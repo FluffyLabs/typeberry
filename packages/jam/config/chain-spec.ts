@@ -62,6 +62,13 @@ export class ChainSpec extends WithDebug {
   /** Number of erasure coding pieces per segment. */
   readonly numberECPiecesPerSegment: number;
 
+  /**
+   * `D`: Period in timeslots after which an unreferenced preimage may be expunged.
+   *
+   * https://graypaper.fluffylabs.dev/#/9a08063/445800445800?v=0.6.6
+   */
+  readonly preimageExpungePeriod: number;
+
   constructor(data: Omit<ChainSpec, "validatorsSuperMajority" | "thirdOfValidators">) {
     super();
 
@@ -76,6 +83,7 @@ export class ChainSpec extends WithDebug {
     this.ticketsPerValidator = data.ticketsPerValidator;
     this.maxTicketsPerExtrinsic = data.maxTicketsPerExtrinsic;
     this.numberECPiecesPerSegment = data.numberECPiecesPerSegment;
+    this.preimageExpungePeriod = data.preimageExpungePeriod;
   }
 }
 
@@ -90,6 +98,7 @@ export const tinyChainSpec = new ChainSpec({
   ticketsPerValidator: 3,
   validatorsCount: 6,
   numberECPiecesPerSegment: 1026,
+  preimageExpungePeriod: 6,
 });
 
 /**
@@ -106,4 +115,5 @@ export const fullChainSpec = new ChainSpec({
   ticketsPerValidator: 2,
   validatorsCount: 1023,
   numberECPiecesPerSegment: 6,
+  preimageExpungePeriod: 19_200,
 });

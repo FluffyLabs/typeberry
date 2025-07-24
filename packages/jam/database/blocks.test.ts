@@ -7,7 +7,7 @@ import { InMemoryBlocks } from "./index.js";
 
 describe("InMemoryDatabase", () => {
   it("should set and retrieve best header hash", () => {
-    const db = new InMemoryBlocks();
+    const db = InMemoryBlocks.new();
 
     db.setBestHeaderHash(Bytes.fill(HASH_SIZE, 5).asOpaque());
 
@@ -18,7 +18,7 @@ describe("InMemoryDatabase", () => {
   });
 
   it("should set and retrieve post state root", () => {
-    const db = new InMemoryBlocks();
+    const db = InMemoryBlocks.new();
 
     db.setPostStateRoot(Bytes.fill(HASH_SIZE, 5).asOpaque(), Bytes.fill(HASH_SIZE, 10).asOpaque());
 
@@ -30,7 +30,7 @@ describe("InMemoryDatabase", () => {
   });
 
   it("should store and retrieve a block", () => {
-    const db = new InMemoryBlocks();
+    const db = InMemoryBlocks.new();
     const block = testBlockView();
     const headerHash = blake2b.hashBytes(block.header.view().encoded()).asOpaque();
     db.insertBlock(new WithHash(headerHash, block));

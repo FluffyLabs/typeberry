@@ -85,7 +85,7 @@ describe("Block Verifier", async () => {
   };
 
   it("should return ParentNotFound error if parent block is not found", async () => {
-    const blocksDb = new InMemoryBlocks();
+    const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb, { headerHash: Bytes.fill(HASH_SIZE, 7).asOpaque() });
     const blockVerifier = new BlockVerifier(hasher, blocksDb);
     const block = prepareBlock({ parentHash: Bytes.fill(HASH_SIZE, 8).asOpaque() });
@@ -103,7 +103,7 @@ describe("Block Verifier", async () => {
 
   it("should return InvalidTimeSlot error if current block is older than parent block", async () => {
     const timeSlot = tryAsTimeSlot(42);
-    const blocksDb = new InMemoryBlocks();
+    const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb, { timeSlot });
     const blockVerifier = new BlockVerifier(hasher, blocksDb);
     const block = prepareBlock({ timeSlot: tryAsTimeSlot(timeSlot - 2) });
@@ -117,7 +117,7 @@ describe("Block Verifier", async () => {
   });
 
   it("should return InvalidExtrinsic error if current block extrinsic hash is incorrect", async () => {
-    const blocksDb = new InMemoryBlocks();
+    const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb);
     const blockVerifier = new BlockVerifier(hasher, blocksDb);
     const block = prepareBlock({ correctExtrinsic: false });
@@ -136,7 +136,7 @@ describe("Block Verifier", async () => {
   });
 
   it("should return StateRootNotFound error if posterior state root of parent hash is not set", async () => {
-    const blocksDb = new InMemoryBlocks();
+    const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb, {
       stateRootHash: Bytes.fill(HASH_SIZE, 6).asOpaque(),
       prepareStateRoot: false,
@@ -160,7 +160,7 @@ describe("Block Verifier", async () => {
   });
 
   it("should return InvalidStateRoot error if current block priorStateRoot hash is not the same as posterior state root", async () => {
-    const blocksDb = new InMemoryBlocks();
+    const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb, {
       stateRootHash: Bytes.fill(HASH_SIZE, 6).asOpaque(),
       prepareStateRoot: true,
@@ -184,7 +184,7 @@ describe("Block Verifier", async () => {
   });
 
   it("should return valid header hash if all checks pass", async () => {
-    const blocksDb = new InMemoryBlocks();
+    const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb, { prepareStateRoot: true });
     const blockVerifier = new BlockVerifier(hasher, blocksDb);
 
