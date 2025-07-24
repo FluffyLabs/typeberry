@@ -3,18 +3,7 @@ import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js"
 import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import { type FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import type { OpaqueHash } from "@typeberry/hash";
-import {
-  type InMemoryService,
-  LookupHistoryItem,
-  type PerCore,
-  type PreimageItem,
-  ServiceAccountInfo,
-  type ServicesUpdate,
-  UpdatePreimage,
-  UpdateService,
-  type UpdateStorage,
-  type ValidatorData,
-} from "@typeberry/state";
+import type { PerCore, ServicesUpdate, ValidatorData } from "@typeberry/state";
 import type { PendingTransfer } from "./pending-transfer.js";
 
 /**
