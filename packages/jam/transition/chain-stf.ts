@@ -182,6 +182,7 @@ export class OnChain {
       slot: timeSlot,
       entropy: newEntropyHash,
       extrinsic: block.extrinsic.view().tickets.materialize(),
+      punishSet: disputesRecords.punishSet,
     });
     // TODO [ToDr] shall we verify the ticket mark & epoch mark as well?
     if (safroleResult.isError) {
