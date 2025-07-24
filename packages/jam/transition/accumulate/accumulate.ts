@@ -37,8 +37,9 @@ import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulat
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import { Compatibility, GpVersion, Result, assertEmpty, check } from "@typeberry/utils";
 import type { CountAndGasUsed } from "../statistics.js";
+import { AccumulateData } from "./accumulate-data.js";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
-import { generateNextServiceId, getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils.js";
+import { generateNextServiceId, getWorkPackageHashes } from "./accumulate-utils.js";
 import { AccumulateFetchExternalities } from "./externalities/index.js";
 import { Operand, Operand_0_6_4 } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
@@ -251,54 +252,18 @@ export class Accumulate {
   }
 
   /**
-   * A method that prepare operands array and gas cost that are needed to accumulate a single service.
-   *
-   * https://graypaper.fluffylabs.dev/#/7e6ff6a/18ea00189d01?v=0.6.7
-   */
-  private getOperandsAndGasCost(serviceId: ServiceId, reports: WorkReport[]) {
-    let gasCost =
-      this.state.privilegedServices.autoAccumulateServices.find((x) => x.service === serviceId)?.gasLimit ??
-      tryAsServiceGas(0n);
-
-    const operands: Operand[] = [];
-
-    for (const report of reports) {
-      const results = report.results.filter((result) => result.serviceId === serviceId);
-
-      for (const result of results) {
-        gasCost = tryAsServiceGas(gasCost + result.gas);
-
-        operands.push(
-          Operand.new({
-            gas: result.gas, // g
-            payloadHash: result.payloadHash, // y
-            result: result.result, // d
-            authorizationOutput: report.authorizationOutput, // o
-            exportsRoot: report.workPackageSpec.exportsRoot, // e
-            hash: report.workPackageSpec.hash, // h
-            authorizerHash: report.authorizerHash, // a
-          }),
-        );
-      }
-    }
-
-    return { operands, gasCost };
-  }
-
-  /**
    * A method that accumulate reports connected with a single service
    *
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/18d70118d701?v=0.6.7
    */
   private async accumulateSingleService(
     serviceId: ServiceId,
-    reports: WorkReport[],
+    operands: Operand[],
+    gasCost: ServiceGas,
     slot: TimeSlot,
     entropy: EntropyHash,
     inputStateUpdate: AccumulationStateUpdate,
   ) {
-    const { operands, gasCost } = this.getOperandsAndGasCost(serviceId, reports);
-
     logger.trace(`Accumulating service ${serviceId}, items: ${operands.length} at slot: ${slot}.`);
 
     const result = await this.pvmAccumulateInvocation(slot, serviceId, operands, gasCost, entropy, inputStateUpdate);
@@ -341,10 +306,12 @@ export class Accumulate {
     }
 
     const reportsToAccumulateInParallel = reports.slice(0, i);
+    const autoAccumulateServices = this.state.privilegedServices.autoAccumulateServices;
+    const accumulateData = new AccumulateData(reportsToAccumulateInParallel, autoAccumulateServices);
     const reportsToAccumulateSequentially = reports.slice(i);
 
     const { gasCost, yieldedRoots, pendingTransfers, stateUpdates, ...rest } = await this.accumulateInParallel(
-      reportsToAccumulateInParallel,
+      accumulateData,
       slot,
       entropy,
       statistics,
@@ -396,18 +363,13 @@ export class Accumulate {
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/175501175501?v=0.6.7
    */
   private async accumulateInParallel(
-    reports: WorkReport[],
+    accumulateData: AccumulateData,
     slot: TimeSlot,
     entropy: EntropyHash,
     statistics: Map<ServiceId, CountAndGasUsed>,
     inputStateUpdate: AccumulationStateUpdate,
   ): Promise<ParallelAccumulationResult> {
-    const autoAccumulateServiceIds = this.state.privilegedServices.autoAccumulateServices.map(({ service }) => service);
-    const allServiceIds = reports
-      .flatMap((report) => report.results.map((result) => result.serviceId))
-      .concat(Array.from(autoAccumulateServiceIds));
-    const serviceIds = uniquePreserveOrder(autoAccumulateServiceIds.concat(allServiceIds));
-
+    const serviceIds = accumulateData.getServiceIds();
     const stateUpdates: [ServiceId, AccumulationStateUpdate][] = [];
     let gasCost: ServiceGas = tryAsServiceGas(0);
     const yieldedRoots: [ServiceId, OpaqueHash][] = [];
@@ -416,7 +378,8 @@ export class Accumulate {
     for (const serviceId of serviceIds) {
       const { consumedGas, stateUpdate } = await this.accumulateSingleService(
         serviceId,
-        reports,
+        accumulateData.getOperands(serviceId),
+        accumulateData.getGasCost(serviceId),
         slot,
         entropy,
         AccumulationStateUpdate.copyFrom(inputStateUpdate), // each service gets its own copy of the state update
@@ -425,7 +388,7 @@ export class Accumulate {
       gasCost = tryAsServiceGas(gasCost + consumedGas);
 
       const serviceStatistics = statistics.get(serviceId) ?? { count: tryAsU32(0), gasUsed: tryAsServiceGas(0) };
-      serviceStatistics.count = tryAsU32(serviceStatistics.count + reports.length);
+      serviceStatistics.count = tryAsU32(serviceStatistics.count + accumulateData.getReportsLength(serviceId));
       serviceStatistics.gasUsed = tryAsServiceGas(serviceStatistics.gasUsed + consumedGas);
       statistics.set(serviceId, serviceStatistics);
 
