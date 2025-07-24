@@ -371,7 +371,6 @@ export class Accumulate {
       slot,
       entropy,
       statistics,
-      // NOTE: we ignore all of the State changes here that are not service changes! - is it still true?
       accUpdates.ok,
     );
     assertEmpty(seqRest);
@@ -485,7 +484,7 @@ export class Accumulate {
       }
 
       if (serviceId === validatorsManager && stateUpdate.validatorsData !== null) {
-        check(designatedValidatorData === undefined, "Only one service can update designated validators!");
+        check(designatedValidatorData === null, "Only one service can update designated validators!");
         designatedValidatorData = stateUpdate.validatorsData;
       }
 

@@ -4,6 +4,7 @@ import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
 import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
+import { Logger } from "@typeberry/logger";
 import { sumU64, tryAsU32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
@@ -40,8 +41,11 @@ const ON_TRANSFER_ARGS_CODEC = codec.object({
   transfers: codec.sequenceVarLen(PendingTransfer.Codec),
 });
 
-export const DEFERRED_TRANSFERS_ERROR = "service balance overflow";
-export type DEFERRED_TRANSFERS_ERROR = typeof DEFERRED_TRANSFERS_ERROR;
+export enum DeferredTransfersErrorCode {
+  ServiceBalanceOverflow = 1,
+  ServiceInfoNotExist = 2,
+}
+const logger = Logger.new(import.meta.filename, "deferred-transfers");
 
 export class DeferredTransfers {
   constructor(
@@ -91,7 +95,7 @@ export class DeferredTransfers {
     servicesUpdates: servicesUpdatesInput,
     servicesRemoved,
     preimages,
-  }: DeferredTransfersInput): Promise<Result<DeferredTransfersResult, DEFERRED_TRANSFERS_ERROR>> {
+  }: DeferredTransfersInput): Promise<Result<DeferredTransfersResult, DeferredTransfersErrorCode>> {
     const transferStatistics = new Map<ServiceId, CountAndGasUsed>();
     const servicesUpdates = [...servicesUpdatesInput];
     const services = uniquePreserveOrder(pendingTransfers.flatMap((x) => [x.source, x.destination]));
@@ -101,7 +105,7 @@ export class DeferredTransfers {
 
       const info = this.getPotentiallyUpdatedServiceInfo(serviceId, servicesUpdates, servicesRemoved);
       if (info === null) {
-        continue;
+        return Result.error(DeferredTransfersErrorCode.ServiceInfoNotExist);
       }
       const codeHash = info.codeHash;
       const code = this.getPotentiallyUpdatedPreimage(preimages, serviceId, codeHash.asOpaque());
@@ -110,7 +114,7 @@ export class DeferredTransfers {
       const newBalance = sumU64(info.balance, ...transfers.map((item) => item.amount));
 
       if (newBalance.overflow) {
-        return Result.error(DEFERRED_TRANSFERS_ERROR);
+        return Result.error(DeferredTransfersErrorCode.ServiceBalanceOverflow);
       }
 
       const newInfo = ServiceAccountInfo.create({ ...info, balance: newBalance.value });
@@ -118,6 +122,7 @@ export class DeferredTransfers {
         serviceId,
         serviceInfo: newInfo,
       });
+
       if (existingUpdateIndex < 0 || servicesUpdates[existingUpdateIndex].action.kind === UpdateServiceKind.Create) {
         servicesUpdates.push(newUpdate);
       } else {
@@ -125,6 +130,7 @@ export class DeferredTransfers {
       }
 
       if (code === null || transfers.length === 0) {
+        logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId}, code is null or no transfers`);
         transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(0) });
         continue;
       }

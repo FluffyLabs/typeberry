@@ -14,7 +14,7 @@ import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/sa
 import type { State } from "@typeberry/state";
 import { type ErrorResult, Result, type TaggedError, assertEmpty } from "@typeberry/utils";
 import type { ACCUMULATION_ERROR, AccumulateStateUpdate } from "./accumulate/accumulate.js";
-import { type DEFERRED_TRANSFERS_ERROR, DeferredTransfers } from "./accumulate/deferred-transfers.js";
+import { DeferredTransfers, type DeferredTransfersErrorCode } from "./accumulate/deferred-transfers.js";
 import { Accumulate } from "./accumulate/index.js";
 import { Assurances, type AssurancesError, type AssurancesStateUpdate } from "./assurances.js";
 import { Authorization, type AuthorizationStateUpdate } from "./authorization.js";
@@ -62,7 +62,7 @@ export type StfError =
   | TaggedError<StfErrorKind.Preimages, PreimagesErrorCode>
   | TaggedError<StfErrorKind.SafroleSeal, SafroleSealError>
   | TaggedError<StfErrorKind.Accumulate, ACCUMULATION_ERROR>
-  | TaggedError<StfErrorKind.DeferredTransfers, DEFERRED_TRANSFERS_ERROR>;
+  | TaggedError<StfErrorKind.DeferredTransfers, DeferredTransfersErrorCode>;
 
 export const stfError = <Kind extends StfErrorKind, Err extends StfError["error"]>(
   kind: Kind,
