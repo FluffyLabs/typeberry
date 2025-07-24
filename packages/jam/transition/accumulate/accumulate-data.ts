@@ -124,10 +124,6 @@ export class AccumulateData {
       }
     }
 
-    for (const key of this.autoAccumulateServicesByServiceId.keys()) {
-      serviceIds.add(key);
-    }
-
     return { reportsDataByServiceId, serviceIds };
   }
 
