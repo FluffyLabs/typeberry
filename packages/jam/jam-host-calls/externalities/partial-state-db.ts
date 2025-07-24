@@ -567,37 +567,34 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
       return Result.error(NewServiceError.InsufficientFunds);
     }
 
-    // proceed with service creation
-    const newService = new InMemoryService(newServiceId, {
-      info: ServiceAccountInfo.create({
-        codeHash,
-        balance: thresholdForNew,
-        accumulateMinGas,
-        onTransferMinGas,
-        storageUtilisationBytes: bytes.value,
-        storageUtilisationCount: items,
-        gratisStorageBytes: gratisStorageOffset,
-        created: this.state.timeslot,
-        lastAccumulation: tryAsTimeSlot(0),
-        parentService: newServiceId,
-      }),
-      preimages: HashDictionary.new(),
-      // add the preimage request
-      lookupHistory: HashDictionary.fromEntries([
-        [codeHash.asOpaque(), [new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([]))]],
-      ]),
-      storage: HashDictionary.new(),
-    });
-
     // add the new service
-    this.updatedState.newServices.push(newService);
+    this.updatedState.services.servicesUpdates.push(
+      UpdateService.create({
+        serviceId: newServiceId,
+        serviceInfo: ServiceAccountInfo.create({
+          codeHash,
+          balance: thresholdForNew,
+          accumulateMinGas,
+          onTransferMinGas,
+          storageUtilisationBytes: bytes.value,
+          storageUtilisationCount: items,
+          gratisStorageBytes: gratisStorageOffset,
+          created: this.state.timeslot,
+          lastAccumulation: tryAsTimeSlot(0),
+          parentService: newServiceId,
+        }),
+        lookupHistory: new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([])),
+      }),
+    );
 
     // update the balance
     // https://graypaper.fluffylabs.dev/#/9a08063/36f10236f102?v=0.6.6
-    this.updatedState.updatedServiceInfo = ServiceAccountInfo.create({
-      ...currentService,
-      balance: tryAsU64(balanceLeftForCurrent),
-    });
+    this.updateCurrentServiceInfo(
+      ServiceAccountInfo.create({
+        ...currentService,
+        balance: tryAsU64(balanceLeftForCurrent),
+      }),
+    );
 
     // update the next service id we are going to create next
     // https://graypaper.fluffylabs.dev/#/9a08063/363603363603?v=0.6.6
@@ -632,28 +629,6 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
       return Result.error("insufficient funds");
     }
 
-    // proceed with service creation
-    const newService = new InMemoryService(newServiceId, {
-      info: ServiceAccountInfo.create({
-        codeHash,
-        balance: thresholdForNew,
-        accumulateMinGas,
-        onTransferMinGas,
-        storageUtilisationBytes: bytes.value,
-        storageUtilisationCount: items,
-        gratisStorageBytes: tryAsU64(0),
-        created: this.state.timeslot,
-        lastAccumulation: tryAsTimeSlot(0),
-        parentService: newServiceId,
-      }),
-      preimages: HashDictionary.new(),
-      // add the preimage request
-      lookupHistory: HashDictionary.fromEntries([
-        [codeHash.asOpaque(), [new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([]))]],
-      ]),
-      storage: HashDictionary.new(),
-    });
-
     // add the new service
     this.updatedState.services.servicesUpdates.push(
       UpdateService.create({
@@ -665,6 +640,10 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
           onTransferMinGas,
           storageUtilisationBytes: bytes.value,
           storageUtilisationCount: items,
+          gratisStorageBytes: tryAsU64(0),
+          created: this.state.timeslot,
+          lastAccumulation: tryAsTimeSlot(0),
+          parentService: newServiceId,
         }),
         lookupHistory: new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([])),
       }),
