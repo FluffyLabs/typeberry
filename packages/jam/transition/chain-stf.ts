@@ -12,8 +12,9 @@ import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js"
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
 import type { State } from "@typeberry/state";
-import { type ErrorResult, Result, type TaggedError } from "@typeberry/utils";
+import { type ErrorResult, Result, type TaggedError, assertEmpty } from "@typeberry/utils";
 import type { ACCUMULATION_ERROR, AccumulateStateUpdate } from "./accumulate/accumulate.js";
+import { DeferredTransfers, type DeferredTransfersErrorCode } from "./accumulate/deferred-transfers.js";
 import { Accumulate } from "./accumulate/index.js";
 import { Assurances, type AssurancesError, type AssurancesStateUpdate } from "./assurances.js";
 import { Authorization, type AuthorizationStateUpdate } from "./authorization.js";
@@ -50,6 +51,7 @@ export enum StfErrorKind {
   Preimages = 4,
   SafroleSeal = 5,
   Accumulate = 6,
+  DeferredTransfers = 7,
 }
 
 export type StfError =
@@ -59,7 +61,8 @@ export type StfError =
   | TaggedError<StfErrorKind.Safrole, SafroleErrorCode>
   | TaggedError<StfErrorKind.Preimages, PreimagesErrorCode>
   | TaggedError<StfErrorKind.SafroleSeal, SafroleSealError>
-  | TaggedError<StfErrorKind.Accumulate, ACCUMULATION_ERROR>;
+  | TaggedError<StfErrorKind.Accumulate, ACCUMULATION_ERROR>
+  | TaggedError<StfErrorKind.DeferredTransfers, DeferredTransfersErrorCode>;
 
 export const stfError = <Kind extends StfErrorKind, Err extends StfError["error"]>(
   kind: Kind,
@@ -79,6 +82,8 @@ export class OnChain {
   private readonly assurances: Assurances;
   // chapter 12: https://graypaper.fluffylabs.dev/#/68eaa1f/159f02159f02?v=0.6.4
   private readonly accumulate: Accumulate;
+  // chapter 12.3: https://graypaper.fluffylabs.dev/#/68eaa1f/178203178203?v=0.6.4
+  private readonly deferredTransfers: DeferredTransfers;
   // chapter 12.4: https://graypaper.fluffylabs.dev/#/68eaa1f/18cc0018cc00?v=0.6.4
   private readonly preimages: Preimages;
   // after accumulation
@@ -109,6 +114,7 @@ export class OnChain {
     this.reports = new Reports(chainSpec, state, hasher, new DbHeaderChain(blocks));
     this.assurances = new Assurances(chainSpec, state);
     this.accumulate = new Accumulate(chainSpec, state);
+    this.deferredTransfers = new DeferredTransfers(chainSpec, state);
     this.preimages = new Preimages(state);
 
     this.authorization = new Authorization(chainSpec, state);
@@ -221,17 +227,41 @@ export class OnChain {
     if (accumulateResult.isError) {
       return stfError(StfErrorKind.Accumulate, accumulateResult);
     }
-    const { root: accumulateRoot, stateUpdate: accumulateUpdate, ...accumulateRest } = accumulateResult.ok;
+    const {
+      root: accumulateRoot,
+      stateUpdate: accumulateUpdate,
+      accumulationStatistics,
+      pendingTransfers,
+      ...accumulateRest
+    } = accumulateResult.ok;
     assertEmpty(accumulateRest);
+
     const {
       privilegedServices: maybePrivilegedServices,
-      authQueues: maybeAuthQueues,
+      authQueues: maybeAuthorizationQueues,
       designatedValidatorData: maybeDesignatedValidatorData,
       timeslot: accumulationTimeSlot,
       preimages: accumulatePreimages,
       ...servicesUpdate
     } = accumulateUpdate;
 
+    const deferredTransfersResult = await this.deferredTransfers.transition({
+      pendingTransfers,
+      ...servicesUpdate,
+      preimages: accumulatePreimages,
+      timeslot: timeSlot,
+    });
+    if (deferredTransfersResult.isError) {
+      return stfError(StfErrorKind.DeferredTransfers, deferredTransfersResult);
+    }
+
+    const {
+      servicesUpdates: newServicesUpdates,
+      transferStatistics,
+      ...deferredTransfersRest
+    } = deferredTransfersResult.ok;
+    assertEmpty(deferredTransfersRest);
+    servicesUpdate.servicesUpdates = newServicesUpdates;
     // recent history
     const recentHistoryUpdate = this.recentHistory.transition({
       headerHash,
@@ -260,14 +290,14 @@ export class OnChain {
       extrinsic,
       incomingReports: extrinsic.guarantees.map((g) => g.report),
       availableReports: assurancesResult.ok.availableReports,
-      accumulationStatistics: new Map(),
-      transferStatistics: new Map(),
+      accumulationStatistics,
+      transferStatistics,
     });
     const { statistics, ...statisticsRest } = statisticsUpdate;
     assertEmpty(statisticsRest);
 
     return Result.ok({
-      ...(maybeAuthQueues !== undefined ? { authQueues: maybeAuthQueues } : {}),
+      ...(maybeAuthorizationQueues !== undefined ? { authQueues: maybeAuthorizationQueues } : {}),
       ...(maybeDesignatedValidatorData !== undefined ? { designatedValidatorData: maybeDesignatedValidatorData } : {}),
       ...(maybePrivilegedServices !== undefined ? { privilegedServices: maybePrivilegedServices } : {}),
       authPools,
@@ -305,8 +335,6 @@ export class OnChain {
     return map;
   }
 }
-
-function assertEmpty<T extends Record<string, never>>(_x: T) {}
 
 type AvailAssignment = State["availabilityAssignment"];
 
