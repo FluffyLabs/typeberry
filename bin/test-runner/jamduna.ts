@@ -23,8 +23,6 @@ main(runners, process.argv.slice(2), "test-vectors/jamduna", {
     "/chainspecs/",
     "/blocks/",
     "/state_snapshots/",
-    "disputes/state_transitions/2_005.json",
-    "disputes/state_transitions/3_005.json",
     "orderedaccumulation/state_transitions/2_007.json",
     "orderedaccumulation/state_transitions/2_009.json",
     "orderedaccumulation/state_transitions/2_011.json",
