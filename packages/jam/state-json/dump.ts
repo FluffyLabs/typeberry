@@ -190,7 +190,7 @@ type JsonStateDumpPre067 = {
   tau: State["timeslot"];
   chi: {
     chi_m: PrivilegedServices["manager"];
-    chi_a: ServiceId;
+    chi_a: ServiceId; // NOTE: [MaSo] pre067
     chi_v: PrivilegedServices["validatorsManager"];
     chi_g: PrivilegedServices["autoAccumulateServices"] | null;
   };
