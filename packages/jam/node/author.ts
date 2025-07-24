@@ -1,7 +1,7 @@
 import * as blockGenerator from "@typeberry/block-generator";
-import type { Config } from "@typeberry/config";
+import type { WorkerConfig } from "@typeberry/config";
 
-export async function startBlockGenerator(config: Config) {
+export async function startBlockGenerator(config: WorkerConfig) {
   const generatorInit = await blockGenerator.spawnWorker();
 
   const generatorReady = generatorInit.transition((state, port) => {

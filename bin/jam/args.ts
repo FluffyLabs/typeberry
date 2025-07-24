@@ -1,13 +1,6 @@
-import os from "node:os";
+import { DEV_CONFIG, NODE_DEFAULTS } from "@typeberry/config-node";
 import minimist from "minimist";
 import packageJson from "./package.json" with { type: "json" };
-
-export const DEV_CONFIG = "dev";
-
-export const DEFAULTS = {
-  name: os.hostname(),
-  config: DEV_CONFIG,
-};
 
 export const HELP = `
 @typeberry/jam ${packageJson.version} by Fluffy Labs.
@@ -18,9 +11,9 @@ Usage:
 
 Options:
   --name                Override node name. Affects networking key and db location.
-                        [default: ${DEFAULTS.name}]
+                        [default: ${NODE_DEFAULTS.name}]
   --config              Path to a config file or '${DEV_CONFIG}'.
-                        [default: ${DEFAULTS.config}]
+                        [default: ${NODE_DEFAULTS.config}]
 `;
 
 /** Command to execute. */
@@ -46,17 +39,12 @@ export type Arguments =
     >;
 
 function parseSharedOptions(args: minimist.ParsedArgs, withRelPath: (v: string) => string): SharedOptions {
-  const { name } = parseValueOption(args, "name", (v) => v, DEFAULTS.name);
+  const { name } = parseValueOption(args, "name", (v) => v, NODE_DEFAULTS.name);
   const { config } = parseValueOption(
     args,
     "config",
-    (v) => {
-      if (v === DEV_CONFIG) {
-        return DEV_CONFIG;
-      }
-      return withRelPath(v);
-    },
-    DEFAULTS.config,
+    (v) => (v === DEV_CONFIG ? DEV_CONFIG : withRelPath(v)),
+    NODE_DEFAULTS.config,
   );
 
   return {

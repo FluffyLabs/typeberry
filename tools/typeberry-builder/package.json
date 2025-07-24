@@ -10,8 +10,9 @@
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
   "dependencies": {
-    "@typeberry/logger": "0.0.1",
     "@typeberry/jam": "0.0.1",
+    "@typeberry/logger": "0.0.1",
+    "@typeberry/node": "^0.0.1",
     "ts-loader": "^9.5.2",
     "tsx": "^4.20.3",
     "webpack": "^5.99.9"
