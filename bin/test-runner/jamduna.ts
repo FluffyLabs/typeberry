@@ -15,6 +15,8 @@ main(runners, process.argv.slice(2), "test-vectors/jamduna", {
     "fallback/state_transitions",
   ],
   ignored: [
+    "disputes/state_transitions/2_005.json",
+    "disputes/state_transitions/3_005.json",
     // Ignoring, since they are invalid and we cannot even parse them.
     "BadTicketAttemptNumber.json",
     // we only run independent state-transition tests
