@@ -44,10 +44,10 @@ describe("AccumulateData", () => {
       const serviceId = tryAsServiceId(129);
       const report = getWorkReport();
       const reports = [report];
-      const acumulateData = new AccumulateData(reports, []);
+      const accumulateData = new AccumulateData(reports, []);
       const expectedOperands = transformReportToOperands(report);
 
-      const result = acumulateData.getOperands(serviceId);
+      const result = accumulateData.getOperands(serviceId);
 
       deepEqual(result, expectedOperands);
     });
@@ -58,10 +58,10 @@ describe("AccumulateData", () => {
       const serviceId = tryAsServiceId(129);
       const report = getWorkReport();
       const reports = [report];
-      const acumulateData = new AccumulateData(reports, []);
+      const accumulateData = new AccumulateData(reports, []);
       const expectedLength = report.results.length;
 
-      const result = acumulateData.getReportsLength(serviceId);
+      const result = accumulateData.getReportsLength(serviceId);
 
       deepEqual(result, expectedLength);
     });
@@ -72,10 +72,10 @@ describe("AccumulateData", () => {
       const serviceId = tryAsServiceId(129);
       const report = getWorkReport();
       const reports = [report];
-      const acumulateData = new AccumulateData(reports, []);
+      const accumulateData = new AccumulateData(reports, []);
       const expectedGasCost = report.results.reduce((acc, result) => acc + result.gas, 0n);
 
-      const result = acumulateData.getGasCost(serviceId);
+      const result = accumulateData.getGasCost(serviceId);
 
       deepEqual(result, expectedGasCost);
     });
@@ -87,10 +87,10 @@ describe("AccumulateData", () => {
       const autoAccumulateServices = [createAutoAccumulate(129, autoAccumulateGas)];
 
       const reports = [report];
-      const acumulateData = new AccumulateData(reports, autoAccumulateServices);
+      const accumulateData = new AccumulateData(reports, autoAccumulateServices);
       const expectedGasCost = report.results.reduce((acc, result) => acc + result.gas, 0n) + autoAccumulateGas;
 
-      const result = acumulateData.getGasCost(serviceId);
+      const result = accumulateData.getGasCost(serviceId);
 
       deepEqual(result, expectedGasCost);
     });
@@ -98,9 +98,9 @@ describe("AccumulateData", () => {
 
   describe("getServiceIds", () => {
     it("should return empty array when no reports and auto accumulate services", () => {
-      const acumulateData = new AccumulateData([], []);
+      const accumulateData = new AccumulateData([], []);
 
-      const result = acumulateData.getServiceIds();
+      const result = accumulateData.getServiceIds();
 
       deepEqual(result, []);
     });
@@ -108,9 +108,9 @@ describe("AccumulateData", () => {
     it("should return unique service ids from reports", () => {
       const reports = [getWorkReport(), getWorkReport()];
       const expectedServiceIds = [129].map(tryAsServiceId);
-      const acumulateData = new AccumulateData(reports, []);
+      const accumulateData = new AccumulateData(reports, []);
 
-      const result = acumulateData.getServiceIds();
+      const result = accumulateData.getServiceIds();
 
       deepEqual(result, expectedServiceIds);
     });
@@ -118,9 +118,9 @@ describe("AccumulateData", () => {
     it("should return unique service ids from auto accumulate services", () => {
       const autoAccumulateServices = [createAutoAccumulate(129), createAutoAccumulate(129)];
       const expectedServiceIds = [129].map(tryAsServiceId);
-      const acumulateData = new AccumulateData([], autoAccumulateServices);
+      const accumulateData = new AccumulateData([], autoAccumulateServices);
 
-      const result = acumulateData.getServiceIds();
+      const result = accumulateData.getServiceIds();
 
       deepEqual(result, expectedServiceIds);
     });
@@ -129,9 +129,9 @@ describe("AccumulateData", () => {
       const reports = [getWorkReport()];
       const autoAccumulateServices = [createAutoAccumulate(129)];
       const expectedServiceIds = [129].map(tryAsServiceId);
-      const acumulateData = new AccumulateData(reports, autoAccumulateServices);
+      const accumulateData = new AccumulateData(reports, autoAccumulateServices);
 
-      const result = acumulateData.getServiceIds();
+      const result = accumulateData.getServiceIds();
 
       deepEqual(result, expectedServiceIds);
     });
