@@ -12,6 +12,7 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
+import { NewServiceError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { New } from "./new.js";
 
@@ -52,6 +53,7 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: New", () => {
+  const it067 = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? it : it.skip;
   it("should create a new service", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
@@ -86,6 +88,7 @@ describe("HostCalls: New", () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);
+    accumulate.newServiceResponse = Result.error(NewServiceError.InsufficientFunds);
     accumulate.newServicePre067Response = null;
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
@@ -133,27 +136,24 @@ describe("HostCalls: New", () => {
     }
   });
 
-  it("should fail when free storage is for incorrect service", async () => {
+  it067("should fail when free storage is set by unprivileged service", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);
-    accumulate.newServicePre067Response = null;
+    accumulate.newServiceResponse = Result.error(NewServiceError.UnprivilegedService);
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),
       tryAsU64(2n ** 40n),
       tryAsU64(2n ** 50n),
       tryAsU64(1_024n),
-      { skipCodeHash: true },
     );
 
     // when
     await n.execute(gas, registers, memory);
 
     // then
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
-      assert.deepStrictEqual(accumulate.newServiceCalled.length, 1);
-    }
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
+    assert.deepStrictEqual(accumulate.newServiceCalled.length, 1);
   });
 });

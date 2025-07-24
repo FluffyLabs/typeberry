@@ -140,8 +140,8 @@ export enum ProvidePreimageError {
 export enum NewServiceError {
   /** Not enough balance to create the service account. */
   InsufficientFunds = 0,
-  /** Incorrect service to give free storage. */
-  IncorrectService = 1,
+  /** Service is not privileged to give free storage. */
+  UnprivilegedService = 1,
 }
 
 /**

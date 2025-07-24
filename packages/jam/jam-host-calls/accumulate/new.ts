@@ -5,7 +5,7 @@ import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { Compatibility, GpVersion } from "@typeberry/utils";
+import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
 import { NewServiceError, type PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 
@@ -53,20 +53,29 @@ export class New implements HostCallHandler {
       ? this.partialState.newService(codeHash.asOpaque(), codeLength, gas, allowance, gratisStorageOffset)
       : this.partialState.newServicePre067(codeHash.asOpaque(), codeLength, gas, allowance);
 
-    if (assignedId.isError) {
-      if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-        const error = assignedId.error as NewServiceError;
-        if (error === NewServiceError.InsufficientFunds) {
-          regs.set(IN_OUT_REG, HostCallResult.CASH);
-        } else {
-          regs.set(IN_OUT_REG, HostCallResult.HUH);
-        }
-      } else {
-        regs.set(IN_OUT_REG, HostCallResult.CASH);
-      }
-    } else {
+    if (assignedId.isOk) {
       regs.set(IN_OUT_REG, tryAsU64(assignedId.ok));
+      return;
     }
+
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      const e = assignedId.error as NewServiceError;
+
+      if (e === NewServiceError.InsufficientFunds) {
+        regs.set(IN_OUT_REG, HostCallResult.CASH);
+        return;
+      }
+
+      if (e === NewServiceError.UnprivilegedService) {
+        regs.set(IN_OUT_REG, HostCallResult.HUH);
+        return;
+      }
+
+      assertNever(e);
+    }
+
+    // NOTE: [MaSo] pre067 it's just else case
+    regs.set(IN_OUT_REG, HostCallResult.CASH);
     return;
   }
 }

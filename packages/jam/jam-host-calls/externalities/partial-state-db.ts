@@ -475,8 +475,12 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
       currentService.gratisStorageBytes,
     );
 
-    // TODO: [MaSo] Check if privilaged service for free storage
-    // https://graypaper.fluffylabs.dev/#/7e6ff6a/369703369703?v=0.6.7
+    if (
+      gratisStorageOffset !== tryAsU64(0) &&
+      this.currentServiceId !== this.updatedState.privilegedServices?.manager
+    ) {
+      return Result.error(NewServiceError.UnprivilegedService);
+    }
 
     // check if we have enough balance
     const balanceLeftForCurrent = currentService.balance - thresholdForNew;
