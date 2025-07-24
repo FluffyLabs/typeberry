@@ -136,7 +136,7 @@ export class AccumulateData {
     return this.reportsDataByServiceId.get(serviceId)?.operands ?? [];
   }
 
-  /** Returns the gas cost for a given service id */
+  /** Returns the number of reports to acccumulate for a given service id */
   getReportsLength(serviceId: ServiceId): U32 {
     return this.reportsDataByServiceId.get(serviceId)?.reportsLength ?? tryAsU32(0);
   }
