@@ -82,6 +82,10 @@ export class HashDictionary<K extends OpaqueHash, V> implements ImmutableHashDic
     return vals.map((x) => x[1]);
   }
 
+  toJSON() {
+    return Object.fromEntries(this);
+  }
+
   /** Insert/overwrite the value at given key. */
   set(key: K, value: V) {
     this.map.set(key.toString(), [key, value]);

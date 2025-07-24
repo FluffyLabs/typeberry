@@ -25,6 +25,10 @@ export class BytesBlob {
     return bytesToHexString(this.raw);
   }
 
+  toJSON() {
+    return this.toString();
+  }
+
   /** Decode contained bytes as string. */
   asText() {
     const decoder = new TextDecoder();
