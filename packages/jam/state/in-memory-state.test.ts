@@ -15,7 +15,7 @@ import {
   StorageItem,
   tryAsLookupHistorySlots,
 } from "./service.js";
-import { UpdatePreimageKind, UpdateServiceKind, UpdateStorage } from "./state-update.js";
+import { UpdatePreimage, UpdateServiceKind, UpdateStorage } from "./state-update.js";
 
 describe("InMemoryState", () => {
   it("should not change anything when state udpate is empty", () => {
@@ -240,14 +240,11 @@ describe("InMemoryState", () => {
 
     result = state.applyUpdate({
       preimages: [
-        {
+        UpdatePreimage.provide({
           serviceId,
-          action: {
-            kind: UpdatePreimageKind.Provide,
-            preimage,
-            slot,
-          },
-        },
+          preimage,
+          slot,
+        }),
       ],
     });
 
@@ -305,14 +302,11 @@ describe("InMemoryState", () => {
 
     result = state.applyUpdate({
       preimages: [
-        {
+        UpdatePreimage.provide({
           serviceId,
-          action: {
-            kind: UpdatePreimageKind.Provide,
-            preimage,
-            slot: null,
-          },
-        },
+          preimage,
+          slot: null,
+        }),
       ],
     });
 
@@ -370,14 +364,11 @@ describe("InMemoryState", () => {
 
     result = state.applyUpdate({
       preimages: [
-        {
+        UpdatePreimage.provide({
           serviceId,
-          action: {
-            kind: UpdatePreimageKind.Provide,
-            preimage,
-            slot: slot1,
-          },
-        },
+          preimage,
+          slot: slot1,
+        }),
       ],
     });
 
@@ -389,13 +380,10 @@ describe("InMemoryState", () => {
 
     result = state.applyUpdate({
       preimages: [
-        {
+        UpdatePreimage.updateOrAdd({
           serviceId,
-          action: {
-            kind: UpdatePreimageKind.UpdateOrAdd,
-            item: newItem,
-          },
-        },
+          lookupHistory: newItem,
+        }),
       ],
     });
 
@@ -456,14 +444,11 @@ describe("InMemoryState", () => {
     // First application should succeed
     result = state.applyUpdate({
       preimages: [
-        {
+        UpdatePreimage.provide({
           serviceId,
-          action: {
-            kind: UpdatePreimageKind.Provide,
-            preimage,
-            slot,
-          },
-        },
+          preimage,
+          slot,
+        }),
       ],
     });
 
@@ -472,14 +457,11 @@ describe("InMemoryState", () => {
     // Second application should fail
     result = state.applyUpdate({
       preimages: [
-        {
+        UpdatePreimage.provide({
           serviceId,
-          action: {
-            kind: UpdatePreimageKind.Provide,
-            preimage,
-            slot,
-          },
-        },
+          preimage,
+          slot,
+        }),
       ],
     });
 
@@ -531,14 +513,11 @@ describe("InMemoryState", () => {
 
     result = state.applyUpdate({
       preimages: [
-        {
+        UpdatePreimage.provide({
           serviceId,
-          action: {
-            kind: UpdatePreimageKind.Provide,
-            preimage,
-            slot,
-          },
-        },
+          preimage,
+          slot,
+        }),
       ],
     });
 
@@ -553,14 +532,11 @@ describe("InMemoryState", () => {
     // Now remove the preimage
     result = state.applyUpdate({
       preimages: [
-        {
+        UpdatePreimage.remove({
           serviceId,
-          action: {
-            kind: UpdatePreimageKind.Remove,
-            hash,
-            length,
-          },
-        },
+          hash,
+          length,
+        }),
       ],
     });
 
@@ -614,21 +590,15 @@ describe("InMemoryState", () => {
 
     result = state.applyUpdate({
       preimages: [
-        {
+        UpdatePreimage.provide({
           serviceId,
-          action: {
-            kind: UpdatePreimageKind.Provide,
-            preimage,
-            slot: slot1,
-          },
-        },
-        {
+          preimage,
+          slot: slot1,
+        }),
+        UpdatePreimage.updateOrAdd({
           serviceId,
-          action: {
-            kind: UpdatePreimageKind.UpdateOrAdd,
-            item: secondItem,
-          },
-        },
+          lookupHistory: secondItem,
+        }),
       ],
     });
 
@@ -641,14 +611,11 @@ describe("InMemoryState", () => {
     // Now remove only length1
     result = state.applyUpdate({
       preimages: [
-        {
+        UpdatePreimage.remove({
           serviceId,
-          action: {
-            kind: UpdatePreimageKind.Remove,
-            hash,
-            length: length1,
-          },
-        },
+          hash,
+          length: length1,
+        }),
       ],
     });
 
