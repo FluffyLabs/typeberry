@@ -1,6 +1,6 @@
-import { main } from "@typeberry/jam";
-import { type Arguments, HELP, parseArgs } from "@typeberry/jam/args.js";
+import { type Arguments, HELP, parseArgs, prepareConfigFile } from "@typeberry/jam";
 import { Level, Logger } from "@typeberry/logger";
+import { main } from "@typeberry/node";
 
 export * from "@typeberry/jam";
 
@@ -16,7 +16,7 @@ try {
   process.exit(1);
 }
 
-main(args, withRelPath).catch((e) => {
+main(prepareConfigFile(args), withRelPath).catch((e) => {
   console.error(`${e}`);
   process.exit(-1);
 });
