@@ -9,7 +9,7 @@ export class DebuggerAdapter {
   private readonly pvm: Interpreter;
 
   constructor(useSbrkGas = false) {
-    this.pvm = new Interpreter(useSbrkGas);
+    this.pvm = new Interpreter({ useSbrkGas });
   }
 
   // TODO [MaSi]: a temporary solution that is needed to implement host calls in PVM debugger

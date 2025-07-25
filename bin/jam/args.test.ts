@@ -1,14 +1,15 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
+import { NODE_DEFAULTS } from "@typeberry/config-node";
 import { deepEqual } from "@typeberry/utils";
-import { Command, DEFAULTS, type SharedOptions, parseArgs } from "./args.js";
+import { Command, type SharedOptions, parseArgs } from "./args.js";
 
 describe("CLI", () => {
   const parse = (args: string[]) => parseArgs(args, (v) => `../${v}`);
   const defaultOptions: SharedOptions = {
-    nodeName: DEFAULTS.name,
-    configPath: DEFAULTS.config,
+    nodeName: NODE_DEFAULTS.name,
+    configPath: NODE_DEFAULTS.config,
   };
 
   it("should start with default arguments", () => {

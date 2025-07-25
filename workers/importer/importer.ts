@@ -99,6 +99,7 @@ export class Importer {
       return importerError(ImporterErrorKind.Update, updateResult);
     }
     const newState = this.states.getState(headerHash);
+
     if (newState === null) {
       throw new Error("Freshly updated state not in the DB?");
     }

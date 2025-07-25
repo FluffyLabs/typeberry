@@ -1,6 +1,6 @@
 import { Block, type BlockView, type HeaderHash, type HeaderView, headerViewWithHashCodec } from "@typeberry/block";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { Config } from "@typeberry/config";
+import { WorkerConfig } from "@typeberry/config";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
 import type { WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
@@ -17,7 +17,7 @@ export type ImporterInit = WorkerInit<ImporterReady>;
 export type ImporterStates = ImporterInit | ImporterReady | Finished;
 
 export function importerStateMachine() {
-  const initialized = new WorkerInit<ImporterReady>("ready(importer)", Config.reInit);
+  const initialized = new WorkerInit<ImporterReady>("ready(importer)", WorkerConfig.reInit);
   const ready = new ImporterReady();
   const finished = new Finished();
 
@@ -26,7 +26,7 @@ export function importerStateMachine() {
 
 const logger = Logger.new(import.meta.filename, "importer");
 
-export class MainReady extends State<"ready(main)", Finished, Config> {
+export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
   public readonly onBestBlock = new Listener<WithHash<HeaderHash, HeaderView>>();
 
   constructor() {
@@ -39,7 +39,7 @@ export class MainReady extends State<"ready(main)", Finished, Config> {
     });
   }
 
-  getConfig(): Config {
+  getConfig(): WorkerConfig {
     if (this.data === null) {
       throw new Error("Did not receive chain spec config!");
     }
@@ -70,7 +70,7 @@ export class MainReady extends State<"ready(main)", Finished, Config> {
   }
 }
 
-export class ImporterReady extends State<"ready(importer)", Finished, Config> {
+export class ImporterReady extends State<"ready(importer)", Finished, WorkerConfig> {
   public readonly onBlock = new Listener<BlockView>();
 
   constructor() {
@@ -84,7 +84,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, Config> {
     });
   }
 
-  getConfig(): Config {
+  getConfig(): WorkerConfig {
     if (this.data === null) {
       throw new Error("Did not receive chain spec config!");
     }
