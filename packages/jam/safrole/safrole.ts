@@ -178,7 +178,7 @@ export class Safrole {
         const isOffender = postOffenders.has(validator.ed25519) !== false;
 
         /**
-         * Bandersnatch & ed25519 keys of validators that belongs to offenders are replaced with null keys
+         * Bandersnatch, ed25519 and bls keys of validators that belongs to offenders are replaced with null keys
          *
          * https://graypaper.fluffylabs.dev/#/5f542d7/0ea2000ea200
          */
