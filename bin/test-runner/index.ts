@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { run } from "node:test";
 import { spec } from "node:test/reporters";
 import { Reporter } from "./reporter.js";
+import { DEFAULT_SUITE, TestSuite } from "@typeberry/utils";
 
 const distDir = `${import.meta.dirname}/../../dist`;
 try {
@@ -11,13 +12,14 @@ try {
 }
 
 const suites: { [key: string]: string } = {
-  w3f: "jamtestvectors",
-  "w3f-davxy": "jamtestvectors-davxy",
-  jamduna: "jamdunavectors",
-  javajam: "javajamvectors",
+  [TestSuite.W3F]: "jamtestvectors",
+  [TestSuite.W3F_DAVXY]: "jamtestvectors-davxy",
+  [TestSuite.JAMDUNA]: "jamdunavectors",
+  [TestSuite.JAVAJAM]: "javajamvectors",
 };
 
-const suiteToRun = process.argv[2] ?? "w3f";
+const suiteToRun = process.env.TEST_SUITE ?? DEFAULT_SUITE;
+
 const suite = suites[suiteToRun];
 if (suite === undefined) {
   throw new Error(`Invalid suite ${suiteToRun}. Available suites: ${Object.keys(suites)}`);
