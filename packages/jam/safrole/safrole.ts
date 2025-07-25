@@ -10,9 +10,15 @@ import {
 import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets.js";
 import { Bytes, bytesBlobComparator } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
-import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
+import { FixedSizeArray, type ImmutableSortedSet, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { BANDERSNATCH_KEY_BYTES, type BandersnatchKey, ED25519_KEY_BYTES } from "@typeberry/crypto";
+import {
+  BANDERSNATCH_KEY_BYTES,
+  BLS_KEY_BYTES,
+  type BandersnatchKey,
+  ED25519_KEY_BYTES,
+  type Ed25519Key,
+} from "@typeberry/crypto";
 import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
@@ -29,7 +35,6 @@ const ticketComparator = (a: Ticket, b: Ticket) => bytesBlobComparator(a.id, b.i
 
 export type SafroleState = Pick<
   State,
-  | "disputesRecords"
   | "designatedValidatorData"
   | "timeslot"
   | "previousValidatorData"
@@ -68,6 +73,8 @@ export type Input = {
   entropy: EntropyHash;
   /** Current block tickets extrinsic. */
   extrinsic: TicketsExtrinsic;
+  /** Punish set from disputes */
+  punishSet: ImmutableSortedSet<Ed25519Key>;
 };
 
 export enum SafroleErrorCode {
@@ -153,6 +160,7 @@ export class Safrole {
 
   private async getValidatorKeys(
     timeslot: TimeSlot,
+    postOffenders: ImmutableSortedSet<Ed25519Key>,
   ): Promise<Result<EpochValidators, typeof SafroleErrorCode.IncorrectData>> {
     /**
      * Epoch is not changed so the previous state is returned
@@ -165,13 +173,12 @@ export class Safrole {
     /**
      * Epoch is changed so we shift validators and calculate new epoch root commitment
      */
-    const postOffenders = this.state.disputesRecords.punishSet;
     const newNextValidators: PerValidator<ValidatorData> = asOpaqueType(
       this.state.designatedValidatorData.map((validator) => {
         const isOffender = postOffenders.has(validator.ed25519) !== false;
 
         /**
-         * Bandersnatch & ed25519 keys of validators that belongs to offenders are replaced with null keys
+         * Bandersnatch, ed25519 and bls keys of validators that belongs to offenders are replaced with null keys
          *
          * https://graypaper.fluffylabs.dev/#/5f542d7/0ea2000ea200
          */
@@ -179,7 +186,7 @@ export class Safrole {
           return ValidatorData.create({
             bandersnatch: Bytes.zero(BANDERSNATCH_KEY_BYTES).asOpaque(),
             ed25519: Bytes.zero(ED25519_KEY_BYTES).asOpaque(),
-            bls: validator.bls,
+            bls: Bytes.zero(BLS_KEY_BYTES).asOpaque(),
             metadata: validator.metadata,
           });
         }
@@ -467,7 +474,7 @@ export class Safrole {
       return Result.error(SafroleErrorCode.BadTicketAttempt);
     }
 
-    const validatorKeysResult = await this.getValidatorKeys(input.slot);
+    const validatorKeysResult = await this.getValidatorKeys(input.slot, input.punishSet);
 
     if (validatorKeysResult.isError) {
       return Result.error(validatorKeysResult.error);
