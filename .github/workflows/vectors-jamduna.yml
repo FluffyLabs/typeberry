@@ -72,7 +72,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/test-runner jamduna
+      - run: npm start -w @typeberry/test-runner
       - name: Display results
         if: always()
         run: cat ./dist/jamdunavectors.txt
