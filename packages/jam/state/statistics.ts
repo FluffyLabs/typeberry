@@ -9,11 +9,14 @@ import {
 import { type CodecRecord, type Descriptor, codec } from "@typeberry/codec";
 import { type U16, type U32, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { type PerCore, codecPerCore } from "./common.js";
+import { Compatibility, TestSuite } from "@typeberry/utils";
 
-const codecVarServiceId: Descriptor<ServiceId> = codec.varU32.convert(
-  (s) => tryAsU32(s),
-  (i) => tryAsServiceId(i),
-);
+const codecServiceId: Descriptor<ServiceId> = Compatibility.isSuite(TestSuite.W3F_DAVXY)
+  ? codec.u32.asOpaque<ServiceId>()
+  : codec.varU32.convert(
+      (s) => tryAsU32(s),
+      (i) => tryAsServiceId(i),
+    );
 
 /**
  * Activity Record of a single validator.
@@ -226,7 +229,7 @@ export class StatisticsData {
     current: codecPerValidator(ValidatorStatistics.Codec),
     previous: codecPerValidator(ValidatorStatistics.Codec),
     cores: codecPerCore(CoreStatistics.Codec),
-    services: codec.dictionary(codecVarServiceId, ServiceStatistics.Codec, {
+    services: codec.dictionary(codecServiceId, ServiceStatistics.Codec, {
       sortKeys: (a, b) => a - b,
     }),
   });
