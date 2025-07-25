@@ -26,7 +26,9 @@ export class TestState {
 }
 
 export function loadState(spec: ChainSpec, keyvals: StateKeyVal[]) {
-  const stateDict = TruncatedHashDictionary.fromEntries<StateKey, BytesBlob>(keyvals.map((x) => [x.key.asOpaque(), x.value]));
+  const stateDict = TruncatedHashDictionary.fromEntries<StateKey, BytesBlob>(
+    keyvals.map((x) => [x.key.asOpaque(), x.value]),
+  );
   const stateEntries = StateEntries.fromTruncatedDictionaryUnsafe(stateDict);
   return SerializedState.fromStateEntries(spec, stateEntries);
 }
