@@ -8,8 +8,8 @@ import {
 } from "@typeberry/block";
 import { type CodecRecord, type Descriptor, codec } from "@typeberry/codec";
 import { type U16, type U32, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { type PerCore, codecPerCore } from "./common.js";
 import { Compatibility, TestSuite } from "@typeberry/utils";
+import { type PerCore, codecPerCore } from "./common.js";
 
 const codecServiceId: Descriptor<ServiceId> = Compatibility.isSuite(TestSuite.W3F_DAVXY)
   ? codec.u32.asOpaque<ServiceId>()
