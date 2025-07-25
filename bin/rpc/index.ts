@@ -1,6 +1,6 @@
 import { pathToFileURL } from "node:url";
-import { DEFAULTS } from "@typeberry/jam/args.js";
-import { getChainSpec, loadConfig, openDatabase } from "@typeberry/jam/main.js";
+import { NODE_DEFAULTS, loadConfig } from "@typeberry/config-node";
+import { getChainSpec, openDatabase } from "@typeberry/node/main.js";
 import minimist from "minimist";
 import { methods } from "./src/method-loader.js";
 import { RpcServer } from "./src/server.js";
@@ -10,8 +10,8 @@ export function main(args: string[]) {
     string: ["port", "nodeName", "config"],
     default: {
       port: "19800",
-      nodeName: DEFAULTS.name,
-      config: DEFAULTS.config,
+      nodeName: NODE_DEFAULTS.name,
+      config: NODE_DEFAULTS.config,
     },
   });
 

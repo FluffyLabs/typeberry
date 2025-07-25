@@ -1,6 +1,7 @@
 import { type Comparator, Ordering } from "@typeberry/ordering";
 import { type Opaque, TEST_COMPARE_VIA_STRING, type TokenOf, asOpaqueType, check } from "@typeberry/utils";
 
+// TODO: [MaSo] Update BytesBlob and Bytes, so they return Result (not throw error)
 /**
  * A variable-length blob of bytes with a concise text representation.
  *

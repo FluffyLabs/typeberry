@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { isMainThread } from "node:worker_threads";
 import { Logger } from "@typeberry/logger";
 
@@ -6,23 +5,23 @@ import { Block, type BlockView, Extrinsic, Header, type HeaderHash } from "@type
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
-import { type ChainSpec, Config, fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import { type JipChainSpec, KnownChainSpec, NodeConfiguration } from "@typeberry/config-node";
+import { type ChainSpec, WorkerConfig, fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import { type JipChainSpec, KnownChainSpec } from "@typeberry/config-node";
 import { TruncatedHashDictionary } from "@typeberry/database";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import type { Finished, MainInit } from "@typeberry/generic-worker";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine.js";
-import { parseFromJson } from "@typeberry/json-parser";
 import type { MessageChannelStateMachine } from "@typeberry/state-machine";
 import { SerializedState, StateEntries, type StateKey } from "@typeberry/state-merkleization";
-import { type Arguments, Command, DEV_CONFIG } from "./args.js";
 import { startBlockGenerator } from "./author.js";
 import { initializeExtensions } from "./extensions.js";
 import { startBlocksReader } from "./reader.js";
 
-import devConfigJson from "@typeberry/configs/typeberry-dev.json" with { type: "json" };
+import type { JamConfig } from "./jam-config.js";
+
+export * from "./jam-config.js";
 
 const logger = Logger.new(import.meta.filename, "jam");
 
@@ -31,39 +30,21 @@ export enum DatabaseKind {
   Lmdb = 1,
 }
 
-/** General options. */
-type Options = {
-  /** Whether we should be authoring blocks. */
-  isAuthoring: boolean;
-  /** Paths to JSON or binary blocks to import (ordered). */
-  blocksToImport: string[] | null;
-  /** Node name. */
-  nodeName: string;
-  /** Node configuration. */
-  config: NodeConfiguration;
-};
-
-export async function main(args: Arguments, withRelPath: (v: string) => string) {
+export async function main(config: JamConfig, withRelPath: (v: string) => string) {
   if (!isMainThread) {
     logger.error("The main binary cannot be running as a Worker!");
     return;
   }
 
-  const options: Options = {
-    isAuthoring: false,
-    blocksToImport: args.command === Command.Import ? args.args.files : null,
-    nodeName: args.args.nodeName,
-    config: loadConfig(args.args.configPath),
-  };
-
-  const chainSpec = getChainSpec(options.config.flavor);
+  const chainSpec = getChainSpec(config.node.flavor);
   const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
-    options.nodeName,
-    options.config.chainSpec.genesisHeader,
-    withRelPath(options.config.databaseBasePath),
+    config.nodeName,
+    config.node.chainSpec.genesisHeader,
+    withRelPath(config.node.databaseBasePath),
   );
+
   // Initialize the database with genesis state and block if there isn't one.
-  await initializeDatabase(chainSpec, genesisHeaderHash, rootDb, options.config.chainSpec);
+  await initializeDatabase(chainSpec, genesisHeaderHash, rootDb, config.node.chainSpec);
 
   // Start extensions
   const importerInit = await blockImporter.spawnWorker();
@@ -71,19 +52,19 @@ export async function main(args: Arguments, withRelPath: (v: string) => string) 
   const closeExtensions = initializeExtensions({ bestHeader });
 
   // Start block importer
-  const config = new Config(chainSpec, dbPath, options.config.authorship.omitSealVerification);
+  const workerConfig = new WorkerConfig(chainSpec, dbPath, config.node.authorship.omitSealVerification);
   const importerReady = importerInit.transition((state, port) => {
-    return state.sendConfig(port, config);
+    return state.sendConfig(port, workerConfig);
   });
 
   // Initialize block reader and wait for it to finish
-  const blocksReader = initBlocksReader(importerReady, chainSpec, options.blocksToImport);
+  const blocksReader = initBlocksReader(importerReady, chainSpec, config.blocksToImport);
 
   // Authorship initialization.
   // 1. load validator keys (bandersnatch, ed25519, bls)
   // 2. allow the validator to specify metadata.
   // 3. if we have validator keys, we should start the authorship module.
-  const closeAuthorship = await initAuthorship(options.isAuthoring, config, importerReady);
+  const closeAuthorship = await initAuthorship(config.isAuthoring, workerConfig, importerReady);
 
   logger.info("[main]⌛ waiting for importer to finish");
   const importerDone = await blocksReader;
@@ -98,7 +79,7 @@ export async function main(args: Arguments, withRelPath: (v: string) => string) 
 
 type ImporterReady = MessageChannelStateMachine<MainReady, Finished | MainReady | MainInit<MainReady>>;
 
-const initAuthorship = async (isAuthoring: boolean, config: Config, importerReady: ImporterReady) => {
+const initAuthorship = async (isAuthoring: boolean, config: WorkerConfig, importerReady: ImporterReady) => {
   if (!isAuthoring) {
     return () => Promise.resolve();
   }
@@ -251,18 +232,4 @@ function emptyBlock() {
       },
     }),
   });
-}
-
-export function loadConfig(configPath: string): NodeConfiguration {
-  if (configPath === DEV_CONFIG) {
-    return parseFromJson(devConfigJson, NodeConfiguration.fromJson);
-  }
-
-  try {
-    const configFile = fs.readFileSync(configPath, "utf8");
-    const parsed = JSON.parse(configFile);
-    return parseFromJson(parsed, NodeConfiguration.fromJson);
-  } catch (e) {
-    throw new Error(`Unable to load config file from ${configPath}: ${e}`);
-  }
 }
