@@ -34,6 +34,7 @@
     "w3f": "tsx ./w3f.ts",
     "w3f-davxy": "tsx ./w3f-davxy.ts",
     "jamduna": "tsx ./jamduna.ts",
+    "javajam": "tsx ./javajam.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
