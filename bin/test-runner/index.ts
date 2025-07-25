@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import { run } from "node:test";
 import { spec } from "node:test/reporters";
-import { Reporter } from "./reporter.js";
 import { DEFAULT_SUITE, TestSuite } from "@typeberry/utils";
+import { Reporter } from "./reporter.js";
 
 const distDir = `${import.meta.dirname}/../../dist`;
 try {
