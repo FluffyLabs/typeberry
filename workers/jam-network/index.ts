@@ -37,7 +37,7 @@ export async function main(channel: MessageChannelStateMachine<NetworkInit, Netw
 
   const finished = await ready.doUntil<Finished>("finished", async (worker, port) => {
     const config = worker.getConfig();
-    const key = await ed25519.privateKey(Bytes.parseBytes(config.key, ED25519_PRIV_KEY_BYTES));
+    const key = await ed25519.privateKey(config.key);
 
     const lmdb = new LmdbRoot(config.genericConfig.dbPath);
     const blocks = new LmdbBlocks(config.genericConfig.chainSpec, lmdb);

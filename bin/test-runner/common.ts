@@ -41,30 +41,31 @@ export async function main(
   const tests: TestAndRunner[] = [];
   const ignoredPatterns = ignored ?? [];
 
-  let files = initialFiles;
+  let testFiles = initialFiles;
   if (initialFiles.length === 0) {
-    // scan the jamtestvectors directory
-    files = await scanDir(relPath, directoryToScan, ".json");
+    // scan the given directory for fallback tests
+    testFiles = await scanDir(relPath, directoryToScan, ".json");
   }
 
-  logger.info(`Creating tests for ${files.length} files.`);
-  for (const file of files) {
-    const absolutePath = path.resolve(`${relPath}/${file}`);
-    const data = await fs.readFile(absolutePath, "utf8");
-    const testContent = JSON.parse(data);
-    const testCase = prepareTest(runners, testContent, file, absolutePath);
-
-    testCase.shouldSkip = accepted !== undefined && !accepted.some((x) => absolutePath.includes(x));
+  logger.info(`Preparing tests for ${testFiles.length} files.`);
+  for (const testFile of testFiles) {
+    const absolutePath = path.resolve(`${relPath}/${testFile}`);
 
     if (ignoredPatterns.some((x) => absolutePath.includes(x))) {
       logger.log(`Ignoring: ${absolutePath}`);
       continue;
     }
 
-    tests.push(testCase);
+    const content = await fs.readFile(absolutePath, "utf8");
+    const testJson = JSON.parse(content);
+    const test = prepareTest(runners, testJson, testFile, absolutePath);
+
+    test.shouldSkip = accepted !== undefined && !accepted.some((x) => absolutePath.includes(x));
+
+    tests.push(test);
   }
 
-  // now we're going to aggregate the tests by their runner.
+  // aggregate the tests by their runner.
   const aggregated = new Map<string, TestAndRunner[]>();
   for (const test of tests) {
     const sameRunner = aggregated.get(test.runner) ?? [];
@@ -74,32 +75,33 @@ export async function main(
 
   const pathToReplace = new RegExp(`/.*${directoryToScan}/`);
 
-  logger.info(`Running all tests (${tests.length}).`);
-  // we have all of the tests now, let's run them in parallel and generate results.
-  for (const [key, values] of aggregated.entries()) {
-    // split large suites into parts to run them in parallel
-    const perPart = 50;
-    const parts = Math.ceil(values.length / perPart);
-    for (let i = 0; i < parts; i += 1) {
-      // we use `setImmediate` here, to make sure to start each suite
+  logger.info(`Running ${tests.length} tests.`);
+  // run in parallel and generate results.
+  for (const [testGroupName, testRunners] of aggregated.entries()) {
+    // split large suites into parts
+    const batchSize = 50;
+    const totalBatches = Math.ceil(testRunners.length / batchSize);
+    for (let i = 0; i < totalBatches; i += 1) {
+      // NOTE: we use `setImmediate` here, to make sure to start each suite
       // separately (faster feedback in the console when running tests).
       setImmediate(() => {
-        const testName = `${key} tests [${i + 1}/${parts}]`;
+        const testName = `${testGroupName} tests [${i + 1}/${totalBatches}]`;
         logger.info(`Running ${testName}`);
+        const timeout = 5 * 60 * 1000;
         test.describe(
           testName,
           {
             concurrency: 100,
-            timeout: 60 * 1000,
+            timeout,
           },
           () => {
-            const partValues = values.slice(i * perPart, (i + 1) * perPart);
-            for (const subTest of partValues) {
-              const fileName = subTest.file.replace(pathToReplace, "");
-              if (subTest.shouldSkip) {
-                test.it.skip(fileName, subTest.test);
+            const runnersBatch = testRunners.slice(i * batchSize, (i + 1) * batchSize);
+            for (const runner of runnersBatch) {
+              const fileName = runner.file.replace(pathToReplace, "");
+              if (runner.shouldSkip) {
+                test.it.skip(fileName, runner.test);
               } else {
-                test.it(fileName, subTest.test);
+                test.it(fileName, { timeout }, runner.test);
               }
             }
           },
@@ -131,8 +133,8 @@ function prepareTest(runners: Runner<unknown>[], testContent: unknown, file: str
 
   // Find the first runner that is able to parse the input data.
   for (const { name, fromJson, run } of runners) {
-    // the condition is needed to distinguish between tiny and full chain spec
-    // without the condition some tests (for example statistics) will be run twice
+    // NOTE: this `if` statement is needed to distinguish between tiny and full chain spec
+    // without this `if` some tests (for example statistics) will be run twice
     if (!name.split("/").every((pathPart) => path.includes(pathPart))) {
       continue;
     }

@@ -92,12 +92,12 @@ class Parser {
 
   static storage(description: string) {
     const [service, hashKey] = description.split("|");
-    const [hash, key] = hashKey.split(" ");
+    const [, key] = hashKey.split(" ");
 
     // TODO [ToDr] For some reason they take the last 28 bytes when creating the state
     // entry, so we swap some bytes here to make that work.
-    const strHash = hash.replace("hk=", "");
-    const metaHash = Bytes.parseBytes(`0x${strHash.substring(10)}00000000`, HASH_SIZE).asOpaque();
+    const strHash = key.replace("k=", "");
+    const metaHash = Bytes.parseBytes(`${strHash}`, HASH_SIZE).asOpaque();
 
     return {
       serviceId: tryAsServiceId(Number.parseInt(service.replace("s=", ""))),
@@ -144,9 +144,9 @@ const kindMapping: { [k: string]: Appender } = {
       ],
     };
   },
-  account_storage: (blob, description) => {
+  account_storage: (value, description) => {
     const { serviceId, hash } = Parser.storage(description);
-    const storage = StorageItem.create({ hash, blob });
+    const storage = StorageItem.create({ key: hash, value });
 
     return {
       storage: [

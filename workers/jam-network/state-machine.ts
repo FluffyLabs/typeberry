@@ -1,7 +1,8 @@
 import { Block, type BlockView, type HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder, codec } from "@typeberry/codec";
-import { Config } from "@typeberry/config";
+import { WorkerConfig } from "@typeberry/config";
+import {Ed25519SecretSeed, SEED_SIZE} from "@typeberry/crypto";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
@@ -20,7 +21,7 @@ export type NetworkStates = NetworkInit | NetworkReady | Finished;
 const logger = Logger.new(import.meta.filename, "net:worker");
 
 export function networkStateMachine() {
-  const initialized = new WorkerInit<NetworkReady>("ready(network)", NetworkConfig.reInit);
+  const initialized = new WorkerInit<NetworkReady>("ready(network)", NetworkWorkerConfig.reInit);
   const ready = new NetworkReady();
   const finished = new Finished();
 
@@ -28,17 +29,17 @@ export function networkStateMachine() {
 }
 
 /** Network-specific worker initialisatation. */
-export class NetworkConfig {
+export class NetworkWorkerConfig {
   /**
    * Since we loose prototypes when transferring the context,
    * this function is re-initializing proper types.
    */
   static reInit(config: unknown) {
-    const { genericConfig, genesisHeaderHash, key, host, port, bootnodes } = config as NetworkConfig;
-    return new NetworkConfig(
-      Config.reInit(genericConfig),
+    const { genericConfig, genesisHeaderHash, key, host, port, bootnodes } = config as NetworkWorkerConfig;
+    return new NetworkWorkerConfig(
+      WorkerConfig.reInit(genericConfig),
       Bytes.fromBlob(genesisHeaderHash.raw, HASH_SIZE).asOpaque(),
-      key,
+      Bytes.fromBlob(key.raw, SEED_SIZE).asOpaque(),
       host,
       port,
       bootnodes,
@@ -52,17 +53,17 @@ export class NetworkConfig {
     host,
     port,
     bootnodes,
-  }: Pick<NetworkConfig, keyof NetworkConfig>) {
-    return new NetworkConfig(genericConfig, genesisHeaderHash, key, host, port, bootnodes);
+  }: Pick<NetworkWorkerConfig, keyof NetworkWorkerConfig>) {
+    return new NetworkWorkerConfig(genericConfig, genesisHeaderHash, key, host, port, bootnodes);
   }
 
   private constructor(
     /** Generic config. */
-    public readonly genericConfig: Config,
+    public readonly genericConfig: WorkerConfig,
     /** Genesis header hash. */
     public readonly genesisHeaderHash: HeaderHash,
     /** Ed25519 private key. */
-    public readonly key: string,
+    public readonly key: Ed25519SecretSeed,
     /** Host to bind the networking to. */
     public readonly host: string,
     /** Port to bind the networking to. */
@@ -72,7 +73,7 @@ export class NetworkConfig {
   ) {}
 }
 
-export class MainReady extends State<"ready(main)", Finished, NetworkConfig> {
+export class MainReady extends State<"ready(main)", Finished, NetworkWorkerConfig> {
   public readonly onNewBlocks = new Listener<BlockView[]>();
 
   constructor() {
@@ -99,7 +100,7 @@ export class MainReady extends State<"ready(main)", Finished, NetworkConfig> {
     }
   }
 
-  getConfig(): NetworkConfig {
+  getConfig(): NetworkWorkerConfig {
     if (this.data === null) {
       throw new Error("Did not receive network config!");
     }
@@ -114,7 +115,7 @@ export class MainReady extends State<"ready(main)", Finished, NetworkConfig> {
   }
 }
 
-export class NetworkReady extends State<"ready(network)", Finished, NetworkConfig> {
+export class NetworkReady extends State<"ready(network)", Finished, NetworkWorkerConfig> {
   constructor() {
     super({
       name: "ready(network)",
@@ -135,7 +136,7 @@ export class NetworkReady extends State<"ready(network)", Finished, NetworkConfi
     port.sendSignal("newBlocks", encoded.raw, [encoded.raw.buffer as ArrayBuffer]);
   }
 
-  getConfig(): NetworkConfig {
+  getConfig(): NetworkWorkerConfig {
     if (this.data === null) {
       throw new Error("Did not receive chain spec config!");
     }

@@ -1,6 +1,7 @@
 import "json-bigint-patch";
 import fs from "node:fs";
-import { BytesBlob } from "@typeberry/bytes";
+import { start as startRepl } from "node:repl";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
@@ -10,33 +11,15 @@ import { type Arguments, KnownChainSpec, OutputFormat } from "./args.js";
 import type { SupportedType } from "./types.js";
 
 export function main(args: Arguments, withRelPath: (v: string) => string) {
-  const input = loadInputFile(args.inputPath, withRelPath);
-  const spec = getChainSpec(args.flavor);
-
-  const processAndDump = (data: unknown) => {
-    const { processed, type } = processOutput(spec, data, args.type, args.process);
-    dumpOutput(spec, processed, type, args.outputFormat);
-  };
-
-  if (input.type === "blob") {
-    if (args.type.decode === undefined) {
-      throw new Error(`${args.type.name} does not support decoding from binary data.`);
-    }
-    const data = Decoder.decodeObject(args.type.decode, input.data, spec);
-    processAndDump(data);
-    return;
-  }
-
-  if (input.type === "json") {
-    if (args.type.json === undefined) {
-      throw new Error(`${args.type.name} does not support reading from JSON.`);
-    }
-    const parsed = parseFromJson(input.data, args.type.json(spec));
-    processAndDump(parsed);
-    return;
-  }
-
-  assertNever(input);
+  const { processed, type, spec } = loadAndProcessDataFile(
+    args.inputPath,
+    withRelPath,
+    args.flavor,
+    args.type,
+    args.process,
+  );
+  dumpOutput(spec, processed, type, args.outputFormat, args, withRelPath);
+  return;
 }
 
 function getChainSpec(chainSpec: KnownChainSpec) {
@@ -65,6 +48,15 @@ function loadInputFile(
     throw new Error("Missing input file!");
   }
 
+  if (file.endsWith(".bin")) {
+    const fileContent = fs.readFileSync(withRelPath(file));
+
+    return {
+      type: "blob",
+      data: BytesBlob.blobFrom(fileContent),
+    };
+  }
+
   const fileContent = fs.readFileSync(withRelPath(file), "utf8").trim();
   if (file.endsWith(".hex")) {
     return {
@@ -83,7 +75,14 @@ function loadInputFile(
   throw new Error("Input file format unsupported.");
 }
 
-function dumpOutput(spec: ChainSpec, data: unknown, type: SupportedType, outputFormat: OutputFormat) {
+function dumpOutput(
+  spec: ChainSpec,
+  data: unknown,
+  type: SupportedType,
+  outputFormat: OutputFormat,
+  args: Arguments,
+  withRelPath: (path: string) => string,
+) {
   switch (outputFormat) {
     case OutputFormat.Print: {
       console.info(`${inspect(data)}`);
@@ -100,28 +99,85 @@ function dumpOutput(spec: ChainSpec, data: unknown, type: SupportedType, outputF
     case OutputFormat.Json: {
       // TODO [ToDr] this will probably not work for all cases,
       // but for now may be good enough.
-      console.info(
-        JSON.stringify(
-          data,
-          (_key, value) => {
-            if (value instanceof BytesBlob) {
-              return value.toString();
-            }
+      console.info(toJson(data));
+      return;
+    }
+    case OutputFormat.Repl: {
+      console.info("\nStarting JavaScript REPL with converted data...");
+      console.info("📦 Data type:", type.name);
+      console.info("💡 Your data is available in the 'data' variable");
+      console.info("🔍 Try: data, inspect(data), toJson(data)");
+      console.info("❓ Type .help for REPL commands or .exit to quit\n");
 
-            if (value instanceof HashDictionary) {
-              return Object.fromEntries(Array.from(value).map(([key, val]) => [key.toString(), val]));
-            }
+      const replServer = startRepl({
+        prompt: `${type.name}> `,
+        useColors: true,
+      });
 
-            return value;
-          },
-          2,
-        ),
-      );
+      replServer.defineCommand("load", {
+        help: "Reload the input file and updata data: .load <file> [process]",
+        action(input: string) {
+          const [file, process] = input.trim().split(/\s+/);
+          const processOption = process ?? args.process;
+          if (file === "") {
+            console.error("❌ No file specified");
+            this.displayPrompt();
+            return;
+          }
+          try {
+            const { processed } = loadAndProcessDataFile(file, withRelPath, args.flavor, args.type, processOption);
+            replServer.context.data = processed;
+            console.info("✅ File reloaded successfully!");
+            console.info("📁 Current file:", file);
+            if (processOption !== undefined) {
+              console.info("⚙️ Process:", processOption);
+            }
+          } catch (error) {
+            console.error("❌ Error reloading file:", error);
+          }
+
+          this.displayPrompt();
+        },
+      });
+
+      reset();
+      replServer.on("reset", reset);
+
+      function reset() {
+        // Make the data available in the REPL context
+        replServer.context.data = data;
+
+        // Add utility functions to the context
+        replServer.context.inspect = inspect;
+        replServer.context.type = type;
+        replServer.context.toJson = toJson;
+        replServer.context.Bytes = Bytes;
+        replServer.context.BytesBlob = BytesBlob;
+      }
+
       return;
     }
     default:
       assertNever(outputFormat);
   }
+}
+
+function toJson(data: unknown) {
+  return JSON.stringify(
+    data,
+    (_key, value) => {
+      if (value instanceof BytesBlob) {
+        return value.toString();
+      }
+
+      if (value instanceof HashDictionary) {
+        return Object.fromEntries(Array.from(value).map(([key, val]) => [key.toString(), val]));
+      }
+
+      return value;
+    },
+    2,
+  );
 }
 
 function processOutput(
@@ -148,5 +204,40 @@ function processOutput(
       // disable encoding, since it won't match
       encode: undefined,
     },
+  };
+}
+
+function loadAndProcessDataFile(
+  file: string | undefined,
+  withRelPath: (v: string) => string,
+  flavor: KnownChainSpec,
+  decodeType: SupportedType,
+  process: string,
+) {
+  const input = loadInputFile(file, withRelPath);
+  const spec = getChainSpec(flavor);
+
+  let data: unknown;
+
+  if (input.type === "blob") {
+    if (decodeType.decode === undefined) {
+      throw new Error(`${decodeType.name} does not support decoding from binary data.`);
+    }
+    data = Decoder.decodeObject(decodeType.decode, input.data, spec);
+  } else if (input.type === "json") {
+    if (decodeType.json === undefined) {
+      throw new Error(`${decodeType.name} does not support reading from JSON.`);
+    }
+    data = parseFromJson(input.data, decodeType.json(spec));
+  } else {
+    assertNever(input);
+  }
+
+  const { processed, type } = processOutput(spec, data, decodeType, process);
+
+  return {
+    processed,
+    type,
+    spec,
   };
 }

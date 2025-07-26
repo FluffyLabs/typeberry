@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { isMainThread } from "node:worker_threads";
 import { Logger } from "@typeberry/logger";
 
@@ -6,28 +5,25 @@ import { Block, type BlockView, Extrinsic, Header, type HeaderHash } from "@type
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
-import { type ChainSpec, Config, fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import { type JipChainSpec, KnownChainSpec, NodeConfiguration } from "@typeberry/config-node";
-import { SEED_SIZE, deriveEd25519SecretKey, trivialSeed } from "@typeberry/crypto/key-derivation.js";
+import { type ChainSpec, WorkerConfig, fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import { type JipChainSpec, KnownChainSpec } from "@typeberry/config-node";
 import { TruncatedHashDictionary } from "@typeberry/database";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import type { Finished, MainInit } from "@typeberry/generic-worker";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine.js";
-import { NetworkConfig } from "@typeberry/jam-network/state-machine.js";
-import type { Bootnode } from "@typeberry/jamnp-s";
-import { parseFromJson } from "@typeberry/json-parser";
-import { tryAsU32 } from "@typeberry/numbers";
+import { NetworkWorkerConfig } from "@typeberry/jam-network/state-machine.js";
 import type { MessageChannelStateMachine } from "@typeberry/state-machine";
 import { SerializedState, StateEntries, type StateKey } from "@typeberry/state-merkleization";
-import { type Arguments, Command, DEV_CONFIG } from "./args.js";
 import { startBlockGenerator } from "./author.js";
 import { initializeExtensions } from "./extensions.js";
 import { startNetwork } from "./network.js";
 import { startBlocksReader } from "./reader.js";
 
-import devConfigJson from "@typeberry/configs/typeberry-dev.json" with { type: "json" };
+import type { JamConfig, NetworkConfig } from "./jam-config.js";
+
+export * from "./jam-config.js";
 
 const logger = Logger.new(import.meta.filename, "jam");
 
@@ -36,65 +32,21 @@ export enum DatabaseKind {
   Lmdb = 1,
 }
 
-/** General options. */
-type Options = {
-  /** Whether we should be authoring blocks. */
-  isAuthoring: boolean;
-  /** Paths to JSON or binary blocks to import (ordered). */
-  blocksToImport: string[] | null;
-  /** Node name. */
-  nodeName: string;
-  /** Node configuration. */
-  config: NodeConfiguration;
-  /** Networking options. */
-  network: NetworkingOptions;
-};
-
-type NetworkingOptions = {
-  key: string;
-  host: string;
-  port: number;
-  bootnodes: Bootnode[];
-};
-
-export async function main(args: Arguments, withRelPath: (v: string) => string) {
+export async function main(config: JamConfig, withRelPath: (v: string) => string) {
   if (!isMainThread) {
     logger.error("The main binary cannot be running as a Worker!");
     return;
   }
 
-  const portShift = args.command === Command.Dev ? args.args.index : 0;
-  const networkingKey = (() => {
-    // TODO [ToDr] in the future we should probably read the networking key
-    // from some file or a database, since we want it to be consistent between runs.
-    // For now, for easier testability, we use a deterministic seed.
-    const seed = args.command === Command.Dev ? trivialSeed(tryAsU32(args.args.index)) : Bytes.zero(SEED_SIZE);
-    const key = deriveEd25519SecretKey(seed);
-    return key;
-  })();
-
-  const nodeConfig = loadConfig(args.args.configPath);
-  const options: Options = {
-    isAuthoring: args.command === Command.Dev,
-    blocksToImport: args.command === Command.Import ? args.args.files : null,
-    nodeName: args.args.nodeName,
-    config: nodeConfig,
-    network: {
-      key: networkingKey.toString(),
-      host: "127.0.0.1",
-      port: 12345 + portShift,
-      bootnodes: nodeConfig.chainSpec.bootnodes ?? [],
-    },
-  };
-
-  const chainSpec = getChainSpec(options.config.flavor);
+  const chainSpec = getChainSpec(config.node.flavor);
   const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
-    options.nodeName,
-    options.config.chainSpec.genesisHeader,
-    withRelPath(options.config.databaseBasePath),
+    config.nodeName,
+    config.node.chainSpec.genesisHeader,
+    withRelPath(config.node.databaseBasePath),
   );
+
   // Initialize the database with genesis state and block if there isn't one.
-  await initializeDatabase(chainSpec, genesisHeaderHash, rootDb, options.config.chainSpec);
+  await initializeDatabase(chainSpec, genesisHeaderHash, rootDb, config.node.chainSpec);
 
   // Start extensions
   const importerInit = await blockImporter.spawnWorker();
@@ -102,13 +54,13 @@ export async function main(args: Arguments, withRelPath: (v: string) => string) 
   const closeExtensions = initializeExtensions({ bestHeader });
 
   // Start block importer
-  const config = new Config(chainSpec, dbPath, options.config.authorship.omitSealVerification);
+  const workerConfig = new WorkerConfig(chainSpec, dbPath, config.node.authorship.omitSealVerification);
   const importerReady = importerInit.transition((state, port) => {
-    return state.sendConfig(port, config);
+    return state.sendConfig(port, workerConfig);
   });
 
   // Initialize block reader and wait for it to finish
-  const blocksReader = initBlocksReader(importerReady, chainSpec, options.blocksToImport);
+  const blocksReader = initBlocksReader(importerReady, chainSpec, config.blocksToImport);
 
   // Authorship initialization.
   // 1. load validator keys (bandersnatch, ed25519, bls)
@@ -116,17 +68,17 @@ export async function main(args: Arguments, withRelPath: (v: string) => string) 
   // 3. if we have validator keys, we should start the authorship module.
   const closeAuthorship = await initAuthorship(
     importerReady,
-    options.isAuthoring && options.blocksToImport === null,
-    config,
+    config.isAuthoring && config.blocksToImport === null,
+    workerConfig,
   );
 
   // Networking initialization
   const closeNetwork = await initNetwork(
     importerReady,
-    config,
+    workerConfig,
     genesisHeaderHash,
-    options.network,
-    options.blocksToImport === null,
+    config.network,
+    config.blocksToImport === null,
   );
 
   logger.info("[main]⌛ waiting for importer to finish");
@@ -145,8 +97,9 @@ export async function main(args: Arguments, withRelPath: (v: string) => string) 
 
 type ImporterReady = MessageChannelStateMachine<MainReady, Finished | MainReady | MainInit<MainReady>>;
 
-const initAuthorship = async (importerReady: ImporterReady, isAuthoring: boolean, config: Config) => {
+const initAuthorship = async (importerReady: ImporterReady, isAuthoring: boolean, config: WorkerConfig) => {
   if (!isAuthoring) {
+    logger.log(`✍️  Authorship off: disabled`);
     return () => Promise.resolve();
   }
 
@@ -190,18 +143,21 @@ const initBlocksReader = async (
 
 const initNetwork = async (
   importerReady: ImporterReady,
-  genericConfig: Config,
+  workerConfig: WorkerConfig,
   genesisHeaderHash: HeaderHash,
-  { key, host, port, bootnodes }: NetworkingOptions,
+  networkConfig: NetworkConfig | null,
   shouldStartNetwork: boolean,
 ) => {
-  if (!shouldStartNetwork) {
+  if (!shouldStartNetwork || networkConfig === null) {
+    logger.log(`🛜 Networking off: ${networkConfig === null ? 'no config' : 'disabled'}`);
     return () => Promise.resolve();
   }
 
+  const { key, host, port, bootnodes } = networkConfig;
+
   const { network, finish } = await startNetwork(
-    NetworkConfig.new({
-      genericConfig,
+    NetworkWorkerConfig.new({
+      genericConfig: workerConfig,
       genesisHeaderHash,
       key,
       host,
@@ -332,18 +288,4 @@ function emptyBlock() {
       },
     }),
   });
-}
-
-export function loadConfig(configPath: string): NodeConfiguration {
-  if (configPath === DEV_CONFIG) {
-    return parseFromJson(devConfigJson, NodeConfiguration.fromJson);
-  }
-
-  try {
-    const configFile = fs.readFileSync(configPath, "utf8");
-    const parsed = JSON.parse(configFile);
-    return parseFromJson(parsed, NodeConfiguration.fromJson);
-  } catch (e) {
-    throw new Error(`Unable to load config file from ${configPath}: ${e}`);
-  }
 }

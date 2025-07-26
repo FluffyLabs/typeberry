@@ -53,14 +53,14 @@ export class HostCalls {
     if (status === Status.HALT) {
       const memory = pvmInstance.getMemory();
       const regs = pvmInstance.getRegisters();
-      const maybeAddress = regs.getLowerU32(10);
-      const maybeLength = regs.getLowerU32(11);
+      const maybeAddress = regs.getLowerU32(7);
+      const maybeLength = regs.getLowerU32(8);
 
       const result = new Uint8Array(maybeLength);
       const startAddress = tryAsMemoryIndex(maybeAddress);
-      const pageFault = memory.loadInto(result, startAddress);
+      const loadResult = memory.loadInto(result, startAddress);
 
-      if (pageFault !== null) {
+      if (loadResult.isError) {
         return ReturnValue.fromMemorySlice(gasConsumed, new Uint8Array());
       }
 

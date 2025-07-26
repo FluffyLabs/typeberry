@@ -1,5 +1,5 @@
 import type { BytesBlob } from "@typeberry/bytes";
-import { Config } from "@typeberry/config";
+import { WorkerConfig } from "@typeberry/config";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
 import { Logger } from "@typeberry/logger";
 import {
@@ -15,7 +15,7 @@ export type GeneratorInit = WorkerInit<GeneratorReady>;
 export type GeneratorStates = GeneratorInit | GeneratorReady | Finished;
 
 export function generatorStateMachine() {
-  const initialized = new WorkerInit<GeneratorReady>("ready(generator)", Config.reInit);
+  const initialized = new WorkerInit<GeneratorReady>("ready(generator)", WorkerConfig.reInit);
   const ready = new GeneratorReady();
   const finished = new Finished();
 
@@ -24,7 +24,7 @@ export function generatorStateMachine() {
 
 const logger = Logger.new(import.meta.filename, "block-generator");
 
-export class MainReady extends State<"ready(main)", Finished, Config> {
+export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
   // TODO [ToDr] should this be cleaned up at some point?
   public readonly onBlock = new Listener<Uint8Array>();
 
@@ -53,7 +53,7 @@ export class MainReady extends State<"ready(main)", Finished, Config> {
   }
 }
 
-export class GeneratorReady extends State<"ready(generator)", Finished, Config> {
+export class GeneratorReady extends State<"ready(generator)", Finished, WorkerConfig> {
   constructor() {
     super({
       name: "ready(generator)",
@@ -68,7 +68,7 @@ export class GeneratorReady extends State<"ready(generator)", Finished, Config> 
     port.sendSignal("block", block.raw, [block.raw.buffer as ArrayBuffer]);
   }
 
-  getConfig(): Config {
+  getConfig(): WorkerConfig {
     if (this.data === null) {
       throw new Error("Config not received.");
     }

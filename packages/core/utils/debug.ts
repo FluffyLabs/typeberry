@@ -44,6 +44,21 @@ export function assertNever(value: never): never {
   throw new Error(`Unexpected value: ${value}`);
 }
 
+/**
+ * The function can be used to make sure that a particular object type
+ * has no keys at a certain point in the code.
+ *
+ * Basically that means that all other possible keys are exhaustively
+ * handled earlier and the assertion should make sure that no unexpected
+ * keys are introduced in the future.
+ */
+export function assertEmpty<T extends Record<string, never>>(value: T) {
+  const keys = Object.keys(value);
+  if (keys.length > 0) {
+    throw new Error(`Unexpected keys: ${keys.join(", ")}`);
+  }
+}
+
 /** Debug print an object. */
 export function inspect<T>(val: T): string {
   const nest = (v: string) =>

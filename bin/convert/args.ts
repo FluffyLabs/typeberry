@@ -6,11 +6,11 @@ export const HELP = `
 @typeberry/convert ${packageJson.version} by Fluffy Labs.
 
 Usage:
-  @typeberry/convert [options] <hex-or-json-input-file> <type> [process] [output-format]
+  @typeberry/convert [options] <bin-hex-or-json-input-file> <type> [process] [output-format]
 
 Attempts to read provided input file as 'type' and output in requested 'output-format'.
 For some 'type's it's additionally possible to process the data before outputting it.
-The input type is detected from file extension ('.hex' or '.json').
+The input type is detected from file extension ('.bin', '.hex' or '.json').
 
 Example usage:
   @typeberry/convert ./genesis-header.json header to-hex
@@ -21,9 +21,10 @@ Options:
                 [default: tiny]
 
 Output formats:
-  to-print       - print the object to the console
+  to-print       - Print the object to the console
   to-json        - JSON format (when supported)
   to-hex         - JAM-codec hex-encoded string (when supported)
+  to-repl        - Start a JavaScript REPL with the data loaded into a variable
 
 Input types:
 ${SUPPORTED_TYPES.map((x) => `  ${x.name}`).join("\n")}
@@ -55,6 +56,7 @@ export enum OutputFormat {
   Print = "to-print",
   Json = "to-json",
   Hex = "to-hex",
+  Repl = "to-repl",
 }
 
 export function parseArgs(cliInput: string[], withRelPath: (v: string) => string): Arguments {
@@ -119,6 +121,8 @@ function parseOutputFormat(output?: string): OutputFormat {
       return OutputFormat.Hex;
     case OutputFormat.Json:
       return OutputFormat.Json;
+    case OutputFormat.Repl:
+      return OutputFormat.Repl;
     default:
       throw new Error(`Invalid output format: '${output}'.`);
   }

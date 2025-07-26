@@ -15,7 +15,7 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { HASH_SIZE, SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
-import { Result } from "@typeberry/utils";
+import { Compatibility, GpVersion, Result, deepEqual } from "@typeberry/utils";
 import { BlockVerifier, BlockVerifierError } from "./block-verifier.js";
 import { TransitionHasher } from "./hasher.js";
 
@@ -85,7 +85,7 @@ describe("Block Verifier", async () => {
   };
 
   it("should return ParentNotFound error if parent block is not found", async () => {
-    const blocksDb = new InMemoryBlocks();
+    const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb, { headerHash: Bytes.fill(HASH_SIZE, 7).asOpaque() });
     const blockVerifier = new BlockVerifier(hasher, blocksDb);
     const block = prepareBlock({ parentHash: Bytes.fill(HASH_SIZE, 8).asOpaque() });
@@ -103,7 +103,7 @@ describe("Block Verifier", async () => {
 
   it("should return InvalidTimeSlot error if current block is older than parent block", async () => {
     const timeSlot = tryAsTimeSlot(42);
-    const blocksDb = new InMemoryBlocks();
+    const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb, { timeSlot });
     const blockVerifier = new BlockVerifier(hasher, blocksDb);
     const block = prepareBlock({ timeSlot: tryAsTimeSlot(timeSlot - 2) });
@@ -117,7 +117,7 @@ describe("Block Verifier", async () => {
   });
 
   it("should return InvalidExtrinsic error if current block extrinsic hash is incorrect", async () => {
-    const blocksDb = new InMemoryBlocks();
+    const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb);
     const blockVerifier = new BlockVerifier(hasher, blocksDb);
     const block = prepareBlock({ correctExtrinsic: false });
@@ -128,13 +128,15 @@ describe("Block Verifier", async () => {
       result,
       Result.error(
         BlockVerifierError.InvalidExtrinsic,
-        "Invalid extrinsic hash: 0x0202020202020202020202020202020202020202020202020202020202020202, expected 0x170f8e387101ffd117ad93ef6161ef8decc3900b37c38011aef10ba3274052ae",
+        Compatibility.isGreaterOrEqual(GpVersion.V0_6_5)
+          ? "Invalid extrinsic hash: 0x0202020202020202020202020202020202020202020202020202020202020202, expected 0x0cae6b5fb28258312381144a6dd6f8996f7181d7d6ab1016ec6e8108c332f932"
+          : "Invalid extrinsic hash: 0x0202020202020202020202020202020202020202020202020202020202020202, expected 0x170f8e387101ffd117ad93ef6161ef8decc3900b37c38011aef10ba3274052ae",
       ),
     );
   });
 
   it("should return StateRootNotFound error if posterior state root of parent hash is not set", async () => {
-    const blocksDb = new InMemoryBlocks();
+    const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb, {
       stateRootHash: Bytes.fill(HASH_SIZE, 6).asOpaque(),
       prepareStateRoot: false,
@@ -158,7 +160,7 @@ describe("Block Verifier", async () => {
   });
 
   it("should return InvalidStateRoot error if current block priorStateRoot hash is not the same as posterior state root", async () => {
-    const blocksDb = new InMemoryBlocks();
+    const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb, {
       stateRootHash: Bytes.fill(HASH_SIZE, 6).asOpaque(),
       prepareStateRoot: true,
@@ -182,7 +184,7 @@ describe("Block Verifier", async () => {
   });
 
   it("should return valid header hash if all checks pass", async () => {
-    const blocksDb = new InMemoryBlocks();
+    const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb, { prepareStateRoot: true });
     const blockVerifier = new BlockVerifier(hasher, blocksDb);
 
@@ -192,10 +194,15 @@ describe("Block Verifier", async () => {
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
-    assert.deepStrictEqual(
+    deepEqual(
       result,
       Result.ok(
-        Bytes.parseBytes("0xa1895a132474e9191e8bdc949649ecfe16ad55685db3e4ea9646766cc7ac1fc4", HASH_SIZE).asOpaque(),
+        Bytes.parseBytes(
+          Compatibility.isGreaterOrEqual(GpVersion.V0_6_5)
+            ? "0xf02989a8c20e88609e3aec79ba7159197bc8e7b5d43e27f98c911a96b61cdcb8"
+            : "0xa1895a132474e9191e8bdc949649ecfe16ad55685db3e4ea9646766cc7ac1fc4",
+          HASH_SIZE,
+        ).asOpaque(),
       ),
     );
   });
