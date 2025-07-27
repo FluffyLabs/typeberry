@@ -1,15 +1,13 @@
 import { isMainThread, parentPort } from "node:worker_threads";
 
-import { MessageChannelStateMachine } from "@typeberry/state-machine";
-
-import { Bytes } from "@typeberry/bytes";
 import { parseBootnode } from "@typeberry/config-node";
-import { ED25519_PRIV_KEY_BYTES, ed25519 } from "@typeberry/crypto";
+import { ed25519 } from "@typeberry/crypto";
 import { LmdbBlocks } from "@typeberry/database-lmdb";
 import { LmdbRoot } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { setup } from "@typeberry/jamnp-s";
 import { Level, Logger } from "@typeberry/logger";
+import { MessageChannelStateMachine } from "@typeberry/state-machine";
 import {
   MainReady,
   type NetworkInit,

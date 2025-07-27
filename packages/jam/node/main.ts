@@ -99,7 +99,7 @@ type ImporterReady = MessageChannelStateMachine<MainReady, Finished | MainReady 
 
 const initAuthorship = async (importerReady: ImporterReady, isAuthoring: boolean, config: WorkerConfig) => {
   if (!isAuthoring) {
-    logger.log(`✍️  Authorship off: disabled`);
+    logger.log("✍️  Authorship off: disabled");
     return () => Promise.resolve();
   }
 
@@ -149,7 +149,7 @@ const initNetwork = async (
   shouldStartNetwork: boolean,
 ) => {
   if (!shouldStartNetwork || networkConfig === null) {
-    logger.log(`🛜 Networking off: ${networkConfig === null ? 'no config' : 'disabled'}`);
+    logger.log(`🛜 Networking off: ${networkConfig === null ? "no config" : "disabled"}`);
     return () => Promise.resolve();
   }
 
