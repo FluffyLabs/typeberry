@@ -5,10 +5,12 @@
   "main": "index.ts",
   "bin": "./index.ts",
   "dependencies": {
+    "@typeberry/bytes": "0.0.1",
     "@typeberry/config": "0.0.1",
     "@typeberry/config-node": "^0.0.1",
     "@typeberry/logger": "0.0.1",
     "@typeberry/node": "^0.0.1",
+    "@typeberry/numbers": "0.0.1",
     "@typeberry/utils": "0.0.1",
     "minimist": "^1.2.8"
   },
