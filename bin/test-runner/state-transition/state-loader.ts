@@ -1,24 +1,22 @@
 import type { StateRootHash } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
-import type { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
-import { TruncatedHashDictionary } from "@typeberry/database";
+import { TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { SerializedState, StateEntries, type StateKey } from "@typeberry/state-merkleization";
+import { loadState as loadSerializedState } from "@typeberry/state-merkleization";
 
 export class TestState {
   static fromJson: FromJson<TestState> = {
     state_root: fromJson.bytes32(),
-    keyvals: json.map(fromJson.bytesN(31), fromJson.bytesBlob),
+    keyvals: json.map(fromJson.bytesN(TRUNCATED_HASH_SIZE), fromJson.bytesBlob),
   };
   state_root!: StateRootHash;
   keyvals!: StateKeyVals;
 }
 
-export type StateKeyVals = Map<Bytes<31>, BytesBlob>;
+export type StateKeyVals = Map<TruncatedHash, BytesBlob>;
 
 export function loadState(spec: ChainSpec, keyvals: StateKeyVals) {
-  const stateDict = TruncatedHashDictionary.fromEntries<StateKey, BytesBlob>(keyvals.entries());
-  const stateEntries = StateEntries.fromTruncatedDictionaryUnsafe(stateDict);
-  return SerializedState.fromStateEntries(spec, stateEntries);
+  return loadSerializedState(spec, keyvals.entries());
 }

@@ -1,8 +1,8 @@
 import type { StateRootHash } from "@typeberry/block";
 import { Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
+import type { TruncatedHashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import type { TruncatedHashDictionary } from "@typeberry/database/truncated-hash-dictionary.js";
 import type { InMemoryState } from "@typeberry/state";
 import { type BytesBlob, InMemoryTrie } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";

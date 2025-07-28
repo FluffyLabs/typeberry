@@ -10,6 +10,10 @@ import { WithDebug } from "@typeberry/utils";
 export const HASH_SIZE = 32;
 export type HASH_SIZE = typeof HASH_SIZE;
 
+/** A hash without last byte (useful for trie representation). */
+export const TRUNCATED_HASH_SIZE = 31;
+export type TRUNCATED_HASH_SIZE = typeof TRUNCATED_HASH_SIZE;
+
 /** Opaque, unknown hash. */
 export type OpaqueHash = Bytes<HASH_SIZE>;
 
@@ -18,6 +22,9 @@ export type Blake2bHash = Bytes<HASH_SIZE>;
 
 /** Opaque KeccakHash. */
 export type KeccakHash = Bytes<HASH_SIZE>;
+
+/** Truncated hash. */
+export type TruncatedHash = Bytes<TRUNCATED_HASH_SIZE>;
 
 /**
  * Container for some object with a hash that is related to this object.
