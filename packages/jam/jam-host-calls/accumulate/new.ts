@@ -59,11 +59,11 @@ export class New implements HostCallHandler {
     }
 
     if (!Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-       // NOTE: [MaSo] pre067 it's just else case
+      // NOTE: [MaSo] pre067 it's just else case
       regs.set(IN_OUT_REG, HostCallResult.CASH);
       return;
     }
-    
+
     const e = assignedId.error as NewServiceError;
 
     if (e === NewServiceError.InsufficientFunds) {
@@ -76,7 +76,7 @@ export class New implements HostCallHandler {
       return;
     }
 
-    assertNever(e);   
+    assertNever(e);
     return;
   }
 }
