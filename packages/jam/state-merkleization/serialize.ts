@@ -64,7 +64,7 @@ export namespace serialize {
     extract: (s) => s.authQueues,
   };
 
-  /** C(3) Legacy: https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3 */
+  /** C(3) Legacy Pre 0.6.7: https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3 */
   export const recentBlocksLegacy: StateCodec<KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>> = {
     key: stateKeys.index(StateKeyIdx.Beta),
     Codec: codecKnownSizeArray(BlockState.Codec, {
@@ -75,7 +75,7 @@ export namespace serialize {
     extract: (s) => s.recentBlocks as KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>,
   };
 
-  /** C(3): https://graypaper.fluffylabs.dev/#/7e6ff6a/3b3e013b3e01?v=0.6.7 */
+  /** C(3) 0.6.7+: https://graypaper.fluffylabs.dev/#/7e6ff6a/3b3e013b3e01?v=0.6.7 */
   export const recentBlocksCurrent: StateCodec<RecentBlocks> = {
     key: stateKeys.index(StateKeyIdx.Beta),
     Codec: RecentBlocks.Codec,
@@ -87,9 +87,12 @@ export namespace serialize {
    *  https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3
    *  https://graypaper.fluffylabs.dev/#/7e6ff6a/3b3e013b3e01?v=0.6.7
    */
-  export const recentBlocks = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-    ? recentBlocksCurrent
-    : recentBlocksLegacy;
+  export const recentBlocks: StateCodec<State["recentBlocks"]> = (() => {
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      return recentBlocksCurrent as StateCodec<State["recentBlocks"]>;
+    }
+    return recentBlocksLegacy as StateCodec<State["recentBlocks"]>;
+  })();
 
   /** C(4): https://graypaper.fluffylabs.dev/#/85129da/38e60138e601?v=0.6.3 */
   export const safrole: StateCodec<SafroleData> = {

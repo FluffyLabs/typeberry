@@ -30,13 +30,14 @@ import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519K
 import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { OK, Result, WithDebug, assertNever, check } from "@typeberry/utils";
+import { Compatibility, GpVersion, OK, Result, WithDebug, assertNever, check } from "@typeberry/utils";
 import type { AvailabilityAssignment } from "./assurances.js";
 import type { BlockState } from "./block-state.js";
 import { type PerCore, tryAsPerCore } from "./common.js";
 import { DisputesRecords, hashComparator } from "./disputes.js";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
 import { PrivilegedServices } from "./privileged-services.js";
+import type { RecentBlocks } from "./recent-blocks.js";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "./safrole-data.js";
 import {
   LookupHistoryItem,
@@ -220,7 +221,9 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       entropy: other.entropy,
       authPools: other.authPools,
       authQueues: other.authQueues,
-      recentBlocks: other.recentBlocks,
+      recentBlocks: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+        ? (other.recentBlocks as RecentBlocks)
+        : (other.recentBlocks as KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>),
       statistics: other.statistics,
       recentlyAccumulated: other.recentlyAccumulated,
       ticketsAccumulator: other.ticketsAccumulator,
@@ -402,7 +405,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
   entropy: FixedSizeArray<EntropyHash, ENTROPY_ENTRIES>;
   authPools: PerCore<KnownSizeArray<AuthorizerHash, `At most ${typeof MAX_AUTH_POOL_SIZE}`>>;
   authQueues: PerCore<FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>>;
-  recentBlocks: KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
+  recentBlocks: KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`> | RecentBlocks;
   statistics: StatisticsData;
   accumulationQueue: PerEpochBlock<readonly NotYetAccumulatedReport[]>;
   recentlyAccumulated: PerEpochBlock<ImmutableHashSet<WorkPackageHash>>;
