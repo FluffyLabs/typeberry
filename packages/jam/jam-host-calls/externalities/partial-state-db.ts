@@ -566,6 +566,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
       currentService.gratisStorageBytes,
     );
 
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/369203369603?v=0.6.7
     if (
       gratisStorageOffset !== tryAsU64(0) &&
       this.currentServiceId !== this.updatedState.privilegedServices?.manager
@@ -580,6 +581,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     }
 
     // add the new service
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/36cb0236cb02?v=0.6.7
     this.updatedState.services.servicesUpdates.push(
       UpdateService.create({
         serviceId: newServiceId,
@@ -593,75 +595,13 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
           gratisStorageBytes: gratisStorageOffset,
           created: this.currentTimeslot,
           lastAccumulation: tryAsTimeSlot(0),
-          parentService: newServiceId,
+          parentService: this.currentServiceId,
         }),
         lookupHistory: new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([])),
       }),
     );
 
     // update the balance
-    // https://graypaper.fluffylabs.dev/#/9a08063/36f10236f102?v=0.6.6
-    this.updateCurrentServiceInfo(
-      ServiceAccountInfo.create({
-        ...currentService,
-        balance: tryAsU64(balanceLeftForCurrent),
-      }),
-    );
-
-    // update the next service id we are going to create next
-    // https://graypaper.fluffylabs.dev/#/9a08063/363603363603?v=0.6.6
-    this.nextNewServiceId = this.getNextAvailableServiceId(bumpServiceId(newServiceId));
-
-    return Result.ok(newServiceId);
-  }
-
-  newServicePre067(
-    codeHash: CodeHash,
-    codeLength: U64,
-    accumulateMinGas: ServiceGas,
-    onTransferMinGas: ServiceGas,
-  ): Result<ServiceId, "insufficient funds"> {
-    const newServiceId = this.nextNewServiceId;
-    // calculate the threshold. Storage is empty, one preimage requested.
-    // https://graypaper.fluffylabs.dev/#/7e6ff6a/115901115901?v=0.6.7
-    const items = tryAsU32(2 * 1 + 0);
-    const bytes = sumU64(tryAsU64(81), codeLength);
-    const clampedLength = clampU64ToU32(codeLength);
-
-    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes.value, tryAsU64(0));
-    const currentService = this.getCurrentServiceInfo();
-    const thresholdForCurrent = ServiceAccountInfo.calculateThresholdBalance(
-      currentService.storageUtilisationCount,
-      currentService.storageUtilisationBytes,
-      tryAsU64(0),
-    );
-
-    // check if we have enough balance
-    const balanceLeftForCurrent = currentService.balance - thresholdForNew;
-    if (balanceLeftForCurrent < thresholdForCurrent || bytes.overflow) {
-      return Result.error("insufficient funds");
-    }
-
-    // add the new service
-    this.updatedState.services.servicesUpdates.push(
-      UpdateService.create({
-        serviceId: newServiceId,
-        serviceInfo: ServiceAccountInfo.create({
-          codeHash,
-          balance: thresholdForNew,
-          accumulateMinGas,
-          onTransferMinGas,
-          storageUtilisationBytes: bytes.value,
-          storageUtilisationCount: items,
-          gratisStorageBytes: tryAsU64(0),
-          created: this.currentTimeslot,
-          lastAccumulation: tryAsTimeSlot(0),
-          parentService: newServiceId,
-        }),
-        lookupHistory: new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([])),
-      }),
-    );
-    // update the balance of current service
     // https://graypaper.fluffylabs.dev/#/9a08063/36f10236f102?v=0.6.6
     this.updateCurrentServiceInfo(
       ServiceAccountInfo.create({

@@ -53,13 +53,12 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: New", () => {
-  const it067 = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? it : it.skip;
+  const itPost067 = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? it : it.skip;
   it("should create a new service", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);
     accumulate.newServiceResponse = Result.ok(tryAsServiceId(23_000));
-    accumulate.newServicePre067Response = tryAsServiceId(23_000);
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),
@@ -78,8 +77,8 @@ describe("HostCalls: New", () => {
         [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, 1_024n],
       ]);
     } else {
-      assert.deepStrictEqual(accumulate.newServicePre067Called, [
-        [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n],
+      assert.deepStrictEqual(accumulate.newServiceCalled, [
+        [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, 0n],
       ]);
     }
   });
@@ -89,7 +88,6 @@ describe("HostCalls: New", () => {
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);
     accumulate.newServiceResponse = Result.error(NewServiceError.InsufficientFunds);
-    accumulate.newServicePre067Response = null;
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),
@@ -103,18 +101,13 @@ describe("HostCalls: New", () => {
 
     // then
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.CASH);
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      assert.deepStrictEqual(accumulate.newServiceCalled.length, 1);
-    } else {
-      assert.deepStrictEqual(accumulate.newServicePre067Called.length, 1);
-    }
+    assert.deepStrictEqual(accumulate.newServiceCalled.length, 1);
   });
 
   it("should fail when code not readable", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);
-    accumulate.newServicePre067Response = null;
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),
@@ -129,14 +122,10 @@ describe("HostCalls: New", () => {
 
     // then
     assert.deepStrictEqual(result, PvmExecution.Panic);
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      assert.deepStrictEqual(accumulate.newServiceCalled, []);
-    } else {
-      assert.deepStrictEqual(accumulate.newServicePre067Called, []);
-    }
+    assert.deepStrictEqual(accumulate.newServiceCalled, []);
   });
 
-  it067("should fail when free storage is set by unprivileged service", async () => {
+  itPost067("should fail when free storage is set by unprivileged service", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);

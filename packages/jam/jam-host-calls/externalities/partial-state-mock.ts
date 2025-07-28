@@ -29,7 +29,6 @@ export class PartialStateMock implements PartialState {
   public readonly authQueue: Parameters<PartialStateMock["updateAuthorizationQueue"]>[] = [];
   public readonly forgetPreimageData: Parameters<PartialStateMock["forgetPreimage"]>[] = [];
   public readonly newServiceCalled: Parameters<PartialStateMock["newService"]>[] = [];
-  public readonly newServicePre067Called: Parameters<PartialStateMock["newServicePre067"]>[] = [];
   public readonly privilegedServices: Parameters<PartialStateMock["updatePrivilegedServices"]>[] = [];
   public readonly ejectData: Parameters<PartialStateMock["eject"]>[] = [];
   public readonly requestPreimageData: Parameters<PartialStateMock["requestPreimage"]>[] = [];
@@ -43,7 +42,6 @@ export class PartialStateMock implements PartialState {
   public yieldHash: OpaqueHash | null = null;
   public forgetPreimageResponse: Result<OK, null> = Result.ok(OK);
   public newServiceResponse: Result<ServiceId, NewServiceError> = Result.ok(tryAsServiceId(0));
-  public newServicePre067Response: ServiceId | null = null;
   public ejectReturnValue: Result<OK, EjectError> = Result.ok(OK);
   public requestPreimageResponse: Result<OK, RequestPreimageError> = Result.ok(OK);
   public checkPreimageStatusResponse: PreimageStatus | null = null;
@@ -92,20 +90,6 @@ export class PartialStateMock implements PartialState {
   ): Result<ServiceId, NewServiceError> {
     this.newServiceCalled.push([codeHash, codeLength, gas, balance, freeStorage]);
     return this.newServiceResponse;
-  }
-
-  newServicePre067(
-    codeHash: CodeHash,
-    codeLength: U64,
-    gas: ServiceGas,
-    balance: ServiceGas,
-  ): Result<ServiceId, "insufficient funds"> {
-    this.newServicePre067Called.push([codeHash, codeLength, gas, balance]);
-    if (this.newServicePre067Response !== null) {
-      return Result.ok(this.newServicePre067Response);
-    }
-
-    return Result.error("insufficient funds");
   }
 
   upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void {

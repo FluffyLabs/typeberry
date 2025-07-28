@@ -51,7 +51,7 @@ export class New implements HostCallHandler {
 
     const assignedId = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
       ? this.partialState.newService(codeHash.asOpaque(), codeLength, gas, allowance, gratisStorageOffset)
-      : this.partialState.newServicePre067(codeHash.asOpaque(), codeLength, gas, allowance);
+      : this.partialState.newService(codeHash.asOpaque(), codeLength, gas, allowance, tryAsU64(0));
 
     if (assignedId.isOk) {
       regs.set(IN_OUT_REG, tryAsU64(assignedId.ok));
@@ -77,6 +77,5 @@ export class New implements HostCallHandler {
     }
 
     assertNever(e);
-    return;
   }
 }

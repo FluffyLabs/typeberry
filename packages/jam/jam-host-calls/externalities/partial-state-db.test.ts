@@ -49,6 +49,7 @@ import {
   TransferError,
 } from "./partial-state.js";
 import { PendingTransfer } from "./pending-transfer.js";
+import { AccumulationStateUpdate } from "./state-update.js";
 
 describe("PartialState.checkPreimageStatus", () => {
   it("should check preimage status from state", () => {
@@ -482,11 +483,20 @@ describe("PartialState.forgetPreimage", () => {
 });
 
 describe("PartialState.newService", () => {
+  const itPost067 = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? it : it.skip;
   it("should create a new service and update balance + next service ID", () => {
     const mockState = testState();
     const serviceId = tryAsServiceId(0);
     const maybeService = mockState.services.get(serviceId);
     const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
+
+    const accStateUpdate = AccumulationStateUpdate.empty();
+    accStateUpdate.privilegedServices = PrivilegedServices.create({
+      manager: service.serviceId,
+      authManager: service.serviceId,
+      validatorsManager: service.serviceId,
+      autoAccumulateServices: [],
+    });
 
     const partialState = new PartialStateDb(
       tinyChainSpec,
@@ -494,6 +504,7 @@ describe("PartialState.newService", () => {
       tryAsServiceId(0),
       tryAsServiceId(10),
       tryAsTimeSlot(16),
+      accStateUpdate,
     );
 
     const codeHash = Bytes.fill(HASH_SIZE, 0x11).asOpaque();
@@ -501,7 +512,7 @@ describe("PartialState.newService", () => {
     const codeLengthU64 = tryAsU64(codeLength);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
-    const gratisStorageBytes = tryAsU64(0);
+    const gratisStorageBytes = tryAsU64(50);
 
     const items = tryAsU32(2); // 2 * 1 + 0
     const bytes = tryAsU64(81 + codeLength);
@@ -516,7 +527,7 @@ describe("PartialState.newService", () => {
       codeLengthU64,
       accumulateMinGas,
       onTransferMinGas,
-      gratisStorageBytes,
+      Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? gratisStorageBytes : tryAsU64(0),
     );
 
     // then
@@ -541,11 +552,11 @@ describe("PartialState.newService", () => {
           accumulateMinGas,
           onTransferMinGas,
           storageUtilisationBytes: bytes,
-          gratisStorageBytes: gratisStorageBytes,
+          gratisStorageBytes: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? gratisStorageBytes : tryAsU64(0),
           storageUtilisationCount: items,
           created: tryAsTimeSlot(16),
           lastAccumulation: tryAsTimeSlot(0),
-          parentService: expectedServiceId,
+          parentService: service.serviceId,
         }),
         lookupHistory: new LookupHistoryItem(codeHash, codeLength, tryAsLookupHistorySlots([])),
       }),
@@ -565,6 +576,56 @@ describe("PartialState.newService", () => {
       info: ServiceAccountInfo.create({
         ...service.data.info,
         // lower the balance a bit
+        balance: tryAsU64(2 ** 24),
+      }),
+    });
+    mockState.services.set(tryAsServiceId(0), updatedService);
+
+    const accStateUpdate = AccumulationStateUpdate.empty();
+    accStateUpdate.privilegedServices = PrivilegedServices.create({
+      manager: service.serviceId,
+      authManager: service.serviceId,
+      validatorsManager: service.serviceId,
+      autoAccumulateServices: [],
+    });
+
+    const partialState = new PartialStateDb(
+      tinyChainSpec,
+      mockState,
+      tryAsServiceId(0),
+      tryAsServiceId(10),
+      tryAsTimeSlot(16),
+      accStateUpdate,
+    );
+
+    const codeHash = Bytes.fill(HASH_SIZE, 0x12).asOpaque();
+    // artificially large to exceed balance
+    const codeLength = tryAsU64(2 ** 32 + 1);
+    const accumulateMinGas = tryAsServiceGas(10n);
+    const onTransferMinGas = tryAsServiceGas(20n);
+    const freeStorage = tryAsU64(1024);
+
+    // when
+    const result = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, freeStorage)
+      : partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, tryAsU64(0));
+
+    // then
+    assert.deepStrictEqual(result, Result.error(NewServiceError.InsufficientFunds));
+
+    // Verify no side effects
+    assert.deepStrictEqual(partialState.updatedState.services.servicesUpdates, []);
+  });
+
+  itPost067("should return an error if service is unprivileged to get gratis storage", () => {
+    const mockState = testState();
+    const maybeService = mockState.services.get(tryAsServiceId(0));
+    const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
+
+    const updatedService = new InMemoryService(service.serviceId, {
+      ...service.data,
+      info: ServiceAccountInfo.create({
+        ...service.data.info,
         balance: tryAsU64(2 ** 32),
       }),
     });
@@ -579,23 +640,16 @@ describe("PartialState.newService", () => {
     );
 
     const codeHash = Bytes.fill(HASH_SIZE, 0x12).asOpaque();
-    // artificially large to exceed balance
-    const codeLength = tryAsU64(2 ** 32 + 1);
+    const codeLength = tryAsU64(1024);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
-    const freeStorage = tryAsU64(0);
+    const freeStorage = tryAsU64(1024);
 
     // when
-    const result = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, freeStorage)
-      : partialState.newServicePre067(codeHash, codeLength, accumulateMinGas, onTransferMinGas);
+    const result = partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, freeStorage);
 
     // then
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      assert.deepStrictEqual(result, Result.error(NewServiceError.InsufficientFunds));
-    } else {
-      assert.deepStrictEqual(result, Result.error("insufficient funds"));
-    }
+    assert.deepStrictEqual(result, Result.error(NewServiceError.UnprivilegedService));
 
     // Verify no side effects
     assert.deepStrictEqual(partialState.updatedState.services.servicesUpdates, []);

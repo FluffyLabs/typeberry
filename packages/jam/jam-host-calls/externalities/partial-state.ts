@@ -213,13 +213,6 @@ export interface PartialState {
     freeStorage: U64,
   ): Result<ServiceId, NewServiceError>;
 
-  newServicePre067(
-    codeHash: CodeHash,
-    codeLength: U64,
-    gas: ServiceGas,
-    allowance: ServiceGas,
-  ): Result<ServiceId, "insufficient funds">;
-
   /** Upgrade code of currently running service. */
   upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void;
 
