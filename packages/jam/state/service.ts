@@ -13,7 +13,7 @@ import { type CodecRecord, Descriptor, type SizeHint, codec } from "@typeberry/c
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U32, type U64, maxU64, sumU64, tryAsU64 } from "@typeberry/numbers";
-import { Compatibility, GpVersion, type Opaque, WithDebug } from "@typeberry/utils";
+import { Compatibility, GpVersion, type Opaque, WithDebug, check } from "@typeberry/utils";
 
 /**
  * `B_S`: The basic minimum balance which all services require.
@@ -101,32 +101,20 @@ export class ServiceAccountInfo extends WithDebug {
    * `a_t = max(0, BS + BI * a_i + BL * a_o - a_f)`
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/119e01119e01?v=0.6.7
    */
-  static calculateThresholdBalance(items: U32, bytes: U64, freeBytes: U64): U64 {
+  static calculateThresholdBalance(items: U32, bytes: U64, gratisStorage: U64): U64 {
+    check(
+      gratisStorage === tryAsU64(0) || Compatibility.isGreaterOrEqual(GpVersion.V0_6_7),
+      "Gratis storage cannot be non-zero before 0.6.7",
+    );
     const sum = sumU64(
       tryAsU64(BASE_SERVICE_BALANCE),
       tryAsU64(ELECTIVE_ITEM_BALANCE * BigInt(items)),
-      tryAsU64(ELECTIVE_BYTE_BALANCE * (bytes - freeBytes)),
+      tryAsU64(ELECTIVE_BYTE_BALANCE * (bytes - gratisStorage)),
     );
     if (sum.overflow) {
       return tryAsU64(2n ** 64n - 1n);
     }
     return maxU64(tryAsU64(0), sum.value);
-  }
-
-  /**
-   * `a_t = BS + BI * a_i + BL * a_o`
-   * https://graypaper.fluffylabs.dev/#/9a08063/114501114501?v=0.6.6
-   */
-  static calculateThresholdBalancePre067(items: U32, bytes: U64): U64 {
-    const sum = sumU64(
-      tryAsU64(BASE_SERVICE_BALANCE),
-      tryAsU64(ELECTIVE_ITEM_BALANCE * BigInt(items)),
-      tryAsU64(ELECTIVE_BYTE_BALANCE * bytes),
-    );
-    if (sum.overflow) {
-      return tryAsU64(2n ** 64n - 1n);
-    }
-    return sum.value;
   }
 
   private constructor(

@@ -70,9 +70,10 @@ export class Info implements HostCallHandler {
                   accountInfo.storageUtilisationBytes,
                   accountInfo.gratisStorageBytes,
                 )
-              : ServiceAccountInfo.calculateThresholdBalancePre067(
+              : ServiceAccountInfo.calculateThresholdBalance(
                   accountInfo.storageUtilisationCount,
                   accountInfo.storageUtilisationBytes,
+                  tryAsU64(0),
                 ),
           });
 

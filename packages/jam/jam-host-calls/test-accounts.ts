@@ -2,6 +2,7 @@ import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
+import { tryAsU64 } from "@typeberry/numbers";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
 import type { AccountsInfo } from "./info.js";
@@ -72,9 +73,10 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
           accountInfo.storageUtilisationBytes,
           accountInfo.gratisStorageBytes,
         ) > accountInfo.balance
-      : ServiceAccountInfo.calculateThresholdBalancePre067(
+      : ServiceAccountInfo.calculateThresholdBalance(
           accountInfo.storageUtilisationCount,
           accountInfo.storageUtilisationBytes,
+          tryAsU64(0),
         ) > accountInfo.balance;
   }
 

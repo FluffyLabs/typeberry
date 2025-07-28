@@ -507,7 +507,7 @@ describe("PartialState.newService", () => {
     const bytes = tryAsU64(81 + codeLength);
     const thresholdForNew = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
       ? ServiceAccountInfo.calculateThresholdBalance(items, bytes, gratisStorageBytes)
-      : ServiceAccountInfo.calculateThresholdBalancePre067(items, bytes);
+      : ServiceAccountInfo.calculateThresholdBalance(items, bytes, tryAsU64(0));
     const expectedBalance = tryAsU64(service.data.info.balance - thresholdForNew);
 
     // when
