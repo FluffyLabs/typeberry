@@ -5,7 +5,7 @@ import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, keccak } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
-import { type BlockState, MAX_RECENT_HISTORY } from "@typeberry/state";
+import { type BlockState, type LegacyRecentBlocks, MAX_RECENT_HISTORY } from "@typeberry/state";
 import { asOpaqueType, check } from "@typeberry/utils";
 import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "./recent-history.js";
 import { copyAndUpdateState } from "./test.utils.js";
@@ -75,7 +75,8 @@ describe("Recent History", () => {
     const stateUpdate = recentHistory.transition(input);
     const state = copyAndUpdateState(recentHistory.state, stateUpdate);
 
-    const recentBlocks = state.recentBlocks;
+    // TODO: [MaSo] Implement for 0.6.7
+    const recentBlocks = state.recentBlocks as LegacyRecentBlocks;
     assert.deepStrictEqual(recentBlocks.length, 2);
     assert.deepStrictEqual(recentBlocks[0], {
       headerHash: initialState.headerHash,
@@ -125,7 +126,7 @@ describe("Recent History", () => {
       state = copyAndUpdateState(recentHistory.state, stateUpdate);
     }
 
-    const recentBlocks = state.recentBlocks;
+    const recentBlocks = state.recentBlocks as LegacyRecentBlocks;
     assert.deepStrictEqual(recentBlocks.length, 8);
     assert.deepStrictEqual(recentBlocks[7], {
       headerHash: input.headerHash,

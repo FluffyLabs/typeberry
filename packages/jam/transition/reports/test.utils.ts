@@ -42,13 +42,15 @@ import {
   ENTROPY_ENTRIES,
   InMemoryService,
   InMemoryState,
+  type LegacyRecentBlocks,
   ServiceAccountInfo,
   VALIDATOR_META_BYTES,
   ValidatorData,
   tryAsPerCore,
 } from "@typeberry/state";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
-import { asOpaqueType } from "@typeberry/utils";
+import type { RecentBlocks } from "@typeberry/state/recent-blocks.js";
+import { Compatibility, GpVersion, asOpaqueType } from "@typeberry/utils";
 import { Reports, type ReportsState } from "./reports.js";
 
 const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then((hasher) => {
@@ -158,7 +160,9 @@ export async function newReports(options: Parameters<typeof newReportsState>[0] 
   const state = newReportsState(options);
   const headerChain = {
     isInChain(header: HeaderHash) {
-      return state.recentBlocks.find((x) => x.headerHash.isEqualTo(header)) !== undefined;
+      return Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+        ? (state.recentBlocks as RecentBlocks).blocks.find((x) => x.headerHash.isEqualTo(header)) !== undefined
+        : (state.recentBlocks as LegacyRecentBlocks).find((x) => x.headerHash.isEqualTo(header)) !== undefined;
     },
   };
 
