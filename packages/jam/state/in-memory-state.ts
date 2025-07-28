@@ -36,7 +36,7 @@ import { type PerCore, tryAsPerCore } from "./common.js";
 import { DisputesRecords, hashComparator } from "./disputes.js";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
 import { PrivilegedServices } from "./privileged-services.js";
-import type { RecentBlocks } from "./recent-blocks.js";
+import { RecentBlocks } from "./recent-blocks.js";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "./safrole-data.js";
 import {
   LookupHistoryItem,
@@ -516,7 +516,12 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
         ),
         spec,
       ),
-      recentBlocks: asKnownSize([]),
+      recentBlocks: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+        ? RecentBlocks.create({
+            blocks: asKnownSize([]),
+            accumulationLog: { peaks: [] },
+          })
+        : asKnownSize([]),
       statistics: StatisticsData.create({
         current: tryAsPerValidator(
           Array.from({ length: spec.validatorsCount }, () => ValidatorStatistics.empty()),
