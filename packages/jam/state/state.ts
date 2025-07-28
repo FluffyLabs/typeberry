@@ -41,6 +41,12 @@ export type ENTROPY_ENTRIES = typeof ENTROPY_ENTRIES;
 export const MAX_RECENT_HISTORY = 8;
 export type MAX_RECENT_HISTORY = typeof MAX_RECENT_HISTORY;
 
+/**
+ * Array of Block state with max size of `MAX_RECENT_HISTORY`
+ * https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6. 3
+ */
+export type LegacyRecentBlocks = KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
+
 /** State with some entries being possible to enumerate. */
 export type EnumerableState = {
   /**
@@ -138,7 +144,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/0fb7010fb701
    */
-  readonly recentBlocks: KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`> | RecentBlocks;
+  readonly recentBlocks: LegacyRecentBlocks | RecentBlocks;
 
   /**
    * `π pi`: Previous and current statistics of each validator,

@@ -4,7 +4,9 @@ import { Bytes } from "@typeberry/bytes";
 import { type HashDictionary, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, type OpaqueHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
-import { MAX_RECENT_HISTORY, type State } from "@typeberry/state";
+import { type LegacyRecentBlocks, MAX_RECENT_HISTORY, type State } from "@typeberry/state";
+import type { RecentBlocks } from "@typeberry/state/recent-blocks.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 
 /** Current block input for the recent history transition. */
 export type RecentHistoryInput = {
@@ -40,7 +42,9 @@ export class RecentHistory {
   ) {}
 
   transition(input: RecentHistoryInput): RecentHistoryStateUpdate {
-    const recentBlocks = this.state.recentBlocks.slice();
+    const recentBlocks = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? (this.state.recentBlocks as RecentBlocks).blocks.slice()
+      : (this.state.recentBlocks as LegacyRecentBlocks).slice();
     const lastState = recentBlocks.length > 0 ? recentBlocks[recentBlocks.length - 1] : null;
     // update the posterior root of previous state.
     if (lastState !== null) {

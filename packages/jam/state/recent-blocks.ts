@@ -11,6 +11,9 @@ import { MAX_RECENT_HISTORY } from "./state.js";
 /** Merkle Mountain Belt hash. */
 export type MmbHash = Opaque<OpaqueHash, "MmbHash">;
 
+/** Array of recent blocks with maximum size of `MAX_RECENT_HISTORY` */
+type RecentBlockStates = KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
+
 /** Recent history of a single block. */
 export class BlockState extends WithDebug {
   static Codec = codec.Class(BlockState, {
@@ -41,7 +44,7 @@ export class BlockState extends WithDebug {
 /**
  * Recent history of a single block and accumulation output log.
  *
- * https://graypaper.fluffylabs.dev/#/38c4e62/0f28020f2802?v=0.7.0
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/0fc9010fc901?v=0.6.7
  */
 export class RecentBlocks extends WithDebug {
   static Codec = codec.Class(RecentBlocks, {
@@ -60,9 +63,16 @@ export class RecentBlocks extends WithDebug {
   }
 
   private constructor(
-    /** Most recent block. */
-    public readonly blocks: KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>,
-    /** Accumulation output log. */
+    /**
+     * Most recent block.
+     * https://graypaper.fluffylabs.dev/#/7e6ff6a/0fea010fea01?v=0.6.7
+     */
+    public readonly blocks: RecentBlockStates,
+    /**
+     * Accumulation output log.
+     * https://graypaper.fluffylabs.dev/#/7e6ff6a/0f02020f0202?v=0.6.7
+     * TODO: [MaSo] Change to MMB to align with GP.
+     */
     public readonly accumulationLog: MmrPeaks<KeccakHash>,
   ) {
     super();

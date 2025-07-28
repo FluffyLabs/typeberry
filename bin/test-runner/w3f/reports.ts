@@ -8,7 +8,7 @@ import {
 import { fromJson, guaranteesExtrinsicFromJson, segmentRootLookupItemFromJson } from "@typeberry/block-json";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash, WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
-import { FixedSizeArray, HashDictionary, HashSet, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { type KeccakHash, keccak } from "@typeberry/hash";
@@ -21,7 +21,7 @@ import {
   ENTROPY_ENTRIES,
   type InMemoryService,
   InMemoryState,
-  type MAX_RECENT_HISTORY,
+  type LegacyRecentBlocks,
   type ValidatorData,
   tryAsPerCore,
 } from "@typeberry/state";
@@ -257,11 +257,7 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   // blocks history.
   const headerChain = {
     isInChain(hash: HeaderHash) {
-      return (
-        (preState.recentBlocks as KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>).find((x) =>
-          x.headerHash.isEqualTo(hash),
-        ) !== undefined
-      );
+      return (preState.recentBlocks as LegacyRecentBlocks).find((x) => x.headerHash.isEqualTo(hash)) !== undefined;
     },
   };
 

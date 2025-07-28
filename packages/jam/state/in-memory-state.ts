@@ -32,7 +32,6 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { Compatibility, GpVersion, OK, Result, WithDebug, assertNever, check } from "@typeberry/utils";
 import type { AvailabilityAssignment } from "./assurances.js";
-import type { BlockState } from "./block-state.js";
 import { type PerCore, tryAsPerCore } from "./common.js";
 import { DisputesRecords, hashComparator } from "./disputes.js";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
@@ -57,7 +56,7 @@ import {
   type UpdateStorage,
   UpdateStorageKind,
 } from "./state-update.js";
-import { ENTROPY_ENTRIES, type EnumerableState, type MAX_RECENT_HISTORY, type Service, type State } from "./state.js";
+import { ENTROPY_ENTRIES, type EnumerableState, type LegacyRecentBlocks, type Service, type State } from "./state.js";
 import { CoreStatistics, StatisticsData, ValidatorStatistics } from "./statistics.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "./validator-data.js";
 
@@ -223,7 +222,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       authQueues: other.authQueues,
       recentBlocks: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
         ? (other.recentBlocks as RecentBlocks)
-        : (other.recentBlocks as KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>),
+        : (other.recentBlocks as LegacyRecentBlocks),
       statistics: other.statistics,
       recentlyAccumulated: other.recentlyAccumulated,
       ticketsAccumulator: other.ticketsAccumulator,
@@ -405,7 +404,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
   entropy: FixedSizeArray<EntropyHash, ENTROPY_ENTRIES>;
   authPools: PerCore<KnownSizeArray<AuthorizerHash, `At most ${typeof MAX_AUTH_POOL_SIZE}`>>;
   authQueues: PerCore<FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>>;
-  recentBlocks: KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`> | RecentBlocks;
+  recentBlocks: LegacyRecentBlocks | RecentBlocks;
   statistics: StatisticsData;
   accumulationQueue: PerEpochBlock<readonly NotYetAccumulatedReport[]>;
   recentlyAccumulated: PerEpochBlock<ImmutableHashSet<WorkPackageHash>>;

@@ -11,7 +11,7 @@ import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Descriptor, codec, readonlyArray } from "@typeberry/codec";
-import { HashSet, type KnownSizeArray } from "@typeberry/collections";
+import { HashSet } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import {
@@ -19,6 +19,7 @@ import {
   BlockState,
   DisputesRecords,
   ENTROPY_ENTRIES,
+  type LegacyRecentBlocks,
   MAX_RECENT_HISTORY,
   PrivilegedServices,
   ServiceAccountInfo,
@@ -65,14 +66,14 @@ export namespace serialize {
   };
 
   /** C(3) Legacy Pre 0.6.7: https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3 */
-  export const recentBlocksLegacy: StateCodec<KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>> = {
+  export const recentBlocksLegacy: StateCodec<LegacyRecentBlocks> = {
     key: stateKeys.index(StateKeyIdx.Beta),
     Codec: codecKnownSizeArray(BlockState.Codec, {
       minLength: 0,
       maxLength: MAX_RECENT_HISTORY,
       typicalLength: MAX_RECENT_HISTORY,
     }),
-    extract: (s) => s.recentBlocks as KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>,
+    extract: (s) => s.recentBlocks as LegacyRecentBlocks,
   };
 
   /** C(3) 0.6.7+: https://graypaper.fluffylabs.dev/#/7e6ff6a/3b3e013b3e01?v=0.6.7 */
