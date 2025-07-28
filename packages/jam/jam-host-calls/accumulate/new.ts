@@ -58,24 +58,25 @@ export class New implements HostCallHandler {
       return;
     }
 
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      const e = assignedId.error as NewServiceError;
+    if (!Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+       // NOTE: [MaSo] pre067 it's just else case
+      regs.set(IN_OUT_REG, HostCallResult.CASH);
+      return;
+    }
+    
+    const e = assignedId.error as NewServiceError;
 
-      if (e === NewServiceError.InsufficientFunds) {
-        regs.set(IN_OUT_REG, HostCallResult.CASH);
-        return;
-      }
-
-      if (e === NewServiceError.UnprivilegedService) {
-        regs.set(IN_OUT_REG, HostCallResult.HUH);
-        return;
-      }
-
-      assertNever(e);
+    if (e === NewServiceError.InsufficientFunds) {
+      regs.set(IN_OUT_REG, HostCallResult.CASH);
+      return;
     }
 
-    // NOTE: [MaSo] pre067 it's just else case
-    regs.set(IN_OUT_REG, HostCallResult.CASH);
+    if (e === NewServiceError.UnprivilegedService) {
+      regs.set(IN_OUT_REG, HostCallResult.HUH);
+      return;
+    }
+
+    assertNever(e);   
     return;
   }
 }
