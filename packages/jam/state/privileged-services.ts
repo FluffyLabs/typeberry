@@ -33,6 +33,9 @@ export class PrivilegedServices {
       ? codecPerCore(codec.u32.asOpaque<ServiceId>())
       : codecWithContext((ctx) =>
           codec.u32.asOpaque<ServiceId>().convert(
+            // NOTE: [MaSo] In a compatibility mode we are always updating all entries
+            // (all the entries are the same)
+            // so it doesn't matter which one we take here.
             (perCore: PerCore<ServiceId>) => perCore[0],
             (serviceId: ServiceId) => {
               const array = new Array(ctx.coresCount).fill(serviceId);

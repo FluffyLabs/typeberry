@@ -160,6 +160,7 @@ class TestStatePre067 {
       ),
       privilegedServices: PrivilegedServices.create({
         manager: tryAsServiceId(privileges.bless),
+        // NOTE: [MaSo] We are expanding single value to all of the cores for compatibility reason
         authManager: tryAsPerCore(new Array(chainSpec.coresCount).fill(tryAsServiceId(privileges.assign)), chainSpec),
         validatorsManager: tryAsServiceId(privileges.designate),
         autoAccumulateServices: privileges.always_acc.map(({ gas, id }) =>
