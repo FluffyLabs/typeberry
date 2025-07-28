@@ -11,6 +11,7 @@ import type { PerCore } from "./common.js";
 import type { DisputesRecords } from "./disputes.js";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
 import type { PrivilegedServices } from "./privileged-services.js";
+import type { RecentBlocks } from "./recent-blocks.js";
 import type { SafroleData } from "./safrole-data.js";
 import type { LookupHistorySlots, ServiceAccountInfo, StorageKey } from "./service.js";
 import type { StatisticsData } from "./statistics.js";
@@ -137,7 +138,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/0fb7010fb701
    */
-  readonly recentBlocks: KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
+  readonly recentBlocks: KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`> | RecentBlocks;
 
   /**
    * `π pi`: Previous and current statistics of each validator,
