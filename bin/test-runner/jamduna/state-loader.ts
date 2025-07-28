@@ -20,7 +20,7 @@ import {
   UpdateStorage,
 } from "@typeberry/state";
 import { serialize } from "@typeberry/state-merkleization";
-import { Compatibility, GpVersion, resultToString } from "@typeberry/utils";
+import { resultToString } from "@typeberry/utils";
 
 export class TestState {
   static fromJson: FromJson<TestState> = {
@@ -192,9 +192,7 @@ const kindMapping: { [k: string]: Appender } = {
     authQueues: decode(serialize.authQueues.Codec, value),
   }),
   c3: (value) => ({
-    recentBlocks: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? decode()
-      : decode(serialize.recentBlocks.Codec, value),
+    recentBlocks: decode(serialize.recentBlocksLegacy.Codec, value),
   }),
   c4: (value) => {
     const safrole = decode(serialize.safrole.Codec, value);
