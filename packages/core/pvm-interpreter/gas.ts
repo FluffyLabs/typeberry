@@ -50,8 +50,12 @@ class GasCounterU64 implements GasCounter {
   }
 
   sub(g: Gas) {
-    // TODO [ToDr] This should rather be I64?
-    this.gas = tryAsU64(this.gas - tryAsU64(g));
-    return this.gas < 0n;
+    const result = this.gas - tryAsU64(g);
+    if (result >= 0n) {
+      this.gas = tryAsU64(result);
+      return false;
+    }
+    this.gas = tryAsU64(0n);
+    return true;
   }
 }

@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Authorship schema",
+  "type": "object",
+  "description": "Block authorship configuration options",
+  "required": ["omit_seal_verification"],
+  "properties": {
+    "omit_seal_verification": {
+      "type": "boolean",
+      "description": "Use fake seal verification instead of running bandersnatch"
+    }
+  },
+  "additionalProperties": false
+}

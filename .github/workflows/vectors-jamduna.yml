@@ -8,6 +8,7 @@ on:
 env:
   TEST_VECTORS_REF: 4d0e957b969e974a7db701a7df7cdacb384283d0
   GP_VERSION: 0.6.4
+  TEST_SUITE: jamduna
 
 jobs:
   import:
@@ -71,7 +72,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/test-runner jamduna
+      - run: npm start -w @typeberry/test-runner
       - name: Display results
         if: always()
         run: cat ./dist/jamdunavectors.txt

@@ -3,10 +3,8 @@ import {
   EpochMarker,
   type TimeSlot,
   type ValidatorKeys,
-  type WorkReportHash,
   tryAsPerEpochBlock,
   tryAsPerValidator,
-  tryAsTimeSlot,
 } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
 import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets.js";
@@ -22,8 +20,8 @@ import {
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
-import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole.js";
-import { DisputesRecords, ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
+import { type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole.js";
+import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
 import { TicketsOrKeys, ticketFromJson } from "@typeberry/state-json";
 import { validatorDataFromJson } from "@typeberry/state-json";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
@@ -102,12 +100,6 @@ class JsonState {
       ticketsAccumulator: asKnownSize(state.gamma_a),
       sealingKeySeries: TicketsOrKeys.toSafroleSealingKeys(state.gamma_s, chainSpec),
       epochRoot: state.gamma_z.asOpaque(),
-      disputesRecords: DisputesRecords.create({
-        goodSet: SortedSet.fromSortedArray<WorkReportHash>(hashComparator, []),
-        badSet: SortedSet.fromSortedArray<WorkReportHash>(hashComparator, []),
-        wonkySet: SortedSet.fromSortedArray<WorkReportHash>(hashComparator, []),
-        punishSet: SortedSet.fromSortedArray(hashComparator, state.post_offenders),
-      }),
     };
   }
 }
@@ -187,18 +179,11 @@ export class Output {
 }
 
 class TestInput {
-  static fromJson = json.object<TestInput, Input>(
-    {
-      slot: "number",
-      entropy: fromJson.bytes32(),
-      extrinsic: json.array(safroleFromJson.ticketEnvelope),
-    },
-    ({ entropy, extrinsic, slot }) => ({
-      entropy,
-      extrinsic: asKnownSize(extrinsic),
-      slot: tryAsTimeSlot(slot),
-    }),
-  );
+  static fromJson: FromJson<TestInput> = {
+    slot: "number",
+    entropy: fromJson.bytes32(),
+    extrinsic: json.array(safroleFromJson.ticketEnvelope),
+  };
 
   slot!: TimeSlot;
   entropy!: EntropyHash;
@@ -224,9 +209,10 @@ export const bwasm = BandernsatchWasm.new({ synchronous: false });
 export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const chainSpec = getChainSpec(path);
   const preState = JsonState.toSafroleState(testContent.pre_state, chainSpec);
+  const punishSet = SortedSet.fromArray(hashComparator, testContent.pre_state.post_offenders);
   const safrole = new Safrole(chainSpec, preState, bwasm);
 
-  const result = await safrole.transition(testContent.input);
+  const result = await safrole.transition({ ...testContent.input, punishSet });
 
   const expectedResult = Output.toSafroleOutput(testContent.output, chainSpec);
   const expectedState = JsonState.toSafroleState(testContent.post_state, chainSpec);
