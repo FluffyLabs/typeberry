@@ -1,6 +1,6 @@
 import { Bytes } from "@typeberry/bytes";
-import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
+import { HashDictionary } from "./hash-dictionary.js";
 
 type HashWithZeroedBit<T extends OpaqueHash> = T;
 
