@@ -11,7 +11,7 @@ import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Descriptor, codec, readonlyArray } from "@typeberry/codec";
-import { HashSet } from "@typeberry/collections";
+import { HashSet, type KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import {
@@ -29,7 +29,9 @@ import {
   codecPerCore,
 } from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
+import { RecentBlocks } from "@typeberry/state/recent-blocks.js";
 import { SafroleData } from "@typeberry/state/safrole-data.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { type StateKey, StateKeyIdx, stateKeys } from "./keys.js";
 
 export type StateCodec<T> = {
@@ -62,16 +64,32 @@ export namespace serialize {
     extract: (s) => s.authQueues,
   };
 
-  /** C(3): https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3 */
-  export const recentBlocks: StateCodec<State["recentBlocks"]> = {
+  /** C(3) Legacy: https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3 */
+  export const recentBlocksLegacy: StateCodec<KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>> = {
     key: stateKeys.index(StateKeyIdx.Beta),
     Codec: codecKnownSizeArray(BlockState.Codec, {
       minLength: 0,
       maxLength: MAX_RECENT_HISTORY,
       typicalLength: MAX_RECENT_HISTORY,
     }),
-    extract: (s) => s.recentBlocks,
+    extract: (s) => s.recentBlocks as KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>,
   };
+
+  /** C(3): https://graypaper.fluffylabs.dev/#/7e6ff6a/3b3e013b3e01?v=0.6.7 */
+  export const recentBlocksCurrent: StateCodec<RecentBlocks> = {
+    key: stateKeys.index(StateKeyIdx.Beta),
+    Codec: RecentBlocks.Codec,
+    extract: (s) => s.recentBlocks as RecentBlocks,
+  };
+
+  /**
+   * C(3):
+   *  https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3
+   *  https://graypaper.fluffylabs.dev/#/7e6ff6a/3b3e013b3e01?v=0.6.7
+   */
+  export const recentBlocks = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+    ? recentBlocksCurrent
+    : recentBlocksLegacy;
 
   /** C(4): https://graypaper.fluffylabs.dev/#/85129da/38e60138e601?v=0.6.3 */
   export const safrole: StateCodec<SafroleData> = {

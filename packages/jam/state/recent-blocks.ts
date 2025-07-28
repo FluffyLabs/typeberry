@@ -45,7 +45,7 @@ export class BlockState extends WithDebug {
  */
 export class RecentBlocks extends WithDebug {
   static Codec = codec.Class(RecentBlocks, {
-    block: codecKnownSizeArray(BlockState.Codec, {
+    blocks: codecKnownSizeArray(BlockState.Codec, {
       minLength: 0,
       maxLength: MAX_RECENT_HISTORY,
       typicalLength: MAX_RECENT_HISTORY,
@@ -56,12 +56,12 @@ export class RecentBlocks extends WithDebug {
   });
 
   static create(a: CodecRecord<RecentBlocks>) {
-    return new RecentBlocks(a.block, a.accumulationLog);
+    return new RecentBlocks(a.blocks, a.accumulationLog);
   }
 
   private constructor(
     /** Most recent block. */
-    public readonly block: KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>,
+    public readonly blocks: KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>,
     /** Accumulation output log. */
     public readonly accumulationLog: MmrPeaks<KeccakHash>,
   ) {
