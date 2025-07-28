@@ -3,14 +3,16 @@ import { fromJson } from "@typeberry/block-json";
 import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report.js";
 import { Bytes } from "@typeberry/bytes";
-import { HashSet, asKnownSize } from "@typeberry/collections";
+import { HashSet, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { BLS_KEY_BYTES, type BandersnatchKey, type Ed25519Key } from "@typeberry/crypto";
 import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";
 import { type FromJson, json } from "@typeberry/json-parser";
 import {
+  type BlockState,
   type InMemoryService,
   InMemoryState,
+  type MAX_RECENT_HISTORY,
   PrivilegedServices,
   type State,
   VALIDATOR_META_BYTES,
@@ -136,7 +138,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           }),
           spec,
         ),
-        recentBlocks: beta ?? asKnownSize([]),
+        recentBlocks: (beta ?? asKnownSize([])) as KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>,
         nextValidatorData: gamma.gamma_k,
         epochRoot: gamma.gamma_z,
         sealingKeySeries: TicketsOrKeys.toSafroleSealingKeys(gamma.gamma_s, spec),
