@@ -30,10 +30,11 @@
     "json-bigint-patch": "^0.0.8"
   },
   "scripts": {
-    "start": "tsx ./index.ts",
-    "w3f": "tsx ./w3f.ts",
-    "w3f-davxy": "tsx ./w3f-davxy.ts",
-    "jamduna": "tsx ./jamduna.ts",
+    "start": "tsx --test-timeout=600000 ./index.ts",
+    "w3f": "TEST_SUITE=w3f tsx ./index.ts",
+    "w3f-davxy": "TEST_SUITE=w3f-davxy tsx ./index.ts",
+    "jamduna": "TEST_SUITE=jamduna tsx ./index.ts",
+    "javajam": "TEST_SUITE=javajam tsx ./index.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
