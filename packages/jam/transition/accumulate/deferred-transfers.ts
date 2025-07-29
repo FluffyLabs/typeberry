@@ -50,7 +50,7 @@ const logger = Logger.new(import.meta.filename, "deferred-transfers");
 export class DeferredTransfers {
   constructor(
     public readonly chainSpec: ChainSpec,
-    private readonly state: Pick<State, "getService" | "timeslot">,
+    private readonly state: Pick<State, "getService" | "timeslot" | "privilegedServices">,
   ) {}
 
   private getPotentiallyUpdatedServiceInfo(
