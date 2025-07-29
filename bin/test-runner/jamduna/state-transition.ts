@@ -8,11 +8,12 @@ import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
+import type { InMemoryState } from "@typeberry/state";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
-import { deepEqual, resultToString } from "@typeberry/utils";
+import { Compatibility, GpVersion, deepEqual, resultToString } from "@typeberry/utils";
 import { TestState, loadState } from "./state-loader.js";
 
 export class StateTransition {
@@ -107,6 +108,31 @@ export async function runStateTransition(testContent: StateTransition, testPath:
 
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
   const root = StateEntries.serializeInMemory(spec, preState).getRootHash();
+
+  copyNewerValues(preState, postState);
   deepEqual(preState, postState);
   assert.deepStrictEqual(root.toString(), postStateRoot.toString());
+}
+
+// Coppying values `from` newer version of state `to` older one
+function copyNewerValues(from: InMemoryState, to: InMemoryState): void {
+  if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+    // NOTE: [MaSo] We don't need to copy, we should handle this values
+    return;
+  }
+  // Service Accounts
+  for (const toService of to.services.entries()) {
+    const serviceId = toService[0];
+    const fromService = from.services.get(serviceId);
+    if (fromService === undefined) {
+      throw new Error(`Can't copy state, there is no ServiceId (${serviceId}) to copy from.`);
+    }
+    toService[1].data.info = {
+      ...toService[1].data.info,
+      created: fromService.data.info.created,
+      lastAccumulation: fromService.data.info.lastAccumulation,
+      gratisStorageBytes: fromService.data.info.gratisStorageBytes,
+      parentService: fromService.data.info.parentService,
+    };
+  }
 }
