@@ -6,7 +6,7 @@ import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, keccak } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { type BlockState, type LegacyRecentBlocks, MAX_RECENT_HISTORY } from "@typeberry/state";
-import { asOpaqueType, check } from "@typeberry/utils";
+import { asOpaqueType, check, Compatibility, GpVersion } from "@typeberry/utils";
 import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "./recent-history.js";
 import { copyAndUpdateState } from "./test.utils.js";
 
@@ -25,7 +25,9 @@ const asRecentHistory = (arr: BlockState[]): RecentHistoryState => {
 };
 
 describe("Recent History", () => {
-  it("should perform a transition with empty state", async () => {
+  const [itPost067, itPre067] = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? [it, it.skip] : [it.skip, it];
+
+  itPre067("should perform a transition with empty state", async () => {
     const recentHistory = new RecentHistory(await hasher, asRecentHistory([]));
     const input: RecentHistoryInput = {
       headerHash: Bytes.fill(HASH_SIZE, 3).asOpaque(),
@@ -48,7 +50,7 @@ describe("Recent History", () => {
     ]);
   });
 
-  it("should perform a transition with some state", async () => {
+  itPre067("should perform a transition with some state", async () => {
     const initialState = {
       headerHash: Bytes.fill(HASH_SIZE, 3).asOpaque(),
       mmr: {
@@ -102,7 +104,7 @@ describe("Recent History", () => {
     });
   });
 
-  it("should only keep 8 entries", async () => {
+  itPre067("should only keep 8 entries", async () => {
     let input!: RecentHistoryInput;
     let state = asRecentHistory([]);
 

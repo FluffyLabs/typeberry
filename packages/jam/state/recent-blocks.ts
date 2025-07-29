@@ -3,13 +3,10 @@ import { codecHashDictionary, codecKnownSizeArray } from "@typeberry/block/codec
 import { type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
 import type { HashDictionary, KnownSizeArray } from "@typeberry/collections";
-import { HASH_SIZE, type KeccakHash, type OpaqueHash } from "@typeberry/hash";
+import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";
 import type { MmrPeaks } from "@typeberry/mmr";
-import { type Opaque, WithDebug } from "@typeberry/utils";
+import { WithDebug } from "@typeberry/utils";
 import { MAX_RECENT_HISTORY } from "./state.js";
-
-/** Merkle Mountain Belt hash. */
-export type MmbHash = Opaque<OpaqueHash, "MmbHash">;
 
 /** Array of recent blocks with maximum size of `MAX_RECENT_HISTORY` */
 type RecentBlockStates = KnownSizeArray<RecentBlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
@@ -18,7 +15,7 @@ type RecentBlockStates = KnownSizeArray<RecentBlockState, `0..${typeof MAX_RECEN
 export class RecentBlockState extends WithDebug {
   static Codec = codec.Class(RecentBlockState, {
     headerHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
-    accumulationResult: codec.bytes(HASH_SIZE).asOpaque<MmbHash>(),
+    accumulationResult: codec.bytes(HASH_SIZE),
     postStateRoot: codec.bytes(HASH_SIZE).asOpaque<StateRootHash>(),
     reported: codecHashDictionary(WorkPackageInfo.Codec, (x) => x.workPackageHash),
   });
@@ -31,7 +28,7 @@ export class RecentBlockState extends WithDebug {
     /** Header hash. */
     public readonly headerHash: HeaderHash,
     /** Merkle mountain belt of accumulation result. */
-    public readonly accumulationResult: MmbHash,
+    public readonly accumulationResult: KeccakHash,
     /** Posterior state root filled in with a 1-block delay. */
     public postStateRoot: StateRootHash,
     /** Reported work packages (no more than number of cores). */
