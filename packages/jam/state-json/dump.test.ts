@@ -4,10 +4,12 @@ import { tinyChainSpec } from "@typeberry/config";
 import { parseFromJson } from "@typeberry/json-parser";
 import { StateEntries } from "@typeberry/state-merkleization";
 
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { fullStateDumpFromJson } from "./dump.js";
 
 describe("JSON state dump", () => {
-  it("should load full JSON state dump", async () => {
+  const itPre067 = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? it.skip : it;
+  itPre067("should load full JSON state dump", async () => {
     const spec = tinyChainSpec;
     const testState = await import("./dump.example.json");
     const fromJson = fullStateDumpFromJson(spec);
