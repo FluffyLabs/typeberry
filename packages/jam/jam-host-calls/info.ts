@@ -64,16 +64,10 @@ export class Info implements HostCallHandler {
         ? BytesBlob.empty()
         : Encoder.encodeObject(codecServiceAccountInfoWithThresholdBalance, {
             ...accountInfo,
-            thresholdBalance: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-              ? ServiceAccountInfo.calculateThresholdBalance(
+            thresholdBalance: ServiceAccountInfo.calculateThresholdBalance(
                   accountInfo.storageUtilisationCount,
                   accountInfo.storageUtilisationBytes,
                   accountInfo.gratisStorageBytes,
-                )
-              : ServiceAccountInfo.calculateThresholdBalance(
-                  accountInfo.storageUtilisationCount,
-                  accountInfo.storageUtilisationBytes,
-                  tryAsU64(0),
                 ),
           });
 
