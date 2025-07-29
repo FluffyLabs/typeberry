@@ -27,6 +27,7 @@ if (suite === undefined) {
 
 const stream = run({
   files: [`${import.meta.dirname}/${suiteToRun}.ts`],
+  argv: process.argv.slice(2),
   timeout: 180 * 1000,
   concurrency: true,
 }).on("test:fail", () => {
