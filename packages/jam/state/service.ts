@@ -107,7 +107,7 @@ export class ServiceAccountInfo extends WithDebug {
       "Gratis storage cannot be non-zero before 0.6.7",
     );
 
-    // NOTE: [MaSo] Checking underflow
+    // checking underflow
     if (bytes < gratisStorage) {
       const negativeBytes = gratisStorage - bytes;
       const sum = sumU64(tryAsU64(BASE_SERVICE_BALANCE), tryAsU64(ELECTIVE_ITEM_BALANCE * BigInt(items)));
