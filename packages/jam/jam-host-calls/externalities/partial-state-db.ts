@@ -35,7 +35,7 @@ import {
   type ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { Compatibility, GpVersion, OK, Result, assertNever, check, ensure } from "@typeberry/utils";
+import { OK, Result, assertNever, check, ensure } from "@typeberry/utils";
 import type { AccountsInfo } from "../info.js";
 import type { AccountsLookup } from "../lookup.js";
 import type { AccountsRead } from "../read.js";
@@ -392,7 +392,11 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
       return Result.error(NewServiceError.InsufficientFunds);
     }
 
-    const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(items.value, bytes.value, serviceInfo.gratisStorageBytes);
+    const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(
+      items.value,
+      bytes.value,
+      serviceInfo.gratisStorageBytes,
+    );
     if (serviceInfo.balance < thresholdBalance) {
       return Result.error(NewServiceError.InsufficientFunds);
     }

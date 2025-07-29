@@ -2,9 +2,8 @@ import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
-import { tryAsU64 } from "@typeberry/numbers";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
+import { OK, Result } from "@typeberry/utils";
 import type { AccountsInfo } from "./info.js";
 import type { AccountsLookup } from "./lookup.js";
 import type { AccountsRead } from "./read.js";
@@ -67,11 +66,13 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
     if (accountInfo === undefined) {
       return false;
     }
-    return ServiceAccountInfo.calculateThresholdBalance(
-          accountInfo.storageUtilisationCount,
-          accountInfo.storageUtilisationBytes,
-          accountInfo.gratisStorageBytes,
-        ) > accountInfo.balance;
+    return (
+      ServiceAccountInfo.calculateThresholdBalance(
+        accountInfo.storageUtilisationCount,
+        accountInfo.storageUtilisationBytes,
+        accountInfo.gratisStorageBytes,
+      ) > accountInfo.balance
+    );
   }
 
   readSnapshotLength(hash: Blake2bHash): number | null {

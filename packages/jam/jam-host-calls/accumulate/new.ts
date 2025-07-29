@@ -49,13 +49,18 @@ export class New implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const assignedId = this.partialState.newService(codeHash.asOpaque(), codeLength, gas, allowance, gratisStorageOffset);
+    const assignedId = this.partialState.newService(
+      codeHash.asOpaque(),
+      codeLength,
+      gas,
+      allowance,
+      gratisStorageOffset,
+    );
 
     if (assignedId.isOk) {
       regs.set(IN_OUT_REG, tryAsU64(assignedId.ok));
       return;
     }
-
 
     const e = assignedId.error as NewServiceError;
 

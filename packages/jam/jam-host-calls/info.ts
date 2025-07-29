@@ -65,10 +65,10 @@ export class Info implements HostCallHandler {
         : Encoder.encodeObject(codecServiceAccountInfoWithThresholdBalance, {
             ...accountInfo,
             thresholdBalance: ServiceAccountInfo.calculateThresholdBalance(
-                  accountInfo.storageUtilisationCount,
-                  accountInfo.storageUtilisationBytes,
-                  accountInfo.gratisStorageBytes,
-                ),
+              accountInfo.storageUtilisationCount,
+              accountInfo.storageUtilisationBytes,
+              accountInfo.gratisStorageBytes,
+            ),
           });
 
     const writeResult = memory.storeFrom(outputStart, encodedInfo.raw);
