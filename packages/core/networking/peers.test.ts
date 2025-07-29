@@ -1,53 +1,8 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Bytes } from "@typeberry/bytes";
-import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { OK } from "@typeberry/utils";
-import { type Peer, type PeerAddress, type PeerId, Peers, type Stream, type StreamCallback } from "./peers.js";
-
-// Test implementations
-class TestStream implements Stream {
-  readable = new ReadableStream<Uint8Array>();
-  writable = new WritableStream<Uint8Array>();
-  onError: ((e: unknown) => void)[] = [];
-
-  constructor(public readonly streamId: number) {}
-
-  addOnError(onError: (e: unknown) => void): void {
-    this.onError.push(onError);
-  }
-
-  async destroy(): Promise<void> {
-    // Mock implementation
-  }
-}
-
-class TestPeer implements Peer {
-  streamId = 0;
-
-  constructor(
-    public readonly connectionId: string,
-    public readonly address: PeerAddress,
-    public readonly id: PeerId,
-    public readonly key: Ed25519Key,
-  ) {}
-
-  addOnIncomingStream(_streamCallback: StreamCallback): void {
-    // Mock implementation
-  }
-
-  openStream(): Stream {
-    return new TestStream(this.streamId++);
-  }
-
-  async disconnect(): Promise<void> {
-    // Mock implementation
-  }
-}
-
-function createTestPeer(id: string, host = "127.0.0.1", port = 8080): TestPeer {
-  return new TestPeer(`conn-${id}`, { host, port }, id as PeerId, Bytes.zero(ED25519_KEY_BYTES).asOpaque());
-}
+import { Peers } from "./peers.js";
+import { type TestPeer, createTestPeer } from "./testing.js";
 
 describe("Peers", () => {
   it("should track peer connection status", () => {

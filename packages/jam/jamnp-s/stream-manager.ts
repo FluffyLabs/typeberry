@@ -264,4 +264,13 @@ class QuicStreamSender implements StreamMessageSender {
       await this.internal.writable.close();
     }, this.onError);
   }
+
+  /**
+   * Wait for the data to finish writing.
+   *
+   * Usually should not be used, but may be useful for tests sometimes.
+   */
+  flush(): Promise<void> {
+    return this.currentWriterPromise ?? Promise.resolve();
+  }
 }
