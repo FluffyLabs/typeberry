@@ -392,10 +392,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
       return Result.error(NewServiceError.InsufficientFunds);
     }
 
-    // TODO: [MaSo] gratisStorageBytes should be passed here as parameter or taken from serviceInfo?
-    const thresholdBalance = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? ServiceAccountInfo.calculateThresholdBalance(items.value, bytes.value, serviceInfo.gratisStorageBytes)
-      : ServiceAccountInfo.calculateThresholdBalance(items.value, bytes.value, tryAsU64(0));
+    const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(items.value, bytes.value, serviceInfo.gratisStorageBytes);
     if (serviceInfo.balance < thresholdBalance) {
       return Result.error(NewServiceError.InsufficientFunds);
     }
