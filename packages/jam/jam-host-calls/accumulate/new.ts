@@ -49,9 +49,7 @@ export class New implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const assignedId = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? this.partialState.newService(codeHash.asOpaque(), codeLength, gas, allowance, gratisStorageOffset)
-      : this.partialState.newService(codeHash.asOpaque(), codeLength, gas, allowance, tryAsU64(0));
+    const assignedId = this.partialState.newService(codeHash.asOpaque(), codeLength, gas, allowance, gratisStorageOffset);
 
     if (assignedId.isOk) {
       regs.set(IN_OUT_REG, tryAsU64(assignedId.ok));
