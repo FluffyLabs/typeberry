@@ -67,16 +67,10 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
     if (accountInfo === undefined) {
       return false;
     }
-    return Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? ServiceAccountInfo.calculateThresholdBalance(
+    return ServiceAccountInfo.calculateThresholdBalance(
           accountInfo.storageUtilisationCount,
           accountInfo.storageUtilisationBytes,
           accountInfo.gratisStorageBytes,
-        ) > accountInfo.balance
-      : ServiceAccountInfo.calculateThresholdBalance(
-          accountInfo.storageUtilisationCount,
-          accountInfo.storageUtilisationBytes,
-          tryAsU64(0),
         ) > accountInfo.balance;
   }
 
