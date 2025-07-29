@@ -618,7 +618,14 @@ describe("PartialState.newService", () => {
   });
 
   itPost067("should return an error if service is unprivileged to get gratis storage", () => {
-    const mockState = testState();
+    const mockStateTest = testState();
+    const mockState = InMemoryState.create({
+      ...mockStateTest,
+      privilegedServices: PrivilegedServices.create({
+        ...mockStateTest.privilegedServices,
+        manager: tryAsServiceId(1), // setting different manager
+      }),
+    });
     const maybeService = mockState.services.get(tryAsServiceId(0));
     const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
 

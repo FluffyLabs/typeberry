@@ -12,7 +12,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Descriptor, type SizeHint, codec } from "@typeberry/codec";
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { type U32, type U64, maxU64, sumU64, tryAsU64 } from "@typeberry/numbers";
+import { type U32, type U64, sumU64, tryAsU64 } from "@typeberry/numbers";
 import { Compatibility, GpVersion, type Opaque, WithDebug, check } from "@typeberry/utils";
 
 /**
@@ -106,15 +106,32 @@ export class ServiceAccountInfo extends WithDebug {
       gratisStorage === tryAsU64(0) || Compatibility.isGreaterOrEqual(GpVersion.V0_6_7),
       "Gratis storage cannot be non-zero before 0.6.7",
     );
+
+    // NOTE: [MaSo] Checking underflow
+    if (bytes < gratisStorage) {
+      const negativeBytes = gratisStorage - bytes;
+      const sum = sumU64(tryAsU64(BASE_SERVICE_BALANCE), tryAsU64(ELECTIVE_ITEM_BALANCE * BigInt(items)));
+
+      // NOTE: [MaSo] Note that is impossible for `sum` to be overflow at this point
+      // since maxU32 * 10 + 100 is still less than maxU64
+      if (sum.value > negativeBytes) {
+        return tryAsU64(sum.value - negativeBytes);
+      }
+
+      return tryAsU64(0);
+    }
+
     const sum = sumU64(
       tryAsU64(BASE_SERVICE_BALANCE),
       tryAsU64(ELECTIVE_ITEM_BALANCE * BigInt(items)),
-      tryAsU64(ELECTIVE_BYTE_BALANCE * (bytes - gratisStorage)),
+      tryAsU64(ELECTIVE_BYTE_BALANCE * bytes - gratisStorage),
     );
+
     if (sum.overflow) {
       return tryAsU64(2n ** 64n - 1n);
     }
-    return maxU64(tryAsU64(0), sum.value);
+
+    return sum.value;
   }
 
   private constructor(

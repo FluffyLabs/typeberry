@@ -62,7 +62,7 @@ export class New implements HostCallHandler {
       return;
     }
 
-    const e = assignedId.error as NewServiceError;
+    const e = assignedId.error;
 
     if (e === NewServiceError.InsufficientFunds) {
       regs.set(IN_OUT_REG, HostCallResult.CASH);

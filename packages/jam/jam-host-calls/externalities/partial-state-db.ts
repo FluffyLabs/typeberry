@@ -66,7 +66,7 @@ import { AccumulationStateUpdate } from "./state-update.js";
  * https://graypaper.fluffylabs.dev/#/9a08063/370202370502?v=0.6.6 */
 const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 
-type StateSlice = Pick<State, "getService">;
+type StateSlice = Pick<State, "getService" | "privilegedServices">;
 
 export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead, AccountsInfo, AccountsLookup {
   private checkpointedState: AccumulationStateUpdate | null = null;
@@ -568,10 +568,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     );
 
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/369203369603?v=0.6.7
-    if (
-      gratisStorageOffset !== tryAsU64(0) &&
-      this.currentServiceId !== this.updatedState.privilegedServices?.manager
-    ) {
+    if (gratisStorageOffset !== tryAsU64(0) && this.currentServiceId !== this.state.privilegedServices.manager) {
       return Result.error(NewServiceError.UnprivilegedService);
     }
 
