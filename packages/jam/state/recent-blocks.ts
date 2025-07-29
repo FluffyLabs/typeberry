@@ -39,7 +39,7 @@ export class RecentBlockState extends WithDebug {
 }
 
 /**
- * Recent history of a single block and accumulation output log.
+ * Recent history of blocks and accumulation output log.
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/0fc9010fc901?v=0.6.7
  */
