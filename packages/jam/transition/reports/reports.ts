@@ -7,6 +7,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { type Ed25519Key, ed25519 } from "@typeberry/crypto";
 import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
+import type { SafroleStateUpdate } from "@typeberry/safrole";
 import { AvailabilityAssignment, type State, tryAsPerCore } from "@typeberry/state";
 import { OK, Result, asOpaqueType } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
@@ -43,6 +44,7 @@ export type ReportsInput = {
   /** Current time slot, excerpted from block header. */
   slot: TimeSlot;
   knownPackages: WorkPackageHash[];
+  newEntropy: SafroleStateUpdate["entropy"];
 };
 
 export type ReportsState = Pick<
@@ -176,7 +178,7 @@ export class Reports {
 
   verifyCredentials(input: ReportsInput, workReportHashes: KnownSizeArray<WorkReportHash, "Guarantees">) {
     return verifyCredentials(input.guarantees, workReportHashes, input.slot, (headerTimeSlot, guaranteeTimeSlot) =>
-      this.getGuarantorAssignment(headerTimeSlot, guaranteeTimeSlot),
+      this.getGuarantorAssignment(headerTimeSlot, guaranteeTimeSlot, input.newEntropy),
     );
   }
 
@@ -223,6 +225,7 @@ export class Reports {
   getGuarantorAssignment(
     headerTimeSlot: TimeSlot,
     guaranteeTimeSlot: TimeSlot,
+    newEntropy: SafroleStateUpdate["entropy"],
   ): Result<PerValidator<GuarantorAssignment>, ReportsError> {
     const epochLength = this.chainSpec.epochLength;
     const rotationPeriod = this.chainSpec.rotationPeriod;
@@ -249,7 +252,6 @@ export class Reports {
     // The `G` and `G*` sets should only be computed once per rotation.
 
     // Default data for the current rotation
-    let entropy = this.state.entropy[2];
     let validatorData = this.state.currentValidatorData;
     let timeSlot = headerTimeSlot;
 
@@ -261,14 +263,13 @@ export class Reports {
 
       // if the epoch changed, we need to take previous entropy and previous validator data.
       if (isPreviousRotationPreviousEpoch(timeSlot, headerTimeSlot, epochLength)) {
-        entropy = this.state.entropy[3];
         validatorData = this.state.previousValidatorData;
       }
     }
 
     // we know which entropy, timeSlot and validatorData should be used,
     // so we can compute `G` or `G*` here.
-    const coreAssignment = generateCoreAssignment(this.chainSpec, entropy, timeSlot);
+    const coreAssignment = generateCoreAssignment(this.chainSpec, newEntropy[2], timeSlot);
     return Result.ok(
       zip(coreAssignment, validatorData, (core, validator) => ({
         core,
