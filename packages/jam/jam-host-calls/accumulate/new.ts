@@ -56,11 +56,6 @@ export class New implements HostCallHandler {
       return;
     }
 
-    if (!Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      // NOTE: [MaSo] pre067 it's just else case
-      regs.set(IN_OUT_REG, HostCallResult.CASH);
-      return;
-    }
 
     const e = assignedId.error as NewServiceError;
 
