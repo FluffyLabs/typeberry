@@ -85,9 +85,11 @@ export function deepEqual<T>(
     (typeof actual === "object" && TEST_COMPARE_USING in actual) ||
     (typeof expected === "object" && TEST_COMPARE_USING in expected)
   ) {
-    errors.tryAndCatch(() => {
-      deepEqual(callCompareFunction(actual), callCompareFunction(expected));
-    }, ctx);
+    deepEqual(callCompareFunction(actual), callCompareFunction(expected), {
+      context: ctx,
+      errorsCollector: errors,
+      ignore,
+    });
     return errors.exitOrThrow();
   }
 
