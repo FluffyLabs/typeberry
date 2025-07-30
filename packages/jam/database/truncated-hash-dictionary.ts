@@ -2,7 +2,7 @@ import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { TRUNCATED_KEY_BYTES } from "@typeberry/trie";
-import {TEST_COMPARE_USING} from "@typeberry/utils";
+import { TEST_COMPARE_USING } from "@typeberry/utils";
 
 type HashWithZeroedBit<T extends OpaqueHash> = T;
 

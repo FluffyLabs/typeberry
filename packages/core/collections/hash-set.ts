@@ -1,6 +1,5 @@
 import type { OpaqueHash } from "@typeberry/hash";
 import { HashDictionary } from "./hash-dictionary.js";
-import {TEST_COMPARE_USING} from "@typeberry/utils";
 
 /** Immutable version of the HashSet. */
 export interface ImmutableHashSet<V extends OpaqueHash> extends Iterable<V> {

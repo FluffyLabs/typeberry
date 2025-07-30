@@ -13,10 +13,10 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
+import { TEST_COMPARE_USING } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
 import { serialize } from "./serialize.js";
 import type { StateEntries } from "./state-entries.js";
-import {TEST_COMPARE_USING} from "@typeberry/utils";
 
 /**
  * Abstraction over some backend containing serialized state entries.
