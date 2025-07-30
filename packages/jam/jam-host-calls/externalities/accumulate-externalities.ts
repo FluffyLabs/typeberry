@@ -59,7 +59,9 @@ import { AccumulationStateUpdate, type PartiallyUpdatedState } from "./state-upd
 const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 
 // TODO [ToDr] Rename to `AccumulateExternalities`.
-export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead, AccountsInfo, AccountsLookup {
+export class AccumulateExternalities
+  implements PartialState, AccountsWrite, AccountsRead, AccountsInfo, AccountsLookup
+{
   private checkpointedState: AccumulationStateUpdate | null = null;
   /** `x_i`: next service id we are going to create. */
   private nextNewServiceId: ServiceId;
