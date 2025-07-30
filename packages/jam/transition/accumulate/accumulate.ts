@@ -19,6 +19,7 @@ import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-
 import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import {
   AccumulationStateUpdate,
+  PartiallyUpdatedState,
   type ServiceStateUpdate,
 } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
@@ -192,11 +193,10 @@ export class Accumulate {
     const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec);
     const partialState = new PartialStateDb(
       this.chainSpec,
-      this.state,
+      new PartiallyUpdatedState(this.state, inputStateUpdate),
       serviceId,
       nextServiceId,
       slot,
-      inputStateUpdate,
     );
 
     const externalities = {

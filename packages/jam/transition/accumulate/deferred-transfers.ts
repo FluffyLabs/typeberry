@@ -4,6 +4,7 @@ import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
 import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
+import { PartiallyUpdatedState } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
 import { sumU64, tryAsU32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
@@ -137,7 +138,13 @@ export class DeferredTransfers {
         transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(0) });
         continue;
       }
-      const partialState = new PartialStateDb(this.chainSpec, this.state, serviceId, serviceId, timeslot);
+      const partialState = new PartialStateDb(
+        this.chainSpec,
+        new PartiallyUpdatedState(this.state),
+        serviceId,
+        serviceId,
+        timeslot,
+      );
 
       const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState });
       const args = Encoder.encodeObject(ON_TRANSFER_ARGS_CODEC, { timeslot, serviceId, transfers }, this.chainSpec);
