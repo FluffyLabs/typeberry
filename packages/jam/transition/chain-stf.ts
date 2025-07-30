@@ -251,17 +251,20 @@ export class OnChain {
       preimages: accumulatePreimages,
       timeslot: timeSlot,
     });
+
     if (deferredTransfersResult.isError) {
       return stfError(StfErrorKind.DeferredTransfers, deferredTransfersResult);
     }
 
     const {
       servicesUpdates: newServicesUpdates,
+      storageUpdates: deferredTransfersStorageUpdates,
       transferStatistics,
       ...deferredTransfersRest
     } = deferredTransfersResult.ok;
     assertEmpty(deferredTransfersRest);
     servicesUpdate.servicesUpdates = newServicesUpdates;
+    servicesUpdate.storage.push(...deferredTransfersStorageUpdates);
     // recent history
     const recentHistoryUpdate = this.recentHistory.transition({
       headerHash,
