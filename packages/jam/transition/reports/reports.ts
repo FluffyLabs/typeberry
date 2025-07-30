@@ -252,6 +252,7 @@ export class Reports {
     // The `G` and `G*` sets should only be computed once per rotation.
 
     // Default data for the current rotation
+    let entropy = newEntropy[2];
     let validatorData = this.state.currentValidatorData;
     let timeSlot = headerTimeSlot;
 
@@ -263,13 +264,14 @@ export class Reports {
 
       // if the epoch changed, we need to take previous entropy and previous validator data.
       if (isPreviousRotationPreviousEpoch(timeSlot, headerTimeSlot, epochLength)) {
+        entropy = this.state.entropy[3];
         validatorData = this.state.previousValidatorData;
       }
     }
 
     // we know which entropy, timeSlot and validatorData should be used,
     // so we can compute `G` or `G*` here.
-    const coreAssignment = generateCoreAssignment(this.chainSpec, newEntropy[2], timeSlot);
+    const coreAssignment = generateCoreAssignment(this.chainSpec, entropy, timeSlot);
     return Result.ok(
       zip(coreAssignment, validatorData, (core, validator) => ({
         core,

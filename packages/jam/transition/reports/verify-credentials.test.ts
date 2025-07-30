@@ -6,7 +6,14 @@ import { tinyChainSpec } from "@typeberry/config";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { Compatibility, GpVersion, asOpaqueType, deepEqual } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
-import { guaranteesAsView, initialValidators, newCredential, newReports, newWorkReport } from "./test.utils.js";
+import {
+  ENTROPY,
+  guaranteesAsView,
+  initialValidators,
+  newCredential,
+  newReports,
+  newWorkReport,
+} from "./test.utils.js";
 
 describe("Reports.verifyCredentials", () => {
   it("should reject insufficient credentials", async () => {
@@ -23,7 +30,7 @@ describe("Reports.verifyCredentials", () => {
       { disableCredentialsRangeCheck: true },
     );
 
-    const input = { guarantees, slot: tryAsTimeSlot(1), knownPackages: [] };
+    const input = { guarantees, slot: tryAsTimeSlot(1), knownPackages: [], newEntropy: ENTROPY };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -49,7 +56,7 @@ describe("Reports.verifyCredentials", () => {
       { disableCredentialsRangeCheck: true },
     );
 
-    const input = { guarantees, slot: tryAsTimeSlot(1), knownPackages: [] };
+    const input = { guarantees, slot: tryAsTimeSlot(1), knownPackages: [], newEntropy: ENTROPY };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -71,7 +78,7 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(6), knownPackages: [] };
+    const input = { guarantees, slot: tryAsTimeSlot(6), knownPackages: [], newEntropy: ENTROPY };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -93,7 +100,7 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(6), knownPackages: [] };
+    const input = { guarantees, slot: tryAsTimeSlot(6), knownPackages: [], newEntropy: ENTROPY };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -115,7 +122,7 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(4), knownPackages: [] };
+    const input = { guarantees, slot: tryAsTimeSlot(4), knownPackages: [], newEntropy: ENTROPY };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -137,7 +144,7 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(25), knownPackages: [] };
+    const input = { guarantees, slot: tryAsTimeSlot(25), knownPackages: [], newEntropy: ENTROPY };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -159,7 +166,7 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(25), knownPackages: [] };
+    const input = { guarantees, slot: tryAsTimeSlot(25), knownPackages: [], newEntropy: ENTROPY };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
