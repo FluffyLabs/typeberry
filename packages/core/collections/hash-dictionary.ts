@@ -1,5 +1,6 @@
 import type { OpaqueHash } from "@typeberry/hash";
 import type { Comparator } from "@typeberry/ordering";
+import {TEST_COMPARE_USING} from "@typeberry/utils";
 
 /** Immutable view of the `HashDictionary`. */
 export interface ImmutableHashDictionary<K extends OpaqueHash, V> extends Iterable<[K, V]> {

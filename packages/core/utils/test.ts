@@ -5,8 +5,29 @@ import assert from "node:assert";
 import { inspect } from "./debug.js";
 import type { Result } from "./result.js";
 
-/** Unique symbol that can be added to a class to have it be compared by strings instead of defaults. */
-export const TEST_COMPARE_VIA_STRING: unique symbol = Symbol("compare via string");
+/**
+ * If some object has this property set, it can override how it's being compared
+ * using [`deepEqual`].
+ * The value under that symbol should be a function to be invoked by `deepEqual`.
+ * Returned values will then be further compared recursively.
+ */
+export const TEST_COMPARE_USING: unique symbol = Symbol("compare using");
+
+function callCompareFunction(object: unknown) {
+  if (
+    object !== null
+  && typeof object === 'object'
+  && TEST_COMPARE_USING in object
+  )
+  {
+    if (typeof object[TEST_COMPARE_USING] !== 'function') {
+      throw new Error(`${TEST_COMPARE_USING} of ${object} is not a function!`);
+    }
+    return object[TEST_COMPARE_USING]();
+  }
+
+  return object;
+}
 
 /** Equality comparison options. */
 export type DeepEqualOptions = {
@@ -64,13 +85,16 @@ export function deepEqual<T>(
     return errors.exitOrThrow();
   }
 
-  // special casing for bytes blobs
+  // special casing for customized comparison
   if (
-    (typeof actual === "object" && TEST_COMPARE_VIA_STRING in actual) ||
-    (typeof expected === "object" && TEST_COMPARE_VIA_STRING in expected)
+    (typeof actual === "object" && TEST_COMPARE_USING in actual) ||
+    (typeof expected === "object" && TEST_COMPARE_USING in expected)
   ) {
     errors.tryAndCatch(() => {
-      deepEqual(actual.toString(), expected.toString());
+      deepEqual(
+        callCompareFunction(actual),
+        callCompareFunction(expected)
+      );
     }, ctx);
     return errors.exitOrThrow();
   }

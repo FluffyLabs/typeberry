@@ -2,6 +2,7 @@ import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { TRUNCATED_KEY_BYTES } from "@typeberry/trie";
+import {TEST_COMPARE_USING} from "@typeberry/utils";
 
 type HashWithZeroedBit<T extends OpaqueHash> = T;
 
@@ -34,6 +35,10 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
   private readonly truncatedKey: T = Bytes.zero(HASH_SIZE).asOpaque();
 
   private constructor(private readonly dict: HashDictionary<HashWithZeroedBit<T>, V>) {}
+
+  [TEST_COMPARE_USING]() {
+    return this.dict;
+  }
 
   /** Return number of items in the dictionary. */
   get size(): number {

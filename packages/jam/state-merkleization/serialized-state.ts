@@ -16,6 +16,7 @@ import {
 import type { StateKey } from "./keys.js";
 import { serialize } from "./serialize.js";
 import type { StateEntries } from "./state-entries.js";
+import {TEST_COMPARE_USING} from "@typeberry/utils";
 
 /**
  * Abstraction over some backend containing serialized state entries.
@@ -58,6 +59,11 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
     /** Best-effort list of recently active services. */
     private readonly _recentServiceIds: ServiceId[],
   ) {}
+
+  /** Comparing the serialized states, just means comparing their backends. */
+  [TEST_COMPARE_USING]() {
+    return this.backend;
+  }
 
   // TODO [ToDr] Temporary method to update the state,
   // without changing references.
