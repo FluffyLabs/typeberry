@@ -17,7 +17,6 @@ import {
   type UpdatePreimage,
   UpdatePreimageKind,
   UpdateService,
-  UpdateServiceKind,
   UpdateStorage,
   type ValidatorData,
   tryAsLookupHistorySlots,
@@ -120,7 +119,7 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     }
 
     const maybeNewService = this.stateUpdate.services.servicesUpdates.find(
-      (update) => update.serviceId === destination && update.action.kind === UpdateServiceKind.Create,
+      (update) => update.serviceId === destination,
     );
     if (maybeNewService !== undefined) {
       return maybeNewService.action.account;

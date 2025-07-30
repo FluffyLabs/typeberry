@@ -1090,7 +1090,7 @@ describe("PartialState.providePreimage", () => {
     const result = partialState.providePreimage(serviceId, preimage.blob);
 
     // then
-    assert.deepStrictEqual(result, Result.error(ProvidePreimageError.AlreadyProvided));
+    assert.deepStrictEqual(result, Result.error(ProvidePreimageError.WasNotRequested));
     assert.deepStrictEqual(state.stateUpdate.services.preimages, [
       UpdatePreimage.provide({
         serviceId: tryAsServiceId(1),
@@ -1188,7 +1188,7 @@ describe("PartialState.providePreimage", () => {
 
     // then
     assert.deepStrictEqual(resultok, Result.ok(OK));
-    assert.deepStrictEqual(resulterr, Result.error(ProvidePreimageError.AlreadyProvided));
+    assert.deepStrictEqual(resulterr, Result.error(ProvidePreimageError.WasNotRequested));
     assert.deepStrictEqual(state.stateUpdate.services.preimages, [
       UpdatePreimage.provide({
         serviceId: tryAsServiceId(1),
@@ -1468,13 +1468,12 @@ describe("PartialState.eject", () => {
     if (currentService === undefined) {
       throw new Error("missing required service!");
     }
-    state.stateUpdate.services.servicesUpdates.push(
-      UpdateService.update({
-        serviceId: tryAsServiceId(0),
-        serviceInfo: ServiceAccountInfo.create({
-          ...currentService.data.info,
-          balance: tryAsU64(2n ** 64n - 1n),
-        }),
+
+    state.updateServiceInfo(
+      tryAsServiceId(0),
+      ServiceAccountInfo.create({
+        ...currentService.data.info,
+        balance: tryAsU64(2n ** 64n - 1n),
       }),
     );
 
