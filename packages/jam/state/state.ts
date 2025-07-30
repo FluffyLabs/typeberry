@@ -201,6 +201,13 @@ export type State = {
   readonly privilegedServices: PrivilegedServices;
 
   /**
+   * `θ theta`: Merkle mountain belts with recent accumulations per service that accumulated them.
+   *
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/3bad023bad02?v=0.6.7
+   */
+  redonly recentAccumulations: RecentAccumulations;
+
+  /**
    * Retrieve details about single service.
    */
   getService(id: ServiceId): Service | null;
