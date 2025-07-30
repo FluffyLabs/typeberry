@@ -160,6 +160,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           xi.map((x) => HashSet.from(x)),
           spec,
         ),
+        recentAccumulations: asKnownSize([]),
         services: new Map(accounts.map((x) => [x.serviceId, x])),
       });
     },

@@ -362,6 +362,7 @@ export const testState = (): InMemoryState => {
       "0x85f9095f4abd040839d793d89ab5ff25c61e50c844ab6765e2c0b22373b5a8f6fbe5fc0cd61fdde580b3d44fe1be127197e33b91960b10d2c6fc75aec03f36e16c2a8204961097dbc2c5ba7655543385399cc9ef08bf2e520ccf3b0a7569d88492e630ae2b14e758ab0960e372172203f4c9a41777dadd529971d7ab9d23ab29fe0e9c85ec450505dde7f5ac038274cf",
       BANDERSNATCH_RING_ROOT_BYTES,
     ).asOpaque(),
+    recentAccumulations: asKnownSize([]),
     privilegedServices: PrivilegedServices.create({
       manager: tryAsServiceId(0),
       authManager: tryAsServiceId(0),

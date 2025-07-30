@@ -37,6 +37,7 @@ import { type PerCore, tryAsPerCore } from "./common.js";
 import { DisputesRecords, hashComparator } from "./disputes.js";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
 import { PrivilegedServices } from "./privileged-services.js";
+import type { RecentAccumulations } from "./recent-accumulations.js";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "./safrole-data.js";
 import {
   LookupHistoryItem,
@@ -227,6 +228,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       sealingKeySeries: other.sealingKeySeries,
       epochRoot: other.epochRoot,
       privilegedServices: other.privilegedServices,
+      recentAccumulations: other.recentAccumulations,
       services,
     });
   }
@@ -410,6 +412,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
   sealingKeySeries: SafroleSealingKeys;
   epochRoot: BandersnatchRingRoot;
   privilegedServices: PrivilegedServices;
+  recentAccumulations: KnownSizeArray<RecentAccumulations, `0..${typeof MAX_RECENT_HISTORY}`>;
   services: Map<ServiceId, InMemoryService>;
 
   recentServiceIds(): readonly ServiceId[] {
@@ -440,6 +443,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     this.sealingKeySeries = s.sealingKeySeries;
     this.epochRoot = s.epochRoot;
     this.privilegedServices = s.privilegedServices;
+    this.recentAccumulations = s.recentAccumulations;
     this.services = s.services;
   }
 
@@ -552,6 +556,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
         validatorsManager: tryAsServiceId(0),
         autoAccumulateServices: [],
       }),
+      recentAccumulations: asKnownSize([]),
       services: new Map(),
     });
   }

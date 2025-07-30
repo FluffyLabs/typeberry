@@ -11,11 +11,11 @@ import type { PerCore } from "./common.js";
 import type { DisputesRecords } from "./disputes.js";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
 import type { PrivilegedServices } from "./privileged-services.js";
+import type { RecentAccumulations } from "./recent-accumulations.js";
 import type { SafroleData } from "./safrole-data.js";
 import type { LookupHistorySlots, ServiceAccountInfo, StorageKey } from "./service.js";
 import type { StatisticsData } from "./statistics.js";
 import type { ValidatorData } from "./validator-data.js";
-import { RecentAccumulations } from "./recent-accumulations.js";
 
 /**
  * In addition to the entropy accumulator η_0, we retain
@@ -206,7 +206,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/3bad023bad02?v=0.6.7
    */
-  readonly recentAccumulations: RecentAccumulations;
+  readonly recentAccumulations: KnownSizeArray<RecentAccumulations, `0..${typeof MAX_RECENT_HISTORY}`>;
 
   /**
    * Retrieve details about single service.
