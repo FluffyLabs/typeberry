@@ -30,7 +30,7 @@ describe("Reports.verifyCredentials", () => {
       { disableCredentialsRangeCheck: true },
     );
 
-    const input = { guarantees, slot: tryAsTimeSlot(1), knownPackages: [], newEntropy: ENTROPY };
+    const input = { guarantees, slot: tryAsTimeSlot(1), newEntropy: ENTROPY };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -56,7 +56,7 @@ describe("Reports.verifyCredentials", () => {
       { disableCredentialsRangeCheck: true },
     );
 
-    const input = { guarantees, slot: tryAsTimeSlot(1), knownPackages: [], newEntropy: ENTROPY };
+    const input = { guarantees, slot: tryAsTimeSlot(1), newEntropy: ENTROPY };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -78,7 +78,7 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(6), knownPackages: [], newEntropy: ENTROPY };
+    const input = { guarantees, slot: tryAsTimeSlot(6), newEntropy: ENTROPY };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -100,7 +100,7 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(6), knownPackages: [], newEntropy: ENTROPY };
+    const input = { guarantees, slot: tryAsTimeSlot(6), newEntropy: ENTROPY };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -122,7 +122,7 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(4), knownPackages: [], newEntropy: ENTROPY };
+    const input = { guarantees, slot: tryAsTimeSlot(4), newEntropy: ENTROPY };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -144,7 +144,7 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(25), knownPackages: [], newEntropy: ENTROPY };
+    const input = { guarantees, slot: tryAsTimeSlot(25), newEntropy: ENTROPY };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -166,7 +166,7 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(25), knownPackages: [], newEntropy: ENTROPY };
+    const input = { guarantees, slot: tryAsTimeSlot(25), newEntropy: ENTROPY };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 

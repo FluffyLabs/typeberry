@@ -187,7 +187,6 @@ export class OnChain {
     const reportsResult = await this.reports.transition({
       slot: timeSlot,
       guarantees: block.extrinsic.view().guarantees.view(),
-      knownPackages: [],
       newEntropy: entropy,
     });
     if (reportsResult.isError) {

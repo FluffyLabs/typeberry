@@ -43,7 +43,7 @@ export type ReportsInput = {
   guarantees: GuaranteesExtrinsicView;
   /** Current time slot, excerpted from block header. */
   slot: TimeSlot;
-  knownPackages: WorkPackageHash[];
+  /** `eta_prime`: New entropy, after potential epoch transition. */
   newEntropy: SafroleStateUpdate["entropy"];
 };
 

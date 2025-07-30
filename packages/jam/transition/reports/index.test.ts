@@ -14,7 +14,6 @@ describe("Reports - top level", () => {
     const input: ReportsInput = {
       guarantees: guaranteesAsView(tinyChainSpec, []),
       slot: tryAsTimeSlot(12),
-      knownPackages: [],
       newEntropy: ENTROPY,
     };
 
