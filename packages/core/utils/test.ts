@@ -16,7 +16,7 @@ export const TEST_COMPARE_USING: unique symbol = Symbol("compare using");
 function callCompareFunction(object: unknown) {
   if (object !== null && typeof object === "object" && TEST_COMPARE_USING in object) {
     if (typeof object[TEST_COMPARE_USING] !== "function") {
-      throw new Error(`${TEST_COMPARE_USING} of ${object} is not a function!`);
+      throw new Error(`${String(TEST_COMPARE_USING)} of ${object} is not a function!`);
     }
     return object[TEST_COMPARE_USING]();
   }
