@@ -31,6 +31,7 @@ import {
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { SafroleData } from "@typeberry/state/safrole-data.js";
 import { type StateKey, StateKeyIdx, stateKeys } from "./keys.js";
+import { RecentAccumulations } from "@typeberry/state/recent-accumulations.js";
 
 export type StateCodec<T> = {
   key: StateKey;
@@ -151,7 +152,7 @@ export namespace serialize {
 
   /** C(14): https://graypaper.fluffylabs.dev/#/85129da/38f80238f802?v=0.6.3 */
   export const accumulationQueue: StateCodec<State["accumulationQueue"]> = {
-    key: stateKeys.index(StateKeyIdx.Theta),
+    key: stateKeys.index(StateKeyIdx.Omega),
     Codec: codecPerEpochBlock(readonlyArray(codec.sequenceVarLen(NotYetAccumulatedReport.Codec))),
     extract: (s) => s.accumulationQueue,
   };
@@ -167,6 +168,13 @@ export namespace serialize {
     ),
     extract: (s) => s.recentlyAccumulated,
   };
+
+  /** C(16): https://graypaper.fluffylabs.dev/#/38c4e62/3b46033b4603?v=0.7.0 */
+  export const recentAccumulations: StateCodec<State["recentAccumulations"]> = {
+    key: stateKeys.index(StateKeyIdx.Theta),
+    Codec: RecentAccumulations.Codec,
+    extract: (s) => s.recentAccumulations,
+  }
 
   /** C(255, s): https://graypaper.fluffylabs.dev/#/85129da/383103383103?v=0.6.3 */
   export const serviceData = (serviceId: ServiceId) => ({

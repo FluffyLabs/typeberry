@@ -15,6 +15,7 @@ import type { SafroleData } from "./safrole-data.js";
 import type { LookupHistorySlots, ServiceAccountInfo, StorageKey } from "./service.js";
 import type { StatisticsData } from "./statistics.js";
 import type { ValidatorData } from "./validator-data.js";
+import { RecentAccumulations } from "./recent-accumulations.js";
 
 /**
  * In addition to the entropy accumulator η_0, we retain
@@ -205,7 +206,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/3bad023bad02?v=0.6.7
    */
-  redonly recentAccumulations: RecentAccumulations;
+  readonly recentAccumulations: RecentAccumulations;
 
   /**
    * Retrieve details about single service.
