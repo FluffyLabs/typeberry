@@ -145,6 +145,7 @@ export class DeferredTransfers {
       const gas = transfers.reduce((acc, item) => acc + item.gas, 0n);
       const { consumedGas } = await executor.run(args, tryAsGas(gas));
       const [stateUpdate] = partialState.getStateUpdates();
+      // We assume here that OnTransfer invocation can update only storage of the service
       storageUpdates.push(...stateUpdate.services.storage);
       transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(consumedGas) });
     }
