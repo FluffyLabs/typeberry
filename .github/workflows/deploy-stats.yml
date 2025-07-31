@@ -33,6 +33,8 @@ jobs:
       run: npm run reader-notes
     - name: Copy schemas
       run: cp ./configs/**/*.schema.json ./web/schemas/
+    - name: Copy config schemas
+      run: cp ./configs/*.schema.json ./web/schemas/
     - name: Setup Pages
       uses: actions/configure-pages@v4
     - name: Upload artifact

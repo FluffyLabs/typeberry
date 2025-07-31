@@ -8,6 +8,7 @@ on:
 env:
   TEST_VECTORS_REF: 3e46bb56c75b16bcce8347e19b042f50e8c7d207
   GP_VERSION: 0.6.6
+  TEST_SUITE: w3f-davxy
 
 jobs:
   run:
@@ -33,7 +34,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/test-runner w3f-davxy
+      - run: npm start -w @typeberry/test-runner
       - name: Display results
         if: always()
         run: cat ./dist/jamtestvectors-davxy.txt
