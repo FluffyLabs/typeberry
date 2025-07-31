@@ -51,7 +51,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   // Start extensions
   const importerInit = await blockImporter.spawnWorker();
   const bestHeader = importerInit.getState<MainReady>("ready(main)").onBestBlock;
-  const closeExtensions = initializeExtensions({ bestHeader });
+  const closeExtensions = initializeExtensions({ chainSpec, bestHeader });
 
   // Start block importer
   const workerConfig = new WorkerConfig(chainSpec, dbPath, config.node.authorship.omitSealVerification);

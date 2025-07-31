@@ -11,9 +11,9 @@ import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
-import { type WithHash, blake2b } from "@typeberry/hash";
+import { WithHash, blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import type { Peer } from "@typeberry/networking";
+import type { Peer, PeerId } from "@typeberry/networking";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { OK } from "@typeberry/utils";
 import type { AuxData, Connections } from "../peers.js";
@@ -44,7 +44,7 @@ export class SyncTask {
     streamManager: StreamManager,
     connections: Connections,
     blocks: BlocksDb,
-    onNewBlocks: (blocks: BlockView[]) => void,
+    onNewBlocks: (blocks: BlockView[], peerId: PeerId) => void,
   ) {
     const syncTask = new SyncTask(spec, streamManager, connections, blocks, onNewBlocks);
 
@@ -59,6 +59,7 @@ export class SyncTask {
     };
 
     const up0Handler = new up0.Handler(
+      spec,
       () => syncTask.getUp0Handshake(),
       (streamId, ann) => {
         const peer = getPeerForStream(streamId);
@@ -100,7 +101,7 @@ export class SyncTask {
     private readonly streamManager: StreamManager,
     private readonly connections: Connections,
     private readonly blocks: BlocksDb,
-    private readonly onNewBlocks: (blocks: BlockView[]) => void,
+    private readonly onNewBlocks: (blocks: BlockView[], peer: PeerId) => void,
   ) {
     const ourBestHash = blocks.getBestHeaderHash();
     const ourBest = blocks.getHeader(ourBestHash);
@@ -193,6 +194,11 @@ export class SyncTask {
     });
   }
 
+  /**
+   * Open a UP0 stream with given peer.
+   *
+   * This will automatically send a handshake as well.
+   */
   openUp0(peer: Peer) {
     this.streamManager.withNewStream<up0.Handler>(peer, up0.STREAM_KIND, (handler, sender) => {
       handler.sendHandshake(sender);
@@ -200,6 +206,7 @@ export class SyncTask {
     });
   }
 
+  /** Broadcast header we have seen or produced to our peers. */
   broadcastHeader(header: WithHash<HeaderHash, HeaderView>) {
     const slot = header.data.timeSlotIndex.materialize();
     const annoucement = up0.Announcement.create({
@@ -271,12 +278,17 @@ export class SyncTask {
     return response;
   }
 
+  /**
+   * Should be called periodically to request best seen blocks from other peers.
+   */
   maintainSync() {
     // figure out where we are at
     const ourBestHash = this.blocks.getBestHeaderHash();
     const ourBestHeader = this.blocks.getHeader(ourBestHash);
     if (ourBestHeader === null) {
-      return;
+      return {
+        kind: SyncResult.OurBestHeaderMissing,
+      };
     }
 
     const ourBestSlot = ourBestHeader.timeSlotIndex.materialize();
@@ -285,8 +297,14 @@ export class SyncTask {
     const blocksToSync = othersBest.slot - ourBestSlot;
     if (blocksToSync < 1) {
       logger.log("Seems that there is no new blocks to sync. Finishing.");
-      return;
+      return {
+        kind: SyncResult.NoNewBlocks,
+        ours: ourBestSlot,
+        theirs: othersBest.slot,
+      };
     }
+
+    const requested: RequestedBlocks[] = [];
 
     logger.log(`Attempting to sync ${blocksToSync} blocks.`);
     // TODO [ToDr] We might be requesting the same blocks from many peers
@@ -307,6 +325,13 @@ export class SyncTask {
         continue;
       }
 
+      // add some details for statistics.
+      requested.push({
+        peerId: peerInfo.peerId,
+        theirs: bestSlot,
+        count: bestSlot - ourBestSlot,
+      });
+
       // request as much blocks from that peer as possible.
       this.streamManager.withNewStream<ce128.ClientHandler>(peerInfo.peerRef, ce128.STREAM_KIND, (handler, sender) => {
         handleAsyncErrors(
@@ -319,7 +344,7 @@ export class SyncTask {
               tryAsU32(bestSlot - ourBestSlot),
             );
             blocks.reverse();
-            this.onNewBlocks(blocks);
+            this.onNewBlocks(blocks, peerInfo.peerId);
           },
           (e) => {
             logger.warn(`[${peerInfo.peerId}] --> requesting blocks to import: ${e}`);
@@ -328,11 +353,37 @@ export class SyncTask {
         return OK;
       });
     }
+
+    return {
+      kind: SyncResult.BlocksRequested,
+      ours: ourBestSlot,
+      requested,
+    };
   }
 }
+
+/** Some extra details about how maintaining sync went. */
+export enum SyncResult {
+  /** We didn't find our best header? */
+  OurBestHeaderMissing = 1,
+  /** There is no new blocks that we can sync. */
+  NoNewBlocks = 2,
+  /** Sent request to some peers. */
+  BlocksRequested = 3,
+}
+
+/** Information about blocks requested from other peers. */
+export type RequestedBlocks = {
+  /** Peer id we sent the request to. */
+  peerId: PeerId;
+  /* Their best time slot. */
+  theirs: TimeSlot;
+  /** Number of blocks requested. */
+  count: number;
+};
 
 // TODO [ToDr] Should this be transition hasher?
 function hashHeader(header: Header, spec: ChainSpec): WithHash<HeaderHash, Header> {
   const encoded = Encoder.encodeObject(Header.Codec, header, spec);
-  return blake2b.hashBytes(encoded).asOpaque();
+  return new WithHash(blake2b.hashBytes(encoded).asOpaque(), header);
 }

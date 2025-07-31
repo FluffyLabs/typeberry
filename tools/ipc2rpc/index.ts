@@ -2,6 +2,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { tryAsTimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
+import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { up0 } from "@typeberry/jamnp-s";
 import { Level, Logger } from "@typeberry/logger";
@@ -34,6 +35,7 @@ async function main() {
   };
 
   const client = await startClient(
+    tinyChainSpec,
     socketPath,
     getHandshake,
     (_streamId, ann) => {

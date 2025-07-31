@@ -4,7 +4,7 @@ import type { ChainSpec } from "@typeberry/config";
 import type { ed25519 } from "@typeberry/crypto";
 import type { BlocksDb } from "@typeberry/database";
 import { Logger } from "@typeberry/logger";
-import { Quic } from "@typeberry/networking";
+import { type Network, type Peer, Quic } from "@typeberry/networking";
 import { OK } from "@typeberry/utils";
 import { type Bootnode, Connections } from "./peers.js";
 import { StreamManager } from "./stream-manager.js";
@@ -45,10 +45,22 @@ export async function setup(
     }
   });
 
-  network.onPeerConnect((peer) => {
-    // open UP0 stream with each new peer after the connection is fully estabilished.
-    syncTask.openUp0(peer);
+  // TODO [ToDr] This design is a bit weird,
+  // however we don't want the sync task to handle that
+  // (since only parts of it are sync-related), but that
+  // should be a general behavior of the JAMNP-S.
+  // For now it's simply an external function that's exposed
+  // for tests as well.
+  setupPeerListeners(syncTask, network, streamManager);
 
+  return {
+    network,
+    streamManager,
+  };
+}
+
+export function setupPeerListeners(syncTask: SyncTask, network: Network<Peer>, streamManager: StreamManager) {
+  network.onPeerConnect((peer) => {
     // whenever the peer wants to open a stream with us, let's handle that.
     peer.addOnIncomingStream((stream) => {
       handleAsyncErrors(
@@ -60,11 +72,10 @@ export async function setup(
       );
       return OK;
     });
+
+    // open UP0 stream with each new peer after the connection is fully estabilished.
+    syncTask.openUp0(peer);
+
     return OK;
   });
-
-  return {
-    network,
-    streamManager,
-  };
 }

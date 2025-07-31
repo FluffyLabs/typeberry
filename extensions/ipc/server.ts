@@ -4,6 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 import type { HeaderHash } from "@typeberry/block";
+import type { ChainSpec } from "@typeberry/config";
 import { ce129, up0 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
 import { handleMessageFragmentation } from "@typeberry/networking";
@@ -12,6 +13,7 @@ import type { TrieNode } from "@typeberry/trie/nodes.js";
 import { IpcHandler } from "./handler.js";
 
 export function startIpcServer(
+  spec: ChainSpec,
   announcements: Listener<up0.Announcement>,
   getHandshake: () => up0.Handshake,
   getBoundaryNodes: (hash: HeaderHash, startKey: ce129.Key, endKey: ce129.Key) => TrieNode[],
@@ -29,6 +31,7 @@ export function startIpcServer(
     const messageHandler = new IpcHandler(socket);
     messageHandler.registerHandlers(
       new up0.Handler(
+        spec,
         getHandshake,
         () => {},
         () => {},

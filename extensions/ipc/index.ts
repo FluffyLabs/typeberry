@@ -1,5 +1,6 @@
 import { type HeaderHash, type HeaderView, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type WithHash, blake2b } from "@typeberry/hash";
 import { ce129, up0 } from "@typeberry/jamnp-s";
 import { Listener } from "@typeberry/state-machine";
@@ -7,6 +8,7 @@ import { TRUNCATED_KEY_BYTES } from "@typeberry/trie/nodes.js";
 import { startIpcServer } from "./server.js";
 
 export interface ExtensionApi {
+  chainSpec: ChainSpec;
   bestHeader: Listener<WithHash<HeaderHash, HeaderView>>;
 }
 
@@ -46,5 +48,5 @@ export function startExtension(api: ExtensionApi) {
     return [new ce129.KeyValuePair(startKey, value)];
   };
 
-  return startIpcServer(announcements, getHandshake, getBoundaryNodes, getKeyValuePairs);
+  return startIpcServer(api.chainSpec, announcements, getHandshake, getBoundaryNodes, getKeyValuePairs);
 }

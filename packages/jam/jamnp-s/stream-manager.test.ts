@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import type { BytesBlob } from "@typeberry/bytes";
-import { TestStream, createTestPeer } from "@typeberry/networking/testing.js";
+import { TestManualStream, createDisconnectedPeer } from "@typeberry/networking/testing.js";
 import { OK } from "@typeberry/utils";
 import type { StreamHandler, StreamId, StreamKind, StreamMessageSender } from "./protocol/stream.js";
 import { StreamManager } from "./stream-manager.js";
@@ -38,7 +38,7 @@ describe("StreamManager", () => {
 
     it("should open new stream and call work function", async () => {
       const manager = new StreamManager();
-      const peer = createTestPeer("peer1");
+      const peer = createDisconnectedPeer("peer1");
       const handler = createTestHandler(1 as StreamKind);
       manager.registerOutgoingHandlers(handler);
 
@@ -65,7 +65,7 @@ describe("StreamManager", () => {
 
     it("should throw error for unsupported outgoing stream kind", () => {
       const manager = new StreamManager();
-      const peer = createTestPeer("peer1");
+      const peer = createDisconnectedPeer("peer1");
 
       assert.throws(() => {
         manager.withNewStream(peer, 99 as StreamKind, () => OK);
@@ -74,7 +74,7 @@ describe("StreamManager", () => {
 
     it("should find existing stream of given kind", () => {
       const manager = new StreamManager();
-      const peer = createTestPeer("peer1");
+      const peer = createDisconnectedPeer("peer1");
       const handler = createTestHandler(1 as StreamKind);
       manager.registerOutgoingHandlers(handler);
 
@@ -94,7 +94,7 @@ describe("StreamManager", () => {
 
     it("should not call work function if stream kind not found", () => {
       const manager = new StreamManager();
-      const peer = createTestPeer("peer1");
+      const peer = createDisconnectedPeer("peer1");
 
       let workCalled = false;
       manager.withStreamOfKind(peer.id, 1 as StreamKind, () => {
@@ -109,11 +109,11 @@ describe("StreamManager", () => {
   describe("incoming streams", () => {
     it("should handle incoming stream with valid kind", async () => {
       const manager = new StreamManager();
-      const peer = createTestPeer("peer1");
+      const peer = createDisconnectedPeer("peer1");
       const handler = createTestHandler(1 as StreamKind);
       manager.registerIncomingHandlers(handler);
 
-      const stream = new TestStream(42);
+      const stream = new TestManualStream(42);
 
       // Simulate incoming stream with kind byte
       const kindData = new Uint8Array([1, 0x41, 0x42]); // kind=1, followed by some data
@@ -129,8 +129,8 @@ describe("StreamManager", () => {
 
     it("should throw error for stream without kind byte", async () => {
       const manager = new StreamManager();
-      const peer = createTestPeer("peer1");
-      const stream = new TestStream(42);
+      const peer = createDisconnectedPeer("peer1");
+      const stream = new TestManualStream(42);
 
       // Simulate empty stream
       stream._incomingData.close();
@@ -140,8 +140,8 @@ describe("StreamManager", () => {
 
     it("should throw error for unsupported incoming stream kind", async () => {
       const manager = new StreamManager();
-      const peer = createTestPeer("peer2");
-      const stream = new TestStream(42);
+      const peer = createDisconnectedPeer("peer2");
+      const stream = new TestManualStream(42);
 
       // Simulate incoming stream with unsupported kind
       stream._simulateIncomingData(new Uint8Array([99])); // unsupported kind
@@ -154,11 +154,11 @@ describe("StreamManager", () => {
   describe("message handling", () => {
     it("should handle fragmented messages", async () => {
       const manager = new StreamManager();
-      const peer = createTestPeer("peer3");
+      const peer = createDisconnectedPeer("peer3");
       const handler = createTestHandler(1 as StreamKind);
       manager.registerIncomingHandlers(handler);
 
-      const stream = new TestStream(42);
+      const stream = new TestManualStream(42);
 
       // Send initial kind byte
       stream._simulateIncomingData(new Uint8Array([1]));
@@ -186,11 +186,11 @@ describe("StreamManager", () => {
   describe("error handling", () => {
     it("should handle stream errors and disconnect peer", async () => {
       const manager = new StreamManager();
-      const peer = createTestPeer("peer2");
+      const peer = createDisconnectedPeer("peer2");
       const handler = createTestHandler(1 as StreamKind);
       manager.registerIncomingHandlers(handler);
 
-      const stream = new TestStream(42);
+      const stream = new TestManualStream(42);
 
       // Send initial kind byte
       stream._simulateIncomingData(new Uint8Array([1]));
@@ -213,12 +213,12 @@ describe("StreamManager", () => {
   describe("lifecycle", () => {
     it("should wait for all streams to finish", async () => {
       const manager = new StreamManager();
-      const peer = createTestPeer("1");
+      const peer = createDisconnectedPeer("1");
       const handler = createTestHandler(1 as StreamKind);
       manager.registerIncomingHandlers(handler);
 
-      const stream1 = new TestStream(42);
-      const stream2 = new TestStream(43);
+      const stream1 = new TestManualStream(42);
+      const stream2 = new TestManualStream(43);
 
       // Start handling both streams
       stream1._simulateIncomingData(new Uint8Array([1]));

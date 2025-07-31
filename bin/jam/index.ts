@@ -10,7 +10,7 @@ import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 export * from "./args.js";
 
 export const prepareConfigFile = (args: Arguments): JamConfig => {
-  const files = args.command === Command.Import ? args.args.files : [];
+  const blocksToImport = args.command === Command.Import ? args.args.files : null;
   const nodeConfig = loadConfig(args.args.configPath);
 
   const portShift = args.command === Command.Dev ? args.args.index : 0;
@@ -26,7 +26,7 @@ export const prepareConfigFile = (args: Arguments): JamConfig => {
 
   return JamConfig.new({
     isAuthoring: args.command === Command.Dev,
-    blockToImport: files,
+    blocksToImport,
     nodeName: args.args.nodeName,
     nodeConfig,
     networkConfig: {

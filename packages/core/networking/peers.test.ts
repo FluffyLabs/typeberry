@@ -2,12 +2,12 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { OK } from "@typeberry/utils";
 import { Peers } from "./peers.js";
-import { type TestPeer, createTestPeer } from "./testing.js";
+import { type TestPeerDisconnected, createDisconnectedPeer } from "./testing.js";
 
 describe("Peers", () => {
   it("should track peer connection status", () => {
-    const peers = new Peers<TestPeer>();
-    const peer = createTestPeer("test-peer-1");
+    const peers = new Peers<TestPeerDisconnected>();
+    const peer = createDisconnectedPeer("test-peer-1");
 
     assert.strictEqual(peers.isConnected(peer.id), false);
 
@@ -19,8 +19,8 @@ describe("Peers", () => {
   });
 
   it("should call connection callbacks", () => {
-    const peers = new Peers<TestPeer>();
-    const peer = createTestPeer("test-peer-2");
+    const peers = new Peers<TestPeerDisconnected>();
+    const peer = createDisconnectedPeer("test-peer-2");
     let connectedCalled = false;
     let disconnectedCalled = false;
 
@@ -42,8 +42,8 @@ describe("Peers", () => {
   });
 
   it("should handle multiple callbacks", () => {
-    const peers = new Peers<TestPeer>();
-    const peer = createTestPeer("test-peer-3");
+    const peers = new Peers<TestPeerDisconnected>();
+    const peer = createDisconnectedPeer("test-peer-3");
     let callback1Called = false;
     let callback2Called = false;
 
@@ -63,8 +63,8 @@ describe("Peers", () => {
   });
 
   it("should allow callback removal", () => {
-    const peers = new Peers<TestPeer>();
-    const peer = createTestPeer("test-peer-4");
+    const peers = new Peers<TestPeerDisconnected>();
+    const peer = createDisconnectedPeer("test-peer-4");
     let callbackCalled = false;
 
     const removeCallback = peers.addOnPeerConnected(() => {
@@ -78,9 +78,9 @@ describe("Peers", () => {
   });
 
   it("should replace existing peer with same ID", () => {
-    const peers = new Peers<TestPeer>();
-    const peer1 = createTestPeer("same-id", "127.0.0.1", 8080);
-    const peer2 = createTestPeer("same-id", "127.0.0.1", 8081);
+    const peers = new Peers<TestPeerDisconnected>();
+    const peer1 = createDisconnectedPeer("same-id", "127.0.0.1", 8080);
+    const peer2 = createDisconnectedPeer("same-id", "127.0.0.1", 8081);
 
     peers.peerConnected(peer1);
     assert.strictEqual(peers.isConnected(peer1.id), true);

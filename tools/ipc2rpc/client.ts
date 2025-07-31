@@ -1,5 +1,6 @@
 import { Socket } from "node:net";
 
+import type { ChainSpec } from "@typeberry/config";
 import { IpcHandler } from "@typeberry/ext-ipc/handler.js";
 import { type StreamId, ce129, up0 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
@@ -8,6 +9,7 @@ import { handleMessageFragmentation } from "@typeberry/networking";
 const logger = Logger.new(import.meta.filename, "ipc2rpc/client");
 
 export function startClient(
+  spec: ChainSpec,
   socketPath: string,
   getHandshake: () => up0.Handshake,
   onAnnouncement: (streamId: StreamId, ann: up0.Announcement) => void,
@@ -17,7 +19,7 @@ export function startClient(
 
   return new Promise((resolve) => {
     const messageHandler = new IpcHandler(client);
-    messageHandler.registerHandlers(new up0.Handler(getHandshake, onAnnouncement, onHandshake));
+    messageHandler.registerHandlers(new up0.Handler(spec, getHandshake, onAnnouncement, onHandshake));
     messageHandler.registerHandlers(new ce129.Handler(false));
 
     client.connect(socketPath, () => {

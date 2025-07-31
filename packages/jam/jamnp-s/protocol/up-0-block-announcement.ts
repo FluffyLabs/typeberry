@@ -1,6 +1,7 @@
 import { Header, type HeaderHash, type TimeSlot } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
+import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
@@ -87,6 +88,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
   private readonly pendingHandshakes: Map<StreamId, boolean> = new Map();
 
   constructor(
+    private readonly spec: ChainSpec,
     private readonly getHandshake: () => Handshake,
     private readonly onAnnouncement: (sender: StreamId, ann: Announcement) => void,
     private readonly onHandshake: (sender: StreamId, handshake: Handshake) => void,
@@ -108,7 +110,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     }
 
     // it's just an announcement
-    const annoucement = Decoder.decodeObject(Announcement.Codec, message);
+    const annoucement = Decoder.decodeObject(Announcement.Codec, message, this.spec);
     logger.trace(`[${streamId}] --> got blocks announcement: ${annoucement}`);
     this.onAnnouncement(streamId, annoucement);
   }
@@ -134,7 +136,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     // only send announcement if we've handshaken
     if (this.handshakes.has(streamId)) {
       logger.trace(`[${streamId}] --> got blocks announcement: ${annoucement}`);
-      sender.bufferAndSend(Encoder.encodeObject(Announcement.Codec, annoucement));
+      sender.bufferAndSend(Encoder.encodeObject(Announcement.Codec, annoucement, this.spec));
     } else {
       logger.warn(`[${streamId}] <-- no handshake yet, skipping announcement.`);
     }

@@ -15,7 +15,7 @@ export const DEFAULT_DEV_CONFIG = {
 export class JamConfig {
   static new({
     isAuthoring,
-    blockToImport,
+    blocksToImport,
     nodeName,
     nodeConfig,
     devConfig,
@@ -23,7 +23,7 @@ export class JamConfig {
     networkConfig,
   }: {
     isAuthoring?: boolean;
-    blockToImport?: string[];
+    blocksToImport?: string[] | null;
     nodeName: string;
     nodeConfig: NodeConfiguration;
     devConfig?: DevConfig;
@@ -38,7 +38,7 @@ export class JamConfig {
 
     return new JamConfig(
       isAuthoring ?? false,
-      blockToImport ?? [],
+      blocksToImport ?? null,
       nodeName,
       nodeConfig,
       fullConfig,
