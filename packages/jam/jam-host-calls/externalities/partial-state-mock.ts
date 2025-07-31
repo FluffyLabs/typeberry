@@ -86,9 +86,9 @@ export class PartialStateMock implements PartialState {
     codeLength: U64,
     gas: ServiceGas,
     balance: ServiceGas,
-    freeStorage: U64,
+    gratisStorage: U64,
   ): Result<ServiceId, NewServiceError> {
-    this.newServiceCalled.push([codeHash, codeLength, gas, balance, freeStorage]);
+    this.newServiceCalled.push([codeHash, codeLength, gas, balance, gratisStorage]);
     return this.newServiceResponse;
   }
 

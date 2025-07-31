@@ -89,7 +89,7 @@ describe("LMDB States database", () => {
             accumulateMinGas: tryAsServiceGas(10_000),
             onTransferMinGas: tryAsServiceGas(5_000),
             storageUtilisationBytes: tryAsU64(1_000),
-            gratisStorageBytes: tryAsU64(0),
+            gratisStorage: tryAsU64(0),
             storageUtilisationCount: tryAsU32(1),
             created: tryAsTimeSlot(0),
             lastAccumulation: tryAsTimeSlot(0),

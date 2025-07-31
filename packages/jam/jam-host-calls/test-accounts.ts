@@ -70,7 +70,7 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
       ServiceAccountInfo.calculateThresholdBalance(
         accountInfo.storageUtilisationCount,
         accountInfo.storageUtilisationBytes,
-        accountInfo.gratisStorageBytes,
+        accountInfo.gratisStorage,
       ) > accountInfo.balance
     );
   }

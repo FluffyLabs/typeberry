@@ -29,7 +29,7 @@ function prepareRegsAndMemory(
   codeLength: U64,
   gas: U64,
   balance: U64,
-  freeStorage: U64,
+  gratisStorage: U64,
   { skipCodeHash = false }: { skipCodeHash?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
@@ -38,7 +38,7 @@ function prepareRegsAndMemory(
   registers.set(CODE_LENGTH_REG, tryAsU64(codeLength));
   registers.set(GAS_REG, gas);
   registers.set(BALANCE_REG, balance);
-  registers.set(FREE_STORAGE, freeStorage);
+  registers.set(FREE_STORAGE, gratisStorage);
 
   const builder = new MemoryBuilder();
 

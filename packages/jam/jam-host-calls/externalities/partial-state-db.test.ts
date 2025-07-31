@@ -512,23 +512,15 @@ describe("PartialState.newService", () => {
     const codeLengthU64 = tryAsU64(codeLength);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
-    const gratisStorageBytes = tryAsU64(50);
+    const gratisStorage = tryAsU64(50);
 
     const items = tryAsU32(2); // 2 * 1 + 0
     const bytes = tryAsU64(81 + codeLength);
-    const thresholdForNew = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? ServiceAccountInfo.calculateThresholdBalance(items, bytes, gratisStorageBytes)
-      : ServiceAccountInfo.calculateThresholdBalance(items, bytes, tryAsU64(0));
+    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes, gratisStorage);
     const expectedBalance = tryAsU64(service.data.info.balance - thresholdForNew);
 
     // when
-    const result = partialState.newService(
-      codeHash,
-      codeLengthU64,
-      accumulateMinGas,
-      onTransferMinGas,
-      Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? gratisStorageBytes : tryAsU64(0),
-    );
+    const result = partialState.newService(codeHash, codeLengthU64, accumulateMinGas, onTransferMinGas, gratisStorage);
 
     // then
     const expectedServiceId = tryAsServiceId(10);
@@ -552,7 +544,7 @@ describe("PartialState.newService", () => {
           accumulateMinGas,
           onTransferMinGas,
           storageUtilisationBytes: bytes,
-          gratisStorageBytes: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? gratisStorageBytes : tryAsU64(0),
+          gratisStorage: gratisStorage,
           storageUtilisationCount: items,
           created: tryAsTimeSlot(16),
           lastAccumulation: tryAsTimeSlot(0),
@@ -603,11 +595,11 @@ describe("PartialState.newService", () => {
     const codeLength = tryAsU64(2 ** 32 + 1);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
-    const freeStorage = tryAsU64(1024);
+    const gratisStorage = tryAsU64(1024);
 
     // when
     const result = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, freeStorage)
+      ? partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, gratisStorage)
       : partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, tryAsU64(0));
 
     // then
@@ -650,10 +642,10 @@ describe("PartialState.newService", () => {
     const codeLength = tryAsU64(1024);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
-    const freeStorage = tryAsU64(1024);
+    const gratisStorage = tryAsU64(1024);
 
     // when
-    const result = partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, freeStorage);
+    const result = partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, gratisStorage);
 
     // then
     assert.deepStrictEqual(result, Result.error(NewServiceError.UnprivilegedService));
@@ -1612,7 +1604,7 @@ describe("AccumulateServiceExternalities", () => {
         storageUtilisationCount: tryAsU32(initialStorage.size),
         codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
         onTransferMinGas: tryAsServiceGas(1000),
-        gratisStorageBytes: tryAsU64(0),
+        gratisStorage: tryAsU64(0),
         created: tryAsTimeSlot(0),
         lastAccumulation: tryAsTimeSlot(0),
         parentService: tryAsServiceId(0),

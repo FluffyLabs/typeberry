@@ -395,7 +395,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(
       items.value,
       bytes.value,
-      serviceInfo.gratisStorageBytes,
+      serviceInfo.gratisStorage,
     );
     if (serviceInfo.balance < thresholdBalance) {
       return Result.error(NewServiceError.InsufficientFunds);
@@ -518,7 +518,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(
       source.storageUtilisationCount,
       source.storageUtilisationBytes,
-      source.gratisStorageBytes,
+      source.gratisStorage,
     );
     if (newBalance < thresholdBalance) {
       return Result.error(TransferError.BalanceBelowThreshold);
@@ -550,7 +550,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     codeLength: U64,
     accumulateMinGas: ServiceGas,
     onTransferMinGas: ServiceGas,
-    gratisStorageOffset: U64,
+    gratisStorage: U64,
   ): Result<ServiceId, NewServiceError> {
     const newServiceId = this.nextNewServiceId;
     // calculate the threshold. Storage is empty, one preimage requested.
@@ -559,17 +559,23 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     const bytes = sumU64(tryAsU64(81), codeLength);
     const clampedLength = clampU64ToU32(codeLength);
 
-    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes.value, gratisStorageOffset);
+    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes.value, gratisStorage);
     const currentService = this.getCurrentServiceInfo();
     const thresholdForCurrent = ServiceAccountInfo.calculateThresholdBalance(
       currentService.storageUtilisationCount,
       currentService.storageUtilisationBytes,
-      currentService.gratisStorageBytes,
+      currentService.gratisStorage,
     );
 
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/369203369603?v=0.6.7
-    if (gratisStorageOffset !== tryAsU64(0) && this.currentServiceId !== this.state.privilegedServices.manager) {
-      return Result.error(NewServiceError.UnprivilegedService);
+    if (gratisStorage !== tryAsU64(0)) {
+      const updatedManager =
+        this.updatedState.privilegedServices !== null ? this.updatedState.privilegedServices.manager : undefined;
+      const manager = updatedManager ?? this.state.privilegedServices.manager;
+
+      if (this.currentServiceId !== manager) {
+        return Result.error(NewServiceError.UnprivilegedService);
+      }
     }
 
     // check if we have enough balance
@@ -590,7 +596,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
           onTransferMinGas,
           storageUtilisationBytes: bytes.value,
           storageUtilisationCount: items,
-          gratisStorageBytes: gratisStorageOffset,
+          gratisStorage: gratisStorage,
           created: this.currentTimeslot,
           lastAccumulation: tryAsTimeSlot(0),
           parentService: this.currentServiceId,

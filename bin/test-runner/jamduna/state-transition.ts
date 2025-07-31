@@ -131,7 +131,7 @@ function copyNewerValues(from: InMemoryState, to: InMemoryState): void {
       ...toService[1].data.info,
       created: fromService.data.info.created,
       lastAccumulation: fromService.data.info.lastAccumulation,
-      gratisStorageBytes: fromService.data.info.gratisStorageBytes,
+      gratisStorage: fromService.data.info.gratisStorage,
       parentService: fromService.data.info.parentService,
     };
   }

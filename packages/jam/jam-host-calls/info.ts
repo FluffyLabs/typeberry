@@ -67,7 +67,7 @@ export class Info implements HostCallHandler {
             thresholdBalance: ServiceAccountInfo.calculateThresholdBalance(
               accountInfo.storageUtilisationCount,
               accountInfo.storageUtilisationBytes,
-              accountInfo.gratisStorageBytes,
+              accountInfo.gratisStorage,
             ),
           });
 
@@ -102,7 +102,7 @@ export const codecServiceAccountInfoWithThresholdBalance = Compatibility.isGreat
         onTransferMinGas: codec.u64.convert((i) => i, tryAsServiceGas),
         storageUtilisationBytes: codec.u64,
         storageUtilisationCount: codec.u32,
-        gratisStorageBytes: codec.u64,
+        gratisStorage: codec.u64,
         created: codec.u32.convert((x) => x, tryAsTimeSlot),
         lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
         parentService: codec.u32.convert((x) => x, tryAsServiceId),
@@ -118,7 +118,7 @@ export const codecServiceAccountInfoWithThresholdBalance = Compatibility.isGreat
         onTransferMinGas: codec.u64.convert((i) => i, tryAsServiceGas),
         storageUtilisationBytes: codec.u64,
         storageUtilisationCount: codec.u32,
-        gratisStorageBytes: ignoreValueWithDefault(tryAsU64(0)),
+        gratisStorage: ignoreValueWithDefault(tryAsU64(0)),
         created: ignoreValueWithDefault(tryAsTimeSlot(0)),
         lastAccumulation: ignoreValueWithDefault(tryAsTimeSlot(0)),
         parentService: ignoreValueWithDefault(tryAsServiceId(0)),

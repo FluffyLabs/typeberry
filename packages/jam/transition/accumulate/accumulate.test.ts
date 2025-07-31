@@ -192,7 +192,7 @@ const createServices = (items: [ServiceId, OpaqueHash, BytesBlob][]) => {
           onTransferMinGas: tryAsServiceGas(0n),
           storageUtilisationBytes: tryAsU64(0),
           storageUtilisationCount: tryAsU32(0),
-          gratisStorageBytes: tryAsU64(0),
+          gratisStorage: tryAsU64(0),
           created: tryAsTimeSlot(0),
           lastAccumulation: tryAsTimeSlot(0),
           parentService: tryAsServiceId(0),

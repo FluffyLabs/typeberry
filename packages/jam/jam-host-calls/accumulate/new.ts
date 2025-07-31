@@ -39,7 +39,7 @@ export class New implements HostCallHandler {
     // `m`
     const allowance = tryAsServiceGas(regs.get(10));
     // `f`
-    const gratisStorageOffset = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? regs.get(11) : tryAsU64(0);
+    const gratisStorage = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? regs.get(11) : tryAsU64(0);
 
     // `c`
     const codeHash = Bytes.zero(HASH_SIZE);
@@ -49,13 +49,7 @@ export class New implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const assignedId = this.partialState.newService(
-      codeHash.asOpaque(),
-      codeLength,
-      gas,
-      allowance,
-      gratisStorageOffset,
-    );
+    const assignedId = this.partialState.newService(codeHash.asOpaque(), codeLength, gas, allowance, gratisStorage);
 
     if (assignedId.isOk) {
       regs.set(IN_OUT_REG, tryAsU64(assignedId.ok));

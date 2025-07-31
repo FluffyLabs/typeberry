@@ -30,7 +30,7 @@ describe("SerializedState", () => {
             onTransferMinGas: tryAsServiceGas(10),
             storageUtilisationBytes: tryAsU64(10),
             storageUtilisationCount: tryAsU32(3),
-            gratisStorageBytes: tryAsU64(0),
+            gratisStorage: tryAsU64(0),
             created: tryAsTimeSlot(0),
             lastAccumulation: tryAsTimeSlot(0),
             parentService: tryAsServiceId(0),
