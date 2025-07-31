@@ -1,4 +1,4 @@
-import { DEV_CONFIG, NODE_DEFAULTS } from "@typeberry/config-node";
+import { DEFAULT_CONFIG, DEV_CONFIG, NODE_DEFAULTS } from "@typeberry/config-node";
 import { type U16, isU16 } from "@typeberry/numbers";
 import minimist from "minimist";
 import packageJson from "./package.json" with { type: "json" };
@@ -14,7 +14,7 @@ Usage:
 Options:
   --name                Override node name. Affects networking key and db location.
                         [default: ${NODE_DEFAULTS.name}]
-  --config              Path to a config file or '${DEV_CONFIG}'.
+  --config              Path to a config file or one of: ['${DEV_CONFIG}', '${DEFAULT_CONFIG}'].
                         [default: ${NODE_DEFAULTS.config}]
 `;
 

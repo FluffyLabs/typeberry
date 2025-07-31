@@ -3,10 +3,10 @@
   "version": 1,
   "flavor": "tiny",
   "authorship": {
-    "omit_seal_verification": true
+    "omit_seal_verification": false
   },
   "chain_spec": {
-    "id": "typeberry-dev",
+    "id": "typeberry-default",
     "bootnodes": [
       "e3r2oc62zwfj3crnuifuvsxvbtlzetk4o5qyhetkhagsc2fgl2oka@127.0.0.1:40000",
       "eecgwpgwq3noky4ijm4jmvjtmuzv44qvigciusxakq5epnrfj2utb@127.0.0.1:12345",
