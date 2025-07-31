@@ -1,6 +1,6 @@
 import { pathToFileURL } from "node:url";
 import { tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
-import { DEV_CONFIG, NODE_DEFAULTS, loadConfig } from "@typeberry/config-node";
+import { NODE_DEFAULTS, loadConfig } from "@typeberry/config-node";
 import { Level, Logger } from "@typeberry/logger";
 import * as node from "@typeberry/node";
 import { type CommonArguments, HELP, type RequiredFlag, parseArgs, requiredSeedFlags } from "./args.js";
@@ -31,7 +31,7 @@ export async function main(args: string[]) {
 export function createJamConfig(argv: CommonArguments): node.JamConfig {
   // TODO: [MaSo] Add networking config; add loading from genesis path
 
-  let nodeConfig = loadConfig(DEV_CONFIG);
+  let nodeConfig = loadConfig(NODE_DEFAULTS.config);
   let devConfig = node.DEFAULT_DEV_CONFIG;
   let seedConfig: node.SeedDevConfig | undefined;
 
