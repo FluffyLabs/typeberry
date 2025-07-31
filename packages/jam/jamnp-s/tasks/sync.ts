@@ -231,7 +231,7 @@ export class SyncTask {
 
   private handleGetBlockSequence(
     peer: Peer,
-    hash: HeaderHash,
+    startHash: HeaderHash,
     direction: ce128.Direction,
     maxBlocks: U32,
   ): BlockView[] {
@@ -245,23 +245,46 @@ export class SyncTask {
       return Decoder.decodeObject(Block.Codec.View, blockView, this.spec);
     };
 
-    const startBlock = getBlockView(hash);
+    const startBlock = getBlockView(startHash);
     if (startBlock === null) {
       // we don't know about that block at all, so let's just bail.
       // we should probably penalize the peer for sending BS?
-      logger.warn(`[${peer.id}] <-- Invalid block sequence request: ${hash} missing header or extrinsic.`);
+      logger.warn(`[${peer.id}] <-- Invalid block sequence request: ${startHash} missing header or extrinsic.`);
       return [];
     }
 
+    const limit = Math.min(maxBlocks, MAX_BLOCK_SEQUENCE);
+
     if (direction === ce128.Direction.AscExcl) {
-      // TODO [ToDr] Unsupported yet.
-      logger.warn(`[${peer.id}] <-- Unsupported children request of: ${hash}.`);
-      return [];
+      // Since we don't have an index of all blocks, we need to start from
+      // the last block and reach the `startBlock`.
+      const response: HeaderHash[] = [];
+      const startIndex = startBlock.header.view().timeSlotIndex.materialize();
+      let currentHash = this.blocks.getBestHeaderHash();
+      for (;;) {
+        const currentHeader = this.blocks.getHeader(currentHash);
+        // some errornuous situation, we didn't really reach the block?
+        if (currentHeader === null || currentHeader.timeSlotIndex.materialize() < startIndex) {
+          return [];
+        }
+        // we have everything we need, let's return it now
+        if (startHash.isEqualTo(currentHash)) {
+          return response
+            .reverse()
+            .slice(0, limit)
+            .flatMap((hash) => {
+              const view = getBlockView(hash);
+              return view === null ? [] : [view];
+            });
+        }
+        // otherwise include current hash in potential response and move further down.
+        response.push(currentHash);
+        currentHash = currentHeader.parentHeaderHash.materialize();
+      }
     }
 
     const response = [startBlock];
     let currentBlock = startBlock;
-    const limit = Math.min(maxBlocks, MAX_BLOCK_SEQUENCE);
 
     // now iterate a bit over ancestor blocks
     for (let i = 0; i < limit; i++) {
