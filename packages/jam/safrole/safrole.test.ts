@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import { type EntropyHash, type PerValidator, tryAsTimeSlot } from "@typeberry/block";
-import { type SignedTicket, type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
+import { type SignedTicket, Ticket, type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
@@ -9,7 +9,11 @@ import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519K
 import { BANDERSNATCH_PROOF_BYTES, BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { VALIDATOR_META_BYTES, ValidatorData, hashComparator } from "@typeberry/state";
-import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
+import {
+  type SafroleSealingKeys,
+  SafroleSealingKeysData,
+  SafroleSealingKeysKind,
+} from "@typeberry/state/safrole-data.js";
 import { Result, deepEqual } from "@typeberry/utils";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
@@ -323,6 +327,148 @@ describe("Safrole", () => {
     if (result.isError) {
       assert.deepEqual(result.error, SafroleErrorCode.BadTicketOrder);
     }
+  });
+
+  it("should return correct sequenced sealingKeySeries", async () => {
+    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator, []);
+    const state: SafroleState = {
+      timeslot: tryAsTimeSlot(11),
+      entropy: FixedSizeArray.new(
+        [
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+        ],
+        4,
+      ),
+      previousValidatorData: validators,
+      currentValidatorData: validators,
+      designatedValidatorData: validators,
+      nextValidatorData: validators,
+      ticketsAccumulator: asKnownSize([
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 1),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 2),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 3),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 4),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 5),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 6),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 7),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 8),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 9),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 10),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 11),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 12),
+        }),
+      ]),
+      sealingKeySeries: fakeSealingKeys,
+      epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
+    };
+    const safrole = new Safrole(tinyChainSpec, state, bwasm);
+    const timeslot = tryAsTimeSlot(12);
+    const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
+    const extrinsic: TicketsExtrinsic = asKnownSize([]);
+
+    const input = {
+      slot: timeslot,
+      entropy,
+      extrinsic,
+      punishSet,
+    };
+
+    const result = await safrole.transition(input);
+    assert.ok(result.isOk, "Expected transition to pass successfully");
+
+    deepEqual(
+      result.ok.stateUpdate.sealingKeySeries,
+      SafroleSealingKeysData.tickets(
+        asKnownSize([
+          Ticket.create({
+            attempt: tryAsTicketAttempt(0),
+            id: Bytes.fill(HASH_SIZE, 1),
+          }),
+          Ticket.create({
+            attempt: tryAsTicketAttempt(0),
+            id: Bytes.fill(HASH_SIZE, 12),
+          }),
+          Ticket.create({
+            attempt: tryAsTicketAttempt(0),
+            id: Bytes.fill(HASH_SIZE, 2),
+          }),
+          Ticket.create({
+            attempt: tryAsTicketAttempt(0),
+            id: Bytes.fill(HASH_SIZE, 11),
+          }),
+          Ticket.create({
+            attempt: tryAsTicketAttempt(0),
+            id: Bytes.fill(HASH_SIZE, 3),
+          }),
+          Ticket.create({
+            attempt: tryAsTicketAttempt(0),
+            id: Bytes.fill(HASH_SIZE, 10),
+          }),
+          Ticket.create({
+            attempt: tryAsTicketAttempt(0),
+            id: Bytes.fill(HASH_SIZE, 4),
+          }),
+          Ticket.create({
+            attempt: tryAsTicketAttempt(0),
+            id: Bytes.fill(HASH_SIZE, 9),
+          }),
+          Ticket.create({
+            attempt: tryAsTicketAttempt(0),
+            id: Bytes.fill(HASH_SIZE, 5),
+          }),
+          Ticket.create({
+            attempt: tryAsTicketAttempt(0),
+            id: Bytes.fill(HASH_SIZE, 8),
+          }),
+          Ticket.create({
+            attempt: tryAsTicketAttempt(0),
+            id: Bytes.fill(HASH_SIZE, 6),
+          }),
+          Ticket.create({
+            attempt: tryAsTicketAttempt(0),
+            id: Bytes.fill(HASH_SIZE, 7),
+          }),
+        ]),
+      ),
+    );
   });
 
   it("should return correct result for empty data", async () => {
