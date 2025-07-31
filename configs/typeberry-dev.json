@@ -1,5 +1,5 @@
 {
-  "$schema": "./config-v1.schema.json",
+  "$schema": "https://fluffylabs.dev/typeberry/schemas/config-v1.schema.json",
   "version": 1,
   "flavor": "tiny",
   "authorship": {
