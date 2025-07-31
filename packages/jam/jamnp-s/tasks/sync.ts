@@ -50,7 +50,7 @@ export class SyncTask {
     const syncTask = new SyncTask(spec, streamManager, connections, blocks, onNewBlocks);
 
     const getPeerForStream = (streamId: StreamId) => {
-      // TODO [ToDr] Needing to query stream manager for a peer might be a bit
+      // NOTE [ToDr] Needing to query stream manager for a peer might be a bit
       // wasteful, since we probably know the peer when we dispatch the
       // stream message, however it's nice that the current abstraction of
       // streams does not know anything about peers. Revisit if it gets ugly.
@@ -142,7 +142,7 @@ export class SyncTask {
     const bestHeader = hashHeader(announcement.header, this.spec);
     logger.info(`[${peer.id}] --> Received new header #${announcement.header.timeSlotIndex}: ${bestHeader.hash}`);
 
-    // TODO [ToDr] Instead of having `Connections` store aux data perhaps
+    // NOTE [ToDr] Instead of having `Connections` store aux data perhaps
     // we should maintain that directly? However that would require
     // listening to peers connected/disconnected to perfrom some cleanups
     // and extra persistence.
@@ -174,7 +174,6 @@ export class SyncTask {
         hash: bestHeader.hash,
         slot: bestHeader.data.timeSlotIndex,
       });
-      this.maintainSync();
     }
   }
 
@@ -243,7 +242,6 @@ export class SyncTask {
         return null;
       }
       const blockView = BytesBlob.blobFromParts(header.encoded().raw, extrinsic.encoded().raw);
-      // TODO [ToDr] rest of the blocks
       return Decoder.decodeObject(Block.Codec.View, blockView, this.spec);
     };
 
@@ -279,9 +277,7 @@ export class SyncTask {
     return response;
   }
 
-  /**
-   * Should be called periodically to request best seen blocks from other peers.
-   */
+  /** Should be called periodically to request best seen blocks from other peers. */
   maintainSync() {
     // figure out where we are at
     const ourBestHash = this.blocks.getBestHeaderHash();
@@ -308,7 +304,7 @@ export class SyncTask {
     const requested: RequestedBlocks[] = [];
 
     logger.log(`Attempting to sync ${blocksToSync} blocks.`);
-    // TODO [ToDr] We might be requesting the same blocks from many peers
+    // NOTE [ToDr] We might be requesting the same blocks from many peers
     // which isn't very optimal, but for now: 🤷
     //
     // find peers that might have that block
@@ -383,7 +379,6 @@ export type RequestedBlocks = {
   count: number;
 };
 
-// TODO [ToDr] Should this be transition hasher?
 function hashHeader(header: Header, spec: ChainSpec): WithHash<HeaderHash, Header> {
   const encoded = Encoder.encodeObject(Header.Codec, header, spec);
   return new WithHash(blake2b.hashBytes(encoded).asOpaque(), header);

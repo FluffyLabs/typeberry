@@ -17,6 +17,10 @@ export class QuicNetwork implements Network<QuicPeer> {
     private readonly listen: { host: string; port: number },
   ) {}
 
+  get isRunning() {
+    return this.started;
+  }
+
   async start() {
     if (this.started) {
       throw new Error("Network already started!");

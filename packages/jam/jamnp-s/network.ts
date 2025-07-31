@@ -39,7 +39,7 @@ export async function setup(
   const syncTask = SyncTask.start(spec, streamManager, connections, blocks, onNewBlocks);
 
   setImmediate(async () => {
-    for (;;) {
+    while (network.isRunning) {
       await setTimeout(3000);
       syncTask.maintainSync();
     }

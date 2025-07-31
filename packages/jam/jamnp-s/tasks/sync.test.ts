@@ -59,9 +59,6 @@ describe("SyncTask", () => {
     const openConnection = (other: { name: string; network: MockNetwork }) => {
       // we need to create a pair of peers that connected together
       const [self, peer1] = createTestPeerPair(connectionIdx++, name, other.name);
-
-      // TODO [ToDr] we should rather simulate new connection on our side and not do this fake peer stuff here.
-      // connect these two guys together
       network._simulatePeerConnect(peer1);
       other.network._simulatePeerConnect(self);
 

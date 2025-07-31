@@ -37,7 +37,8 @@ export type Options = {
 export class Quic {
   /** Setup QUIC socket and start listening for connections. */
   static async setup({ host, port, protocols, key }: Options): Promise<QuicNetwork> {
-    const quicLogger = new QuicLogger("quic", LogLevel.WARN, [
+    const quicLoggerLvl = Logger.getLevel("net") > LogLevel.DEBUG ? LogLevel.WARN : LogLevel.DEBUG;
+    const quicLogger = new QuicLogger("quic", quicLoggerLvl, [
       new StreamHandler(formatting.format`${formatting.level}:${formatting.keys}:${formatting.msg}`),
     ]);
 

@@ -111,7 +111,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
 
     // it's just an announcement
     const annoucement = Decoder.decodeObject(Announcement.Codec, message, this.spec);
-    logger.trace(`[${streamId}] --> got blocks announcement: ${annoucement}`);
+    logger.log(`[${streamId}] --> got blocks announcement: ${annoucement}`);
     this.onAnnouncement(streamId, annoucement);
   }
 
@@ -126,7 +126,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       return;
     }
     const handshake = this.getHandshake();
-    logger.log(`[${streamId}] <-- sending handshake`);
+    logger.trace(`[${streamId}] <-- sending handshake`);
     this.pendingHandshakes.set(sender.streamId, true);
     sender.bufferAndSend(Encoder.encodeObject(Handshake.Codec, handshake));
   }
@@ -135,7 +135,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     const { streamId } = sender;
     // only send announcement if we've handshaken
     if (this.handshakes.has(streamId)) {
-      logger.trace(`[${streamId}] --> got blocks announcement: ${annoucement}`);
+      logger.trace(`[${streamId}] <-- sending block announcement: ${annoucement}`);
       sender.bufferAndSend(Encoder.encodeObject(Announcement.Codec, annoucement, this.spec));
     } else {
       logger.warn(`[${streamId}] <-- no handshake yet, skipping announcement.`);
