@@ -9,11 +9,7 @@ import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519K
 import { BANDERSNATCH_PROOF_BYTES, BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { VALIDATOR_META_BYTES, ValidatorData, hashComparator } from "@typeberry/state";
-import {
-  type SafroleSealingKeys,
-  SafroleSealingKeysData,
-  SafroleSealingKeysKind,
-} from "@typeberry/state/safrole-data.js";
+import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
 import { Result, deepEqual } from "@typeberry/utils";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
@@ -333,7 +329,7 @@ describe("Safrole", () => {
     const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator, []);
     const state: SafroleState = {
       // end of epoch
-      timeslot: tryAsTimeSlot(11),
+      timeslot: tryAsTimeSlot(9),
       entropy: FixedSizeArray.new(
         [
           Bytes.zero(HASH_SIZE).asOpaque(),
@@ -402,7 +398,7 @@ describe("Safrole", () => {
     };
     const safrole = new Safrole(tinyChainSpec, state, bwasm);
     // new epoch; return reordered tickets accumulator
-    const timeslot = tryAsTimeSlot(12);
+    const timeslot = tryAsTimeSlot(10);
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: TicketsExtrinsic = asKnownSize([]);
 
@@ -417,59 +413,57 @@ describe("Safrole", () => {
     assert.ok(result.isOk, "Expected transition to pass successfully");
 
     deepEqual(
-      result.ok.stateUpdate.sealingKeySeries,
-      SafroleSealingKeysData.tickets(
-        asKnownSize([
-          Ticket.create({
-            attempt: tryAsTicketAttempt(0),
-            id: Bytes.fill(HASH_SIZE, 1),
-          }),
-          Ticket.create({
-            attempt: tryAsTicketAttempt(0),
-            id: Bytes.fill(HASH_SIZE, 12),
-          }),
-          Ticket.create({
-            attempt: tryAsTicketAttempt(0),
-            id: Bytes.fill(HASH_SIZE, 2),
-          }),
-          Ticket.create({
-            attempt: tryAsTicketAttempt(0),
-            id: Bytes.fill(HASH_SIZE, 11),
-          }),
-          Ticket.create({
-            attempt: tryAsTicketAttempt(0),
-            id: Bytes.fill(HASH_SIZE, 3),
-          }),
-          Ticket.create({
-            attempt: tryAsTicketAttempt(0),
-            id: Bytes.fill(HASH_SIZE, 10),
-          }),
-          Ticket.create({
-            attempt: tryAsTicketAttempt(0),
-            id: Bytes.fill(HASH_SIZE, 4),
-          }),
-          Ticket.create({
-            attempt: tryAsTicketAttempt(0),
-            id: Bytes.fill(HASH_SIZE, 9),
-          }),
-          Ticket.create({
-            attempt: tryAsTicketAttempt(0),
-            id: Bytes.fill(HASH_SIZE, 5),
-          }),
-          Ticket.create({
-            attempt: tryAsTicketAttempt(0),
-            id: Bytes.fill(HASH_SIZE, 8),
-          }),
-          Ticket.create({
-            attempt: tryAsTicketAttempt(0),
-            id: Bytes.fill(HASH_SIZE, 6),
-          }),
-          Ticket.create({
-            attempt: tryAsTicketAttempt(0),
-            id: Bytes.fill(HASH_SIZE, 7),
-          }),
-        ]),
-      ),
+      result.ok.ticketsMark,
+      asKnownSize([
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 1),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 12),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 2),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 11),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 3),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 10),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 4),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 9),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 5),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 8),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 6),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 7),
+        }),
+      ]),
     );
   });
 
