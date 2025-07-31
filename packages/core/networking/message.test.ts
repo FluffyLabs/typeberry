@@ -31,9 +31,12 @@ describe("encodeMessageLength", () => {
 describe("handleMessageFragmentation", () => {
   it("should handle complete message received at once", () => {
     const receivedMessages: Uint8Array[] = [];
-    const handler = handleMessageFragmentation((data) => {
-      receivedMessages.push(data);
-    });
+    const handler = handleMessageFragmentation(
+      (data) => {
+        receivedMessages.push(data);
+      },
+      () => {},
+    );
 
     const message = new Uint8Array([0x01, 0x02, 0x03]);
     const lengthPrefix = new Uint8Array([3, 0, 0, 0]); // length = 3 in little endian
@@ -47,9 +50,12 @@ describe("handleMessageFragmentation", () => {
 
   it("should handle message received in fragments", () => {
     const receivedMessages: Uint8Array[] = [];
-    const handler = handleMessageFragmentation((data) => {
-      receivedMessages.push(data);
-    });
+    const handler = handleMessageFragmentation(
+      (data) => {
+        receivedMessages.push(data);
+      },
+      () => {},
+    );
 
     const message = new Uint8Array([0x01, 0x02, 0x03]);
     const lengthPrefix = new Uint8Array([3, 0, 0, 0]); // length = 3 in little endian
@@ -74,9 +80,12 @@ describe("handleMessageFragmentation", () => {
 
   it("should handle multiple consecutive messages", () => {
     const receivedMessages: Uint8Array[] = [];
-    const handler = handleMessageFragmentation((data) => {
-      receivedMessages.push(data);
-    });
+    const handler = handleMessageFragmentation(
+      (data) => {
+        receivedMessages.push(data);
+      },
+      () => {},
+    );
 
     const message1 = new Uint8Array([0x01, 0x02]);
     const message2 = new Uint8Array([0x03, 0x04, 0x05]);
@@ -89,5 +98,27 @@ describe("handleMessageFragmentation", () => {
     assert.strictEqual(receivedMessages.length, 2);
     assert.deepStrictEqual(receivedMessages[0], message1);
     assert.deepStrictEqual(receivedMessages[1], message2);
+  });
+
+  it("should reject if message is too big", () => {
+    const receivedMessages: Uint8Array[] = [];
+    let overflowCalled = false;
+    const handler = handleMessageFragmentation(
+      (data) => {
+        receivedMessages.push(data);
+      },
+      () => {
+        overflowCalled = true;
+      },
+    );
+
+    const message1 = new Uint8Array(16 * 1024 * 1024 + 1);
+    const lengthPrefix1 = new Uint8Array([0, 0, 0, 1]);
+    const combinedFrame = new Uint8Array([...lengthPrefix1, ...message1]);
+
+    handler(combinedFrame);
+
+    assert.deepStrictEqual(receivedMessages, []);
+    assert.strictEqual(overflowCalled, true);
   });
 });

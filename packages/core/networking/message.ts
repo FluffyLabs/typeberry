@@ -3,6 +3,8 @@ import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 
 export const MSG_LEN_PREFIX_BYTES = 4;
 
+const MAX_MESSAGE_BYTES = 16 * 1024 * 1024;
+
 /** Encode message length into a buffer. */
 export function encodeMessageLength(message: Uint8Array) {
   return u32AsLeBytes(tryAsU32(message.length));
@@ -14,7 +16,10 @@ export function encodeMessageLength(message: Uint8Array) {
  * Each message should be prefixed with a single U32 denoting the length of the next data
  * frame that should be interpreted as single chunk.
  */
-export function handleMessageFragmentation(callback: (data: Uint8Array) => void): (data: Uint8Array) => void {
+export function handleMessageFragmentation(
+  callback: (data: Uint8Array) => void,
+  onOverflow: () => void,
+): (data: Uint8Array) => void {
   let buffer = Buffer.alloc(0);
   let expectedLength = -1;
 
@@ -34,6 +39,11 @@ export function handleMessageFragmentation(callback: (data: Uint8Array) => void)
 
       // we don't have enough data, so let's wait.
       if (buffer.length < expectedLength) {
+        break;
+      }
+
+      if (buffer.length > MAX_MESSAGE_BYTES) {
+        onOverflow();
         break;
       }
 

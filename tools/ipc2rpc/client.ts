@@ -32,14 +32,20 @@ export function startClient(
 
     client.on(
       "data",
-      handleMessageFragmentation((data) => {
-        try {
-          messageHandler.onSocketMessage(data);
-        } catch (e) {
-          logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
+      handleMessageFragmentation(
+        (data) => {
+          try {
+            messageHandler.onSocketMessage(data);
+          } catch (e) {
+            logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
+            client.end();
+          }
+        },
+        () => {
+          logger.error("Message too big. Closing connection.");
           client.end();
-        }
-      }),
+        },
+      ),
     );
 
     client.on("timeout", () => {

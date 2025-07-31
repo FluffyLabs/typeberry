@@ -50,14 +50,20 @@ export function startIpcServer(
     // Handle incoming data from the client
     socket.on(
       "data",
-      handleMessageFragmentation((data: Uint8Array) => {
-        try {
-          messageHandler.onSocketMessage(data);
-        } catch (e) {
-          logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
+      handleMessageFragmentation(
+        (data: Uint8Array) => {
+          try {
+            messageHandler.onSocketMessage(data);
+          } catch (e) {
+            logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
+            socket.end();
+          }
+        },
+        () => {
+          logger.error("Received too much data on socket. Closing connection.");
           socket.end();
-        }
-      }),
+        },
+      ),
     );
 
     // Handle client disconnection

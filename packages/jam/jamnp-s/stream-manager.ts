@@ -177,11 +177,17 @@ async function readStreamForever(
   // finally start listening for more data.
   let bytes = initialData;
   let isDone = false;
-  const callback = handleMessageFragmentation((data) => {
-    const bytes = BytesBlob.blobFrom(new Uint8Array(data));
-    logger.trace(`🚰 --> [${peer.id}:${quicStream.streamId}] ${bytes}`);
-    handler.onStreamMessage(quicStream, bytes);
-  });
+  const callback = handleMessageFragmentation(
+    (data) => {
+      const bytes = BytesBlob.blobFrom(new Uint8Array(data));
+      logger.trace(`🚰 --> [${peer.id}:${quicStream.streamId}] ${bytes}`);
+      handler.onStreamMessage(quicStream, bytes);
+    },
+    () => {
+      logger.error(`🚰 --> [${peer.id}:${quicStream.streamId}] got too much data. Disconnecting.`);
+      peer.disconnect();
+    },
+  );
 
   for (;;) {
     // TODO [ToDr] We are going to read messages from the socket as fast as we can,
