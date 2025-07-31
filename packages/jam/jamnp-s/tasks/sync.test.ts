@@ -56,7 +56,7 @@ describe("SyncTask", () => {
     setupPeerListeners(syncTask, network, streamManager);
 
     let connectionIdx = 0;
-    const openConnection = async (other: { name: string; network: MockNetwork }) => {
+    const openConnection = (other: { name: string; network: MockNetwork }) => {
       // we need to create a pair of peers that connected together
       const [self, peer1] = createTestPeerPair(connectionIdx++, name, other.name);
 
@@ -102,7 +102,8 @@ describe("SyncTask", () => {
   it("should sync with one peer", async () => {
     const self = await init("self", blocksSeq({ start: 5, end: 7 }));
     const peer1 = await init("peer1", blocksSeq({ start: 5, end: 10 }));
-    await self.openConnection(peer1);
+    self.openConnection(peer1);
+    await tick();
 
     const resultPeer = peer1.syncTask.maintainSync();
     deepEqual(resultPeer, {
@@ -137,8 +138,8 @@ describe("SyncTask", () => {
     const self = await init("self", blocksSeq({ start: 5, end: 7 }));
     const peer1 = await init("peer1", blocksSeq({ start: 5, end: 10 }));
     const peer2 = await init("peer2", blocksSeq({ start: 5, end: 12 }));
-    await self.openConnection(peer1);
-    await self.openConnection(peer2);
+    self.openConnection(peer1);
+    self.openConnection(peer2);
     await tick();
 
     const resultSelf = self.syncTask.maintainSync();
@@ -195,7 +196,7 @@ describe("SyncTask", () => {
     );
 
     for (const p of peers) {
-      await self.openConnection(p);
+      self.openConnection(p);
     }
     await tick();
 
