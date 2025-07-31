@@ -1,10 +1,10 @@
-import { Block, type BlockView, type HeaderHash } from "@typeberry/block";
+import { Block, type BlockView, type HeaderHash, type HeaderView, headerViewWithHashCodec } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder, codec } from "@typeberry/codec";
 import { WorkerConfig } from "@typeberry/config";
 import { type Ed25519SecretSeed, SEED_SIZE } from "@typeberry/crypto";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
-import { HASH_SIZE } from "@typeberry/hash";
+import { HASH_SIZE, type WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import {
   Listener,
@@ -100,6 +100,11 @@ export class MainReady extends State<"ready(main)", Finished, NetworkWorkerConfi
     }
   }
 
+  announceHeader(port: TypedChannel, header: WithHash<HeaderHash, HeaderView>) {
+    const encoded = Encoder.encodeObject(headerViewWithHashCodec, header);
+    port.sendSignal("announceHeader", encoded.raw, [encoded.raw.buffer as ArrayBuffer]);
+  }
+
   getConfig(): NetworkWorkerConfig {
     if (this.data === null) {
       throw new Error("Did not receive network config!");
@@ -116,12 +121,27 @@ export class MainReady extends State<"ready(main)", Finished, NetworkWorkerConfi
 }
 
 export class NetworkReady extends State<"ready(network)", Finished, NetworkWorkerConfig> {
+  public readonly onNewHeader = new Listener<WithHash<HeaderHash, HeaderView>>();
+
   constructor() {
     super({
       name: "ready(network)",
       allowedTransitions: ["finished"],
       requestHandlers: { finish: async () => this.endWork() },
+      signalListeners: {
+        announceHeader: (header) => this.triggerHeaderAnnouncement(header) as undefined,
+      },
     });
+  }
+
+  triggerHeaderAnnouncement(header: unknown): undefined {
+    if (header instanceof Uint8Array) {
+      const config = this.getConfig();
+      const decoded = Decoder.decodeObject(headerViewWithHashCodec, header, config.genericConfig.chainSpec);
+      this.onNewHeader.emit(decoded);
+    } else {
+      logger.error(`${this.constructor.name} got invalid signal type: ${JSON.stringify(header)}.`);
+    }
   }
 
   sendBlocks(port: TypedChannel, blocks: BlockView[]) {

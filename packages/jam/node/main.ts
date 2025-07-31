@@ -1,7 +1,7 @@
 import { isMainThread } from "node:worker_threads";
 import { Logger } from "@typeberry/logger";
 
-import { Block, type BlockView, Extrinsic, Header, type HeaderHash } from "@typeberry/block";
+import { Block, type BlockView, Extrinsic, Header, type HeaderHash, type HeaderView } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
@@ -14,7 +14,7 @@ import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine.js";
 import { NetworkWorkerConfig } from "@typeberry/jam-network/state-machine.js";
-import type { MessageChannelStateMachine } from "@typeberry/state-machine";
+import type { Listener, MessageChannelStateMachine } from "@typeberry/state-machine";
 import { SerializedState, StateEntries, type StateKey } from "@typeberry/state-merkleization";
 import { startBlockGenerator } from "./author.js";
 import { initializeExtensions } from "./extensions.js";
@@ -38,6 +38,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
     return;
   }
 
+  logger.info(`🎸 Starting node: ${config.nodeName}`);
   const chainSpec = getChainSpec(config.node.flavor);
   const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
     config.nodeName,
@@ -79,6 +80,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
     genesisHeaderHash,
     config.network,
     config.blocksToImport === null,
+    bestHeader,
   );
 
   logger.info("[main]⌛ waiting for importer to finish");
@@ -147,6 +149,7 @@ const initNetwork = async (
   genesisHeaderHash: HeaderHash,
   networkConfig: NetworkConfig | null,
   shouldStartNetwork: boolean,
+  bestHeader: Listener<WithHash<HeaderHash, HeaderView>>,
 ) => {
   if (!shouldStartNetwork || networkConfig === null) {
     logger.log(`🛜 Networking off: ${networkConfig === null ? "no config" : "disabled"}`);
@@ -167,11 +170,18 @@ const initNetwork = async (
   );
 
   // relay blocks from networking to importer?
-  importerReady.doUntil<Finished>("finished", async (importer, port) => {
+  importerReady.doUntil("finished", async (importer, port) => {
     network.currentState().onNewBlocks.on((newBlocks) => {
       for (const block of newBlocks) {
         importer.sendBlock(port, block.encoded().raw);
       }
+    });
+  });
+
+  // relay newly imported headers to trigger network announcements
+  network.doUntil("finished", async (network, port) => {
+    bestHeader.on((header) => {
+      network.announceHeader(port, header);
     });
   });
 

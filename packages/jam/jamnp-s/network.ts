@@ -55,6 +55,7 @@ export async function setup(
 
   return {
     network,
+    syncTask,
     streamManager,
   };
 }

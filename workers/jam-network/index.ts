@@ -54,6 +54,11 @@ export async function main(channel: MessageChannelStateMachine<NetworkInit, Netw
       (blocks) => worker.sendBlocks(port, blocks),
     );
 
+    // send notifications about imported headers
+    worker.onNewHeader.on((header) => {
+      network.syncTask.broadcastHeader(header);
+    });
+
     // stop the network when the worker is finishing.
     ready.waitForState("finished").then(() => network.network.stop());
 

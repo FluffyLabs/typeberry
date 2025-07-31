@@ -26,8 +26,8 @@ export const prepareConfigFile = (args: Arguments): JamConfig => {
 
   return JamConfig.new({
     isAuthoring: args.command === Command.Dev,
+    nodeName: args.command === Command.Dev ? `${args.args.nodeName}-${args.args.index}` : args.args.nodeName,
     blocksToImport,
-    nodeName: args.args.nodeName,
     nodeConfig,
     networkConfig: {
       key: networkingKey,

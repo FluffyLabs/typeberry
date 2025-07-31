@@ -44,6 +44,7 @@ export class SyncTask {
     streamManager: StreamManager,
     connections: Connections,
     blocks: BlocksDb,
+    // TODO [ToDr] Use listener instead of a callback maybe?
     onNewBlocks: (blocks: BlockView[], peerId: PeerId) => void,
   ) {
     const syncTask = new SyncTask(spec, streamManager, connections, blocks, onNewBlocks);
@@ -296,7 +297,7 @@ export class SyncTask {
     const othersBest = this.bestSeen;
     const blocksToSync = othersBest.slot - ourBestSlot;
     if (blocksToSync < 1) {
-      logger.log("Seems that there is no new blocks to sync. Finishing.");
+      logger.trace("Seems that there is no new blocks to sync. Finishing.");
       return {
         kind: SyncResult.NoNewBlocks,
         ours: ourBestSlot,
