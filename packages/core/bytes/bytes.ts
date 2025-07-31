@@ -1,5 +1,5 @@
 import { type Comparator, Ordering } from "@typeberry/ordering";
-import { type Opaque, TEST_COMPARE_VIA_STRING, type TokenOf, asOpaqueType, check } from "@typeberry/utils";
+import { type Opaque, TEST_COMPARE_USING, type TokenOf, asOpaqueType, check } from "@typeberry/utils";
 
 // TODO: [MaSo] Update BytesBlob and Bytes, so they return Result (not throw error)
 /**
@@ -9,7 +9,9 @@ import { type Opaque, TEST_COMPARE_VIA_STRING, type TokenOf, asOpaqueType, check
  * especially if the data is coming from a hex-encoded string.
  */
 export class BytesBlob {
-  [TEST_COMPARE_VIA_STRING] = true;
+  [TEST_COMPARE_USING]() {
+    return this.toString();
+  }
 
   readonly raw: Uint8Array;
   readonly length: number = 0;
