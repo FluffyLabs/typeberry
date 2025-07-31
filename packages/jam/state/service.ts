@@ -12,7 +12,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Descriptor, type SizeHint, codec } from "@typeberry/codec";
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { type U32, type U64, sumU64, tryAsU64 } from "@typeberry/numbers";
+import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
 import { Compatibility, GpVersion, type Opaque, WithDebug, check } from "@typeberry/utils";
 
 /**
@@ -62,7 +62,7 @@ export class ServiceAccountInfo extends WithDebug {
         accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
         onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
         storageUtilisationBytes: codec.u64,
-        gratisStorageBytes: codec.u64,
+        gratisStorage: codec.u64,
         storageUtilisationCount: codec.u32,
         created: codec.u32.convert((x) => x, tryAsTimeSlot),
         lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
@@ -75,8 +75,7 @@ export class ServiceAccountInfo extends WithDebug {
         onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
         storageUtilisationBytes: codec.u64,
         storageUtilisationCount: codec.u32,
-        // NOTE: [MaSo] here are values out of order, bcs they are not existing in previous versions
-        gratisStorageBytes: ignoreValueWithDefault(tryAsU64(0)),
+        gratisStorage: ignoreValueWithDefault(tryAsU64(0)),
         created: ignoreValueWithDefault(tryAsTimeSlot(0)),
         lastAccumulation: ignoreValueWithDefault(tryAsTimeSlot(0)),
         parentService: ignoreValueWithDefault(tryAsServiceId(0)),
@@ -89,7 +88,7 @@ export class ServiceAccountInfo extends WithDebug {
       a.accumulateMinGas,
       a.onTransferMinGas,
       a.storageUtilisationBytes,
-      a.gratisStorageBytes,
+      a.gratisStorage,
       a.storageUtilisationCount,
       a.created,
       a.lastAccumulation,
@@ -107,31 +106,18 @@ export class ServiceAccountInfo extends WithDebug {
       "Gratis storage cannot be non-zero before 0.6.7",
     );
 
-    // checking underflow
-    if (bytes < gratisStorage) {
-      const negativeBytes = gratisStorage - bytes;
-      const sum = sumU64(tryAsU64(BASE_SERVICE_BALANCE), tryAsU64(ELECTIVE_ITEM_BALANCE * BigInt(items)));
+    const storageCost =
+      BASE_SERVICE_BALANCE + ELECTIVE_ITEM_BALANCE * BigInt(items) + ELECTIVE_BYTE_BALANCE * bytes - gratisStorage;
 
-      // NOTE: [MaSo] Note that is impossible for `sum` to be overflow at this point
-      // since maxU32 * 10 + 100 is still less than maxU64
-      if (sum.value > negativeBytes) {
-        return tryAsU64(sum.value - negativeBytes);
-      }
-
+    if (storageCost < 0n) {
       return tryAsU64(0);
     }
 
-    const sum = sumU64(
-      tryAsU64(BASE_SERVICE_BALANCE),
-      tryAsU64(ELECTIVE_ITEM_BALANCE * BigInt(items)),
-      tryAsU64(ELECTIVE_BYTE_BALANCE * bytes - gratisStorage),
-    );
-
-    if (sum.overflow) {
+    if (storageCost >= 2n ** 64n) {
       return tryAsU64(2n ** 64n - 1n);
     }
 
-    return sum.value;
+    return tryAsU64(storageCost);
   }
 
   private constructor(
@@ -145,8 +131,8 @@ export class ServiceAccountInfo extends WithDebug {
     public readonly onTransferMinGas: ServiceGas,
     /** `a_o`: Total number of octets in storage. */
     public readonly storageUtilisationBytes: U64,
-    /** `a_f`: Free octets of storage. */
-    public readonly gratisStorageBytes: U64,
+    /** `a_f`: Cost-free storage. Decreases both storage item count and total byte size. */
+    public readonly gratisStorage: U64,
     /** `a_i`: Number of items in storage. */
     public readonly storageUtilisationCount: U32,
     /** `a_r`: Creation account time slot. */
