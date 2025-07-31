@@ -329,9 +329,10 @@ describe("Safrole", () => {
     }
   });
 
-  it("should return correct sequenced sealingKeySeries", async () => {
+  it("should return correctly sequenced sealingKeySeries", async () => {
     const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator, []);
     const state: SafroleState = {
+      // end of epoch
       timeslot: tryAsTimeSlot(11),
       entropy: FixedSizeArray.new(
         [
@@ -400,6 +401,7 @@ describe("Safrole", () => {
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
     };
     const safrole = new Safrole(tinyChainSpec, state, bwasm);
+    // new epoch; return reordered tickets accumulator
     const timeslot = tryAsTimeSlot(12);
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: TicketsExtrinsic = asKnownSize([]);

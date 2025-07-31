@@ -229,9 +229,10 @@ export class Safrole {
     }
 
     // handle potential edge case for odd number of elements
-    // eg. ticketsLength = 7; middle = floor(7/2) = 3;
-    // then 2 * middle = 6, which is less than 7
-    // and sets array index => 2 * middle = 6, with value from index => middle = 3
+    //
+    // eg. ticketsLength = 7, middle = floor(7/2) = 3;
+    // 2 * middle = 6, which is less than 7
+    // sets reorderedTickets[2 * middle = 6], with tickets[middle = 3]
     if (2 * middle < ticketsLength) {
       reorderedTickets[2 * middle] = tickets[middle];
     }
