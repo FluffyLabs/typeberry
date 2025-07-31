@@ -22,7 +22,7 @@ Options:
 export enum Command {
   /** Regular node operation. */
   Run = "run",
-  /** Run in as a development-mode validator. */
+  /** Run as a development-mode validator. */
   Dev = "dev",
   /** Import the blocks from CLI and finish. */
   Import = "import",

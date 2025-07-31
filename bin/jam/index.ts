@@ -1,10 +1,9 @@
 import { pathToFileURL } from "node:url";
-import { Bytes } from "@typeberry/bytes";
 import { loadConfig } from "@typeberry/config-node";
-import { SEED_SIZE, deriveEd25519SecretKey, trivialSeed } from "@typeberry/crypto/key-derivation.js";
+import { deriveEd25519SecretKey } from "@typeberry/crypto/key-derivation.js";
+import { blake2b } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { JamConfig, main } from "@typeberry/node";
-import { tryAsU32 } from "@typeberry/numbers";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 
 export * from "./args.js";
@@ -12,21 +11,21 @@ export * from "./args.js";
 export const prepareConfigFile = (args: Arguments): JamConfig => {
   const blocksToImport = args.command === Command.Import ? args.args.files : null;
   const nodeConfig = loadConfig(args.args.configPath);
+  const nodeName = args.command === Command.Dev ? `${args.args.nodeName}-${args.args.index}` : args.args.nodeName;
 
   const portShift = args.command === Command.Dev ? args.args.index : 0;
   const networkingKey = (() => {
-    // TODO [ToDr] in the future we should probably read the networking key
+    // NOTE [ToDr] in the future we should probably read the networking key
     // from some file or a database, since we want it to be consistent between runs.
     // For now, for easier testability, we use a deterministic seed.
-    const seed =
-      args.command === Command.Dev ? trivialSeed(tryAsU32(args.args.index)) : Bytes.zero(SEED_SIZE).asOpaque();
-    const key = deriveEd25519SecretKey(seed);
+    const seed = blake2b.hashString(nodeName);
+    const key = deriveEd25519SecretKey(seed.asOpaque());
     return key;
   })();
 
   return JamConfig.new({
     isAuthoring: args.command === Command.Dev,
-    nodeName: args.command === Command.Dev ? `${args.args.nodeName}-${args.args.index}` : args.args.nodeName,
+    nodeName,
     blocksToImport,
     nodeConfig,
     networkConfig: {

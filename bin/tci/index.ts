@@ -29,8 +29,6 @@ export async function main(args: string[]) {
 }
 
 export function createJamConfig(argv: CommonArguments): node.JamConfig {
-  // TODO: [MaSo] Add networking config; add loading from genesis path
-
   let nodeConfig = loadConfig(NODE_DEFAULTS.config);
   let devConfig = node.DEFAULT_DEV_CONFIG;
   let seedConfig: node.SeedDevConfig | undefined;
