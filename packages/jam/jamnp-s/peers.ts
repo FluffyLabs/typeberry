@@ -52,13 +52,16 @@ const MAX_RECONNECT_TIMEOUT_S = 3_600;
 /** Manage connections to peers. */
 export class Connections {
   private readonly peerInfo: Map<PeerId, PeerInfo> = new Map();
+  private connectedPeers = 0;
 
   constructor(private readonly network: Network<Peer>) {
     network.onPeerConnect((peer) => {
+      this.connectedPeers++;
       this.updatePeer(peer);
       return OK;
     });
     network.onPeerDisconnect((peer) => {
+      this.connectedPeers--;
       this.scheduleReconnect(peer.id);
       return OK;
     });
@@ -79,6 +82,11 @@ export class Connections {
     const auxData = this.getAuxData(peer, id);
     const newAuxData = onAux(auxData);
     this.setAuxData(peer, id, newAuxData);
+  }
+
+  /** Return the number of currently connected peers. */
+  getPeerCount() {
+    return this.connectedPeers;
   }
 
   /** Return peers that are currently connected. */

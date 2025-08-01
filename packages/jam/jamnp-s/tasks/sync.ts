@@ -261,6 +261,7 @@ export class SyncTask {
     // figure out where we are at
     const ourBestHash = this.blocks.getBestHeaderHash();
     const ourBestHeader = this.blocks.getHeader(ourBestHash);
+    const peerCount = this.connections.getPeerCount();
     if (ourBestHeader === null) {
       return {
         kind: SyncResult.OurBestHeaderMissing,
@@ -272,7 +273,8 @@ export class SyncTask {
     const othersBest = this.bestSeen;
     const blocksToSync = othersBest.slot - ourBestSlot;
     if (blocksToSync < 1) {
-      logger.trace("Seems that there is no new blocks to sync. Finishing.");
+      this.connections.getPeerCount();
+      logger.trace(`No new blocks. ${peerCount} peers.`);
       return {
         kind: SyncResult.NoNewBlocks,
         ours: ourBestSlot,
@@ -282,7 +284,7 @@ export class SyncTask {
 
     const requested: RequestedBlocks[] = [];
 
-    logger.log(`Attempting to sync ${blocksToSync} blocks.`);
+    logger.log(`Sync ${blocksToSync} blocks from ${peerCount} peers.`);
     // NOTE [ToDr] We might be requesting the same blocks from many peers
     // which isn't very optimal, but for now: 🤷
     //

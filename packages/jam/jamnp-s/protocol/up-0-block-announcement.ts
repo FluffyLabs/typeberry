@@ -135,7 +135,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     const { streamId } = sender;
     // only send announcement if we've handshaken
     if (this.handshakes.has(streamId)) {
-      logger.trace(`[${streamId}] <-- sending block announcement: ${annoucement}`);
+      logger.trace(`[${streamId}] <-- sending block announcement: ${annoucement.final}`);
       sender.bufferAndSend(Encoder.encodeObject(Announcement.Codec, annoucement, this.spec));
     } else {
       logger.warn(`[${streamId}] <-- no handshake yet, skipping announcement.`);
