@@ -233,10 +233,10 @@ export class OnChain {
       designatedValidatorData: maybeDesignatedValidatorData,
       recentlyAccumulated: maybeRecentlyAccumulated,
       accumulationQueue: maybeAccumulationQueue,
-      timeslot: accumulationTimeSlot,
+      timeslot: accumulateTimeSlot,
       preimages: accumulatePreimages,
-      servicesRemoved: accumulationServicesRemoved,
-      servicesUpdates: accumulationServicesUpdates,
+      servicesRemoved: accumulateServicesRemoved,
+      servicesUpdates: accumulateServicesUpdates,
       storage,
       ...accumulateRest
     } = accumulateResult.ok.stateUpdate;
@@ -246,8 +246,8 @@ export class OnChain {
       pendingTransfers: accumulateResult.ok.pendingTransfers,
       preimages: accumulatePreimages,
       timeslot: timeSlot,
-      servicesRemoved: accumulationServicesRemoved,
-      servicesUpdates: accumulationServicesUpdates,
+      servicesRemoved: accumulateServicesRemoved,
+      servicesUpdates: accumulateServicesUpdates,
     });
 
     if (deferredTransfersResult.isError) {
@@ -262,6 +262,8 @@ export class OnChain {
     } = deferredTransfersResult.ok;
     assertEmpty(deferredTransfersRest);
 
+    // TODO [MaSo] Should this check if some storage was updates twice?
+    // and allowed only the newest update to occure?
     storage.push(...deferredTransfersStorageUpdates);
 
     // recent history
@@ -320,7 +322,7 @@ export class OnChain {
       previousValidatorData,
       sealingKeySeries,
       ticketsAccumulator,
-      servicesRemoved: accumulationServicesRemoved,
+      servicesRemoved: accumulateServicesRemoved,
       servicesUpdates: deferredTransfersServicesUpdates,
       storage,
     });
