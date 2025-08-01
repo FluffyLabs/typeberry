@@ -8,7 +8,6 @@ import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
-import type { InMemoryState } from "@typeberry/state";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
@@ -112,12 +111,7 @@ export async function runStateTransition(testContent: StateTransition, testPath:
   let ignore: string[] = [];
   if (!Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
     // NOTE These fields were introduced in version 0.6.7.
-    ignore = [
-      "info.created",
-      "info.gratisStorage",
-      "info.lastAccumulation",
-      "info.parentService",
-    ];
+    ignore = ["info.created", "info.gratisStorage", "info.lastAccumulation", "info.parentService"];
   }
   deepEqual(preState, postState, { ignore });
   assert.deepStrictEqual(root.toString(), postStateRoot.toString());

@@ -11,6 +11,7 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { ServiceAccountInfo } from "@typeberry/state";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { Info, codecServiceAccountInfoWithThresholdBalance } from "./info.js";
 import { HostCallResult } from "./results.js";
 import { TestAccounts } from "./test-accounts.js";
@@ -55,6 +56,12 @@ describe("HostCalls: Info", () => {
     const { registers, memory, readInfo } = prepareRegsAndMemory(serviceId);
     const storageUtilisationBytes = tryAsU64(10_000);
     const storageUtilisationCount = tryAsU32(1_000);
+    const gratisStorage = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(1024) : tryAsU64(0);
+    const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(
+      storageUtilisationCount,
+      storageUtilisationBytes,
+      gratisStorage,
+    );
     accounts.details.set(
       serviceId,
       ServiceAccountInfo.create({
@@ -64,7 +71,7 @@ describe("HostCalls: Info", () => {
         onTransferMinGas: tryAsServiceGas(0n),
         storageUtilisationBytes,
         storageUtilisationCount,
-        gratisStorage: tryAsU64(0),
+        gratisStorage,
         created: tryAsTimeSlot(0),
         lastAccumulation: tryAsTimeSlot(0),
         parentService: tryAsServiceId(0),
@@ -79,7 +86,7 @@ describe("HostCalls: Info", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(readInfo(), {
       ...accounts.details.get(serviceId),
-      thresholdBalance: 20_100n,
+      thresholdBalance,
     });
   });
 

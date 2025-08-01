@@ -49,7 +49,6 @@ import {
   TransferError,
 } from "./partial-state.js";
 import { PendingTransfer } from "./pending-transfer.js";
-import { AccumulationStateUpdate } from "./state-update.js";
 
 describe("PartialState.checkPreimageStatus", () => {
   it("should check preimage status from state", () => {
@@ -582,7 +581,7 @@ describe("PartialState.newService", () => {
     const gratisStorage = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(1024) : tryAsU64(0);
 
     // when
-    const result = partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, gratisStorage)
+    const result = partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, gratisStorage);
 
     // then
     assert.deepStrictEqual(result, Result.error(NewServiceError.InsufficientFunds));

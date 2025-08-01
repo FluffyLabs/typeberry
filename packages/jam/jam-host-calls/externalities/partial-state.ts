@@ -140,7 +140,7 @@ export enum ProvidePreimageError {
 export enum NewServiceError {
   /** Not enough balance to create the service account. */
   InsufficientFunds = 0,
-  /** Service is not privileged to give free storage. */
+  /** Service is not privileged to set gratis storage. */
   UnprivilegedService = 1,
 }
 
@@ -203,7 +203,8 @@ export interface PartialState {
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/2f4c022f4c02?v=0.6.7
    *
    * An error can be returned in case the account does not
-   * have the required balance.
+   * have the required balance
+   * or tries to set gratis storage without being privileged.
    */
   newService(
     codeHash: CodeHash,
