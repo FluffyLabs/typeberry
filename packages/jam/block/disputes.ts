@@ -170,7 +170,7 @@ export class DisputesExtrinsic extends WithDebug {
      */
     public readonly culprits: Culprit[],
     /**
-     * `c`: proofs of validator misbehavior: signing a contradictory judgement of a [`WorkReport`] validity.
+     * `f`: proofs of validator misbehavior: signing a contradictory judgement of a [`WorkReport`] validity.
      *
      * NOTE: must be ordered by the validator's Ed25519Key.
      * https://graypaper.fluffylabs.dev/#/579bd12/12c40112c601
