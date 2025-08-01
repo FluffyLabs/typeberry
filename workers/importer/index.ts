@@ -1,12 +1,10 @@
 import { isMainThread, parentPort } from "node:worker_threads";
 
-import { MessageChannelStateMachine } from "@typeberry/state-machine";
-
-import { tryAsTimeSlot } from "@typeberry/block";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { SimpleAllocator, keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
+import { MessageChannelStateMachine } from "@typeberry/state-machine";
 import { TransitionHasher } from "@typeberry/transition";
 import { measure, resultToString } from "@typeberry/utils";
 import { ImportQueue } from "./import-queue.js";
@@ -60,8 +58,27 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
     const importingQueue = new ImportQueue(config.chainSpec, importer);
 
     worker.onBlock.on(async (block) => {
-      const newBlockSlot = importingQueue.push(block) ?? tryAsTimeSlot(0);
-      logger.log(`🧊 Got block: #${newBlockSlot}`);
+      const details = ImportQueue.getBlockDetails(block);
+      // ignore invalid blocks.
+      if (details.isError) {
+        logger.trace("🧊 Ignoring invalid block.");
+        return;
+      }
+
+      // ignore already known blocks
+      if (blocks.getHeader(details.ok.hash) !== null) {
+        logger.trace(`🧊 Already imported block: #${details.ok.data.timeSlot}.`);
+        return;
+      }
+
+      const importResult = importingQueue.push(details.ok);
+      // ignore blocks that are already queued
+      if (importResult.isError) {
+        logger.trace(`🧊 Already queued block: #${details.ok.data.timeSlot}.`);
+        return;
+      }
+
+      logger.log(`🧊 Queued block: #${details.ok.data.timeSlot}`);
 
       if (isProcessing) {
         return;

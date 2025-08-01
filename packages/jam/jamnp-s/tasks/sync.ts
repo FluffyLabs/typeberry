@@ -272,6 +272,8 @@ export class SyncTask {
     // figure out where others are at
     const othersBest = this.bestSeen;
     const blocksToSync = othersBest.slot - ourBestSlot;
+
+    logger.trace(`Our best. ${ourBestSlot}. Best seen: ${othersBest.slot}`);
     if (blocksToSync < 1) {
       this.connections.getPeerCount();
       logger.trace(`No new blocks. ${peerCount} peers.`);
