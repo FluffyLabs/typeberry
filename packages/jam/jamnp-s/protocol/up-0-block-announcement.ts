@@ -111,7 +111,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
 
     // it's just an announcement
     const annoucement = Decoder.decodeObject(Announcement.Codec, message, this.spec);
-    logger.log(`[${streamId}] --> got blocks announcement: ${annoucement}`);
+    logger.log(`[${streamId}] --> got blocks announcement: ${annoucement.final}`);
     this.onAnnouncement(streamId, annoucement);
   }
 
