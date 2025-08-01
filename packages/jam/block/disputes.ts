@@ -124,9 +124,6 @@ export class Verdict extends WithDebug {
      *
      * NOTE: must be ordered by validator index.
      * https://graypaper.fluffylabs.dev/#/579bd12/123702123802
-     *
-     * TODO [ToDr] The Gray Paper does not seem to imply that this has to be
-     * supermajority: https://graypaper.fluffylabs.dev/#/579bd12/124e02125502
      */
     public readonly votes: KnownSizeArray<Judgement, "Validators super majority">,
   ) {
