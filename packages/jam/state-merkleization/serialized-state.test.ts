@@ -11,7 +11,7 @@ import {
   UpdateService,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { Compatibility, deepEqual, GpVersion } from "@typeberry/utils";
+import { Compatibility, GpVersion, deepEqual } from "@typeberry/utils";
 import { SerializedState } from "./serialized-state.js";
 import { StateEntries } from "./state-entries.js";
 

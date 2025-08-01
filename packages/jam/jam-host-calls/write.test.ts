@@ -11,11 +11,11 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { ServiceAccountInfo } from "@typeberry/state";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { HostCallResult } from "./results.js";
 import { TestAccounts } from "./test-accounts.js";
 import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils.js";
 import { Write } from "./write.js";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
@@ -24,7 +24,10 @@ const KEY_LEN_REG = 8;
 const DEST_START_REG = 9;
 const DEST_LEN_REG = 10;
 
-function prepareAccounts(serviceId: ServiceId, { balance, gratisStorage }: { balance?: bigint, gratisStorage?: bigint } = {}) {
+function prepareAccounts(
+  serviceId: ServiceId,
+  { balance, gratisStorage }: { balance?: bigint; gratisStorage?: bigint } = {},
+) {
   const accounts = new TestAccounts(serviceId);
   accounts.details.set(
     serviceId,
