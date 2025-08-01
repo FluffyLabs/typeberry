@@ -5,6 +5,8 @@ import {
   type Peer,
   type PeerId,
   type Stream,
+  type StreamErrorCallback,
+  StreamErrorKind,
   encodeMessageLength,
   handleMessageFragmentation,
 } from "@typeberry/networking";
@@ -137,31 +139,44 @@ export class StreamManager {
     const streamId = tryAsStreamId(stream.streamId);
 
     // NOTE: `onError` callback may be called multiple times.
-    const onError = (e: unknown) => {
-      logger.error(`🚰 --- [${peer.id}:${streamId}] Stream error: ${e}. Disconnecting peer.`);
-      // TODO [ToDr] We should clean up the stream when it's closed gracefuly!
+    const onError = (e: unknown, kind: StreamErrorKind) => {
       this.streams.delete(streamId);
       this.backgroundTasks.delete(streamId);
-      // whenever we have an error, we are going to inform the handler
-      // and close the stream,
-      handler.onClose(streamId, true);
-      // but also disconnect from the peer.
-      peer.disconnect();
+
+      if (kind === StreamErrorKind.Exception) {
+        logger.error(`🚰 --- [${peer.id}:${streamId}] Stream error: ${e}. Disconnecting peer.`);
+      }
+
+      if (kind !== StreamErrorKind.LocalClose) {
+        // whenever we have an error, we are going to inform the handler
+        // and close the stream,
+        handler.onClose(streamId, true);
+        // but also disconnect from the peer.
+        peer.disconnect();
+      }
     };
 
     stream.addOnError(onError);
-    const quicStream = new QuicStreamSender(streamId, stream, onError);
-    const readStreamPromise = handleAsyncErrors(
-      () => readStreamForever(peer, handler, quicStream, initialData, stream.readable.getReader()),
-      onError,
-    );
 
+    const quicStream = new QuicStreamSender(streamId, stream, onError);
     this.streams.set(streamId, {
       handler,
       streamSender: quicStream,
       peer,
     });
-    this.backgroundTasks.set(streamId, readStreamPromise);
+
+    // when we start reading the stream, there might be some data there already,
+    // so we need to make sure that the stream is fully initialized.
+    const readStreamPromise = handleAsyncErrors(
+      () => readStreamForever(peer, handler, quicStream, initialData, stream.readable.getReader()),
+      (e) => onError(e, StreamErrorKind.Exception),
+    );
+
+    // there could be an error already during the first read, so
+    // only insert the background task when it's still active.
+    if (this.streams.has(streamId)) {
+      this.backgroundTasks.set(streamId, readStreamPromise);
+    }
 
     return quicStream;
   }
@@ -217,7 +232,7 @@ class QuicStreamSender implements StreamMessageSender {
   constructor(
     public readonly streamId: StreamId,
     private readonly internal: Stream,
-    private readonly onError: (e: unknown) => void,
+    private readonly onError: StreamErrorCallback,
   ) {}
 
   /** Send given piece of data to the other end. */
@@ -254,21 +269,22 @@ class QuicStreamSender implements StreamMessageSender {
           this.currentWriterPromise = null;
         }
       },
-      (e) => {
-        this.onError(e);
-      },
+      (e) => this.onError(e, StreamErrorKind.Exception),
     );
     return true;
   }
 
   close(): void {
-    handleAsyncErrors(async () => {
-      logger.trace(`🚰 <-- [${this.streamId}] closing`);
-      if (this.currentWriterPromise !== null) {
-        await this.currentWriterPromise;
-      }
-      await this.internal.writable.close();
-    }, this.onError);
+    handleAsyncErrors(
+      async () => {
+        logger.trace(`🚰 <-- [${this.streamId}] closing`);
+        if (this.currentWriterPromise !== null) {
+          await this.currentWriterPromise;
+        }
+        await this.internal.writable.close();
+      },
+      (e) => this.onError(e, StreamErrorKind.Exception),
+    );
   }
 
   /**

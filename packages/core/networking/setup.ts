@@ -3,7 +3,7 @@ import { LogLevel, StreamHandler, formatting } from "@matrixai/logger";
 import { events, QUICClient, type QUICConnection, QUICServer, QUICSocket } from "@matrixai/quic";
 import { BytesBlob } from "@typeberry/bytes";
 import type { Ed25519Pair } from "@typeberry/crypto/ed25519.js";
-import { Logger } from "@typeberry/logger";
+import { Level, Logger } from "@typeberry/logger";
 import {
   type PeerInfo,
   altNameRaw,
@@ -37,7 +37,7 @@ export type Options = {
 export class Quic {
   /** Setup QUIC socket and start listening for connections. */
   static async setup({ host, port, protocols, key }: Options): Promise<QuicNetwork> {
-    const quicLoggerLvl = Logger.getLevel("net") > LogLevel.DEBUG ? LogLevel.WARN : LogLevel.DEBUG;
+    const quicLoggerLvl = Logger.getLevel("net") > Level.TRACE ? LogLevel.WARN : LogLevel.DEBUG;
     const quicLogger = new QuicLogger("quic", quicLoggerLvl, [
       new StreamHandler(formatting.format`${formatting.level}:${formatting.keys}:${formatting.msg}`),
     ]);

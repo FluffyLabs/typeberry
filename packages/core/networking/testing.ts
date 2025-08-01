@@ -4,7 +4,7 @@ import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { Logger } from "@typeberry/logger";
 import { OK, asOpaqueType } from "@typeberry/utils";
 import type { DialOptions, Network } from "./network.js";
-import type { Peer, PeerAddress, PeerCallback, PeerId, Stream, StreamCallback } from "./peers.js";
+import type { Peer, PeerAddress, PeerCallback, PeerId, Stream, StreamCallback, StreamErrorCallback } from "./peers.js";
 
 const logger = Logger.new(import.meta.filename, "test:net");
 
@@ -18,7 +18,7 @@ export class TestManualStream implements Stream {
 
   readonly _writtenData: Uint8Array[] = [];
   readonly _incomingData: WritableStream;
-  private readonly _onError: ((e: unknown) => void)[] = [];
+  private readonly _onError: StreamErrorCallback[] = [];
 
   constructor(public readonly streamId: number) {
     // simulate incoming data stream
@@ -35,7 +35,7 @@ export class TestManualStream implements Stream {
     });
   }
 
-  addOnError(onError: (e: unknown) => void): void {
+  addOnError(onError: StreamErrorCallback): void {
     this._onError.push(onError);
   }
 
@@ -71,9 +71,9 @@ export class TestDuplexStream implements Stream {
     return [new TestDuplexStream(id1, r1, w2), new TestDuplexStream(id2, r2, w1)] as const;
   }
 
-  _onError: ((e: unknown) => void)[] = [];
+  _onError: StreamErrorCallback[] = [];
 
-  addOnError(onError: (e: unknown) => void): void {
+  addOnError(onError: StreamErrorCallback): void {
     this._onError.push(onError);
   }
 

@@ -11,10 +11,36 @@ export type PeerAddress = {
   port: number;
 };
 
+/**
+ * Error callback maybe be triggered multiple times.
+ *
+ * In case of an exception result we will usually see a sequence of:
+ * 1. Exception
+ * 2. LocalClose (since we detected exception and want to close connection)
+ * 3. RemoteClose (since the remote peer detected the exceptional behavior as well)
+ *
+ * However in case of clean disconnects, we may see just local close or remote close
+ * first in case it was either us or them closing the connection.
+ *
+ * `LocalClose` is also trigerred mutliple times (readable stream, writeable stream,
+ * connection). If that's too much, we can tone it down in the future.
+ */
+export enum StreamErrorKind {
+  /** An error or closing event that originates locally. */
+  LocalClose = 0,
+  /** Remote peer triggering close event. */
+  RemoteClose = 1,
+  /** Some exceptional behavior on the stream. */
+  Exception = 2,
+}
+
+/** The callback that should be triggered when an error/close on stream occurs. */
+export type StreamErrorCallback = (e: unknown, kind: StreamErrorKind) => void;
+
 /** Communication stream. */
 export interface Stream extends ReadableWritablePair<Uint8Array, Uint8Array> {
   /** Add a callback to be notified about stream errors. */
-  addOnError(onError: (e: unknown) => void): void;
+  addOnError(onError: StreamErrorCallback): void;
   /** Unique stream identifier. */
   streamId: number;
   /** Destroy the stream. */
