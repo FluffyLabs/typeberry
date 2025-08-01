@@ -1,5 +1,4 @@
 import {
-  Block,
   type BlockView,
   Header,
   type HeaderHash,
@@ -7,16 +6,16 @@ import {
   type TimeSlot,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import { BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
 import { WithHash, blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { Peer, PeerId } from "@typeberry/networking";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { OK } from "@typeberry/utils";
+import { OK, assertNever } from "@typeberry/utils";
 import type { AuxData, Connections } from "../peers.js";
+import { BlockSequenceError, handleGetBlockSequence } from "../protocol/ce-128-block-request.js";
 import { type StreamId, ce128, up0 } from "../protocol/index.js";
 import type { StreamManager } from "../stream-manager.js";
 import { handleAsyncErrors } from "../utils.js";
@@ -235,69 +234,26 @@ export class SyncTask {
     direction: ce128.Direction,
     maxBlocks: U32,
   ): BlockView[] {
-    const getBlockView = (hash: HeaderHash): BlockView | null => {
-      const header = this.blocks.getHeader(hash);
-      const extrinsic = this.blocks.getExtrinsic(hash);
-      if (header === null || extrinsic === null) {
-        return null;
-      }
-      const blockView = BytesBlob.blobFromParts(header.encoded().raw, extrinsic.encoded().raw);
-      return Decoder.decodeObject(Block.Codec.View, blockView, this.spec);
-    };
+    const limit = tryAsU32(Math.min(maxBlocks, MAX_BLOCK_SEQUENCE));
+    const res = handleGetBlockSequence(this.spec, this.blocks, startHash, direction, limit);
+    if (res.isOk) {
+      return res.ok;
+    }
 
-    const startBlock = getBlockView(startHash);
-    if (startBlock === null) {
+    if (res.error === BlockSequenceError.BlockOnFork) {
+      // seems that peer is requesting syncing a fork from us, let's bail.
+      logger.warn(`[${peer.id}] <-- Invalid block sequence request: ${startHash} is on a fork.`);
+      return [];
+    }
+
+    if (res.error === BlockSequenceError.NoStartBlock) {
       // we don't know about that block at all, so let's just bail.
       // we should probably penalize the peer for sending BS?
       logger.warn(`[${peer.id}] <-- Invalid block sequence request: ${startHash} missing header or extrinsic.`);
       return [];
     }
 
-    const limit = Math.min(maxBlocks, MAX_BLOCK_SEQUENCE);
-
-    if (direction === ce128.Direction.AscExcl) {
-      // Since we don't have an index of all blocks, we need to start from
-      // the last block and reach the `startBlock`.
-      const response: HeaderHash[] = [];
-      const startIndex = startBlock.header.view().timeSlotIndex.materialize();
-      let currentHash = this.blocks.getBestHeaderHash();
-      for (;;) {
-        const currentHeader = this.blocks.getHeader(currentHash);
-        // some errornuous situation, we didn't really reach the block?
-        if (currentHeader === null || currentHeader.timeSlotIndex.materialize() < startIndex) {
-          return [];
-        }
-        // we have everything we need, let's return it now
-        if (startHash.isEqualTo(currentHash)) {
-          return response
-            .reverse()
-            .slice(0, limit)
-            .flatMap((hash) => {
-              const view = getBlockView(hash);
-              return view === null ? [] : [view];
-            });
-        }
-        // otherwise include current hash in potential response and move further down.
-        response.push(currentHash);
-        currentHash = currentHeader.parentHeaderHash.materialize();
-      }
-    }
-
-    const response = [startBlock];
-    let currentBlock = startBlock;
-
-    // now iterate a bit over ancestor blocks
-    for (let i = 0; i < limit; i++) {
-      const parent = getBlockView(currentBlock.header.view().parentHeaderHash.materialize());
-      if (parent === null) {
-        break;
-      }
-
-      response.push(parent);
-      currentBlock = parent;
-    }
-
-    return response;
+    assertNever(res.error);
   }
 
   /** Should be called periodically to request best seen blocks from other peers. */

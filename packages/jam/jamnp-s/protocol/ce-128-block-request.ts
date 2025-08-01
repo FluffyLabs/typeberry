@@ -1,11 +1,12 @@
 import { Block, type BlockView, type HeaderHash } from "@typeberry/block";
-import type { BytesBlob } from "@typeberry/bytes";
+import { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
+import type { BlocksDb } from "@typeberry/database";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU8 } from "@typeberry/numbers";
-import { WithDebug } from "@typeberry/utils";
+import { Result, WithDebug } from "@typeberry/utils";
 import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
@@ -138,4 +139,82 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
       sender.close();
     });
   }
+}
+
+/** Error when querying blocks from DB. */
+export enum BlockSequenceError {
+  /** We don't have the start block in our db. */
+  NoStartBlock = 0,
+  /** When looking up the start block from the tip of the chain it wasn't found. */
+  BlockOnFork = 1,
+}
+
+/** Handle request for block sequence by looking them up in the db. */
+export function handleGetBlockSequence(
+  chainSpec: ChainSpec,
+  blocks: BlocksDb,
+  startHash: HeaderHash,
+  direction: Direction,
+  limit: U32,
+): Result<BlockView[], BlockSequenceError> {
+  const getBlockView = (hash: HeaderHash): BlockView | null => {
+    const header = blocks.getHeader(hash);
+    const extrinsic = blocks.getExtrinsic(hash);
+    if (header === null || extrinsic === null) {
+      return null;
+    }
+    const blockView = BytesBlob.blobFromParts(header.encoded().raw, extrinsic.encoded().raw);
+    return Decoder.decodeObject(Block.Codec.View, blockView, chainSpec);
+  };
+
+  const startBlock = getBlockView(startHash);
+  if (startBlock === null) {
+    return Result.error(BlockSequenceError.NoStartBlock);
+  }
+
+  if (direction === Direction.AscExcl) {
+    // Since we don't have an index of all blocks, we need to start from
+    // the last block and reach the `startBlock`.
+    const response: HeaderHash[] = [];
+    const startIndex = startBlock.header.view().timeSlotIndex.materialize();
+    let currentHash = blocks.getBestHeaderHash();
+    for (;;) {
+      const currentHeader = blocks.getHeader(currentHash);
+      // some errornuous situation, we didn't really reach the block?
+      if (currentHeader === null || currentHeader.timeSlotIndex.materialize() < startIndex) {
+        return Result.error(BlockSequenceError.BlockOnFork);
+      }
+      // we have everything we need, let's return it now
+      if (startHash.isEqualTo(currentHash)) {
+        return Result.ok(
+          response
+            .reverse()
+            .slice(0, limit)
+            .flatMap((hash) => {
+              const view = getBlockView(hash);
+              return view === null ? [] : [view];
+            }),
+        );
+      }
+      // otherwise include current hash in potential response and move further down.
+      response.push(currentHash);
+      currentHash = currentHeader.parentHeaderHash.materialize();
+    }
+  }
+
+  const response = [startBlock];
+  let currentBlock = startBlock;
+
+  // now iterate a bit over ancestor blocks
+  for (let i = 0; i < limit; i++) {
+    const parent = getBlockView(currentBlock.header.view().parentHeaderHash.materialize());
+    if (parent === null) {
+      break;
+    }
+
+    response.push(parent);
+    currentBlock = parent;
+  }
+
+  return Result.ok(response);
 }
