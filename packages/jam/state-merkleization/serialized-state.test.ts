@@ -11,7 +11,7 @@ import {
   UpdateService,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { deepEqual } from "@typeberry/utils";
+import { Compatibility, deepEqual, GpVersion } from "@typeberry/utils";
 import { SerializedState } from "./serialized-state.js";
 import { StateEntries } from "./state-entries.js";
 
@@ -30,10 +30,10 @@ describe("SerializedState", () => {
             onTransferMinGas: tryAsServiceGas(10),
             storageUtilisationBytes: tryAsU64(10),
             storageUtilisationCount: tryAsU32(3),
-            gratisStorage: tryAsU64(0),
-            created: tryAsTimeSlot(0),
-            lastAccumulation: tryAsTimeSlot(0),
-            parentService: tryAsServiceId(0),
+            gratisStorage: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(1024) : tryAsU64(0),
+            created: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsTimeSlot(8) : tryAsTimeSlot(0),
+            lastAccumulation: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsTimeSlot(12) : tryAsTimeSlot(0),
+            parentService: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsServiceId(10) : tryAsServiceId(0),
           }),
           lookupHistory: new LookupHistoryItem(
             Bytes.fill(HASH_SIZE, 5).asOpaque(),
