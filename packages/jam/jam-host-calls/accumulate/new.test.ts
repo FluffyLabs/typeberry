@@ -22,7 +22,7 @@ const CODE_HASH_START_REG = 7;
 const CODE_LENGTH_REG = 8;
 const GAS_REG = 9;
 const BALANCE_REG = 10;
-const FREE_STORAGE = 11;
+const GRATIS_STORAGE_REG = 11;
 
 function prepareRegsAndMemory(
   codeHash: CodeHash,
@@ -38,7 +38,7 @@ function prepareRegsAndMemory(
   registers.set(CODE_LENGTH_REG, tryAsU64(codeLength));
   registers.set(GAS_REG, gas);
   registers.set(BALANCE_REG, balance);
-  registers.set(FREE_STORAGE, gratisStorage);
+  registers.set(GRATIS_STORAGE_REG, gratisStorage);
 
   const builder = new MemoryBuilder();
 
@@ -77,6 +77,8 @@ describe("HostCalls: New", () => {
         [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, 1_024n],
       ]);
     } else {
+      // NOTE not setting the gratis storage value
+      // which results in `0n` at the end
       assert.deepStrictEqual(accumulate.newServiceCalled, [
         [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, 0n],
       ]);
@@ -93,7 +95,7 @@ describe("HostCalls: New", () => {
       tryAsU64(4_096n),
       tryAsU64(2n ** 40n),
       tryAsU64(2n ** 50n),
-      tryAsU64(0n),
+      tryAsU64(1n),
     );
 
     // when
@@ -125,7 +127,7 @@ describe("HostCalls: New", () => {
     assert.deepStrictEqual(accumulate.newServiceCalled, []);
   });
 
-  itPost067("should fail when free storage is set by unprivileged service", async () => {
+  itPost067("should fail when trying to set gratis storage by unprivileged service", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);

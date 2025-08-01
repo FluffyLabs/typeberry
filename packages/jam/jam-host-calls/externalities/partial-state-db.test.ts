@@ -490,21 +490,12 @@ describe("PartialState.newService", () => {
     const maybeService = mockState.services.get(serviceId);
     const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
 
-    const accStateUpdate = AccumulationStateUpdate.empty();
-    accStateUpdate.privilegedServices = PrivilegedServices.create({
-      manager: service.serviceId,
-      authManager: service.serviceId,
-      validatorsManager: service.serviceId,
-      autoAccumulateServices: [],
-    });
-
     const partialState = new PartialStateDb(
       tinyChainSpec,
       mockState,
       tryAsServiceId(0),
       tryAsServiceId(10),
       tryAsTimeSlot(16),
-      accStateUpdate,
     );
 
     const codeHash = Bytes.fill(HASH_SIZE, 0x11).asOpaque();
@@ -512,7 +503,9 @@ describe("PartialState.newService", () => {
     const codeLengthU64 = tryAsU64(codeLength);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
-    const gratisStorage = tryAsU64(50);
+    // NOTE compatibility is neede here, as we are using `calculateThresholdBalance`
+    // which throws an error when `gratisStorage > 0` is provided for GP versions earlier than 0.6.7.
+    const gratisStorage = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(50) : tryAsU64(0);
 
     const items = tryAsU32(2); // 2 * 1 + 0
     const bytes = tryAsU64(81 + codeLength);
@@ -573,21 +566,12 @@ describe("PartialState.newService", () => {
     });
     mockState.services.set(tryAsServiceId(0), updatedService);
 
-    const accStateUpdate = AccumulationStateUpdate.empty();
-    accStateUpdate.privilegedServices = PrivilegedServices.create({
-      manager: service.serviceId,
-      authManager: service.serviceId,
-      validatorsManager: service.serviceId,
-      autoAccumulateServices: [],
-    });
-
     const partialState = new PartialStateDb(
       tinyChainSpec,
       mockState,
       tryAsServiceId(0),
       tryAsServiceId(10),
       tryAsTimeSlot(16),
-      accStateUpdate,
     );
 
     const codeHash = Bytes.fill(HASH_SIZE, 0x12).asOpaque();
@@ -595,12 +579,10 @@ describe("PartialState.newService", () => {
     const codeLength = tryAsU64(2 ** 32 + 1);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
-    const gratisStorage = tryAsU64(1024);
+    const gratisStorage = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(1024) : tryAsU64(0);
 
     // when
-    const result = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, gratisStorage)
-      : partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, tryAsU64(0));
+    const result = partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, gratisStorage)
 
     // then
     assert.deepStrictEqual(result, Result.error(NewServiceError.InsufficientFunds));
@@ -609,13 +591,14 @@ describe("PartialState.newService", () => {
     assert.deepStrictEqual(partialState.updatedState.services.servicesUpdates, []);
   });
 
-  itPost067("should return an error if service is unprivileged to get gratis storage", () => {
+  itPost067("should return an error if service is unprivileged to set gratis storage", () => {
     const mockStateTest = testState();
+    // setting different manager service than our currentService
     const mockState = InMemoryState.create({
       ...mockStateTest,
       privilegedServices: PrivilegedServices.create({
         ...mockStateTest.privilegedServices,
-        manager: tryAsServiceId(1), // setting different manager
+        manager: tryAsServiceId(1),
       }),
     });
     const maybeService = mockState.services.get(tryAsServiceId(0));
@@ -642,6 +625,7 @@ describe("PartialState.newService", () => {
     const codeLength = tryAsU64(1024);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
+    // setting gratisStorage
     const gratisStorage = tryAsU64(1024);
 
     // when

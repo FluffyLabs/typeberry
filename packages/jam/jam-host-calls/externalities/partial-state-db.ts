@@ -291,6 +291,14 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     }
   }
 
+  /**
+   * `(x_u)_m`: Get most recent manager
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/174900174900?v=0.6.7
+   */
+  private getManager(): ServiceId {
+    return this.updatedState.privilegedServices?.manager ?? this.state.privilegedServices.manager;
+  }
+
   checkPreimageStatus(hash: PreimageHash, length: U64): PreimageStatus | null {
     // https://graypaper.fluffylabs.dev/#/9a08063/378102378102?v=0.6.6
     const status = this.getUpdatedPreimageStatus(hash, length);
@@ -387,7 +395,6 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     serviceInfo: ServiceAccountInfo,
   ): Result<OK, NewServiceError> {
     // NOTE: [ToDr] this is not specified in GP, but it seems sensible.
-    // TODO: [MaSo] check if still right in version ^0.6.7, when we can have free storage
     if (items.overflow || bytes.overflow) {
       return Result.error(NewServiceError.InsufficientFunds);
     }
@@ -556,9 +563,18 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     // calculate the threshold. Storage is empty, one preimage requested.
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/115901115901?v=0.6.7
     const items = tryAsU32(2 * 1 + 0);
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/116b01116b01?v=0.6.7
     const bytes = sumU64(tryAsU64(81), codeLength);
     const clampedLength = clampU64ToU32(codeLength);
 
+    // check if we are priviledged to set gratis storage
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/369203369603?v=0.6.7
+    if (gratisStorage !== tryAsU64(0) && this.currentServiceId !== this.getManager()) {
+      return Result.error(NewServiceError.UnprivilegedService);
+    }
+
+    // check if we have enough balance
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/369e0336a303?v=0.6.7
     const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes.value, gratisStorage);
     const currentService = this.getCurrentServiceInfo();
     const thresholdForCurrent = ServiceAccountInfo.calculateThresholdBalance(
@@ -566,19 +582,6 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
       currentService.storageUtilisationBytes,
       currentService.gratisStorage,
     );
-
-    // https://graypaper.fluffylabs.dev/#/7e6ff6a/369203369603?v=0.6.7
-    if (gratisStorage !== tryAsU64(0)) {
-      const updatedManager =
-        this.updatedState.privilegedServices !== null ? this.updatedState.privilegedServices.manager : undefined;
-      const manager = updatedManager ?? this.state.privilegedServices.manager;
-
-      if (this.currentServiceId !== manager) {
-        return Result.error(NewServiceError.UnprivilegedService);
-      }
-    }
-
-    // check if we have enough balance
     const balanceLeftForCurrent = currentService.balance - thresholdForNew;
     if (balanceLeftForCurrent < thresholdForCurrent || bytes.overflow) {
       return Result.error(NewServiceError.InsufficientFunds);
@@ -606,7 +609,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     );
 
     // update the balance
-    // https://graypaper.fluffylabs.dev/#/9a08063/36f10236f102?v=0.6.6
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/364d03364d03?v=0.6.7
     this.updateCurrentServiceInfo(
       ServiceAccountInfo.create({
         ...currentService,
@@ -615,7 +618,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     );
 
     // update the next service id we are going to create next
-    // https://graypaper.fluffylabs.dev/#/9a08063/363603363603?v=0.6.6
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/36a70336a703?v=0.6.7
     this.nextNewServiceId = this.getNextAvailableServiceId(bumpServiceId(newServiceId));
 
     return Result.ok(newServiceId);
