@@ -109,30 +109,16 @@ export async function runStateTransition(testContent: StateTransition, testPath:
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
   const root = StateEntries.serializeInMemory(spec, preState).getRootHash();
 
-  copyNewerValues(preState, postState);
-  deepEqual(preState, postState);
+  let ignore: string[] = [];
+  if (!Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+    // NOTE These fields were introduced in version 0.6.7.
+    ignore = [
+      "info.created",
+      "info.gratisStorage",
+      "info.lastAccumulation",
+      "info.parentService",
+    ];
+  }
+  deepEqual(preState, postState, { ignore });
   assert.deepStrictEqual(root.toString(), postStateRoot.toString());
-}
-
-// Coppying values `from` newer version of state `to` older one
-function copyNewerValues(from: InMemoryState, to: InMemoryState): void {
-  if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-    // NOTE: [MaSo] We don't need to copy, we should handle this values
-    return;
-  }
-  // Service Accounts
-  for (const toService of to.services.entries()) {
-    const serviceId = toService[0];
-    const fromService = from.services.get(serviceId);
-    if (fromService === undefined) {
-      throw new Error(`Can't copy state, there is no ServiceId (${serviceId}) to copy from.`);
-    }
-    toService[1].data.info = {
-      ...toService[1].data.info,
-      created: fromService.data.info.created,
-      lastAccumulation: fromService.data.info.lastAccumulation,
-      gratisStorage: fromService.data.info.gratisStorage,
-      parentService: fromService.data.info.parentService,
-    };
-  }
 }

@@ -46,8 +46,10 @@ export function deepEqual<T>(
   const ctx = Array.isArray(context) ? context : [context];
   const errors = errorsCollector ?? new ErrorsCollector();
 
-  // ignore a field if it's on ignore list.
-  if (ignore.includes(ctx.join("."))) {
+  // ignore a field that ends with what is on ignore list.
+  // NOTE ignore list is a list of suffixes
+  // this allows to ignore values in maps and arrays
+  if (ignore.some((suffix) => ctx.join(".").endsWith(suffix))) {
     return;
   }
 
