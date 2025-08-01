@@ -14,6 +14,7 @@ import {
   UpdatePreimageKind,
   UpdateService,
   UpdateServiceKind,
+  type UpdateStorage,
 } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import type { CountAndGasUsed } from "../statistics.js";
@@ -32,6 +33,7 @@ export type DeferredTransfersState = Pick<State, "timeslot" | "getService">;
 
 export type DeferredTransfersResult = {
   servicesUpdates: UpdateService[];
+  storageUpdates: UpdateStorage[];
   transferStatistics: Map<ServiceId, CountAndGasUsed>;
 };
 
@@ -98,6 +100,7 @@ export class DeferredTransfers {
   }: DeferredTransfersInput): Promise<Result<DeferredTransfersResult, DeferredTransfersErrorCode>> {
     const transferStatistics = new Map<ServiceId, CountAndGasUsed>();
     const servicesUpdates = [...servicesUpdatesInput];
+    const storageUpdates: UpdateStorage[] = [];
     const services = uniquePreserveOrder(pendingTransfers.flatMap((x) => [x.source, x.destination]));
 
     for (const serviceId of services) {
@@ -141,11 +144,15 @@ export class DeferredTransfers {
 
       const gas = transfers.reduce((acc, item) => acc + item.gas, 0n);
       const { consumedGas } = await executor.run(args, tryAsGas(gas));
+      const [stateUpdate] = partialState.getStateUpdates();
+      // We assume here that OnTransfer invocation can update only storage of the service
+      storageUpdates.push(...stateUpdate.services.storage);
       transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(consumedGas) });
     }
 
     return Result.ok({
       servicesUpdates,
+      storageUpdates,
       transferStatistics,
     });
   }
