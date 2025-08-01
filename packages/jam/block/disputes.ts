@@ -93,7 +93,7 @@ export class Judgement extends WithDebug {
  * (either using keys from current epoch or previous)
  * over validity or invalidity of a particular [`WorkReport`].
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/12cd0012cd00
+ * https://graypaper.fluffylabs.dev/#/1c979cb/121c01122f01?v=0.7.1
  */
 export class Verdict extends WithDebug {
   static Codec = codec.Class(Verdict, {
