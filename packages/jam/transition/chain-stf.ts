@@ -228,28 +228,26 @@ export class OnChain {
       return stfError(StfErrorKind.Accumulate, accumulateResult);
     }
     const {
-      root: accumulateRoot,
-      stateUpdate: accumulateUpdate,
-      accumulationStatistics,
-      pendingTransfers,
-      ...accumulateRest
-    } = accumulateResult.ok;
-    assertEmpty(accumulateRest);
-
-    const {
       privilegedServices: maybePrivilegedServices,
       authQueues: maybeAuthorizationQueues,
       designatedValidatorData: maybeDesignatedValidatorData,
+      recentlyAccumulated: maybeRecentlyAccumulated,
+      accumulationQueue: maybeAccumulationQueue,
       timeslot: accumulationTimeSlot,
       preimages: accumulatePreimages,
-      ...servicesUpdate
-    } = accumulateUpdate;
+      servicesRemoved: accumulationServicesRemoved,
+      servicesUpdates: accumulationServicesUpdates,
+      storage,
+      ...accumulateRest
+    } = accumulateResult.ok.stateUpdate;
+    assertEmpty(accumulateRest);
 
     const deferredTransfersResult = await this.deferredTransfers.transition({
-      pendingTransfers,
-      ...servicesUpdate,
+      pendingTransfers: accumulateResult.ok.pendingTransfers,
       preimages: accumulatePreimages,
       timeslot: timeSlot,
+      servicesRemoved: accumulationServicesRemoved,
+      servicesUpdates: accumulationServicesUpdates,
     });
 
     if (deferredTransfersResult.isError) {
@@ -257,19 +255,20 @@ export class OnChain {
     }
 
     const {
-      servicesUpdates: newServicesUpdates,
+      servicesUpdates: deferredTransfersServicesUpdates,
       storageUpdates: deferredTransfersStorageUpdates,
       transferStatistics,
       ...deferredTransfersRest
     } = deferredTransfersResult.ok;
     assertEmpty(deferredTransfersRest);
-    servicesUpdate.servicesUpdates = newServicesUpdates;
-    servicesUpdate.storage.push(...deferredTransfersStorageUpdates);
+
+    storage.push(...deferredTransfersStorageUpdates);
+
     // recent history
     const recentHistoryUpdate = this.recentHistory.transition({
       headerHash,
       priorStateRoot: header.priorStateRoot,
-      accumulateRoot,
+      accumulateRoot: accumulateResult.ok.root,
       workPackages: reportsResult.ok.reported,
     });
     const { recentBlocks, ...recentHistoryRest } = recentHistoryUpdate;
@@ -284,16 +283,13 @@ export class OnChain {
     assertEmpty(authorizationRest);
 
     const extrinsic = block.extrinsic.materialize();
-
-    // TODO [MaSo] fill in the statistics with accumulation results
-    // statistics
     const statisticsUpdate = this.statistics.transition({
       slot: timeSlot,
       authorIndex: header.bandersnatchBlockAuthorIndex,
       extrinsic,
       incomingReports: extrinsic.guarantees.map((g) => g.report),
       availableReports: assurancesResult.ok.availableReports,
-      accumulationStatistics,
+      accumulationStatistics: accumulateResult.ok.accumulationStatistics,
       transferStatistics,
     });
     const { statistics, ...statisticsRest } = statisticsUpdate;
@@ -303,6 +299,8 @@ export class OnChain {
       ...(maybeAuthorizationQueues !== undefined ? { authQueues: maybeAuthorizationQueues } : {}),
       ...(maybeDesignatedValidatorData !== undefined ? { designatedValidatorData: maybeDesignatedValidatorData } : {}),
       ...(maybePrivilegedServices !== undefined ? { privilegedServices: maybePrivilegedServices } : {}),
+      ...(maybeRecentlyAccumulated !== undefined ? { recentlyAccumulated: maybeRecentlyAccumulated } : {}),
+      ...(maybeAccumulationQueue !== undefined ? { accumulationQueue: maybeAccumulationQueue } : {}),
       authPools,
       preimages: preimages.concat(accumulatePreimages),
       disputesRecords,
@@ -322,7 +320,9 @@ export class OnChain {
       previousValidatorData,
       sealingKeySeries,
       ticketsAccumulator,
-      ...servicesUpdate,
+      servicesRemoved: accumulationServicesRemoved,
+      servicesUpdates: deferredTransfersServicesUpdates,
+      storage,
     });
   }
 
