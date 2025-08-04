@@ -2,14 +2,13 @@ import type { StateRootHash } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
-import type { TruncatedHash } from "@typeberry/hash";
+import { TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { loadState as loadSerializedState } from "@typeberry/state-merkleization";
-import { TRUNCATED_KEY_BYTES } from "@typeberry/trie";
 
 export class StateKeyVal {
   static fromJson: FromJson<StateKeyVal> = {
-    key: fromJson.bytesN(TRUNCATED_KEY_BYTES),
+    key: fromJson.bytesN(TRUNCATED_HASH_SIZE),
     value: fromJson.bytesBlob,
   };
   key!: TruncatedHash;
