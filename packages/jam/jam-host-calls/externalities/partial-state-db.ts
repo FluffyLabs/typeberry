@@ -762,11 +762,9 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
       return null;
     }
 
-    if (this.currentServiceId === serviceId) {
-      const item = this.updatedState.services.storage.find((x) => x.serviceId === serviceId && x.key.isEqualTo(key));
-      if (item !== undefined) {
-        return item.value;
-      }
+    const item = this.updatedState.services.storage.find((x) => x.serviceId === serviceId && x.key.isEqualTo(key));
+    if (item !== undefined) {
+      return item.value;
     }
 
     const service = this.state.getService(serviceId);
