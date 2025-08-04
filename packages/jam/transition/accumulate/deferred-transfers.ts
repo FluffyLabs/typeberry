@@ -2,8 +2,9 @@ import { type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
+import { AccumulateExternalities } from "@typeberry/jam-host-calls/externalities/accumulate-externalities.js";
 import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
+import { PartiallyUpdatedState } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
 import { sumU64, tryAsU32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
@@ -14,6 +15,7 @@ import {
   UpdatePreimageKind,
   UpdateService,
   UpdateServiceKind,
+  type UpdateStorage,
 } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import type { CountAndGasUsed } from "../statistics.js";
@@ -32,6 +34,7 @@ export type DeferredTransfersState = Pick<State, "timeslot" | "getService">;
 
 export type DeferredTransfersResult = {
   servicesUpdates: UpdateService[];
+  storageUpdates: UpdateStorage[];
   transferStatistics: Map<ServiceId, CountAndGasUsed>;
 };
 
@@ -98,6 +101,7 @@ export class DeferredTransfers {
   }: DeferredTransfersInput): Promise<Result<DeferredTransfersResult, DeferredTransfersErrorCode>> {
     const transferStatistics = new Map<ServiceId, CountAndGasUsed>();
     const servicesUpdates = [...servicesUpdatesInput];
+    const storageUpdates: UpdateStorage[] = [];
     const services = uniquePreserveOrder(pendingTransfers.flatMap((x) => [x.source, x.destination]));
 
     for (const serviceId of services) {
@@ -134,18 +138,28 @@ export class DeferredTransfers {
         transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(0) });
         continue;
       }
-      const partialState = new PartialStateDb(this.chainSpec, this.state, serviceId, serviceId, timeslot);
+      const partialState = new AccumulateExternalities(
+        this.chainSpec,
+        new PartiallyUpdatedState(this.state),
+        serviceId,
+        serviceId,
+        timeslot,
+      );
 
       const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState });
       const args = Encoder.encodeObject(ON_TRANSFER_ARGS_CODEC, { timeslot, serviceId, transfers }, this.chainSpec);
 
       const gas = transfers.reduce((acc, item) => acc + item.gas, 0n);
       const { consumedGas } = await executor.run(args, tryAsGas(gas));
+      const [stateUpdate] = partialState.getStateUpdates();
+      // We assume here that OnTransfer invocation can update only storage of the service
+      storageUpdates.push(...stateUpdate.services.storage);
       transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(consumedGas) });
     }
 
     return Result.ok({
       servicesUpdates,
+      storageUpdates,
       transferStatistics,
     });
   }

@@ -223,13 +223,18 @@ export class Safrole {
     const reorderedTickets = new Array<Ticket>(ticketsLength);
 
     const middle = Math.floor(ticketsLength / 2);
-    if (ticketsLength % 2 === 1) {
-      reorderedTickets[middle] = tickets[middle];
-    }
-
     for (let i = 0; i < middle; i += 1) {
       reorderedTickets[2 * i] = tickets[i];
       reorderedTickets[2 * i + 1] = tickets[ticketsLength - i - 1];
+    }
+
+    // handle potential edge case for odd number of elements
+    //
+    // eg. ticketsLength = 7, middle = floor(7/2) = 3;
+    // 2 * middle = 6, which is less than 7
+    // sets reorderedTickets[2 * middle = 6], with tickets[middle = 3]
+    if (2 * middle < ticketsLength) {
+      reorderedTickets[2 * middle] = tickets[middle];
     }
 
     return tryAsPerEpochBlock(reorderedTickets, this.chainSpec);
