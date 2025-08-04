@@ -92,10 +92,10 @@ type InvocationResult = {
 };
 
 type ParallelAccumulationResult = {
-  stateUpdates: [ServiceId, AccumulationStateUpdate][];
+  state: AccumulationStateUpdate;
   gasCost: ServiceGas;
-  yieldedRoots: [ServiceId, OpaqueHash][];
-  pendingTransfers: PendingTransfer[];
+  // yieldedRoots: [ServiceId, OpaqueHash][];
+  // pendingTransfers: PendingTransfer[];
 };
 
 type SequentialAccumulationResult = ParallelAccumulationResult & {
@@ -240,7 +240,7 @@ export class Accumulate {
      */
     if (result.hasMemorySlice() && result.memorySlice.length === HASH_SIZE) {
       const memorySlice = Bytes.fromBlob(result.memorySlice, HASH_SIZE);
-      newState.yieldedRoot = memorySlice.asOpaque();
+      newState.yieldedRoots.set(serviceId, memorySlice.asOpaque());
     }
 
     /**
@@ -299,9 +299,9 @@ export class Accumulate {
       return {
         accumulatedReports: tryAsU32(0),
         gasCost: tryAsServiceGas(0),
-        yieldedRoots: [],
-        pendingTransfers: [],
-        stateUpdates: [],
+        // yieldedRoots: [],
+        // pendingTransfers: [],
+        state: stateUpdate,
       };
     }
 
@@ -310,27 +310,25 @@ export class Accumulate {
     const accumulateData = new AccumulateData(reportsToAccumulateInParallel, autoAccumulateServices);
     const reportsToAccumulateSequentially = reports.slice(i);
 
-    const { gasCost, yieldedRoots, pendingTransfers, stateUpdates, ...rest } = await this.accumulateInParallel(
-      accumulateData,
-      slot,
-      entropy,
-      statistics,
-      stateUpdate,
-    );
+    const {
+      gasCost,
+      state: stateAfterarallelAcc,
+      ...rest
+    } = await this.accumulateInParallel(accumulateData, slot, entropy, statistics, stateUpdate);
     assertEmpty(rest);
 
-    const accUpdates = this.mergeServiceStateUpdates(stateUpdates);
-    if (accUpdates.isError) {
-      throw new Error("we should be returning Result here");
-    }
+    // const accUpdates = this.mergeServiceStateUpdates(stateUpdates);
+    // if (accUpdates.isError) {
+    //   throw new Error("we should be returning Result here");
+    // }
 
     // NOTE [ToDr] recursive invocation
     const {
       accumulatedReports,
       gasCost: seqGasCost,
-      yieldedRoots: seqYieldedRoots,
-      pendingTransfers: seqPendingTransfers,
-      stateUpdates: seqStateUpdates,
+      // yieldedRoots: seqYieldedRoots,
+      // pendingTransfers: seqPendingTransfers,
+      state,
       ...seqRest
     } = await this.accumulateSequentially(
       tryAsServiceGas(gasLimit - gasCost),
@@ -338,17 +336,17 @@ export class Accumulate {
       slot,
       entropy,
       statistics,
-      accUpdates.ok,
+      stateAfterarallelAcc,
     );
     assertEmpty(seqRest);
 
     return {
       accumulatedReports: tryAsU32(i + accumulatedReports),
       gasCost: tryAsServiceGas(gasCost + seqGasCost),
-      yieldedRoots: yieldedRoots.concat(seqYieldedRoots),
-      pendingTransfers: pendingTransfers.concat(seqPendingTransfers),
+      // yieldedRoots: yieldedRoots.concat(seqYieldedRoots),
+      // pendingTransfers: pendingTransfers.concat(seqPendingTransfers),
       // ideally we would use the already merged state here instead of doing multiple merge rounds
-      stateUpdates: stateUpdates.concat(seqStateUpdates),
+      state,
     };
   }
 
@@ -370,19 +368,18 @@ export class Accumulate {
     inputStateUpdate: AccumulationStateUpdate,
   ): Promise<ParallelAccumulationResult> {
     const serviceIds = accumulateData.getServiceIds();
-    const stateUpdates: [ServiceId, AccumulationStateUpdate][] = [];
     let gasCost: ServiceGas = tryAsServiceGas(0);
-    const yieldedRoots: [ServiceId, OpaqueHash][] = [];
-    const pendingTransfers: PendingTransfer[] = [];
+    let currentState = inputStateUpdate;
 
     for (const serviceId of serviceIds) {
+      const checkpoint = AccumulationStateUpdate.copyFrom(currentState);
       const { consumedGas, stateUpdate } = await this.accumulateSingleService(
         serviceId,
         accumulateData.getOperands(serviceId),
         accumulateData.getGasCost(serviceId),
         slot,
         entropy,
-        AccumulationStateUpdate.copyFrom(inputStateUpdate), // each service gets its own copy of the state update
+        currentState,
       );
 
       gasCost = tryAsServiceGas(gasCost + consumedGas);
@@ -391,23 +388,11 @@ export class Accumulate {
       serviceStatistics.count = tryAsU32(serviceStatistics.count + accumulateData.getReportsLength(serviceId));
       serviceStatistics.gasUsed = tryAsServiceGas(serviceStatistics.gasUsed + consumedGas);
       statistics.set(serviceId, serviceStatistics);
-
-      if (stateUpdate === null) {
-        continue;
-      }
-
-      stateUpdates.push([serviceId, stateUpdate]);
-      pendingTransfers.push(...stateUpdate.transfers);
-
-      if (stateUpdate.yieldedRoot !== null) {
-        yieldedRoots.push([serviceId, stateUpdate.yieldedRoot]);
-      }
+      currentState = stateUpdate === null ? checkpoint : stateUpdate;
     }
 
     return {
-      stateUpdates,
-      pendingTransfers,
-      yieldedRoots,
+      state: currentState,
       gasCost,
     };
   }
@@ -571,34 +556,33 @@ export class Accumulate {
 
     const gasLimit = this.getGasLimit();
 
-    const { accumulatedReports, yieldedRoots, gasCost, pendingTransfers, stateUpdates, ...rest } =
-      await this.accumulateSequentially(
-        gasLimit,
-        accumulatableReports,
-        slot,
-        entropy,
-        statistics,
-        AccumulationStateUpdate.empty(),
-      );
+    const { accumulatedReports, gasCost, state, ...rest } = await this.accumulateSequentially(
+      gasLimit,
+      accumulatableReports,
+      slot,
+      entropy,
+      statistics,
+      AccumulationStateUpdate.empty(),
+    );
     assertEmpty(rest);
 
     const accumulated = accumulatableReports.slice(0, accumulatedReports);
     const accStateUpdate = this.getAccumulationStateUpdate(accumulated, toAccumulateLater, slot);
-    const servicesStateUpdate = this.mergeServiceStateUpdates(stateUpdates);
+    // const servicesStateUpdate = this.mergeServiceStateUpdates(stateUpdates);
 
-    if (servicesStateUpdate.isError) {
-      return servicesStateUpdate;
-    }
+    // if (servicesStateUpdate.isError) {
+    //   return servicesStateUpdate;
+    // }
 
-    const rootHash = await getRootHash(yieldedRoots);
+    const rootHash = await getRootHash(Array.from(state.yieldedRoots.entries()));
     return Result.ok({
       root: rootHash,
       stateUpdate: {
         ...accStateUpdate,
-        ...servicesStateUpdate.ok.services,
+        ...state.services,
       },
       accumulationStatistics: statistics,
-      pendingTransfers,
+      pendingTransfers: state.transfers,
     });
   }
 }

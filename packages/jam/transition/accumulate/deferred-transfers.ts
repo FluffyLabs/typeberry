@@ -4,18 +4,20 @@ import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { AccumulateExternalities } from "@typeberry/jam-host-calls/externalities/accumulate-externalities.js";
 import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
-import { PartiallyUpdatedState } from "@typeberry/jam-host-calls/externalities/state-update.js";
+import {
+  AccumulationStateUpdate,
+  PartiallyUpdatedState,
+} from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
 import { sumU64, tryAsU32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
   ServiceAccountInfo,
+  type ServicesUpdate,
   type State,
   type UpdatePreimage,
   UpdatePreimageKind,
-  UpdateService,
-  UpdateServiceKind,
-  type UpdateStorage,
+  type UpdateService,
 } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import type { CountAndGasUsed } from "../statistics.js";
@@ -25,16 +27,13 @@ import { PvmExecutor } from "./pvm-executor.js";
 type DeferredTransfersInput = {
   pendingTransfers: PendingTransfer[];
   timeslot: TimeSlot;
-  servicesUpdates: UpdateService[];
-  servicesRemoved: ServiceId[];
-  preimages: UpdatePreimage[];
+  servicesUpdate: ServicesUpdate;
 };
 
 export type DeferredTransfersState = Pick<State, "timeslot" | "getService">;
 
 export type DeferredTransfersResult = {
-  servicesUpdates: UpdateService[];
-  storageUpdates: UpdateStorage[];
+  servicesUpdate: ServicesUpdate;
   transferStatistics: Map<ServiceId, CountAndGasUsed>;
 };
 
@@ -91,30 +90,69 @@ export class DeferredTransfers {
         return this.state.getService(serviceId)?.getPreimage(preimageHash) ?? null;
     }
   }
+  /**
+   * A method that merges changes that were made by services during accumulation.
+   * It can modify: `services`, `privilegedServices`, `authQueues`,
+   * and `designatedValidatorData` and is called after the whole accumulation finishes.
+   */
+  private mergeServiceStateUpdates(
+    source: ServicesUpdate,
+    stateUpdates: AccumulationStateUpdate[],
+  ): AccumulationStateUpdate {
+    const serviceUpdates: ServicesUpdate[] = [source];
+
+    for (const stateUpdate of stateUpdates) {
+      serviceUpdates.push(stateUpdate.services);
+    }
+
+    const servicesUpdate = serviceUpdates.reduce(
+      (acc, update) => {
+        acc.servicesRemoved.push(...update.servicesRemoved);
+        acc.servicesUpdates.push(...update.servicesUpdates);
+        acc.preimages.push(...update.preimages);
+        acc.storage.push(...update.storage);
+        return acc;
+      },
+      {
+        servicesRemoved: [],
+        servicesUpdates: [],
+        preimages: [],
+        storage: [],
+      },
+    );
+
+    const accumulationStateUpdate = AccumulationStateUpdate.new(servicesUpdate);
+
+    return accumulationStateUpdate;
+  }
 
   async transition({
     pendingTransfers,
     timeslot,
-    servicesUpdates: servicesUpdatesInput,
-    servicesRemoved,
-    preimages,
+    servicesUpdate,
   }: DeferredTransfersInput): Promise<Result<DeferredTransfersResult, DeferredTransfersErrorCode>> {
     const transferStatistics = new Map<ServiceId, CountAndGasUsed>();
-    const servicesUpdates = [...servicesUpdatesInput];
-    const storageUpdates: UpdateStorage[] = [];
     const services = uniquePreserveOrder(pendingTransfers.flatMap((x) => [x.source, x.destination]));
+    const stateUpdates: AccumulationStateUpdate[] = [];
 
     for (const serviceId of services) {
       const transfers = pendingTransfers.filter((pendingTransfer) => pendingTransfer.destination === serviceId);
 
-      const info = this.getPotentiallyUpdatedServiceInfo(serviceId, servicesUpdates, servicesRemoved);
+      const partiallyUpdatedState = new PartiallyUpdatedState(this.state, AccumulationStateUpdate.new(servicesUpdate));
+      const partialState = new AccumulateExternalities(
+        this.chainSpec,
+        partiallyUpdatedState,
+        serviceId,
+        serviceId,
+        timeslot,
+      );
+      const info = partialState.getServiceInfo(serviceId);
       if (info === null) {
         return Result.error(DeferredTransfersErrorCode.ServiceInfoNotExist);
       }
       const codeHash = info.codeHash;
-      const code = this.getPotentiallyUpdatedPreimage(preimages, serviceId, codeHash.asOpaque());
+      const code = partiallyUpdatedState.getPreimage(serviceId, codeHash.asOpaque());
 
-      const existingUpdateIndex = servicesUpdates.findIndex((x) => x.serviceId === serviceId);
       const newBalance = sumU64(info.balance, ...transfers.map((item) => item.amount));
 
       if (newBalance.overflow) {
@@ -122,44 +160,28 @@ export class DeferredTransfers {
       }
 
       const newInfo = ServiceAccountInfo.create({ ...info, balance: newBalance.value });
-      const newUpdate = UpdateService.update({
-        serviceId,
-        serviceInfo: newInfo,
-      });
-
-      if (existingUpdateIndex < 0 || servicesUpdates[existingUpdateIndex].action.kind === UpdateServiceKind.Create) {
-        servicesUpdates.push(newUpdate);
-      } else {
-        servicesUpdates[existingUpdateIndex] = newUpdate;
-      }
+      partiallyUpdatedState.updateServiceInfo(serviceId, newInfo);
 
       if (code === null || transfers.length === 0) {
         logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId}, code is null or no transfers`);
         transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(0) });
         continue;
       }
-      const partialState = new AccumulateExternalities(
-        this.chainSpec,
-        new PartiallyUpdatedState(this.state),
-        serviceId,
-        serviceId,
-        timeslot,
-      );
 
       const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState });
       const args = Encoder.encodeObject(ON_TRANSFER_ARGS_CODEC, { timeslot, serviceId, transfers }, this.chainSpec);
 
       const gas = transfers.reduce((acc, item) => acc + item.gas, 0n);
       const { consumedGas } = await executor.run(args, tryAsGas(gas));
-      const [stateUpdate] = partialState.getStateUpdates();
-      // We assume here that OnTransfer invocation can update only storage of the service
-      storageUpdates.push(...stateUpdate.services.storage);
       transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(consumedGas) });
+      const [updatedState] = partialState.getStateUpdates();
+      stateUpdates.push(updatedState);
     }
 
+    const deferredTransfersStateUpdate = this.mergeServiceStateUpdates(servicesUpdate, stateUpdates);
+
     return Result.ok({
-      servicesUpdates,
-      storageUpdates,
+      servicesUpdate: deferredTransfersStateUpdate.services,
       transferStatistics,
     });
   }

@@ -481,7 +481,7 @@ export class AccumulateExternalities
 
   yield(hash: OpaqueHash): void {
     /** https://graypaper.fluffylabs.dev/#/9a08063/387d02387d02?v=0.6.6 */
-    this.updatedState.stateUpdate.yieldedRoot = hash;
+    this.updatedState.stateUpdate.yieldedRoots.set(this.currentServiceId, hash);
   }
 
   providePreimage(serviceId: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {
@@ -587,7 +587,6 @@ export class AccumulateExternalities
 
   write(key: StorageKey, data: BytesBlob | null): Result<OK, "full"> {
     const current = this.read(this.currentServiceId, key);
-
     const isAddingNew = current === null && data !== null;
     const isRemoving = current !== null && data === null;
     const countDiff = isAddingNew ? 1 : isRemoving ? -1 : 0;
