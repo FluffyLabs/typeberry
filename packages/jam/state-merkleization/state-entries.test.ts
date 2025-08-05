@@ -51,7 +51,7 @@ describe("State Serialization", () => {
     assert.deepStrictEqual(state.authPools, authPools);
 
     const expectedRoot = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? "0x1e39fe53e7391518892de801922dfef1652149dffec20b7ece4c19e1badec212"
+      ? "0x3a58c0bb16d5c6f152abd381cfb8c10c5e567203f392a54425e40ebd901b0785"
       : Compatibility.is(GpVersion.V0_6_5, GpVersion.V0_6_6)
         ? "0x22e5ebfb233c49d833af107ae8933ab229bceb49db1d2604abb2e120bc381eba"
         : "0xd30fa98d70ae1f039b8ac40a0fd9f4478f7b57e0faac396a51e4df3718c985b2";
