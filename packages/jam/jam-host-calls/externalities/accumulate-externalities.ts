@@ -166,9 +166,7 @@ export class AccumulateExternalities
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/174900174900?v=0.6.7
    */
   private getManager(): ServiceId {
-    return (
-      this.updatedState.stateUpdate.privilegedServices?.manager ?? this.updatedState.state.privilegedServices.manager
-    );
+    return this.updatedState.getPrivilegedServices().manager;
   }
 
   checkPreimageStatus(hash: PreimageHash, length: U64): PreimageStatus | null {
