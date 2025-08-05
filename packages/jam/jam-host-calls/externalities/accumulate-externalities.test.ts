@@ -37,7 +37,7 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { testState } from "@typeberry/state/test.utils.js";
-import { Compatibility, GpVersion, OK, Result, ensure } from "@typeberry/utils";
+import { Compatibility, GpVersion, OK, Result, deepEqual, ensure } from "@typeberry/utils";
 import { writeServiceIdAsLeBytes } from "../utils.js";
 import { AccumulateExternalities } from "./accumulate-externalities.js";
 import {
@@ -947,20 +947,22 @@ describe("PartialState.transfer", () => {
 
 describe("PartialState.yield", () => {
   it("should yield root", () => {
+    const currentServiceId = tryAsServiceId(0);
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
       state,
-      tryAsServiceId(0),
+      currentServiceId,
       tryAsServiceId(10),
       tryAsTimeSlot(16),
     );
-
+    const expectedYieldedRoots = new Map<ServiceId, Bytes<32>>();
+    expectedYieldedRoots.set(currentServiceId, Bytes.fill(HASH_SIZE, 0xef));
     // when
     partialState.yield(Bytes.fill(HASH_SIZE, 0xef));
 
     // then
-    assert.deepStrictEqual(state.stateUpdate.yieldedRoot, Bytes.fill(HASH_SIZE, 0xef));
+    deepEqual(state.stateUpdate.yieldedRoots, expectedYieldedRoots);
   });
 });
 

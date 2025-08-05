@@ -247,8 +247,7 @@ export class OnChain {
 
     const deferredTransfersResult = await this.deferredTransfers.transition({
       pendingTransfers,
-      ...servicesUpdate,
-      preimages: accumulatePreimages,
+      servicesUpdate: { ...servicesUpdate, preimages: accumulatePreimages },
       timeslot: timeSlot,
     });
 
@@ -257,14 +256,12 @@ export class OnChain {
     }
 
     const {
-      servicesUpdates: newServicesUpdates,
-      storageUpdates: deferredTransfersStorageUpdates,
+      servicesUpdate: newServicesUpdate,
       transferStatistics,
       ...deferredTransfersRest
     } = deferredTransfersResult.ok;
     assertEmpty(deferredTransfersRest);
-    servicesUpdate.servicesUpdates = newServicesUpdates;
-    servicesUpdate.storage.push(...deferredTransfersStorageUpdates);
+
     // recent history
     const recentHistoryUpdate = this.recentHistory.transition({
       headerHash,
