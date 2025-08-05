@@ -36,7 +36,7 @@ describe("Peers", () => {
     assert.strictEqual(connectedCalled, false);
     peers.peerConnected(peer);
     assert.strictEqual(connectedCalled, true);
-    
+
     assert.strictEqual(disconnectedCalled, false);
     peers.peerDisconnected(peer);
     assert.strictEqual(disconnectedCalled, true);
