@@ -50,9 +50,11 @@ describe("State Serialization", () => {
     const state = SerializedState.fromStateEntries(spec, serialized);
     assert.deepStrictEqual(state.authPools, authPools);
 
-    const expectedRoot = Compatibility.isGreaterOrEqual(GpVersion.V0_6_5)
-      ? "0x22e5ebfb233c49d833af107ae8933ab229bceb49db1d2604abb2e120bc381eba"
-      : "0xd30fa98d70ae1f039b8ac40a0fd9f4478f7b57e0faac396a51e4df3718c985b2";
+    const expectedRoot = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? "0x6d8733dd9f2113e1f02e65f275d972f0ef6fd54ec56b97bec9fefeec373a64f9"
+      : Compatibility.is(GpVersion.V0_6_5, GpVersion.V0_6_6)
+        ? "0x22e5ebfb233c49d833af107ae8933ab229bceb49db1d2604abb2e120bc381eba"
+        : "0xd30fa98d70ae1f039b8ac40a0fd9f4478f7b57e0faac396a51e4df3718c985b2";
 
     assert.strictEqual(serialized.getRootHash().toString(), expectedRoot);
   });
