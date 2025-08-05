@@ -104,13 +104,14 @@ export class SyncTask {
     private readonly onNewBlocks: (blocks: BlockView[], peer: PeerId) => void,
   ) {
     const ourBestHash = blocks.getBestHeaderHash();
-    const ourBest = blocks.getHeader(ourBestHash);
-    if (ourBest === null) {
+    // Get best block view
+    const ourBestBlock = blocks.getHeader(ourBestHash);
+    if (ourBestBlock === null) {
       throw new Error(`Best header ${ourBestHash} missing in the database?`);
     }
     this.bestSeen = up0.HashAndSlot.create({
       hash: ourBestHash,
-      slot: ourBest.timeSlotIndex.materialize(),
+      slot: ourBestBlock.timeSlotIndex.materialize(),
     });
   }
 
