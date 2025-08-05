@@ -5,7 +5,7 @@ import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
-import type { LookupHistorySlots } from "@typeberry/state";
+import type { LookupHistorySlots, PerCore } from "@typeberry/state";
 import type { ValidatorData } from "@typeberry/state";
 import type { OK, Result } from "@typeberry/utils";
 
@@ -235,7 +235,7 @@ export interface PartialState {
    * `g`: collection of serviceId -> gas that auto-accumulate every block
    *
    */
-  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: [ServiceId, ServiceGas][]): void;
+  updatePrivilegedServices(m: ServiceId, a: PerCore<ServiceId>, v: ServiceId, g: [ServiceId, ServiceGas][]): void;
 
   /** Yield accumulation trie result hash. */
   yield(hash: OpaqueHash): void;

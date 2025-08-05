@@ -34,6 +34,7 @@ import {
   VALIDATOR_META_BYTES,
   ValidatorData,
   tryAsLookupHistorySlots,
+  tryAsPerCore,
 } from "@typeberry/state";
 import { testState } from "@typeberry/state/test.utils.js";
 import { OK, Result, deepEqual, ensure } from "@typeberry/utils";
@@ -733,7 +734,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     );
 
     const manager = tryAsServiceId(1);
-    const authManager = tryAsServiceId(2);
+    const authManager = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
     const validatorsManager = tryAsServiceId(3);
     const autoAccumulate: [ServiceId, ServiceGas][] = [
       [tryAsServiceId(4), tryAsServiceGas(10n)],

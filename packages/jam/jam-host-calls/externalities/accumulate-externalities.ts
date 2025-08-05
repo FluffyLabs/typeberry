@@ -20,6 +20,7 @@ import { type U64, isU32, isU64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typ
 import {
   AutoAccumulate,
   LookupHistoryItem,
+  type PerCore,
   PreimageItem,
   PrivilegedServices,
   ServiceAccountInfo,
@@ -472,11 +473,11 @@ export class AccumulateExternalities
     // NOTE `coreIndex` is already verified in the HC, so this is infallible.
     /** https://graypaper.fluffylabs.dev/#/9a08063/368401368401?v=0.6.6 */
 
-    const currentAuthManager = this.updatedState.getPotentiallyUpdatedPrivilegedServices().authManager;
+    const currentAuthManager = this.updatedState.getPotentiallyUpdatedPrivilegedServices().authManager[coreIndex];
 
     if (currentAuthManager !== this.currentServiceId) {
       logger.trace(
-        `Current service id (${this.currentServiceId}) is not an auth manager and cannot update authorization queues.`,
+        `Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} and cannot update authorization queue.`,
       );
       return;
     }
@@ -486,7 +487,7 @@ export class AccumulateExternalities
 
   updatePrivilegedServices(
     manager: ServiceId,
-    authorizer: ServiceId,
+    authorizer: PerCore<ServiceId>,
     validators: ServiceId,
     autoAccumulate: [ServiceId, ServiceGas][],
   ): void {
