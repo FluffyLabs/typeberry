@@ -325,8 +325,6 @@ export class Accumulate {
     return {
       accumulatedReports: tryAsU32(i + accumulatedReports),
       gasCost: tryAsServiceGas(gasCost + seqGasCost),
-      // yieldedRoots: yieldedRoots.concat(seqYieldedRoots),
-      // pendingTransfers: pendingTransfers.concat(seqPendingTransfers),
       // ideally we would use the already merged state here instead of doing multiple merge rounds
       state,
     };
