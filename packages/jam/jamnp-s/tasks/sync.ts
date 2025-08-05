@@ -94,7 +94,8 @@ export class SyncTask {
     return syncTask;
   }
 
-  private bestSeen: up0.HashAndSlot;
+  // Other's best header hash with timeslot
+  private othersBest: up0.HashAndSlot;
 
   private constructor(
     private readonly spec: ChainSpec,
