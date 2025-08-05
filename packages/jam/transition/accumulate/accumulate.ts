@@ -318,7 +318,7 @@ export class Accumulate {
       slot,
       entropy,
       statistics,
-      stateAfterarallelAcc,
+      stateAfterParallelAcc,
     );
     assertEmpty(seqRest);
 
