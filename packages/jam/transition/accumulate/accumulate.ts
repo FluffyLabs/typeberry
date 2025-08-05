@@ -15,10 +15,11 @@ import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 
 import { HashSet } from "@typeberry/collections";
 import { KeccakHasher } from "@typeberry/hash/keccak.js";
-import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
+import { AccumulateExternalities } from "@typeberry/jam-host-calls/externalities/accumulate-externalities.js";
 import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import {
   AccumulationStateUpdate,
+  PartiallyUpdatedState,
   type ServiceStateUpdate,
 } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
@@ -190,13 +191,12 @@ export class Accumulate {
     }
 
     const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec);
-    const partialState = new PartialStateDb(
+    const partialState = new AccumulateExternalities(
       this.chainSpec,
-      this.state,
+      new PartiallyUpdatedState(this.state, inputStateUpdate),
       serviceId,
       nextServiceId,
       slot,
-      inputStateUpdate,
     );
 
     const externalities = {

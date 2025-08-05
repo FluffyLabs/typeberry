@@ -159,30 +159,6 @@ export class OnChain {
     } = disputesResult.ok.stateUpdate;
     assertEmpty(disputesRest);
 
-    // reports
-    const reportsResult = await this.reports.transition({
-      slot: timeSlot,
-      guarantees: block.extrinsic.view().guarantees.view(),
-      knownPackages: [],
-    });
-    if (reportsResult.isError) {
-      return stfError(StfErrorKind.Reports, reportsResult);
-    }
-    const { availabilityAssignment: reportsAvailAssignment, ...reportsRest } = reportsResult.ok.stateUpdate;
-    assertEmpty(reportsRest);
-
-    // assurances
-    const assurancesResult = await this.assurances.transition({
-      assurances: asKnownSize(block.extrinsic.view().assurances.view()),
-      slot: timeSlot,
-      parentHash: header.parentHeaderHash,
-    });
-    if (assurancesResult.isError) {
-      return stfError(StfErrorKind.Assurances, assurancesResult);
-    }
-    const { availabilityAssignment: assurancesAvailAssignment, ...assurancesRest } = assurancesResult.ok.stateUpdate;
-    assertEmpty(assurancesRest);
-
     // safrole
     const safroleResult = await this.safrole.transition({
       slot: timeSlot,
@@ -206,6 +182,30 @@ export class OnChain {
       ...safroleRest
     } = safroleResult.ok.stateUpdate;
     assertEmpty(safroleRest);
+
+    // reports
+    const reportsResult = await this.reports.transition({
+      slot: timeSlot,
+      guarantees: block.extrinsic.view().guarantees.view(),
+      newEntropy: entropy,
+    });
+    if (reportsResult.isError) {
+      return stfError(StfErrorKind.Reports, reportsResult);
+    }
+    const { availabilityAssignment: reportsAvailAssignment, ...reportsRest } = reportsResult.ok.stateUpdate;
+    assertEmpty(reportsRest);
+
+    // assurances
+    const assurancesResult = await this.assurances.transition({
+      assurances: asKnownSize(block.extrinsic.view().assurances.view()),
+      slot: timeSlot,
+      parentHash: header.parentHeaderHash,
+    });
+    if (assurancesResult.isError) {
+      return stfError(StfErrorKind.Assurances, assurancesResult);
+    }
+    const { availabilityAssignment: assurancesAvailAssignment, ...assurancesRest } = assurancesResult.ok.stateUpdate;
+    assertEmpty(assurancesRest);
 
     // preimages
     const preimagesResult = this.preimages.integrate({
@@ -251,17 +251,20 @@ export class OnChain {
       preimages: accumulatePreimages,
       timeslot: timeSlot,
     });
+
     if (deferredTransfersResult.isError) {
       return stfError(StfErrorKind.DeferredTransfers, deferredTransfersResult);
     }
 
     const {
       servicesUpdates: newServicesUpdates,
+      storageUpdates: deferredTransfersStorageUpdates,
       transferStatistics,
       ...deferredTransfersRest
     } = deferredTransfersResult.ok;
     assertEmpty(deferredTransfersRest);
     servicesUpdate.servicesUpdates = newServicesUpdates;
+    servicesUpdate.storage.push(...deferredTransfersStorageUpdates);
     // recent history
     const recentHistoryUpdate = this.recentHistory.transition({
       headerHash,
