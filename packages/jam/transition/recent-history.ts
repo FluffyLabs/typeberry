@@ -46,26 +46,28 @@ export class RecentHistory {
   ) {}
 
   transition(input: RecentHistoryInput): RecentHistoryStateUpdate {
-    if (!Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      const recentBlocks = (this.state.recentBlocks as LegacyRecentBlocks).slice();
-      const lastState = recentBlocks.length > 0 ? recentBlocks[recentBlocks.length - 1] : null;
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      const lastState = this.state.recentBlocks as RecentBlocks;
+      const lastAccumulation = lastState.accumulationLog;
+      const recentBlocks = lastState.blocks.slice();
+      const lastBlock = recentBlocks.length > 0 ? recentBlocks[recentBlocks.length - 1] : null;
       // update the posterior root of previous state.
-      if (lastState !== null) {
-        lastState.postStateRoot = input.priorStateRoot;
+      if (lastBlock !== null) {
+        lastBlock.postStateRoot = input.priorStateRoot;
       }
 
-      const mmr =
-        lastState !== null
-          ? MerkleMountainRange.fromPeaks(this.hasher, lastState.mmr)
+      const mmb =
+        lastAccumulation !== null
+          ? MerkleMountainRange.fromPeaks(this.hasher, lastAccumulation)
           : MerkleMountainRange.empty(this.hasher);
 
       // append the accumulation root
-      mmr.append(input.accumulateRoot);
+      mmb.append(input.accumulateRoot);
 
       // push new state item
       recentBlocks.push({
         headerHash: input.headerHash,
-        mmr: mmr.getPeaks(),
+        accumulationResult: mmb.getSuperPeakHash(),
         postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
         reported: input.workPackages,
       });
@@ -76,31 +78,32 @@ export class RecentHistory {
       // write back to the state.
       return {
         // we remove all items above `MAX_RECENT_HISTORY`.
-        recentBlocks: asKnownSize(recentBlocks),
+        recentBlocks: RecentBlocks.create({
+          blocks: asKnownSize(recentBlocks),
+          accumulationLog: mmb.getPeaks(),
+        }),
       };
     }
 
-    const lastState = this.state.recentBlocks as RecentBlocks;
-    const lastAccumulation = lastState.accumulationLog;
-    const recentBlocks = lastState.blocks.slice();
-    const lastBlock = recentBlocks.length > 0 ? recentBlocks[recentBlocks.length - 1] : null;
+    const recentBlocks = (this.state.recentBlocks as LegacyRecentBlocks).slice();
+    const lastState = recentBlocks.length > 0 ? recentBlocks[recentBlocks.length - 1] : null;
     // update the posterior root of previous state.
-    if (lastBlock !== null) {
-      lastBlock.postStateRoot = input.priorStateRoot;
+    if (lastState !== null) {
+      lastState.postStateRoot = input.priorStateRoot;
     }
 
-    const mmb =
-      lastAccumulation !== null
-        ? MerkleMountainRange.fromPeaks(this.hasher, lastAccumulation)
+    const mmr =
+      lastState !== null
+        ? MerkleMountainRange.fromPeaks(this.hasher, lastState.mmr)
         : MerkleMountainRange.empty(this.hasher);
 
     // append the accumulation root
-    mmb.append(input.accumulateRoot);
+    mmr.append(input.accumulateRoot);
 
     // push new state item
     recentBlocks.push({
       headerHash: input.headerHash,
-      accumulationResult: mmb.getSuperPeakHash(),
+      mmr: mmr.getPeaks(),
       postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
       reported: input.workPackages,
     });
@@ -111,10 +114,7 @@ export class RecentHistory {
     // write back to the state.
     return {
       // we remove all items above `MAX_RECENT_HISTORY`.
-      recentBlocks: RecentBlocks.create({
-        blocks: asKnownSize(recentBlocks),
-        accumulationLog: mmb.getPeaks(),
-      }),
+      recentBlocks: asKnownSize(recentBlocks),
     };
   }
 }
