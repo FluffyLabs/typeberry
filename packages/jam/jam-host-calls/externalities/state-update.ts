@@ -327,7 +327,7 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     );
   }
 
-  getPotentiallyUpdatedPrivilegedServices() {
+  getPrivilegedServices() {
     if (this.stateUpdate.privilegedServices !== null) {
       return this.stateUpdate.privilegedServices;
     }

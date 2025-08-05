@@ -449,7 +449,7 @@ export class AccumulateExternalities
 
   updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void {
     /** https://graypaper.fluffylabs.dev/#/9a08063/36e10136e901?v=0.6.6 */
-    const validatorsManager = this.updatedState.getPotentiallyUpdatedPrivilegedServices().validatorsManager;
+    const validatorsManager = this.updatedState.getPrivilegedServices().validatorsManager;
 
     if (validatorsManager !== this.currentServiceId) {
       logger.trace(
@@ -473,7 +473,7 @@ export class AccumulateExternalities
     // NOTE `coreIndex` is already verified in the HC, so this is infallible.
     /** https://graypaper.fluffylabs.dev/#/9a08063/368401368401?v=0.6.6 */
 
-    const currentAuthManager = this.updatedState.getPotentiallyUpdatedPrivilegedServices().authManager[coreIndex];
+    const currentAuthManager = this.updatedState.getPrivilegedServices().authManager[coreIndex];
 
     if (currentAuthManager !== this.currentServiceId) {
       logger.trace(
@@ -493,7 +493,7 @@ export class AccumulateExternalities
   ): void {
     // NOTE [ToDr] I guess we should not fail if the services don't exist. */
     /** https://graypaper.fluffylabs.dev/#/9a08063/36f40036f400?v=0.6.6 */
-    const currentManager = this.updatedState.getPotentiallyUpdatedPrivilegedServices().manager;
+    const currentManager = this.updatedState.getPrivilegedServices().manager;
 
     if (currentManager !== this.currentServiceId) {
       logger.trace(
