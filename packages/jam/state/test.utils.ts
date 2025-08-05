@@ -42,6 +42,20 @@ import {
 
 const spec = tinyChainSpec;
 
+const serviceComp = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+  ? {
+      gratisStorage: tryAsU64(1024),
+      created: tryAsTimeSlot(10),
+      lastAccumulation: tryAsTimeSlot(15),
+      parentService: tryAsServiceId(1),
+    }
+  : {
+      gratisStorage: tryAsU64(0),
+      created: tryAsTimeSlot(0),
+      lastAccumulation: tryAsTimeSlot(0),
+      parentService: tryAsServiceId(0),
+    };
+
 // based on jamduna/assurances/state_snapshots/1_004.json
 export const testState = (): InMemoryState => {
   const state = InMemoryState.create({
@@ -182,11 +196,8 @@ export const testState = (): InMemoryState => {
             accumulateMinGas: tryAsServiceGas(100),
             onTransferMinGas: tryAsServiceGas(100),
             storageUtilisationBytes: tryAsU64(1296),
-            gratisStorage: tryAsU64(0),
             storageUtilisationCount: tryAsU32(4),
-            created: tryAsTimeSlot(0),
-            lastAccumulation: tryAsTimeSlot(0),
-            parentService: tryAsServiceId(0),
+            ...serviceComp,
           }),
           preimages: HashDictionary.fromEntries(
             [
@@ -413,7 +424,7 @@ const TEST_VALIDATOR_DATA =
 
 // from post state of jamduna/assurances/1_004.json
 export const TEST_STATE_ROOT = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-  ? "0xff0fd8e279f09aea84722476152cd4ef78ac3ac4d7edbc30b3b7e58ba53d239a"
+  ? "0x71ad0a54052bcfdcd87ab52dd8234e3b794377954a18904441d8b0479568a7be"
   : Compatibility.is(GpVersion.V0_6_5, GpVersion.V0_6_6)
     ? "0x8e7d1c93e8b9c88584e2212330e062826b5c925a99627b2120e33e41563f4d79"
     : "0xc460608b85a3a6b405f967fbd47b10b185516423f6a6744485b9ecd2c0c72e77";
@@ -513,11 +524,11 @@ export const TEST_STATE = [
   [
     "0xff00000000000000000000000000000000000000000000000000000000000000",
     Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? "0x15f8485e3a88e86182e63280720d5ec9892578f0e577fb1bcdda5cf49795081500e40b5402000000640000000000000064000000000000001005000000000000000000000000000004000000000000000000000000000000"
+      ? "0x15f8485e3a88e86182e63280720d5ec9892578f0e577fb1bcdda5cf49795081500e40b54020000006400000000000000640000000000000010050000000000000004000000000000040000000a0000000f00000001000000"
       : "0x15f8485e3a88e86182e63280720d5ec9892578f0e577fb1bcdda5cf49795081500e40b540200000064000000000000006400000000000000100500000000000004000000",
     "service_account",
     Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? "s=0|c=0x15f8485e3a88e86182e63280720d5ec9892578f0e577fb1bcdda5cf497950815 b=10000000000 g=100 m=100 l=1296 f=0 i=4 r=0 a=0 p=0|clen=32"
+      ? "s=0|c=0x15f8485e3a88e86182e63280720d5ec9892578f0e577fb1bcdda5cf497950815 b=10000000000 g=100 m=100 l=1296 f=1024 i=4 r=10 a=15 p=1|clen=32"
       : "s=0|c=0x15f8485e3a88e86182e63280720d5ec9892578f0e577fb1bcdda5cf497950815 b=10000000000 g=100 m=100 l=1296 i=4|clen=32",
   ],
 ];

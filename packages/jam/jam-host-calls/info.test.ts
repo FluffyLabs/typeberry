@@ -113,6 +113,7 @@ describe("HostCalls: Info", () => {
     const { registers, memory } = prepareRegsAndMemory(serviceId, 10);
     const storageUtilisationBytes = tryAsU64(10_000);
     const storageUtilisationCount = tryAsU32(1_000);
+    // NOTE We can set values in new fields because encoding just skips them in GP pre067
     accounts.details.set(
       serviceId,
       ServiceAccountInfo.create({
@@ -122,10 +123,11 @@ describe("HostCalls: Info", () => {
         onTransferMinGas: tryAsServiceGas(0n),
         storageUtilisationBytes,
         storageUtilisationCount,
-        gratisStorage: tryAsU64(0),
-        created: tryAsTimeSlot(0),
-        lastAccumulation: tryAsTimeSlot(0),
-        parentService: tryAsServiceId(0),
+        // NOTE Compatibility is needed since we are calculating threshold balance internally
+        gratisStorage: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(1024) : tryAsU64(0),
+        created: tryAsTimeSlot(10),
+        lastAccumulation: tryAsTimeSlot(10),
+        parentService: tryAsServiceId(10_000),
       }),
     );
 

@@ -6,7 +6,7 @@ import { HashDictionary } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { OK, Result, deepEqual } from "@typeberry/utils";
+import { Compatibility, GpVersion, OK, Result, deepEqual } from "@typeberry/utils";
 import { InMemoryState, UpdateError } from "./in-memory-state.js";
 import {
   LookupHistoryItem,
@@ -18,6 +18,21 @@ import {
 import { UpdatePreimage, UpdateServiceKind, UpdateStorage } from "./state-update.js";
 
 describe("InMemoryState", () => {
+  // backward-compatable account fields
+  const accountComp = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+    ? {
+        gratisStorage: tryAsU64(1024),
+        created: tryAsTimeSlot(10),
+        lastAccumulation: tryAsTimeSlot(15),
+        parentService: tryAsServiceId(1),
+      }
+    : {
+        gratisStorage: tryAsU64(0),
+        created: tryAsTimeSlot(0),
+        lastAccumulation: tryAsTimeSlot(0),
+        parentService: tryAsServiceId(0),
+      };
+
   it("should not change anything when state udpate is empty", () => {
     const state = InMemoryState.empty(tinyChainSpec);
     const expectedState = InMemoryState.empty(tinyChainSpec);
@@ -38,10 +53,7 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
-      gratisStorage: tryAsU64(0),
-      created: tryAsTimeSlot(0),
-      lastAccumulation: tryAsTimeSlot(0),
-      parentService: tryAsServiceId(0),
+      ...accountComp,
     });
 
     const result = state.applyUpdate({
@@ -80,10 +92,7 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
-      gratisStorage: tryAsU64(0),
-      created: tryAsTimeSlot(0),
-      lastAccumulation: tryAsTimeSlot(0),
-      parentService: tryAsServiceId(0),
+      ...accountComp,
     });
 
     // First creation succeeds
@@ -130,10 +139,7 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
-      gratisStorage: tryAsU64(0),
-      created: tryAsTimeSlot(0),
-      lastAccumulation: tryAsTimeSlot(0),
-      parentService: tryAsServiceId(0),
+      ...accountComp,
     });
 
     // Create service first
@@ -211,10 +217,7 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
-      gratisStorage: tryAsU64(0),
-      created: tryAsTimeSlot(0),
-      lastAccumulation: tryAsTimeSlot(0),
-      parentService: tryAsServiceId(0),
+      ...accountComp,
     });
 
     // Create service first
@@ -274,10 +277,7 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
-      gratisStorage: tryAsU64(0),
-      created: tryAsTimeSlot(0),
-      lastAccumulation: tryAsTimeSlot(0),
-      parentService: tryAsServiceId(0),
+      ...accountComp,
     });
 
     // Create service first
@@ -334,10 +334,7 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
-      gratisStorage: tryAsU64(0),
-      created: tryAsTimeSlot(0),
-      lastAccumulation: tryAsTimeSlot(0),
-      parentService: tryAsServiceId(0),
+      ...accountComp,
     });
 
     // Create the service
@@ -414,10 +411,7 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
-      gratisStorage: tryAsU64(0),
-      created: tryAsTimeSlot(0),
-      lastAccumulation: tryAsTimeSlot(0),
-      parentService: tryAsServiceId(0),
+      ...accountComp,
     });
 
     // Create the service
@@ -482,10 +476,7 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
-      gratisStorage: tryAsU64(0),
-      created: tryAsTimeSlot(0),
-      lastAccumulation: tryAsTimeSlot(0),
-      parentService: tryAsServiceId(0),
+      ...accountComp,
     });
 
     // Create the service
@@ -557,10 +548,7 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
-      gratisStorage: tryAsU64(0),
-      created: tryAsTimeSlot(0),
-      lastAccumulation: tryAsTimeSlot(0),
-      parentService: tryAsServiceId(0),
+      ...accountComp,
     });
 
     let result = state.applyUpdate({

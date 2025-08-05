@@ -578,6 +578,7 @@ describe("PartialState.newService", () => {
     const codeLength = tryAsU64(2 ** 32 + 1);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
+    // NOTE compatibility is needed since newService uses calculateThresholdBalance internally
     const gratisStorage = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(1024) : tryAsU64(0);
 
     // when

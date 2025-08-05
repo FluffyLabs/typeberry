@@ -11,7 +11,20 @@ import { ServiceAccountInfo } from "./service.js";
 const encodedTestInfo = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
   ? "0x0101010101010101010101010101010101010101010101010101010101010101809698000000000064000000000000000a000000000000000a00000000000000050000000000000003000000060000000b0000000f000000"
   : "0x0101010101010101010101010101010101010101010101010101010101010101809698000000000064000000000000000a000000000000000a0000000000000003000000";
-
+// compatibility service parameters
+const serviceComp = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+  ? {
+      gratisStorage: tryAsU64(5),
+      created: tryAsTimeSlot(6),
+      lastAccumulation: tryAsTimeSlot(11),
+      parentService: tryAsServiceId(15),
+    }
+  : {
+      gratisStorage: tryAsU64(0),
+      created: tryAsTimeSlot(0),
+      lastAccumulation: tryAsTimeSlot(0),
+      parentService: tryAsServiceId(0),
+    };
 const testInfo = ServiceAccountInfo.create({
   codeHash: Bytes.fill(HASH_SIZE, 1).asOpaque(),
   balance: tryAsU64(10_000_000n),
@@ -19,10 +32,7 @@ const testInfo = ServiceAccountInfo.create({
   onTransferMinGas: tryAsServiceGas(10),
   storageUtilisationBytes: tryAsU64(10),
   storageUtilisationCount: tryAsU32(3),
-  gratisStorage: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(5) : tryAsU64(0),
-  created: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsTimeSlot(6) : tryAsTimeSlot(0),
-  lastAccumulation: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsTimeSlot(11) : tryAsTimeSlot(0),
-  parentService: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsServiceId(15) : tryAsServiceId(0),
+  ...serviceComp,
 });
 
 describe("Service: Account Info", () => {

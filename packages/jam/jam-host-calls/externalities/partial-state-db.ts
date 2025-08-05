@@ -394,7 +394,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     bytes: { overflow: boolean; value: U64 },
     serviceInfo: ServiceAccountInfo,
   ): Result<OK, NewServiceError> {
-    // NOTE: [ToDr] this is not specified in GP, but it seems sensible.
+    // TODO [ToDr] this is not specified in GP, but it seems sensible.
     if (items.overflow || bytes.overflow) {
       return Result.error(NewServiceError.InsufficientFunds);
     }
