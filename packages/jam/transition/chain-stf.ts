@@ -192,8 +192,10 @@ export class OnChain {
     if (reportsResult.isError) {
       return stfError(StfErrorKind.Reports, reportsResult);
     }
-    const { availabilityAssignment: reportsAvailAssignment, ...reportsRest } = reportsResult.ok.stateUpdate;
+    const { reported: workPackages, reporters, stateUpdate: reportsUpdate, ...reportsRest } = reportsResult.ok;
     assertEmpty(reportsRest);
+    const { availabilityAssignment: reportsAvailAssignment, ...reportsUpdateRest } = reportsUpdate;
+    assertEmpty(reportsUpdateRest);
 
     // assurances
     const assurancesResult = await this.assurances.transition({
@@ -204,8 +206,12 @@ export class OnChain {
     if (assurancesResult.isError) {
       return stfError(StfErrorKind.Assurances, assurancesResult);
     }
-    const { availabilityAssignment: assurancesAvailAssignment, ...assurancesRest } = assurancesResult.ok.stateUpdate;
+
+    const { availableReports, stateUpdate: assurancesUpdate, ...assurancesRest } = assurancesResult.ok;
     assertEmpty(assurancesRest);
+
+    const { availabilityAssignment: assurancesAvailAssignment, ...assurancesUpdateRest } = assurancesUpdate;
+    assertEmpty(assurancesUpdateRest);
 
     // preimages
     const preimagesResult = this.preimages.integrate({
@@ -221,33 +227,35 @@ export class OnChain {
     // accumulate
     const accumulateResult = await this.accumulate.transition({
       slot: timeSlot,
-      reports: assurancesResult.ok.availableReports,
+      reports: availableReports,
       entropy: entropy[0],
     });
     if (accumulateResult.isError) {
       return stfError(StfErrorKind.Accumulate, accumulateResult);
     }
     const {
+      root: accumulateRoot,
+      stateUpdate: accumulateUpdate,
+      accumulationStatistics,
+      pendingTransfers,
+      ...accumulateRest
+    } = accumulateResult.ok;
+    assertEmpty(accumulateRest);
+
+    const {
       privilegedServices: maybePrivilegedServices,
       authQueues: maybeAuthorizationQueues,
       designatedValidatorData: maybeDesignatedValidatorData,
-      recentlyAccumulated: maybeRecentlyAccumulated,
-      accumulationQueue: maybeAccumulationQueue,
       timeslot: accumulateTimeSlot,
       preimages: accumulatePreimages,
-      servicesRemoved: accumulateServicesRemoved,
-      servicesUpdates: accumulateServicesUpdates,
-      storage,
-      ...accumulateRest
-    } = accumulateResult.ok.stateUpdate;
-    assertEmpty(accumulateRest);
+      ...servicesUpdate
+    } = accumulateUpdate;
 
     const deferredTransfersResult = await this.deferredTransfers.transition({
-      pendingTransfers: accumulateResult.ok.pendingTransfers,
+      pendingTransfers: pendingTransfers,
       preimages: accumulatePreimages,
       timeslot: timeSlot,
-      servicesRemoved: accumulateServicesRemoved,
-      servicesUpdates: accumulateServicesUpdates,
+      ...servicesUpdate,
     });
 
     if (deferredTransfersResult.isError) {
@@ -255,23 +263,22 @@ export class OnChain {
     }
 
     const {
-      servicesUpdates: deferredTransfersServicesUpdates,
+      servicesUpdates: newServicesUpdates,
       storageUpdates: deferredTransfersStorageUpdates,
       transferStatistics,
       ...deferredTransfersRest
     } = deferredTransfersResult.ok;
     assertEmpty(deferredTransfersRest);
 
-    // TODO [MaSo] Should this check if some storage was updates twice?
-    // and allowed only the newest update to occure?
-    storage.push(...deferredTransfersStorageUpdates);
+    servicesUpdate.servicesUpdates = newServicesUpdates;
+    servicesUpdate.storage.push(...deferredTransfersStorageUpdates);
 
     // recent history
     const recentHistoryUpdate = this.recentHistory.transition({
       headerHash,
       priorStateRoot: header.priorStateRoot,
-      accumulateRoot: accumulateResult.ok.root,
-      workPackages: reportsResult.ok.reported,
+      accumulateRoot,
+      workPackages,
     });
     const { recentBlocks, ...recentHistoryRest } = recentHistoryUpdate;
     assertEmpty(recentHistoryRest);
@@ -290,8 +297,8 @@ export class OnChain {
       authorIndex: header.bandersnatchBlockAuthorIndex,
       extrinsic,
       incomingReports: extrinsic.guarantees.map((g) => g.report),
-      availableReports: assurancesResult.ok.availableReports,
-      accumulationStatistics: accumulateResult.ok.accumulationStatistics,
+      availableReports,
+      accumulationStatistics,
       transferStatistics,
     });
     const { statistics, ...statisticsRest } = statisticsUpdate;
@@ -301,8 +308,6 @@ export class OnChain {
       ...(maybeAuthorizationQueues !== undefined ? { authQueues: maybeAuthorizationQueues } : {}),
       ...(maybeDesignatedValidatorData !== undefined ? { designatedValidatorData: maybeDesignatedValidatorData } : {}),
       ...(maybePrivilegedServices !== undefined ? { privilegedServices: maybePrivilegedServices } : {}),
-      ...(maybeRecentlyAccumulated !== undefined ? { recentlyAccumulated: maybeRecentlyAccumulated } : {}),
-      ...(maybeAccumulationQueue !== undefined ? { accumulationQueue: maybeAccumulationQueue } : {}),
       authPools,
       preimages: preimages.concat(accumulatePreimages),
       disputesRecords,
@@ -322,9 +327,7 @@ export class OnChain {
       previousValidatorData,
       sealingKeySeries,
       ticketsAccumulator,
-      servicesRemoved: accumulateServicesRemoved,
-      servicesUpdates: deferredTransfersServicesUpdates,
-      storage,
+      ...servicesUpdate,
     });
   }
 
