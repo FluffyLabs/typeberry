@@ -15,6 +15,7 @@ import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
+import { Logger } from "@typeberry/logger";
 import { type U64, isU32, isU64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AutoAccumulate,
@@ -58,7 +59,8 @@ import { AccumulationStateUpdate, type PartiallyUpdatedState } from "./state-upd
  * https://graypaper.fluffylabs.dev/#/9a08063/370202370502?v=0.6.6 */
 const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 
-// TODO [ToDr] Rename to `AccumulateExternalities`.
+const logger = Logger.new(import.meta.filename, "accumulate-externalities");
+
 export class AccumulateExternalities
   implements PartialState, AccountsWrite, AccountsRead, AccountsInfo, AccountsLookup
 {
@@ -446,6 +448,15 @@ export class AccumulateExternalities
 
   updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void {
     /** https://graypaper.fluffylabs.dev/#/9a08063/36e10136e901?v=0.6.6 */
+    const validatorsManager = this.updatedState.getPotentiallyUpdatedPrivilegedServices().manager;
+
+    if (validatorsManager !== this.currentServiceId) {
+      logger.trace(
+        `Current service id (${this.currentServiceId}) is not a validator manager and cannot update validators.`,
+      );
+      return;
+    }
+
     this.updatedState.stateUpdate.validatorsData = validatorsData;
   }
 
@@ -460,6 +471,16 @@ export class AccumulateExternalities
   ): void {
     // NOTE `coreIndex` is already verified in the HC, so this is infallible.
     /** https://graypaper.fluffylabs.dev/#/9a08063/368401368401?v=0.6.6 */
+
+    const currentAuthManager = this.updatedState.getPotentiallyUpdatedPrivilegedServices().authManager;
+
+    if (currentAuthManager !== this.currentServiceId) {
+      logger.trace(
+        `Current service id (${this.currentServiceId}) is not an auth manager and cannot update authorization queues.`,
+      );
+      return;
+    }
+
     this.updatedState.stateUpdate.authorizationQueues.set(coreIndex, authQueue);
   }
 
@@ -471,6 +492,15 @@ export class AccumulateExternalities
   ): void {
     // NOTE [ToDr] I guess we should not fail if the services don't exist. */
     /** https://graypaper.fluffylabs.dev/#/9a08063/36f40036f400?v=0.6.6 */
+    const currentManager = this.updatedState.getPotentiallyUpdatedPrivilegedServices().manager;
+
+    if (currentManager !== this.currentServiceId) {
+      logger.trace(
+        `Current service id (${this.currentServiceId}) is not a manager and cannot update privileged services.`,
+      );
+      return;
+    }
+
     this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
       manager,
       authManager: authorizer,

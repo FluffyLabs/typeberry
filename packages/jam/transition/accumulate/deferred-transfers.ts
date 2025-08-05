@@ -1,5 +1,4 @@
 import { type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
-import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { AccumulateExternalities } from "@typeberry/jam-host-calls/externalities/accumulate-externalities.js";
@@ -11,14 +10,7 @@ import {
 import { Logger } from "@typeberry/logger";
 import { sumU64, tryAsU32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
-import {
-  ServiceAccountInfo,
-  type ServicesUpdate,
-  type State,
-  type UpdatePreimage,
-  UpdatePreimageKind,
-  type UpdateService,
-} from "@typeberry/state";
+import { ServiceAccountInfo, type ServicesUpdate, type State } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import type { CountAndGasUsed } from "../statistics.js";
 import { uniquePreserveOrder } from "./accumulate-utils.js";
@@ -30,7 +22,7 @@ type DeferredTransfersInput = {
   servicesUpdate: ServicesUpdate;
 };
 
-export type DeferredTransfersState = Pick<State, "timeslot" | "getService">;
+export type DeferredTransfersState = Pick<State, "timeslot" | "getService" | "privilegedServices">;
 
 export type DeferredTransfersResult = {
   servicesUpdate: ServicesUpdate;
@@ -52,79 +44,8 @@ const logger = Logger.new(import.meta.filename, "deferred-transfers");
 export class DeferredTransfers {
   constructor(
     public readonly chainSpec: ChainSpec,
-    private readonly state: Pick<State, "getService" | "timeslot">,
+    private readonly state: DeferredTransfersState,
   ) {}
-
-  private getPotentiallyUpdatedServiceInfo(
-    serviceId: ServiceId,
-    serviceUpdates: UpdateService[],
-    servicesRemoved: ServiceId[],
-  ) {
-    if (servicesRemoved.includes(serviceId)) {
-      return null;
-    }
-
-    const maybeUpdatedService = serviceUpdates.find((x) => x.serviceId === serviceId);
-
-    if (maybeUpdatedService !== undefined) {
-      return maybeUpdatedService.action.account;
-    }
-
-    return this.state.getService(serviceId)?.getInfo() ?? null;
-  }
-
-  private getPotentiallyUpdatedPreimage(preimages: UpdatePreimage[], serviceId: ServiceId, preimageHash: PreimageHash) {
-    const preimageUpdate = preimages.findLast((x) => x.serviceId === serviceId && x.hash.isEqualTo(preimageHash));
-    if (preimageUpdate === undefined) {
-      return this.state.getService(serviceId)?.getPreimage(preimageHash) ?? null;
-    }
-
-    switch (preimageUpdate.action.kind) {
-      case UpdatePreimageKind.Provide:
-        return preimageUpdate.action.preimage.blob;
-      case UpdatePreimageKind.Remove:
-        return null;
-      case UpdatePreimageKind.UpdateOrAdd:
-        // TODO [MaSi]: It is possible to have `Provide` and `UpdateOrAdd` in `preimages` and it will return `null`.
-        // We have to check if this situation is possible in real world and handle it
-        return this.state.getService(serviceId)?.getPreimage(preimageHash) ?? null;
-    }
-  }
-  /**
-   * A method that merges changes that were made by services during accumulation.
-   * It can modify: `services`, `privilegedServices`, `authQueues`,
-   * and `designatedValidatorData` and is called after the whole accumulation finishes.
-   */
-  private mergeServiceStateUpdates(
-    source: ServicesUpdate,
-    stateUpdates: AccumulationStateUpdate[],
-  ): AccumulationStateUpdate {
-    const serviceUpdates: ServicesUpdate[] = [source];
-
-    for (const stateUpdate of stateUpdates) {
-      serviceUpdates.push(stateUpdate.services);
-    }
-
-    const servicesUpdate = serviceUpdates.reduce(
-      (acc, update) => {
-        acc.servicesRemoved.push(...update.servicesRemoved);
-        acc.servicesUpdates.push(...update.servicesUpdates);
-        acc.preimages.push(...update.preimages);
-        acc.storage.push(...update.storage);
-        return acc;
-      },
-      {
-        servicesRemoved: [],
-        servicesUpdates: [],
-        preimages: [],
-        storage: [],
-      },
-    );
-
-    const accumulationStateUpdate = AccumulationStateUpdate.new(servicesUpdate);
-
-    return accumulationStateUpdate;
-  }
 
   async transition({
     pendingTransfers,
@@ -133,12 +54,11 @@ export class DeferredTransfers {
   }: DeferredTransfersInput): Promise<Result<DeferredTransfersResult, DeferredTransfersErrorCode>> {
     const transferStatistics = new Map<ServiceId, CountAndGasUsed>();
     const services = uniquePreserveOrder(pendingTransfers.flatMap((x) => [x.source, x.destination]));
-    const stateUpdates: AccumulationStateUpdate[] = [];
+    const partiallyUpdatedState = new PartiallyUpdatedState(this.state, AccumulationStateUpdate.new(servicesUpdate));
 
     for (const serviceId of services) {
       const transfers = pendingTransfers.filter((pendingTransfer) => pendingTransfer.destination === serviceId);
 
-      const partiallyUpdatedState = new PartiallyUpdatedState(this.state, AccumulationStateUpdate.new(servicesUpdate));
       const partialState = new AccumulateExternalities(
         this.chainSpec,
         partiallyUpdatedState,
@@ -174,14 +94,10 @@ export class DeferredTransfers {
       const gas = transfers.reduce((acc, item) => acc + item.gas, 0n);
       const { consumedGas } = await executor.run(args, tryAsGas(gas));
       transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(consumedGas) });
-      const [updatedState] = partialState.getStateUpdates();
-      stateUpdates.push(updatedState);
     }
 
-    const deferredTransfersStateUpdate = this.mergeServiceStateUpdates(servicesUpdate, stateUpdates);
-
     return Result.ok({
-      servicesUpdate: deferredTransfersStateUpdate.services,
+      servicesUpdate,
       transferStatistics,
     });
   }

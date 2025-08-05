@@ -84,7 +84,7 @@ export class AccumulationStateUpdate {
     for (const [k, v] of from.authorizationQueues) {
       update.authorizationQueues.set(k, v);
     }
-    update.yieldedRoot = from.yieldedRoot;
+    update.yieldedRoots = new Map(from.yieldedRoots);
     update.validatorsData = from.validatorsData === null ? null : asKnownSize([...from.validatorsData]);
     update.privilegedServices =
       from.privilegedServices === null ? null : PrivilegedServices.create({ ...from.privilegedServices });
@@ -92,7 +92,7 @@ export class AccumulationStateUpdate {
   }
 }
 
-type StateSlice = Pick<State, "getService">;
+type StateSlice = Pick<State, "getService" | "privilegedServices">;
 
 export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
   constructor(
@@ -320,6 +320,14 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
         serviceInfo: newInfo,
       }),
     );
+  }
+
+  getPotentiallyUpdatedPrivilegedServices() {
+    if (this.stateUpdate.privilegedServices !== null) {
+      return this.stateUpdate.privilegedServices;
+    }
+
+    return this.state.privilegedServices;
   }
 }
 

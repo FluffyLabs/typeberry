@@ -261,8 +261,7 @@ export class OnChain {
       ...deferredTransfersRest
     } = deferredTransfersResult.ok;
     assertEmpty(deferredTransfersRest);
-    // servicesUpdate.servicesUpdates = newServicesUpdates;
-    // servicesUpdate.storage.push(...deferredTransfersStorageUpdates);
+
     // recent history
     const recentHistoryUpdate = this.recentHistory.transition({
       headerHash,
