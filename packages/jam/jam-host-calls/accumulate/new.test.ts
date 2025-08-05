@@ -72,17 +72,10 @@ describe("HostCalls: New", () => {
 
     // then
     assert.deepStrictEqual(tryAsServiceId(Number(registers.get(RESULT_REG))), tryAsServiceId(23_000));
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      assert.deepStrictEqual(accumulate.newServiceCalled, [
-        [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, 1_024n],
-      ]);
-    } else {
-      // NOTE not setting the gratis storage value
-      // which results in `0n` at the end
-      assert.deepStrictEqual(accumulate.newServiceCalled, [
-        [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, 0n],
-      ]);
-    }
+    const gratisStorage = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 1_024n : 0n;
+    assert.deepStrictEqual(accumulate.newServiceCalled, [
+      [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, gratisStorage],
+    ]);
   });
 
   it("should fail when balance is not enough", async () => {

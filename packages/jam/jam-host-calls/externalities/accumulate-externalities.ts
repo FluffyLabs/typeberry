@@ -432,7 +432,7 @@ export class AccumulateExternalities
           onTransferMinGas,
           storageUtilisationBytes: bytes.value,
           storageUtilisationCount: items,
-          gratisStorage: gratisStorage,
+          gratisStorage,
           created: this.currentTimeslot,
           lastAccumulation: tryAsTimeSlot(0),
           parentService: this.currentServiceId,
