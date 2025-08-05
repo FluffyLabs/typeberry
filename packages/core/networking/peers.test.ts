@@ -87,6 +87,7 @@ describe("Peers", () => {
     assert.strictEqual(peers.isConnected(peer1.id), true);
 
     peers.peerConnected(peer2);
+    assert.strictEqual(peers.isConnected(peer1.id), false);
     assert.strictEqual(peers.isConnected(peer2.id), true);
   });
 });
