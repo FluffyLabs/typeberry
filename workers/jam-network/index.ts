@@ -26,7 +26,11 @@ if (!isMainThread) {
 }
 
 /**
- * TODO [ToDr] Docs
+ * JAM networking worker.
+ *
+ * The worker is responsible for setting up the UDP networking socket
+ * (using `typeberry/networking` package) and adding relevant JAMNP-s
+ * stream handlers.
  */
 export async function main(channel: MessageChannelStateMachine<NetworkInit, NetworkStates>) {
   logger.trace(`🛜 Network starting ${channel.currentState()}`);
