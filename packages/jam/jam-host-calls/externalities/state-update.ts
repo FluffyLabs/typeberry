@@ -86,7 +86,12 @@ export class AccumulationStateUpdate {
     update.yieldedRoot = from.yieldedRoot;
     update.validatorsData = from.validatorsData === null ? null : asKnownSize([...from.validatorsData]);
     update.privilegedServices =
-      from.privilegedServices === null ? null : PrivilegedServices.create({ ...from.privilegedServices });
+      from.privilegedServices === null
+        ? null
+        : PrivilegedServices.create({
+            ...from.privilegedServices,
+            authManager: asKnownSize([...from.privilegedServices.authManager]),
+          });
     return update;
   }
 }

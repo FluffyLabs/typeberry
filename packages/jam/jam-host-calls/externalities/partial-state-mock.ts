@@ -12,7 +12,7 @@ import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
-import type { ValidatorData } from "@typeberry/state";
+import type { PerCore, ValidatorData } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
 import {
   type EjectError,
@@ -104,7 +104,7 @@ export class PartialStateMock implements PartialState {
     this.validatorsData.push(validatorsData);
   }
 
-  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: [ServiceId, ServiceGas][]): void {
+  updatePrivilegedServices(m: ServiceId, a: PerCore<ServiceId>, v: ServiceId, g: [ServiceId, ServiceGas][]): void {
     this.privilegedServices.push([m, a, v, g]);
   }
 

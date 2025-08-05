@@ -174,6 +174,10 @@ function toJson(data: unknown) {
         return Object.fromEntries(Array.from(value).map(([key, val]) => [key.toString(), val]));
       }
 
+      if (value instanceof Map) {
+        return Object.fromEntries(value.entries());
+      }
+
       return value;
     },
     2,

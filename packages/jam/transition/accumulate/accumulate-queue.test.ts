@@ -10,7 +10,7 @@ import { FixedSizeArray, HashSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { InMemoryState, PrivilegedServices } from "@typeberry/state";
+import { InMemoryState, PrivilegedServices, tryAsPerCore } from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { deepEqual } from "@typeberry/utils";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
@@ -104,7 +104,7 @@ describe("accumulate-queue", () => {
         InMemoryState.partial(tinyChainSpec, {
           privilegedServices: PrivilegedServices.create({
             manager: tryAsServiceId(0),
-            authManager: tryAsServiceId(0),
+            authManager: tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(0)), tinyChainSpec),
             validatorsManager: tryAsServiceId(0),
             autoAccumulateServices: [],
           }),

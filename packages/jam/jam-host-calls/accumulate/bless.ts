@@ -1,9 +1,11 @@
 import { type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import { Decoder, codec, tryAsExactBytes } from "@typeberry/codec";
+import type { ChainSpec } from "@typeberry/config";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
@@ -34,6 +36,7 @@ export class Bless implements HostCallHandler {
   constructor(
     public readonly currentServiceId: ServiceId,
     private readonly partialState: PartialState,
+    private readonly chainSpec: ChainSpec,
   ) {}
 
   async execute(
@@ -79,7 +82,13 @@ export class Bless implements HostCallHandler {
       return;
     }
 
-    this.partialState.updatePrivilegedServices(manager, authorization, validator, autoAccumulateEntries);
+    // TODO: [MaSo] need to be updated properly to gp ^0.6.7
+    this.partialState.updatePrivilegedServices(
+      manager,
+      tryAsPerCore(new Array(this.chainSpec.coresCount).fill(authorization), this.chainSpec),
+      validator,
+      autoAccumulateEntries,
+    );
     regs.set(IN_OUT_REG, HostCallResult.OK);
   }
 }
