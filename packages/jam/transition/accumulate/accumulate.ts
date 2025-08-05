@@ -301,7 +301,7 @@ export class Accumulate {
 
     const {
       gasCost,
-      state: stateAfterarallelAcc,
+      state: stateAfterParallelAcc,
       ...rest
     } = await this.accumulateInParallel(accumulateData, slot, entropy, statistics, stateUpdate);
     assertEmpty(rest);

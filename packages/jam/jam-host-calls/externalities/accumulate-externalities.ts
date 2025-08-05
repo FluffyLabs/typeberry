@@ -449,11 +449,11 @@ export class AccumulateExternalities
 
   updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void {
     /** https://graypaper.fluffylabs.dev/#/9a08063/36e10136e901?v=0.6.6 */
-    const validatorsManager = this.updatedState.getPotentiallyUpdatedPrivilegedServices().manager;
+    const validatorsManager = this.updatedState.getPotentiallyUpdatedPrivilegedServices().validatorsManager;
 
     if (validatorsManager !== this.currentServiceId) {
       logger.trace(
-        `Current service id (${this.currentServiceId}) is not a validator manager and cannot update validators.`,
+        `Current service id (${this.currentServiceId}) is not a validator manager (${validatorsManager}) and cannot update validators. Ignoring.`,
       );
       return;
     }
@@ -477,7 +477,7 @@ export class AccumulateExternalities
 
     if (currentAuthManager !== this.currentServiceId) {
       logger.trace(
-        `Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} and cannot update authorization queue.`,
+        `Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentAuthManager}) and cannot update authorization queue. Ignoring`,
       );
       return;
     }
@@ -497,7 +497,7 @@ export class AccumulateExternalities
 
     if (currentManager !== this.currentServiceId) {
       logger.trace(
-        `Current service id (${this.currentServiceId}) is not a manager and cannot update privileged services.`,
+        `Current service id (${this.currentServiceId}) is not a manager (${currentManager}) and cannot update privileged services. Ignoring.`,
       );
       return;
     }
