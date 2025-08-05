@@ -192,7 +192,8 @@ export class OnChain {
     if (reportsResult.isError) {
       return stfError(StfErrorKind.Reports, reportsResult);
     }
-    const { reported: workPackages, reporters, stateUpdate: reportsUpdate, ...reportsRest } = reportsResult.ok;
+    // NOTE `reporters` are unused
+    const { reported: workPackages, reporters: _, stateUpdate: reportsUpdate, ...reportsRest } = reportsResult.ok;
     assertEmpty(reportsRest);
     const { availabilityAssignment: reportsAvailAssignment, ...reportsUpdateRest } = reportsUpdate;
     assertEmpty(reportsUpdateRest);
