@@ -1579,6 +1579,19 @@ describe("AccumulateServiceExternalities", () => {
       (sum, item) => sum + (item?.value.length ?? 0),
       0,
     );
+    const serviceComp = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? {
+          gratisStorage: tryAsU64(1024),
+          created: tryAsTimeSlot(10),
+          lastAccumulation: tryAsTimeSlot(15),
+          parentService: tryAsServiceId(1),
+        }
+      : {
+          gratisStorage: tryAsU64(0),
+          created: tryAsTimeSlot(0),
+          lastAccumulation: tryAsTimeSlot(0),
+          parentService: tryAsServiceId(0),
+        };
 
     return new InMemoryService(serviceId, {
       info: ServiceAccountInfo.create({
@@ -1588,10 +1601,7 @@ describe("AccumulateServiceExternalities", () => {
         storageUtilisationCount: tryAsU32(initialStorage.size),
         codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
         onTransferMinGas: tryAsServiceGas(1000),
-        gratisStorage: tryAsU64(0),
-        created: tryAsTimeSlot(0),
-        lastAccumulation: tryAsTimeSlot(0),
-        parentService: tryAsServiceId(0),
+        ...serviceComp,
         ...info,
       }),
       storage: initialStorage,

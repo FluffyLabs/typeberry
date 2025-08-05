@@ -48,6 +48,20 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: Info", () => {
+  const serviceComp = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+    ? {
+        gratisStorage: tryAsU64(1024),
+        created: tryAsTimeSlot(10),
+        lastAccumulation: tryAsTimeSlot(15),
+        parentService: tryAsServiceId(1),
+      }
+    : {
+        gratisStorage: tryAsU64(0),
+        created: tryAsTimeSlot(0),
+        lastAccumulation: tryAsTimeSlot(0),
+        parentService: tryAsServiceId(0),
+      };
+
   it("should write account info data into memory", async () => {
     const serviceId = tryAsServiceId(10_000);
     const currentServiceId = serviceId;
@@ -56,12 +70,13 @@ describe("HostCalls: Info", () => {
     const { registers, memory, readInfo } = prepareRegsAndMemory(serviceId);
     const storageUtilisationBytes = tryAsU64(10_000);
     const storageUtilisationCount = tryAsU32(1_000);
-    const gratisStorage = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(1024) : tryAsU64(0);
+
     const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(
       storageUtilisationCount,
       storageUtilisationBytes,
-      gratisStorage,
+      serviceComp.gratisStorage,
     );
+
     accounts.details.set(
       serviceId,
       ServiceAccountInfo.create({
@@ -71,10 +86,7 @@ describe("HostCalls: Info", () => {
         onTransferMinGas: tryAsServiceGas(0n),
         storageUtilisationBytes,
         storageUtilisationCount,
-        gratisStorage,
-        created: tryAsTimeSlot(0),
-        lastAccumulation: tryAsTimeSlot(0),
-        parentService: tryAsServiceId(0),
+        ...serviceComp,
       }),
     );
 
@@ -113,7 +125,6 @@ describe("HostCalls: Info", () => {
     const { registers, memory } = prepareRegsAndMemory(serviceId, 10);
     const storageUtilisationBytes = tryAsU64(10_000);
     const storageUtilisationCount = tryAsU32(1_000);
-    // NOTE We can set values in new fields because encoding just skips them in GP pre067
     accounts.details.set(
       serviceId,
       ServiceAccountInfo.create({
@@ -123,11 +134,7 @@ describe("HostCalls: Info", () => {
         onTransferMinGas: tryAsServiceGas(0n),
         storageUtilisationBytes,
         storageUtilisationCount,
-        // NOTE Compatibility is needed since we are calculating threshold balance internally
-        gratisStorage: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(1024) : tryAsU64(0),
-        created: tryAsTimeSlot(10),
-        lastAccumulation: tryAsTimeSlot(10),
-        parentService: tryAsServiceId(10_000),
+        ...serviceComp,
       }),
     );
 
