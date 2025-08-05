@@ -58,13 +58,13 @@ class Input {
   slot!: TimeSlot;
   known_packages!: WorkPackageHash[];
 
-  static toReportsInput(input: Input, spec: ChainSpec): ReportsInput {
+  static toReportsInput(input: Input, spec: ChainSpec, entropy: ReportsState["entropy"]): ReportsInput {
     const view = guaranteesAsView(spec, input.guarantees, { disableCredentialsRangeCheck: true });
 
     return {
       guarantees: view,
       slot: input.slot,
-      knownPackages: input.known_packages,
+      newEntropy: entropy,
     };
   }
 }
@@ -244,7 +244,7 @@ export async function runReportsTestFull(testContent: ReportsTest) {
 async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   const preState = TestState.toReportsState(testContent.pre_state, spec);
   const postState = TestState.toReportsState(testContent.post_state, spec);
-  const input = Input.toReportsInput(testContent.input, spec);
+  const input = Input.toReportsInput(testContent.input, spec, preState.entropy);
   const expectedOutput = TestReportsResult.toReportsResult(testContent.output);
 
   const keccakHasher = await keccak.KeccakHasher.create();

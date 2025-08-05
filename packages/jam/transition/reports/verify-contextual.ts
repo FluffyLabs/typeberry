@@ -1,5 +1,4 @@
-import type { HeaderHash, TimeSlot } from "@typeberry/block";
-import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
+import type { HeaderHash } from "@typeberry/block";
 import type { RefineContext } from "@typeberry/block/refine-context.js";
 import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { HashDictionary } from "@typeberry/collections";
@@ -10,6 +9,7 @@ import type { BlockState, LegacyRecentBlocks, State } from "@typeberry/state";
 import type { RecentBlockState, RecentBlocks } from "@typeberry/state/recent-blocks.js";
 import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
+import type { ReportsInput } from "./reports.js";
 
 /** `L`: The maximum age in timeslots of the lookup anchor. */
 export const L = 14_400;
@@ -22,7 +22,7 @@ export type HeaderChain = {
 
 /** https://graypaper.fluffylabs.dev/#/7e6ff6a/15eb0115eb01?v=0.6.7 */
 export function verifyContextualValidity(
-  input: { guarantees: GuaranteesExtrinsicView; slot: TimeSlot },
+  input: ReportsInput,
   state: Pick<
     State,
     "getService" | "recentBlocks" | "availabilityAssignment" | "accumulationQueue" | "recentlyAccumulated"

@@ -53,6 +53,8 @@ import { RecentBlocks } from "@typeberry/state/recent-blocks.js";
 import { Compatibility, GpVersion, asOpaqueType } from "@typeberry/utils";
 import { Reports, type ReportsState } from "./reports.js";
 
+export const ENTROPY = getEntropy(1, 2, 3, 4);
+
 const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then((hasher) => {
   return {
     hashConcat: (a, b) => keccak.hashBlobs(hasher, [a, b]),
@@ -210,7 +212,7 @@ function newReportsState({
     availabilityAssignment: tryAsPerCore(coreAssignment, spec),
     currentValidatorData: tryAsPerValidator(initialValidators(), spec),
     previousValidatorData: tryAsPerValidator(initialValidators(), spec),
-    entropy: getEntropy(1, 2, 3, 4),
+    entropy: ENTROPY,
     authPools: getAuthPools([1, 2, 3, 4], spec),
     recentBlocks: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
       ? RecentBlocks.create({
