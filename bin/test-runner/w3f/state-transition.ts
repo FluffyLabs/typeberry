@@ -1,6 +1,6 @@
 import assert from "node:assert";
-import { Block } from "@typeberry/block";
-import { blockFromJson } from "@typeberry/block-json";
+import { Block, Header } from "@typeberry/block";
+import { blockFromJson, headerFromJson } from "@typeberry/block-json";
 import { Decoder, Encoder, codec } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
@@ -12,6 +12,21 @@ import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
 import { TestState, loadState } from "./state-loader.js";
+
+export class StateTransitionGenesis {
+  static fromJson: FromJson<StateTransitionGenesis> = {
+    header: headerFromJson,
+    state: TestState.fromJson,
+  };
+
+  static Codec = codec.object({
+    header: Header.Codec,
+    state: TestState.Codec,
+  });
+
+  header!: Header;
+  state!: TestState;
+}
 
 export class StateTransition {
   static fromJson: FromJson<StateTransition> = {
