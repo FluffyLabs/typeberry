@@ -17,6 +17,7 @@ import {
   type UpdatePreimage,
   UpdatePreimageKind,
   UpdateService,
+  UpdateServiceKind,
   UpdateStorage,
   type ValidatorData,
   tryAsLookupHistorySlots,
@@ -38,7 +39,7 @@ export class AccumulationStateUpdate {
   public readonly authorizationQueues: Map<CoreIndex, FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>> =
     new Map();
   /** Yielded accumulation root. */
-  public yieldedRoot: OpaqueHash | null = null;
+  public yieldedRoots: Map<ServiceId, OpaqueHash> = new Map();
   /** New validators data. */
   public validatorsData: PerValidator<ValidatorData> | null = null;
   /** Updated priviliged services. */
@@ -83,7 +84,7 @@ export class AccumulationStateUpdate {
     for (const [k, v] of from.authorizationQueues) {
       update.authorizationQueues.set(k, v);
     }
-    update.yieldedRoot = from.yieldedRoot;
+    update.yieldedRoots = new Map(from.yieldedRoots);
     update.validatorsData = from.validatorsData === null ? null : asKnownSize([...from.validatorsData]);
     update.privilegedServices =
       from.privilegedServices === null
@@ -96,7 +97,7 @@ export class AccumulationStateUpdate {
   }
 }
 
-type StateSlice = Pick<State, "getService">;
+type StateSlice = Pick<State, "getService" | "privilegedServices">;
 
 export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
   constructor(
@@ -126,6 +127,7 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     const maybeNewService = this.stateUpdate.services.servicesUpdates.find(
       (update) => update.serviceId === destination,
     );
+
     if (maybeNewService !== undefined) {
       return maybeNewService.action.account;
     }
@@ -299,6 +301,22 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
   updateServiceInfo(serviceId: ServiceId, newInfo: ServiceAccountInfo) {
     const idx = this.stateUpdate.services.servicesUpdates.findIndex((x) => x.serviceId === serviceId);
     const toRemove = idx === -1 ? 0 : 1;
+    const existingItem = this.stateUpdate.services.servicesUpdates[idx];
+
+    if (existingItem?.action.kind === UpdateServiceKind.Create) {
+      this.stateUpdate.services.servicesUpdates.splice(
+        idx,
+        toRemove,
+        UpdateService.create({
+          serviceId,
+          serviceInfo: newInfo,
+          lookupHistory: existingItem.action.lookupHistory,
+        }),
+      );
+
+      return;
+    }
+
     this.stateUpdate.services.servicesUpdates.splice(
       idx,
       toRemove,
@@ -307,6 +325,14 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
         serviceInfo: newInfo,
       }),
     );
+  }
+
+  getPrivilegedServices() {
+    if (this.stateUpdate.privilegedServices !== null) {
+      return this.stateUpdate.privilegedServices;
+    }
+
+    return this.state.privilegedServices;
   }
 }
 
