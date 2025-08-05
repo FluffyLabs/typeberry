@@ -1,10 +1,9 @@
 import { EventEmitter } from "node:events";
 import { type HeaderHash, type HeaderView, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { HASH_SIZE, type WithHash, blake2b } from "@typeberry/hash";
+import { HASH_SIZE, TRUNCATED_HASH_SIZE, type WithHash, blake2b } from "@typeberry/hash";
 import { ce129, up0 } from "@typeberry/jamnp-s";
 import type { Listener } from "@typeberry/state-machine";
-import { TRUNCATED_KEY_BYTES } from "@typeberry/trie/nodes.js";
 import { startIpcServer } from "./server.js";
 
 export interface ExtensionApi {
@@ -38,8 +37,8 @@ export function startExtension(api: ExtensionApi) {
     let value = BytesBlob.blobFromNumbers([255, 255, 0, 0]);
     if (
       Bytes.fromBlob(
-        blake2b.hashString("0x83bd3bde264a79a2e67c487696c1d7f0b549da89").raw.subarray(0, TRUNCATED_KEY_BYTES),
-        TRUNCATED_KEY_BYTES,
+        blake2b.hashString("0x83bd3bde264a79a2e67c487696c1d7f0b549da89").raw.subarray(0, TRUNCATED_HASH_SIZE),
+        TRUNCATED_HASH_SIZE,
       ).isEqualTo(startKey)
     ) {
       value = BytesBlob.blobFromNumbers([255, 255, 255, 0]);

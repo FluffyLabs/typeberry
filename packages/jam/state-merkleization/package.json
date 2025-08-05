@@ -6,6 +6,7 @@
   "author": "Fluffy Labs",
   "main": "index.ts",
   "scripts": {
+    "build": "npm run build -w @typeberry/builder -- --environment PACKAGE_NAME:@typeberry/state-merkleization",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
