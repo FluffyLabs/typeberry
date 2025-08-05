@@ -19,6 +19,7 @@ import { type U64, isU32, isU64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typ
 import {
   AutoAccumulate,
   LookupHistoryItem,
+  type PerCore,
   PreimageItem,
   PrivilegedServices,
   ServiceAccountInfo,
@@ -465,7 +466,7 @@ export class AccumulateExternalities
 
   updatePrivilegedServices(
     manager: ServiceId,
-    authorizer: ServiceId,
+    authorizer: PerCore<ServiceId>,
     validators: ServiceId,
     autoAccumulate: [ServiceId, ServiceGas][],
   ): void {

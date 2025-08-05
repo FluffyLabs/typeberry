@@ -17,10 +17,17 @@ import { type WorkPackageHash, WorkPackageSpec, WorkReport } from "@typeberry/bl
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
-import { tinyChainSpec } from "@typeberry/config";
+import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { InMemoryService, InMemoryState, PreimageItem, PrivilegedServices, ServiceAccountInfo } from "@typeberry/state";
+import {
+  InMemoryService,
+  InMemoryState,
+  PreimageItem,
+  PrivilegedServices,
+  ServiceAccountInfo,
+  tryAsPerCore,
+} from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
 import { Accumulate, type AccumulateInput, type AccumulateState } from "./accumulate.js";
@@ -49,7 +56,7 @@ describe("accumulate", () => {
     const state = InMemoryState.partial(tinyChainSpec, {
       timeslot: tryAsTimeSlot(46),
       services,
-      privilegedServices: createPrivilegedServices(),
+      privilegedServices: createPrivilegedServices(tinyChainSpec),
       recentlyAccumulated: tryAsPerEpochBlock(
         [
           [],
@@ -202,9 +209,9 @@ const createServices = (items: [ServiceId, OpaqueHash, BytesBlob][]) => {
   return services;
 };
 
-const createPrivilegedServices = () =>
+const createPrivilegedServices = (spec: ChainSpec) =>
   PrivilegedServices.create({
-    authManager: tryAsServiceId(0),
+    authManager: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
     manager: tryAsServiceId(0),
     validatorsManager: tryAsServiceId(0),
     autoAccumulateServices: [],
