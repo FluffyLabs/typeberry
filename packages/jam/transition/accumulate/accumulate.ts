@@ -439,10 +439,12 @@ export class Accumulate {
         });
       }
 
-      if (serviceId === authManager && stateUpdate.authorizationQueues !== null) {
+      if (stateUpdate.authorizationQueues !== null) {
         for (const [coreIndex, authQueue] of stateUpdate.authorizationQueues) {
-          authQueues[coreIndex] = authQueue;
-          authQueuesUpdated = true;
+          if (serviceId === authManager[coreIndex]) {
+            authQueues[coreIndex] = authQueue;
+            authQueuesUpdated = true;
+          }
         }
       }
 
