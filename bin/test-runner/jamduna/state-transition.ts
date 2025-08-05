@@ -108,12 +108,28 @@ export async function runStateTransition(testContent: StateTransition, testPath:
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
   const root = StateEntries.serializeInMemory(spec, preState).getRootHash();
 
-  // NOTE These fields were introduced in version 0.6.7.
-  let ignore = ["info.created", "info.gratisStorage", "info.lastAccumulation", "info.parentService"];
-  if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-    // we dont ignore them here
-    ignore = [];
-  }
+  const createIgnoredFields = (val: number): string[] => {
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      // we dont ignore
+      return [];
+    }
+
+    const ignore: string[] = [];
+
+    // NOTE These fields were introduced in version 0.6.7.
+    const fields = ["created", "gratisStorage", "lastAccumulation", "parentService"];
+    for (let i = 0; i <= val; i++) {
+      const serviceInfo = `services.[map].[${i}].value.data.info`;
+      for (const field of fields) {
+        ignore.push(`${serviceInfo}.${field}`);
+      }
+    }
+
+    return ignore;
+  };
+
+  const ignore = createIgnoredFields(4);
+
   deepEqual(preState, postState, { ignore });
   assert.deepStrictEqual(root.toString(), postStateRoot.toString());
 }
