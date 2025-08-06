@@ -5,13 +5,20 @@ import { HASH_SIZE, type WithHash, blake2b } from "@typeberry/hash";
 import { ce129, up0 } from "@typeberry/jamnp-s";
 import type { Listener } from "@typeberry/state-machine";
 import { TRUNCATED_KEY_BYTES } from "@typeberry/trie/nodes.js";
-import { startIpcServer } from "./server.js";
+import { startJamnpIpcServer } from "./jamnp/server.js";
 
 export interface ExtensionApi {
   bestHeader: Listener<WithHash<HeaderHash, HeaderView>>;
 }
 
 export function startExtension(api: ExtensionApi) {
+  const closeJamnpIpc = startJamnpExtension(api);
+  return () => {
+    closeJamnpIpc();
+  };
+}
+
+function startJamnpExtension(api: ExtensionApi) {
   const announcements = new EventEmitter();
   let bestBlock: up0.HashAndSlot | null = null;
 
@@ -23,7 +30,6 @@ export function startExtension(api: ExtensionApi) {
     announcements.emit("announcement", up0.Announcement.create({ header, final }));
   });
 
-  // TODO [ToDr] `Handshake` should not leak that far.
   const getHandshake = () => {
     const final =
       bestBlock ?? up0.HashAndSlot.create({ hash: Bytes.zero(HASH_SIZE).asOpaque(), slot: tryAsTimeSlot(0) });
@@ -47,5 +53,5 @@ export function startExtension(api: ExtensionApi) {
     return [new ce129.KeyValuePair(startKey, value)];
   };
 
-  return startIpcServer(announcements, getHandshake, getBoundaryNodes, getKeyValuePairs);
+  return startJamnpIpcServer(announcements, getHandshake, getBoundaryNodes, getKeyValuePairs);
 }

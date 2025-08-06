@@ -1,9 +1,8 @@
-import { Buffer } from "node:buffer";
-import type { Socket } from "node:net";
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import type { StreamHandler, StreamId, StreamKind, StreamManager, StreamMessageSender } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
+import type { IpcHandler, IpcSender } from "../server.js";
 import { NewStream, StreamEnvelope, StreamEnvelopeType } from "./stream.js";
 
 export type ResponseHandler = (err: Error | null, response?: BytesBlob) => void;
@@ -17,30 +16,27 @@ type OnEnd = {
   reject: (error: Error) => void;
 };
 
-export class IpcHandler implements StreamManager {
-  // already initiated streams
+export class JamnpIpcHandler implements StreamManager, IpcHandler {
+  /** already initiated streams */
   private readonly streams: Map<StreamId, StreamHandler> = new Map();
-  // streams awaiting confirmation from the other side.
+  /** streams awaiting confirmation from the other side. */
   private readonly pendingStreams: Map<StreamId, boolean> = new Map();
-  // a collection of handlers for particular stream kind
+  /** a collection of handlers for particular stream kind */
   private readonly streamHandlers: Map<StreamKind, StreamHandler> = new Map();
-  // termination promise + resolvers
+  /** termination promise + resolvers */
   private readonly onEnd: OnEnd;
 
-  private readonly sender: IpcSender;
-
-  constructor(socket: Socket) {
+  constructor(private readonly sender: IpcSender) {
     const onEnd = { finished: false } as OnEnd;
     onEnd.listen = new Promise((resolve, reject) => {
       onEnd.resolve = resolve;
       onEnd.reject = reject;
     });
     this.onEnd = onEnd;
-    this.sender = new IpcSender(socket);
   }
 
   /** Register stream handlers. */
-  registerHandlers(...handlers: StreamHandler[]) {
+  registerStreamHandlers(...handlers: StreamHandler[]) {
     for (const handler of handlers) {
       this.streamHandlers.set(handler.kind, handler);
     }
@@ -207,70 +203,4 @@ class EnvelopeSender implements StreamMessageSender {
       ),
     );
   }
-}
-
-class IpcSender {
-  constructor(private readonly socket: Socket) {}
-
-  send(data: BytesBlob): void {
-    sendWithLengthPrefix(this.socket, data.raw);
-  }
-
-  close(): void {
-    this.socket.end();
-  }
-}
-
-const MSG_LEN_PREFIX_BYTES = 4;
-
-/**
- * Send a message to the socket, but prefix it with a 32-bit length,
- * so that the receiver can now the boundaries between the datum.
- */
-function sendWithLengthPrefix(socket: Socket, data: Uint8Array) {
-  const buffer = new Uint8Array(MSG_LEN_PREFIX_BYTES);
-  const encoder = Encoder.create({
-    destination: buffer,
-  });
-  encoder.i32(data.length);
-  socket.write(buffer);
-  socket.write(data);
-}
-
-/**
- * Only triggers the `callback` in case full data blob is received.
- *
- * Each message should be prefixed with a single U32 denoting the length of the next data
- * frame that should be interpreted as single chunk.
- */
-export function handleFragmentation(callback: (data: Buffer) => void): (data: Buffer) => void {
-  let buffer = Buffer.alloc(0);
-  let expectedLength = -1;
-
-  return (data: Buffer) => {
-    buffer = Buffer.concat([buffer, data]);
-    do {
-      // we now expect a length prefix.
-      if (expectedLength === -1) {
-        // not enough data to parse the length, wait for more.
-        if (buffer.length < MSG_LEN_PREFIX_BYTES) {
-          break;
-        }
-
-        expectedLength = buffer.readUint32LE();
-        buffer = buffer.subarray(MSG_LEN_PREFIX_BYTES);
-      }
-
-      // we don't have enough data, so let's wait.
-      if (buffer.length < expectedLength) {
-        break;
-      }
-
-      // full chunk can be parsed now, but there might be some more.
-      const chunk = buffer.subarray(0, expectedLength);
-      buffer = buffer.subarray(expectedLength);
-      expectedLength = -1;
-      callback(chunk);
-    } while (buffer.length > 0);
-  };
 }

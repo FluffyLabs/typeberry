@@ -1,20 +1,19 @@
 import fs from "node:fs";
 import http from "node:http";
-import type { JSONRPCID, JSONRPCSuccessResponse } from "./../../node_modules/json-rpc-2.0/dist/models.d.js";
 
 import type { Header } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { JamnpIpcHandler } from "@typeberry/ext-ipc/jamnp/handler.js";
 import { blake2b } from "@typeberry/hash";
 import { ce129 } from "@typeberry/jamnp-s";
 import { TRUNCATED_KEY_BYTES } from "@typeberry/trie/nodes.js";
-import { JSONRPCServer } from "json-rpc-2.0";
-import type { IpcHandler } from "../../extensions/ipc/handler.js";
+import { type JSONRPCID, JSONRPCServer, type JSONRPCSuccessResponse } from "json-rpc-2.0";
 
 export interface Database {
   bestHeader: Header | null;
 }
 
-export function startRpc(db: Database, client: IpcHandler) {
+export function startRpc(db: Database, client: JamnpIpcHandler) {
   const server = new JSONRPCServer();
   server.addMethod("jam_bestHeader", () => {
     return db.bestHeader;

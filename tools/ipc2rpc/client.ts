@@ -1,6 +1,7 @@
 import { Socket } from "node:net";
 
-import { IpcHandler, handleFragmentation } from "@typeberry/ext-ipc/handler.js";
+import { JamnpIpcHandler } from "@typeberry/ext-ipc/jamnp/handler.js";
+import { IpcSender, handleFragmentation } from "@typeberry/ext-ipc/server.js";
 import { ce129, up0 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
 
@@ -10,13 +11,13 @@ export function startClient(
   socketPath: string,
   getHandshake: () => up0.Handshake,
   onAnnouncement: (ann: up0.Announcement) => void,
-): Promise<IpcHandler> {
+): Promise<JamnpIpcHandler> {
   const client = new Socket();
 
   return new Promise((resolve) => {
-    const messageHandler = new IpcHandler(client);
-    messageHandler.registerHandlers(new up0.Handler(getHandshake, onAnnouncement));
-    messageHandler.registerHandlers(new ce129.Handler(false));
+    const messageHandler = new JamnpIpcHandler(new IpcSender(client));
+    messageHandler.registerStreamHandlers(new up0.Handler(getHandshake, onAnnouncement));
+    messageHandler.registerStreamHandlers(new ce129.Handler(false));
 
     client.connect(socketPath, () => {
       logger.log("Connected to IPC server");
