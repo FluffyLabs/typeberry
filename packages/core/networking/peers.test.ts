@@ -83,11 +83,13 @@ describe("Peers", () => {
     const peer1 = createDisconnectedPeer("same-id", "127.0.0.1", 8080);
     const peer2 = createDisconnectedPeer("same-id", "127.0.0.1", 8081);
 
+    assert.strictEqual(peers.isConnected(peer1.id), false);
+
     peers.peerConnected(peer1);
     assert.strictEqual(peers.isConnected(peer1.id), true);
 
     peers.peerConnected(peer2);
-    assert.strictEqual(peers.isConnected(peer1.id), false);
+    assert.strictEqual(peers.isConnected(peer1.id), true);
     assert.strictEqual(peers.isConnected(peer2.id), true);
   });
 });
