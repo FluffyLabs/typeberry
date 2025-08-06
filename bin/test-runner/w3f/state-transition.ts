@@ -1,19 +1,19 @@
 import assert from "node:assert";
+import fs from "node:fs";
+import path from "node:path";
 import { Block, Header } from "@typeberry/block";
 import { blockFromJson, headerFromJson } from "@typeberry/block-json";
 import { Decoder, Encoder, codec } from "@typeberry/codec";
-import { ChainSpec, tinyChainSpec } from "@typeberry/config";
+import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
-import { parseFromJson, type FromJson } from "@typeberry/json-parser";
+import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { serializeStateUpdate } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
 import { TestState, loadState } from "./state-loader.js";
-import path from "node:path";
-import fs from "node:fs";
 
 export class StateTransitionGenesis {
   static fromJson: FromJson<StateTransitionGenesis> = {
