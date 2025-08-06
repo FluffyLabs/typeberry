@@ -199,6 +199,11 @@ const createServices = (items: [ServiceId, OpaqueHash, BytesBlob][]) => {
           onTransferMinGas: tryAsServiceGas(0n),
           storageUtilisationBytes: tryAsU64(0),
           storageUtilisationCount: tryAsU32(0),
+          gratisStorage: tryAsU64(0),
+          created: tryAsTimeSlot(0),
+          // TODO [MaSo] Should be updated during accumulation
+          lastAccumulation: tryAsTimeSlot(0),
+          parentService: tryAsServiceId(0),
         }),
         lookupHistory: HashDictionary.new(),
         preimages,

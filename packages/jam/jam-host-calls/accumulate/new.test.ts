@@ -10,7 +10,9 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
+import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
+import { NewServiceError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { New } from "./new.js";
 
@@ -20,12 +22,14 @@ const CODE_HASH_START_REG = 7;
 const CODE_LENGTH_REG = 8;
 const GAS_REG = 9;
 const BALANCE_REG = 10;
+const GRATIS_STORAGE_REG = 11;
 
 function prepareRegsAndMemory(
   codeHash: CodeHash,
   codeLength: U64,
   gas: U64,
   balance: U64,
+  gratisStorage: U64,
   { skipCodeHash = false }: { skipCodeHash?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
@@ -34,6 +38,7 @@ function prepareRegsAndMemory(
   registers.set(CODE_LENGTH_REG, tryAsU64(codeLength));
   registers.set(GAS_REG, gas);
   registers.set(BALANCE_REG, balance);
+  registers.set(GRATIS_STORAGE_REG, gratisStorage);
 
   const builder = new MemoryBuilder();
 
@@ -48,16 +53,18 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: New", () => {
+  const itPost067 = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? it : it.skip;
   it("should create a new service", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);
-    accumulate.newServiceResponse = tryAsServiceId(23_000);
+    accumulate.newServiceResponse = Result.ok(tryAsServiceId(23_000));
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),
       tryAsU64(2n ** 40n),
       tryAsU64(2n ** 50n),
+      tryAsU64(1_024n),
     );
 
     // when
@@ -65,19 +72,23 @@ describe("HostCalls: New", () => {
 
     // then
     assert.deepStrictEqual(tryAsServiceId(Number(registers.get(RESULT_REG))), tryAsServiceId(23_000));
-    assert.deepStrictEqual(accumulate.newServiceCalled, [[Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n]]);
+    const gratisStorage = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 1_024n : 0n;
+    assert.deepStrictEqual(accumulate.newServiceCalled, [
+      [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, gratisStorage],
+    ]);
   });
 
   it("should fail when balance is not enough", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);
-    accumulate.newServiceResponse = null;
+    accumulate.newServiceResponse = Result.error(NewServiceError.InsufficientFunds);
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),
       tryAsU64(2n ** 40n),
       tryAsU64(2n ** 50n),
+      tryAsU64(1n),
     );
 
     // when
@@ -92,12 +103,12 @@ describe("HostCalls: New", () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);
-    accumulate.newServiceResponse = null;
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),
       tryAsU64(2n ** 40n),
       tryAsU64(2n ** 50n),
+      tryAsU64(1_024n),
       { skipCodeHash: true },
     );
 
@@ -107,5 +118,26 @@ describe("HostCalls: New", () => {
     // then
     assert.deepStrictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accumulate.newServiceCalled, []);
+  });
+
+  itPost067("should fail when trying to set gratis storage by unprivileged service", async () => {
+    const accumulate = new PartialStateMock();
+    const serviceId = tryAsServiceId(10_000);
+    const n = new New(serviceId, accumulate);
+    accumulate.newServiceResponse = Result.error(NewServiceError.UnprivilegedService);
+    const { registers, memory } = prepareRegsAndMemory(
+      Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
+      tryAsU64(4_096n),
+      tryAsU64(2n ** 40n),
+      tryAsU64(2n ** 50n),
+      tryAsU64(1_024n),
+    );
+
+    // when
+    await n.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
+    assert.deepStrictEqual(accumulate.newServiceCalled.length, 1);
   });
 });

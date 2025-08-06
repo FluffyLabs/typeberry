@@ -137,6 +137,13 @@ export enum ProvidePreimageError {
   AlreadyProvided = 2,
 }
 
+export enum NewServiceError {
+  /** Not enough balance to create the service account. */
+  InsufficientFunds = 0,
+  /** Service is not privileged to set gratis storage. */
+  UnprivilegedService = 1,
+}
+
 /**
  * `U`: state components mutated by the accumulation.
  * - `d`: service accounts state
@@ -190,20 +197,22 @@ export interface PartialState {
   ): Result<OK, TransferError>;
 
   /**
-   * Create a new service with given codeHash, length, gas and allowance.
+   * Create a new service with given codeHash, length, gas, allowance and gratisStorage.
    *
    * Returns a newly assigned id of that service.
-   * https://graypaper.fluffylabs.dev/#/9a08063/2f59022f5902?v=0.6.6
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/2f4c022f4c02?v=0.6.7
    *
    * An error can be returned in case the account does not
-   * have the required balance.
+   * have the required balance
+   * or tries to set gratis storage without being privileged.
    */
   newService(
     codeHash: CodeHash,
     codeLength: U64,
     gas: ServiceGas,
     allowance: ServiceGas,
-  ): Result<ServiceId, "insufficient funds">;
+    gratisStorage: U64,
+  ): Result<ServiceId, NewServiceError>;
 
   /** Upgrade code of currently running service. */
   upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void;

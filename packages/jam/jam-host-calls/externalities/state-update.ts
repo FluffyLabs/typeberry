@@ -281,7 +281,11 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
       return Result.error("insufficient funds");
     }
 
-    const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(items.value, bytes.value);
+    const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(
+      items.value,
+      bytes.value,
+      serviceInfo.gratisStorage,
+    );
     if (serviceInfo.balance < thresholdBalance) {
       return Result.error("insufficient funds");
     }

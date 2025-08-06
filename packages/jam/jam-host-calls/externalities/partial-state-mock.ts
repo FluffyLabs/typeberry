@@ -1,4 +1,11 @@
-import type { CodeHash, CoreIndex, PerValidator, ServiceGas, ServiceId } from "@typeberry/block";
+import {
+  type CodeHash,
+  type CoreIndex,
+  type PerValidator,
+  type ServiceGas,
+  type ServiceId,
+  tryAsServiceId,
+} from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
@@ -9,6 +16,7 @@ import type { PerCore, ValidatorData } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
 import {
   type EjectError,
+  type NewServiceError,
   type PartialState,
   type PreimageStatus,
   ProvidePreimageError,
@@ -33,7 +41,7 @@ export class PartialStateMock implements PartialState {
   public checkpointCalled = 0;
   public yieldHash: OpaqueHash | null = null;
   public forgetPreimageResponse: Result<OK, null> = Result.ok(OK);
-  public newServiceResponse: ServiceId | null = null;
+  public newServiceResponse: Result<ServiceId, NewServiceError> = Result.ok(tryAsServiceId(0));
   public ejectReturnValue: Result<OK, EjectError> = Result.ok(OK);
   public requestPreimageResponse: Result<OK, RequestPreimageError> = Result.ok(OK);
   public checkPreimageStatusResponse: PreimageStatus | null = null;
@@ -78,13 +86,10 @@ export class PartialStateMock implements PartialState {
     codeLength: U64,
     gas: ServiceGas,
     balance: ServiceGas,
-  ): Result<ServiceId, "insufficient funds"> {
-    this.newServiceCalled.push([codeHash, codeLength, gas, balance]);
-    if (this.newServiceResponse !== null) {
-      return Result.ok(this.newServiceResponse);
-    }
-
-    return Result.error("insufficient funds");
+    gratisStorage: U64,
+  ): Result<ServiceId, NewServiceError> {
+    this.newServiceCalled.push([codeHash, codeLength, gas, balance, gratisStorage]);
+    return this.newServiceResponse;
   }
 
   upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void {
