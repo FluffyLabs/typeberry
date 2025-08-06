@@ -1,4 +1,10 @@
-import { type PerValidator, type TimeSlot, type WorkReportHash, tryAsTimeSlot } from "@typeberry/block";
+import {
+  type PerValidator,
+  type StateRootHash,
+  type TimeSlot,
+  type WorkReportHash,
+  tryAsTimeSlot,
+} from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { type BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
@@ -45,6 +51,8 @@ export type ReportsInput = {
   slot: TimeSlot;
   /** `eta_prime`: New entropy, after potential epoch transition. */
   newEntropy: SafroleStateUpdate["entropy"];
+  /** Prior state root of the current header. */
+  priorStateRoot: StateRootHash;
 };
 
 export type ReportsState = Pick<

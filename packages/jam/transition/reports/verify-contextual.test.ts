@@ -10,7 +10,15 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
-import { ENTROPY, guaranteesAsView, initialServices, newCredential, newReports, newWorkReport } from "./test.utils.js";
+import {
+  ENTROPY,
+  PRIOR_STATE_ROOT,
+  guaranteesAsView,
+  initialServices,
+  newCredential,
+  newReports,
+  newWorkReport,
+} from "./test.utils.js";
 
 describe("Reports.verifyContextualValidity", () => {
   it("should reject when code hash is not matching", async () => {
@@ -24,7 +32,7 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -52,7 +60,7 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -77,7 +85,7 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -103,7 +111,7 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -128,7 +136,7 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -155,7 +163,7 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(20_000), guarantees, newEntropy: ENTROPY };
+    const input = { slot: tryAsTimeSlot(20_000), guarantees, newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -182,7 +190,7 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -211,7 +219,7 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -242,7 +250,7 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -278,7 +286,7 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -307,7 +315,7 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {

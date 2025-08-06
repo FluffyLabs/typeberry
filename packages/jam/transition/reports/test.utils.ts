@@ -52,6 +52,10 @@ import { asOpaqueType } from "@typeberry/utils";
 import { Reports, type ReportsState } from "./reports.js";
 
 export const ENTROPY = getEntropy(1, 2, 3, 4);
+export const PRIOR_STATE_ROOT = Bytes.parseBytes(
+  "0xf6967658df626fa39cbfb6014b50196d23bc2cfbfa71a7591ca7715472dd2b48",
+  HASH_SIZE,
+).asOpaque();
 
 const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then((hasher) => {
   return {

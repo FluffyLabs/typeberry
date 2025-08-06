@@ -1,9 +1,10 @@
-import type { HeaderHash } from "@typeberry/block";
+import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import type { RefineContext } from "@typeberry/block/refine-context.js";
 import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
+import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
-import type { KeccakHash } from "@typeberry/hash";
+import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import type { BlockState, State } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
@@ -73,7 +74,7 @@ export function verifyContextualValidity(
   }
 
   const minLookupSlot = Math.max(0, input.slot - L);
-  const contextResult = verifyRefineContexts(minLookupSlot, contexts, state, hasher, headerChain);
+  const contextResult = verifyRefineContexts(minLookupSlot, contexts, state, hasher, headerChain, input.priorStateRoot);
   if (contextResult.isError) {
     return contextResult;
   }
@@ -136,6 +137,7 @@ function verifyRefineContexts(
   state: Pick<State, "recentBlocks">,
   hasher: MmrHasher<KeccakHash>,
   headerChain: HeaderChain,
+  priorStateRoot: StateRootHash,
 ): Result<OK, ReportsError> {
   // TODO [ToDr] [opti] This could be cached and updated efficiently between runs.
   const recentBlocks = HashDictionary.new<HeaderHash, BlockState>();
@@ -156,10 +158,14 @@ function verifyRefineContexts(
     }
 
     // check state root
-    if (!recentBlock.postStateRoot.isEqualTo(context.stateRoot)) {
+    const expectedStateRoot = recentBlock.postStateRoot.isEqualTo(Bytes.zero(HASH_SIZE).asOpaque())
+      ? priorStateRoot
+      : recentBlock.postStateRoot;
+
+    if (!expectedStateRoot.isEqualTo(context.stateRoot)) {
       return Result.error(
         ReportsError.BadStateRoot,
-        `Anchor state root mismatch. Got: ${context.stateRoot}, expected: ${recentBlock.postStateRoot}.`,
+        `Anchor state root mismatch. Got: ${context.stateRoot}, expected: ${expectedStateRoot}.`,
       );
     }
 

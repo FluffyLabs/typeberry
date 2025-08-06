@@ -188,6 +188,7 @@ export class OnChain {
       slot: timeSlot,
       guarantees: block.extrinsic.view().guarantees.view(),
       newEntropy: entropy,
+      priorStateRoot: header.priorStateRoot,
     });
     if (reportsResult.isError) {
       return stfError(StfErrorKind.Reports, reportsResult);
