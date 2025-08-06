@@ -264,7 +264,7 @@ export class Reports {
 
       // if the epoch changed, we need to take previous entropy and previous validator data.
       if (isPreviousRotationPreviousEpoch(timeSlot, headerTimeSlot, epochLength)) {
-        entropy = this.state.entropy[3];
+        entropy = newEntropy[3];
         validatorData = this.state.previousValidatorData;
       }
     }
