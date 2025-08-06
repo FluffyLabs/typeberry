@@ -1,12 +1,10 @@
 import fs from "node:fs";
 import http from "node:http";
-
 import type { Header } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { JamnpIpcHandler } from "@typeberry/ext-ipc/jamnp/handler.js";
-import { blake2b } from "@typeberry/hash";
+import { TRUNCATED_HASH_SIZE, blake2b } from "@typeberry/hash";
 import { ce129 } from "@typeberry/jamnp-s";
-import { TRUNCATED_KEY_BYTES } from "@typeberry/trie/nodes.js";
 import { type JSONRPCID, JSONRPCServer, type JSONRPCSuccessResponse } from "json-rpc-2.0";
 
 export interface Database {
@@ -37,7 +35,7 @@ export function startRpc(db: Database, client: JamnpIpcHandler) {
         handler.getStateByKey(
           sender,
           db.bestHeader.parentHeaderHash,
-          Bytes.fromBlob(blake2b.hashString(key).raw.subarray(0, TRUNCATED_KEY_BYTES), TRUNCATED_KEY_BYTES),
+          Bytes.fromBlob(blake2b.hashString(key).raw.subarray(0, TRUNCATED_HASH_SIZE), TRUNCATED_HASH_SIZE),
           handleResponse,
         );
       });
