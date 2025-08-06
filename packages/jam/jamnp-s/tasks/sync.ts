@@ -110,7 +110,7 @@ export class SyncTask {
     if (ourBestBlock === null) {
       throw new Error(`Best header ${ourBestHash} missing in the database?`);
     }
-    this.bestSeen = up0.HashAndSlot.create({
+    this.othersBest = up0.HashAndSlot.create({
       hash: ourBestHash,
       slot: ourBestBlock.timeSlotIndex.materialize(),
     });
@@ -133,8 +133,8 @@ export class SyncTask {
       return aux;
     });
 
-    if (this.bestSeen.slot < slot) {
-      this.bestSeen = handshake.final;
+    if (this.othersBest.slot < slot) {
+      this.othersBest = handshake.final;
     }
   }
 
@@ -170,8 +170,8 @@ export class SyncTask {
     // reported finalized block).
     //
     // now check if we should sync that block
-    if (this.bestSeen.slot < bestHeader.data.timeSlotIndex) {
-      this.bestSeen = up0.HashAndSlot.create({
+    if (this.othersBest.slot < bestHeader.data.timeSlotIndex) {
+      this.othersBest = up0.HashAndSlot.create({
         hash: bestHeader.hash,
         slot: bestHeader.data.timeSlotIndex,
       });
@@ -272,7 +272,7 @@ export class SyncTask {
 
     const ourBestSlot = ourBestHeader.timeSlotIndex.materialize();
     // figure out where others are at
-    const othersBest = this.bestSeen;
+    const othersBest = this.othersBest;
     const blocksToSync = othersBest.slot - ourBestSlot;
 
     logger.trace(`Our best. ${ourBestSlot}. Best seen: ${othersBest.slot}`);
