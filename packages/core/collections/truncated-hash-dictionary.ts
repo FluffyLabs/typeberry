@@ -1,17 +1,13 @@
 import { Bytes } from "@typeberry/bytes";
-import { HashDictionary } from "@typeberry/collections";
-import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { TRUNCATED_KEY_BYTES } from "@typeberry/trie";
+import { HASH_SIZE, type OpaqueHash, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
 import { TEST_COMPARE_USING } from "@typeberry/utils";
+import { HashDictionary } from "./hash-dictionary.js";
 
 type HashWithZeroedBit<T extends OpaqueHash> = T;
 
 /**
  * A collection of hash-based keys (likely `StateKey`s) which ignores
  * differences on the last byte.
- *
- * TODO [ToDr] introduce `TruncatedHash` into `@typeberry/hash` and move this
- * collection to `@typeberry/collections` (note it should not depend on trie)
  */
 export class TruncatedHashDictionary<T extends OpaqueHash, V> {
   /**
@@ -20,12 +16,12 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
    * Each key will be copied and have the last byte replace with a 0.
    */
   static fromEntries<T extends OpaqueHash, V>(
-    entries: Iterable<[T | Bytes<TRUNCATED_KEY_BYTES>, V]>,
+    entries: Iterable<[T | TruncatedHash, V]>,
   ): TruncatedHashDictionary<T, V> {
     /** Copy key bytes of an entry and replace the last one with 0. */
     const mapped = Array.from(entries).map<[T, V]>(([key, value]) => {
       const newKey: T = Bytes.zero(HASH_SIZE).asOpaque();
-      newKey.raw.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES));
+      newKey.raw.set(key.raw.subarray(0, TRUNCATED_HASH_SIZE));
       return [newKey, value];
     });
     return new TruncatedHashDictionary(HashDictionary.fromEntries(mapped));
@@ -45,31 +41,31 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
     return this.dict.size;
   }
 
-  /** Retrieve a value that matches the key on `TRUNCATED_KEY_BYTES`. */
-  get(fullKey: T | Bytes<TRUNCATED_KEY_BYTES>): V | undefined {
-    this.truncatedKey.raw.set(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES));
+  /** Retrieve a value that matches the key on `TRUNCATED_HASH_SIZE`. */
+  get(fullKey: T | TruncatedHash): V | undefined {
+    this.truncatedKey.raw.set(fullKey.raw.subarray(0, TRUNCATED_HASH_SIZE));
     return this.dict.get(this.truncatedKey);
   }
 
   /** Return true if the key is present in the dictionary */
-  has(fullKey: T | Bytes<TRUNCATED_KEY_BYTES>): boolean {
-    this.truncatedKey.raw.set(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES));
+  has(fullKey: T | TruncatedHash): boolean {
+    this.truncatedKey.raw.set(fullKey.raw.subarray(0, TRUNCATED_HASH_SIZE));
 
     return this.dict.has(this.truncatedKey);
   }
 
-  /** Set or update a value that matches the key on `TRUNCATED_KEY_BYTES`. */
-  set(fullKey: T | Bytes<TRUNCATED_KEY_BYTES>, value: V) {
+  /** Set or update a value that matches the key on `TRUNCATED_HASH_SIZE`. */
+  set(fullKey: T | TruncatedHash, value: V) {
     // NOTE we can't use the the shared key here, since the collection will
     // store the key for us, hence the copy.
     const key = Bytes.zero(HASH_SIZE);
-    key.raw.set(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES));
+    key.raw.set(fullKey.raw.subarray(0, TRUNCATED_HASH_SIZE));
     this.dict.set(key.asOpaque(), value);
   }
 
-  /** Remove a value that matches the key on `TRUNCATED_KEY_BYTES`. */
-  delete(fullKey: T | Bytes<TRUNCATED_KEY_BYTES>) {
-    this.truncatedKey.raw.set(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES));
+  /** Remove a value that matches the key on `TRUNCATED_HASH_SIZE`. */
+  delete(fullKey: T | TruncatedHash) {
+    this.truncatedKey.raw.set(fullKey.raw.subarray(0, TRUNCATED_HASH_SIZE));
     this.dict.delete(this.truncatedKey);
   }
 

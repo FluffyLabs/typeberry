@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
+import { type ServiceId, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { blake2b } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
@@ -11,6 +11,7 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { ServiceAccountInfo } from "@typeberry/state";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { HostCallResult } from "./results.js";
 import { TestAccounts } from "./test-accounts.js";
 import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils.js";
@@ -23,7 +24,10 @@ const KEY_LEN_REG = 8;
 const DEST_START_REG = 9;
 const DEST_LEN_REG = 10;
 
-function prepareAccounts(serviceId: ServiceId, { balance }: { balance?: bigint } = {}) {
+function prepareAccounts(
+  serviceId: ServiceId,
+  { balance, gratisStorage }: { balance?: bigint; gratisStorage?: bigint } = {},
+) {
   const accounts = new TestAccounts(serviceId);
   accounts.details.set(
     serviceId,
@@ -34,6 +38,10 @@ function prepareAccounts(serviceId: ServiceId, { balance }: { balance?: bigint }
       onTransferMinGas: tryAsServiceGas(0n),
       storageUtilisationBytes: tryAsU64(10_000),
       storageUtilisationCount: tryAsU32(1_000),
+      gratisStorage: tryAsU64(gratisStorage ?? 0),
+      created: tryAsTimeSlot(0),
+      lastAccumulation: tryAsTimeSlot(0),
+      parentService: tryAsServiceId(0),
     }),
   );
   return accounts;
@@ -75,9 +83,29 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: Write", () => {
+  const itPost067 = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? it : it.skip;
+
   it("should write data to account state", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
+    const write = new Write(serviceId, accounts);
+    const { key, hash } = prepareKey(write.currentServiceId, "imma key");
+    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
+    accounts.snapshotData.set(BytesBlob.blobFromString("old data"), serviceId, hash);
+
+    // when
+    const result = await write.execute(gas, registers, memory);
+
+    // then
+    assert.strictEqual(result, undefined);
+    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64("old data".length));
+    assert.deepStrictEqual(accounts.storage.get(serviceId, hash)?.asText(), "hello world!");
+    assert.deepStrictEqual(accounts.storage.data.size, 1);
+  });
+
+  itPost067("should write data to account state when low balance but with gratisStorage", async () => {
+    const serviceId = tryAsServiceId(10_000);
+    const accounts = prepareAccounts(serviceId, { balance: 100n, gratisStorage: 150_000n });
     const write = new Write(serviceId, accounts);
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));

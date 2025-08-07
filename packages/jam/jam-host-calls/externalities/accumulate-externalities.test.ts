@@ -37,11 +37,12 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { testState } from "@typeberry/state/test.utils.js";
-import { OK, Result, ensure } from "@typeberry/utils";
+import { Compatibility, GpVersion, OK, Result, deepEqual, ensure } from "@typeberry/utils";
 import { writeServiceIdAsLeBytes } from "../utils.js";
 import { AccumulateExternalities } from "./accumulate-externalities.js";
 import {
   EjectError,
+  NewServiceError,
   PreimageStatusKind,
   ProvidePreimageError,
   RequestPreimageError,
@@ -511,6 +512,7 @@ describe("PartialState.forgetPreimage", () => {
 });
 
 describe("PartialState.newService", () => {
+  const itPost067 = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? it : it.skip;
   it("should create a new service and update balance + next service ID", () => {
     const state = partiallyUpdatedState();
     const maybeService = state.state.services.get(tryAsServiceId(0));
@@ -529,14 +531,17 @@ describe("PartialState.newService", () => {
     const codeLengthU64 = tryAsU64(codeLength);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
+    // NOTE compatibility is neede here, as we are using `calculateThresholdBalance`
+    // which throws an error when `gratisStorage > 0` is provided for GP versions earlier than 0.6.7.
+    const gratisStorage = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(50) : tryAsU64(0);
 
     const items = tryAsU32(2); // 2 * 1 + 0
     const bytes = tryAsU64(81 + codeLength);
-    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes);
+    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes, gratisStorage);
     const expectedBalance = tryAsU64(service.data.info.balance - thresholdForNew);
 
     // when
-    const result = partialState.newService(codeHash, codeLengthU64, accumulateMinGas, onTransferMinGas);
+    const result = partialState.newService(codeHash, codeLengthU64, accumulateMinGas, onTransferMinGas, gratisStorage);
 
     // then
     const expectedServiceId = tryAsServiceId(10);
@@ -560,7 +565,11 @@ describe("PartialState.newService", () => {
           accumulateMinGas,
           onTransferMinGas,
           storageUtilisationBytes: bytes,
+          gratisStorage: gratisStorage,
           storageUtilisationCount: items,
+          created: tryAsTimeSlot(16),
+          lastAccumulation: tryAsTimeSlot(0),
+          parentService: service.serviceId,
         }),
         lookupHistory: new LookupHistoryItem(codeHash, codeLength, tryAsLookupHistorySlots([])),
       }),
@@ -580,7 +589,7 @@ describe("PartialState.newService", () => {
       info: ServiceAccountInfo.create({
         ...service.data.info,
         // lower the balance a bit
-        balance: tryAsU64(2 ** 32),
+        balance: tryAsU64(2 ** 24),
       }),
     });
     state.state.services.set(tryAsServiceId(0), updatedService);
@@ -598,12 +607,58 @@ describe("PartialState.newService", () => {
     const codeLength = tryAsU64(2 ** 32 + 1);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
+    // NOTE compatibility is needed since newService uses calculateThresholdBalance internally
+    const gratisStorage = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(1024) : tryAsU64(0);
 
     // when
-    const result = partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas);
+    const result = partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, gratisStorage);
 
     // then
-    assert.deepStrictEqual(result, Result.error("insufficient funds"));
+    assert.deepStrictEqual(result, Result.error(NewServiceError.InsufficientFunds));
+
+    // Verify no side effects
+    assert.deepStrictEqual(state.stateUpdate.services.servicesUpdates, []);
+  });
+
+  itPost067("should return an error if service is unprivileged to set gratis storage", () => {
+    const state = partiallyUpdatedState();
+    // setting different service than our privileged manager
+    state.stateUpdate.privilegedServices = {
+      ...state.state.privilegedServices,
+      manager: tryAsServiceId(1),
+    };
+    const maybeService = state.state.services.get(tryAsServiceId(0));
+    const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
+
+    const updatedService = new InMemoryService(service.serviceId, {
+      ...service.data,
+      info: ServiceAccountInfo.create({
+        ...service.data.info,
+        balance: tryAsU64(2 ** 32),
+      }),
+    });
+    state.state.services.set(tryAsServiceId(0), updatedService);
+
+    const partialState = new AccumulateExternalities(
+      tinyChainSpec,
+      state,
+      tryAsServiceId(0),
+      tryAsServiceId(10),
+      tryAsTimeSlot(16),
+    );
+
+    const codeHash = Bytes.fill(HASH_SIZE, 0x12).asOpaque();
+    const codeLength = tryAsU64(1024);
+    const accumulateMinGas = tryAsServiceGas(10n);
+    const onTransferMinGas = tryAsServiceGas(20n);
+    // setting gratisStorage
+    const gratisStorage = tryAsU64(1024);
+
+    // when
+    const result = partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, gratisStorage);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(NewServiceError.UnprivilegedService));
 
     // Verify no side effects
     assert.deepStrictEqual(state.stateUpdate.services.servicesUpdates, []);
@@ -892,20 +947,22 @@ describe("PartialState.transfer", () => {
 
 describe("PartialState.yield", () => {
   it("should yield root", () => {
+    const currentServiceId = tryAsServiceId(0);
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
       state,
-      tryAsServiceId(0),
+      currentServiceId,
       tryAsServiceId(10),
       tryAsTimeSlot(16),
     );
-
+    const expectedYieldedRoots = new Map<ServiceId, Bytes<32>>();
+    expectedYieldedRoots.set(currentServiceId, Bytes.fill(HASH_SIZE, 0xef));
     // when
     partialState.yield(Bytes.fill(HASH_SIZE, 0xef));
 
     // then
-    assert.deepStrictEqual(state.stateUpdate.yieldedRoot, Bytes.fill(HASH_SIZE, 0xef));
+    deepEqual(state.stateUpdate.yieldedRoots, expectedYieldedRoots);
   });
 });
 
@@ -1549,6 +1606,19 @@ describe("AccumulateServiceExternalities", () => {
       (sum, item) => sum + (item?.value.length ?? 0),
       0,
     );
+    const serviceComp = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? {
+          gratisStorage: tryAsU64(1024),
+          created: tryAsTimeSlot(10),
+          lastAccumulation: tryAsTimeSlot(15),
+          parentService: tryAsServiceId(1),
+        }
+      : {
+          gratisStorage: tryAsU64(0),
+          created: tryAsTimeSlot(0),
+          lastAccumulation: tryAsTimeSlot(0),
+          parentService: tryAsServiceId(0),
+        };
 
     return new InMemoryService(serviceId, {
       info: ServiceAccountInfo.create({
@@ -1558,6 +1628,7 @@ describe("AccumulateServiceExternalities", () => {
         storageUtilisationCount: tryAsU32(initialStorage.size),
         codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
         onTransferMinGas: tryAsServiceGas(1000),
+        ...serviceComp,
         ...info,
       }),
       storage: initialStorage,

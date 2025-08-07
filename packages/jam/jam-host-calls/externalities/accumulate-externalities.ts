@@ -7,6 +7,7 @@ import {
   type TimeSlot,
   tryAsServiceGas,
   tryAsServiceId,
+  tryAsTimeSlot,
 } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
@@ -15,6 +16,7 @@ import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
+import { Logger } from "@typeberry/logger";
 import { type U64, isU32, isU64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AutoAccumulate,
@@ -37,6 +39,7 @@ import { clampU64ToU32, writeServiceIdAsLeBytes } from "../utils.js";
 import type { AccountsWrite } from "../write.js";
 import {
   EjectError,
+  NewServiceError,
   type PartialState,
   type PreimageStatus,
   PreimageStatusKind,
@@ -59,7 +62,8 @@ import { AccumulationStateUpdate, type PartiallyUpdatedState } from "./state-upd
  * https://graypaper.fluffylabs.dev/#/9a08063/370202370502?v=0.6.6 */
 const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 
-// TODO [ToDr] Rename to `AccumulateExternalities`.
+const logger = Logger.new(import.meta.filename, "accumulate-externalities");
+
 export class AccumulateExternalities
   implements PartialState, AccountsWrite, AccountsRead, AccountsInfo, AccountsLookup
 {
@@ -155,6 +159,14 @@ export class AccumulateExternalities
       // keep trying
       currentServiceId = tryAsServiceId(((currentServiceId - 2 ** 8 + 1 + mod) % mod) + 2 ** 8);
     }
+  }
+
+  /**
+   * `(x_u)_m`: Get most recent manager
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/174900174900?v=0.6.7
+   */
+  private getManager(): ServiceId {
+    return this.updatedState.getPrivilegedServices().manager;
   }
 
   checkPreimageStatus(hash: PreimageHash, length: U64): PreimageStatus | null {
@@ -346,6 +358,7 @@ export class AccumulateExternalities
     const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(
       source.storageUtilisationCount,
       source.storageUtilisationBytes,
+      source.gratisStorage,
     );
     if (newBalance < thresholdBalance) {
       return Result.error(TransferError.BalanceBelowThreshold);
@@ -378,28 +391,38 @@ export class AccumulateExternalities
     codeLength: U64,
     accumulateMinGas: ServiceGas,
     onTransferMinGas: ServiceGas,
-  ): Result<ServiceId, "insufficient funds"> {
+    gratisStorage: U64,
+  ): Result<ServiceId, NewServiceError> {
     const newServiceId = this.nextNewServiceId;
     // calculate the threshold. Storage is empty, one preimage requested.
-    // https://graypaper.fluffylabs.dev/#/9a08063/114501114501?v=0.6.6
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/115901115901?v=0.6.7
     const items = tryAsU32(2 * 1 + 0);
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/116b01116b01?v=0.6.7
     const bytes = sumU64(tryAsU64(81), codeLength);
     const clampedLength = clampU64ToU32(codeLength);
 
-    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes.value);
+    // check if we are priviledged to set gratis storage
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/369203369603?v=0.6.7
+    if (gratisStorage !== tryAsU64(0) && this.currentServiceId !== this.getManager()) {
+      return Result.error(NewServiceError.UnprivilegedService);
+    }
+
+    // check if we have enough balance
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/369e0336a303?v=0.6.7
+    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes.value, gratisStorage);
     const currentService = this.getCurrentServiceInfo();
     const thresholdForCurrent = ServiceAccountInfo.calculateThresholdBalance(
       currentService.storageUtilisationCount,
       currentService.storageUtilisationBytes,
+      currentService.gratisStorage,
     );
-
-    // check if we have enough balance
     const balanceLeftForCurrent = currentService.balance - thresholdForNew;
     if (balanceLeftForCurrent < thresholdForCurrent || bytes.overflow) {
-      return Result.error("insufficient funds");
+      return Result.error(NewServiceError.InsufficientFunds);
     }
 
     // add the new service
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/36cb0236cb02?v=0.6.7
     this.updatedState.stateUpdate.services.servicesUpdates.push(
       UpdateService.create({
         serviceId: newServiceId,
@@ -410,12 +433,16 @@ export class AccumulateExternalities
           onTransferMinGas,
           storageUtilisationBytes: bytes.value,
           storageUtilisationCount: items,
+          gratisStorage,
+          created: this.currentTimeslot,
+          lastAccumulation: tryAsTimeSlot(0),
+          parentService: this.currentServiceId,
         }),
         lookupHistory: new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([])),
       }),
     );
     // update the balance of current service
-    // https://graypaper.fluffylabs.dev/#/9a08063/36f10236f102?v=0.6.6
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/364d03364d03?v=0.6.7
     this.updatedState.updateServiceInfo(
       this.currentServiceId,
       ServiceAccountInfo.create({
@@ -425,7 +452,7 @@ export class AccumulateExternalities
     );
 
     // update the next service id we are going to create next
-    // https://graypaper.fluffylabs.dev/#/9a08063/363603363603?v=0.6.6
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/36a70336a703?v=0.6.7
     this.nextNewServiceId = this.getNextAvailableServiceId(bumpServiceId(newServiceId));
 
     return Result.ok(newServiceId);
@@ -447,6 +474,15 @@ export class AccumulateExternalities
 
   updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void {
     /** https://graypaper.fluffylabs.dev/#/9a08063/36e10136e901?v=0.6.6 */
+    const validatorsManager = this.updatedState.getPrivilegedServices().validatorsManager;
+
+    if (validatorsManager !== this.currentServiceId) {
+      logger.trace(
+        `Current service id (${this.currentServiceId}) is not a validator manager (${validatorsManager}) and cannot update validators. Ignoring.`,
+      );
+      return;
+    }
+
     this.updatedState.stateUpdate.validatorsData = validatorsData;
   }
 
@@ -461,6 +497,16 @@ export class AccumulateExternalities
   ): void {
     // NOTE `coreIndex` is already verified in the HC, so this is infallible.
     /** https://graypaper.fluffylabs.dev/#/9a08063/368401368401?v=0.6.6 */
+
+    const currentAuthManager = this.updatedState.getPrivilegedServices().authManager[coreIndex];
+
+    if (currentAuthManager !== this.currentServiceId) {
+      logger.trace(
+        `Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentAuthManager}) and cannot update authorization queue. Ignoring`,
+      );
+      return;
+    }
+
     this.updatedState.stateUpdate.authorizationQueues.set(coreIndex, authQueue);
   }
 
@@ -472,6 +518,15 @@ export class AccumulateExternalities
   ): void {
     // NOTE [ToDr] I guess we should not fail if the services don't exist. */
     /** https://graypaper.fluffylabs.dev/#/9a08063/36f40036f400?v=0.6.6 */
+    const currentManager = this.updatedState.getPrivilegedServices().manager;
+
+    if (currentManager !== this.currentServiceId) {
+      logger.trace(
+        `Current service id (${this.currentServiceId}) is not a manager (${currentManager}) and cannot update privileged services. Ignoring.`,
+      );
+      return;
+    }
+
     this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
       manager,
       authManager: authorizer,
@@ -482,7 +537,7 @@ export class AccumulateExternalities
 
   yield(hash: OpaqueHash): void {
     /** https://graypaper.fluffylabs.dev/#/9a08063/387d02387d02?v=0.6.6 */
-    this.updatedState.stateUpdate.yieldedRoot = hash;
+    this.updatedState.stateUpdate.yieldedRoots.set(this.currentServiceId, hash);
   }
 
   providePreimage(serviceId: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {
@@ -588,7 +643,6 @@ export class AccumulateExternalities
 
   write(key: StorageKey, data: BytesBlob | null): Result<OK, "full"> {
     const current = this.read(this.currentServiceId, key);
-
     const isAddingNew = current === null && data !== null;
     const isRemoving = current !== null && data === null;
     const countDiff = isAddingNew ? 1 : isRemoving ? -1 : 0;
