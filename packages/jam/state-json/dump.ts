@@ -25,10 +25,11 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { JsonService } from "./accounts.js";
+import { accumulationOutput } from "./accumulation-output.js";
 import { availabilityAssignmentFromJson } from "./availability-assignment.js";
 import { disputesRecordsFromJson } from "./disputes.js";
 import { notYetAccumulatedFromJson } from "./not-yet-accumulated.js";
-import { blockStateFromJson } from "./recent-history.js";
+import { blockStateFromJson, recentBlocksFromJson } from "./recent-history.js";
 import { TicketsOrKeys, ticketFromJson } from "./safrole.js";
 import { JsonStatisticsData } from "./statistics.js";
 
@@ -42,6 +43,7 @@ const validatorDataFromJson: FromJson<ValidatorData> = json.object<ValidatorData
   ValidatorData.create,
 );
 
+// NOTE State in line with GP ^0.7.0
 type JsonStateDump = {
   alpha: AuthorizerHash[][];
   varphi: AuthorizerHash[][];
@@ -66,8 +68,9 @@ type JsonStateDump = {
     chi_g: PrivilegedServices["autoAccumulateServices"] | null;
   };
   pi: JsonStatisticsData;
-  theta: State["accumulationQueue"];
+  omega: State["accumulationQueue"];
   xi: PerEpochBlock<WorkPackageHash[]>;
+  theta: State["accumulationOutputLog"];
   accounts: InMemoryService[];
 };
 
@@ -76,7 +79,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
     {
       alpha: json.array(json.array(fromJson.bytes32<AuthorizerHash>())),
       varphi: json.array(json.array(fromJson.bytes32<AuthorizerHash>())),
-      beta: json.nullable(json.array(blockStateFromJson)),
+      beta: json.nullable(recentBlocksFromJson),
       gamma: {
         gamma_k: json.array(validatorDataFromJson),
         gamma_a: json.array(ticketFromJson),
@@ -102,8 +105,9 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
         ),
       },
       pi: JsonStatisticsData.fromJson,
-      theta: json.array(json.array(notYetAccumulatedFromJson)),
+      omega: json.array(json.array(notYetAccumulatedFromJson)),
       xi: json.array(json.array(fromJson.bytes32())),
+      theta: json.array(accumulationOutput),
       accounts: json.array(JsonService.fromJson),
     },
     ({
@@ -120,8 +124,9 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
       tau,
       chi,
       pi,
-      theta,
+      omega,
       xi,
+      theta,
       accounts,
     }): InMemoryState => {
       return InMemoryState.create({
@@ -162,12 +167,12 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           autoAccumulateServices: chi.chi_g ?? [],
         }),
         statistics: JsonStatisticsData.toStatisticsData(spec, pi),
-        accumulationQueue: theta,
+        accumulationQueue: omega,
         recentlyAccumulated: tryAsPerEpochBlock(
           xi.map((x) => HashSet.from(x)),
           spec,
         ),
-        recentAccumulations: asKnownSize([]),
+        accumulationOutputLog: theta,
         services: new Map(accounts.map((x) => [x.serviceId, x])),
       });
     },
@@ -299,6 +304,7 @@ export const fullStateDumpFromJsonPre067 = (spec: ChainSpec) =>
           spec,
         ),
         services: new Map(accounts.map((x) => [x.serviceId, x])),
+        accumulationOutputLog: [],
       });
     },
   );

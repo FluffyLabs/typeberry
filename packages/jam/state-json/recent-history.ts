@@ -4,7 +4,7 @@ import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@ty
 import { HashDictionary } from "@typeberry/collections";
 import type { KeccakHash } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";
-import type { BlockState } from "@typeberry/state";
+import { type BlockState, RecentBlockState, type RecentBlockStates, RecentBlocks } from "@typeberry/state";
 
 export const reportedWorkPackageFromJson = json.object<JsonReportedWorkPackageInfo, WorkPackageInfo>(
   {
@@ -21,6 +21,53 @@ type JsonReportedWorkPackageInfo = {
   exports_root: ExportsRootHash;
 };
 
+const recentBlockStateFromJson = json.object<JsonRecentBlockState, RecentBlockState>(
+  {
+    header_hash: fromJson.bytes32(),
+    accumulation_result: fromJson.bytes32(),
+    state_root: fromJson.bytes32(),
+    reported: json.array(reportedWorkPackageFromJson),
+  },
+  ({ header_hash, accumulation_result, state_root, reported }) => {
+    return RecentBlockState.create({
+      headerHash: header_hash,
+      accumulationResult: accumulation_result,
+      postStateRoot: state_root,
+      reported: HashDictionary.fromEntries(reported.map((x) => [x.workPackageHash, x])),
+    });
+  },
+);
+
+type JsonRecentBlockState = {
+  header_hash: HeaderHash;
+  accumulation_result: KeccakHash;
+  state_root: StateRootHash;
+  reported: WorkPackageInfo[];
+};
+
+export const recentBlocksFromJson = json.object<JsonRecentBlocks, RecentBlocks>(
+  {
+    blocks: json.array(recentBlockStateFromJson),
+    accumulation_log: {
+      peaks: json.array(json.nullable(fromJson.bytes32())),
+    },
+  },
+  ({ blocks, accumulation_log }) => {
+    return RecentBlocks.create({
+      blocks,
+      accumulationLog: accumulation_log,
+    });
+  },
+);
+
+type JsonRecentBlocks = {
+  blocks: RecentBlockStates;
+  accumulation_log: {
+    peaks: Array<KeccakHash | null>;
+  };
+};
+
+// NOTE Pre 0.6.7
 export const blockStateFromJson = json.object<JsonBlockState, BlockState>(
   {
     header_hash: fromJson.bytes32(),

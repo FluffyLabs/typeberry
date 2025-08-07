@@ -9,7 +9,7 @@ import { WithDebug } from "@typeberry/utils";
 import { MAX_RECENT_HISTORY } from "./state.js";
 
 /** Array of recent blocks with maximum size of `MAX_RECENT_HISTORY` */
-type RecentBlockStates = KnownSizeArray<RecentBlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
+export type RecentBlockStates = KnownSizeArray<RecentBlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
 
 /** Recent history of a single block. */
 export class RecentBlockState extends WithDebug {

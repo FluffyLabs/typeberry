@@ -176,8 +176,8 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
     return this.retrieve(serialize.privilegedServices, "privilegedServices");
   }
 
-  get recentAccumulations(): State["recentAccumulations"] {
-    return this.retrieve(serialize.recentAccumulations, "recentAccumulations");
+  get accumulationOutputLog(): State["accumulationOutputLog"] {
+    return this.retrieve(serialize.accumulationOutputLog, "accumulationOutputLog");
   }
 }
 

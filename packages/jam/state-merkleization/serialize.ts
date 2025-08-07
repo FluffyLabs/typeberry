@@ -192,7 +192,7 @@ export namespace serialize {
   };
 
   /** C(16): https://graypaper.fluffylabs.dev/#/38c4e62/3b46033b4603?v=0.7.0 */
-  export const recentAccumulations: StateCodec<State["accumulationOutputLog"]> = {
+  export const accumulationOutputLog: StateCodec<State["accumulationOutputLog"]> = {
     key: stateKeys.index(StateKeyIdx.Theta),
     Codec: codec.sequenceVarLen(AccumulationOutput.Codec),
     extract: (s) => s.accumulationOutputLog,

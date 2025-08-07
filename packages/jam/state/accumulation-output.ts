@@ -5,13 +5,12 @@ import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";
 /**
  * Single service-indexed commitment to accumulation output
  *
- * https://graypaper.fluffylabs.dev/#/1c979cb/170801171001?v=0.7.1
- * https://graypaper.fluffylabs.dev/#/1c979cb/182202182402?v=0.7.1
+ * https://graypaper.fluffylabs.dev/#/1c979cb/0f3c020f3e02?v=0.7.1
  */
 export class AccumulationOutput {
   static Codec = codec.Class(AccumulationOutput, {
     serviceId: codec.u32.asOpaque<ServiceId>(),
-    output: codec.optional(codec.bytes(HASH_SIZE)),
+    output: codec.bytes(HASH_SIZE),
   });
 
   static create(a: CodecRecord<AccumulationOutput>) {
@@ -20,6 +19,6 @@ export class AccumulationOutput {
 
   private constructor(
     readonly serviceId: ServiceId,
-    readonly output: KeccakHash | null,
+    readonly output: KeccakHash,
   ) {}
 }

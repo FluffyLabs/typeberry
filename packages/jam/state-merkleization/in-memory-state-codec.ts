@@ -129,7 +129,7 @@ export const inMemoryStateCodec = codec.Class<InMemoryState>(InMemoryState, {
   // xi
   recentlyAccumulated: serialize.recentlyAccumulated.Codec,
   // theta
-  recentAccumulations: serialize.recentAccumulations.Codec,
+  accumulationOutputLog: serialize.accumulationOutputLog.Codec,
   // delta
   services: codec.dictionary(codec.u32.asOpaque<ServiceId>(), ServiceWithCodec.Codec, {
     sortKeys: (a, b) => a - b,
