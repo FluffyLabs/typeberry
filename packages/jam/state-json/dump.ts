@@ -17,8 +17,8 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import {
   type InMemoryService,
   InMemoryState,
-  type LegacyRecentBlocks,
   PrivilegedServices,
+  RecentBlocks,
   type State,
   VALIDATOR_META_BYTES,
   ValidatorData,
@@ -70,7 +70,7 @@ type JsonStateDump = {
   pi: JsonStatisticsData;
   omega: State["accumulationQueue"];
   xi: PerEpochBlock<WorkPackageHash[]>;
-  theta: State["accumulationOutputLog"];
+  theta: State["accumulationOutputLog"] | null;
   accounts: InMemoryService[];
 };
 
@@ -107,7 +107,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
       pi: JsonStatisticsData.fromJson,
       omega: json.array(json.array(notYetAccumulatedFromJson)),
       xi: json.array(json.array(fromJson.bytes32())),
-      theta: json.array(accumulationOutput),
+      theta: json.nullable(json.array(accumulationOutput)),
       accounts: json.array(JsonService.fromJson),
     },
     ({
@@ -148,7 +148,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           }),
           spec,
         ),
-        recentBlocks: (beta ?? asKnownSize([])) as LegacyRecentBlocks,
+        recentBlocks: beta ?? RecentBlocks.create({ blocks: asKnownSize([]), accumulationLog: { peaks: [] } }),
         nextValidatorData: gamma.gamma_k,
         epochRoot: gamma.gamma_z,
         sealingKeySeries: TicketsOrKeys.toSafroleSealingKeys(gamma.gamma_s, spec),
@@ -172,7 +172,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           xi.map((x) => HashSet.from(x)),
           spec,
         ),
-        accumulationOutputLog: theta,
+        accumulationOutputLog: theta ?? [],
         services: new Map(accounts.map((x) => [x.serviceId, x])),
       });
     },
