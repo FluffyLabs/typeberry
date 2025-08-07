@@ -1,8 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { TRUNCATED_KEY_BYTES } from "@typeberry/trie";
+import { HASH_SIZE, type OpaqueHash, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
 import { TruncatedHashDictionary } from "./truncated-hash-dictionary.js";
 
 describe("TruncatedHashDictionary", () => {
@@ -58,7 +57,7 @@ describe("TruncatedHashDictionary", () => {
 
     it("should retrieve the value when using a truncated key for lookup", () => {
       const fullKey = Bytes.parseBytes("0xababababababababababababababababababababababababababababababab00", HASH_SIZE);
-      const truncatedKey = Bytes.fromBlob(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES), TRUNCATED_KEY_BYTES);
+      const truncatedKey = Bytes.fromBlob(fullKey.raw.subarray(0, TRUNCATED_HASH_SIZE), TRUNCATED_HASH_SIZE);
 
       const dict = TruncatedHashDictionary.fromEntries([[fullKey, "value"]]);
 
@@ -130,7 +129,7 @@ describe("TruncatedHashDictionary", () => {
 
     it("should set with truncated keys", () => {
       const fullKey = Bytes.parseBytes("0x3333333333333333333333333333333333333333333333333333333333333333", HASH_SIZE);
-      const truncatedKey = Bytes.fromBlob(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES), TRUNCATED_KEY_BYTES);
+      const truncatedKey = Bytes.fromBlob(fullKey.raw.subarray(0, TRUNCATED_HASH_SIZE), TRUNCATED_HASH_SIZE);
       const dict = TruncatedHashDictionary.fromEntries([]);
 
       // when
@@ -197,7 +196,7 @@ describe("TruncatedHashDictionary", () => {
 
     it("should delete with truncated keys", () => {
       const fullKey = Bytes.parseBytes("0x7777777777777777777777777777777777777777777777777777777777777777", HASH_SIZE);
-      const truncatedKey = Bytes.fromBlob(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES), TRUNCATED_KEY_BYTES);
+      const truncatedKey = Bytes.fromBlob(fullKey.raw.subarray(0, TRUNCATED_HASH_SIZE), TRUNCATED_HASH_SIZE);
       const dict = TruncatedHashDictionary.fromEntries([[fullKey, "to delete"]]);
 
       // when

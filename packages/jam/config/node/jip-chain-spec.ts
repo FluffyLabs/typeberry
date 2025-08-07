@@ -76,7 +76,7 @@ export class JipChainSpec extends WithDebug {
     return new JipChainSpec({ bootnodes, id, genesisHeader, genesisState });
   }
 
-  private constructor(data: JipChainSpec) {
+  private constructor(data: Pick<JipChainSpec, keyof JipChainSpec>) {
     super();
 
     this.bootnodes = data.bootnodes;

@@ -12,7 +12,7 @@ import { StateEntries } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
-import { deepEqual, resultToString } from "@typeberry/utils";
+import { Compatibility, GpVersion, deepEqual, resultToString } from "@typeberry/utils";
 import { TestState, loadState } from "./state-loader.js";
 
 export class StateTransition {
@@ -107,6 +107,29 @@ export async function runStateTransition(testContent: StateTransition, testPath:
 
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
   const root = StateEntries.serializeInMemory(spec, preState).getRootHash();
-  deepEqual(preState, postState);
+
+  const createIgnoredFields = (val: number): string[] => {
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      // we dont ignore
+      return [];
+    }
+
+    const ignore: string[] = [];
+
+    // NOTE These fields were introduced in version 0.6.7.
+    const fields = ["created", "gratisStorage", "lastAccumulation", "parentService"];
+    for (let i = 0; i <= val; i++) {
+      const serviceInfo = `services.[map].[${i}].value.data.info`;
+      for (const field of fields) {
+        ignore.push(`${serviceInfo}.${field}`);
+      }
+    }
+
+    return ignore;
+  };
+
+  const ignore = createIgnoredFields(4);
+
+  deepEqual(preState, postState, { ignore });
   assert.deepStrictEqual(root.toString(), postStateRoot.toString());
 }

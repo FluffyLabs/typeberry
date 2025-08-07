@@ -1,12 +1,11 @@
 import fs from "node:fs";
 import http from "node:http";
-import type { JSONRPCID, JSONRPCSuccessResponse } from "./../../node_modules/json-rpc-2.0/dist/models.d.js";
+import type { JSONRPCID, JSONRPCSuccessResponse } from "json-rpc-2.0/dist/models.d.js";
 
 import type { Header } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { blake2b } from "@typeberry/hash";
+import { TRUNCATED_HASH_SIZE, blake2b } from "@typeberry/hash";
 import { ce129 } from "@typeberry/jamnp-s";
-import { TRUNCATED_KEY_BYTES } from "@typeberry/trie/nodes.js";
 import { JSONRPCServer } from "json-rpc-2.0";
 import type { IpcHandler } from "../../extensions/ipc/handler.js";
 
@@ -38,7 +37,7 @@ export function startRpc(db: Database, client: IpcHandler) {
         handler.getStateByKey(
           sender,
           db.bestHeader.parentHeaderHash,
-          Bytes.fromBlob(blake2b.hashString(key).raw.subarray(0, TRUNCATED_KEY_BYTES), TRUNCATED_KEY_BYTES),
+          Bytes.fromBlob(blake2b.hashString(key).raw.subarray(0, TRUNCATED_HASH_SIZE), TRUNCATED_HASH_SIZE),
           handleResponse,
         );
       });
