@@ -14,7 +14,6 @@ import { Solicit } from "@typeberry/jam-host-calls/accumulate/solicit.js";
 import { Transfer } from "@typeberry/jam-host-calls/accumulate/transfer.js";
 import { Upgrade } from "@typeberry/jam-host-calls/accumulate/upgrade.js";
 import { Yield } from "@typeberry/jam-host-calls/accumulate/yield.js";
-import type { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
 import type { PartialState } from "@typeberry/jam-host-calls/externalities/partial-state.js";
 import {
   type ProgramCounter,
@@ -54,7 +53,7 @@ type AccumulateHostCallExternalities = {
 };
 
 type OnTransferHostCallExternalities = {
-  partialState: PartialStateDb;
+  partialState: AccountsInfo & AccountsLookup & AccountsWrite & AccountsRead;
 };
 
 namespace entrypoint {

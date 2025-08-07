@@ -1,12 +1,12 @@
 import type { StateRootHash } from "@typeberry/block";
 import { Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
+import type { TruncatedHashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import type { TruncatedHashDictionary } from "@typeberry/database/truncated-hash-dictionary.js";
 import type { InMemoryState } from "@typeberry/state";
 import { type BytesBlob, InMemoryTrie } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
-import { assertNever } from "@typeberry/utils";
+import { TEST_COMPARE_USING, assertNever } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
 import { type StateEntryUpdate, StateEntryUpdateAction } from "./serialize-state-update.js";
 import { type StateCodec, serialize } from "./serialize.js";
@@ -66,6 +66,11 @@ export class StateEntries<TEntries extends FullEntries | TruncatedEntries = Full
   private trieCache: InMemoryTrie | null = null;
 
   private constructor(public readonly entries: TEntries) {}
+
+  /** When comparing, we can safely ignore `trieCache` and just use entries. */
+  [TEST_COMPARE_USING]() {
+    return this.entries.data;
+  }
 
   /** Construct the trie from given set of state entries. */
   public getTrie(): InMemoryTrie {

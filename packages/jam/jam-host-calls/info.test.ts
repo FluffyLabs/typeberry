@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
+import { type ServiceId, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
@@ -11,6 +11,7 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { ServiceAccountInfo } from "@typeberry/state";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { Info, codecServiceAccountInfoWithThresholdBalance } from "./info.js";
 import { HostCallResult } from "./results.js";
 import { TestAccounts } from "./test-accounts.js";
@@ -47,6 +48,20 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: Info", () => {
+  const serviceComp = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+    ? {
+        gratisStorage: tryAsU64(1024),
+        created: tryAsTimeSlot(10),
+        lastAccumulation: tryAsTimeSlot(15),
+        parentService: tryAsServiceId(1),
+      }
+    : {
+        gratisStorage: tryAsU64(0),
+        created: tryAsTimeSlot(0),
+        lastAccumulation: tryAsTimeSlot(0),
+        parentService: tryAsServiceId(0),
+      };
+
   it("should write account info data into memory", async () => {
     const serviceId = tryAsServiceId(10_000);
     const currentServiceId = serviceId;
@@ -55,6 +70,13 @@ describe("HostCalls: Info", () => {
     const { registers, memory, readInfo } = prepareRegsAndMemory(serviceId);
     const storageUtilisationBytes = tryAsU64(10_000);
     const storageUtilisationCount = tryAsU32(1_000);
+
+    const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(
+      storageUtilisationCount,
+      storageUtilisationBytes,
+      serviceComp.gratisStorage,
+    );
+
     accounts.details.set(
       serviceId,
       ServiceAccountInfo.create({
@@ -64,6 +86,7 @@ describe("HostCalls: Info", () => {
         onTransferMinGas: tryAsServiceGas(0n),
         storageUtilisationBytes,
         storageUtilisationCount,
+        ...serviceComp,
       }),
     );
 
@@ -75,7 +98,7 @@ describe("HostCalls: Info", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(readInfo(), {
       ...accounts.details.get(serviceId),
-      thresholdBalance: 20_100n,
+      thresholdBalance,
     });
   });
 
@@ -111,6 +134,7 @@ describe("HostCalls: Info", () => {
         onTransferMinGas: tryAsServiceGas(0n),
         storageUtilisationBytes,
         storageUtilisationCount,
+        ...serviceComp,
       }),
     );
 

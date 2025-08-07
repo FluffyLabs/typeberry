@@ -13,6 +13,7 @@ import {
   ServiceAccountInfo,
   UpdateService,
   tryAsLookupHistorySlots,
+  tryAsPerCore,
 } from "@typeberry/state";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { testState } from "@typeberry/state/test.utils.js";
@@ -76,7 +77,7 @@ describe("LMDB States database", () => {
       timeslot: tryAsTimeSlot(15),
       privilegedServices: PrivilegedServices.create({
         manager: tryAsServiceId(1),
-        authManager: tryAsServiceId(2),
+        authManager: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(2)), spec),
         validatorsManager: tryAsServiceId(3),
         autoAccumulateServices: [],
       }),
@@ -89,7 +90,11 @@ describe("LMDB States database", () => {
             accumulateMinGas: tryAsServiceGas(10_000),
             onTransferMinGas: tryAsServiceGas(5_000),
             storageUtilisationBytes: tryAsU64(1_000),
+            gratisStorage: tryAsU64(0),
             storageUtilisationCount: tryAsU32(1),
+            created: tryAsTimeSlot(0),
+            lastAccumulation: tryAsTimeSlot(0),
+            parentService: tryAsServiceId(0),
           }),
           lookupHistory,
         }),

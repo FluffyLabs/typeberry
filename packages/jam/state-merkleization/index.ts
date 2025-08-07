@@ -29,3 +29,10 @@ export * from "./state-entries.js";
 export * from "./serialize.js";
 export * from "./keys.js";
 export * from "./binary-merkleization.js";
+export * from "./loader.js";
+
+// Re-export from dependent packages.
+export * as bytes from "@typeberry/bytes";
+export * as config from "@typeberry/config";
+export * as state from "@typeberry/state";
+export * as trie from "@typeberry/trie";

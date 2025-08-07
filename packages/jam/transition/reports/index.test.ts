@@ -5,7 +5,7 @@ import { HashDictionary, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { deepEqual } from "@typeberry/utils";
 import type { ReportsInput } from "./reports.js";
-import { guaranteesAsView, newReports } from "./test.utils.js";
+import { ENTROPY, guaranteesAsView, newReports } from "./test.utils.js";
 
 describe("Reports - top level", () => {
   it("should perform a transition with empty state", async () => {
@@ -14,7 +14,7 @@ describe("Reports - top level", () => {
     const input: ReportsInput = {
       guarantees: guaranteesAsView(tinyChainSpec, []),
       slot: tryAsTimeSlot(12),
-      knownPackages: [],
+      newEntropy: ENTROPY,
     };
 
     const res = await reports.transition(input);

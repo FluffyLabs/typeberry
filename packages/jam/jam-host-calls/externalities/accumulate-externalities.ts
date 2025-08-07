@@ -7,6 +7,7 @@ import {
   type TimeSlot,
   tryAsServiceGas,
   tryAsServiceId,
+  tryAsTimeSlot,
 } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
@@ -15,26 +16,22 @@ import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
-import { type U32, type U64, isU32, isU64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { Logger } from "@typeberry/logger";
+import { type U64, isU32, isU64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AutoAccumulate,
   LookupHistoryItem,
+  type PerCore,
   PreimageItem,
   PrivilegedServices,
-  type Service,
   ServiceAccountInfo,
-  type State,
-  StorageItem,
   type StorageKey,
   UpdatePreimage,
-  UpdatePreimageKind,
   UpdateService,
-  UpdateServiceKind,
-  UpdateStorage,
   type ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { OK, Result, assertNever, check, ensure } from "@typeberry/utils";
+import { OK, Result, assertNever, check } from "@typeberry/utils";
 import type { AccountsInfo } from "../info.js";
 import type { AccountsLookup } from "../lookup.js";
 import type { AccountsRead } from "../read.js";
@@ -42,6 +39,7 @@ import { clampU64ToU32, writeServiceIdAsLeBytes } from "../utils.js";
 import type { AccountsWrite } from "../write.js";
 import {
   EjectError,
+  NewServiceError,
   type PartialState,
   type PreimageStatus,
   PreimageStatusKind,
@@ -52,7 +50,7 @@ import {
   slotsToPreimageStatus,
 } from "./partial-state.js";
 import { PendingTransfer } from "./pending-transfer.js";
-import { AccumulationStateUpdate } from "./state-update.js";
+import { AccumulationStateUpdate, type PartiallyUpdatedState } from "./state-update.js";
 
 /**
  * Number of storage items required for ejection of the service.
@@ -64,25 +62,26 @@ import { AccumulationStateUpdate } from "./state-update.js";
  * https://graypaper.fluffylabs.dev/#/9a08063/370202370502?v=0.6.6 */
 const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 
-type StateSlice = Pick<State, "getService">;
+const logger = Logger.new(import.meta.filename, "accumulate-externalities");
 
-export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead, AccountsInfo, AccountsLookup {
+export class AccumulateExternalities
+  implements PartialState, AccountsWrite, AccountsRead, AccountsInfo, AccountsLookup
+{
   private checkpointedState: AccumulationStateUpdate | null = null;
   /** `x_i`: next service id we are going to create. */
   private nextNewServiceId: ServiceId;
 
   constructor(
     private readonly chainSpec: ChainSpec,
-    private readonly state: StateSlice,
+    private readonly updatedState: PartiallyUpdatedState,
     /** `x_s` */
     private readonly currentServiceId: ServiceId,
     nextNewServiceIdCandidate: ServiceId,
     private readonly currentTimeslot: TimeSlot,
-    public readonly updatedState = AccumulationStateUpdate.empty(),
   ) {
     this.nextNewServiceId = this.getNextAvailableServiceId(nextNewServiceIdCandidate);
 
-    const service = this.state.getService(this.currentServiceId);
+    const service = this.updatedState.getServiceInfo(this.currentServiceId);
     if (service === null) {
       throw new Error(`Invalid state initialization. Service info missing for ${this.currentServiceId}.`);
     }
@@ -90,7 +89,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
 
   /** Return the underlying state update and checkpointed state (if any). */
   getStateUpdates(): [AccumulationStateUpdate, AccumulationStateUpdate | null] {
-    return [this.updatedState, this.checkpointedState];
+    return [this.updatedState.stateUpdate, this.checkpointedState];
   }
 
   /** Return current `x_i` value of next new service id. */
@@ -104,18 +103,11 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
    * Takes into account updates over the state.
    */
   private getCurrentServiceInfo(): ServiceAccountInfo {
-    const updatedInfo = this.updatedState.services.servicesUpdates.find((x) => x.serviceId === this.currentServiceId);
-    if (updatedInfo !== undefined) {
-      return updatedInfo.action.account;
+    const serviceInfo = this.updatedState.getServiceInfo(this.currentServiceId);
+    if (serviceInfo === null) {
+      throw new Error(`Missing service info for current service! ${this.currentServiceId}`);
     }
-
-    const maybeService = this.state.getService(this.currentServiceId);
-    const service = ensure<Service | null, Service>(
-      maybeService,
-      maybeService !== null,
-      "Service existence in state validated in constructor.",
-    );
-    return service.getInfo();
+    return serviceInfo;
   }
 
   /**
@@ -126,85 +118,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
    * Takes into account newly created services as well.
    */
   getServiceInfo(destination: ServiceId | null): ServiceAccountInfo | null {
-    if (destination === null) {
-      return null;
-    }
-
-    if (destination === this.currentServiceId) {
-      return this.getCurrentServiceInfo();
-    }
-
-    const isEjected = this.updatedState.services.servicesRemoved.some((x) => x === destination);
-    if (isEjected) {
-      return null;
-    }
-
-    const maybeNewService = this.updatedState.services.servicesUpdates.find(
-      (update) => update.serviceId === destination && update.action.kind === UpdateServiceKind.Create,
-    );
-    if (maybeNewService !== undefined) {
-      return maybeNewService.action.account;
-    }
-
-    const maybeService = this.state.getService(destination);
-    if (maybeService === null) {
-      return null;
-    }
-
-    return maybeService.getInfo();
-  }
-
-  /** Get status of a preimage of current service taking into account any updates. */
-  private getUpdatedPreimageStatus(hash: PreimageHash, length: U64): LookupHistoryItem | null {
-    // TODO [ToDr] This is most likely wrong. We may have `provide` and `remove` within
-    // the same state update. We should however switch to proper "updated state"
-    // representation soon.
-    const updatedPreimage = this.updatedState.services.preimages.findLast(
-      (update) =>
-        update.serviceId === this.currentServiceId && update.hash.isEqualTo(hash) && BigInt(update.length) === length,
-    );
-
-    const stateFallback = () => {
-      // fallback to state lookup
-      const service = this.state.getService(this.currentServiceId);
-      const lenU32 = preimageLenAsU32(length);
-      if (lenU32 === null || service === null) {
-        return null;
-      }
-
-      const slots = service.getLookupHistory(hash, lenU32);
-      return slots === null ? null : new LookupHistoryItem(hash, lenU32, slots);
-    };
-
-    if (updatedPreimage === undefined) {
-      return stateFallback();
-    }
-
-    const { action } = updatedPreimage;
-    switch (action.kind) {
-      case UpdatePreimageKind.Provide: {
-        // casting to U32 is safe, since we compare with object we have in memory.
-        return new LookupHistoryItem(hash, updatedPreimage.length, tryAsLookupHistorySlots([this.currentTimeslot]));
-      }
-      case UpdatePreimageKind.Remove: {
-        const state = stateFallback();
-        // kinda impossible, since we know it's there because it's removed.
-        if (state === null) {
-          return null;
-        }
-
-        return new LookupHistoryItem(
-          hash,
-          state.length,
-          tryAsLookupHistorySlots([...state.slots, this.currentTimeslot]),
-        );
-      }
-      case UpdatePreimageKind.UpdateOrAdd: {
-        return action.item;
-      }
-    }
-
-    assertNever(action);
+    return this.updatedState.getServiceInfo(destination);
   }
 
   /**
@@ -221,10 +135,8 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
    *   lookup status.
    */
   private isPreviousCodeExpired(destination: ServiceId, previousCodeHash: PreimageHash, len: U64): [boolean, string] {
-    const service = this.state.getService(destination);
-    const lenU32 = preimageLenAsU32(len);
-    const slots = service === null || lenU32 === null ? null : service.getLookupHistory(previousCodeHash, lenU32);
-    const status = slots === null ? null : slotsToPreimageStatus(slots);
+    const slots = this.updatedState.getLookupHistory(this.currentTimeslot, destination, previousCodeHash, len);
+    const status = slots === null ? null : slotsToPreimageStatus(slots.slots);
     // The previous code needs to be forgotten and expired.
     if (status?.status !== PreimageStatusKind.Unavailable) {
       return [false, "wrong status"];
@@ -232,46 +144,6 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     const t = this.currentTimeslot;
     const isExpired = status.data[1] < t - this.chainSpec.preimageExpungePeriod;
     return [isExpired, isExpired ? "" : "not expired"];
-  }
-
-  /**
-   * Returns `true` if the preimage is already provided either in current
-   * accumulation scope or earlier.
-   *
-   * NOTE: Does not check if the preimage is available, we just check
-   * the existence in `preimages` map.
-   */
-  private hasExistingPreimage(serviceId: ServiceId | null, hash: PreimageHash): boolean {
-    if (serviceId === null) {
-      return false;
-    }
-
-    const providedPreimage = this.updatedState.services.preimages.find(
-      // we ignore the action here, since if there is <any> update on that
-      // hash it means it has to exist, right?
-      (p) => p.serviceId === serviceId && p.hash.isEqualTo(hash),
-    );
-    if (providedPreimage !== undefined) {
-      return true;
-    }
-
-    // fallback to state preimages
-    const service = this.state.getService(serviceId);
-    if (service === undefined) {
-      return false;
-    }
-
-    return service?.hasPreimage(hash) ?? false;
-  }
-
-  /**
-   * Update a preimage.
-   *
-   * Note we store all previous entries as well, since there might be a sequence of:
-   * `provide` -> `remove` and both should update the end state somehow.
-   */
-  private addPreimageUpdate(newUpdate: UpdatePreimage) {
-    this.updatedState.services.preimages.push(newUpdate);
   }
 
   /** `check`: https://graypaper.fluffylabs.dev/#/9a08063/303f02303f02?v=0.6.6 */
@@ -289,9 +161,17 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     }
   }
 
+  /**
+   * `(x_u)_m`: Get most recent manager
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/174900174900?v=0.6.7
+   */
+  private getManager(): ServiceId {
+    return this.updatedState.getPrivilegedServices().manager;
+  }
+
   checkPreimageStatus(hash: PreimageHash, length: U64): PreimageStatus | null {
     // https://graypaper.fluffylabs.dev/#/9a08063/378102378102?v=0.6.6
-    const status = this.getUpdatedPreimageStatus(hash, length);
+    const status = this.updatedState.getLookupHistory(this.currentTimeslot, this.currentServiceId, hash, length);
     if (status === null) {
       return null;
     }
@@ -300,7 +180,12 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
   }
 
   requestPreimage(hash: PreimageHash, length: U64): Result<OK, RequestPreimageError> {
-    const existingPreimage = this.getUpdatedPreimageStatus(hash, length);
+    const existingPreimage = this.updatedState.getLookupHistory(
+      this.currentTimeslot,
+      this.currentServiceId,
+      hash,
+      length,
+    );
 
     if (existingPreimage !== null) {
       const len = existingPreimage.slots.length;
@@ -332,7 +217,8 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     const overflowItems = !isU32(items);
     const overflowBytes = !isU64(bytes);
 
-    const res = this.updateServiceStorageUtilisation(
+    const res = this.updatedState.updateServiceStorageUtilisation(
+      this.currentServiceId,
       {
         overflow: overflowItems,
         value: overflowItems ? tryAsU32(0) : items,
@@ -356,7 +242,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     const clampedLength = clampU64ToU32(length);
     if (existingPreimage === null) {
       // https://graypaper.fluffylabs.dev/#/9a08063/38a60038a600?v=0.6.6
-      this.addPreimageUpdate(
+      this.updatedState.updatePreimage(
         UpdatePreimage.updateOrAdd({
           serviceId: this.currentServiceId,
           lookupHistory: new LookupHistoryItem(hash, clampedLength, tryAsLookupHistorySlots([])),
@@ -364,7 +250,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
       );
     } else {
       /** https://graypaper.fluffylabs.dev/#/9a08063/38ca0038ca00?v=0.6.6 */
-      this.addPreimageUpdate(
+      this.updatedState.updatePreimage(
         UpdatePreimage.updateOrAdd({
           serviceId: this.currentServiceId,
           lookupHistory: new LookupHistoryItem(
@@ -379,48 +265,9 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     return Result.ok(OK);
   }
 
-  updateServiceStorageUtilisation(
-    items: { overflow: boolean; value: U32 },
-    bytes: { overflow: boolean; value: U64 },
-    serviceInfo: ServiceAccountInfo,
-  ): Result<OK, "insufficient funds"> {
-    // TODO [ToDr] this is not specified in GP, but it seems sensible.
-    if (items.overflow || bytes.overflow) {
-      return Result.error("insufficient funds");
-    }
-
-    const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(items.value, bytes.value);
-    if (serviceInfo.balance < thresholdBalance) {
-      return Result.error("insufficient funds");
-    }
-
-    // Update service info with new details.
-    this.updateCurrentServiceInfo(
-      ServiceAccountInfo.create({
-        ...serviceInfo,
-        storageUtilisationBytes: bytes.value,
-        storageUtilisationCount: items.value,
-      }),
-    );
-    return Result.ok(OK);
-  }
-
-  private updateCurrentServiceInfo(newInfo: ServiceAccountInfo) {
-    const idx = this.updatedState.services.servicesUpdates.findIndex((x) => x.serviceId === this.currentServiceId);
-    const toRemove = idx === -1 ? 0 : 1;
-    this.updatedState.services.servicesUpdates.splice(
-      idx,
-      toRemove,
-      UpdateService.update({
-        serviceId: this.currentServiceId,
-        serviceInfo: newInfo,
-      }),
-    );
-  }
-
   forgetPreimage(hash: PreimageHash, length: U64): Result<OK, null> {
     const serviceId = this.currentServiceId;
-    const status = this.getUpdatedPreimageStatus(hash, length);
+    const status = this.updatedState.getLookupHistory(this.currentTimeslot, this.currentServiceId, hash, length);
     if (status === null) {
       return Result.error(null);
     }
@@ -429,7 +276,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
 
     // https://graypaper.fluffylabs.dev/#/9a08063/389501389501?v=0.6.6
     if (s.status === PreimageStatusKind.Requested) {
-      this.addPreimageUpdate(
+      this.updatedState.updatePreimage(
         UpdatePreimage.remove({
           serviceId,
           hash: status.hash,
@@ -444,7 +291,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     if (s.status === PreimageStatusKind.Unavailable) {
       const y = s.data[1];
       if (y < t - this.chainSpec.preimageExpungePeriod) {
-        this.addPreimageUpdate(
+        this.updatedState.updatePreimage(
           UpdatePreimage.remove({
             serviceId,
             hash: status.hash,
@@ -459,7 +306,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
 
     // https://graypaper.fluffylabs.dev/#/9a08063/38c80138c801?v=0.6.6
     if (s.status === PreimageStatusKind.Available) {
-      this.addPreimageUpdate(
+      this.updatedState.updatePreimage(
         UpdatePreimage.updateOrAdd({
           serviceId,
           lookupHistory: new LookupHistoryItem(status.hash, status.length, tryAsLookupHistorySlots([s.data[0], t])),
@@ -472,7 +319,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     if (s.status === PreimageStatusKind.Reavailable) {
       const y = s.data[1];
       if (y < t - this.chainSpec.preimageExpungePeriod) {
-        this.addPreimageUpdate(
+        this.updatedState.updatePreimage(
           UpdatePreimage.updateOrAdd({
             serviceId,
             lookupHistory: new LookupHistoryItem(status.hash, status.length, tryAsLookupHistorySlots([s.data[2], t])),
@@ -511,13 +358,14 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(
       source.storageUtilisationCount,
       source.storageUtilisationBytes,
+      source.gratisStorage,
     );
     if (newBalance < thresholdBalance) {
       return Result.error(TransferError.BalanceBelowThreshold);
     }
 
     // outgoing transfer
-    this.updatedState.transfers.push(
+    this.updatedState.stateUpdate.transfers.push(
       PendingTransfer.create({
         source: this.currentServiceId,
         destination: destinationId,
@@ -528,7 +376,8 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     );
 
     // reduced balance
-    this.updateCurrentServiceInfo(
+    this.updatedState.updateServiceInfo(
+      this.currentServiceId,
       ServiceAccountInfo.create({
         ...source,
         balance: tryAsU64(newBalance),
@@ -542,29 +391,39 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     codeLength: U64,
     accumulateMinGas: ServiceGas,
     onTransferMinGas: ServiceGas,
-  ): Result<ServiceId, "insufficient funds"> {
+    gratisStorage: U64,
+  ): Result<ServiceId, NewServiceError> {
     const newServiceId = this.nextNewServiceId;
     // calculate the threshold. Storage is empty, one preimage requested.
-    // https://graypaper.fluffylabs.dev/#/9a08063/114501114501?v=0.6.6
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/115901115901?v=0.6.7
     const items = tryAsU32(2 * 1 + 0);
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/116b01116b01?v=0.6.7
     const bytes = sumU64(tryAsU64(81), codeLength);
     const clampedLength = clampU64ToU32(codeLength);
 
-    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes.value);
+    // check if we are priviledged to set gratis storage
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/369203369603?v=0.6.7
+    if (gratisStorage !== tryAsU64(0) && this.currentServiceId !== this.getManager()) {
+      return Result.error(NewServiceError.UnprivilegedService);
+    }
+
+    // check if we have enough balance
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/369e0336a303?v=0.6.7
+    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes.value, gratisStorage);
     const currentService = this.getCurrentServiceInfo();
     const thresholdForCurrent = ServiceAccountInfo.calculateThresholdBalance(
       currentService.storageUtilisationCount,
       currentService.storageUtilisationBytes,
+      currentService.gratisStorage,
     );
-
-    // check if we have enough balance
     const balanceLeftForCurrent = currentService.balance - thresholdForNew;
     if (balanceLeftForCurrent < thresholdForCurrent || bytes.overflow) {
-      return Result.error("insufficient funds");
+      return Result.error(NewServiceError.InsufficientFunds);
     }
 
     // add the new service
-    this.updatedState.services.servicesUpdates.push(
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/36cb0236cb02?v=0.6.7
+    this.updatedState.stateUpdate.services.servicesUpdates.push(
       UpdateService.create({
         serviceId: newServiceId,
         serviceInfo: ServiceAccountInfo.create({
@@ -574,13 +433,18 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
           onTransferMinGas,
           storageUtilisationBytes: bytes.value,
           storageUtilisationCount: items,
+          gratisStorage,
+          created: this.currentTimeslot,
+          lastAccumulation: tryAsTimeSlot(0),
+          parentService: this.currentServiceId,
         }),
         lookupHistory: new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([])),
       }),
     );
     // update the balance of current service
-    // https://graypaper.fluffylabs.dev/#/9a08063/36f10236f102?v=0.6.6
-    this.updateCurrentServiceInfo(
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/364d03364d03?v=0.6.7
+    this.updatedState.updateServiceInfo(
+      this.currentServiceId,
       ServiceAccountInfo.create({
         ...currentService,
         balance: tryAsU64(balanceLeftForCurrent),
@@ -588,7 +452,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     );
 
     // update the next service id we are going to create next
-    // https://graypaper.fluffylabs.dev/#/9a08063/363603363603?v=0.6.6
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/36a70336a703?v=0.6.7
     this.nextNewServiceId = this.getNextAvailableServiceId(bumpServiceId(newServiceId));
 
     return Result.ok(newServiceId);
@@ -597,7 +461,8 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
   upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void {
     /** https://graypaper.fluffylabs.dev/#/9a08063/36c80336c803?v=0.6.6 */
     const serviceInfo = this.getCurrentServiceInfo();
-    this.updateCurrentServiceInfo(
+    this.updatedState.updateServiceInfo(
+      this.currentServiceId,
       ServiceAccountInfo.create({
         ...serviceInfo,
         codeHash,
@@ -609,12 +474,21 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
 
   updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void {
     /** https://graypaper.fluffylabs.dev/#/9a08063/36e10136e901?v=0.6.6 */
-    this.updatedState.validatorsData = validatorsData;
+    const validatorsManager = this.updatedState.getPrivilegedServices().validatorsManager;
+
+    if (validatorsManager !== this.currentServiceId) {
+      logger.trace(
+        `Current service id (${this.currentServiceId}) is not a validator manager (${validatorsManager}) and cannot update validators. Ignoring.`,
+      );
+      return;
+    }
+
+    this.updatedState.stateUpdate.validatorsData = validatorsData;
   }
 
   checkpoint(): void {
     /** https://graypaper.fluffylabs.dev/#/9a08063/362202362202?v=0.6.6 */
-    this.checkpointedState = AccumulationStateUpdate.copyFrom(this.updatedState);
+    this.checkpointedState = AccumulationStateUpdate.copyFrom(this.updatedState.stateUpdate);
   }
 
   updateAuthorizationQueue(
@@ -623,18 +497,37 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
   ): void {
     // NOTE `coreIndex` is already verified in the HC, so this is infallible.
     /** https://graypaper.fluffylabs.dev/#/9a08063/368401368401?v=0.6.6 */
-    this.updatedState.authorizationQueues.set(coreIndex, authQueue);
+
+    const currentAuthManager = this.updatedState.getPrivilegedServices().authManager[coreIndex];
+
+    if (currentAuthManager !== this.currentServiceId) {
+      logger.trace(
+        `Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentAuthManager}) and cannot update authorization queue. Ignoring`,
+      );
+      return;
+    }
+
+    this.updatedState.stateUpdate.authorizationQueues.set(coreIndex, authQueue);
   }
 
   updatePrivilegedServices(
     manager: ServiceId,
-    authorizer: ServiceId,
+    authorizer: PerCore<ServiceId>,
     validators: ServiceId,
     autoAccumulate: [ServiceId, ServiceGas][],
   ): void {
     // NOTE [ToDr] I guess we should not fail if the services don't exist. */
     /** https://graypaper.fluffylabs.dev/#/9a08063/36f40036f400?v=0.6.6 */
-    this.updatedState.privilegedServices = PrivilegedServices.create({
+    const currentManager = this.updatedState.getPrivilegedServices().manager;
+
+    if (currentManager !== this.currentServiceId) {
+      logger.trace(
+        `Current service id (${this.currentServiceId}) is not a manager (${currentManager}) and cannot update privileged services. Ignoring.`,
+      );
+      return;
+    }
+
+    this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
       manager,
       authManager: authorizer,
       validatorsManager: validators,
@@ -644,11 +537,13 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
 
   yield(hash: OpaqueHash): void {
     /** https://graypaper.fluffylabs.dev/#/9a08063/387d02387d02?v=0.6.6 */
-    this.updatedState.yieldedRoot = hash;
+    this.updatedState.stateUpdate.yieldedRoots.set(this.currentServiceId, hash);
   }
 
   providePreimage(serviceId: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {
-    const service = serviceId === null ? null : this.state.getService(serviceId);
+    // we need to explicitly check if service exists, since it's a different error.
+    // TODO [ToDr] what about newly created services?
+    const service = serviceId === null ? null : this.updatedState.state.getService(serviceId);
     if (service === null || serviceId === null) {
       return Result.error(ProvidePreimageError.ServiceNotFound);
     }
@@ -657,28 +552,24 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     const preimageHash = blake2b.hashBytes(preimage).asOpaque<PreimageHash>();
 
     // checking service internal lookup
-    if (serviceId === this.currentServiceId) {
-      const stateLookup = this.getUpdatedPreimageStatus(preimageHash, tryAsU64(preimage.length));
-      if (stateLookup === null || !LookupHistoryItem.isRequested(stateLookup)) {
-        return Result.error(ProvidePreimageError.WasNotRequested);
-      }
-    } else {
-      const slots = service.getLookupHistory(preimageHash, tryAsU32(preimage.length));
-      const notRequested = slots === null || !LookupHistoryItem.isRequested(slots);
-
-      if (notRequested) {
-        return Result.error(ProvidePreimageError.WasNotRequested);
-      }
+    const stateLookup = this.updatedState.getLookupHistory(
+      this.currentTimeslot,
+      serviceId,
+      preimageHash,
+      tryAsU64(preimage.length),
+    );
+    if (stateLookup === null || !LookupHistoryItem.isRequested(stateLookup)) {
+      return Result.error(ProvidePreimageError.WasNotRequested);
     }
 
     // checking already provided preimages
-    const hasPreimage = this.hasExistingPreimage(serviceId, preimageHash);
+    const hasPreimage = this.updatedState.hasPreimage(serviceId, preimageHash);
     if (hasPreimage) {
       return Result.error(ProvidePreimageError.AlreadyProvided);
     }
 
     // setting up the new preimage
-    this.addPreimageUpdate(
+    this.updatedState.updatePreimage(
       UpdatePreimage.provide({
         serviceId,
         preimage: PreimageItem.create({
@@ -730,31 +621,16 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     }
 
     // update current service.
-    this.updateCurrentServiceInfo(
+    this.updatedState.updateServiceInfo(
+      this.currentServiceId,
       ServiceAccountInfo.create({
         ...currentService,
         balance: newBalance.value,
       }),
     );
     // and finally add an ejected service.
-    this.updatedState.services.servicesRemoved.push(destination);
+    this.updatedState.stateUpdate.services.servicesRemoved.push(destination);
     return Result.ok(OK);
-  }
-
-  private replaceOrAddStorageUpdate(key: StorageKey, value: BytesBlob | null) {
-    const update =
-      value === null
-        ? UpdateStorage.remove({ serviceId: this.currentServiceId, key })
-        : UpdateStorage.set({
-            serviceId: this.currentServiceId,
-            storage: StorageItem.create({ key, value }),
-          });
-
-    const index = this.updatedState.services.storage.findIndex(
-      (x) => x.serviceId === update.serviceId && x.key.isEqualTo(key),
-    );
-    const count = index === -1 ? 0 : 1;
-    this.updatedState.services.storage.splice(index, count, update);
   }
 
   read(serviceId: ServiceId | null, key: StorageKey): BytesBlob | null {
@@ -762,20 +638,11 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
       return null;
     }
 
-    if (this.currentServiceId === serviceId) {
-      const item = this.updatedState.services.storage.find((x) => x.serviceId === serviceId && x.key.isEqualTo(key));
-      if (item !== undefined) {
-        return item.value;
-      }
-    }
-
-    const service = this.state.getService(serviceId);
-    return service?.getStorage(key) ?? null;
+    return this.updatedState.getStorage(serviceId, key);
   }
 
   write(key: StorageKey, data: BytesBlob | null): Result<OK, "full"> {
     const current = this.read(this.currentServiceId, key);
-
     const isAddingNew = current === null && data !== null;
     const isRemoving = current !== null && data === null;
     const countDiff = isAddingNew ? 1 : isRemoving ? -1 : 0;
@@ -791,7 +658,8 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     const overflowItems = !isU32(items);
     const overflowBytes = !isU64(bytes);
 
-    const res = this.updateServiceStorageUtilisation(
+    const res = this.updatedState.updateServiceStorageUtilisation(
+      this.currentServiceId,
       {
         overflow: overflowItems,
         value: overflowItems ? tryAsU32(0) : items,
@@ -806,13 +674,13 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
       return Result.error("full", res.details);
     }
 
-    this.replaceOrAddStorageUpdate(key, data);
+    this.updatedState.updateStorage(this.currentServiceId, key, data);
 
     return Result.ok(OK);
   }
 
   readSnapshotLength(key: StorageKey): number | null {
-    const service = this.state.getService(this.currentServiceId);
+    const service = this.updatedState.state.getService(this.currentServiceId);
     return service?.getStorage(key)?.length ?? null;
   }
 
@@ -821,25 +689,11 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
       return null;
     }
 
-    // TODO [ToDr] Should we verify availability here?
-    const freshlyProvided = this.updatedState.services.preimages.find(
-      (x) => x.serviceId === serviceId && x.hash.isEqualTo(hash),
-    );
-    if (freshlyProvided !== undefined && freshlyProvided.action.kind === UpdatePreimageKind.Provide) {
-      return freshlyProvided.action.preimage.blob;
-    }
-
-    const service = this.state.getService(serviceId);
-    return service?.getPreimage(hash) ?? null;
+    return this.updatedState.getPreimage(serviceId, hash);
   }
 }
 
 function bumpServiceId(serviceId: ServiceId) {
   const mod = 2 ** 32 - 2 ** 9;
   return tryAsServiceId(2 ** 8 + ((serviceId - 2 ** 8 + 42 + mod) % mod));
-}
-
-function preimageLenAsU32(length: U64) {
-  // Safe to convert to Number and U32: we check that len < 2^32 before conversion
-  return length >= 2n ** 32n ? null : tryAsU32(Number(length));
 }
