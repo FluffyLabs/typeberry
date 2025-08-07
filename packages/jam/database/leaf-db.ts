@@ -1,11 +1,11 @@
 import type { StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
+import { TruncatedHashDictionary } from "@typeberry/collections";
 import type { SerializedStateBackend, StateKey } from "@typeberry/state-merkleization";
 import { InMemoryTrie, type LeafNode, TrieNode } from "@typeberry/trie";
 import { NodeType, TRIE_NODE_BYTES } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { Result, assertNever } from "@typeberry/utils";
-import { TruncatedHashDictionary } from "./truncated-hash-dictionary.js";
 
 /** Error during `LeafDb` creation. */
 export enum LeafDbError {

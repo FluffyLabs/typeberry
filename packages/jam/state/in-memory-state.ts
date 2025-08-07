@@ -31,6 +31,7 @@ import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typebe
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { Compatibility, GpVersion, OK, Result, WithDebug, assertNever, check } from "@typeberry/utils";
+import type { AccumulationOutput } from "./accumulation-output.js";
 import type { AvailabilityAssignment } from "./assurances.js";
 import { type PerCore, tryAsPerCore } from "./common.js";
 import { DisputesRecords, hashComparator } from "./disputes.js";
@@ -229,6 +230,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       sealingKeySeries: other.sealingKeySeries,
       epochRoot: other.epochRoot,
       privilegedServices: other.privilegedServices,
+      accumulationOutputLog: other.accumulationOutputLog,
       services,
     });
   }
@@ -412,6 +414,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
   sealingKeySeries: SafroleSealingKeys;
   epochRoot: BandersnatchRingRoot;
   privilegedServices: PrivilegedServices;
+  accumulationOutputLog: AccumulationOutput[];
   services: Map<ServiceId, InMemoryService>;
 
   recentServiceIds(): readonly ServiceId[] {
@@ -442,6 +445,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     this.sealingKeySeries = s.sealingKeySeries;
     this.epochRoot = s.epochRoot;
     this.privilegedServices = s.privilegedServices;
+    this.accumulationOutputLog = s.accumulationOutputLog;
     this.services = s.services;
   }
 
@@ -555,10 +559,11 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
       privilegedServices: PrivilegedServices.create({
         manager: tryAsServiceId(0),
-        authManager: tryAsServiceId(0),
+        authManager: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
         validatorsManager: tryAsServiceId(0),
         autoAccumulateServices: [],
       }),
+      accumulationOutputLog: [],
       services: new Map(),
     });
   }

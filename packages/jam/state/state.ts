@@ -5,6 +5,7 @@ import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-repo
 import type { BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray, ImmutableHashSet, KnownSizeArray } from "@typeberry/collections";
 import type { U32 } from "@typeberry/numbers";
+import type { AccumulationOutput } from "./accumulation-output.js";
 import type { AvailabilityAssignment } from "./assurances.js";
 import type { BlockState } from "./block-state.js";
 import type { PerCore } from "./common.js";
@@ -206,6 +207,16 @@ export type State = {
    * https://graypaper.fluffylabs.dev/#/85129da/116f01117201?v=0.6.3
    */
   readonly privilegedServices: PrivilegedServices;
+
+  /**
+   * `θ theta`: Sequence of merkle mountain belts from recent accumulations
+   *            with service that accumulated them.
+   *
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/3bad023bad02?v=0.6.7
+   *
+   * NOTE Maximum size of this array is unspecified in GP
+   */
+  readonly accumulationOutputLog: AccumulationOutput[];
 
   /**
    * Retrieve details about single service.

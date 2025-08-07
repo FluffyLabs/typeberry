@@ -29,6 +29,7 @@ import {
   ValidatorData,
   codecPerCore,
 } from "@typeberry/state";
+import { AccumulationOutput } from "@typeberry/state/accumulation-output.js";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { RecentBlocks } from "@typeberry/state/recent-blocks.js";
 import { SafroleData } from "@typeberry/state/safrole-data.js";
@@ -173,7 +174,7 @@ export namespace serialize {
 
   /** C(14): https://graypaper.fluffylabs.dev/#/85129da/38f80238f802?v=0.6.3 */
   export const accumulationQueue: StateCodec<State["accumulationQueue"]> = {
-    key: stateKeys.index(StateKeyIdx.Theta),
+    key: stateKeys.index(StateKeyIdx.Omega),
     Codec: codecPerEpochBlock(readonlyArray(codec.sequenceVarLen(NotYetAccumulatedReport.Codec))),
     extract: (s) => s.accumulationQueue,
   };
@@ -188,6 +189,13 @@ export namespace serialize {
       ),
     ),
     extract: (s) => s.recentlyAccumulated,
+  };
+
+  /** C(16): https://graypaper.fluffylabs.dev/#/38c4e62/3b46033b4603?v=0.7.0 */
+  export const recentAccumulations: StateCodec<State["accumulationOutputLog"]> = {
+    key: stateKeys.index(StateKeyIdx.Theta),
+    Codec: codec.sequenceVarLen(AccumulationOutput.Codec),
+    extract: (s) => s.accumulationOutputLog,
   };
 
   /** C(255, s): https://graypaper.fluffylabs.dev/#/85129da/383103383103?v=0.6.3 */

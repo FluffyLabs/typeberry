@@ -175,6 +175,10 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
   get privilegedServices(): State["privilegedServices"] {
     return this.retrieve(serialize.privilegedServices, "privilegedServices");
   }
+
+  get recentAccumulations(): State["recentAccumulations"] {
+    return this.retrieve(serialize.recentAccumulations, "recentAccumulations");
+  }
 }
 
 /** Service data representation on a serialized state. */

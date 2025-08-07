@@ -23,9 +23,10 @@ const ALL_VERSIONS_IN_ORDER = [
   GpVersion.V0_7_0,
 ];
 
+const env = typeof process === "undefined" ? {} : process.env;
 export const DEFAULT_VERSION = GpVersion.V0_6_5;
-export let CURRENT_VERSION = parseCurrentVersion(process.env.GP_VERSION);
-export const CURRENT_SUITE = (process.env.TEST_SUITE as TestSuite) ?? DEFAULT_SUITE;
+export let CURRENT_VERSION = parseCurrentVersion(env.GP_VERSION);
+export const CURRENT_SUITE = (env.TEST_SUITE as TestSuite) ?? DEFAULT_SUITE;
 
 function parseCurrentVersion(env?: string): GpVersion | undefined {
   if (env === undefined) {

@@ -2,6 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceGas, type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { Encoder } from "@typeberry/codec";
+import { tinyChainSpec } from "@typeberry/config";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
@@ -63,7 +64,7 @@ describe("HostCalls: Bless", () => {
   it("should set new privileged services and auto-accumualte services", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const bless = new Bless(serviceId, accumulate);
+    const bless = new Bless(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasEntires();
     const { registers, memory } = prepareRegsAndMemory(entries);
 
@@ -74,14 +75,14 @@ describe("HostCalls: Bless", () => {
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.privilegedServices, [
-      [tryAsServiceId(5), tryAsServiceId(10), tryAsServiceId(15), entries],
+      [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(10)], tryAsServiceId(15), entries],
     ]);
   });
 
   it("should return panic when dictionary is not readable", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const bless = new Bless(serviceId, accumulate);
+    const bless = new Bless(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasEntires();
     const { registers, memory } = prepareRegsAndMemory(entries, { skipDictionary: true });
 
@@ -96,7 +97,7 @@ describe("HostCalls: Bless", () => {
   it("should auto-accumualte services when dictionary is out of order", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const bless = new Bless(serviceId, accumulate);
+    const bless = new Bless(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasEntires();
     entries.push([tryAsServiceId(5), tryAsServiceGas(10_000)]);
     const { registers, memory } = prepareRegsAndMemory(entries);
@@ -107,14 +108,14 @@ describe("HostCalls: Bless", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(accumulate.privilegedServices, [
-      [tryAsServiceId(5), tryAsServiceId(10), tryAsServiceId(15), entries],
+      [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(10)], tryAsServiceId(15), entries],
     ]);
   });
 
   it("should auto-accumualte services when dictionary contains duplicates", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const bless = new Bless(serviceId, accumulate);
+    const bless = new Bless(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasEntires();
     entries.push(entries[entries.length - 1]);
     const { registers, memory } = prepareRegsAndMemory(entries);
@@ -125,7 +126,7 @@ describe("HostCalls: Bless", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(accumulate.privilegedServices, [
-      [tryAsServiceId(5), tryAsServiceId(10), tryAsServiceId(15), entries],
+      [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(10)], tryAsServiceId(15), entries],
     ]);
   });
 });
