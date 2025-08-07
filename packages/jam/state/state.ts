@@ -16,6 +16,7 @@ import type { SafroleData } from "./safrole-data.js";
 import type { LookupHistorySlots, ServiceAccountInfo, StorageKey } from "./service.js";
 import type { StatisticsData } from "./statistics.js";
 import type { ValidatorData } from "./validator-data.js";
+import { AccumulationOutput } from "./accumulation-output.js";
 
 /**
  * In addition to the entropy accumulator η_0, we retain
@@ -202,11 +203,14 @@ export type State = {
   readonly privilegedServices: PrivilegedServices;
 
   /**
-   * `θ theta`: Merkle mountain belts with recent accumulations per service that accumulated them.
+   * `θ theta`: Sequence of merkle mountain belts from recent accumulations
+   *            with service that accumulated them.
    *
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/3bad023bad02?v=0.6.7
+   *
+   * NOTE Maximum size of this array is unspecified in GP
    */
-  readonly recentAccumulations: KnownSizeArray<RecentAccumulations, `0..${typeof MAX_RECENT_HISTORY}`>;
+  readonly accumulationOutputLog: AccumulationOutput[];
 
   /**
    * Retrieve details about single service.
