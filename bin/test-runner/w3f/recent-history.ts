@@ -5,7 +5,7 @@ import { HashDictionary } from "@typeberry/collections";
 import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
-import type { BlockState } from "@typeberry/state";
+import type { LegacyBlockState } from "@typeberry/state";
 import { blockStateFromJson, reportedWorkPackageFromJson } from "@typeberry/state-json";
 import {
   RecentHistory,
@@ -49,7 +49,7 @@ class TestState {
     }),
   );
 
-  beta!: BlockState[];
+  beta!: LegacyBlockState[];
 }
 
 export class HistoryTest {

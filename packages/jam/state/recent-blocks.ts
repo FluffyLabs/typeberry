@@ -9,19 +9,19 @@ import { WithDebug } from "@typeberry/utils";
 import { MAX_RECENT_HISTORY } from "./state.js";
 
 /** Array of recent blocks with maximum size of `MAX_RECENT_HISTORY` */
-export type RecentBlockStates = KnownSizeArray<RecentBlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
+export type RecentBlockStates = KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
 
 /** Recent history of a single block. */
-export class RecentBlockState extends WithDebug {
-  static Codec = codec.Class(RecentBlockState, {
+export class BlockState extends WithDebug {
+  static Codec = codec.Class(BlockState, {
     headerHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
     accumulationResult: codec.bytes(HASH_SIZE),
     postStateRoot: codec.bytes(HASH_SIZE).asOpaque<StateRootHash>(),
     reported: codecHashDictionary(WorkPackageInfo.Codec, (x) => x.workPackageHash),
   });
 
-  static create({ headerHash, accumulationResult, postStateRoot, reported }: CodecRecord<RecentBlockState>) {
-    return new RecentBlockState(headerHash, accumulationResult, postStateRoot, reported);
+  static create({ headerHash, accumulationResult, postStateRoot, reported }: CodecRecord<BlockState>) {
+    return new BlockState(headerHash, accumulationResult, postStateRoot, reported);
   }
 
   private constructor(
@@ -45,7 +45,7 @@ export class RecentBlockState extends WithDebug {
  */
 export class RecentBlocks extends WithDebug {
   static Codec = codec.Class(RecentBlocks, {
-    blocks: codecKnownSizeArray(RecentBlockState.Codec, {
+    blocks: codecKnownSizeArray(BlockState.Codec, {
       minLength: 0,
       maxLength: MAX_RECENT_HISTORY,
       typicalLength: MAX_RECENT_HISTORY,

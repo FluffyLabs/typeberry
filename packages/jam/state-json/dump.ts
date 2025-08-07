@@ -304,6 +304,7 @@ export const fullStateDumpFromJsonPre067 = (spec: ChainSpec) =>
           spec,
         ),
         services: new Map(accounts.map((x) => [x.serviceId, x])),
+        // NOTE Field not present int pre067, added here for compatibility reasons
         accumulationOutputLog: [],
       });
     },

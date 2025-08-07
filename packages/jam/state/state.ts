@@ -7,7 +7,7 @@ import type { FixedSizeArray, ImmutableHashSet, KnownSizeArray } from "@typeberr
 import type { U32 } from "@typeberry/numbers";
 import type { AccumulationOutput } from "./accumulation-output.js";
 import type { AvailabilityAssignment } from "./assurances.js";
-import type { BlockState } from "./block-state.js";
+import type { LegacyBlockState } from "./block-state.js";
 import type { PerCore } from "./common.js";
 import type { DisputesRecords } from "./disputes.js";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
@@ -43,10 +43,10 @@ export const MAX_RECENT_HISTORY = 8;
 export type MAX_RECENT_HISTORY = typeof MAX_RECENT_HISTORY;
 
 /**
- * Array of Block state with max size of `MAX_RECENT_HISTORY`
- * https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6. 3
+ * Legacy array of block state with max size of `MAX_RECENT_HISTORY`
+ * https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3
  */
-export type LegacyRecentBlocks = KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
+export type LegacyRecentBlocks = KnownSizeArray<LegacyBlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
 
 /** State with some entries being possible to enumerate. */
 export type EnumerableState = {

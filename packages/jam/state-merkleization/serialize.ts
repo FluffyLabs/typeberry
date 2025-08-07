@@ -16,9 +16,9 @@ import { HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import {
   AvailabilityAssignment,
-  BlockState,
   DisputesRecords,
   ENTROPY_ENTRIES,
+  LegacyBlockState,
   type LegacyRecentBlocks,
   MAX_RECENT_HISTORY,
   PrivilegedServices,
@@ -69,7 +69,7 @@ export namespace serialize {
   /** C(3) Legacy Pre 0.6.7: https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3 */
   export const recentBlocksLegacy: StateCodec<LegacyRecentBlocks> = {
     key: stateKeys.index(StateKeyIdx.Beta),
-    Codec: codecKnownSizeArray(BlockState.Codec, {
+    Codec: codecKnownSizeArray(LegacyBlockState.Codec, {
       minLength: 0,
       maxLength: MAX_RECENT_HISTORY,
       typicalLength: MAX_RECENT_HISTORY,
@@ -77,7 +77,7 @@ export namespace serialize {
     extract: (s) => s.recentBlocks as LegacyRecentBlocks,
   };
 
-  /** C(3) 0.6.7+: https://graypaper.fluffylabs.dev/#/7e6ff6a/3b3e013b3e01?v=0.6.7 */
+  /** C(3) ^0.6.7: https://graypaper.fluffylabs.dev/#/7e6ff6a/3b3e013b3e01?v=0.6.7 */
   export const recentBlocksCurrent: StateCodec<RecentBlocks> = {
     key: stateKeys.index(StateKeyIdx.Beta),
     Codec: RecentBlocks.Codec,
@@ -85,7 +85,7 @@ export namespace serialize {
   };
 
   /**
-   * C(3):
+   * C(3): Recent blocks with compatibility
    *  https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3
    *  https://graypaper.fluffylabs.dev/#/7e6ff6a/3b3e013b3e01?v=0.6.7
    */

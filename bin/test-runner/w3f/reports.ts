@@ -16,11 +16,11 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
 import {
   type AvailabilityAssignment,
-  type BlockState,
   type CoreStatistics,
   ENTROPY_ENTRIES,
   type InMemoryService,
   InMemoryState,
+  type LegacyBlockState,
   type LegacyRecentBlocks,
   type ValidatorData,
   tryAsPerCore,
@@ -89,7 +89,7 @@ class TestState {
   entropy!: EntropyHash[];
   offenders!: Ed25519Key[];
   auth_pools!: AuthorizerHash[][];
-  recent_blocks!: BlockState[];
+  recent_blocks!: LegacyBlockState[];
   accounts!: InMemoryService[];
   cores_statistics!: CoreStatistics[];
   services_statistics!: ServiceStatisticsEntry[];
@@ -257,6 +257,7 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   // blocks history.
   const headerChain = {
     isInChain(hash: HeaderHash) {
+      // TODO [MaSo] Update to GP ^0.6.7
       return (preState.recentBlocks as LegacyRecentBlocks).find((x) => x.headerHash.isEqualTo(hash)) !== undefined;
     },
   };

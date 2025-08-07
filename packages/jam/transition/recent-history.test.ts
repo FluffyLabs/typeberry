@@ -6,10 +6,10 @@ import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, keccak } from "@typeberry/hash";
 import type { MmrHasher, MmrPeaks } from "@typeberry/mmr";
 import {
-  type BlockState,
+  BlockState,
+  type LegacyBlockState,
   type LegacyRecentBlocks,
   MAX_RECENT_HISTORY,
-  RecentBlockState,
   RecentBlocks,
 } from "@typeberry/state";
 import { Compatibility, GpVersion, asOpaqueType, check } from "@typeberry/utils";
@@ -24,7 +24,7 @@ const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then
 });
 
 const asRecentHistory = (
-  arr: BlockState[] | RecentBlockState[],
+  arr: LegacyBlockState[] | BlockState[],
   accumulationLog?: MmrPeaks<KeccakHash>,
 ): RecentHistoryState => {
   check(arr.length <= MAX_RECENT_HISTORY, "Invalid size of the state input.");
@@ -35,14 +35,14 @@ const asRecentHistory = (
   return Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
     ? {
         recentBlocks: RecentBlocks.create({
-          blocks: asOpaqueType(arr as RecentBlockState[]),
+          blocks: asOpaqueType(arr as BlockState[]),
           accumulationLog: accumulationLog ?? {
             peaks: [],
           },
         }),
       }
     : {
-        recentBlocks: asOpaqueType(arr as BlockState[]),
+        recentBlocks: asOpaqueType(arr as LegacyBlockState[]),
       };
 };
 
@@ -79,7 +79,7 @@ describe("Recent History", () => {
   });
 
   itPost067("should perform a transition with some state", async () => {
-    const initialState = RecentBlockState.create({
+    const initialState = BlockState.create({
       headerHash: Bytes.fill(HASH_SIZE, 3).asOpaque(),
       accumulationResult: Bytes.fill(HASH_SIZE, 2),
       postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
@@ -110,7 +110,7 @@ describe("Recent History", () => {
     assert.deepStrictEqual(recentBlocks.blocks.length, 2);
     assert.deepStrictEqual(
       recentBlocks.blocks[0],
-      RecentBlockState.create({
+      BlockState.create({
         headerHash: initialState.headerHash,
         accumulationResult: initialState.accumulationResult,
         postStateRoot: input.priorStateRoot,

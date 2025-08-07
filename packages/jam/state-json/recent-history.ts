@@ -4,7 +4,7 @@ import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@ty
 import { HashDictionary } from "@typeberry/collections";
 import type { KeccakHash } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";
-import { type BlockState, RecentBlockState, type RecentBlockStates, RecentBlocks } from "@typeberry/state";
+import { BlockState, type LegacyBlockState, type RecentBlockStates, RecentBlocks } from "@typeberry/state";
 
 export const reportedWorkPackageFromJson = json.object<JsonReportedWorkPackageInfo, WorkPackageInfo>(
   {
@@ -21,7 +21,7 @@ type JsonReportedWorkPackageInfo = {
   exports_root: ExportsRootHash;
 };
 
-const recentBlockStateFromJson = json.object<JsonRecentBlockState, RecentBlockState>(
+const recentBlockStateFromJson = json.object<JsonRecentBlockState, BlockState>(
   {
     header_hash: fromJson.bytes32(),
     accumulation_result: fromJson.bytes32(),
@@ -29,7 +29,7 @@ const recentBlockStateFromJson = json.object<JsonRecentBlockState, RecentBlockSt
     reported: json.array(reportedWorkPackageFromJson),
   },
   ({ header_hash, accumulation_result, state_root, reported }) => {
-    return RecentBlockState.create({
+    return BlockState.create({
       headerHash: header_hash,
       accumulationResult: accumulation_result,
       postStateRoot: state_root,
@@ -68,7 +68,7 @@ type JsonRecentBlocks = {
 };
 
 // NOTE Pre 0.6.7
-export const blockStateFromJson = json.object<JsonBlockState, BlockState>(
+export const blockStateFromJson = json.object<JsonBlockState, LegacyBlockState>(
   {
     header_hash: fromJson.bytes32(),
     mmr: {

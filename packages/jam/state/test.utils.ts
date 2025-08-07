@@ -27,10 +27,10 @@ import {
   ENTROPY_ENTRIES,
   InMemoryService,
   InMemoryState,
+  LegacyBlockState,
   LookupHistoryItem,
   PreimageItem,
   PrivilegedServices,
-  RecentBlockState,
   RecentBlocks,
   SafroleSealingKeysData,
   ServiceAccountInfo,
@@ -134,31 +134,31 @@ export const testState = (): InMemoryState => {
     recentBlocks: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
       ? RecentBlocks.create({
           blocks: asKnownSize([
-            RecentBlockState.create({
+            BlockState.create({
               headerHash: b32("0xc83b057ac60f3029edafc4a005f97c965ab8c2c19f3e4469c6e280356737d07c"),
               accumulationResult: emptyHash(),
               postStateRoot: b32("0x59642abe3120e645f4cda9e464d1e594743f146404dd948f146cf5daf2e99660"),
               reported: HashDictionary.new(),
             }),
-            RecentBlockState.create({
+            BlockState.create({
               headerHash: b32("0xbed5792b7df998e5520dfbb8c91386cf2117b2c07b7837094c79d5c0b4de9de7"),
               accumulationResult: b32("0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5"),
               postStateRoot: b32("0x1324bad2e35946c1a95dd25380a6e9199fbd40045ae49eacfc67599cbd23cda7"),
               reported: HashDictionary.new(),
             }),
-            RecentBlockState.create({
+            BlockState.create({
               headerHash: b32("0x6ce5d0b9ec42d803bee92d7dead697df3379836b50e6ed361068ed0561b5a2b5"),
               accumulationResult: b32("0x675f9e53123c83ddcdb2c1f5231f13646378aefc83837a4571d052ac80014837"),
               postStateRoot: b32("0x331f8a5b07cfc35cd75749c605146d48a4863af1b8a578160f188f4a725c1236"),
               reported: HashDictionary.new(),
             }),
-            RecentBlockState.create({
+            BlockState.create({
               headerHash: b32("0x7897a9dd7529d62d8be3a0e1ddc2e36795e2fbcacdd738cd9d75b4e00b186d33"),
               accumulationResult: b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30"),
               postStateRoot: b32("0xfbae2505572f332ad18dd75ecfa1aa4be7959f1666ed75d3241505c4ca3dd3fc"),
               reported: HashDictionary.new(),
             }),
-            RecentBlockState.create({
+            BlockState.create({
               headerHash: b32("0x72b9718488b532a4e93788865bf47291e57cfd7ca9bce755814fd8e2db2d41c8"),
               accumulationResult: b32("0xe884038e46068eaab1df24317c855e78fe94335d4adb7aa6c62920ce1352eed7"),
               postStateRoot: emptyHash(),
@@ -169,8 +169,9 @@ export const testState = (): InMemoryState => {
             peaks: [emptyHash(), null, b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30")],
           },
         })
-      : asKnownSize([
-          BlockState.create({
+      : // NOTE Legacy pre 067
+        asKnownSize([
+          LegacyBlockState.create({
             headerHash: b32("0x3fcf9728204359b93032b413eef3af0a0953d494b8b96e01550795b43b56c766"),
             mmr: {
               peaks: [emptyHash()],
@@ -178,7 +179,7 @@ export const testState = (): InMemoryState => {
             postStateRoot: b32("0xbcf32b81ac750f980b03c8cbdbaf5ad7d9e6aad823d099e209d7d5a0b82f2aed"),
             reported: HashDictionary.new(),
           }),
-          BlockState.create({
+          LegacyBlockState.create({
             headerHash: b32("0x1a7d753af2e2be12f88dfcb7ca5c704641534094b061c8c3aa258d4b0acbf5c8"),
             mmr: {
               peaks: [null, b32("0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5")],
@@ -186,7 +187,7 @@ export const testState = (): InMemoryState => {
             postStateRoot: b32("0x5e8f73cf5d9f94cb3a8313361a3b48e97968a9ac52ab9c29b4e88f4159c21560"),
             reported: HashDictionary.new(),
           }),
-          BlockState.create({
+          LegacyBlockState.create({
             headerHash: b32("0x3a31fd60656cb3de2c6ba9fafb8dee8d4c45d4bc87ca248cdda7625a68b987fb"),
             mmr: {
               peaks: [
@@ -197,7 +198,7 @@ export const testState = (): InMemoryState => {
             postStateRoot: b32("0x0fac6a80aa8722be502119a5dd405b3c1baae8170569ce186942a8c64ba0260a"),
             reported: HashDictionary.new(),
           }),
-          BlockState.create({
+          LegacyBlockState.create({
             headerHash: b32("0x070fe1f39b43ca551f40a58048bf52614771c812c87f5e43bc611d252f5d7949"),
             mmr: {
               peaks: [null, null, b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30")],
@@ -205,7 +206,7 @@ export const testState = (): InMemoryState => {
             postStateRoot: b32("0x175cafa38d5d26914e8c6bf3f8cc456eb073a7a0ae3d41bd12c2e5c396a62615"),
             reported: HashDictionary.new(),
           }),
-          BlockState.create({
+          LegacyBlockState.create({
             headerHash: b32("0x3f70f457921f9e274722ef3a7601f26393af473ce2f44109ab4316414b007de3"),
             mmr: {
               peaks: [

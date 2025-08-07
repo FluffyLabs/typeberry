@@ -221,9 +221,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       entropy: other.entropy,
       authPools: other.authPools,
       authQueues: other.authQueues,
-      recentBlocks: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-        ? (other.recentBlocks as RecentBlocks)
-        : (other.recentBlocks as LegacyRecentBlocks),
+      recentBlocks: other.recentBlocks,
       statistics: other.statistics,
       recentlyAccumulated: other.recentlyAccumulated,
       ticketsAccumulator: other.ticketsAccumulator,

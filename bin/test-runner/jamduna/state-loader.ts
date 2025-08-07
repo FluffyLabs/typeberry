@@ -192,7 +192,7 @@ const kindMapping: { [k: string]: Appender } = {
     authQueues: decode(serialize.authQueues.Codec, value),
   }),
   c3: (value) => ({
-    recentBlocks: decode(serialize.recentBlocksLegacy.Codec, value),
+    recentBlocks: decode(serialize.recentBlocks.Codec, value),
   }),
   c4: (value) => {
     const safrole = decode(serialize.safrole.Codec, value);

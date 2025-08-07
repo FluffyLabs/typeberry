@@ -7,9 +7,13 @@ import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";
 import type { MmrPeaks } from "@typeberry/mmr";
 import { WithDebug } from "@typeberry/utils";
 
-/** Recent history of a single block. */
-export class BlockState extends WithDebug {
-  static Codec = codec.Class(BlockState, {
+/**
+ * Recent history of a single block.
+ *
+ * NOTE Legacy - pre 067
+ */
+export class LegacyBlockState extends WithDebug {
+  static Codec = codec.Class(LegacyBlockState, {
     headerHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
     mmr: codec.object({
       peaks: readonlyArray(codec.sequenceVarLen(codec.optional(codec.bytes(HASH_SIZE)))),
@@ -18,8 +22,8 @@ export class BlockState extends WithDebug {
     reported: codecHashDictionary(WorkPackageInfo.Codec, (x) => x.workPackageHash),
   });
 
-  static create({ headerHash, mmr, postStateRoot, reported }: CodecRecord<BlockState>) {
-    return new BlockState(headerHash, mmr, postStateRoot, reported);
+  static create({ headerHash, mmr, postStateRoot, reported }: CodecRecord<LegacyBlockState>) {
+    return new LegacyBlockState(headerHash, mmr, postStateRoot, reported);
   }
 
   private constructor(

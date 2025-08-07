@@ -11,3 +11,4 @@ export * from "./state-update.js";
 export * from "./statistics.js";
 export * from "./validator-data.js";
 export * from "./recent-blocks.js";
+export * from "./accumulation-output.js";

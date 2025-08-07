@@ -5,8 +5,8 @@ import { HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import type { KeccakHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
-import type { BlockState, LegacyRecentBlocks, State } from "@typeberry/state";
-import type { RecentBlockState, RecentBlocks } from "@typeberry/state/recent-blocks.js";
+import type { LegacyBlockState, LegacyRecentBlocks, State } from "@typeberry/state";
+import type { BlockState, RecentBlocks } from "@typeberry/state/recent-blocks.js";
 import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 import type { ReportsInput } from "./reports.js";
@@ -143,81 +143,19 @@ function verifyRefineContexts(
   hasher: MmrHasher<KeccakHash>,
   headerChain: HeaderChain,
 ): Result<OK, ReportsError> {
-  if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-    // TODO [ToDr] [opti] This could be cached and updated efficiently between runs.
-    const recentBlocks = HashDictionary.new<HeaderHash, RecentBlockState>();
-    const blocksState = state.recentBlocks as RecentBlocks;
+  // TODO [ToDr] [opti] This could be cached and updated efficiently between runs.
+  const recentBlocks = HashDictionary.new<HeaderHash, BlockState | LegacyBlockState>();
 
-    for (const recentBlock of blocksState.blocks.slice()) {
+  if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+    for (const recentBlock of (state.recentBlocks as RecentBlocks).blocks.slice()) {
       recentBlocks.set(recentBlock.headerHash, recentBlock);
     }
-    for (const context of contexts) {
-      /**
-       * We require that the anchor block be within the last H
-       * blocks and that its details be correct by ensuring that it
-       * appears within our most recent blocks β† H:
-       *
-       * https://graypaper.fluffylabs.dev/#/7e6ff6a/150402150902?v=0.6.7
-       */
-      const recentBlock = recentBlocks.get(context.anchor);
-      if (recentBlock === undefined) {
-        return Result.error(ReportsError.AnchorNotRecent, `Anchor block ${context.anchor} not found in recent blocks.`);
-      }
-
-      // check state root
-      if (!recentBlock.postStateRoot.isEqualTo(context.stateRoot)) {
-        return Result.error(
-          ReportsError.BadStateRoot,
-          `Anchor state root mismatch. Got: ${context.stateRoot}, expected: ${recentBlock.postStateRoot}.`,
-        );
-      }
-
-      // check beefy root
-      const superPeakHash = recentBlock.accumulationResult;
-      if (!superPeakHash.isEqualTo(context.beefyRoot)) {
-        return Result.error(
-          ReportsError.BadBeefyMmrRoot,
-          `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${superPeakHash}. Anchor: ${recentBlock.headerHash}`,
-        );
-      }
-
-      /**
-       * We require that each lookup-anchor block be within the
-       * last L timeslots.
-       *
-       * https://graypaper.fluffylabs.dev/#/7e6ff6a/152602152702?v=0.6.7
-       */
-      if (context.lookupAnchorSlot < minLookupSlot) {
-        return Result.error(
-          ReportsError.SegmentRootLookupInvalid,
-          `Lookup anchor slot's too old. Got: ${context.lookupAnchorSlot}, minimal: ${minLookupSlot}`,
-        );
-      }
-
-      /**
-       * We also require that we have a record of it; this is one of
-       * the few conditions which cannot be checked purely with
-       * on-chain state and must be checked by virtue of retaini
-       * ing the series of the last L headers as the ancestor set A.
-       *
-       * https://graypaper.fluffylabs.dev/#/7e6ff6a/153c02154102?v=0.6.7
-       */
-      if (!headerChain.isInChain(context.lookupAnchor)) {
-        return Result.error(
-          ReportsError.SegmentRootLookupInvalid,
-          `Lookup anchor is not found in chain. Hash: ${context.lookupAnchor} (slot: ${context.lookupAnchorSlot})`,
-        );
-      }
+  } else {
+    for (const recentBlock of state.recentBlocks as LegacyRecentBlocks) {
+      recentBlocks.set(recentBlock.headerHash, recentBlock);
     }
-
-    return Result.ok(OK);
   }
 
-  // TODO [ToDr] [opti] This could be cached and updated efficiently between runs.
-  const recentBlocks = HashDictionary.new<HeaderHash, BlockState>();
-  for (const recentBlock of state.recentBlocks as LegacyRecentBlocks) {
-    recentBlocks.set(recentBlock.headerHash, recentBlock);
-  }
   for (const context of contexts) {
     /**
      * We require that the anchor block be within the last H
@@ -239,16 +177,24 @@ function verifyRefineContexts(
       );
     }
 
-    // TODO [ToDr] [opti] Don't calculate super peak hash every time.
-    //                    use either some cache or pre-processing.
     // check beefy root
-    const mmr = MerkleMountainRange.fromPeaks(hasher, recentBlock.mmr);
-    const superPeakHash = mmr.getSuperPeakHash();
-    if (!superPeakHash.isEqualTo(context.beefyRoot)) {
-      return Result.error(
-        ReportsError.BadBeefyMmrRoot,
-        `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${superPeakHash}. Anchor: ${recentBlock.headerHash}`,
-      );
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      const superPeakHash = (recentBlock as BlockState).accumulationResult;
+      if (!superPeakHash.isEqualTo(context.beefyRoot)) {
+        return Result.error(
+          ReportsError.BadBeefyMmrRoot,
+          `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${superPeakHash}. Anchor: ${recentBlock.headerHash}`,
+        );
+      }
+    } else {
+      const mmr = MerkleMountainRange.fromPeaks(hasher, (recentBlock as LegacyBlockState).mmr);
+      const superPeakHash = mmr.getSuperPeakHash();
+      if (!superPeakHash.isEqualTo(context.beefyRoot)) {
+        return Result.error(
+          ReportsError.BadBeefyMmrRoot,
+          `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${superPeakHash}. Anchor: ${recentBlock.headerHash}`,
+        );
+      }
     }
 
     /**

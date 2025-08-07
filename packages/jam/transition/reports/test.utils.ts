@@ -264,7 +264,8 @@ function newReportsState({
             ],
           },
         })
-      : asKnownSize([
+      : // NOTE Legacy pre 067
+        asKnownSize([
           {
             headerHash: Bytes.parseBytes(
               "0x168490e085497fcb6cbe3b220e2fa32456f30c1570412edd76ccb93be9254fef",
