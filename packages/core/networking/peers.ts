@@ -95,16 +95,26 @@ function displayId(peer: Peer) {
   return `${peer.id}@${peer.address.host}:${peer.address.port}`;
 }
 
+type Unsubscribe = () => void;
+
+export interface Peers<T extends Peer> {
+  /** Check that peer with given id is currently connected. */
+  isConnected(id: PeerId): boolean;
+  /** Get number of connected peers. */
+  noOfConnectedPeers(): number;
+
+  /** Add a callback triggered every time new peers is connected. */
+  onPeerConnected(cb: PeerCallback<T>): Unsubscribe;
+  /** Add a callback triggered every time a peer is disconnected. */
+  onPeerDisconnected(cb: PeerCallback<T>): Unsubscribe;
+}
+
 /** Peer management. */
-export class Peers<T extends Peer> {
-  private readonly onPeerConnected: PeerCallback<T>[] = [];
-  private readonly onPeerDisconnected: PeerCallback<T>[] = [];
+export class PeersManagement<T extends Peer> implements Peers<T> {
+  private readonly _onPeerConnected: PeerCallback<T>[] = [];
+  private readonly _onPeerDisconnected: PeerCallback<T>[] = [];
 
   private readonly peers: Map<PeerId, Peer> = new Map();
-
-  isConnected(id: PeerId) {
-    return this.peers.has(id);
-  }
 
   peerConnected(peer: T) {
     logger.info(`💡 Peer ${displayId(peer)} connected.`);
@@ -114,7 +124,7 @@ export class Peers<T extends Peer> {
       logger.warn("Replacing older connection.");
     }
     this.peers.set(peer.id, peer);
-    for (const callback of this.onPeerConnected) {
+    for (const callback of this._onPeerConnected) {
       callback(peer);
     }
   }
@@ -122,27 +132,35 @@ export class Peers<T extends Peer> {
   peerDisconnected(peer: T) {
     logger.info(`⚡︎Peer ${displayId(peer)} disconnected.`);
     this.peers.delete(peer.id);
-    for (const callback of this.onPeerDisconnected) {
+    for (const callback of this._onPeerDisconnected) {
       callback(peer);
     }
   }
 
-  addOnPeerConnected(cb: PeerCallback<T>) {
-    this.onPeerConnected.push(cb);
+  isConnected(id: PeerId) {
+    return this.peers.has(id);
+  }
+
+  noOfConnectedPeers() {
+    return this.peers.size;
+  }
+
+  onPeerConnected(cb: PeerCallback<T>) {
+    this._onPeerConnected.push(cb);
     return () => {
-      const idx = this.onPeerConnected.indexOf(cb);
+      const idx = this._onPeerConnected.indexOf(cb);
       if (idx !== -1) {
-        this.onPeerConnected.splice(idx, 1);
+        this._onPeerConnected.splice(idx, 1);
       }
     };
   }
 
-  addOnPeerDisconnected(cb: PeerCallback<T>) {
-    this.onPeerDisconnected.push(cb);
+  onPeerDisconnected(cb: PeerCallback<T>) {
+    this._onPeerDisconnected.push(cb);
     return () => {
-      const idx = this.onPeerDisconnected.indexOf(cb);
+      const idx = this._onPeerDisconnected.indexOf(cb);
       if (idx !== -1) {
-        this.onPeerDisconnected.splice(idx, 1);
+        this._onPeerDisconnected.splice(idx, 1);
       }
     };
   }

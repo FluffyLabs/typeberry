@@ -1,12 +1,12 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { OK } from "@typeberry/utils";
-import { Peers } from "./peers.js";
+import { PeersManagement } from "./peers.js";
 import { type TestPeerDisconnected, createDisconnectedPeer } from "./testing.js";
 
 describe("Peers", () => {
   it("should track peer connection status", () => {
-    const peers = new Peers<TestPeerDisconnected>();
+    const peers = new PeersManagement<TestPeerDisconnected>();
     const peer = createDisconnectedPeer("test-peer-1");
 
     assert.strictEqual(peers.isConnected(peer.id), false);
@@ -19,17 +19,17 @@ describe("Peers", () => {
   });
 
   it("should call connection callbacks", () => {
-    const peers = new Peers<TestPeerDisconnected>();
+    const peers = new PeersManagement<TestPeerDisconnected>();
     const peer = createDisconnectedPeer("test-peer-2");
     let connectedCalled = false;
     let disconnectedCalled = false;
 
-    peers.addOnPeerConnected(() => {
+    peers.onPeerConnected(() => {
       connectedCalled = true;
       return OK;
     });
 
-    peers.addOnPeerDisconnected(() => {
+    peers.onPeerDisconnected(() => {
       disconnectedCalled = true;
       return OK;
     });
@@ -43,17 +43,17 @@ describe("Peers", () => {
   });
 
   it("should handle multiple callbacks", () => {
-    const peers = new Peers<TestPeerDisconnected>();
+    const peers = new PeersManagement<TestPeerDisconnected>();
     const peer = createDisconnectedPeer("test-peer-3");
     let callback1Called = false;
     let callback2Called = false;
 
-    peers.addOnPeerConnected(() => {
+    peers.onPeerConnected(() => {
       callback1Called = true;
       return OK;
     });
 
-    peers.addOnPeerConnected(() => {
+    peers.onPeerConnected(() => {
       callback2Called = true;
       return OK;
     });
@@ -64,11 +64,11 @@ describe("Peers", () => {
   });
 
   it("should allow callback removal", () => {
-    const peers = new Peers<TestPeerDisconnected>();
+    const peers = new PeersManagement<TestPeerDisconnected>();
     const peer = createDisconnectedPeer("test-peer-4");
     let callbackCalled = false;
 
-    const removeCallback = peers.addOnPeerConnected(() => {
+    const removeCallback = peers.onPeerConnected(() => {
       callbackCalled = true;
       return OK;
     });
@@ -79,7 +79,7 @@ describe("Peers", () => {
   });
 
   it("should replace existing peer with same ID", () => {
-    const peers = new Peers<TestPeerDisconnected>();
+    const peers = new PeersManagement<TestPeerDisconnected>();
     const peer1 = createDisconnectedPeer("same-id", "127.0.0.1", 8080);
     const peer2 = createDisconnectedPeer("same-id", "127.0.0.1", 8081);
 
@@ -87,9 +87,13 @@ describe("Peers", () => {
 
     peers.peerConnected(peer1);
     assert.strictEqual(peers.isConnected(peer1.id), true);
+    assert.strictEqual(peers.noOfConnectedPeers(), 1);
 
+    // since the second peer has exactly the same id we
+    // just replace the place info and assume it is still connected.
     peers.peerConnected(peer2);
     assert.strictEqual(peers.isConnected(peer1.id), true);
     assert.strictEqual(peers.isConnected(peer2.id), true);
+    assert.strictEqual(peers.noOfConnectedPeers(), 1);
   });
 });

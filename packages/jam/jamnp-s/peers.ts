@@ -49,19 +49,24 @@ const MIN_RECONNECT_TIMEOUT_S = 3;
 /** Maximal reconnection time in seconds. */
 const MAX_RECONNECT_TIMEOUT_S = 3_600;
 
-/** Manage connections to peers. */
+/**
+ * Manage current and past connections to peers.
+ *
+ * Note this collection is wider in scope than just `Peers`.
+ * We not only track info about currently connected peers, but we also
+ * have a record of peers that we were connected to earlier, to allow
+ * tracking their behavior (score) or reconnecting in the future.
+ */
 export class Connections {
+  /** Info about peers that are currently connected or where connected in the past. */
   private readonly peerInfo: Map<PeerId, PeerInfo> = new Map();
-  private connectedPeers = 0;
 
   constructor(private readonly network: Network<Peer>) {
-    network.onPeerConnect((peer) => {
-      this.connectedPeers++;
+    network.peers.onPeerConnected((peer) => {
       this.updatePeer(peer);
       return OK;
     });
-    network.onPeerDisconnect((peer) => {
-      this.connectedPeers--;
+    network.peers.onPeerDisconnected((peer) => {
       this.scheduleReconnect(peer.id);
       return OK;
     });
@@ -86,7 +91,7 @@ export class Connections {
 
   /** Return the number of currently connected peers. */
   getPeerCount() {
-    return this.connectedPeers;
+    return this.network.peers.noOfConnectedPeers();
   }
 
   /** Return peers that are currently connected. */

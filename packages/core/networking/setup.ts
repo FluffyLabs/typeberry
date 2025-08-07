@@ -15,7 +15,7 @@ import {
 import { getQuicClientCrypto, getQuicServerCrypto } from "./crypto.js";
 import type { DialOptions } from "./network.js";
 import { peerVerification } from "./peer-verification.js";
-import { type PeerAddress, Peers } from "./peers.js";
+import { type PeerAddress, PeersManagement } from "./peers.js";
 import { QuicNetwork } from "./quic-network.js";
 import { QuicPeer } from "./quic-peer.js";
 import { addEventListener } from "./quic-utils.js";
@@ -79,7 +79,7 @@ export class Quic {
     });
 
     // peer management
-    const peers = new Peers<QuicPeer>();
+    const peers = new PeersManagement<QuicPeer>();
 
     // basic error handling
     addEventListener(server, events.EventQUICServerError, (error) => logger.error(`🛜  Server error: ${error}`));

@@ -4,7 +4,15 @@ import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { Logger } from "@typeberry/logger";
 import { OK, asOpaqueType } from "@typeberry/utils";
 import type { DialOptions, Network } from "./network.js";
-import type { Peer, PeerAddress, PeerCallback, PeerId, Stream, StreamCallback, StreamErrorCallback } from "./peers.js";
+import {
+  type Peer,
+  type PeerAddress,
+  type PeerId,
+  PeersManagement,
+  type Stream,
+  type StreamCallback,
+  type StreamErrorCallback,
+} from "./peers.js";
 
 const logger = Logger.new(import.meta.filename, "test:net");
 
@@ -206,22 +214,21 @@ export function createTestPeerPair(streamIdx: number, id1: string, id2: string) 
  * Provides controlled peer connection/disconnection simulation
  */
 export class MockNetwork implements Network<Peer> {
-  private readonly _onConnectCallback: PeerCallback<Peer>[] = [];
-  private readonly _onDisconnectCallback: PeerCallback<Peer>[] = [];
+  public readonly _peers: PeersManagement<Peer> = new PeersManagement();
 
   constructor(public readonly name: string) {
-    this.onPeerConnect((peer) => {
-      logger.log(
-        `(network: ${this.name}) New peer connected: ${peer.id}. ${this._onConnectCallback.length} listeners.`,
-      );
+    this.peers.onPeerConnected((peer) => {
+      logger.log(`(network: ${this.name}) New peer connected: ${peer.id}.`);
       return OK;
     });
-    this.onPeerDisconnect((peer) => {
-      logger.log(
-        `(network: ${this.name}) Peer disconnected: ${peer.id}. ${this._onDisconnectCallback.length} listeners.`,
-      );
+    this.peers.onPeerDisconnected((peer) => {
+      logger.log(`(network: ${this.name}) Peer disconnected: ${peer.id}.`);
       return OK;
     });
+  }
+
+  get peers() {
+    return this._peers;
   }
 
   async start(): Promise<void> {
@@ -232,29 +239,9 @@ export class MockNetwork implements Network<Peer> {
     // Mock implementation
   }
 
-  onPeerConnect(callback: PeerCallback<Peer>) {
-    this._onConnectCallback.push(callback);
-  }
-
-  onPeerDisconnect(callback: PeerCallback<Peer>) {
-    this._onDisconnectCallback.push(callback);
-  }
-
   async dial(address: PeerAddress, _options: DialOptions): Promise<Peer> {
     const peer = createDisconnectedPeer(address.host);
-    this._simulatePeerConnect(peer);
+    this._peers.peerConnected(peer);
     return peer;
-  }
-
-  _simulatePeerConnect(peer: Peer) {
-    for (const callback of this._onConnectCallback) {
-      callback(peer);
-    }
-  }
-
-  _simulatePeerDisconnect(peer: Peer) {
-    for (const callback of this._onDisconnectCallback) {
-      callback(peer);
-    }
   }
 }

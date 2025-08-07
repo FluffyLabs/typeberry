@@ -61,7 +61,7 @@ export async function setup(
 }
 
 export function setupPeerListeners(syncTask: SyncTask, network: Network<Peer>, streamManager: StreamManager) {
-  network.onPeerConnect((peer) => {
+  network.peers.onPeerConnected((peer) => {
     // whenever the peer wants to open a stream with us, let's handle that.
     peer.addOnIncomingStream((stream) => {
       handleAsyncErrors(
