@@ -9,7 +9,7 @@ import { WithDebug } from "@typeberry/utils";
 import { MAX_RECENT_HISTORY } from "./state.js";
 
 /** Array of recent blocks with maximum size of `MAX_RECENT_HISTORY` */
-export type RecentBlockStates = KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
+export type BlocksState = KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
 
 /** Recent history of a single block. */
 export class BlockState extends WithDebug {
@@ -64,11 +64,10 @@ export class RecentBlocks extends WithDebug {
      * Most recent block.
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/0fea010fea01?v=0.6.7
      */
-    public readonly blocks: RecentBlockStates,
+    public readonly blocks: BlocksState,
     /**
      * Accumulation output log.
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/0f02020f0202?v=0.6.7
-     * TODO: [MaSo] Change to MMB to align with GP.
      */
     public readonly accumulationLog: MmrPeaks<KeccakHash>,
   ) {

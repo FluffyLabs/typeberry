@@ -257,7 +257,6 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   // blocks history.
   const headerChain = {
     isInChain(hash: HeaderHash) {
-      // TODO [MaSo] Update to GP ^0.6.7
       return (preState.recentBlocks as LegacyRecentBlocks).find((x) => x.headerHash.isEqualTo(hash)) !== undefined;
     },
   };

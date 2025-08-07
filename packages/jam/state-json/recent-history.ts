@@ -4,7 +4,7 @@ import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@ty
 import { HashDictionary } from "@typeberry/collections";
 import type { KeccakHash } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";
-import { BlockState, type LegacyBlockState, type RecentBlockStates, RecentBlocks } from "@typeberry/state";
+import { BlockState, type BlocksState, type LegacyBlockState, RecentBlocks } from "@typeberry/state";
 
 export const reportedWorkPackageFromJson = json.object<JsonReportedWorkPackageInfo, WorkPackageInfo>(
   {
@@ -61,7 +61,7 @@ export const recentBlocksFromJson = json.object<JsonRecentBlocks, RecentBlocks>(
 );
 
 type JsonRecentBlocks = {
-  blocks: RecentBlockStates;
+  blocks: BlocksState;
   accumulation_log: {
     peaks: Array<KeccakHash | null>;
   };
