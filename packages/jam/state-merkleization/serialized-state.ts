@@ -13,7 +13,7 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { TEST_COMPARE_USING } from "@typeberry/utils";
+import { Compatibility, GpVersion, TEST_COMPARE_USING } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
 import { serialize } from "./serialize.js";
 import type { StateEntries } from "./state-entries.js";
@@ -177,7 +177,10 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
   }
 
   get accumulationOutputLog(): State["accumulationOutputLog"] {
-    return this.retrieve(serialize.accumulationOutputLog, "accumulationOutputLog");
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      return this.retrieve(serialize.accumulationOutputLog, "accumulationOutputLog");
+    }
+    return [];
   }
 }
 

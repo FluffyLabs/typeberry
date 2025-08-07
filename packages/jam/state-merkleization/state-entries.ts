@@ -6,7 +6,7 @@ import type { ChainSpec } from "@typeberry/config";
 import type { InMemoryState } from "@typeberry/state";
 import { type BytesBlob, InMemoryTrie } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
-import { TEST_COMPARE_USING, assertNever } from "@typeberry/utils";
+import { Compatibility, GpVersion, TEST_COMPARE_USING, assertNever } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
 import { type StateEntryUpdate, StateEntryUpdateAction } from "./serialize-state-update.js";
 import { type StateCodec, serialize } from "./serialize.js";
@@ -135,6 +135,9 @@ function convertInMemoryStateToDictionary(spec: ChainSpec, state: InMemoryState)
   doSerialize(serialize.statistics); // C(13)
   doSerialize(serialize.accumulationQueue); // C(14)
   doSerialize(serialize.recentlyAccumulated); // C(15)
+  if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+    doSerialize(serialize.accumulationOutputLog); // C(16)
+  }
 
   // services
   for (const [serviceId, service] of state.services.entries()) {
