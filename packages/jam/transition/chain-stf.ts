@@ -183,12 +183,19 @@ export class OnChain {
     } = safroleResult.ok.stateUpdate;
     assertEmpty(safroleRest);
 
+    // partial recent history
+    const recentHistoryPartialUpdate = this.recentHistory.partialTransition({
+      priorStateRoot: header.priorStateRoot,
+    });
+    const { recentBlocks: recentBlocksPartialUpdate, ...recentHistoryPartialRest } = recentHistoryPartialUpdate;
+    assertEmpty(recentHistoryPartialRest);
+
     // reports
     const reportsResult = await this.reports.transition({
       slot: timeSlot,
       guarantees: block.extrinsic.view().guarantees.view(),
       newEntropy: entropy,
-      priorStateRoot: header.priorStateRoot,
+      recentBlocksPartialUpdate,
     });
     if (reportsResult.isError) {
       return stfError(StfErrorKind.Reports, reportsResult);
@@ -273,8 +280,8 @@ export class OnChain {
 
     // recent history
     const recentHistoryUpdate = this.recentHistory.transition({
+      partial: recentHistoryPartialUpdate,
       headerHash,
-      priorStateRoot: header.priorStateRoot,
       accumulateRoot,
       workPackages,
     });

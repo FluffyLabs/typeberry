@@ -1,13 +1,13 @@
-import type { HeaderHash, StateRootHash } from "@typeberry/block";
+import type { HeaderHash } from "@typeberry/block";
 import type { RefineContext } from "@typeberry/block/refine-context.js";
 import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
-import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
-import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";
+import type { KeccakHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import type { BlockState, State } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
+import type { RecentHistoryStateUpdate } from "../recent-history.js";
 import { ReportsError } from "./error.js";
 import type { ReportsInput } from "./reports.js";
 
@@ -74,7 +74,13 @@ export function verifyContextualValidity(
   }
 
   const minLookupSlot = Math.max(0, input.slot - L);
-  const contextResult = verifyRefineContexts(minLookupSlot, contexts, state, hasher, headerChain, input.priorStateRoot);
+  const contextResult = verifyRefineContexts(
+    minLookupSlot,
+    contexts,
+    input.recentBlocksPartialUpdate,
+    hasher,
+    headerChain,
+  );
   if (contextResult.isError) {
     return contextResult;
   }
@@ -134,14 +140,13 @@ export function verifyContextualValidity(
 function verifyRefineContexts(
   minLookupSlot: number,
   contexts: RefineContext[],
-  state: Pick<State, "recentBlocks">,
+  recentBlocksPartialUpdate: RecentHistoryStateUpdate["recentBlocks"],
   hasher: MmrHasher<KeccakHash>,
   headerChain: HeaderChain,
-  priorStateRoot: StateRootHash,
 ): Result<OK, ReportsError> {
   // TODO [ToDr] [opti] This could be cached and updated efficiently between runs.
   const recentBlocks = HashDictionary.new<HeaderHash, BlockState>();
-  for (const recentBlock of state.recentBlocks) {
+  for (const recentBlock of recentBlocksPartialUpdate) {
     recentBlocks.set(recentBlock.headerHash, recentBlock);
   }
   for (const context of contexts) {
@@ -158,14 +163,10 @@ function verifyRefineContexts(
     }
 
     // check state root
-    const expectedStateRoot = recentBlock.postStateRoot.isEqualTo(Bytes.zero(HASH_SIZE).asOpaque())
-      ? priorStateRoot
-      : recentBlock.postStateRoot;
-
-    if (!expectedStateRoot.isEqualTo(context.stateRoot)) {
+    if (!recentBlock.postStateRoot.isEqualTo(context.stateRoot)) {
       return Result.error(
         ReportsError.BadStateRoot,
-        `Anchor state root mismatch. Got: ${context.stateRoot}, expected: ${expectedStateRoot}.`,
+        `Anchor state root mismatch. Got: ${context.stateRoot}, expected: ${recentBlock.postStateRoot}.`,
       );
     }
 

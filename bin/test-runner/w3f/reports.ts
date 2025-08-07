@@ -1,7 +1,6 @@
 import {
   type EntropyHash,
   type HeaderHash,
-  type StateRootHash,
   type TimeSlot,
   tryAsPerEpochBlock,
   tryAsPerValidator,
@@ -62,7 +61,7 @@ class Input {
     input: Input,
     spec: ChainSpec,
     entropy: ReportsState["entropy"],
-    priorStateRoot: StateRootHash,
+    recentBlocksPartialUpdate: ReportsState["recentBlocks"],
   ): ReportsInput {
     const view = guaranteesAsView(spec, input.guarantees, { disableCredentialsRangeCheck: true });
 
@@ -70,7 +69,7 @@ class Input {
       guarantees: view,
       slot: input.slot,
       newEntropy: entropy,
-      priorStateRoot,
+      recentBlocksPartialUpdate,
     };
   }
 }
@@ -254,7 +253,7 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
     testContent.input,
     spec,
     preState.entropy,
-    preState.recentBlocks[preState.recentBlocks.length - 1].postStateRoot, // priorStateRoot should actually be the current header's prior state root
+    preState.recentBlocks, // note: for full fidelity this should be partially updated state, not prior state as it is now
   );
   const expectedOutput = TestReportsResult.toReportsResult(testContent.output);
 

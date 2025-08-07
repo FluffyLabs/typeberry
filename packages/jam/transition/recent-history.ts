@@ -6,12 +6,17 @@ import { HASH_SIZE, type KeccakHash, type OpaqueHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import { MAX_RECENT_HISTORY, type State } from "@typeberry/state";
 
-/** Current block input for the recent history transition. */
-export type RecentHistoryInput = {
-  /** Current header hash. */
-  headerHash: HeaderHash;
+export type RecentHistoryPartialInput = {
   /** State root before current header. */
   priorStateRoot: StateRootHash;
+};
+
+/** Current block input for the recent history transition. */
+export type RecentHistoryInput = {
+  /** Result of the partial transition. */
+  partial: RecentHistoryStateUpdate;
+  /** Current header hash. */
+  headerHash: HeaderHash;
   /**
    * `C`: BEEFY commitment.
    *
@@ -39,13 +44,34 @@ export class RecentHistory {
     public readonly state: RecentHistoryState,
   ) {}
 
-  transition(input: RecentHistoryInput): RecentHistoryStateUpdate {
+  /**
+   * During the accumulation stage, a value with the partial transition
+   * of this state is provided which contains the update for the newly-known
+   * roots of the parent block.
+   *
+   * β† ≡ β except β†[|β| − 1]_s = H_r
+   *
+   * https://graypaper.fluffylabs.dev/#/9a08063/0fd2010fe001?v=0.6.6
+   */
+  partialTransition(input: RecentHistoryPartialInput): RecentHistoryStateUpdate {
     const recentBlocks = this.state.recentBlocks.slice();
     const lastState = recentBlocks.length > 0 ? recentBlocks[recentBlocks.length - 1] : null;
     // update the posterior root of previous state.
     if (lastState !== null) {
       lastState.postStateRoot = input.priorStateRoot;
     }
+
+    return {
+      recentBlocks: asKnownSize(recentBlocks), // β†
+    };
+  }
+
+  /**
+   * https://graypaper.fluffylabs.dev/#/9a08063/0fe1010f9402?v=0.6.6
+   */
+  transition(input: RecentHistoryInput): RecentHistoryStateUpdate {
+    const recentBlocks = input.partial.recentBlocks.slice();
+    const lastState = recentBlocks.length > 0 ? recentBlocks[recentBlocks.length - 1] : null;
 
     const mmr =
       lastState !== null

@@ -8,7 +8,6 @@ import { Compatibility, GpVersion, asOpaqueType, deepEqual } from "@typeberry/ut
 import { ReportsError } from "./error.js";
 import {
   ENTROPY,
-  PRIOR_STATE_ROOT,
   guaranteesAsView,
   initialValidators,
   newCredential,
@@ -31,7 +30,12 @@ describe("Reports.verifyCredentials", () => {
       { disableCredentialsRangeCheck: true },
     );
 
-    const input = { guarantees, slot: tryAsTimeSlot(1), newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
+    const input = {
+      guarantees,
+      slot: tryAsTimeSlot(1),
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks, // note: for full fidelity this should be partially updated state, not prior state as it is now
+    };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -57,7 +61,12 @@ describe("Reports.verifyCredentials", () => {
       { disableCredentialsRangeCheck: true },
     );
 
-    const input = { guarantees, slot: tryAsTimeSlot(1), newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
+    const input = {
+      guarantees,
+      slot: tryAsTimeSlot(1),
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -79,7 +88,12 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(6), newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
+    const input = {
+      guarantees,
+      slot: tryAsTimeSlot(6),
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -101,7 +115,12 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(6), newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
+    const input = {
+      guarantees,
+      slot: tryAsTimeSlot(6),
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -123,7 +142,12 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(4), newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
+    const input = {
+      guarantees,
+      slot: tryAsTimeSlot(4),
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -145,7 +169,12 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(25), newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
+    const input = {
+      guarantees,
+      slot: tryAsTimeSlot(25),
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -167,7 +196,12 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(25), newEntropy: ENTROPY, priorStateRoot: PRIOR_STATE_ROOT };
+    const input = {
+      guarantees,
+      slot: tryAsTimeSlot(25),
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
