@@ -7,7 +7,12 @@ import { HASH_SIZE, type KeccakHash, keccak } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { type BlockState, MAX_RECENT_HISTORY } from "@typeberry/state";
 import { asOpaqueType, check } from "@typeberry/utils";
-import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "./recent-history.js";
+import {
+  RecentHistory,
+  type RecentHistoryInput,
+  type RecentHistoryPartialInput,
+  type RecentHistoryState,
+} from "./recent-history.js";
 import { copyAndUpdateState } from "./test.utils.js";
 
 const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then((hasher) => {
@@ -27,10 +32,15 @@ const asRecentHistory = (arr: BlockState[]): RecentHistoryState => {
 describe("Recent History", () => {
   it("should perform a transition with empty state", async () => {
     const recentHistory = new RecentHistory(await hasher, asRecentHistory([]));
+    const partialInput: RecentHistoryPartialInput = {
+      priorStateRoot: Bytes.fill(HASH_SIZE, 1).asOpaque(),
+    };
+    const partialUpdate = recentHistory.partialTransition(partialInput);
+
     const input: RecentHistoryInput = {
-      headerHash: Bytes.fill(HASH_SIZE, 3).asOpaque(),
-      priorStateRoot: Bytes.fill(HASH_SIZE, 2).asOpaque(),
-      accumulateRoot: Bytes.fill(HASH_SIZE, 1).asOpaque(),
+      partial: partialUpdate,
+      headerHash: Bytes.fill(HASH_SIZE, 2).asOpaque(),
+      accumulateRoot: Bytes.fill(HASH_SIZE, 3).asOpaque(),
       workPackages: HashDictionary.new(),
     };
     const stateUpdate = recentHistory.transition(input);
@@ -40,7 +50,7 @@ describe("Recent History", () => {
       {
         headerHash: input.headerHash,
         mmr: {
-          peaks: [Bytes.fill(HASH_SIZE, 1)],
+          peaks: [Bytes.fill(HASH_SIZE, 3)],
         },
         postStateRoot: Bytes.zero(HASH_SIZE),
         reported: HashDictionary.new(),
@@ -59,9 +69,14 @@ describe("Recent History", () => {
     };
     const recentHistory = new RecentHistory(await hasher, asRecentHistory([initialState]));
 
+    const partialInput: RecentHistoryPartialInput = {
+      priorStateRoot: Bytes.fill(HASH_SIZE, 4).asOpaque(),
+    };
+    const partialUpdate = recentHistory.partialTransition(partialInput);
+
     const input: RecentHistoryInput = {
-      headerHash: Bytes.fill(HASH_SIZE, 4).asOpaque(),
-      priorStateRoot: Bytes.fill(HASH_SIZE, 5).asOpaque(),
+      partial: partialUpdate,
+      headerHash: Bytes.fill(HASH_SIZE, 5).asOpaque(),
       accumulateRoot: Bytes.fill(HASH_SIZE, 6).asOpaque(),
       workPackages: HashDictionary.fromEntries(
         [
@@ -81,7 +96,7 @@ describe("Recent History", () => {
       headerHash: initialState.headerHash,
       mmr: initialState.mmr,
       // note we fill it up from the input
-      postStateRoot: input.priorStateRoot,
+      postStateRoot: partialInput.priorStateRoot,
       reported: initialState.reported,
     });
     assert.deepStrictEqual(
@@ -108,9 +123,14 @@ describe("Recent History", () => {
     for (let i = 0; i < 10; i++) {
       const recentHistory = new RecentHistory(await hasher, state);
       const id = (x: number) => 10 * i + x;
+      const partialInput: RecentHistoryPartialInput = {
+        priorStateRoot: Bytes.fill(HASH_SIZE, 1).asOpaque(),
+      };
+      const partialUpdate = recentHistory.partialTransition(partialInput);
+
       input = {
-        headerHash: Bytes.fill(HASH_SIZE, id(1)).asOpaque(),
-        priorStateRoot: Bytes.fill(HASH_SIZE, id(2)).asOpaque(),
+        partial: partialUpdate,
+        headerHash: Bytes.fill(HASH_SIZE, id(2)).asOpaque(),
         accumulateRoot: Bytes.fill(HASH_SIZE, id(3)).asOpaque(),
         workPackages: HashDictionary.fromEntries(
           [
