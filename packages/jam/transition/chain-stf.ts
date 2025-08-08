@@ -192,8 +192,11 @@ export class OnChain {
     if (reportsResult.isError) {
       return stfError(StfErrorKind.Reports, reportsResult);
     }
-    const { availabilityAssignment: reportsAvailAssignment, ...reportsRest } = reportsResult.ok.stateUpdate;
+    // NOTE `reporters` are unused
+    const { reported: workPackages, reporters: _, stateUpdate: reportsUpdate, ...reportsRest } = reportsResult.ok;
     assertEmpty(reportsRest);
+    const { availabilityAssignment: reportsAvailAssignment, ...reportsUpdateRest } = reportsUpdate;
+    assertEmpty(reportsUpdateRest);
 
     // assurances
     const assurancesResult = await this.assurances.transition({
@@ -204,8 +207,12 @@ export class OnChain {
     if (assurancesResult.isError) {
       return stfError(StfErrorKind.Assurances, assurancesResult);
     }
-    const { availabilityAssignment: assurancesAvailAssignment, ...assurancesRest } = assurancesResult.ok.stateUpdate;
+
+    const { availableReports, stateUpdate: assurancesUpdate, ...assurancesRest } = assurancesResult.ok;
     assertEmpty(assurancesRest);
+
+    const { availabilityAssignment: assurancesAvailAssignment, ...assurancesUpdateRest } = assurancesUpdate;
+    assertEmpty(assurancesUpdateRest);
 
     // preimages
     const preimagesResult = this.preimages.integrate({
@@ -221,7 +228,7 @@ export class OnChain {
     // accumulate
     const accumulateResult = await this.accumulate.transition({
       slot: timeSlot,
-      reports: assurancesResult.ok.availableReports,
+      reports: availableReports,
       entropy: entropy[0],
     });
     if (accumulateResult.isError) {
@@ -240,7 +247,7 @@ export class OnChain {
       privilegedServices: maybePrivilegedServices,
       authQueues: maybeAuthorizationQueues,
       designatedValidatorData: maybeDesignatedValidatorData,
-      timeslot: accumulationTimeSlot,
+      timeslot: accumulateTimeSlot,
       preimages: accumulatePreimages,
       ...servicesUpdate
     } = accumulateUpdate;
@@ -249,6 +256,7 @@ export class OnChain {
       pendingTransfers,
       servicesUpdate: { ...servicesUpdate, preimages: accumulatePreimages },
       timeslot: timeSlot,
+      ...servicesUpdate,
     });
 
     if (deferredTransfersResult.isError) {
@@ -267,7 +275,7 @@ export class OnChain {
       headerHash,
       priorStateRoot: header.priorStateRoot,
       accumulateRoot,
-      workPackages: reportsResult.ok.reported,
+      workPackages,
     });
     const { recentBlocks, ...recentHistoryRest } = recentHistoryUpdate;
     assertEmpty(recentHistoryRest);
@@ -281,15 +289,12 @@ export class OnChain {
     assertEmpty(authorizationRest);
 
     const extrinsic = block.extrinsic.materialize();
-
-    // TODO [MaSo] fill in the statistics with accumulation results
-    // statistics
     const statisticsUpdate = this.statistics.transition({
       slot: timeSlot,
       authorIndex: header.bandersnatchBlockAuthorIndex,
       extrinsic,
       incomingReports: extrinsic.guarantees.map((g) => g.report),
-      availableReports: assurancesResult.ok.availableReports,
+      availableReports,
       accumulationStatistics,
       transferStatistics,
     });
