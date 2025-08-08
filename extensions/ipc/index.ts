@@ -1,10 +1,27 @@
-import { type HeaderHash, type HeaderView, tryAsTimeSlot } from "@typeberry/block";
+import {
+  type Block,
+  type Header,
+  type HeaderHash,
+  type HeaderView,
+  type StateRootHash,
+  tryAsTimeSlot,
+} from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { TruncatedHashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, TRUNCATED_HASH_SIZE, type WithHash, blake2b } from "@typeberry/hash";
 import { ce129, up0 } from "@typeberry/jamnp-s";
+import { Logger } from "@typeberry/logger";
+import type { BlockImportError } from "@typeberry/node";
 import { Listener } from "@typeberry/state-machine";
+import { StateEntries, type TruncatedEntries } from "@typeberry/state-merkleization";
+import type { Result } from "@typeberry/utils";
+import { type FuzzMessageHandler, FuzzTarget } from "./fuzz/handler.js";
+import { type KeyValue, PeerInfo, type SetState, type Version } from "./fuzz/types.js";
 import { startJamnpIpcServer } from "./jamnp/server.js";
+import { startIpcServer } from "./server.js";
+
+export { Version } from "./fuzz/types.js";
 
 export interface ExtensionApi {
   chainSpec: ChainSpec;
@@ -12,10 +29,22 @@ export interface ExtensionApi {
 }
 
 export function startExtension(api: ExtensionApi) {
-  const closeJamnpIpc = startJamnpExtension(api);
-  return () => {
-    closeJamnpIpc();
-  };
+  return startJamnpExtension(api);
+}
+
+export interface FuzzTargetApi {
+  nodeName: string;
+  nodeVersion: Version;
+  gpVersion: Version;
+  chainSpec: ChainSpec;
+  importBlock: (block: Block) => Promise<Result<StateRootHash, BlockImportError>>;
+  resetState: (header: Header, state: StateEntries<TruncatedEntries>) => Promise<StateRootHash>;
+  // TODO [ToDr] key/val instead of state entries?
+  getPostSerializedState: (hash: HeaderHash) => Promise<StateEntries | null>;
+}
+
+export function startFuzzTarget(api: FuzzTargetApi) {
+  return startIpcServer("jam_target.sock", (sender) => new FuzzTarget(new FuzzHandler(api), sender, api.chainSpec));
 }
 
 function startJamnpExtension(api: ExtensionApi) {
@@ -54,4 +83,52 @@ function startJamnpExtension(api: ExtensionApi) {
   };
 
   return startJamnpIpcServer(api.chainSpec, announcements, getHandshake, getBoundaryNodes, getKeyValuePairs);
+}
+
+const logger = Logger.new(import.meta.filename, "ext-ipc");
+
+class FuzzHandler implements FuzzMessageHandler {
+  constructor(public readonly api: FuzzTargetApi) {}
+
+  async getSerializedState(value: HeaderHash): Promise<KeyValue[]> {
+    const state = await this.api.getPostSerializedState(value);
+    if (state === null) {
+      logger.warn(`Fuzzer requested non-existing state for: ${value}`);
+      return [];
+    }
+
+    return Array.from(state.entries.data).map(([key, value]) => {
+      return {
+        key: Bytes.fromBlob(key.raw.subarray(0, TRUNCATED_HASH_SIZE), TRUNCATED_HASH_SIZE),
+        value,
+      };
+    });
+  }
+
+  async resetState(value: SetState): Promise<StateRootHash> {
+    const dict = TruncatedHashDictionary.fromEntries(value.state.map(({ key, value }) => [key.asOpaque(), value]));
+    const entries = StateEntries.fromTruncatedDictionaryUnsafe(dict);
+    const root = this.api.resetState(value.header, entries);
+    return root;
+  }
+
+  async importBlock(value: Block): Promise<StateRootHash> {
+    const res = await this.api.importBlock(value);
+    if (res.isError) {
+      logger.warn(`Fuzzer imported incorrect block with error ${res.error}. ${res.details}`);
+      return Bytes.zero(HASH_SIZE).asOpaque();
+    }
+
+    return res.ok;
+  }
+
+  async getPeerInfo(value: PeerInfo): Promise<PeerInfo> {
+    logger.info(`Fuzzer ${value} connected.`);
+
+    return PeerInfo.create({
+      name: this.api.nodeName,
+      appVersion: this.api.nodeVersion,
+      jamVersion: this.api.gpVersion,
+    });
+  }
 }

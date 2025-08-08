@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import type { MessagePort, TransferListItem } from "node:worker_threads";
+import type { MessagePort, Transferable } from "node:worker_threads";
 import { Logger } from "@typeberry/logger";
 import { check } from "@typeberry/utils";
 import { type Message, isValidMessage } from "./message.js";
@@ -41,7 +41,7 @@ export class TypedPort {
   /**
    * Send a request to the worker and get a response `Promise`.
    */
-  async sendRequest<TRes>(localState: string, name: string, data: unknown, transferList?: TransferListItem[]) {
+  async sendRequest<TRes>(localState: string, name: string, data: unknown, transferList?: Transferable[]) {
     const [request, promise] = this.prepareRequest<TRes>(localState, name, data);
     this.postMessage(request, transferList);
     return promise;
@@ -50,7 +50,7 @@ export class TypedPort {
   /**
    * Send a signal to the worker.
    */
-  sendSignal(localState: string, name: string, data: unknown, transferList?: TransferListItem[]) {
+  sendSignal(localState: string, name: string, data: unknown, transferList?: Transferable[]) {
     this.messageId = (this.messageId + 1) % MAX_ID;
     this.messageId >>>= 0;
 
@@ -95,6 +95,7 @@ export class TypedPort {
    */
   respond(localState: string, request: Message, data: unknown) {
     check(request.kind === "request");
+    // TODO [ToDr] transfer list is missing!
     this.postMessage({
       kind: "response",
       id: request.id,
@@ -113,7 +114,7 @@ export class TypedPort {
     this.port.close();
   }
 
-  private postMessage(msg: Message, transferList?: TransferListItem[]) {
+  private postMessage(msg: Message, transferList?: Transferable[]) {
     try {
       this.port.postMessage(msg, transferList);
     } catch (e) {

@@ -7,7 +7,7 @@ import { NewStream, StreamEnvelope, StreamEnvelopeType } from "./stream.js";
 
 export type ResponseHandler = (err: Error | null, response?: BytesBlob) => void;
 
-const logger = Logger.new(import.meta.filename, "ext-ipc");
+const logger = Logger.new(import.meta.filename, "ext-ipc-jamnp");
 
 type OnEnd = {
   finished: boolean;
@@ -95,7 +95,7 @@ export class JamnpIpcHandler implements IpcHandler {
   }
 
   /** Handle incoming message on that socket. */
-  onSocketMessage(msg: Uint8Array) {
+  async onSocketMessage(msg: Uint8Array): Promise<void> {
     // decode the message as `StreamEnvelope`
     const envelope = Decoder.decodeObject(StreamEnvelope.Codec, msg);
     const streamId = envelope.streamId;

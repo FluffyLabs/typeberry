@@ -88,8 +88,8 @@ export class CoreStatistics {
   static Codec = codec.Class(CoreStatistics, {
     dataAvailabilityLoad: codec.varU32,
     popularity: codecVarU16,
-    imports: codecVarU16,
-    exports: codecVarU16,
+    imports: codec.varU32,
+    exports: codec.varU32,
     extrinsicSize: codec.varU32,
     extrinsicCount: codecVarU16,
     bundleSize: codec.varU32,
@@ -115,9 +115,9 @@ export class CoreStatistics {
     /** `p` */
     public popularity: U16,
     /** `i` */
-    public imports: U16,
+    public imports: U32,
     /** `e` */
-    public exports: U16,
+    public exports: U32,
     /** `z` */
     public extrinsicSize: U32,
     /** `x` */
@@ -132,7 +132,7 @@ export class CoreStatistics {
     const zero = tryAsU32(0);
     const zero16 = tryAsU16(0);
     const zeroGas = tryAsServiceGas(0);
-    return new CoreStatistics(zero, zero16, zero16, zero16, zero, zero16, zero, zeroGas);
+    return new CoreStatistics(zero, zero16, zero, zero, zero, zero16, zero, zeroGas);
   }
 }
 
@@ -145,14 +145,14 @@ export class CoreStatistics {
  */
 export class ServiceStatistics {
   static Codec = codec.Class(ServiceStatistics, {
-    providedCount: codecVarU16,
+    providedCount: codec.varU32,
     providedSize: codec.varU32,
     refinementCount: codec.varU32,
     refinementGasUsed: codecVarGas,
-    imports: codecVarU16,
-    exports: codecVarU16,
+    imports: codec.varU32,
+    exports: codec.varU32,
     extrinsicSize: codec.varU32,
-    extrinsicCount: codecVarU16,
+    extrinsicCount: codec.varU32,
     accumulateCount: codec.varU32,
     accumulateGasUsed: codecVarGas,
     onTransfersCount: codec.varU32,
@@ -178,7 +178,7 @@ export class ServiceStatistics {
 
   private constructor(
     /** `p.0` */
-    public providedCount: U16,
+    public providedCount: U32,
     /** `p.1` */
     public providedSize: U32,
     /** `r.0` */
@@ -186,13 +186,13 @@ export class ServiceStatistics {
     /** `r.1` */
     public refinementGasUsed: ServiceGas,
     /** `i` */
-    public imports: U16,
+    public imports: U32,
     /** `e` */
-    public exports: U16,
+    public exports: U32,
     /** `z` */
     public extrinsicSize: U32,
     /** `x` */
-    public extrinsicCount: U16,
+    public extrinsicCount: U32,
     /** `a.0` */
     public accumulateCount: U32,
     /** `a.1` */
@@ -205,22 +205,8 @@ export class ServiceStatistics {
 
   static empty() {
     const zero = tryAsU32(0);
-    const zero16 = tryAsU16(0);
     const zeroGas = tryAsServiceGas(0);
-    return new ServiceStatistics(
-      zero16,
-      zero,
-      zero,
-      zeroGas,
-      zero16,
-      zero16,
-      zero,
-      zero16,
-      zero,
-      zeroGas,
-      zero,
-      zeroGas,
-    );
+    return new ServiceStatistics(zero, zero, zero, zeroGas, zero, zero, zero, zero, zero, zeroGas, zero, zeroGas);
   }
 }
 

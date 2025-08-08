@@ -2,6 +2,7 @@ import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
 import { LeafDb, StateUpdateError, type StatesDb } from "@typeberry/database";
+import { Logger } from "@typeberry/logger";
 import type { ServicesUpdate, State } from "@typeberry/state";
 import { SerializedState, serializeStateUpdate } from "@typeberry/state-merkleization";
 import type { StateKey } from "@typeberry/state-merkleization";
@@ -13,6 +14,7 @@ import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { OK, Result, assertNever, resultToString } from "@typeberry/utils";
 import type { LmdbRoot, SubDb } from "./root.js";
 
+const logger = Logger.new(import.meta.filename, "db");
 /**
  * LMDB-backed state storage.
  *
@@ -121,7 +123,7 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     try {
       await Promise.all([valuesWrite, statesWrite]);
     } catch (e) {
-      console.error(e);
+      logger.error(`${e}`);
       return Result.error(StateUpdateError.Commit);
     }
     return Result.ok(OK);

@@ -1,4 +1,4 @@
-import type { TransferListItem } from "node:worker_threads";
+import type { Transferable } from "node:worker_threads";
 import type { Result } from "@typeberry/utils";
 
 export interface IExecutor<TParams, TResult> {
@@ -7,7 +7,7 @@ export interface IExecutor<TParams, TResult> {
 }
 
 export type WithTransferList = {
-  getTransferList(): TransferListItem[];
+  getTransferList(): Transferable[];
 };
 
 /** Message going from parent thread to worker thread. */

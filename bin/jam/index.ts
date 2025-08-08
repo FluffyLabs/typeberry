@@ -3,7 +3,7 @@ import { loadConfig } from "@typeberry/config-node";
 import { deriveEd25519SecretKey } from "@typeberry/crypto/key-derivation.js";
 import { blake2b } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
-import { JamConfig, main } from "@typeberry/node";
+import { JamConfig, main, mainFuzz } from "@typeberry/node";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 
 export * from "./args.js";
@@ -57,7 +57,12 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     process.exit(1);
   }
 
-  main(prepareConfigFile(args), withRelPath).catch((e) => {
+  const running =
+    args.command === Command.FuzzTarget
+      ? mainFuzz({ jamNodeConfig: prepareConfigFile(args) }, withRelPath)
+      : main(prepareConfigFile(args), withRelPath);
+
+  running.catch((e) => {
     console.error(`${e}`);
     process.exit(-1);
   });

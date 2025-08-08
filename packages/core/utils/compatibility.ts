@@ -28,7 +28,7 @@ const ALL_VERSIONS_IN_ORDER = [
 
 const env = typeof process === "undefined" ? {} : process.env;
 export const DEFAULT_VERSION = GpVersion.V0_6_5;
-export let CURRENT_VERSION = parseCurrentVersion(env.GP_VERSION);
+export let CURRENT_VERSION = parseCurrentVersion(env.GP_VERSION) ?? DEFAULT_VERSION;
 export let CURRENT_SUITE = (env.TEST_SUITE as TestSuite) ?? DEFAULT_SUITE;
 
 function parseCurrentVersion(env?: string): GpVersion | undefined {
@@ -46,7 +46,7 @@ function parseCurrentVersion(env?: string): GpVersion | undefined {
 
 export class Compatibility {
   static override(version?: GpVersion) {
-    CURRENT_VERSION = version;
+    CURRENT_VERSION = version ?? DEFAULT_VERSION;
   }
 
   static overrideSuite(suite: TestSuite) {

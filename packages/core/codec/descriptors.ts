@@ -619,7 +619,11 @@ export function forEachDescriptor<T>(
   for (const key in descriptors) {
     if (typeof key === "string" && key in descriptors) {
       const k = key as keyof DescriptorRecord<T>;
-      f(k, descriptors[k]);
+      try {
+        f(k, descriptors[k]);
+      } catch (e) {
+        throw new Error(`${key}: ${e}`);
+      }
     }
   }
 }
