@@ -6,6 +6,8 @@ import type { TrieNode } from "@typeberry/trie/nodes.js";
 import { startIpcServer } from "../server.js";
 import { JamnpIpcHandler } from "./handler.js";
 
+export const ANNOUNCEMENT_EVENT = "announcement";
+
 /** An IPC endpoint exposing network-like messaging protocol. */
 export function startJamnpIpcServer(
   announcements: EventEmitter,
@@ -25,9 +27,9 @@ export function startJamnpIpcServer(
         throw new Error(`Invalid annoncement received: ${announcement}`);
       }
     };
-    announcements.on("announcement", listener);
+    announcements.on(ANNOUNCEMENT_EVENT, listener);
     handler.waitForEnd().finally(() => {
-      announcements.off("annoncement", listener);
+      announcements.off(ANNOUNCEMENT_EVENT, listener);
     });
 
     handler.registerStreamHandlers(new up0.Handler(getHandshake, () => {}));

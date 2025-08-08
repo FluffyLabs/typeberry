@@ -4,7 +4,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE, TRUNCATED_HASH_SIZE, type WithHash, blake2b } from "@typeberry/hash";
 import { ce129, up0 } from "@typeberry/jamnp-s";
 import type { Listener } from "@typeberry/state-machine";
-import { startJamnpIpcServer } from "./jamnp/server.js";
+import { ANNOUNCEMENT_EVENT, startJamnpIpcServer } from "./jamnp/server.js";
 
 export interface ExtensionApi {
   bestHeader: Listener<WithHash<HeaderHash, HeaderView>>;
@@ -26,7 +26,7 @@ function startJamnpExtension(api: ExtensionApi) {
     const hash = headerWithHash.hash;
     const final = up0.HashAndSlot.create({ hash, slot: header.timeSlotIndex });
     bestBlock = final;
-    announcements.emit("announcement", up0.Announcement.create({ header, final }));
+    announcements.emit(ANNOUNCEMENT_EVENT, up0.Announcement.create({ header, final }));
   });
 
   const getHandshake = () => {
