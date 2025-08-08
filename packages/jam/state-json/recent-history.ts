@@ -4,7 +4,16 @@ import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@ty
 import { HashDictionary } from "@typeberry/collections";
 import type { KeccakHash } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";
-import { BlockState, type BlocksState, type LegacyBlockState, RecentBlocks } from "@typeberry/state";
+import {
+  BlockState,
+  type BlocksState,
+  type LegacyBlockState,
+  type LegacyBlocksState,
+  LegacyRecentBlocks,
+  RecentBlocks,
+  RecentBlocksHistory,
+} from "@typeberry/state";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 
 export const reportedWorkPackageFromJson = json.object<JsonReportedWorkPackageInfo, WorkPackageInfo>(
   {
@@ -45,7 +54,7 @@ type JsonRecentBlockState = {
   reported: WorkPackageInfo[];
 };
 
-export const recentBlocksFromJson = json.object<JsonRecentBlocks, RecentBlocks>(
+const recentBlocksFromJson = json.object<JsonRecentBlocks, RecentBlocksHistory>(
   {
     blocks: json.array(recentBlockStateFromJson),
     accumulation_log: {
@@ -53,10 +62,12 @@ export const recentBlocksFromJson = json.object<JsonRecentBlocks, RecentBlocks>(
     },
   },
   ({ blocks, accumulation_log }) => {
-    return RecentBlocks.create({
-      blocks,
-      accumulationLog: accumulation_log,
-    });
+    return RecentBlocksHistory.create(
+      RecentBlocks.create({
+        blocks,
+        accumulationLog: accumulation_log,
+      }),
+    );
   },
 );
 
@@ -67,8 +78,7 @@ type JsonRecentBlocks = {
   };
 };
 
-// NOTE Pre 0.6.7
-export const blockStateFromJson = json.object<JsonBlockState, LegacyBlockState>(
+const legacyRecentBlockStateFromJson = json.object<JsonRecentBlockStateLegacy, LegacyBlockState>(
   {
     header_hash: fromJson.bytes32(),
     mmr: {
@@ -87,7 +97,7 @@ export const blockStateFromJson = json.object<JsonBlockState, LegacyBlockState>(
   },
 );
 
-type JsonBlockState = {
+type JsonRecentBlockStateLegacy = {
   header_hash: HeaderHash;
   mmr: {
     peaks: Array<KeccakHash | null>;
@@ -95,3 +105,24 @@ type JsonBlockState = {
   state_root: StateRootHash;
   reported: WorkPackageInfo[];
 };
+
+const legacyRecentBlocksFromJson = json.object<JsonRecentBlocksLegacy, RecentBlocksHistory>(
+  {
+    blocks: json.array(legacyRecentBlockStateFromJson),
+  },
+  ({ blocks }) => {
+    return RecentBlocksHistory.legacyCreate(
+      LegacyRecentBlocks.create({
+        blocks,
+      }),
+    );
+  },
+);
+
+type JsonRecentBlocksLegacy = {
+  blocks: LegacyBlocksState;
+};
+
+export const recentBlocksHistoryFromJson = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+  ? recentBlocksFromJson
+  : legacyRecentBlocksFromJson;

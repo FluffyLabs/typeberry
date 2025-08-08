@@ -7,12 +7,11 @@ import type { FixedSizeArray, ImmutableHashSet, KnownSizeArray } from "@typeberr
 import type { U32 } from "@typeberry/numbers";
 import type { AccumulationOutput } from "./accumulation-output.js";
 import type { AvailabilityAssignment } from "./assurances.js";
-import type { LegacyBlockState } from "./block-state.js";
 import type { PerCore } from "./common.js";
 import type { DisputesRecords } from "./disputes.js";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
 import type { PrivilegedServices } from "./privileged-services.js";
-import type { RecentBlocks } from "./recent-blocks.js";
+import type { RecentBlocksHistory } from "./recent-blocks.js";
 import type { SafroleData } from "./safrole-data.js";
 import type { LookupHistorySlots, ServiceAccountInfo, StorageKey } from "./service.js";
 import type { StatisticsData } from "./statistics.js";
@@ -33,20 +32,6 @@ import type { ValidatorData } from "./validator-data.js";
  */
 export const ENTROPY_ENTRIES = 4;
 export type ENTROPY_ENTRIES = typeof ENTROPY_ENTRIES;
-
-/**
- * `H = 8`: The size of recent history, in blocks.
- *
- * https://graypaper.fluffylabs.dev/#/579bd12/416300416500
- */
-export const MAX_RECENT_HISTORY = 8;
-export type MAX_RECENT_HISTORY = typeof MAX_RECENT_HISTORY;
-
-/**
- * Legacy array of block state with max size of `MAX_RECENT_HISTORY`
- * https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3
- */
-export type LegacyRecentBlocks = KnownSizeArray<LegacyBlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
 
 /** State with some entries being possible to enumerate. */
 export type EnumerableState = {
@@ -145,7 +130,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/0fb7010fb701
    */
-  readonly recentBlocks: LegacyRecentBlocks | RecentBlocks;
+  readonly recentBlocks: RecentBlocksHistory;
 
   /**
    * `π pi`: Previous and current statistics of each validator,

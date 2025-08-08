@@ -30,14 +30,14 @@ import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519K
 import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { Compatibility, GpVersion, OK, Result, WithDebug, assertNever, check } from "@typeberry/utils";
+import { OK, Result, WithDebug, assertNever, check } from "@typeberry/utils";
 import type { AccumulationOutput } from "./accumulation-output.js";
 import type { AvailabilityAssignment } from "./assurances.js";
 import { type PerCore, tryAsPerCore } from "./common.js";
 import { DisputesRecords, hashComparator } from "./disputes.js";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
 import { PrivilegedServices } from "./privileged-services.js";
-import { RecentBlocks } from "./recent-blocks.js";
+import { RecentBlocksHistory } from "./recent-blocks.js";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "./safrole-data.js";
 import {
   LookupHistoryItem,
@@ -57,7 +57,7 @@ import {
   type UpdateStorage,
   UpdateStorageKind,
 } from "./state-update.js";
-import { ENTROPY_ENTRIES, type EnumerableState, type LegacyRecentBlocks, type Service, type State } from "./state.js";
+import { ENTROPY_ENTRIES, type EnumerableState, type Service, type State } from "./state.js";
 import { CoreStatistics, StatisticsData, ValidatorStatistics } from "./statistics.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "./validator-data.js";
 
@@ -404,7 +404,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
   entropy: FixedSizeArray<EntropyHash, ENTROPY_ENTRIES>;
   authPools: PerCore<KnownSizeArray<AuthorizerHash, `At most ${typeof MAX_AUTH_POOL_SIZE}`>>;
   authQueues: PerCore<FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>>;
-  recentBlocks: LegacyRecentBlocks | RecentBlocks;
+  recentBlocks: RecentBlocksHistory;
   statistics: StatisticsData;
   accumulationQueue: PerEpochBlock<readonly NotYetAccumulatedReport[]>;
   recentlyAccumulated: PerEpochBlock<ImmutableHashSet<WorkPackageHash>>;
@@ -518,12 +518,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
         ),
         spec,
       ),
-      recentBlocks: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-        ? RecentBlocks.create({
-            blocks: asKnownSize([]),
-            accumulationLog: { peaks: [] },
-          })
-        : asKnownSize([]),
+      recentBlocks: RecentBlocksHistory.empty(),
       statistics: StatisticsData.create({
         current: tryAsPerValidator(
           Array.from({ length: spec.validatorsCount }, () => ValidatorStatistics.empty()),

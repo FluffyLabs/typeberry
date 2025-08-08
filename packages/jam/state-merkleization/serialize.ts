@@ -18,9 +18,6 @@ import {
   AvailabilityAssignment,
   DisputesRecords,
   ENTROPY_ENTRIES,
-  LegacyBlockState,
-  type LegacyRecentBlocks,
-  MAX_RECENT_HISTORY,
   PrivilegedServices,
   ServiceAccountInfo,
   type State,
@@ -31,9 +28,8 @@ import {
 } from "@typeberry/state";
 import { AccumulationOutput } from "@typeberry/state/accumulation-output.js";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
-import { RecentBlocks } from "@typeberry/state/recent-blocks.js";
+import { RecentBlocksHistory } from "@typeberry/state/recent-blocks.js";
 import { SafroleData } from "@typeberry/state/safrole-data.js";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import { type StateKey, StateKeyIdx, stateKeys } from "./keys.js";
 
 export type StateCodec<T> = {
@@ -66,35 +62,16 @@ export namespace serialize {
     extract: (s) => s.authQueues,
   };
 
-  /** C(3) Legacy Pre 0.6.7: https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3 */
-  export const recentBlocksLegacy: StateCodec<LegacyRecentBlocks> = {
-    key: stateKeys.index(StateKeyIdx.Beta),
-    Codec: codecKnownSizeArray(LegacyBlockState.Codec, {
-      minLength: 0,
-      maxLength: MAX_RECENT_HISTORY,
-      typicalLength: MAX_RECENT_HISTORY,
-    }),
-    extract: (s) => s.recentBlocks as LegacyRecentBlocks,
-  };
-
-  /** C(3) ^0.6.7: https://graypaper.fluffylabs.dev/#/7e6ff6a/3b3e013b3e01?v=0.6.7 */
-  export const recentBlocksCurrent: StateCodec<RecentBlocks> = {
-    key: stateKeys.index(StateKeyIdx.Beta),
-    Codec: RecentBlocks.Codec,
-    extract: (s) => s.recentBlocks as RecentBlocks,
-  };
-
   /**
    * C(3): Recent blocks with compatibility
    *  https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3
    *  https://graypaper.fluffylabs.dev/#/7e6ff6a/3b3e013b3e01?v=0.6.7
    */
-  export const recentBlocks: StateCodec<State["recentBlocks"]> = (() => {
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      return recentBlocksCurrent as StateCodec<State["recentBlocks"]>;
-    }
-    return recentBlocksLegacy as StateCodec<State["recentBlocks"]>;
-  })();
+  export const recentBlocks: StateCodec<State["recentBlocks"]> = {
+    key: stateKeys.index(StateKeyIdx.Beta),
+    Codec: RecentBlocksHistory.Codec,
+    extract: (s) => s.recentBlocks,
+  };
 
   /** C(4): https://graypaper.fluffylabs.dev/#/85129da/38e60138e601?v=0.6.3 */
   export const safrole: StateCodec<SafroleData> = {

@@ -18,7 +18,7 @@ import {
   type InMemoryService,
   InMemoryState,
   PrivilegedServices,
-  RecentBlocks,
+  RecentBlocksHistory,
   type State,
   VALIDATOR_META_BYTES,
   ValidatorData,
@@ -29,7 +29,7 @@ import { accumulationOutput } from "./accumulation-output.js";
 import { availabilityAssignmentFromJson } from "./availability-assignment.js";
 import { disputesRecordsFromJson } from "./disputes.js";
 import { notYetAccumulatedFromJson } from "./not-yet-accumulated.js";
-import { blockStateFromJson, recentBlocksFromJson } from "./recent-history.js";
+import { recentBlocksHistoryFromJson } from "./recent-history.js";
 import { TicketsOrKeys, ticketFromJson } from "./safrole.js";
 import { JsonStatisticsData } from "./statistics.js";
 
@@ -79,7 +79,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
     {
       alpha: json.array(json.array(fromJson.bytes32<AuthorizerHash>())),
       varphi: json.array(json.array(fromJson.bytes32<AuthorizerHash>())),
-      beta: json.nullable(recentBlocksFromJson),
+      beta: json.nullable(recentBlocksHistoryFromJson),
       gamma: {
         gamma_k: json.array(validatorDataFromJson),
         gamma_a: json.array(ticketFromJson),
@@ -148,7 +148,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           }),
           spec,
         ),
-        recentBlocks: beta ?? RecentBlocks.create({ blocks: asKnownSize([]), accumulationLog: { peaks: [] } }),
+        recentBlocks: beta ?? RecentBlocksHistory.empty(),
         nextValidatorData: gamma.gamma_k,
         epochRoot: gamma.gamma_z,
         sealingKeySeries: TicketsOrKeys.toSafroleSealingKeys(gamma.gamma_s, spec),
@@ -212,7 +212,7 @@ export const fullStateDumpFromJsonPre067 = (spec: ChainSpec) =>
     {
       alpha: json.array(json.array(fromJson.bytes32<AuthorizerHash>())),
       varphi: json.array(json.array(fromJson.bytes32<AuthorizerHash>())),
-      beta: json.nullable(json.array(blockStateFromJson)),
+      beta: json.nullable(recentBlocksHistoryFromJson),
       gamma: {
         gamma_k: json.array(validatorDataFromJson),
         gamma_a: json.array(ticketFromJson),
@@ -279,7 +279,7 @@ export const fullStateDumpFromJsonPre067 = (spec: ChainSpec) =>
           }),
           spec,
         ),
-        recentBlocks: beta ?? asKnownSize([]),
+        recentBlocks: beta ?? RecentBlocksHistory.empty(),
         nextValidatorData: gamma.gamma_k,
         epochRoot: gamma.gamma_z,
         sealingKeySeries: TicketsOrKeys.toSafroleSealingKeys(gamma.gamma_s, spec),

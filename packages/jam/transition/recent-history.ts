@@ -5,11 +5,12 @@ import { type HashDictionary, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, type OpaqueHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import {
-  type BlockState,
-  type LegacyBlockState,
-  type LegacyRecentBlocks,
+  BlockState,
+  LegacyBlockState,
+  LegacyRecentBlocks,
   MAX_RECENT_HISTORY,
   RecentBlocks,
+  RecentBlocksHistory,
   type State,
 } from "@typeberry/state";
 import { Compatibility, GpVersion } from "@typeberry/utils";
@@ -55,14 +56,7 @@ export class RecentHistory {
   ) {}
 
   transition(input: RecentHistoryInput): RecentHistoryStateUpdate {
-    const recentBlocks = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? (this.state.recentBlocks as RecentBlocks).blocks.slice()
-      : (this.state.recentBlocks as LegacyRecentBlocks).slice();
-
-    const lastAccumulationLog = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? (this.state.recentBlocks as RecentBlocks).accumulationLog
-      : null;
-
+    const recentBlocks = this.state.recentBlocks.blocks.slice();
     const lastState = recentBlocks.length > 0 ? recentBlocks[recentBlocks.length - 1] : null;
 
     // update the posterior root of previous state.
@@ -71,8 +65,8 @@ export class RecentHistory {
     }
 
     const mmr = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? lastAccumulationLog !== null
-        ? MerkleMountainRange.fromPeaks(this.hasher, lastAccumulationLog)
+      ? this.state.recentBlocks.accumulationLog !== null
+        ? MerkleMountainRange.fromPeaks(this.hasher, this.state.recentBlocks.accumulationLog)
         : MerkleMountainRange.empty(this.hasher)
       : lastState !== null
         ? MerkleMountainRange.fromPeaks(this.hasher, (lastState as LegacyBlockState).mmr)
@@ -83,19 +77,23 @@ export class RecentHistory {
 
     // push new state item
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      (recentBlocks as BlockState[]).push({
-        headerHash: input.headerHash,
-        accumulationResult: mmr.getSuperPeakHash(),
-        postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
-        reported: input.workPackages,
-      });
+      recentBlocks.push(
+        BlockState.create({
+          headerHash: input.headerHash,
+          accumulationResult: mmr.getSuperPeakHash(),
+          postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+          reported: input.workPackages,
+        }),
+      );
     } else {
-      (recentBlocks as LegacyBlockState[]).push({
-        headerHash: input.headerHash,
-        mmr: mmr.getPeaks(),
-        postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
-        reported: input.workPackages,
-      });
+      recentBlocks.push(
+        LegacyBlockState.create({
+          headerHash: input.headerHash,
+          mmr: mmr.getPeaks(),
+          postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+          reported: input.workPackages,
+        }),
+      );
     }
 
     // we remove all items above `MAX_RECENT_HISTORY`.
@@ -106,11 +104,13 @@ export class RecentHistory {
     // write back to the state.
     return {
       recentBlocks: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-        ? RecentBlocks.create({
-            blocks: asKnownSize(recentBlocks),
-            accumulationLog: mmr.getPeaks(),
-          })
-        : asKnownSize(recentBlocks),
+        ? RecentBlocksHistory.create(
+            RecentBlocks.create({
+              blocks: asKnownSize(recentBlocks),
+              accumulationLog: mmr.getPeaks(),
+            }),
+          )
+        : RecentBlocksHistory.legacyCreate(LegacyRecentBlocks.create({ blocks: asKnownSize(recentBlocks) })),
     };
   }
 }

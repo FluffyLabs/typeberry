@@ -5,8 +5,8 @@ import { HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import type { KeccakHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
-import type { LegacyBlockState, LegacyRecentBlocks, State } from "@typeberry/state";
-import type { BlockState, RecentBlocks } from "@typeberry/state/recent-blocks.js";
+import type { LegacyBlockState, State } from "@typeberry/state";
+import type { BlockState } from "@typeberry/state/recent-blocks.js";
 import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 import type { ReportsInput } from "./reports.js";
@@ -87,10 +87,7 @@ export function verifyContextualValidity(
 
   // construct dictionary of recently-reported work packages and their segment roots
   const recentlyReported = HashDictionary.new<WorkPackageHash, ExportsRootHash>();
-  const recentBlocks = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-    ? (state.recentBlocks as RecentBlocks).blocks
-    : (state.recentBlocks as LegacyRecentBlocks);
-  for (const recentBlock of recentBlocks) {
+  for (const recentBlock of state.recentBlocks.blocks) {
     for (const reported of recentBlock.reported.values()) {
       recentlyReported.set(reported.workPackageHash, reported.segmentTreeRoot);
     }
@@ -144,16 +141,9 @@ function verifyRefineContexts(
   headerChain: HeaderChain,
 ): Result<OK, ReportsError> {
   // TODO [ToDr] [opti] This could be cached and updated efficiently between runs.
-  const recentBlocks = HashDictionary.new<HeaderHash, BlockState | LegacyBlockState>();
-
-  if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-    for (const recentBlock of (state.recentBlocks as RecentBlocks).blocks.slice()) {
-      recentBlocks.set(recentBlock.headerHash, recentBlock);
-    }
-  } else {
-    for (const recentBlock of state.recentBlocks as LegacyRecentBlocks) {
-      recentBlocks.set(recentBlock.headerHash, recentBlock);
-    }
+  const recentBlocks = HashDictionary.new<HeaderHash, LegacyBlockState | BlockState>();
+  for (const recentBlock of state.recentBlocks.blocks) {
+    recentBlocks.set(recentBlock.headerHash, recentBlock);
   }
 
   for (const context of contexts) {
@@ -299,12 +289,8 @@ function verifyWorkPackagesUniqueness(
   // For now, for the sake of simplicity, let's compute it every time.
   const packagesInPipeline = HashSet.new();
 
-  const recentBlocks = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-    ? (state.recentBlocks as RecentBlocks).blocks
-    : (state.recentBlocks as LegacyRecentBlocks);
-
   // all work packages reported in recent blocks
-  for (const recentBlock of recentBlocks) {
+  for (const recentBlock of state.recentBlocks.blocks) {
     packagesInPipeline.insertAll(Array.from(recentBlock.reported.keys()));
   }
 
