@@ -76,7 +76,7 @@ export class RecentHistory {
     if (lastState !== null) {
       lastState.postStateRoot = input.priorStateRoot;
     }
-  
+
     return {
       recentBlocks: asKnownSize(recentBlocks), // β†
     };
