@@ -106,11 +106,9 @@ type JsonRecentBlockStateLegacy = {
   reported: WorkPackageInfo[];
 };
 
-const legacyRecentBlocksFromJson = json.object<JsonRecentBlocksLegacy, RecentBlocksHistory>(
-  {
-    blocks: json.array(legacyRecentBlockStateFromJson),
-  },
-  ({ blocks }) => {
+const legacyRecentBlocksFromJson = json.object<LegacyBlocksState, RecentBlocksHistory>(
+  json.array(legacyRecentBlockStateFromJson),
+  (blocks) => {
     return RecentBlocksHistory.legacyCreate(
       LegacyRecentBlocks.create({
         blocks,
@@ -118,10 +116,6 @@ const legacyRecentBlocksFromJson = json.object<JsonRecentBlocksLegacy, RecentBlo
     );
   },
 );
-
-type JsonRecentBlocksLegacy = {
-  blocks: LegacyBlocksState;
-};
 
 export const recentBlocksHistoryFromJson = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
   ? recentBlocksFromJson
