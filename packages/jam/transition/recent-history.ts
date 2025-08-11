@@ -65,9 +65,9 @@ export class RecentHistory {
    * of this state is provided which contains the update for the newly-known
    * roots of the parent block.
    *
-   * β† ≡ β except β†[|β| − 1]_s = H_r
+   * β_H† ≡ β_H except β_H†[|β_H| − 1]_s = H_r
    *
-   * https://graypaper.fluffylabs.dev/#/9a08063/0fd2010fe001?v=0.6.6
+   * https://graypaper.fluffylabs.dev/#/1c979cb/0f55020f5502?v=0.7.1
    */
   partialTransition(input: RecentHistoryPartialInput): RecentHistoryStateUpdate {
     const recentBlocks = this.state.recentBlocks.blocks.slice();
@@ -78,20 +78,24 @@ export class RecentHistory {
     }
 
     return {
-      recentBlocks: asKnownSize(recentBlocks), // β†
+      recentBlocks: this.state.recentBlocks.updateBlocks(recentBlocks), // β_H†
     };
   }
 
   /**
-   * https://graypaper.fluffylabs.dev/#/9a08063/0fe1010f9402?v=0.6.6
+   * `β′` = `β_H†` ++ (p, h: H(H), s: H_0, b: M_r(β′_B))
+   * where p = { (((g_r)_s)_p ↦ ((g_r)_s)_e) | g ∈ EG }
+   *
+   * https://graypaper.fluffylabs.dev/#/1c979cb/0fd2020fd202?v=0.7.1
    */
   transition(input: RecentHistoryInput): RecentHistoryStateUpdate {
-    const recentBlocks = this.state.recentBlocks.blocks.slice();
+    const recentBlocks = input.partial.recentBlocks.blocks.slice();
     const lastState = recentBlocks.length > 0 ? recentBlocks[recentBlocks.length - 1] : null;
 
+    // `β′_B`
     const mmr = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? this.state.recentBlocks.accumulationLog !== null
-        ? MerkleMountainRange.fromPeaks(this.hasher, this.state.recentBlocks.accumulationLog)
+      ? this.state.recentBlocks.asCurrent().accumulationLog !== null
+        ? MerkleMountainRange.fromPeaks(this.hasher, this.state.recentBlocks.asCurrent().accumulationLog)
         : MerkleMountainRange.empty(this.hasher)
       : lastState !== null
         ? MerkleMountainRange.fromPeaks(this.hasher, (lastState as LegacyBlockState).mmr)
@@ -99,6 +103,7 @@ export class RecentHistory {
 
     // append the accumulation root
     mmr.append(input.accumulateRoot);
+    const peaks = mmr.getPeaks();
 
     // push new state item
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
@@ -114,7 +119,7 @@ export class RecentHistory {
       recentBlocks.push(
         LegacyBlockState.create({
           headerHash: input.headerHash,
-          mmr: mmr.getPeaks(),
+          mmr: peaks,
           postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
           reported: input.workPackages,
         }),
@@ -132,7 +137,7 @@ export class RecentHistory {
         ? RecentBlocksHistory.create(
             RecentBlocks.create({
               blocks: asKnownSize(recentBlocks),
-              accumulationLog: mmr.getPeaks(),
+              accumulationLog: peaks,
             }),
           )
         : RecentBlocksHistory.legacyCreate(LegacyRecentBlocks.create({ blocks: asKnownSize(recentBlocks) })),

@@ -5,7 +5,7 @@ import { type CodecRecord, Descriptor, codec, readonlyArray } from "@typeberry/c
 import { type HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher, type MmrPeaks } from "@typeberry/mmr";
-import { Compatibility, GpVersion, WithDebug, check } from "@typeberry/utils";
+import { Compatibility, GpVersion, WithDebug, asOpaqueType } from "@typeberry/utils";
 
 /**
  * `H = 8`: The size of recent history, in blocks.
@@ -216,15 +216,6 @@ export class RecentBlocksHistory extends WithDebug {
     throw new Error("RecentBlocksHistory is in invalid state");
   }
 
-  /** Accumulation output log */
-  get accumulationLog() {
-    check(
-      Compatibility.isGreaterOrEqual(GpVersion.V0_6_7),
-      "You could not retrieve Accumulation Log from RecentBlocksHistory in GP version Pre 0.6.7",
-    );
-    return this.current?.accumulationLog ?? null;
-  }
-
   asCurrent() {
     if (this.current === null) {
       throw new Error("Cannot access current RecentBlocks format");
@@ -237,5 +228,24 @@ export class RecentBlocksHistory extends WithDebug {
       throw new Error("Cannot access legacy RecentBlocks format");
     }
     return this.legacy;
+  }
+
+  updateBlocks(blocks: (BlockState | LegacyBlockState)[]): RecentBlocksHistory {
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) && this.current !== null) {
+      return RecentBlocksHistory.create(
+        RecentBlocks.create({
+          ...this.current,
+          blocks: asOpaqueType(blocks as BlockState[]),
+        }),
+      );
+    }
+    if (this.legacy !== null) {
+      return RecentBlocksHistory.legacyCreate(
+        LegacyRecentBlocks.create({
+          blocks: asOpaqueType(blocks as LegacyBlockState[]),
+        }),
+      );
+    }
+    throw new Error("RecentBlocksHistory is in invalid state. Cannot be updated!");
   }
 }
