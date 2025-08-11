@@ -10,7 +10,7 @@ const withRelPath = (path: string) => {
 
 async function main() {
   const nodeConfig = loadConfig(`${import.meta.dirname}/e2e.config.json`);
-  const jamConfig = JamConfig.new({ nodeName: NODE_DEFAULTS.name, blockToImport: files, nodeConfig });
+  const jamConfig = JamConfig.new({ nodeName: NODE_DEFAULTS.name, blocksToImport, nodeConfig });
   try {
     await node(jamConfig, withRelPath);
   } catch (e) {
@@ -19,7 +19,7 @@ async function main() {
   }
 }
 
-const files = [
+const blocksToImport = [
   "jamdunavectors/data/safrole/blocks/1_000.json",
   "jamdunavectors/data/safrole/blocks/1_001.json",
   "jamdunavectors/data/safrole/blocks/1_002.json",

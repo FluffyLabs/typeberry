@@ -1,41 +1,26 @@
 import { type JsonObject, fromJson } from "@typeberry/block-json";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bootnode } from "@typeberry/jamnp-s";
 import { json } from "@typeberry/json-parser";
 import { isU16 } from "@typeberry/numbers";
-import { WithDebug } from "@typeberry/utils";
+import { WithDebug, asOpaqueType } from "@typeberry/utils";
 
-/** Bootnode class represents a single contact point in the network */
-class Bootnode extends WithDebug {
-  /** Network address derived from the node's cryptographic public key (always 53-character?) */
-  readonly name: string;
-  /** IP address (either IPv4 or IPv6) of the bootnode */
-  readonly ip: string;
-  /** Port number on which the bootnode is listening for new connections */
-  readonly port: number;
-
-  static fromString(v: string): Bootnode {
-    const [name, ipPort] = v.split("@");
-    // spliting only by last `:` in case of IPv6
-    const ip = ipPort.substring(0, ipPort.lastIndexOf(":"));
-    const port = ipPort.substring(ipPort.lastIndexOf(":") + 1);
-    if (name === "" || ip === "" || port === "") {
-      throw new Error(`Invalid bootnode format, expected: <name>@<ip>:<port>, got: "${v}"`);
-    }
-
-    const portNumber = Number.parseInt(port);
-    if (!isU16(portNumber)) {
-      throw new Error(`Invalid port number: "${port}"`);
-    }
-
-    return new Bootnode(name, ip, portNumber);
+export function parseBootnode(v: string): Bootnode {
+  const [name, ipPort] = v.split("@");
+  // spliting only by last `:` in case of IPv6
+  const ip = ipPort.substring(0, ipPort.lastIndexOf(":"));
+  const port = ipPort.substring(ipPort.lastIndexOf(":") + 1);
+  if (name === "" || ip === "" || port === "") {
+    throw new Error(`Invalid bootnode format, expected: <name>@<ip>:<port>, got: "${v}"`);
   }
 
-  constructor(name: string, ip: string, port: number) {
-    super();
-    this.name = name;
-    this.ip = ip;
-    this.port = port;
+  const portNumber = Number.parseInt(port);
+  if (!isU16(portNumber)) {
+    throw new Error(`Invalid port number: "${port}"`);
   }
+
+  // TODO [ToDr] we should probably validate the name!
+  return new Bootnode(asOpaqueType(name), ip, portNumber);
 }
 
 /**
@@ -63,7 +48,7 @@ export class JipChainSpec extends WithDebug {
 
   static fromJson = json.object<JsonObject<JipChainSpec>, JipChainSpec>(
     {
-      bootnodes: json.optional(json.array(json.fromString(Bootnode.fromString))),
+      bootnodes: json.optional(json.array(json.fromString(parseBootnode))),
       id: "string",
       genesis_header: fromJson.bytesBlobNoPrefix,
       genesis_state: json.map(fromJson.bytesNNoPrefix(31), fromJson.bytesBlobNoPrefix),

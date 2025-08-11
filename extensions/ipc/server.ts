@@ -1,18 +1,20 @@
-import type { Buffer } from "node:buffer";
-import type { EventEmitter } from "node:events";
 import * as fs from "node:fs";
 import { type Socket, createServer } from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
 
 import type { HeaderHash } from "@typeberry/block";
+import type { ChainSpec } from "@typeberry/config";
 import { ce129, up0 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
+import { handleMessageFragmentation } from "@typeberry/networking";
+import type { Listener } from "@typeberry/state-machine";
 import type { TrieNode } from "@typeberry/trie/nodes.js";
-import { IpcHandler, handleFragmentation } from "./handler.js";
+import { IpcHandler } from "./handler.js";
 
 export function startIpcServer(
-  announcements: EventEmitter,
+  spec: ChainSpec,
+  announcements: Listener<up0.Announcement>,
   getHandshake: () => up0.Handshake,
   getBoundaryNodes: (hash: HeaderHash, startKey: ce129.Key, endKey: ce129.Key) => TrieNode[],
   getKeyValuePairs: (hash: HeaderHash, startKey: ce129.Key, endKey: ce129.Key) => ce129.KeyValuePair[],
@@ -27,39 +29,48 @@ export function startIpcServer(
   const server = createServer((socket: Socket) => {
     logger.log("Client connected");
     const messageHandler = new IpcHandler(socket);
-    messageHandler.registerHandlers(new up0.Handler(getHandshake, () => {}));
+    messageHandler.registerHandlers(
+      new up0.Handler(
+        spec,
+        getHandshake,
+        () => {},
+        () => {},
+      ),
+    );
     messageHandler.registerHandlers(new ce129.Handler(true, getBoundaryNodes, getKeyValuePairs));
 
     // Send block announcements
-    const listener = (announcement: unknown) => {
-      if (announcement instanceof up0.Announcement) {
-        messageHandler.withStreamOfKind(up0.STREAM_KIND, (handler: up0.Handler, sender) => {
-          handler.sendAnnouncement(sender, announcement);
-        });
-      } else {
-        throw new Error(`Invalid annoncement received: ${announcement}`);
-      }
+    const listener = (announcement: up0.Announcement) => {
+      messageHandler.withStreamOfKind(up0.STREAM_KIND, (handler: up0.Handler, sender) => {
+        handler.sendAnnouncement(sender, announcement);
+      });
     };
-    announcements.on("announcement", listener);
+    announcements.on(listener);
 
     // Handle incoming data from the client
     socket.on(
       "data",
-      handleFragmentation((data: Buffer) => {
-        try {
-          messageHandler.onSocketMessage(new Uint8Array(data));
-        } catch (e) {
-          logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
+      handleMessageFragmentation(
+        (data: Uint8Array) => {
+          try {
+            messageHandler.onSocketMessage(data);
+          } catch (e) {
+            logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
+            socket.end();
+          }
+        },
+        () => {
+          logger.error("Received too much data on socket. Closing connection.");
           socket.end();
-        }
-      }),
+        },
+      ),
     );
 
     // Handle client disconnection
     socket.on("end", () => {
       logger.log("Client disconnected");
       messageHandler.onClose({});
-      announcements.off("annoucement", listener);
+      announcements.off(listener);
     });
 
     socket.on("error", (error) => {

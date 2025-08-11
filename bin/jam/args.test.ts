@@ -2,6 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { NODE_DEFAULTS } from "@typeberry/config-node";
+import { tryAsU16 } from "@typeberry/numbers";
 import { deepEqual } from "@typeberry/utils";
 import { Command, type SharedOptions, parseArgs } from "./args.js";
 
@@ -69,6 +70,18 @@ describe("CLI", () => {
     });
   });
 
+  it("should parse dev-validator index", () => {
+    const args = parse(["dev", "0xa"]);
+
+    deepEqual(args, {
+      command: Command.Dev,
+      args: {
+        ...defaultOptions,
+        index: tryAsU16(10),
+      },
+    });
+  });
+
   it("should throw on unexpected command", () => {
     assert.throws(
       () => {
@@ -76,6 +89,28 @@ describe("CLI", () => {
       },
       {
         message: "Unexpected command: 'unknown'",
+      },
+    );
+  });
+
+  it("should throw on missing dev-validator index", () => {
+    assert.throws(
+      () => {
+        const _args = parse(["dev"]);
+      },
+      {
+        message: "Missing dev-validator index.",
+      },
+    );
+  });
+
+  it("should throw on invalid dev-validator index", () => {
+    assert.throws(
+      () => {
+        const _args = parse(["dev", "1.5"]);
+      },
+      {
+        message: "Invalid dev-validator index: 1.5, need U16",
       },
     );
   });

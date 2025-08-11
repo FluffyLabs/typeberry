@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { DEV_CONFIG, NODE_DEFAULTS, loadConfig } from "@typeberry/config-node";
+import { NODE_DEFAULTS, loadConfig } from "@typeberry/config-node";
 import { type PublicKeySeed, SEED_SIZE } from "@typeberry/crypto";
 import { DEFAULT_DEV_CONFIG, JamConfig } from "@typeberry/node";
 import { parseArgs } from "./args.js";
@@ -11,7 +11,7 @@ import { createJamConfig } from "./index.js";
 describe("Typeberry Common Interface: Config", () => {
   const defaultJamConfig = JamConfig.new({
     nodeName: NODE_DEFAULTS.name,
-    nodeConfig: loadConfig(DEV_CONFIG),
+    nodeConfig: loadConfig(NODE_DEFAULTS.config),
     devConfig: DEFAULT_DEV_CONFIG,
   });
   const key = Bytes.fill(SEED_SIZE, 1).asOpaque<PublicKeySeed>();

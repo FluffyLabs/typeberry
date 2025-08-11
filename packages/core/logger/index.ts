@@ -1,5 +1,5 @@
 import { ConsoleTransport } from "./console.js";
-import { Level, type Options, parseLoggerOptions } from "./options.js";
+import { Level, type Options, findLevel, parseLoggerOptions } from "./options.js";
 export { Level, parseLoggerOptions } from "./options.js";
 
 const DEFAULT_OPTIONS = {
@@ -29,6 +29,12 @@ export class Logger {
   static new(fileName?: string, moduleName?: string) {
     const fName = fileName ?? "unknown";
     return new Logger(moduleName ?? fName, fName, GLOBAL_CONFIG);
+  }
+
+  /**
+   * Return currently configured level for given module. */
+  static getLevel(moduleName: string): Level {
+    return findLevel(GLOBAL_CONFIG.options, moduleName);
   }
 
   /**
@@ -66,9 +72,9 @@ export class Logger {
   }
 
   constructor(
-    private moduleName: string,
-    private fileName: string,
-    private config: typeof GLOBAL_CONFIG,
+    private readonly moduleName: string,
+    private readonly fileName: string,
+    private readonly config: typeof GLOBAL_CONFIG,
   ) {}
 
   /** Log a message with `TRACE` level. */

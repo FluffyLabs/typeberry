@@ -7,6 +7,9 @@ export class WorkerConfig {
   /**
    * Since we loose prototypes when transferring the context,
    * this function is re-initializing proper types.
+   *
+   * TODO [ToDr] instead of doing this hack, we might prefer to pass data
+   * between workers using JAM codec maybe?
    */
   static reInit(config: unknown) {
     const { chainSpec, dbPath, omitSealVerification } = config as WorkerConfig;

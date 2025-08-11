@@ -45,7 +45,7 @@ describe("Importing JIP Chain Spec", () => {
   it("should read bootnodes", () => {
     assert(ncs.bootnodes !== undefined);
     for (const bootnode of ncs.bootnodes) {
-      assert(bootnode.name.length > 0);
+      assert(bootnode.id.length > 0);
       assert(bootnode.ip.length > 0);
       assert(bootnode.port > 0 && bootnode.port < 65535);
     }
