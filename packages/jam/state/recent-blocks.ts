@@ -4,7 +4,7 @@ import { type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-rep
 import { type CodecRecord, Descriptor, codec, readonlyArray } from "@typeberry/codec";
 import { type HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";
-import type { MmrPeaks } from "@typeberry/mmr";
+import { MerkleMountainRange, type MmrHasher, type MmrPeaks } from "@typeberry/mmr";
 import { Compatibility, GpVersion, WithDebug, check } from "@typeberry/utils";
 
 /**
@@ -178,6 +178,24 @@ export class RecentBlocksHistory extends WithDebug {
       );
     }
     return RecentBlocksHistory.legacyCreate(LegacyRecentBlocks.create({ blocks: asKnownSize([]) }));
+  }
+
+  /**
+   * Returns the block's BEEFY super peak.
+   *
+   * NOTE: The `hasher` parameter exists solely for backward compatibility with legacy block formats.
+   */
+  static accumulationResult(
+    block: BlockState | LegacyBlockState,
+    {
+      hasher,
+    }: {
+      hasher: MmrHasher<KeccakHash>;
+    },
+  ): KeccakHash {
+    return Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? (block as BlockState).accumulationResult
+      : MerkleMountainRange.fromPeaks(hasher, (block as LegacyBlockState).mmr).getSuperPeakHash();
   }
 
   private constructor(

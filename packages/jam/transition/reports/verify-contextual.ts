@@ -4,10 +4,10 @@ import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@ty
 import { HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import type { KeccakHash } from "@typeberry/hash";
-import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
+import type { MmrHasher } from "@typeberry/mmr";
 import type { LegacyBlockState, State } from "@typeberry/state";
-import type { BlockState } from "@typeberry/state/recent-blocks.js";
-import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
+import { type BlockState, RecentBlocksHistory } from "@typeberry/state/recent-blocks.js";
+import { OK, Result } from "@typeberry/utils";
 import type { RecentHistoryStateUpdate } from "../recent-history.js";
 import { ReportsError } from "./error.js";
 import type { ReportsInput } from "./reports.js";
@@ -175,23 +175,12 @@ function verifyRefineContexts(
     }
 
     // check beefy root
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      const superPeakHash = (recentBlock as BlockState).accumulationResult;
-      if (!superPeakHash.isEqualTo(context.beefyRoot)) {
-        return Result.error(
-          ReportsError.BadBeefyMmrRoot,
-          `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${superPeakHash}. Anchor: ${recentBlock.headerHash}`,
-        );
-      }
-    } else {
-      const mmr = MerkleMountainRange.fromPeaks(hasher, (recentBlock as LegacyBlockState).mmr);
-      const superPeakHash = mmr.getSuperPeakHash();
-      if (!superPeakHash.isEqualTo(context.beefyRoot)) {
-        return Result.error(
-          ReportsError.BadBeefyMmrRoot,
-          `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${superPeakHash}. Anchor: ${recentBlock.headerHash}`,
-        );
-      }
+    const beefyRoot = RecentBlocksHistory.accumulationResult(recentBlock, { hasher });
+    if (!beefyRoot.isEqualTo(context.beefyRoot)) {
+      return Result.error(
+        ReportsError.BadBeefyMmrRoot,
+        `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${beefyRoot}. Anchor: ${recentBlock.headerHash}`,
+      );
     }
 
     /**
