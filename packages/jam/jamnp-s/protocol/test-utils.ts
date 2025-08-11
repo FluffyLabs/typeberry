@@ -4,7 +4,7 @@ import {
   type StreamHandler,
   type StreamId,
   type StreamKind,
-  type StreamManager,
+  type StreamKindOf,
   type StreamMessageSender,
   tryAsStreamId,
 } from "./stream.js";
@@ -44,7 +44,7 @@ export class TestStreamSender implements StreamMessageSender {
 /** We keep it low for the tests to run fast. */
 const SIMULATED_STREAM_TIMEOUT_MS = 50;
 
-export class TestMessageHandler implements StreamManager {
+export class TestMessageHandler {
   private readonly persistentStreams: Map<StreamKind, [StreamHandler, StreamMessageSender]> = new Map();
   private readonly registeredHandlers: Map<StreamKind, StreamHandler> = new Map();
 
@@ -69,8 +69,8 @@ export class TestMessageHandler implements StreamManager {
     receiver[0].onStreamMessage(receiver[1], data);
   }
 
-  withStreamOfKind<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
-    streamKind: TStreamKind,
+  withStreamOfKind<THandler extends StreamHandler>(
+    streamKind: StreamKindOf<THandler>,
     work: (handler: THandler, sender: StreamMessageSender) => OK,
   ): void {
     const handler = this.persistentStreams.get(streamKind);
@@ -81,8 +81,8 @@ export class TestMessageHandler implements StreamManager {
     work(handler[0] as THandler, handler[1]);
   }
 
-  withNewStream<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
-    kind: TStreamKind,
+  withNewStream<THandler extends StreamHandler>(
+    streamKind: StreamKindOf<THandler>,
     work: (handler: THandler, sender: StreamMessageSender) => OK,
   ): void {
     const getRandomStreamId = () => tryAsStreamId(Math.floor(Math.random() * 2 ** 16));
@@ -97,7 +97,7 @@ export class TestMessageHandler implements StreamManager {
 
     // since we are picking a non-existing stream id, there is no way of
     // conflicting here, so the `[handler, stream]` will be fresh.
-    const [handler, stream] = this.createStreamIfNotPresent(streamId, kind);
+    const [handler, stream] = this.createStreamIfNotPresent(streamId, streamKind);
     work(handler as THandler, stream);
   }
 

@@ -8,6 +8,7 @@ import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import type { LegacyBlockState, State } from "@typeberry/state";
 import type { BlockState } from "@typeberry/state/recent-blocks.js";
 import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
+import type { RecentHistoryStateUpdate } from "../recent-history.js";
 import { ReportsError } from "./error.js";
 import type { ReportsInput } from "./reports.js";
 
@@ -75,7 +76,13 @@ export function verifyContextualValidity(
   }
 
   const minLookupSlot = Math.max(0, input.slot - L);
-  const contextResult = verifyRefineContexts(minLookupSlot, contexts, state, hasher, headerChain);
+  const contextResult = verifyRefineContexts(
+    minLookupSlot,
+    contexts,
+    input.recentBlocksPartialUpdate,
+    hasher,
+    headerChain,
+  );
   if (contextResult.isError) {
     return contextResult;
   }
@@ -136,13 +143,13 @@ export function verifyContextualValidity(
 function verifyRefineContexts(
   minLookupSlot: number,
   contexts: RefineContext[],
-  state: Pick<State, "recentBlocks">,
+  recentBlocksPartialUpdate: RecentHistoryStateUpdate["recentBlocks"],
   hasher: MmrHasher<KeccakHash>,
   headerChain: HeaderChain,
 ): Result<OK, ReportsError> {
   // TODO [ToDr] [opti] This could be cached and updated efficiently between runs.
   const recentBlocks = HashDictionary.new<HeaderHash, LegacyBlockState | BlockState>();
-  for (const recentBlock of state.recentBlocks.blocks) {
+  for (const recentBlock of recentBlocksPartialUpdate.blocks) {
     recentBlocks.set(recentBlock.headerHash, recentBlock);
   }
 

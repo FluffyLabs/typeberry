@@ -19,9 +19,9 @@ async function main(clientPort: number, serverPort: number) {
     protocols: [`jamnp-s/0/${genesisHash}`],
   });
 
-  network.onPeerConnect((peer) => {
+  network.peers.onPeerConnected((peer) => {
     logger.log(`New peer: ${peer.id}`);
-    peer.addOnStreamOpen((stream) => {
+    peer.addOnIncomingStream((stream) => {
       (async () => {
         logger.info(`🚰  Stream with ${peer.id} opened`);
         const { readable } = stream;

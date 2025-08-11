@@ -15,6 +15,7 @@ describe("Reports - top level", () => {
       guarantees: guaranteesAsView(tinyChainSpec, []),
       slot: tryAsTimeSlot(12),
       newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
     };
 
     const res = await reports.transition(input);

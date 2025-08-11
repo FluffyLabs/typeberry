@@ -16,7 +16,12 @@ import {
   RecentBlocksHistory,
 } from "@typeberry/state";
 import { Compatibility, GpVersion, asOpaqueType, check } from "@typeberry/utils";
-import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "./recent-history.js";
+import {
+  RecentHistory,
+  type RecentHistoryInput,
+  type RecentHistoryPartialInput,
+  type RecentHistoryState,
+} from "./recent-history.js";
 import { copyAndUpdateState } from "./test.utils.js";
 
 const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then((hasher) => {
@@ -60,9 +65,13 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
     it("should perform a transition with empty state", async () => {
       const initialState: BlocksState = asOpaqueType([]);
       const recentHistory = new RecentHistory(await hasher, asRecentHistory(initialState));
+      const partialInput: RecentHistoryPartialInput = {
+        priorStateRoot: Bytes.fill(HASH_SIZE, 3).asOpaque(),
+      };
+      const partialUpdate = recentHistory.partialTransition(partialInput);
       const input: RecentHistoryInput = {
-        headerHash: Bytes.fill(HASH_SIZE, 3).asOpaque(),
-        priorStateRoot: Bytes.fill(HASH_SIZE, 2).asOpaque(),
+        partial: partialUpdate,
+        headerHash: Bytes.fill(HASH_SIZE, 2).asOpaque(),
         accumulateRoot: Bytes.fill(HASH_SIZE, 1).asOpaque(),
         workPackages: HashDictionary.new(),
       };
@@ -98,10 +107,13 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
         await hasher,
         asRecentHistory(asOpaqueType([firstBlock]), { peaks: [Bytes.fill(HASH_SIZE, 1)] }),
       );
-
+      const partialInput: RecentHistoryPartialInput = {
+        priorStateRoot: Bytes.fill(HASH_SIZE, 4).asOpaque(),
+      };
+      const partialUpdate = recentHistory.partialTransition(partialInput);
       const input: RecentHistoryInput = {
-        headerHash: Bytes.fill(HASH_SIZE, 4).asOpaque(),
-        priorStateRoot: Bytes.fill(HASH_SIZE, 5).asOpaque(),
+        partial: partialUpdate,
+        headerHash: Bytes.fill(HASH_SIZE, 5).asOpaque(),
         accumulateRoot: Bytes.fill(HASH_SIZE, 6).asOpaque(),
         workPackages: HashDictionary.fromEntries(
           [
@@ -122,7 +134,7 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
         BlockState.create({
           ...firstBlock,
           // note we fill it up from the input
-          postStateRoot: input.priorStateRoot,
+          postStateRoot: partialInput.priorStateRoot,
         }),
       );
       assert.deepStrictEqual(recentBlocks.accumulationLog, {
@@ -153,9 +165,13 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       for (let i = 0; i < 10; i++) {
         const recentHistory = new RecentHistory(await hasher, state);
         const id = (x: number) => 10 * i + x;
+        const partialInput: RecentHistoryPartialInput = {
+          priorStateRoot: Bytes.fill(HASH_SIZE, 1).asOpaque(),
+        };
+        const partialUpdate = recentHistory.partialTransition(partialInput);
         input = {
-          headerHash: Bytes.fill(HASH_SIZE, id(1)).asOpaque(),
-          priorStateRoot: Bytes.fill(HASH_SIZE, id(2)).asOpaque(),
+          partial: partialUpdate,
+          headerHash: Bytes.fill(HASH_SIZE, id(2)).asOpaque(),
           accumulateRoot: Bytes.fill(HASH_SIZE, id(3)).asOpaque(),
           workPackages: HashDictionary.fromEntries(
             [
@@ -187,9 +203,13 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
     it("should perform a transition with empty state", async () => {
       const initialState: LegacyBlocksState = asOpaqueType([]);
       const recentHistory = new RecentHistory(await hasher, asRecentHistory(initialState));
+      const partialInput: RecentHistoryPartialInput = {
+        priorStateRoot: Bytes.fill(HASH_SIZE, 3).asOpaque(),
+      };
+      const partialUpdate = recentHistory.partialTransition(partialInput);
       const input: RecentHistoryInput = {
-        headerHash: Bytes.fill(HASH_SIZE, 3).asOpaque(),
-        priorStateRoot: Bytes.fill(HASH_SIZE, 2).asOpaque(),
+        partial: partialUpdate,
+        headerHash: Bytes.fill(HASH_SIZE, 2).asOpaque(),
         accumulateRoot: Bytes.fill(HASH_SIZE, 1).asOpaque(),
         workPackages: HashDictionary.new(),
       };
@@ -223,10 +243,13 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
         reported: HashDictionary.new<WorkPackageHash, WorkPackageInfo>(),
       });
       const recentHistory = new RecentHistory(await hasher, asRecentHistory(asOpaqueType([firstBlock])));
-
+      const partialInput: RecentHistoryPartialInput = {
+        priorStateRoot: Bytes.fill(HASH_SIZE, 4).asOpaque(),
+      };
+      const partialUpdate = recentHistory.partialTransition(partialInput);
       const input: RecentHistoryInput = {
-        headerHash: Bytes.fill(HASH_SIZE, 4).asOpaque(),
-        priorStateRoot: Bytes.fill(HASH_SIZE, 5).asOpaque(),
+        partial: partialUpdate,
+        headerHash: Bytes.fill(HASH_SIZE, 5).asOpaque(),
         accumulateRoot: Bytes.fill(HASH_SIZE, 6).asOpaque(),
         workPackages: HashDictionary.fromEntries(
           [
@@ -247,7 +270,7 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
         LegacyBlockState.create({
           ...firstBlock,
           // note we fill it up from the input
-          postStateRoot: input.priorStateRoot,
+          postStateRoot: partialInput.priorStateRoot,
         }),
       );
       assert.deepStrictEqual(
@@ -278,9 +301,13 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       for (let i = 0; i < 10; i++) {
         const recentHistory = new RecentHistory(await hasher, state);
         const id = (x: number) => 10 * i + x;
+        const partialInput: RecentHistoryPartialInput = {
+          priorStateRoot: Bytes.fill(HASH_SIZE, 1).asOpaque(),
+        };
+        const partialUpdate = recentHistory.partialTransition(partialInput);
         input = {
-          headerHash: Bytes.fill(HASH_SIZE, id(1)).asOpaque(),
-          priorStateRoot: Bytes.fill(HASH_SIZE, id(2)).asOpaque(),
+          partial: partialUpdate,
+          headerHash: Bytes.fill(HASH_SIZE, id(2)).asOpaque(),
           accumulateRoot: Bytes.fill(HASH_SIZE, id(3)).asOpaque(),
           workPackages: HashDictionary.fromEntries(
             [

@@ -8,7 +8,7 @@ import { ed25519 } from "@typeberry/crypto";
 import { Result } from "@typeberry/utils";
 import {
   VerifyCertError,
-  altName,
+  altNameJwk,
   ed25519AsJsonWebKeyPair,
   generateCertificate,
   verifyCertificate,
@@ -29,7 +29,7 @@ describe("altName", () => {
     const alice = await ALICE_PAIR;
     const keyPair = ed25519AsJsonWebKeyPair(alice);
 
-    const aliceAltName = altName(keyPair.publicKey);
+    const aliceAltName = altNameJwk(keyPair.publicKey);
 
     assert.strictEqual(aliceAltName, "e3r2oc62zwfj3crnuifuvsxvbtlzetk4o5qyhetkhagsc2fgl2oka");
   });

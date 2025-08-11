@@ -1,6 +1,7 @@
 import { type TimeSlot, type ValidatorIndex, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import type { NodeConfiguration } from "@typeberry/config-node";
-import type { KeySeed } from "@typeberry/crypto/key-derivation.js";
+import type { Ed25519SecretSeed, KeySeed } from "@typeberry/crypto/key-derivation.js";
+import type { Bootnode } from "@typeberry/jamnp-s";
 
 export const DEFAULT_DEV_CONFIG = {
   genesisPath: "",
@@ -14,18 +15,20 @@ export const DEFAULT_DEV_CONFIG = {
 export class JamConfig {
   static new({
     isAuthoring,
-    blockToImport,
+    blocksToImport,
     nodeName,
     nodeConfig,
     devConfig,
     seedConfig,
+    networkConfig,
   }: {
     isAuthoring?: boolean;
-    blockToImport?: string[];
+    blocksToImport?: string[] | null;
     nodeName: string;
     nodeConfig: NodeConfiguration;
     devConfig?: DevConfig;
     seedConfig?: SeedDevConfig;
+    networkConfig?: NetworkConfig;
   }) {
     let fullConfig: FullDevConfig = devConfig ?? { ...DEFAULT_DEV_CONFIG };
 
@@ -33,20 +36,29 @@ export class JamConfig {
       fullConfig = { ...fullConfig, ...seedConfig };
     }
 
-    return new JamConfig(isAuthoring ?? false, blockToImport ?? [], nodeName, nodeConfig, fullConfig);
+    return new JamConfig(
+      isAuthoring ?? false,
+      blocksToImport ?? null,
+      nodeName,
+      nodeConfig,
+      fullConfig,
+      networkConfig ?? null,
+    );
   }
 
   private constructor(
     /** Whether we should be authoring blocks. */
     public readonly isAuthoring: boolean,
     /** Paths to JSON or binary blocks to import (ordered). */
-    public readonly blocksToImport: string[],
+    public readonly blocksToImport: string[] | null,
     /** Node name. */
     public readonly nodeName: string,
     /** Node starting configuration. */
     public readonly node: NodeConfiguration,
-    /** Node developer specific configuration. */
+    /** Developer specific configuration. */
     public readonly dev: FullDevConfig,
+    /** Networking options. */
+    public readonly network: NetworkConfig | null,
   ) {}
 }
 
@@ -58,6 +70,7 @@ export class JamConfig {
  */
 export type FullDevConfig = DevConfig | (DevConfig & SeedDevConfig);
 
+/** Validator key seeds in developer mode. */
 export type SeedDevConfig = {
   /** Bandersnatch seed to derive key. */
   bandersnatchSeed: KeySeed;
@@ -67,6 +80,7 @@ export type SeedDevConfig = {
   ed25519Seed: KeySeed;
 };
 
+/** Developer mode configuration. */
 export type DevConfig = {
   /** Path to genesis state JSON description file. */
   genesisPath: string;
@@ -74,4 +88,16 @@ export type DevConfig = {
   timeSlot: TimeSlot;
   /** Validator index for current node. */
   validatorIndex: ValidatorIndex;
+};
+
+/** Networking configuration. */
+export type NetworkConfig = {
+  /** Networking key seed. */
+  key: Ed25519SecretSeed;
+  /** Interface to bind networking socket to. */
+  host: string;
+  /** Port to bind networking socket to. */
+  port: number;
+  /** Bootnodes to connect to. */
+  bootnodes: Bootnode[];
 };

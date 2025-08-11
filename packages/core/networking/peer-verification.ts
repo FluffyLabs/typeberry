@@ -3,17 +3,17 @@ import { type PeerInfo, VerifyCertError, verifyCertificate } from "./certificate
 
 export function peerVerification() {
   const peer: {
-    id: PeerInfo | null;
+    info: PeerInfo | null;
     /** Takes all certicates the peer presented and all local certifcates from Certificate Authorities (unused) */
     verifyCallback: (certs: Uint8Array[], cas: Uint8Array[]) => Promise<ReturnType<typeof asCryptoError> | undefined>;
   } = {
-    id: null,
+    info: null,
     verifyCallback: async (certs: Uint8Array[], _cas: Uint8Array[]) => {
       const verification = await verifyCertificate(certs);
       if (verification.isError) {
         return asCryptoError(verification.error);
       }
-      peer.id = verification.ok;
+      peer.info = verification.ok;
       return undefined;
     },
   };

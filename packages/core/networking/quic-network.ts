@@ -1,7 +1,7 @@
 import type { QUICServer, QUICSocket } from "@matrixai/quic";
 import { Logger } from "@typeberry/logger";
-import type { Network } from "./network.js";
-import type { PeerAddress, PeerCallback, Peers } from "./peers.js";
+import type { DialOptions, Network } from "./network.js";
+import type { PeerAddress, Peers, PeersManagement } from "./peers.js";
 import type { QuicPeer } from "./quic-peer.js";
 
 const logger = Logger.new(import.meta.filename, "net");
@@ -12,10 +12,14 @@ export class QuicNetwork implements Network<QuicPeer> {
   constructor(
     private readonly socket: QUICSocket,
     private readonly server: QUICServer,
-    private readonly _dial: (peer: PeerAddress) => Promise<QuicPeer>,
-    private readonly peers: Peers<QuicPeer>,
+    private readonly _dial: (peer: PeerAddress, options: DialOptions) => Promise<QuicPeer>,
+    private readonly _peers: PeersManagement<QuicPeer>,
     private readonly listen: { host: string; port: number },
   ) {}
+
+  get isRunning() {
+    return this.started;
+  }
 
   async start() {
     if (this.started) {
@@ -41,15 +45,11 @@ export class QuicNetwork implements Network<QuicPeer> {
     logger.info("Networking stopped.");
   }
 
-  onPeerConnect(onPeer: PeerCallback<QuicPeer>) {
-    return this.peers.addOnPeerConnected(onPeer);
+  get peers(): Peers<QuicPeer> {
+    return this._peers;
   }
 
-  onPeerDisconnect(onPeer: PeerCallback<QuicPeer>) {
-    return this.peers.addOnPeerDisconnected(onPeer);
-  }
-
-  async dial(peer: PeerAddress): Promise<QuicPeer> {
-    return this._dial(peer);
+  async dial(peer: PeerAddress, options: DialOptions = {}): Promise<QuicPeer> {
+    return this._dial(peer, options);
   }
 }

@@ -13,7 +13,7 @@ export type Options = {
 };
 
 /**
- * Find a configred log level for given module.
+ * Find a configured log level for given module.
  *
  * The function will attempt to find the most detailed level for given module
  * by checking if logging is configured for it's parent modules if it's not for

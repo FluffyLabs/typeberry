@@ -1,11 +1,13 @@
 import assert from "node:assert";
+import fs from "node:fs";
+import path from "node:path";
 import { Block, Header } from "@typeberry/block";
 import { blockFromJson, headerFromJson } from "@typeberry/block-json";
 import { Decoder, Encoder, codec } from "@typeberry/codec";
-import { tinyChainSpec } from "@typeberry/config";
+import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
-import { SimpleAllocator, keccak } from "@typeberry/hash";
-import type { FromJson } from "@typeberry/json-parser";
+import { SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
+import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { serializeStateUpdate } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
@@ -48,7 +50,37 @@ export class StateTransition {
 
 const keccakHasher = keccak.KeccakHasher.create();
 
-export async function runStateTransition(testContent: StateTransition, _path: string) {
+const cachedBlocks = new Map<string, Block[]>();
+function loadBlocks(testPath: string) {
+  const dir = path.dirname(testPath);
+  const fromCache = cachedBlocks.get(dir);
+  if (fromCache !== undefined) {
+    return fromCache;
+  }
+
+  const blocks: Block[] = [];
+  for (const file of fs.readdirSync(dir)) {
+    if (!file.endsWith(".json") || file === "genesis.json") {
+      continue;
+    }
+    const data = fs.readFileSync(path.join(dir, file), "utf8");
+    const parsed = JSON.parse(data);
+    const content = parseFromJson(parsed, StateTransition.fromJson);
+    blocks.push(content.block);
+  }
+
+  blocks.sort((a, b) => a.header.timeSlotIndex - b.header.timeSlotIndex);
+  cachedBlocks.set(dir, blocks);
+  return blocks;
+}
+
+function blockAsView(spec: ChainSpec, block: Block) {
+  const encodedBlock = Encoder.encodeObject(Block.Codec, block, spec);
+  const blockView = Decoder.decodeObject(Block.Codec.View, encodedBlock, spec);
+  return blockView;
+}
+
+export async function runStateTransition(testContent: StateTransition, testPath: string) {
   const spec = tinyChainSpec;
 
   const preState = loadState(spec, testContent.pre_state.keyvals);
@@ -59,7 +91,22 @@ export async function runStateTransition(testContent: StateTransition, _path: st
 
   const encodedBlock = Encoder.encodeObject(Block.Codec, testContent.block, spec);
   const blockView = Decoder.decodeObject(Block.Codec.View, encodedBlock, spec);
-  const blocksDb = InMemoryBlocks.new();
+
+  const allBlocks = loadBlocks(testPath);
+  const myBlockIndex = allBlocks.findIndex(
+    ({ header }) => header.timeSlotIndex === testContent.block.header.timeSlotIndex,
+  );
+  const previousBlocks = allBlocks.slice(0, myBlockIndex);
+
+  const hasher = new TransitionHasher(spec, await keccakHasher, new SimpleAllocator());
+
+  const blocksDb = InMemoryBlocks.fromBlocks(
+    previousBlocks.map((block) => {
+      const blockView = blockAsView(spec, block);
+      const headerHash = hasher.header(blockView.header.view());
+      return new WithHash(headerHash.hash, blockView);
+    }),
+  );
 
   const stf = new OnChain(
     spec,

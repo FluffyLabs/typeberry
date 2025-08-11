@@ -1,16 +1,20 @@
 import fs from "node:fs";
 import os from "node:os";
 import type { JsonObject } from "@typeberry/block-json";
+import defaultConfigJson from "@typeberry/configs/typeberry-default.json" with { type: "json" };
 import devConfigJson from "@typeberry/configs/typeberry-dev.json" with { type: "json" };
 import { type FromJson, json, parseFromJson } from "@typeberry/json-parser";
 import { AuthorshipOptions } from "./authorship.js";
 import { JipChainSpec } from "./jip-chain-spec.js";
 
+/** Development config. Will accept unsealed blocks for now. */
 export const DEV_CONFIG = "dev";
+/** Default config file. */
+export const DEFAULT_CONFIG = "default";
 
 export const NODE_DEFAULTS = {
   name: os.hostname(),
-  config: DEV_CONFIG,
+  config: DEFAULT_CONFIG,
 };
 
 /** Chain spec chooser. */
@@ -63,6 +67,10 @@ export class NodeConfiguration {
 }
 
 export function loadConfig(configPath: string): NodeConfiguration {
+  if (configPath === DEFAULT_CONFIG) {
+    return parseFromJson(defaultConfigJson, NodeConfiguration.fromJson);
+  }
+
   if (configPath === DEV_CONFIG) {
     return parseFromJson(devConfigJson, NodeConfiguration.fromJson);
   }

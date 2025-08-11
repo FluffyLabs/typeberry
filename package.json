@@ -10,6 +10,7 @@
     "bin/rpc",
     "bin/tci",
     "bin/test-runner",
+    "configs",
     "extensions/ipc",
     "packages/core/bytes",
     "packages/core/codec",
@@ -55,7 +56,7 @@
     "workers/block-generator",
     "workers/generic",
     "workers/importer",
-    "configs"
+    "workers/jam-network"
   ],
   "engines": {
     "node": ">=22",

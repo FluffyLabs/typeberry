@@ -10,6 +10,7 @@ import type { MmrHasher } from "@typeberry/mmr";
 import type { SafroleStateUpdate } from "@typeberry/safrole";
 import { AvailabilityAssignment, type State, tryAsPerCore } from "@typeberry/state";
 import { OK, Result, asOpaqueType } from "@typeberry/utils";
+import type { RecentHistoryStateUpdate } from "../recent-history.js";
 import { ReportsError } from "./error.js";
 import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment.js";
 import { verifyReportsBasic } from "./verify-basic.js";
@@ -45,6 +46,8 @@ export type ReportsInput = {
   slot: TimeSlot;
   /** `eta_prime`: New entropy, after potential epoch transition. */
   newEntropy: SafroleStateUpdate["entropy"];
+  /** Partial update of recent blocks. (β†, https://graypaper.fluffylabs.dev/#/9a08063/0fd8010fdb01?v=0.6.6) */
+  recentBlocksPartialUpdate: RecentHistoryStateUpdate["recentBlocks"];
 };
 
 export type ReportsState = Pick<
@@ -59,13 +62,12 @@ export type ReportsState = Pick<
   | "accumulationQueue"
   | "recentlyAccumulated"
 >;
-/**
-  // NOTE: this is most likely part of the `disputesState`, but I'm not sure what
-  // to do with that exactly. It's being passed in the JAM test vectors, but isn't used?
-  // TODO [ToDr] Seems that section 11 does not specify when this should be updated.
-  // I guess we need to check that later with the GP.
-  readonly offenders: KnownSizeArray<Ed25519Key, "0..ValidatorsCount">;
-*/
+
+// NOTE: this is most likely part of the `disputesState`, but I'm not sure what
+// to do with that exactly. It's being passed in the JAM test vectors, but isn't used?
+// TODO [ToDr] Seems that section 11 does not specify when this should be updated.
+// I guess we need to check that later with the GP.
+// readonly offenders: KnownSizeArray<Ed25519Key, "0..ValidatorsCount">;
 
 /** Reports state update. */
 export type ReportsStateUpdate = Pick<ReportsState, "availabilityAssignment">;
