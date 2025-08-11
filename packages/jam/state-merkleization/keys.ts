@@ -38,7 +38,7 @@ export enum StateKeyIdx {
   Chi = 12,
   /** Statistics */
   Pi = 13,
-  /** Work Packages ready to be accumulated */
+  /** Work Packages ready to be accumulated. NOTE: Pre 0.7.0 was called `Theta` */
   Omega = 14,
   /** Work Packages recently accumulated */
   Xi = 15,

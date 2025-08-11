@@ -149,7 +149,7 @@ export namespace serialize {
     extract: (s) => s.statistics,
   };
 
-  /** C(14): https://graypaper.fluffylabs.dev/#/85129da/38f80238f802?v=0.6.3 */
+  /** C(14): https://graypaper.fluffylabs.dev/#/1c979cb/3bf0023bf002?v=0.7.1 */
   export const accumulationQueue: StateCodec<State["accumulationQueue"]> = {
     key: stateKeys.index(StateKeyIdx.Omega),
     Codec: codecPerEpochBlock(readonlyArray(codec.sequenceVarLen(NotYetAccumulatedReport.Codec))),
