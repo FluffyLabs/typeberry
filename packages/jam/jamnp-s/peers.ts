@@ -1,4 +1,5 @@
 import { setTimeout } from "node:timers/promises";
+import { Logger } from "@typeberry/logger";
 import type { Network, Peer, PeerAddress, PeerId } from "@typeberry/networking";
 import { OK } from "@typeberry/utils";
 
@@ -41,6 +42,8 @@ export type AuxData<T> = {
   id: symbol;
   unused?: T;
 };
+
+const logger = Logger.new(import.meta.filename, "net:conn");
 
 /** Number of attempts to re-connect to non-bootnode peers. */
 const MAX_RETRIES = 5;
@@ -124,6 +127,7 @@ export class Connections {
     // set the peer as connected just now
     meta.peerRef = peer;
     meta.lastConnected = Date.now();
+    meta.currentRetry = Math.floor(meta.currentRetry / 2);
     // update it's address?
     meta.address = peer.address;
   }
@@ -148,6 +152,7 @@ export class Connections {
       if (meta.currentRetry >= meta.maxRetries) {
         // reached max retries for a peer, remove it from tracking.
         this.peerInfo.delete(id);
+        logger.log(`[${id}] max retries reached. Removing peer.`);
         return;
       }
       // else attempt to connect to a node a bit later.
@@ -168,7 +173,9 @@ export class Connections {
         return;
       }
 
+      // attempt to connect to the peer
       try {
+        logger.trace(`[${id}] Attempting to connect to peer at ${meta.address.host}:${meta.address.port}.`);
         await this.network.dial(meta.address, { signal, verifyName: meta.peerId });
         return;
       } catch {
@@ -176,6 +183,7 @@ export class Connections {
           return;
         }
         // failing to connect, will retry.
+        logger.trace(`[${id}] attempt failed. Will retry (${meta.currentRetry}/${meta.maxRetries})`);
       }
     }
   }

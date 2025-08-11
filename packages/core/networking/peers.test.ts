@@ -10,12 +10,15 @@ describe("Peers", () => {
     const peer = createDisconnectedPeer("test-peer-1");
 
     assert.strictEqual(peers.isConnected(peer.id), false);
+    assert.strictEqual(peers.noOfConnectedPeers(), 0);
 
     peers.peerConnected(peer);
     assert.strictEqual(peers.isConnected(peer.id), true);
+    assert.strictEqual(peers.noOfConnectedPeers(), 1);
 
     peers.peerDisconnected(peer);
     assert.strictEqual(peers.isConnected(peer.id), false);
+    assert.strictEqual(peers.noOfConnectedPeers(), 0);
   });
 
   it("should call connection callbacks", () => {

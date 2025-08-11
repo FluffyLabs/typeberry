@@ -88,28 +88,28 @@ export class Quic {
     // handling incoming session
     addEventListener(server, events.EventQUICServerConnection, async (ev) => {
       const conn = ev.detail;
-      if (lastConnectedPeer.id === null) {
+      if (lastConnectedPeer.info === null) {
         await conn.stop();
         return;
       }
 
-      if (lastConnectedPeer.id.key.isEqualTo(key.pubKey)) {
+      if (lastConnectedPeer.info.key.isEqualTo(key.pubKey)) {
         logger.log(`🛜 Rejecting connection from ourself from ${conn.remoteHost}:${conn.remotePort}`);
         await conn.stop();
         return;
       }
 
-      if (peers.isConnected(lastConnectedPeer.id.id)) {
+      if (peers.isConnected(lastConnectedPeer.info.id)) {
         logger.log(
-          `🛜 Rejecting duplicate connection with peer ${lastConnectedPeer.id.id} from ${conn.remoteHost}:${conn.remotePort}`,
+          `🛜 Rejecting duplicate connection with peer ${lastConnectedPeer.info.id} from ${conn.remoteHost}:${conn.remotePort}`,
         );
         await conn.stop();
         return;
       }
 
       logger.log(`🛜 Server handshake with ${conn.remoteHost}:${conn.remotePort}`);
-      newPeer(conn, lastConnectedPeer.id);
-      lastConnectedPeer.id = null;
+      newPeer(conn, lastConnectedPeer.info);
+      lastConnectedPeer.info = null;
       await conn.start();
     });
 
@@ -142,18 +142,18 @@ export class Quic {
         logger.error(`🔴 Client error: ${error.detail}`);
       });
 
-      if (peerDetails.id === null) {
+      if (peerDetails.info === null) {
         throw new Error("Client connected, but there is no peer details!");
       }
 
-      if (options.verifyName !== undefined && options.verifyName !== peerDetails.id.id) {
+      if (options.verifyName !== undefined && options.verifyName !== peerDetails.info.id) {
         throw new Error(
-          `Client connected, but the id didn't match. Expected: ${options.verifyName}, got: ${peerDetails.id.id}`,
+          `Client connected, but the id didn't match. Expected: ${options.verifyName}, got: ${peerDetails.info.id}`,
         );
       }
 
       logger.log(`🤝 Client handshake with: ${peer.host}:${peer.port}`);
-      return newPeer(client.connection, peerDetails.id);
+      return newPeer(client.connection, peerDetails.info);
     }
 
     function newPeer(conn: QUICConnection, peerInfo: PeerInfo) {

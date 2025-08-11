@@ -10,7 +10,7 @@ import { Logger } from "@typeberry/logger";
 import { base32 } from "./base32.js";
 import type { PeerId } from "./peers.js";
 
-const logger = Logger.new(import.meta.filename, "networking");
+const logger = Logger.new(import.meta.filename, "net");
 
 // TODO [ToDr] Might not be relevant any more and we can use built-in webcrypto.
 // overwrite crypto provider to use the @peculiar version
