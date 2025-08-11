@@ -57,13 +57,19 @@ class Input {
   slot!: TimeSlot;
   known_packages!: WorkPackageHash[];
 
-  static toReportsInput(input: Input, spec: ChainSpec, entropy: ReportsState["entropy"]): ReportsInput {
+  static toReportsInput(
+    input: Input,
+    spec: ChainSpec,
+    entropy: ReportsState["entropy"],
+    recentBlocksPartialUpdate: ReportsState["recentBlocks"],
+  ): ReportsInput {
     const view = guaranteesAsView(spec, input.guarantees, { disableCredentialsRangeCheck: true });
 
     return {
       guarantees: view,
       slot: input.slot,
       newEntropy: entropy,
+      recentBlocksPartialUpdate,
     };
   }
 }
@@ -243,7 +249,12 @@ export async function runReportsTestFull(testContent: ReportsTest) {
 async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   const preState = TestState.toReportsState(testContent.pre_state, spec);
   const postState = TestState.toReportsState(testContent.post_state, spec);
-  const input = Input.toReportsInput(testContent.input, spec, preState.entropy);
+  const input = Input.toReportsInput(
+    testContent.input,
+    spec,
+    preState.entropy,
+    preState.recentBlocks, // note: for full fidelity this should be partially updated state, not prior state as it is now
+  );
   const expectedOutput = TestReportsResult.toReportsResult(testContent.output);
 
   const keccakHasher = await keccak.KeccakHasher.create();

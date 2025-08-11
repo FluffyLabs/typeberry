@@ -10,13 +10,16 @@ import { blockStateFromJson, reportedWorkPackageFromJson } from "@typeberry/stat
 import {
   RecentHistory,
   type RecentHistoryInput,
+  type RecentHistoryPartialInput,
   type RecentHistoryState,
 } from "@typeberry/transition/recent-history.js";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 
+type RecentHistoryTestInput = RecentHistoryPartialInput & Omit<RecentHistoryInput, "partial">;
+
 class Input {
-  static fromJson = json.object<Input, RecentHistoryInput>(
+  static fromJson = json.object<Input, RecentHistoryTestInput>(
     {
       header_hash: fromJson.bytes32(),
       parent_state_root: fromJson.bytes32(),
@@ -60,7 +63,7 @@ export class HistoryTest {
     post_state: TestState.fromJson,
   };
 
-  input!: RecentHistoryInput;
+  input!: RecentHistoryTestInput;
   pre_state!: RecentHistoryState;
   output!: null;
   post_state!: RecentHistoryState;
@@ -74,7 +77,13 @@ export async function runHistoryTest(testContent: HistoryTest) {
   };
 
   const recentHistory = new RecentHistory(hasher, testContent.pre_state);
-  const stateUpdate = recentHistory.transition(testContent.input);
+  const partialUpdate = recentHistory.partialTransition({ priorStateRoot: testContent.input.priorStateRoot });
+  const stateUpdate = recentHistory.transition({
+    partial: partialUpdate,
+    headerHash: testContent.input.headerHash,
+    accumulateRoot: testContent.input.accumulateRoot,
+    workPackages: testContent.input.workPackages,
+  });
   const result = copyAndUpdateState(recentHistory.state, stateUpdate);
 
   deepEqual(result, testContent.post_state);

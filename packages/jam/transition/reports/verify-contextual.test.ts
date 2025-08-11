@@ -24,7 +24,12 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = {
+      slot: tryAsTimeSlot(10),
+      guarantees,
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks, // note: for full fidelity this should be partially updated state, not prior state as it is now
+    };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -52,7 +57,12 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = {
+      slot: tryAsTimeSlot(10),
+      guarantees,
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -77,7 +87,12 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = {
+      slot: tryAsTimeSlot(10),
+      guarantees,
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -103,7 +118,12 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = {
+      slot: tryAsTimeSlot(10),
+      guarantees,
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -128,7 +148,12 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = {
+      slot: tryAsTimeSlot(10),
+      guarantees,
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -155,7 +180,12 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(20_000), guarantees, newEntropy: ENTROPY };
+    const input = {
+      slot: tryAsTimeSlot(20_000),
+      guarantees,
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -182,7 +212,12 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = {
+      slot: tryAsTimeSlot(10),
+      guarantees,
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -211,7 +246,12 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = {
+      slot: tryAsTimeSlot(10),
+      guarantees,
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -242,7 +282,12 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = {
+      slot: tryAsTimeSlot(10),
+      guarantees,
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -278,7 +323,12 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = {
+      slot: tryAsTimeSlot(10),
+      guarantees,
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {
@@ -307,7 +357,12 @@ describe("Reports.verifyContextualValidity", () => {
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
     ]);
-    const input = { slot: tryAsTimeSlot(10), guarantees, newEntropy: ENTROPY };
+    const input = {
+      slot: tryAsTimeSlot(10),
+      guarantees,
+      newEntropy: ENTROPY,
+      recentBlocksPartialUpdate: reports.state.recentBlocks,
+    };
     const res = reports.verifyContextualValidity(input);
 
     deepEqual(res, {

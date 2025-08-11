@@ -23,7 +23,6 @@ main(runners, process.argv.slice(2), "test-vectors/jamduna", {
     "/chainspecs/",
     "/blocks/",
     "/state_snapshots/",
-    "orderedaccumulation/state_transitions/3_000.json",
   ],
 })
   .then((r) => logger.log(r))
