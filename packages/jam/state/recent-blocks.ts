@@ -183,7 +183,7 @@ export class RecentBlocksHistory extends WithDebug {
   /**
    * Returns the block's BEEFY super peak.
    *
-   * NOTE: The `hasher` parameter exists solely for backward compatibility with legacy block formats.
+   * NOTE: The `hasher` parameter exists solely for backward compatibility with legacy block format.
    */
   static accumulationResult(
     block: BlockState | LegacyBlockState,
