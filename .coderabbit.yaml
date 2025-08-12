@@ -41,6 +41,9 @@ reviews:
       instructions: |
         Casting a `bigint` (or `U64`) using `Number(x)` must have an explanation comment why
         it is safe.
+    - path: './github/workflows/**'
+      instructions: |
+         When updating TEST_VECTORS_REF value in all files should be the same.
   abort_on_close: true
   disable_cache: false
   auto_review:
