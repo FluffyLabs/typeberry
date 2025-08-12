@@ -75,11 +75,11 @@ jobs:
       - run: npm start -w @typeberry/test-runner
       - name: Display results
         if: always()
-        run: cat ./dist/jamdunavectors.txt
+        run: cat ./dist/jamdunavectors-064.txt
       - name: Upload new results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           path: |
-            ./dist/jamdunavectors
+            ./dist/jamdunavectors-064
           name: jamdunavectors-results
