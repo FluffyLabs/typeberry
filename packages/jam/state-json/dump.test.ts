@@ -20,7 +20,7 @@ describe("JSON state dump", () => {
     const parsedState = parseFromJson(testState.default, fromJson);
     const rootHash = StateEntries.serializeInMemory(spec, parsedState).getRootHash();
     const expectedRoot = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? "0x7b2427858b47abbf4da7bad4f4a2627ef91c8b1fe2e781e26c0d82ce348cc0e3"
+      ? "0xde23aee6171f446b1e1e9ae7782d9c5c39824f118f261849c767c29879cff423"
       : "0xc07cdbce686c64d0a9b6539c70b0bb821b6a74d9de750a46a5da05b5640c290a";
     strictEqual(rootHash.toString(), expectedRoot);
   });

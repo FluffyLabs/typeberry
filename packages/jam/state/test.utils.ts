@@ -27,9 +27,13 @@ import {
   ENTROPY_ENTRIES,
   InMemoryService,
   InMemoryState,
+  LegacyBlockState,
+  LegacyRecentBlocks,
   LookupHistoryItem,
   PreimageItem,
   PrivilegedServices,
+  RecentBlocks,
+  RecentBlocksHistory,
   SafroleSealingKeysData,
   ServiceAccountInfo,
   ServiceStatistics,
@@ -129,63 +133,107 @@ export const testState = (): InMemoryState => {
       spec,
     ),
     // beta
-    recentBlocks: asKnownSize([
-      BlockState.create({
-        headerHash: b32("0x3fcf9728204359b93032b413eef3af0a0953d494b8b96e01550795b43b56c766"),
-        mmr: {
-          peaks: [emptyHash()],
-        },
-        postStateRoot: b32("0xbcf32b81ac750f980b03c8cbdbaf5ad7d9e6aad823d099e209d7d5a0b82f2aed"),
-        reported: HashDictionary.new(),
-      }),
-      BlockState.create({
-        headerHash: b32("0x1a7d753af2e2be12f88dfcb7ca5c704641534094b061c8c3aa258d4b0acbf5c8"),
-        mmr: {
-          peaks: [null, b32("0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5")],
-        },
-        postStateRoot: b32("0x5e8f73cf5d9f94cb3a8313361a3b48e97968a9ac52ab9c29b4e88f4159c21560"),
-        reported: HashDictionary.new(),
-      }),
-      BlockState.create({
-        headerHash: b32("0x3a31fd60656cb3de2c6ba9fafb8dee8d4c45d4bc87ca248cdda7625a68b987fb"),
-        mmr: {
-          peaks: [
-            b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
-            b32("0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5"),
-          ],
-        },
-        postStateRoot: b32("0x0fac6a80aa8722be502119a5dd405b3c1baae8170569ce186942a8c64ba0260a"),
-        reported: HashDictionary.new(),
-      }),
-      BlockState.create({
-        headerHash: b32("0x070fe1f39b43ca551f40a58048bf52614771c812c87f5e43bc611d252f5d7949"),
-        mmr: {
-          peaks: [null, null, b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30")],
-        },
-        postStateRoot: b32("0x175cafa38d5d26914e8c6bf3f8cc456eb073a7a0ae3d41bd12c2e5c396a62615"),
-        reported: HashDictionary.new(),
-      }),
-      BlockState.create({
-        headerHash: b32("0x3f70f457921f9e274722ef3a7601f26393af473ce2f44109ab4316414b007de3"),
-        mmr: {
-          peaks: [
-            b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
-            null,
-            b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30"),
-          ],
-        },
-        postStateRoot: b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
-        reported: HashDictionary.fromEntries([
-          [
-            b32("0xac9928d4eb0c942a07c40157fa4498b2efbbc65136819517dc94d50ff2ca9f49"),
-            WorkPackageInfo.create({
-              workPackageHash: b32("0xac9928d4eb0c942a07c40157fa4498b2efbbc65136819517dc94d50ff2ca9f49"),
-              segmentTreeRoot: b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
-            }),
-          ],
-        ]),
-      }),
-    ]),
+    recentBlocks: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? RecentBlocksHistory.create(
+          RecentBlocks.create({
+            blocks: asKnownSize([
+              BlockState.create({
+                headerHash: b32("0xc83b057ac60f3029edafc4a005f97c965ab8c2c19f3e4469c6e280356737d07c"),
+                accumulationResult: emptyHash(),
+                postStateRoot: b32("0x59642abe3120e645f4cda9e464d1e594743f146404dd948f146cf5daf2e99660"),
+                reported: HashDictionary.new(),
+              }),
+              BlockState.create({
+                headerHash: b32("0xbed5792b7df998e5520dfbb8c91386cf2117b2c07b7837094c79d5c0b4de9de7"),
+                accumulationResult: b32("0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5"),
+                postStateRoot: b32("0x1324bad2e35946c1a95dd25380a6e9199fbd40045ae49eacfc67599cbd23cda7"),
+                reported: HashDictionary.new(),
+              }),
+              BlockState.create({
+                headerHash: b32("0x6ce5d0b9ec42d803bee92d7dead697df3379836b50e6ed361068ed0561b5a2b5"),
+                accumulationResult: b32("0x675f9e53123c83ddcdb2c1f5231f13646378aefc83837a4571d052ac80014837"),
+                postStateRoot: b32("0x331f8a5b07cfc35cd75749c605146d48a4863af1b8a578160f188f4a725c1236"),
+                reported: HashDictionary.new(),
+              }),
+              BlockState.create({
+                headerHash: b32("0x7897a9dd7529d62d8be3a0e1ddc2e36795e2fbcacdd738cd9d75b4e00b186d33"),
+                accumulationResult: b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30"),
+                postStateRoot: b32("0xfbae2505572f332ad18dd75ecfa1aa4be7959f1666ed75d3241505c4ca3dd3fc"),
+                reported: HashDictionary.new(),
+              }),
+              BlockState.create({
+                headerHash: b32("0x72b9718488b532a4e93788865bf47291e57cfd7ca9bce755814fd8e2db2d41c8"),
+                accumulationResult: b32("0xe884038e46068eaab1df24317c855e78fe94335d4adb7aa6c62920ce1352eed7"),
+                postStateRoot: emptyHash(),
+                reported: HashDictionary.new(),
+              }),
+            ]),
+            accumulationLog: {
+              peaks: [emptyHash(), null, b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30")],
+            },
+          }),
+        )
+      : RecentBlocksHistory.legacyCreate(
+          LegacyRecentBlocks.create({
+            blocks: asKnownSize([
+              LegacyBlockState.create({
+                headerHash: b32("0x3fcf9728204359b93032b413eef3af0a0953d494b8b96e01550795b43b56c766"),
+                mmr: {
+                  peaks: [emptyHash()],
+                },
+                postStateRoot: b32("0xbcf32b81ac750f980b03c8cbdbaf5ad7d9e6aad823d099e209d7d5a0b82f2aed"),
+                reported: HashDictionary.new(),
+              }),
+              LegacyBlockState.create({
+                headerHash: b32("0x1a7d753af2e2be12f88dfcb7ca5c704641534094b061c8c3aa258d4b0acbf5c8"),
+                mmr: {
+                  peaks: [null, b32("0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5")],
+                },
+                postStateRoot: b32("0x5e8f73cf5d9f94cb3a8313361a3b48e97968a9ac52ab9c29b4e88f4159c21560"),
+                reported: HashDictionary.new(),
+              }),
+              LegacyBlockState.create({
+                headerHash: b32("0x3a31fd60656cb3de2c6ba9fafb8dee8d4c45d4bc87ca248cdda7625a68b987fb"),
+                mmr: {
+                  peaks: [
+                    b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    b32("0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5"),
+                  ],
+                },
+                postStateRoot: b32("0x0fac6a80aa8722be502119a5dd405b3c1baae8170569ce186942a8c64ba0260a"),
+                reported: HashDictionary.new(),
+              }),
+              LegacyBlockState.create({
+                headerHash: b32("0x070fe1f39b43ca551f40a58048bf52614771c812c87f5e43bc611d252f5d7949"),
+                mmr: {
+                  peaks: [null, null, b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30")],
+                },
+                postStateRoot: b32("0x175cafa38d5d26914e8c6bf3f8cc456eb073a7a0ae3d41bd12c2e5c396a62615"),
+                reported: HashDictionary.new(),
+              }),
+              LegacyBlockState.create({
+                headerHash: b32("0x3f70f457921f9e274722ef3a7601f26393af473ce2f44109ab4316414b007de3"),
+                mmr: {
+                  peaks: [
+                    b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    null,
+                    b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30"),
+                  ],
+                },
+                postStateRoot: b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+                reported: HashDictionary.fromEntries([
+                  [
+                    b32("0xac9928d4eb0c942a07c40157fa4498b2efbbc65136819517dc94d50ff2ca9f49"),
+                    WorkPackageInfo.create({
+                      workPackageHash: b32("0xac9928d4eb0c942a07c40157fa4498b2efbbc65136819517dc94d50ff2ca9f49"),
+                      segmentTreeRoot: b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    }),
+                  ],
+                ]),
+              }),
+            ]),
+          }),
+        ),
     services: new Map([
       [
         tryAsServiceId(0),
@@ -377,6 +425,7 @@ export const testState = (): InMemoryState => {
       "0x85f9095f4abd040839d793d89ab5ff25c61e50c844ab6765e2c0b22373b5a8f6fbe5fc0cd61fdde580b3d44fe1be127197e33b91960b10d2c6fc75aec03f36e16c2a8204961097dbc2c5ba7655543385399cc9ef08bf2e520ccf3b0a7569d88492e630ae2b14e758ab0960e372172203f4c9a41777dadd529971d7ab9d23ab29fe0e9c85ec450505dde7f5ac038274cf",
       BANDERSNATCH_RING_ROOT_BYTES,
     ).asOpaque(),
+    accumulationOutputLog: [],
     privilegedServices: PrivilegedServices.create({
       manager: tryAsServiceId(0),
       authManager: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
@@ -424,7 +473,7 @@ const TEST_VALIDATOR_DATA =
 
 // from post state of jamduna/assurances/1_004.json
 export const TEST_STATE_ROOT = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-  ? "0x66e6c768842db968f3a6954c514d68beeb5c76d50d2d3c73cfaa05725c2f216c"
+  ? "0x399cd458d01b3d14a497f8900197fe6fac6fea93a3436797b60ad74d4697b550"
   : Compatibility.is(GpVersion.V0_6_5, GpVersion.V0_6_6)
     ? "0x8e7d1c93e8b9c88584e2212330e062826b5c925a99627b2120e33e41563f4d79"
     : "0xc460608b85a3a6b405f967fbd47b10b185516423f6a6744485b9ecd2c0c72e77";
@@ -468,7 +517,9 @@ export const TEST_STATE = [
   ],
   [
     "0x0300000000000000000000000000000000000000000000000000000000000000",
-    "0x053fcf9728204359b93032b413eef3af0a0953d494b8b96e01550795b43b56c76601010000000000000000000000000000000000000000000000000000000000000000bcf32b81ac750f980b03c8cbdbaf5ad7d9e6aad823d099e209d7d5a0b82f2aed001a7d753af2e2be12f88dfcb7ca5c704641534094b061c8c3aa258d4b0acbf5c8020001ad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb55e8f73cf5d9f94cb3a8313361a3b48e97968a9ac52ab9c29b4e88f4159c21560003a31fd60656cb3de2c6ba9fafb8dee8d4c45d4bc87ca248cdda7625a68b987fb0201000000000000000000000000000000000000000000000000000000000000000001ad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb50fac6a80aa8722be502119a5dd405b3c1baae8170569ce186942a8c64ba0260a00070fe1f39b43ca551f40a58048bf52614771c812c87f5e43bc611d252f5d794903000001b4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30175cafa38d5d26914e8c6bf3f8cc456eb073a7a0ae3d41bd12c2e5c396a62615003f70f457921f9e274722ef3a7601f26393af473ce2f44109ab4316414b007de3030100000000000000000000000000000000000000000000000000000000000000000001b4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30000000000000000000000000000000000000000000000000000000000000000001ac9928d4eb0c942a07c40157fa4498b2efbbc65136819517dc94d50ff2ca9f490000000000000000000000000000000000000000000000000000000000000000",
+    Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? "0x05c83b057ac60f3029edafc4a005f97c965ab8c2c19f3e4469c6e280356737d07c000000000000000000000000000000000000000000000000000000000000000059642abe3120e645f4cda9e464d1e594743f146404dd948f146cf5daf2e9966000bed5792b7df998e5520dfbb8c91386cf2117b2c07b7837094c79d5c0b4de9de7ad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb51324bad2e35946c1a95dd25380a6e9199fbd40045ae49eacfc67599cbd23cda7006ce5d0b9ec42d803bee92d7dead697df3379836b50e6ed361068ed0561b5a2b5675f9e53123c83ddcdb2c1f5231f13646378aefc83837a4571d052ac80014837331f8a5b07cfc35cd75749c605146d48a4863af1b8a578160f188f4a725c1236007897a9dd7529d62d8be3a0e1ddc2e36795e2fbcacdd738cd9d75b4e00b186d33b4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30fbae2505572f332ad18dd75ecfa1aa4be7959f1666ed75d3241505c4ca3dd3fc0072b9718488b532a4e93788865bf47291e57cfd7ca9bce755814fd8e2db2d41c8e884038e46068eaab1df24317c855e78fe94335d4adb7aa6c62920ce1352eed7000000000000000000000000000000000000000000000000000000000000000000030100000000000000000000000000000000000000000000000000000000000000000001b4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30"
+      : "0x053fcf9728204359b93032b413eef3af0a0953d494b8b96e01550795b43b56c76601010000000000000000000000000000000000000000000000000000000000000000bcf32b81ac750f980b03c8cbdbaf5ad7d9e6aad823d099e209d7d5a0b82f2aed001a7d753af2e2be12f88dfcb7ca5c704641534094b061c8c3aa258d4b0acbf5c8020001ad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb55e8f73cf5d9f94cb3a8313361a3b48e97968a9ac52ab9c29b4e88f4159c21560003a31fd60656cb3de2c6ba9fafb8dee8d4c45d4bc87ca248cdda7625a68b987fb0201000000000000000000000000000000000000000000000000000000000000000001ad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb50fac6a80aa8722be502119a5dd405b3c1baae8170569ce186942a8c64ba0260a00070fe1f39b43ca551f40a58048bf52614771c812c87f5e43bc611d252f5d794903000001b4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30175cafa38d5d26914e8c6bf3f8cc456eb073a7a0ae3d41bd12c2e5c396a62615003f70f457921f9e274722ef3a7601f26393af473ce2f44109ab4316414b007de3030100000000000000000000000000000000000000000000000000000000000000000001b4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30000000000000000000000000000000000000000000000000000000000000000001ac9928d4eb0c942a07c40157fa4498b2efbbc65136819517dc94d50ff2ca9f490000000000000000000000000000000000000000000000000000000000000000",
     "c3",
     "",
   ],
@@ -528,6 +579,7 @@ export const TEST_STATE = [
   ],
   ["0x0e00000000000000000000000000000000000000000000000000000000000000", "0x000000000000000000000000", "c14", ""],
   ["0x0f00000000000000000000000000000000000000000000000000000000000000", "0x000000000000000000000000", "c15", ""],
+  ["0x1000000000000000000000000000000000000000000000000000000000000000", "0x00", "c16", ""],
   [
     "0xff00000000000000000000000000000000000000000000000000000000000000",
     Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)

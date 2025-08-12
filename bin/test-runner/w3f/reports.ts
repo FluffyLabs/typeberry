@@ -16,11 +16,11 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
 import {
   type AvailabilityAssignment,
-  type BlockState,
   type CoreStatistics,
   ENTROPY_ENTRIES,
   type InMemoryService,
   InMemoryState,
+  type RecentBlocksHistory,
   type ValidatorData,
   tryAsPerCore,
 } from "@typeberry/state";
@@ -29,7 +29,7 @@ import {
   JsonService,
   type ServiceStatisticsEntry,
   availabilityAssignmentFromJson,
-  blockStateFromJson,
+  recentBlocksHistoryFromJson,
   serviceStatisticsEntryFromJson,
   validatorDataFromJson,
 } from "@typeberry/state-json";
@@ -42,7 +42,7 @@ import {
 } from "@typeberry/transition/reports/index.js";
 import { guaranteesAsView } from "@typeberry/transition/reports/test.utils.js";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
-import { Result, asOpaqueType, deepEqual } from "@typeberry/utils";
+import { Result, deepEqual } from "@typeberry/utils";
 
 type TestReportsOutput = Omit<ReportsOutput, "stateUpdate">;
 
@@ -81,7 +81,7 @@ class TestState {
     prev_validators: json.array(validatorDataFromJson),
     entropy: json.array(fromJson.bytes32()),
     offenders: json.array(fromJson.bytes32<Ed25519Key>()),
-    recent_blocks: json.array(blockStateFromJson),
+    recent_blocks: recentBlocksHistoryFromJson,
     auth_pools: ["array", json.array(fromJson.bytes32())],
     accounts: json.array(JsonService.fromJson),
     cores_statistics: json.array(JsonCoreStatistics.fromJson),
@@ -94,7 +94,7 @@ class TestState {
   entropy!: EntropyHash[];
   offenders!: Ed25519Key[];
   auth_pools!: AuthorizerHash[][];
-  recent_blocks!: BlockState[];
+  recent_blocks!: RecentBlocksHistory;
   accounts!: InMemoryService[];
   cores_statistics!: CoreStatistics[];
   services_statistics!: ServiceStatisticsEntry[];
@@ -123,7 +123,7 @@ class TestState {
         pre.auth_pools.map((x) => asKnownSize(x)),
         spec,
       ),
-      recentBlocks: asOpaqueType(pre.recent_blocks),
+      recentBlocks: pre.recent_blocks,
       services: new Map(pre.accounts.map((x) => [x.serviceId, x])),
     });
   }
@@ -267,7 +267,7 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   // blocks history.
   const headerChain = {
     isInChain(hash: HeaderHash) {
-      return preState.recentBlocks.find((x) => x.headerHash.isEqualTo(hash)) !== undefined;
+      return preState.recentBlocks.blocks.find((x) => x.headerHash.isEqualTo(hash)) !== undefined;
     },
   };
 

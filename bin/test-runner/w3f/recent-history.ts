@@ -5,8 +5,8 @@ import { HashDictionary } from "@typeberry/collections";
 import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
-import type { BlockState } from "@typeberry/state";
-import { blockStateFromJson, reportedWorkPackageFromJson } from "@typeberry/state-json";
+import type { RecentBlocksHistory } from "@typeberry/state";
+import { recentBlocksHistoryFromJson, reportedWorkPackageFromJson } from "@typeberry/state-json";
 import {
   RecentHistory,
   type RecentHistoryInput,
@@ -14,7 +14,7 @@ import {
   type RecentHistoryState,
 } from "@typeberry/transition/recent-history.js";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
-import { asOpaqueType, deepEqual } from "@typeberry/utils";
+import { deepEqual } from "@typeberry/utils";
 
 type RecentHistoryTestInput = RecentHistoryPartialInput & Omit<RecentHistoryInput, "partial">;
 
@@ -45,14 +45,14 @@ class Input {
 class TestState {
   static fromJson = json.object<TestState, RecentHistoryState>(
     {
-      beta: json.array(blockStateFromJson),
+      beta: recentBlocksHistoryFromJson,
     },
     ({ beta }) => ({
-      recentBlocks: asOpaqueType(beta),
+      recentBlocks: beta,
     }),
   );
 
-  beta!: BlockState[];
+  beta!: RecentBlocksHistory;
 }
 
 export class HistoryTest {

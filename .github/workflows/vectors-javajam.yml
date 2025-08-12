@@ -7,6 +7,7 @@ on:
 
 env:
   TEST_VECTORS_REF: 3e46bb56c75b16bcce8347e19b042f50e8c7d207
+  GP_VERSION: 0.6.7
   TEST_SUITE: javajam
 
 jobs:

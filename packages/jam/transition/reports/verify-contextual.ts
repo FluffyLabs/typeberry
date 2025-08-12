@@ -4,8 +4,9 @@ import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@ty
 import { HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import type { KeccakHash } from "@typeberry/hash";
-import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
-import type { BlockState, State } from "@typeberry/state";
+import type { MmrHasher } from "@typeberry/mmr";
+import type { LegacyBlockState, State } from "@typeberry/state";
+import { type BlockState, RecentBlocksHistory } from "@typeberry/state/recent-blocks.js";
 import { OK, Result } from "@typeberry/utils";
 import type { RecentHistoryStateUpdate } from "../recent-history.js";
 import { ReportsError } from "./error.js";
@@ -20,6 +21,7 @@ export type HeaderChain = {
   isInChain(header: HeaderHash): boolean;
 };
 
+/** https://graypaper.fluffylabs.dev/#/7e6ff6a/15eb0115eb01?v=0.6.7 */
 export function verifyContextualValidity(
   input: ReportsInput,
   state: Pick<
@@ -92,7 +94,7 @@ export function verifyContextualValidity(
 
   // construct dictionary of recently-reported work packages and their segment roots
   const recentlyReported = HashDictionary.new<WorkPackageHash, ExportsRootHash>();
-  for (const recentBlock of state.recentBlocks) {
+  for (const recentBlock of state.recentBlocks.blocks) {
     for (const reported of recentBlock.reported.values()) {
       recentlyReported.set(reported.workPackageHash, reported.segmentTreeRoot);
     }
@@ -137,6 +139,7 @@ export function verifyContextualValidity(
   return Result.ok(currentWorkPackages);
 }
 
+/** https://graypaper.fluffylabs.dev/#/7e6ff6a/152502152502?v=0.6.7 */
 function verifyRefineContexts(
   minLookupSlot: number,
   contexts: RefineContext[],
@@ -145,10 +148,11 @@ function verifyRefineContexts(
   headerChain: HeaderChain,
 ): Result<OK, ReportsError> {
   // TODO [ToDr] [opti] This could be cached and updated efficiently between runs.
-  const recentBlocks = HashDictionary.new<HeaderHash, BlockState>();
-  for (const recentBlock of recentBlocksPartialUpdate) {
+  const recentBlocks = HashDictionary.new<HeaderHash, LegacyBlockState | BlockState>();
+  for (const recentBlock of recentBlocksPartialUpdate.blocks) {
     recentBlocks.set(recentBlock.headerHash, recentBlock);
   }
+
   for (const context of contexts) {
     /**
      * We require that the anchor block be within the last H
@@ -170,15 +174,12 @@ function verifyRefineContexts(
       );
     }
 
-    // TODO [ToDr] [opti] Don't calculate super peak hash every time.
-    //                    use either some cache or pre-processing.
     // check beefy root
-    const mmr = MerkleMountainRange.fromPeaks(hasher, recentBlock.mmr);
-    const superPeakHash = mmr.getSuperPeakHash();
-    if (!superPeakHash.isEqualTo(context.beefyRoot)) {
+    const beefyRoot = RecentBlocksHistory.accumulationResult(recentBlock, { hasher });
+    if (!beefyRoot.isEqualTo(context.beefyRoot)) {
       return Result.error(
         ReportsError.BadBeefyMmrRoot,
-        `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${superPeakHash}. Anchor: ${recentBlock.headerHash}`,
+        `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${beefyRoot}. Anchor: ${recentBlock.headerHash}`,
       );
     }
 
@@ -285,7 +286,7 @@ function verifyWorkPackagesUniqueness(
   const packagesInPipeline = HashSet.new();
 
   // all work packages reported in recent blocks
-  for (const recentBlock of state.recentBlocks) {
+  for (const recentBlock of state.recentBlocks.blocks) {
     packagesInPipeline.insertAll(Array.from(recentBlock.reported.keys()));
   }
 
