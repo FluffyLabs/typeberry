@@ -105,8 +105,8 @@ export function startIpcServer(name: string, newMessageHandler: (socket: IpcSend
 const MSG_LEN_PREFIX_BYTES = 4;
 
 /**
- * Send a message to the socket, but prefix it with a 32-bit length,
- * so that the receiver can now the boundaries between the datum.
+ * Send a message to the socket, prefixed with a 32-bit length
+ * so the receiver can determine the boundaries between data items.
  */
 function sendWithLengthPrefix(socket: Socket, data: Uint8Array) {
   const buffer = new Uint8Array(MSG_LEN_PREFIX_BYTES);
