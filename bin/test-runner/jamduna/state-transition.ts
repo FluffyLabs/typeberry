@@ -13,16 +13,16 @@ import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
 import { Compatibility, GpVersion, deepEqual, resultToString } from "@typeberry/utils";
-import { TestState, loadState } from "./state-loader.js";
+import { TestState_0_6_4, loadState } from "./state-loader.js";
 
 export class StateTransition {
   static fromJson: FromJson<StateTransition> = {
-    pre_state: TestState.fromJson,
-    post_state: TestState.fromJson,
+    pre_state: TestState_0_6_4.fromJson,
+    post_state: TestState_0_6_4.fromJson,
     block: blockFromJson(tinyChainSpec),
   };
-  pre_state!: TestState;
-  post_state!: TestState;
+  pre_state!: TestState_0_6_4;
+  post_state!: TestState_0_6_4;
   block!: Block;
 }
 
