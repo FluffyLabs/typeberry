@@ -3,49 +3,45 @@ import { type Socket, createServer } from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import type { HeaderHash } from "@typeberry/block";
-import type { ChainSpec } from "@typeberry/config";
-import { ce129, up0 } from "@typeberry/jamnp-s";
+import type { BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
-import { handleMessageFragmentation } from "@typeberry/networking";
-import type { Listener } from "@typeberry/state-machine";
-import type { TrieNode } from "@typeberry/trie/nodes.js";
-import { IpcHandler } from "./handler.js";
+import { encodeMessageLength, handleMessageFragmentation } from "@typeberry/networking";
 
-export function startIpcServer(
-  spec: ChainSpec,
-  announcements: Listener<up0.Announcement>,
-  getHandshake: () => up0.Handshake,
-  getBoundaryNodes: (hash: HeaderHash, startKey: ce129.Key, endKey: ce129.Key) => TrieNode[],
-  getKeyValuePairs: (hash: HeaderHash, startKey: ce129.Key, endKey: ce129.Key) => ce129.KeyValuePair[],
-) {
+/** A per-client handler of incoming socket messages. */
+export interface IpcHandler {
+  /** New data on the socket received. */
+  onSocketMessage(msg: Uint8Array): void;
+
+  /** Socket closed or errored. */
+  onClose(reason: { error?: Error }): void;
+}
+
+/** Sending data abstraction on a socket. */
+export class IpcSender {
+  constructor(private readonly socket: Socket) {}
+
+  /** Write given data to the outgoing socket. */
+  send(data: BytesBlob): void {
+    sendWithLengthPrefix(this.socket, data.raw);
+  }
+
+  /** Close the socket. */
+  close(): void {
+    this.socket.end();
+  }
+}
+
+export function startIpcServer(name: string, newMessageHandler: (socket: IpcSender) => IpcHandler) {
   // Define the path for the socket or named pipe
   const isWindows = os.platform() === "win32";
-  const socketPath = isWindows ? "\\\\.\\pipe\\typeberry" : path.join(os.tmpdir(), "typeberry.ipc");
+  const socketPath = isWindows ? `\\\\.\\pipe\\${name}` : path.join(os.tmpdir(), `${name}.ipc`);
 
   const logger = Logger.new(import.meta.filename, "ext-ipc");
 
   // Create the IPC server
   const server = createServer((socket: Socket) => {
     logger.log("Client connected");
-    const messageHandler = new IpcHandler(socket);
-    messageHandler.registerHandlers(
-      new up0.Handler(
-        spec,
-        getHandshake,
-        () => {},
-        () => {},
-      ),
-    );
-    messageHandler.registerHandlers(new ce129.Handler(true, getBoundaryNodes, getKeyValuePairs));
-
-    // Send block announcements
-    const listener = (announcement: up0.Announcement) => {
-      messageHandler.withStreamOfKind(up0.STREAM_KIND, (handler: up0.Handler, sender) => {
-        handler.sendAnnouncement(sender, announcement);
-      });
-    };
-    announcements.on(listener);
+    const messageHandler = newMessageHandler(new IpcSender(socket));
 
     // Handle incoming data from the client
     socket.on(
@@ -70,7 +66,6 @@ export function startIpcServer(
     socket.on("end", () => {
       logger.log("Client disconnected");
       messageHandler.onClose({});
-      announcements.off(listener);
     });
 
     socket.on("error", (error) => {
@@ -110,4 +105,13 @@ export function startIpcServer(
     // unrefing
     server.unref();
   };
+}
+
+/**
+ * Send a message to the socket, prefixed with a 32-bit length
+ * so the receiver can determine the boundaries between data items.
+ */
+function sendWithLengthPrefix(socket: Socket, data: Uint8Array) {
+  socket.write(encodeMessageLength(data));
+  socket.write(data);
 }
