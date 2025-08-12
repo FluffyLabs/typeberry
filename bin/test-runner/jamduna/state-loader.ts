@@ -4,7 +4,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, type Descriptor, codec } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
-import { HASH_SIZE } from "@typeberry/hash";
+import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { tryAsU32 } from "@typeberry/numbers";
 import {
@@ -22,13 +22,22 @@ import {
 import { serialize } from "@typeberry/state-merkleization";
 import { resultToString } from "@typeberry/utils";
 
-export class TestState {
-  static fromJson: FromJson<TestState> = {
+export class TestState_0_6_4 {
+  static fromJson: FromJson<TestState_0_6_4> = {
     state_root: fromJson.bytes32(),
     keyvals: json.array(json.array("string")),
   };
   state_root!: StateRootHash;
   keyvals!: StateKeyVal[];
+}
+
+export class TestState {
+  static fromJson: FromJson<TestState> = {
+    state_root: fromJson.bytes32(),
+    keyvals: json.array({ key: fromJson.bytes32(), value: fromJson.bytesBlob }),
+  };
+  state_root!: StateRootHash;
+  keyvals!: { key: OpaqueHash; value: BytesBlob }[];
 }
 
 export type StateKeyVal = string[];

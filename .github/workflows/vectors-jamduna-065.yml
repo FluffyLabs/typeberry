@@ -1,0 +1,85 @@
+name: jamduna test vectors 0.6.5
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  TEST_VECTORS_REF: 9658460523bb5b0250ef6b6fc04852e08dd76d61
+  GP_VERSION: 0.6.5
+  TEST_SUITE: jamduna_065
+
+jobs:
+  import:
+    runs-on: self-hosted
+
+    strategy:
+      matrix:
+        node-version: [22.x]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout JAM test vectors
+        uses: actions/checkout@v4
+        with:
+          repository: fluffylabs/test-vectors
+          path: "./test-vectors"
+          ref: ${{ env.TEST_VECTORS_REF }}
+          submodules: true
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm ci
+      - run: rm -rf ./database
+      - run: npm start -- import ./test-vectors/jamduna/data/safrole/blocks/*.json | tee safrole.txt
+      # TODO [ToDr] would probably be best to have some CLI to display the best block and test with that?
+      #             or a special mode that would import the blocks for test purposes and print some extra output.
+      - run: |
+          grep -q "Best block: #60 (0x293c3d1d15d58871a9ffd2bbdbd48d59f3874e6bfac644ec7b8f975263e7fabe)" safrole.txt || {
+            echo "Seems that the blocks were not imported correctly"
+            exit 1
+          }
+      - run: rm -rf ./database
+      - run: npm start -- import ./test-vectors/jamduna/data/fallback/blocks/*.json | tee fallback.txt
+      - run: |
+          grep -q "Best block: #60 (0x5da17ce23b742d103fd40c20353db271601943a260653802f7645da319e10fd8)" fallback.txt || {
+            echo "Seems that the blocks were not imported correctly"
+            exit 1
+          }
+
+  state_transition:
+    runs-on: self-hosted
+
+    strategy:
+      matrix:
+        node-version: [22.x]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout JAM test vectors
+        uses: actions/checkout@v4
+        with:
+          repository: fluffylabs/test-vectors
+          path: "./test-vectors"
+          ref: ${{ env.TEST_VECTORS_REF }}
+          submodules: true
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm start -w @typeberry/test-runner
+      - name: Display results
+        if: always()
+        run: cat ./dist/jamdunavectors.txt
+      - name: Upload new results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          path: |
+            ./dist/jamdunavectors
+          name: jamdunavectors-results
