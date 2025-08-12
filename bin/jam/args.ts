@@ -1,4 +1,5 @@
-import { DEV_CONFIG, NODE_DEFAULTS } from "@typeberry/config-node";
+import { DEFAULT_CONFIG, DEV_CONFIG, NODE_DEFAULTS } from "@typeberry/config-node";
+import { type U16, isU16 } from "@typeberry/numbers";
 import minimist from "minimist";
 import packageJson from "./package.json" with { type: "json" };
 
@@ -7,12 +8,13 @@ export const HELP = `
 
 Usage:
   jam [options]
+  jam [options] dev <dev-validator-index>
   jam [options] import <bin-or-json-blocks>
 
 Options:
   --name                Override node name. Affects networking key and db location.
                         [default: ${NODE_DEFAULTS.name}]
-  --config              Path to a config file or '${DEV_CONFIG}'.
+  --config              Path to a config file or one of: ['${DEV_CONFIG}', '${DEFAULT_CONFIG}'].
                         [default: ${NODE_DEFAULTS.config}]
 `;
 
@@ -20,6 +22,8 @@ Options:
 export enum Command {
   /** Regular node operation. */
   Run = "run",
+  /** Run as a development-mode validator. */
+  Dev = "dev",
   /** Import the blocks from CLI and finish. */
   Import = "import",
 }
@@ -31,6 +35,12 @@ export type SharedOptions = {
 
 export type Arguments =
   | CommandArgs<Command.Run, SharedOptions & {}>
+  | CommandArgs<
+      Command.Dev,
+      SharedOptions & {
+        index: U16;
+      }
+    >
   | CommandArgs<
       Command.Import,
       SharedOptions & {
@@ -62,6 +72,19 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
       const data = parseSharedOptions(args, withRelPath);
       assertNoMoreArgs(args);
       return { command: Command.Run, args: data };
+    }
+    case Command.Dev: {
+      const data = parseSharedOptions(args, withRelPath);
+      const index = args._.shift();
+      if (index === undefined) {
+        throw new Error("Missing dev-validator index.");
+      }
+      const numIndex = Number(index);
+      if (!isU16(numIndex)) {
+        throw new Error(`Invalid dev-validator index: ${numIndex}, need U16`);
+      }
+      assertNoMoreArgs(args);
+      return { command: Command.Dev, args: { ...data, index: numIndex } };
     }
     case Command.Import: {
       const data = parseSharedOptions(args, withRelPath);

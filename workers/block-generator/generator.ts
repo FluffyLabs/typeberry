@@ -4,6 +4,7 @@ import { DisputesExtrinsic } from "@typeberry/block/disputes.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
+import { BANDERSNATCH_VRF_SIGNATURE_BYTES } from "@typeberry/crypto";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { SimpleAllocator } from "@typeberry/hash";
 import type { KeccakHasher } from "@typeberry/hash/keccak.js";
@@ -93,11 +94,12 @@ export class Generator {
     const extrinsicHash = hasher.extrinsic(extrinsicView).hash;
 
     // Create seal
-    const e = Encoder.create();
+    const seal = Bytes.zero(BANDERSNATCH_VRF_SIGNATURE_BYTES);
+    const e = Encoder.create({
+      destination: seal.raw,
+    });
     e.i32(newTimeSlot);
     e.i16(validatorId);
-    e.bytes(Bytes.fill(90, 0));
-    const seal = Bytes.fromBlob(e.viewResult().raw, 96);
 
     // create header
     const header = Header.create({
@@ -109,7 +111,7 @@ export class Generator {
       ticketsMarker: null,
       offendersMarker: [],
       bandersnatchBlockAuthorIndex: validatorId,
-      entropySource: Bytes.fill(96, (newTimeSlot * 42) % 256).asOpaque(),
+      entropySource: Bytes.fill(BANDERSNATCH_VRF_SIGNATURE_BYTES, (newTimeSlot * 42) % 256).asOpaque(),
       seal: seal.asOpaque(),
     });
 

@@ -12,12 +12,13 @@
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
+    "@matrixai/quic": "^2.0.9",
+    "@peculiar/webcrypto": "^1.5.0",
+    "@peculiar/x509": "^1.12.3",
     "@typeberry/bytes": "0.0.1",
     "@typeberry/crypto": "0.0.1",
     "@typeberry/logger": "0.0.1",
-    "@typeberry/utils": "0.0.1",
-    "@matrixai/quic": "^2.0.9",
-    "@peculiar/webcrypto": "^1.5.0",
-    "@peculiar/x509": "^1.12.3"
+    "@typeberry/numbers": "0.0.1",
+    "@typeberry/utils": "0.0.1"
   }
 }

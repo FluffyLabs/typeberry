@@ -1,16 +1,15 @@
-import type { EventEmitter } from "node:events";
-
 import type { HeaderHash } from "@typeberry/block";
+import type { ChainSpec } from "@typeberry/config";
 import { ce129, up0 } from "@typeberry/jamnp-s";
+import type { Listener } from "@typeberry/state-machine";
 import type { TrieNode } from "@typeberry/trie/nodes.js";
 import { startIpcServer } from "../server.js";
 import { JamnpIpcHandler } from "./handler.js";
 
-export const ANNOUNCEMENT_EVENT = "announcement";
-
 /** An IPC endpoint exposing network-like messaging protocol. */
 export function startJamnpIpcServer(
-  announcements: EventEmitter,
+  chainSpec: ChainSpec,
+  announcements: Listener<up0.Announcement>,
   getHandshake: () => up0.Handshake,
   getBoundaryNodes: (hash: HeaderHash, startKey: ce129.Key, endKey: ce129.Key) => TrieNode[],
   getKeyValuePairs: (hash: HeaderHash, startKey: ce129.Key, endKey: ce129.Key) => ce129.KeyValuePair[],
@@ -27,12 +26,19 @@ export function startJamnpIpcServer(
         throw new Error(`Invalid annoncement received: ${announcement}`);
       }
     };
-    announcements.on(ANNOUNCEMENT_EVENT, listener);
+    announcements.on(listener);
     handler.waitForEnd().finally(() => {
-      announcements.off(ANNOUNCEMENT_EVENT, listener);
+      announcements.off(listener);
     });
 
-    handler.registerStreamHandlers(new up0.Handler(getHandshake, () => {}));
+    handler.registerStreamHandlers(
+      new up0.Handler(
+        chainSpec,
+        getHandshake,
+        () => {},
+        () => {},
+      ),
+    );
     handler.registerStreamHandlers(new ce129.Handler(true, getBoundaryNodes, getKeyValuePairs));
     return handler;
   });

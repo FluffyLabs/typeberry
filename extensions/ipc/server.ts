@@ -1,12 +1,11 @@
-import { Buffer } from "node:buffer";
 import * as fs from "node:fs";
 import { type Socket, createServer } from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Encoder } from "@typeberry/codec";
 
 import type { BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
+import { encodeMessageLength, handleMessageFragmentation } from "@typeberry/networking";
 
 /** A per-client handler of incoming socket messages. */
 export interface IpcHandler {
@@ -47,14 +46,20 @@ export function startIpcServer(name: string, newMessageHandler: (socket: IpcSend
     // Handle incoming data from the client
     socket.on(
       "data",
-      handleFragmentation((data: Buffer) => {
-        try {
-          messageHandler.onSocketMessage(new Uint8Array(data));
-        } catch (e) {
-          logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
+      handleMessageFragmentation(
+        (data: Uint8Array) => {
+          try {
+            messageHandler.onSocketMessage(data);
+          } catch (e) {
+            logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
+            socket.end();
+          }
+        },
+        () => {
+          logger.error("Received too much data on socket. Closing connection.");
           socket.end();
-        }
-      }),
+        },
+      ),
     );
 
     // Handle client disconnection
@@ -102,56 +107,11 @@ export function startIpcServer(name: string, newMessageHandler: (socket: IpcSend
   };
 }
 
-const MSG_LEN_PREFIX_BYTES = 4;
-
 /**
  * Send a message to the socket, prefixed with a 32-bit length
  * so the receiver can determine the boundaries between data items.
  */
 function sendWithLengthPrefix(socket: Socket, data: Uint8Array) {
-  const buffer = new Uint8Array(MSG_LEN_PREFIX_BYTES);
-  const encoder = Encoder.create({
-    destination: buffer,
-  });
-  encoder.i32(data.length);
-  socket.write(buffer);
+  socket.write(encodeMessageLength(data));
   socket.write(data);
-}
-
-/**
- * Only triggers the `callback` in case full data blob is received.
- *
- * Each message should be prefixed with a single U32 denoting the length of the next data
- * frame that should be interpreted as single chunk.
- */
-export function handleFragmentation(callback: (data: Buffer) => void): (data: Buffer) => void {
-  let buffer = Buffer.alloc(0);
-  let expectedLength = -1;
-
-  return (data: Buffer) => {
-    buffer = Buffer.concat([buffer, data]);
-    do {
-      // we now expect a length prefix.
-      if (expectedLength === -1) {
-        // not enough data to parse the length, wait for more.
-        if (buffer.length < MSG_LEN_PREFIX_BYTES) {
-          break;
-        }
-
-        expectedLength = buffer.readUint32LE();
-        buffer = buffer.subarray(MSG_LEN_PREFIX_BYTES);
-      }
-
-      // we don't have enough data, so let's wait.
-      if (buffer.length < expectedLength) {
-        break;
-      }
-
-      // full chunk can be parsed now, but there might be some more.
-      const chunk = buffer.subarray(0, expectedLength);
-      buffer = buffer.subarray(expectedLength);
-      expectedLength = -1;
-      callback(chunk);
-    } while (buffer.length > 0);
-  };
 }

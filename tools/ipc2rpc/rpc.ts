@@ -19,7 +19,7 @@ export function startRpc(db: Database, client: JamnpIpcHandler) {
 
   server.addMethodAdvanced("jam_getBalance", (request) => {
     return new Promise((resolve) => {
-      client.withNewStream<typeof ce129.STREAM_KIND, ce129.Handler>(ce129.STREAM_KIND, (handler, sender) => {
+      client.withNewStream<ce129.Handler>(ce129.STREAM_KIND, (handler, sender) => {
         if (db.bestHeader === null) return;
 
         const key: string = request.params.accountId;

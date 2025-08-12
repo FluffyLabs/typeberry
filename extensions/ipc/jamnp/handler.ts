@@ -1,6 +1,6 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import type { StreamHandler, StreamId, StreamKind, StreamManager, StreamMessageSender } from "@typeberry/jamnp-s";
+import type { StreamHandler, StreamId, StreamKind, StreamKindOf, StreamMessageSender } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
 import type { IpcHandler, IpcSender } from "../server.js";
 import { NewStream, StreamEnvelope, StreamEnvelopeType } from "./stream.js";
@@ -16,7 +16,7 @@ type OnEnd = {
   reject: (error: Error) => void;
 };
 
-export class JamnpIpcHandler implements StreamManager, IpcHandler {
+export class JamnpIpcHandler implements IpcHandler {
   /** already initiated streams */
   private readonly streams: Map<StreamId, StreamHandler> = new Map();
   /** streams awaiting confirmation from the other side. */
@@ -27,12 +27,18 @@ export class JamnpIpcHandler implements StreamManager, IpcHandler {
   private readonly onEnd: OnEnd;
 
   constructor(private readonly sender: IpcSender) {
-    const onEnd = { finished: false } as OnEnd;
-    onEnd.listen = new Promise((resolve, reject) => {
-      onEnd.resolve = resolve;
-      onEnd.reject = reject;
+    let resolve = () => {};
+    let reject = (_error: Error) => {};
+    const listen = new Promise<void>((res, rej) => {
+      resolve = res;
+      reject = rej;
     });
-    this.onEnd = onEnd;
+    this.onEnd = {
+      finished: false,
+      listen,
+      resolve,
+      reject,
+    };
   }
 
   /** Register stream handlers. */
@@ -43,8 +49,8 @@ export class JamnpIpcHandler implements StreamManager, IpcHandler {
   }
 
   /** Re-use an existing stream of given kind if present. */
-  withStreamOfKind<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
-    streamKind: TStreamKind,
+  withStreamOfKind<THandler extends StreamHandler>(
+    streamKind: StreamKindOf<THandler>,
     work: (handler: THandler, sender: EnvelopeSender) => void,
   ): void {
     // find first stream id with given kind
@@ -58,8 +64,8 @@ export class JamnpIpcHandler implements StreamManager, IpcHandler {
   }
 
   /** Open a new stream of given kind. */
-  withNewStream<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
-    kind: TStreamKind,
+  withNewStream<THandler extends StreamHandler>(
+    kind: StreamKindOf<THandler>,
     work: (handler: THandler, sender: EnvelopeSender) => void,
   ): void {
     const handler = this.streamHandlers.get(kind);

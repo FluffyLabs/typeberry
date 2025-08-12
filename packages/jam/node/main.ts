@@ -1,7 +1,7 @@
 import { isMainThread } from "node:worker_threads";
 import { Logger } from "@typeberry/logger";
 
-import { Block, type BlockView, Extrinsic, Header, type HeaderHash } from "@typeberry/block";
+import { Block, type BlockView, Extrinsic, Header, type HeaderHash, type HeaderView } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { TruncatedHashDictionary, asKnownSize } from "@typeberry/collections";
@@ -12,13 +12,15 @@ import type { Finished, MainInit } from "@typeberry/generic-worker";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine.js";
-import type { MessageChannelStateMachine } from "@typeberry/state-machine";
+import { NetworkWorkerConfig } from "@typeberry/jam-network/state-machine.js";
+import type { Listener, MessageChannelStateMachine } from "@typeberry/state-machine";
 import { SerializedState, StateEntries, type StateKey } from "@typeberry/state-merkleization";
 import { startBlockGenerator } from "./author.js";
 import { initializeExtensions } from "./extensions.js";
+import { startNetwork } from "./network.js";
 import { startBlocksReader } from "./reader.js";
 
-import type { JamConfig } from "./jam-config.js";
+import type { JamConfig, NetworkConfig } from "./jam-config.js";
 
 export * from "./jam-config.js";
 
@@ -35,6 +37,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
     return;
   }
 
+  logger.info(`🎸 Starting node: ${config.nodeName}`);
   const chainSpec = getChainSpec(config.node.flavor);
   const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
     config.nodeName,
@@ -48,7 +51,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   // Start extensions
   const importerInit = await blockImporter.spawnWorker();
   const bestHeader = importerInit.getState<MainReady>("ready(main)").onBestBlock;
-  const closeExtensions = initializeExtensions({ bestHeader });
+  const closeExtensions = initializeExtensions({ chainSpec, bestHeader });
 
   // Start block importer
   const workerConfig = new WorkerConfig(chainSpec, dbPath, config.node.authorship.omitSealVerification);
@@ -63,7 +66,21 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   // 1. load validator keys (bandersnatch, ed25519, bls)
   // 2. allow the validator to specify metadata.
   // 3. if we have validator keys, we should start the authorship module.
-  const closeAuthorship = await initAuthorship(config.isAuthoring, workerConfig, importerReady);
+  const closeAuthorship = await initAuthorship(
+    importerReady,
+    config.isAuthoring && config.blocksToImport === null,
+    workerConfig,
+  );
+
+  // Networking initialization
+  const closeNetwork = await initNetwork(
+    importerReady,
+    workerConfig,
+    genesisHeaderHash,
+    config.network,
+    config.blocksToImport === null,
+    bestHeader,
+  );
 
   logger.info("[main]⌛ waiting for importer to finish");
   const importerDone = await blocksReader;
@@ -73,13 +90,17 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   await importerDone.currentState().waitForWorkerToFinish();
   logger.log("[main] ☠️  Closing the authorship module");
   closeAuthorship();
+  logger.log("[main] ☠️  Closing the networking module");
+  closeNetwork();
+
   logger.info("[main] ✅ Done.");
 }
 
 type ImporterReady = MessageChannelStateMachine<MainReady, Finished | MainReady | MainInit<MainReady>>;
 
-const initAuthorship = async (isAuthoring: boolean, config: WorkerConfig, importerReady: ImporterReady) => {
+const initAuthorship = async (importerReady: ImporterReady, isAuthoring: boolean, config: WorkerConfig) => {
   if (!isAuthoring) {
+    logger.log("✍️  Authorship off: disabled");
     return () => Promise.resolve();
   }
 
@@ -119,6 +140,51 @@ const initBlocksReader = async (
     logger.info("All blocks scheduled to be imported.");
     return importer.finish(port);
   });
+};
+
+const initNetwork = async (
+  importerReady: ImporterReady,
+  workerConfig: WorkerConfig,
+  genesisHeaderHash: HeaderHash,
+  networkConfig: NetworkConfig | null,
+  shouldStartNetwork: boolean,
+  bestHeader: Listener<WithHash<HeaderHash, HeaderView>>,
+) => {
+  if (!shouldStartNetwork || networkConfig === null) {
+    logger.log(`🛜 Networking off: ${networkConfig === null ? "no config" : "disabled"}`);
+    return () => Promise.resolve();
+  }
+
+  const { key, host, port, bootnodes } = networkConfig;
+
+  const { network, finish } = await startNetwork(
+    NetworkWorkerConfig.new({
+      genericConfig: workerConfig,
+      genesisHeaderHash,
+      key,
+      host,
+      port,
+      bootnodes: bootnodes.map((node) => node.toString()),
+    }),
+  );
+
+  // relay blocks from networking to importer?
+  importerReady.doUntil("finished", async (importer, port) => {
+    network.currentState().onNewBlocks.on((newBlocks) => {
+      for (const block of newBlocks) {
+        importer.sendBlock(port, block.encoded().raw);
+      }
+    });
+  });
+
+  // relay newly imported headers to trigger network announcements
+  network.doUntil("finished", async (network, port) => {
+    bestHeader.on((header) => {
+      network.announceHeader(port, header);
+    });
+  });
+
+  return finish;
 };
 
 export const getChainSpec = (name: KnownChainSpec) => {

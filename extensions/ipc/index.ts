@@ -1,12 +1,13 @@
-import { EventEmitter } from "node:events";
 import { type HeaderHash, type HeaderView, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, TRUNCATED_HASH_SIZE, type WithHash, blake2b } from "@typeberry/hash";
 import { ce129, up0 } from "@typeberry/jamnp-s";
-import type { Listener } from "@typeberry/state-machine";
-import { ANNOUNCEMENT_EVENT, startJamnpIpcServer } from "./jamnp/server.js";
+import { Listener } from "@typeberry/state-machine";
+import { startJamnpIpcServer } from "./jamnp/server.js";
 
 export interface ExtensionApi {
+  chainSpec: ChainSpec;
   bestHeader: Listener<WithHash<HeaderHash, HeaderView>>;
 }
 
@@ -18,7 +19,7 @@ export function startExtension(api: ExtensionApi) {
 }
 
 function startJamnpExtension(api: ExtensionApi) {
-  const announcements = new EventEmitter();
+  const announcements = new Listener<up0.Announcement>();
   let bestBlock: up0.HashAndSlot | null = null;
 
   api.bestHeader.on((headerWithHash) => {
@@ -26,7 +27,7 @@ function startJamnpExtension(api: ExtensionApi) {
     const hash = headerWithHash.hash;
     const final = up0.HashAndSlot.create({ hash, slot: header.timeSlotIndex });
     bestBlock = final;
-    announcements.emit(ANNOUNCEMENT_EVENT, up0.Announcement.create({ header, final }));
+    announcements.emit(up0.Announcement.create({ header, final }));
   });
 
   const getHandshake = () => {
@@ -52,5 +53,5 @@ function startJamnpExtension(api: ExtensionApi) {
     return [new ce129.KeyValuePair(startKey, value)];
   };
 
-  return startJamnpIpcServer(announcements, getHandshake, getBoundaryNodes, getKeyValuePairs);
+  return startJamnpIpcServer(api.chainSpec, announcements, getHandshake, getBoundaryNodes, getKeyValuePairs);
 }
