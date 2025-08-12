@@ -16,10 +16,8 @@ import { HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import {
   AvailabilityAssignment,
-  BlockState,
   DisputesRecords,
   ENTROPY_ENTRIES,
-  MAX_RECENT_HISTORY,
   PrivilegedServices,
   ServiceAccountInfo,
   type State,
@@ -28,7 +26,9 @@ import {
   ValidatorData,
   codecPerCore,
 } from "@typeberry/state";
+import { AccumulationOutput } from "@typeberry/state/accumulation-output.js";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
+import { RecentBlocksHistory } from "@typeberry/state/recent-blocks.js";
 import { SafroleData } from "@typeberry/state/safrole-data.js";
 import { type StateKey, StateKeyIdx, stateKeys } from "./keys.js";
 
@@ -62,14 +62,14 @@ export namespace serialize {
     extract: (s) => s.authQueues,
   };
 
-  /** C(3): https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3 */
+  /**
+   * C(3): Recent blocks with compatibility
+   *  https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3
+   *  https://graypaper.fluffylabs.dev/#/7e6ff6a/3b3e013b3e01?v=0.6.7
+   */
   export const recentBlocks: StateCodec<State["recentBlocks"]> = {
     key: stateKeys.index(StateKeyIdx.Beta),
-    Codec: codecKnownSizeArray(BlockState.Codec, {
-      minLength: 0,
-      maxLength: MAX_RECENT_HISTORY,
-      typicalLength: MAX_RECENT_HISTORY,
-    }),
+    Codec: RecentBlocksHistory.Codec,
     extract: (s) => s.recentBlocks,
   };
 
@@ -149,9 +149,9 @@ export namespace serialize {
     extract: (s) => s.statistics,
   };
 
-  /** C(14): https://graypaper.fluffylabs.dev/#/85129da/38f80238f802?v=0.6.3 */
+  /** C(14): https://graypaper.fluffylabs.dev/#/1c979cb/3bf0023bf002?v=0.7.1 */
   export const accumulationQueue: StateCodec<State["accumulationQueue"]> = {
-    key: stateKeys.index(StateKeyIdx.Theta),
+    key: stateKeys.index(StateKeyIdx.Omega),
     Codec: codecPerEpochBlock(readonlyArray(codec.sequenceVarLen(NotYetAccumulatedReport.Codec))),
     extract: (s) => s.accumulationQueue,
   };
@@ -166,6 +166,13 @@ export namespace serialize {
       ),
     ),
     extract: (s) => s.recentlyAccumulated,
+  };
+
+  /** C(16): https://graypaper.fluffylabs.dev/#/38c4e62/3b46033b4603?v=0.7.0 */
+  export const accumulationOutputLog: StateCodec<State["accumulationOutputLog"]> = {
+    key: stateKeys.index(StateKeyIdx.Theta),
+    Codec: codec.sequenceVarLen(AccumulationOutput.Codec),
+    extract: (s) => s.accumulationOutputLog,
   };
 
   /** C(255, s): https://graypaper.fluffylabs.dev/#/85129da/383103383103?v=0.6.3 */

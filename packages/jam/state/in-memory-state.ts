@@ -31,12 +31,13 @@ import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typebe
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { OK, Result, WithDebug, assertNever, check } from "@typeberry/utils";
+import type { AccumulationOutput } from "./accumulation-output.js";
 import type { AvailabilityAssignment } from "./assurances.js";
-import type { BlockState } from "./block-state.js";
 import { type PerCore, tryAsPerCore } from "./common.js";
 import { DisputesRecords, hashComparator } from "./disputes.js";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
 import { PrivilegedServices } from "./privileged-services.js";
+import { RecentBlocksHistory } from "./recent-blocks.js";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "./safrole-data.js";
 import {
   LookupHistoryItem,
@@ -56,7 +57,7 @@ import {
   type UpdateStorage,
   UpdateStorageKind,
 } from "./state-update.js";
-import { ENTROPY_ENTRIES, type EnumerableState, type MAX_RECENT_HISTORY, type Service, type State } from "./state.js";
+import { ENTROPY_ENTRIES, type EnumerableState, type Service, type State } from "./state.js";
 import { CoreStatistics, StatisticsData, ValidatorStatistics } from "./statistics.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "./validator-data.js";
 
@@ -227,6 +228,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       sealingKeySeries: other.sealingKeySeries,
       epochRoot: other.epochRoot,
       privilegedServices: other.privilegedServices,
+      accumulationOutputLog: other.accumulationOutputLog,
       services,
     });
   }
@@ -402,7 +404,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
   entropy: FixedSizeArray<EntropyHash, ENTROPY_ENTRIES>;
   authPools: PerCore<KnownSizeArray<AuthorizerHash, `At most ${typeof MAX_AUTH_POOL_SIZE}`>>;
   authQueues: PerCore<FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>>;
-  recentBlocks: KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
+  recentBlocks: RecentBlocksHistory;
   statistics: StatisticsData;
   accumulationQueue: PerEpochBlock<readonly NotYetAccumulatedReport[]>;
   recentlyAccumulated: PerEpochBlock<ImmutableHashSet<WorkPackageHash>>;
@@ -410,6 +412,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
   sealingKeySeries: SafroleSealingKeys;
   epochRoot: BandersnatchRingRoot;
   privilegedServices: PrivilegedServices;
+  accumulationOutputLog: AccumulationOutput[];
   services: Map<ServiceId, InMemoryService>;
 
   recentServiceIds(): readonly ServiceId[] {
@@ -440,6 +443,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     this.sealingKeySeries = s.sealingKeySeries;
     this.epochRoot = s.epochRoot;
     this.privilegedServices = s.privilegedServices;
+    this.accumulationOutputLog = s.accumulationOutputLog;
     this.services = s.services;
   }
 
@@ -514,7 +518,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
         ),
         spec,
       ),
-      recentBlocks: asKnownSize([]),
+      recentBlocks: RecentBlocksHistory.empty(),
       statistics: StatisticsData.create({
         current: tryAsPerValidator(
           Array.from({ length: spec.validatorsCount }, () => ValidatorStatistics.empty()),
@@ -552,6 +556,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
         validatorsManager: tryAsServiceId(0),
         autoAccumulateServices: [],
       }),
+      accumulationOutputLog: [],
       services: new Map(),
     });
   }

@@ -124,10 +124,12 @@ export const inMemoryStateCodec = codec.Class<InMemoryState>(InMemoryState, {
   privilegedServices: serialize.privilegedServices.Codec,
   // pi
   statistics: serialize.statistics.Codec,
-  // theta
+  // omega
   accumulationQueue: serialize.accumulationQueue.Codec,
   // xi
   recentlyAccumulated: serialize.recentlyAccumulated.Codec,
+  // theta
+  accumulationOutputLog: serialize.accumulationOutputLog.Codec,
   // delta
   services: codec.dictionary(codec.u32.asOpaque<ServiceId>(), ServiceWithCodec.Codec, {
     sortKeys: (a, b) => a - b,

@@ -4,9 +4,7 @@ import { StateTransition, runStateTransition } from "./state-transition/state-tr
 const runners = [runner("state_transition", StateTransition.fromJson, runStateTransition)];
 
 main(runners, process.argv.slice(2), "test-vectors/javajam", {
-  accepted: [
-    /*"stf/state_transitions/"*/
-  ],
+  accepted: ["stf/state_transitions/"],
   ignored: ["testnetKeys.json", "stf/blocks/", "erasure_coding/"],
 })
   .then((r) => logger.log(r))
