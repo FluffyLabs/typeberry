@@ -3,7 +3,7 @@ import { StateTransition, runStateTransition } from "./state-transition/state-tr
 
 const runners = [runner("state_transition", StateTransition.fromJson, runStateTransition)];
 
-main(runners, process.argv.slice(2), "test-vectors/jamduna", {
+main(runners, process.argv.slice(2), "test-vectors/jamduna_065", {
   accepted: ["generic/state_transitions/", "assurances/state_transitions/", "orderedaccumulation/state_transitions/"],
   ignored: [
     "generic/state_transitions/00000016.json",
