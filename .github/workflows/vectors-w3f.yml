@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
 
 env:
-  TEST_VECTORS_REF: 4d0e957b969e974a7db701a7df7cdacb384283d0
+  TEST_VECTORS_REF: 5979ea51edc58020ee48a5d2b87281e1bd8be4f5
   TEST_SUITE: w3f
 
 jobs:

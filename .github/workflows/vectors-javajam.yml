@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
 
 env:
-  TEST_VECTORS_REF: 3e46bb56c75b16bcce8347e19b042f50e8c7d207
+  TEST_VECTORS_REF: 5979ea51edc58020ee48a5d2b87281e1bd8be4f5
   GP_VERSION: 0.6.7
   TEST_SUITE: javajam
 
