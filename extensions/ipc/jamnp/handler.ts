@@ -1,9 +1,8 @@
-import type { Socket } from "node:net";
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import type { StreamHandler, StreamId, StreamKind, StreamKindOf, StreamMessageSender } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
-import { encodeMessageLength } from "@typeberry/networking";
+import type { IpcHandler, IpcSender } from "../server.js";
 import { NewStream, StreamEnvelope, StreamEnvelopeType } from "./stream.js";
 
 export type ResponseHandler = (err: Error | null, response?: BytesBlob) => void;
@@ -17,30 +16,33 @@ type OnEnd = {
   reject: (error: Error) => void;
 };
 
-export class IpcHandler {
-  // already initiated streams
+export class JamnpIpcHandler implements IpcHandler {
+  /** already initiated streams */
   private readonly streams: Map<StreamId, StreamHandler> = new Map();
-  // streams awaiting confirmation from the other side.
+  /** streams awaiting confirmation from the other side. */
   private readonly pendingStreams: Map<StreamId, boolean> = new Map();
-  // a collection of handlers for particular stream kind
+  /** a collection of handlers for particular stream kind */
   private readonly streamHandlers: Map<StreamKind, StreamHandler> = new Map();
-  // termination promise + resolvers
+  /** termination promise + resolvers */
   private readonly onEnd: OnEnd;
 
-  private readonly sender: IpcSender;
-
-  constructor(socket: Socket) {
-    const onEnd = { finished: false } as OnEnd;
-    onEnd.listen = new Promise((resolve, reject) => {
-      onEnd.resolve = resolve;
-      onEnd.reject = reject;
+  constructor(private readonly sender: IpcSender) {
+    let resolve = () => {};
+    let reject = (_error: Error) => {};
+    const listen = new Promise<void>((res, rej) => {
+      resolve = res;
+      reject = rej;
     });
-    this.onEnd = onEnd;
-    this.sender = new IpcSender(socket);
+    this.onEnd = {
+      finished: false,
+      listen,
+      resolve,
+      reject,
+    };
   }
 
   /** Register stream handlers. */
-  registerHandlers(...handlers: StreamHandler[]) {
+  registerStreamHandlers(...handlers: StreamHandler[]) {
     for (const handler of handlers) {
       this.streamHandlers.set(handler.kind, handler);
     }
@@ -207,26 +209,4 @@ class EnvelopeSender implements StreamMessageSender {
       ),
     );
   }
-}
-
-class IpcSender {
-  constructor(private readonly socket: Socket) {}
-
-  send(data: BytesBlob): void {
-    sendWithLengthPrefix(this.socket, data.raw);
-  }
-
-  close(): void {
-    this.socket.end();
-  }
-}
-
-/**
- * Send a message to the socket, but prefix it with a 32-bit length,
- * so that the receiver can now the boundaries between the datum.
- */
-function sendWithLengthPrefix(socket: Socket, data: Uint8Array) {
-  const buffer = encodeMessageLength(data);
-  socket.write(buffer);
-  socket.write(data);
 }
