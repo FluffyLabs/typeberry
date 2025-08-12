@@ -14,7 +14,8 @@ try {
 const suites: { [key: string]: string } = {
   [TestSuite.W3F]: "jamtestvectors",
   [TestSuite.W3F_DAVXY]: "jamtestvectors-davxy",
-  [TestSuite.JAMDUNA_064]: "jamdunavectors_064",
+  [TestSuite.JAMDUNA_064]: "jamdunavectors-064",
+  [TestSuite.JAMDUNA_065]: "jamdunavectors-065",
   [TestSuite.JAVAJAM]: "javajamvectors",
 };
 

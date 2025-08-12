@@ -8,7 +8,7 @@ on:
 env:
   TEST_VECTORS_REF: 9658460523bb5b0250ef6b6fc04852e08dd76d61
   GP_VERSION: 0.6.5
-  TEST_SUITE: jamduna_065
+  TEST_SUITE: jamduna-065
 
 jobs:
   import:
@@ -34,7 +34,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: rm -rf ./database
-      - run: npm start -- import ./test-vectors/jamduna/data/safrole/blocks/*.json | tee safrole.txt
+      - run: npm start -- import ./test-vectors/jamduna_065/data/safrole/blocks/*.json | tee safrole.txt
       # TODO [ToDr] would probably be best to have some CLI to display the best block and test with that?
       #             or a special mode that would import the blocks for test purposes and print some extra output.
       - run: |
@@ -43,7 +43,7 @@ jobs:
             exit 1
           }
       - run: rm -rf ./database
-      - run: npm start -- import ./test-vectors/jamduna/data/fallback/blocks/*.json | tee fallback.txt
+      - run: npm start -- import ./test-vectors/jamduna_065/data/fallback/blocks/*.json | tee fallback.txt
       - run: |
           grep -q "Best block: #60 (0x5da17ce23b742d103fd40c20353db271601943a260653802f7645da319e10fd8)" fallback.txt || {
             echo "Seems that the blocks were not imported correctly"
