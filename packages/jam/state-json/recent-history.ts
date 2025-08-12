@@ -33,14 +33,14 @@ type JsonReportedWorkPackageInfo = {
 const recentBlockStateFromJson = json.object<JsonRecentBlockState, BlockState>(
   {
     header_hash: fromJson.bytes32(),
-    accumulation_result: fromJson.bytes32(),
+    beefy_root: fromJson.bytes32(),
     state_root: fromJson.bytes32(),
     reported: json.array(reportedWorkPackageFromJson),
   },
-  ({ header_hash, accumulation_result, state_root, reported }) => {
+  ({ header_hash, beefy_root, state_root, reported }) => {
     return BlockState.create({
       headerHash: header_hash,
-      accumulationResult: accumulation_result,
+      accumulationResult: beefy_root,
       postStateRoot: state_root,
       reported: HashDictionary.fromEntries(reported.map((x) => [x.workPackageHash, x])),
     });
@@ -49,31 +49,31 @@ const recentBlockStateFromJson = json.object<JsonRecentBlockState, BlockState>(
 
 type JsonRecentBlockState = {
   header_hash: HeaderHash;
-  accumulation_result: KeccakHash;
+  beefy_root: KeccakHash;
   state_root: StateRootHash;
   reported: WorkPackageInfo[];
 };
 
 const recentBlocksFromJson = json.object<JsonRecentBlocks, RecentBlocksHistory>(
   {
-    blocks: json.array(recentBlockStateFromJson),
-    accumulation_log: {
+    history: json.array(recentBlockStateFromJson),
+    mmr: {
       peaks: json.array(json.nullable(fromJson.bytes32())),
     },
   },
-  ({ blocks, accumulation_log }) => {
+  ({ history, mmr }) => {
     return RecentBlocksHistory.create(
       RecentBlocks.create({
-        blocks,
-        accumulationLog: accumulation_log,
+        blocks: history,
+        accumulationLog: mmr,
       }),
     );
   },
 );
 
 type JsonRecentBlocks = {
-  blocks: BlocksState;
-  accumulation_log: {
+  history: BlocksState;
+  mmr: {
     peaks: Array<KeccakHash | null>;
   };
 };
