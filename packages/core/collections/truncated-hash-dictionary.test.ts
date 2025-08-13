@@ -220,4 +220,24 @@ describe("TruncatedHashDictionary", () => {
       assert.deepStrictEqual(dict.get(key2), undefined);
     });
   });
+
+  describe("entries", () => {
+    it("should return entries with truncated keys", () => {
+      const key1 = Bytes.parseBytes("0x8888888888888888888888888888888888888888888888888888888888888801", HASH_SIZE);
+      const key2 = Bytes.parseBytes("0x88888888888888888888888888888888888888888888888888888888888888ff", HASH_SIZE);
+      const truncatedKey = Bytes.parseBytes(
+        "0x88888888888888888888888888888888888888888888888888888888888888",
+        TRUNCATED_HASH_SIZE,
+      );
+      const dict = TruncatedHashDictionary.fromEntries([
+        [key1, "value"],
+        [key2, "value2"],
+      ]);
+
+      for (const [key, value] of dict.entries()) {
+        assert.deepStrictEqual(key.toString(), truncatedKey.toString());
+        assert.deepStrictEqual(value, "value2");
+      }
+    });
+  });
 });
