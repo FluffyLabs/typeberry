@@ -70,6 +70,15 @@ export enum ZeroVoidError {
   InvalidPage = 1,
 }
 
+export enum PagesError {
+  /** No machine under given machine index. */
+  NoMachine = 0,
+  /** Privided invalid request type or attempting to change rights of non-accessible page. */
+  InvalidRequest = 1,
+  /** Trying to preserve value of voided page. */
+  UninitializedPage = 2,
+}
+
 /** Error machine is not found. */
 export const NoMachineError = Symbol("Machine index not found.");
 export type NoMachineError = typeof NoMachineError;
@@ -126,4 +135,12 @@ export interface RefineExternalities {
 
   /** Lookup a historical preimage. */
   historicalLookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
+
+  /** Change access to and/or zero the value of memory. */
+  machinePages(
+    machineIndex: MachineId,
+    pageStart: U64,
+    pageCount: U64,
+    requestType: U64,
+  ): Promise<Result<OK, PagesError>>;
 }
