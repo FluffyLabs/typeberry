@@ -3,7 +3,7 @@ import { Bytes } from "@typeberry/bytes";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type Gas, type GasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
-import { assertNever, Compatibility, GpVersion } from "@typeberry/utils";
+import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
 import { type PartialState, TRANSFER_MEMO_BYTES, TransferError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { getServiceId } from "../utils.js";

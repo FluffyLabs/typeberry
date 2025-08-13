@@ -7,10 +7,10 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { type RefineExternalities, tryAsProgramCounter } from "../externalities/refine-externalities.js";
 import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID, clampU64ToU32 } from "../utils.js";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 
 const IN_OUT_REG = 7;
 

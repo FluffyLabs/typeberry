@@ -11,7 +11,7 @@ import {
 import { type GasCounter, Registers, tryAsBigGas, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { check, Compatibility, GpVersion } from "@typeberry/utils";
+import { Compatibility, GpVersion, check } from "@typeberry/utils";
 import { type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID } from "../utils.js";

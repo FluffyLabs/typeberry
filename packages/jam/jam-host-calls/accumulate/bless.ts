@@ -6,7 +6,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { tryAsPerCore } from "@typeberry/state";
-import { asOpaqueType, Compatibility, GpVersion } from "@typeberry/utils";
+import { Compatibility, GpVersion, asOpaqueType } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { getServiceId } from "../utils.js";

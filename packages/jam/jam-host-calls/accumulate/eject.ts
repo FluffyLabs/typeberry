@@ -5,7 +5,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { assertNever, Compatibility, GpVersion } from "@typeberry/utils";
+import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
 import { EjectError, type PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { getServiceId } from "../utils.js";
