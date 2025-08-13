@@ -201,7 +201,6 @@ const createServices = (items: [ServiceId, OpaqueHash, BytesBlob][]) => {
           storageUtilisationCount: tryAsU32(0),
           gratisStorage: tryAsU64(0),
           created: tryAsTimeSlot(0),
-          // TODO [MaSo] Should be updated during accumulation
           lastAccumulation: tryAsTimeSlot(0),
           parentService: tryAsServiceId(0),
         }),

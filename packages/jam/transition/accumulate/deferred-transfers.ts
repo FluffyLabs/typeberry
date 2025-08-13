@@ -41,6 +41,9 @@ export enum DeferredTransfersErrorCode {
 }
 const logger = Logger.new(import.meta.filename, "deferred-transfers");
 
+/**
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/18df0118df01?v=0.6.7
+ */
 export class DeferredTransfers {
   constructor(
     public readonly chainSpec: ChainSpec,
@@ -79,7 +82,7 @@ export class DeferredTransfers {
         return Result.error(DeferredTransfersErrorCode.ServiceBalanceOverflow);
       }
 
-      const newInfo = ServiceAccountInfo.create({ ...info, balance: newBalance.value });
+      const newInfo = ServiceAccountInfo.create({ ...info, balance: newBalance.value, lastAccumulation: timeslot });
       partiallyUpdatedState.updateServiceInfo(serviceId, newInfo);
 
       if (code === null || transfers.length === 0) {
