@@ -62,6 +62,7 @@ class Input {
     spec: ChainSpec,
     entropy: ReportsState["entropy"],
     recentBlocksPartialUpdate: ReportsState["recentBlocks"],
+    assurancesAvailAssignment: ReportsState["availabilityAssignment"],
   ): ReportsInput {
     const view = guaranteesAsView(spec, input.guarantees, { disableCredentialsRangeCheck: true });
 
@@ -70,6 +71,7 @@ class Input {
       slot: input.slot,
       newEntropy: entropy,
       recentBlocksPartialUpdate,
+      assurancesAvailAssignment,
     };
   }
 }
@@ -254,6 +256,7 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
     spec,
     preState.entropy,
     preState.recentBlocks, // note: for full fidelity this should be partially updated state, not prior state as it is now
+    preState.availabilityAssignment,
   );
   const expectedOutput = TestReportsResult.toReportsResult(testContent.output);
 

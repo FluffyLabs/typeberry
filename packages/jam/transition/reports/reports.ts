@@ -10,6 +10,7 @@ import type { MmrHasher } from "@typeberry/mmr";
 import type { SafroleStateUpdate } from "@typeberry/safrole";
 import { AvailabilityAssignment, type State, tryAsPerCore } from "@typeberry/state";
 import { OK, Result, asOpaqueType } from "@typeberry/utils";
+import type { AssurancesStateUpdate } from "../assurances.js";
 import type { RecentHistoryStateUpdate } from "../recent-history.js";
 import { ReportsError } from "./error.js";
 import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment.js";
@@ -48,6 +49,11 @@ export type ReportsInput = {
   newEntropy: SafroleStateUpdate["entropy"];
   /** Partial update of recent blocks. (β†, https://graypaper.fluffylabs.dev/#/9a08063/0fd8010fdb01?v=0.6.6) */
   recentBlocksPartialUpdate: RecentHistoryStateUpdate["recentBlocks"];
+  /**
+   * ρ‡ - Availability assignment resulting from assurances transition
+   * https://graypaper.fluffylabs.dev/#/1c979cb/141302144402?v=0.7.1
+   */
+  assurancesAvailAssignment: AssurancesStateUpdate["availabilityAssignment"];
 };
 
 export type ReportsState = Pick<
@@ -139,12 +145,15 @@ export class Reports {
     }
 
     /**
-     * Replace availability assignment.
-     *
-     * https://graypaper.fluffylabs.dev/#/5f542d7/154c02154c02
+     * ρ′ - equivalent to ρ‡, except where the extrinsic replaced
+     * an entry. In the case an entry is replaced, the new value
+     * includes the present time τ ′ allowing for the value to be
+     * replaced without respect to its availability once sufficient
+     * time has elapsed.
+     * https://graypaper.fluffylabs.dev/#/1c979cb/161e00165900?v=0.7.1
      */
     let index = 0;
-    const availabilityAssignment = this.state.availabilityAssignment.slice();
+    const availabilityAssignment = input.assurancesAvailAssignment.slice();
 
     for (const guarantee of input.guarantees) {
       const report = guarantee.view().report.materialize();
