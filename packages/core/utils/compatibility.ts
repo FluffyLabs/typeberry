@@ -4,6 +4,7 @@ export enum GpVersion {
   V0_6_6 = "0.6.6",
   V0_6_7 = "0.6.7",
   V0_7_0 = "0.7.0",
+  V0_7_1 = "0.7.1",
 }
 
 export enum TestSuite {
@@ -21,6 +22,7 @@ const ALL_VERSIONS_IN_ORDER = [
   GpVersion.V0_6_6,
   GpVersion.V0_6_7,
   GpVersion.V0_7_0,
+  GpVersion.V0_7_1,
 ];
 
 const env = typeof process === "undefined" ? {} : process.env;
