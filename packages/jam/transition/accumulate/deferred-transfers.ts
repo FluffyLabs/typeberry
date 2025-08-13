@@ -55,6 +55,7 @@ export class DeferredTransfers {
     timeslot,
     servicesUpdate,
   }: DeferredTransfersInput): Promise<Result<DeferredTransfersResult, DeferredTransfersErrorCode>> {
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/187a03187a03?v=0.6.7
     const transferStatistics = new Map<ServiceId, CountAndGasUsed>();
     const services = uniquePreserveOrder(pendingTransfers.flatMap((x) => [x.source, x.destination]));
     const partiallyUpdatedState = new PartiallyUpdatedState(this.state, AccumulationStateUpdate.new(servicesUpdate));
@@ -82,7 +83,7 @@ export class DeferredTransfers {
         return Result.error(DeferredTransfersErrorCode.ServiceBalanceOverflow);
       }
 
-      const newInfo = ServiceAccountInfo.create({ ...info, balance: newBalance.value, lastAccumulation: timeslot });
+      const newInfo = ServiceAccountInfo.create({ ...info, balance: newBalance.value });
       partiallyUpdatedState.updateServiceInfo(serviceId, newInfo);
 
       if (code === null || transfers.length === 0) {
@@ -90,6 +91,13 @@ export class DeferredTransfers {
         transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(0) });
         continue;
       }
+
+      // update last accumulation
+      // https://graypaper.fluffylabs.dev/#/7e6ff6a/181003185103?v=0.6.7
+      partiallyUpdatedState.updateServiceInfo(
+        serviceId,
+        ServiceAccountInfo.create({ ...newInfo, lastAccumulation: timeslot }),
+      );
 
       const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState });
       const args = Encoder.encodeObject(ON_TRANSFER_ARGS_CODEC, { timeslot, serviceId, transfers }, this.chainSpec);
