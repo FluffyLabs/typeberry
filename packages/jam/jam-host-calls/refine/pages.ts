@@ -21,7 +21,6 @@ const IN_OUT_REG = 7;
  * `ZeroWrite = 2`: Zeroes memory and set access to read-write.
  * `Read = 3`: Preserve memory and set access to read-only.
  * `Write = 4`: Preserve memory and set access to read-write.
- * `Otherwise`: Do nothing.
  *
  * https://graypaper.fluffylabs.dev/#/1c979cb/349602349602?v=0.7.1
  */
