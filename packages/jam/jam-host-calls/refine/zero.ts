@@ -5,6 +5,7 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { MAX_VALUE } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
 import { type RefineExternalities, ZeroVoidError, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { HostCallResult } from "../results.js";
@@ -22,7 +23,7 @@ const IN_OUT_REG = 7;
 export class Zero implements HostCallHandler {
   index = tryAsHostCallIndex(
     Compatibility.selectIfGreaterOrEqual(23, {
-      [GpVersion.V0_6_7]: -1,
+      [GpVersion.V0_6_7]: MAX_VALUE,
     }),
   );
   gasCost = tryAsSmallGas(10);
