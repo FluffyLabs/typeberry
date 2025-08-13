@@ -10,7 +10,7 @@ import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/util
 /**
  * Program counter is a 64-bit unsigned integer that points to the next instruction
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/2e09012e0901?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/1c979cb/2e3f012e3f01?v=0.7.1
  */
 export type ProgramCounter = Opaque<U64, "ProgramCounter[u64]">;
 /** Convert a number into ProgramCounter. */
