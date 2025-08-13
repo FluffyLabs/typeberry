@@ -72,7 +72,7 @@ export class Compatibility {
   }
 
   /**
-   * Allows selecting different values for different GrayPaper versions from one record.
+   * Allows selecting different values for different Gray Paper versions from one record.
    *
    * @param fallback The default value to return if no value is found for the current.
    * @param record A record mapping versions to values, checking if the version is greater or equal to the current version.
