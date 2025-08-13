@@ -34,6 +34,7 @@ export class Pages implements HostCallHandler {
   index = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsHostCallIndex(11) : tryAsHostCallIndex(-1);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10);
 
   constructor(private readonly refine: RefineExternalities) {}
 
