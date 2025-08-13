@@ -3,7 +3,7 @@ import { Bytes } from "@typeberry/bytes";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type Gas, type GasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
-import { assertNever } from "@typeberry/utils";
+import { assertNever, Compatibility, GpVersion } from "@typeberry/utils";
 import { type PartialState, TRANSFER_MEMO_BYTES, TransferError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { getServiceId } from "../utils.js";
@@ -16,14 +16,17 @@ const MEMO_START_REG = 10; // `o`
 /**
  * Transfer balance from one service account to another.
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/373b00373b00?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/373b00373b00?v=0.6.7
  */
 export class Transfer implements HostCallHandler {
-  index = tryAsHostCallIndex(11);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual(11, {
+      [GpVersion.V0_6_7]: 20,
+    }),
+  );
   /**
    * `g = 10 + ω9`
-   *
-   * https://graypaper.fluffylabs.dev/#/9a08063/373d00373d00?v=0.6.6
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/373d00373d00?v=0.6.7
    */
   gasCost = (regs: IHostCallRegisters): Gas => {
     const gas = 10n + regs.get(ON_TRANSFER_GAS_REG);

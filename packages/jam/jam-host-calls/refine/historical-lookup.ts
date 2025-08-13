@@ -12,16 +12,21 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import type { RefineExternalities } from "../externalities/refine-externalities.js";
 import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID, getServiceIdOrCurrent } from "../utils.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 
 const IN_OUT_REG = 7;
 
 /**
  * Lookup a historical preimage.
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/343b00343b00?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/343b00343b00?v=0.6.7
  */
 export class HistoricalLookup implements HostCallHandler {
-  index = tryAsHostCallIndex(17);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual(17, {
+      [GpVersion.V0_6_7]: 6,
+    }),
+  );
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 

@@ -5,6 +5,7 @@ import { minU64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { HostCallResult } from "./results.js";
 import { getServiceIdOrCurrent } from "./utils.js";
 
@@ -19,10 +20,15 @@ const IN_OUT_REG = 7;
 /**
  * Lookup a preimage.
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/329802329802?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/329902329902?v=0.6.7
  */
 export class Lookup implements HostCallHandler {
-  index = tryAsHostCallIndex(1);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual(1, {
+      [GpVersion.V0_6_7]: 2,
+    }),
+  );
+
   gasCost = tryAsSmallGas(10);
 
   constructor(

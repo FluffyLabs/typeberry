@@ -4,7 +4,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { assertNever } from "@typeberry/utils";
+import { assertNever, Compatibility, GpVersion } from "@typeberry/utils";
 import { type PartialState, RequestPreimageError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 
@@ -13,10 +13,14 @@ const IN_OUT_REG = 7;
 /**
  * Request a preimage to be available.
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/383b00383b00?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/383b00383b00?v=0.6.7
  */
 export class Solicit implements HostCallHandler {
-  index = tryAsHostCallIndex(14);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual(14, {
+      [GpVersion.V0_6_7]: 23,
+    }),
+  );
   gasCost = tryAsSmallGas(10);
 
   constructor(

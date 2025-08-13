@@ -11,7 +11,7 @@ import {
 import { type GasCounter, Registers, tryAsBigGas, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { check } from "@typeberry/utils";
+import { check, Compatibility, GpVersion } from "@typeberry/utils";
 import { type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID } from "../utils.js";
@@ -27,10 +27,14 @@ const GAS_REGISTERS_SIZE = tryAsExactBytes(gasAndRegistersCodec.sizeHint);
 /**
  * Kick off (run) a PVM instance given the machine index and the destination memory (which contains gas and registers values).
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/35a50135a501?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/354301354301?v=0.6.7
  */
 export class Invoke implements HostCallHandler {
-  index = tryAsHostCallIndex(25);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual(25, {
+      [GpVersion.V0_6_7]: 12,
+    }),
+  );
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 

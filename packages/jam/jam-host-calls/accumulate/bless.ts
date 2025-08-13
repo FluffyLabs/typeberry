@@ -6,7 +6,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { tryAsPerCore } from "@typeberry/state";
-import { asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType, Compatibility, GpVersion } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { getServiceId } from "../utils.js";
@@ -27,10 +27,18 @@ const serviceIdAndGasCodec = codec.object({
 /**
  * Modify privileged services and services that auto-accumulate every block.
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/366a00366a00?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/363b00363b00?v=0.6.7
+ *
+ * TODO [MaSo] Update handle Authorizers and check if service is manager
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/365a00365a00?v=0.6.7
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/36db0036db00?v=0.6.7
  */
 export class Bless implements HostCallHandler {
-  index = tryAsHostCallIndex(5);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual(5, {
+      [GpVersion.V0_6_7]: 14,
+    }),
+  );
   gasCost = tryAsSmallGas(10);
 
   constructor(

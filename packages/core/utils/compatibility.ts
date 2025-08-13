@@ -67,4 +67,21 @@ export class Compatibility {
     }
     return Compatibility.is(...ALL_VERSIONS_IN_ORDER.slice(index));
   }
+
+  /**
+   * Allows selecting different values for different GrayPaper versions from one record.
+   *
+   * @param fallback The default value to return if no value is found for the current.
+   * @param record A record mapping versions to values, checking if the version is greater or equal to the current version.
+   * @returns The value for the current version, or the default value.
+   */
+  static selectIfGreaterOrEqual<T>(fallback: T, record: Partial<Record<GpVersion, T>>): T {
+    for (const version of ALL_VERSIONS_IN_ORDER.toReversed()) {
+      const value = record[version];
+      if (value !== undefined && Compatibility.isGreaterOrEqual(version)) {
+        return value;
+      }
+    }
+    return fallback;
+  }
 }

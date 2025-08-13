@@ -6,7 +6,7 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { assertNever } from "@typeberry/utils";
+import { assertNever, Compatibility, GpVersion } from "@typeberry/utils";
 import { PeekPokeError, type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID } from "../utils.js";
@@ -16,10 +16,14 @@ const IN_OUT_REG = 7;
 /**
  * Copy a piece of local memory into nested PVM instance (machine).
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/340403340403?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/340403340403?v=0.6.7
  */
 export class Poke implements HostCallHandler {
-  index = tryAsHostCallIndex(22);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual(22, {
+      [GpVersion.V0_6_7]: 10,
+    }),
+  );
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
