@@ -8,7 +8,7 @@ import {
   type IHostCallRegisters,
   PvmExecution,
 } from "@typeberry/pvm-host-calls";
-import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
+import { traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { type PartialState, PreimageStatusKind } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
@@ -25,6 +25,7 @@ const UPPER_BITS_SHIFT = 32n;
 export class Query implements HostCallHandler {
   index = tryAsHostCallIndex(13);
   gasCost = tryAsSmallGas(10);
+  tracedRegisters = traceRegisters(IN_OUT_REG_1, IN_OUT_REG_2, 9);
 
   constructor(
     public readonly currentServiceId: ServiceId,

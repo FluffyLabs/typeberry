@@ -6,6 +6,7 @@ import {
   type HostCallHandler,
   type HostCallIndex,
   type PvmExecution,
+  traceRegisters,
   tryAsHostCallIndex,
 } from "./host-call-handler.js";
 import type { IHostCallMemory } from "./host-call-memory.js";
@@ -28,11 +29,24 @@ export class HostCallsManager {
 
   /** Get a host call by index. */
   get(hostCallIndex: HostCallIndex): HostCallHandler {
-    const hostCallHandler: HostCallHandler = this.hostCalls.get(hostCallIndex) ?? this.missing;
-    logger.trace(
-      `[${hostCallHandler.currentServiceId}] PVM invoking ${hostCallIndex} (${hostCallHandler.constructor.name}:${hostCallHandler.index})`,
-    );
-    return hostCallHandler;
+    return this.hostCalls.get(hostCallIndex) ?? this.missing;
+  }
+
+  traceHostCall(
+    context: string,
+    hostCallIndex: HostCallIndex,
+    hostCallHandler: HostCallHandler,
+    registers: IHostCallRegisters,
+  ) {
+    const { currentServiceId } = hostCallHandler;
+    const requested = hostCallIndex !== hostCallHandler.index ? ` (${hostCallIndex})` : "";
+    const name = `${hostCallHandler.constructor.name}:${hostCallHandler.index}`;
+    const registerValues = hostCallHandler.tracedRegisters
+      .map((idx) => {
+        return `${idx}: ${registers.get(idx)}`;
+      })
+      .join(", ");
+    logger.trace(`[${currentServiceId}] ${context} ${name} ${requested}. Registers: ${registerValues}`);
   }
 }
 
@@ -40,6 +54,7 @@ class Missing implements HostCallHandler {
   index = tryAsHostCallIndex(2 ** 32 - 1);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
+  tracedRegisters = traceRegisters(7);
 
   execute(_gas: GasCounter, regs: IHostCallRegisters, _memory: IHostCallMemory): Promise<PvmExecution | undefined> {
     regs.set(7, HostCallResult.WHAT);

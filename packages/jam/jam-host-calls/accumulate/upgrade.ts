@@ -2,7 +2,7 @@ import type { ServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
-import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
+import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import type { PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
@@ -19,6 +19,7 @@ const ALLOWANCE_REG = 9; // `m`
 export class Upgrade implements HostCallHandler {
   index = tryAsHostCallIndex(10);
   gasCost = tryAsSmallGas(10);
+  tracedRegisters = traceRegisters(IN_OUT_REG, GAS_REG, ALLOWANCE_REG);
 
   constructor(
     public readonly currentServiceId: ServiceId,

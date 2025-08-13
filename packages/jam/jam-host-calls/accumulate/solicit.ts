@@ -2,7 +2,7 @@ import type { ServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
-import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
+import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { assertNever } from "@typeberry/utils";
 import { type PartialState, RequestPreimageError } from "../externalities/partial-state.js";
@@ -18,6 +18,7 @@ const IN_OUT_REG = 7;
 export class Solicit implements HostCallHandler {
   index = tryAsHostCallIndex(14);
   gasCost = tryAsSmallGas(10);
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8);
 
   constructor(
     public readonly currentServiceId: ServiceId,
