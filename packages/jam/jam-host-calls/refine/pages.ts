@@ -28,7 +28,7 @@ const IN_OUT_REG = 7;
 export class Pages implements HostCallHandler {
   // TODO [MaSo] Change to this when PR #540 is merged
   // index = tryAsHostCallIndex(
-  //   Compatibility.selectIfGreaterOrEqual(MAX_VALUE, {
+  //   Compatibility.selectIfGreaterOrEqual(-1, {
   //     [GpVersion.V0_6_7]: 11,
   //   }),
   // );
