@@ -73,7 +73,7 @@ export enum ZeroVoidError {
 export enum PagesError {
   /** No machine under given machine index. */
   NoMachine = 0,
-  /** Privided invalid request type or attempting to change rights of non-accessible page. */
+  /** Provided invalid request type or attempting to change non-accessible page. */
   InvalidRequest = 1,
   /** Trying to preserve value of voided page. */
   UninitializedPage = 2,
