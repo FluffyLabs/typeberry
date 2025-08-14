@@ -112,9 +112,11 @@ export class Assurances {
     const availableReports: WorkReport[] = [];
     const coresToClear: number[] = [];
     const validatorsSuperMajority = this.chainSpec.validatorsSuperMajority;
+    const availabilityAssignment = input.disputesAvailAssignment.slice();
+
     for (let c = 0; c < coresCount; c++) {
       const noOfAssurances = perCoreAssurances[c];
-      const workReport = this.state.availabilityAssignment[c];
+      const workReport = availabilityAssignment[c];
       const isReportPending = workReport !== null;
       /**
        * Verify if availability is pending: A bit may only be set if the corresponding
@@ -151,7 +153,6 @@ export class Assurances {
      * which are either now available or have timed out
      * https://graypaper.fluffylabs.dev/#/1c979cb/141302144402?v=0.7.1
      */
-    const availabilityAssignment = input.disputesAvailAssignment.slice();
     for (const c of coresToClear) {
       availabilityAssignment[c] = null;
     }

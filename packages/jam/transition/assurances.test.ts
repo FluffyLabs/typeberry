@@ -62,7 +62,7 @@ describe("Assurances", () => {
 
   it("should perform some transition", async () => {
     const initialState = {
-      availabilityAssignment: tryAsPerCore(INITIAL_ASSIGNMENT.slice(), tinyChainSpec),
+      availabilityAssignment: tryAsPerCore([null, null], tinyChainSpec), // empty assignment to make sure assurances use disputesAvailAssignment
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
     };
     const assurances = new Assurances(tinyChainSpec, initialState);
@@ -111,7 +111,7 @@ describe("Assurances", () => {
           },
         ].map(intoAssurances),
       ),
-      disputesAvailAssignment: initialState.availabilityAssignment,
+      disputesAvailAssignment: tryAsPerCore(INITIAL_ASSIGNMENT.slice(), tinyChainSpec),
     };
 
     const res = await assurances.transition(input);

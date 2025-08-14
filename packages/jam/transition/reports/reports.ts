@@ -127,7 +127,7 @@ export class Reports {
     const verifySignaturesLater = ed25519.verify(signaturesToVerify.ok);
 
     // Perform rest of the work in the meantime.
-    const restResult = this.verifyPostSignatureChecks(input.guarantees);
+    const restResult = this.verifyPostSignatureChecks(input.guarantees, input.assurancesAvailAssignment);
     if (restResult.isError) {
       return restResult;
     }
@@ -193,8 +193,11 @@ export class Reports {
     );
   }
 
-  verifyPostSignatureChecks(input: GuaranteesExtrinsicView) {
-    return verifyPostSignatureChecks(input, this.state.availabilityAssignment, this.state.authPools, (id) =>
+  verifyPostSignatureChecks(
+    input: GuaranteesExtrinsicView,
+    assurancesAvailAssignment: ReportsInput["assurancesAvailAssignment"],
+  ) {
+    return verifyPostSignatureChecks(input, assurancesAvailAssignment, this.state.authPools, (id) =>
       this.state.getService(id),
     );
   }
