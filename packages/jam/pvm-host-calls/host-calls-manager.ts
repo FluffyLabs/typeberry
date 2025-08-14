@@ -46,7 +46,7 @@ export class HostCallsManager {
         return `${idx}: ${registers.get(idx)}`;
       })
       .join(", ");
-    logger.trace(`[${currentServiceId}] ${context} ${name} ${requested}. Registers: ${registerValues}`);
+    logger.trace(`[${currentServiceId}] ${context} ${name}${requested}. Registers: ${registerValues}`);
   }
 }
 
