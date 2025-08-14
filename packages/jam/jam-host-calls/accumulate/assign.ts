@@ -6,7 +6,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import type { IHostCallRegisters } from "@typeberry/pvm-host-calls/host-call-registers.js";
+import type { IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import type { PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";

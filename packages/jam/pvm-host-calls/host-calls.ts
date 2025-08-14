@@ -91,11 +91,11 @@ export class HostCalls {
       const gasCost = typeof hostCall.gasCost === "number" ? hostCall.gasCost : hostCall.gasCost(regs);
       const underflow = gas.sub(gasCost);
 
-      this.hostCalls.traceHostCall("Invoking", index, hostCall, regs);
       if (underflow) {
         this.hostCalls.traceHostCall("OOG", index, hostCall, regs);
         return ReturnValue.fromStatus(pvmInstance.getGasConsumed(), Status.OOG);
       }
+      this.hostCalls.traceHostCall("Invoking", index, hostCall, regs);
       const result = await hostCall.execute(gas, regs, memory);
       this.hostCalls.traceHostCall(result === undefined ? "Result" : `Status(${result})`, index, hostCall, regs);
 
