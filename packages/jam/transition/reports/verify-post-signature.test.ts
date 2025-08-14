@@ -22,7 +22,7 @@ describe("Reports.verifyPostSignatureChecks", () => {
       }),
     ]);
 
-    const res = reports.verifyPostSignatureChecks(guarantees);
+    const res = reports.verifyPostSignatureChecks(guarantees, reports.state.availabilityAssignment);
 
     deepEqual(res, {
       isOk: false,
@@ -42,7 +42,7 @@ describe("Reports.verifyPostSignatureChecks", () => {
       }),
     ]);
 
-    const res = reports.verifyPostSignatureChecks(guarantees);
+    const res = reports.verifyPostSignatureChecks(guarantees, reports.state.availabilityAssignment);
 
     deepEqual(res, {
       isOk: false,
@@ -63,7 +63,7 @@ describe("Reports.verifyPostSignatureChecks", () => {
       }),
     ]);
 
-    const res = reports.verifyPostSignatureChecks(guarantees);
+    const res = reports.verifyPostSignatureChecks(guarantees, reports.state.availabilityAssignment);
 
     deepEqual(res, {
       isOk: false,
@@ -85,7 +85,7 @@ describe("Reports.verifyPostSignatureChecks", () => {
       }),
     ]);
 
-    const res = reports.verifyPostSignatureChecks(guarantees);
+    const res = reports.verifyPostSignatureChecks(guarantees, reports.state.availabilityAssignment);
 
     deepEqual(res, {
       isOk: false,
@@ -113,7 +113,7 @@ describe("Reports.verifyPostSignatureChecks", () => {
       }),
     ]);
 
-    const res = reports.verifyPostSignatureChecks(guarantees);
+    const res = reports.verifyPostSignatureChecks(guarantees, reports.state.availabilityAssignment);
 
     deepEqual(res, {
       isOk: false,
