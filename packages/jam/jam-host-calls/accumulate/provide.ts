@@ -5,6 +5,7 @@ import {
   type IHostCallMemory,
   type IHostCallRegisters,
   PvmExecution,
+  traceRegisters,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
@@ -28,6 +29,7 @@ export class Provide implements HostCallHandler {
     }),
   );
   gasCost = tryAsSmallGas(10);
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9);
 
   constructor(
     public readonly currentServiceId: ServiceId,

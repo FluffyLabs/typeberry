@@ -4,6 +4,7 @@ import {
   type IHostCallMemory,
   type IHostCallRegisters,
   PvmExecution,
+  traceRegisters,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
@@ -27,6 +28,7 @@ export class Machine implements HostCallHandler {
   );
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9);
 
   constructor(private readonly refine: RefineExternalities) {}
 
@@ -36,7 +38,7 @@ export class Machine implements HostCallHandler {
     memory: IHostCallMemory,
   ): Promise<PvmExecution | undefined> {
     // `p_o`: memory index where there program code starts
-    const codeStart = regs.get(7);
+    const codeStart = regs.get(IN_OUT_REG);
     // `p_z`: length of the program code
     const codeLength = regs.get(8);
     // `i`: starting program counter

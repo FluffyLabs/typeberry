@@ -4,7 +4,7 @@ import { type Blake2bHash, blake2b } from "@typeberry/hash";
 import { minU64 } from "@typeberry/numbers";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
-import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
+import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import { HostCallResult } from "./results.js";
@@ -32,6 +32,7 @@ export class Read implements HostCallHandler {
     }),
   );
   gasCost = tryAsSmallGas(10);
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10, 11, 12);
 
   constructor(
     public readonly currentServiceId: ServiceId,

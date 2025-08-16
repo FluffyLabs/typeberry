@@ -7,7 +7,7 @@ import {
   type IHostCallRegisters,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
-import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler.js";
+import { PvmExecution, traceRegisters } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { RefineExternalities } from "../externalities/refine-externalities.js";
@@ -29,6 +29,7 @@ export class HistoricalLookup implements HostCallHandler {
   );
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9);
 
   constructor(private readonly refine: RefineExternalities) {}
 

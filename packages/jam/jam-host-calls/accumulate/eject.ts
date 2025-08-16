@@ -3,7 +3,7 @@ import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
-import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
+import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
 import { EjectError, type PartialState } from "../externalities/partial-state.js";
@@ -24,6 +24,7 @@ export class Eject implements HostCallHandler {
     }),
   );
   gasCost = tryAsSmallGas(10);
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8);
 
   constructor(
     public readonly currentServiceId: ServiceId,

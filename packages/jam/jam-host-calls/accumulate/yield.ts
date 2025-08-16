@@ -7,7 +7,7 @@ import {
   type IHostCallRegisters,
   PvmExecution,
 } from "@typeberry/pvm-host-calls";
-import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
+import { traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
@@ -27,6 +27,7 @@ export class Yield implements HostCallHandler {
     }),
   );
   gasCost = tryAsSmallGas(10);
+  tracedRegisters = traceRegisters(IN_OUT_REG);
 
   constructor(
     public readonly currentServiceId: ServiceId,
