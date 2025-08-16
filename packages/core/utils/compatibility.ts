@@ -78,9 +78,12 @@ export class Compatibility {
    * @param record A record mapping versions to values, checking if the version is greater or equal to the current version.
    * @returns The value for the current version, or the default value.
    */
-  static selectIfGreaterOrEqual<T>(fallback: T, record: Partial<Record<GpVersion, T>>): T {
+  static selectIfGreaterOrEqual<T>({
+    fallback,
+    versions,
+  }: { fallback: T; versions: Partial<Record<GpVersion, T>> }): T {
     for (const version of ALL_VERSIONS_IN_ORDER.toReversed()) {
-      const value = record[version];
+      const value = versions[version];
       if (value !== undefined && Compatibility.isGreaterOrEqual(version)) {
         return value;
       }

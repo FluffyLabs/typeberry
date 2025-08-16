@@ -20,8 +20,11 @@ const IN_OUT_REG = 7;
  */
 export class Expunge implements HostCallHandler {
   index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual(26, {
-      [GpVersion.V0_6_7]: 13,
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 26,
+      versions: {
+        [GpVersion.V0_6_7]: 13,
+      },
     }),
   );
   gasCost = tryAsSmallGas(10);

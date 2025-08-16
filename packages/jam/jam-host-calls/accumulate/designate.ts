@@ -22,8 +22,11 @@ export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint
  */
 export class Designate implements HostCallHandler {
   index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual(7, {
-      [GpVersion.V0_6_7]: 16,
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 7,
+      versions: {
+        [GpVersion.V0_6_7]: 16,
+      },
     }),
   );
   gasCost = tryAsSmallGas(10);

@@ -38,7 +38,7 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
       [GpVersion.V0_7_1]: "high",
     };
 
-    const result = Compatibility.selectIfGreaterOrEqual("default", record);
+    const result = Compatibility.selectIfGreaterOrEqual({ fallback: "default", versions: record });
 
     assert.equal(result, "low");
   });
@@ -53,7 +53,7 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
       [GpVersion.V0_7_1]: "high",
     };
 
-    const result = Compatibility.selectIfGreaterOrEqual("default", record);
+    const result = Compatibility.selectIfGreaterOrEqual({ fallback: "default", versions: record });
 
     assert.equal(result, "mid");
   });
@@ -68,7 +68,7 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
       [GpVersion.V0_7_1]: "high",
     };
 
-    const result = Compatibility.selectIfGreaterOrEqual("default", record);
+    const result = Compatibility.selectIfGreaterOrEqual({ fallback: "default", versions: record });
 
     assert.equal(result, "high");
   });
@@ -83,7 +83,7 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
       [GpVersion.V0_7_1]: "high",
     };
 
-    const result = Compatibility.selectIfGreaterOrEqual("default", record);
+    const result = Compatibility.selectIfGreaterOrEqual({ fallback: "default", versions: record });
 
     assert.equal(result, "default");
   });
@@ -92,7 +92,7 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
     const gpVersion = GpVersion.V0_6_4;
     Compatibility.override(gpVersion);
 
-    const result = Compatibility.selectIfGreaterOrEqual("default", {});
+    const result = Compatibility.selectIfGreaterOrEqual({ fallback: "default", versions: {} });
 
     assert.equal(result, "default");
   });

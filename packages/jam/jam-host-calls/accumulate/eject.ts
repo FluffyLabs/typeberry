@@ -19,8 +19,11 @@ const IN_OUT_REG = 7;
  */
 export class Eject implements HostCallHandler {
   index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual(12, {
-      [GpVersion.V0_6_7]: 21,
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 12,
+      versions: {
+        [GpVersion.V0_6_7]: 21,
+      },
     }),
   );
   gasCost = tryAsSmallGas(10);

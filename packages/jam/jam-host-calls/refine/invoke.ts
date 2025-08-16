@@ -32,8 +32,11 @@ const GAS_REGISTERS_SIZE = tryAsExactBytes(gasAndRegistersCodec.sizeHint);
  */
 export class Invoke implements HostCallHandler {
   index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual(25, {
-      [GpVersion.V0_6_7]: 12,
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 25,
+      versions: {
+        [GpVersion.V0_6_7]: 12,
+      },
     }),
   );
   gasCost = tryAsSmallGas(10);

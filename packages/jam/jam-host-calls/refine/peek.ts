@@ -21,8 +21,11 @@ const IN_OUT_REG = 7;
  */
 export class Peek implements HostCallHandler {
   index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual(21, {
-      [GpVersion.V0_6_7]: 9,
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 21,
+      versions: {
+        [GpVersion.V0_6_7]: 9,
+      },
     }),
   );
   gasCost = tryAsSmallGas(10);

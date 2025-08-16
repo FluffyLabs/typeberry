@@ -22,8 +22,11 @@ const IN_OUT_REG = 7;
  */
 export class Machine implements HostCallHandler {
   index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual(20, {
-      [GpVersion.V0_6_7]: 8,
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 20,
+      versions: {
+        [GpVersion.V0_6_7]: 8,
+      },
     }),
   );
   gasCost = tryAsSmallGas(10);

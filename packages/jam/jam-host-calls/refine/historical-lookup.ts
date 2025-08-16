@@ -23,8 +23,11 @@ const IN_OUT_REG = 7;
  */
 export class HistoricalLookup implements HostCallHandler {
   index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual(17, {
-      [GpVersion.V0_6_7]: 6,
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 17,
+      versions: {
+        [GpVersion.V0_6_7]: 6,
+      },
     }),
   );
   gasCost = tryAsSmallGas(10);

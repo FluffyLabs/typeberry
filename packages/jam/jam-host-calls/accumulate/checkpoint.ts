@@ -2,8 +2,8 @@ import type { ServiceId } from "@typeberry/block";
 import type { HostCallHandler, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { RegisterIndex } from "@typeberry/pvm-interpreter/registers.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
 import { GasHostCall } from "../gas.js";
 
@@ -14,8 +14,11 @@ import { GasHostCall } from "../gas.js";
  */
 export class Checkpoint implements HostCallHandler {
   index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual(8, {
-      [GpVersion.V0_6_7]: 17,
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 8,
+      versions: {
+        [GpVersion.V0_6_7]: 17,
+      },
     }),
   );
   gasCost = tryAsSmallGas(10);

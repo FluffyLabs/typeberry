@@ -17,8 +17,11 @@ const IN_OUT_REG = 7;
  */
 export class Solicit implements HostCallHandler {
   index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual(14, {
-      [GpVersion.V0_6_7]: 23,
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 14,
+      versions: {
+        [GpVersion.V0_6_7]: 23,
+      },
     }),
   );
   gasCost = tryAsSmallGas(10);

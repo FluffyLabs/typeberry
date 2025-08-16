@@ -20,8 +20,11 @@ const MEMO_START_REG = 10; // `o`
  */
 export class Transfer implements HostCallHandler {
   index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual(11, {
-      [GpVersion.V0_6_7]: 20,
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 11,
+      versions: {
+        [GpVersion.V0_6_7]: 20,
+      },
     }),
   );
   /**

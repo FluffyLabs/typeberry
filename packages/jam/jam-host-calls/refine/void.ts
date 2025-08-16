@@ -22,8 +22,11 @@ const IN_OUT_REG = 7;
  */
 export class Void implements HostCallHandler {
   index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual(24, {
-      [GpVersion.V0_6_7]: -1,
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 24,
+      versions: {
+        [GpVersion.V0_6_7]: -1,
+      },
     }),
   );
   gasCost = tryAsSmallGas(10);

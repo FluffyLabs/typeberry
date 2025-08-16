@@ -35,8 +35,11 @@ const serviceIdAndGasCodec = codec.object({
  */
 export class Bless implements HostCallHandler {
   index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual(5, {
-      [GpVersion.V0_6_7]: 14,
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 5,
+      versions: {
+        [GpVersion.V0_6_7]: 14,
+      },
     }),
   );
   gasCost = tryAsSmallGas(10);

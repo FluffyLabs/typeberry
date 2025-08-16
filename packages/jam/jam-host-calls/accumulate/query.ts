@@ -25,8 +25,11 @@ const UPPER_BITS_SHIFT = 32n;
  */
 export class Query implements HostCallHandler {
   index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual(13, {
-      [GpVersion.V0_6_7]: 22,
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 13,
+      versions: {
+        [GpVersion.V0_6_7]: 22,
+      },
     }),
   );
   gasCost = tryAsSmallGas(10);
