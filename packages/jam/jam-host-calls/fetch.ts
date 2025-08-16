@@ -2,8 +2,9 @@ import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type U64, minU64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
-import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
+import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { HostCallResult } from "./results.js";
 import { clampU64ToU32 } from "./utils.js";
 
@@ -209,11 +210,19 @@ export interface FetchExternalities {
 const IN_OUT_REG = 7;
 
 /**
- * https://graypaper.fluffylabs.dev/#/9a08063/323f00323f00?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/324000324000?v=0.6.7
  */
 export class Fetch implements HostCallHandler {
-  index = tryAsHostCallIndex(18);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 18,
+      versions: {
+        [GpVersion.V0_6_7]: 1,
+      },
+    }),
+  );
   gasCost = tryAsSmallGas(10);
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10, 11, 12);
 
   constructor(
     public readonly currentServiceId: ServiceId,
