@@ -1,6 +1,7 @@
 import type { ServiceId } from "@typeberry/block";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { type RegisterIndex, tryAsRegisterIndex } from "@typeberry/pvm-interpreter/registers.js";
 import { type Opaque, asOpaqueType } from "@typeberry/utils";
 import type { IHostCallMemory } from "./host-call-memory.js";
 import type { IHostCallRegisters } from "./host-call-registers.js";
@@ -15,6 +16,11 @@ export enum PvmExecution {
   Panic = 1,
 }
 
+/** A utility function to easily trace a bunch of registers. */
+export function traceRegisters(...regs: number[]) {
+  return regs.map(tryAsRegisterIndex);
+}
+
 /** An interface for a host call implementation */
 export interface HostCallHandler {
   /** Index of that host call (i.e. what PVM invokes via `ecalli`) */
@@ -25,6 +31,9 @@ export interface HostCallHandler {
 
   /** Currently executing service id. */
   readonly currentServiceId: ServiceId;
+
+  /** Input&Output registers that we should add to tracing log. */
+  readonly tracedRegisters: RegisterIndex[];
 
   /**
    * Actually execute the host call.

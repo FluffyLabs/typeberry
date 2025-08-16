@@ -27,4 +27,73 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
     assert.equal(Compatibility.isGreaterOrEqual(GpVersion.V0_6_7), false);
     assert.equal(Compatibility.isGreaterOrEqual(GpVersion.V0_7_0), false);
   });
+
+  it("Should return lowest value that is greater or equal current value", () => {
+    const gpVersion = GpVersion.V0_6_6;
+    Compatibility.override(gpVersion);
+
+    const record = {
+      [GpVersion.V0_6_5]: "low",
+      [GpVersion.V0_6_7]: "mid",
+      [GpVersion.V0_7_1]: "high",
+    };
+
+    const result = Compatibility.selectIfGreaterOrEqual({ fallback: "default", versions: record });
+
+    assert.equal(result, "low");
+  });
+
+  it("Should return middle value that is greater or equal current value", () => {
+    const gpVersion = GpVersion.V0_7_0;
+    Compatibility.override(gpVersion);
+
+    const record = {
+      [GpVersion.V0_6_5]: "low",
+      [GpVersion.V0_6_7]: "mid",
+      [GpVersion.V0_7_1]: "high",
+    };
+
+    const result = Compatibility.selectIfGreaterOrEqual({ fallback: "default", versions: record });
+
+    assert.equal(result, "mid");
+  });
+
+  it("Should return highest value that is greater or equal current value", () => {
+    const gpVersion = GpVersion.V0_7_1;
+    Compatibility.override(gpVersion);
+
+    const record = {
+      [GpVersion.V0_6_5]: "low",
+      [GpVersion.V0_6_7]: "mid",
+      [GpVersion.V0_7_1]: "high",
+    };
+
+    const result = Compatibility.selectIfGreaterOrEqual({ fallback: "default", versions: record });
+
+    assert.equal(result, "high");
+  });
+
+  it("Should return default if no version is greater or equal", () => {
+    const gpVersion = GpVersion.V0_6_4;
+    Compatibility.override(gpVersion);
+
+    const record = {
+      [GpVersion.V0_6_5]: "low",
+      [GpVersion.V0_6_7]: "mid",
+      [GpVersion.V0_7_1]: "high",
+    };
+
+    const result = Compatibility.selectIfGreaterOrEqual({ fallback: "default", versions: record });
+
+    assert.equal(result, "default");
+  });
+
+  it("Should return default if record is empty", () => {
+    const gpVersion = GpVersion.V0_6_4;
+    Compatibility.override(gpVersion);
+
+    const result = Compatibility.selectIfGreaterOrEqual({ fallback: "default", versions: {} });
+
+    assert.equal(result, "default");
+  });
 });

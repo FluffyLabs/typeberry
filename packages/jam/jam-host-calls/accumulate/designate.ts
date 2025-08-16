@@ -2,9 +2,10 @@ import { type ServiceId, tryAsPerValidator } from "@typeberry/block";
 import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
-import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
+import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { ValidatorData } from "@typeberry/state";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 
@@ -14,11 +15,22 @@ export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint
 /**
  * Designate a new set of validator keys.
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/369501369501?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/36b50136b501?v=0.6.7
+ *
+ * TODO [MaSo] Update method, needs to check privileges
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/362a02362a02?v=0.6.7
  */
 export class Designate implements HostCallHandler {
-  index = tryAsHostCallIndex(7);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 7,
+      versions: {
+        [GpVersion.V0_6_7]: 16,
+      },
+    }),
+  );
   gasCost = tryAsSmallGas(10);
+  tracedRegisters = traceRegisters(IN_OUT_REG);
 
   constructor(
     public readonly currentServiceId: ServiceId,

@@ -1,8 +1,8 @@
 import type { ServiceId } from "@typeberry/block";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
-import type { IHostCallRegisters } from "@typeberry/pvm-host-calls/host-call-registers.js";
+import { type PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
+import type { IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 
 /**
@@ -15,6 +15,7 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.j
 export class GasHostCall implements HostCallHandler {
   index = tryAsHostCallIndex(0);
   gasCost = tryAsSmallGas(10);
+  tracedRegisters = traceRegisters(7);
 
   constructor(public readonly currentServiceId: ServiceId) {}
 
