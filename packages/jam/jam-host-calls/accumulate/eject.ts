@@ -5,7 +5,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { assertNever } from "@typeberry/utils";
+import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
 import { EjectError, type PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { getServiceId } from "../utils.js";
@@ -15,10 +15,17 @@ const IN_OUT_REG = 7;
 /**
  * Remove the provided service account and transfer the remaining balance to current service account.
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/373b01373b01?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/373b01373b01?v=0.6.7
  */
 export class Eject implements HostCallHandler {
-  index = tryAsHostCallIndex(12);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 12,
+      versions: {
+        [GpVersion.V0_6_7]: 21,
+      },
+    }),
+  );
   gasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8);
 

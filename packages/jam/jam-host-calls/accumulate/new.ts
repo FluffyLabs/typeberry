@@ -14,10 +14,17 @@ const IN_OUT_REG = 7;
 /**
  * Create a new service account.
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/364602364602?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/367502367502?v=0.6.7
  */
 export class New implements HostCallHandler {
-  index = tryAsHostCallIndex(9);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 9,
+      versions: {
+        [GpVersion.V0_6_7]: 18,
+      },
+    }),
+  );
   gasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10, 11);
 

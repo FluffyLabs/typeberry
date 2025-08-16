@@ -8,6 +8,7 @@ import type { HostCallHandler, IHostCallMemory } from "@typeberry/pvm-host-calls
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import type { IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 
@@ -16,10 +17,20 @@ const IN_OUT_REG = 7;
 /**
  * Assign new fixed-length authorization queue to some core.
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/360501360501?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/360d01360d01?v=0.6.7
+ *
+ * TODO [MaSo] Update assign, check privileges
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/369101369101?v=0.6.7
  */
 export class Assign implements HostCallHandler {
-  index = tryAsHostCallIndex(6);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 6,
+      versions: {
+        [GpVersion.V0_6_7]: 15,
+      },
+    }),
+  );
   gasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8);
 

@@ -6,6 +6,7 @@ import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { HostCallResult } from "./results.js";
 import { SERVICE_ID_BYTES, clampU64ToU32, getServiceIdOrCurrent, writeServiceIdAsLeBytes } from "./utils.js";
 
@@ -20,10 +21,19 @@ const IN_OUT_REG = 7;
 /**
  * Read account storage.
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/333b00333b00?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/333b00333b00?v=0.6.7
+ *
+ * TODO [MaSo] Update storage key extraction https://graypaper.fluffylabs.dev/#/7e6ff6a/33d50033d500?v=0.6.7
  */
 export class Read implements HostCallHandler {
-  index = tryAsHostCallIndex(2);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 2,
+      versions: {
+        [GpVersion.V0_6_7]: 3,
+      },
+    }),
+  );
   gasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10, 11, 12);
 
