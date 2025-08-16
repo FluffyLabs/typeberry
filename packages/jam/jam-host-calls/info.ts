@@ -38,7 +38,14 @@ const IN_OUT_REG = 7;
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/332702332702?v=0.6.7
  */
 export class Info implements HostCallHandler {
-  index = tryAsHostCallIndex(4);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 4,
+      versions: {
+        [GpVersion.V0_6_7]: 5,
+      },
+    }),
+  );
   gasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8);
 

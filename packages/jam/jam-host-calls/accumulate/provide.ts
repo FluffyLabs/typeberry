@@ -9,6 +9,7 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { assertNever } from "@typeberry/utils";
 import { type PartialState, ProvidePreimageError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
@@ -16,8 +17,20 @@ import { clampU64ToU32, getServiceIdOrCurrent } from "../utils.js";
 
 const IN_OUT_REG = 7;
 
+/**
+ * Provide a preimage for a given service.
+ *
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/388e02388e02?v=0.6.7
+ */
 export class Provide implements HostCallHandler {
-  index = tryAsHostCallIndex(27);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 27,
+      versions: {
+        [GpVersion.V0_6_7]: 26,
+      },
+    }),
+  );
   gasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9);
 

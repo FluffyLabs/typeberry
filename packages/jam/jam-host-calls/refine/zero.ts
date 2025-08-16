@@ -6,7 +6,7 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { assertNever } from "@typeberry/utils";
+import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
 import { type RefineExternalities, ZeroVoidError, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID } from "../utils.js";
@@ -17,9 +17,18 @@ const IN_OUT_REG = 7;
  * Initialize some pages of memory for writing for a nested PVM.
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/353b00353b00?v=0.6.6
+ *
+ * NOTE This host call is only available in GP versions <= 0.6.7.
  */
 export class Zero implements HostCallHandler {
-  index = tryAsHostCallIndex(23);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 23,
+      versions: {
+        [GpVersion.V0_6_7]: -1,
+      },
+    }),
+  );
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9);
