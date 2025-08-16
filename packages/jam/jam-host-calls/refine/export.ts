@@ -6,9 +6,11 @@ import {
   type IHostCallMemory,
   type IHostCallRegisters,
   PvmExecution,
+  traceRegisters,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { RefineExternalities } from "../externalities/refine-externalities.js";
 import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID } from "../utils.js";
@@ -18,12 +20,20 @@ const IN_OUT_REG = 7;
 /**
  * Export a segment to be imported by some future `refine` invokation.
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/341d01341d01?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/341d01341d01?v=0.6.7
  */
 export class Export implements HostCallHandler {
-  index = tryAsHostCallIndex(19);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 19,
+      versions: {
+        [GpVersion.V0_6_7]: 7,
+      },
+    }),
+  );
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8);
 
   constructor(private readonly refine: RefineExternalities) {}
 

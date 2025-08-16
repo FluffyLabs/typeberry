@@ -3,10 +3,11 @@ import {
   type IHostCallMemory,
   type IHostCallRegisters,
   PvmExecution,
+  traceRegisters,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { assertNever } from "@typeberry/utils";
+import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
 import { PeekPokeError, type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID } from "../utils.js";
@@ -16,12 +17,20 @@ const IN_OUT_REG = 7;
 /**
  * Peek into a piece of nested machine memory.
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/347402347402?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/347402347402?v=0.6.7
  */
 export class Peek implements HostCallHandler {
-  index = tryAsHostCallIndex(21);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 21,
+      versions: {
+        [GpVersion.V0_6_7]: 9,
+      },
+    }),
+  );
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10);
 
   constructor(private readonly refine: RefineExternalities) {}
 

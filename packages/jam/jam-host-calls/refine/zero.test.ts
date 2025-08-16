@@ -5,7 +5,7 @@ import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { OK, Result } from "@typeberry/utils";
+import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
 import { type MachineId, ZeroVoidError, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../results.js";
@@ -45,7 +45,9 @@ function prepareTest(result: Result<OK, ZeroVoidError>, pageStart: number, pageC
 }
 
 describe("HostCalls: Zero", () => {
-  it("should return OK and set memory readable and zeroed", async () => {
+  const itPre067 = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? it.skip : it;
+
+  itPre067("should return OK and set memory readable and zeroed", async () => {
     const { zero, registers } = prepareTest(Result.ok(OK), 10_000, 5);
 
     // when
@@ -56,7 +58,7 @@ describe("HostCalls: Zero", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
   });
 
-  it("should return HUH when page is too low", async () => {
+  itPre067("should return HUH when page is too low", async () => {
     const { zero, registers } = prepareTest(Result.error(ZeroVoidError.InvalidPage), 12, 5);
 
     // when
@@ -67,7 +69,7 @@ describe("HostCalls: Zero", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
   });
 
-  it("should return HUH when page is too large", async () => {
+  itPre067("should return HUH when page is too large", async () => {
     const { zero, registers } = prepareTest(Result.error(ZeroVoidError.InvalidPage), 2 ** 32 - 1, 12_000);
 
     // when
@@ -78,7 +80,7 @@ describe("HostCalls: Zero", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
   });
 
-  it("should return HUH when page is too large 2", async () => {
+  itPre067("should return HUH when page is too large 2", async () => {
     const { zero, registers } = prepareTest(Result.error(ZeroVoidError.InvalidPage), 2 ** 20 - 5, 5);
 
     // when
@@ -89,7 +91,7 @@ describe("HostCalls: Zero", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
   });
 
-  it("should return WHO if machine is not known", async () => {
+  itPre067("should return WHO if machine is not known", async () => {
     const { zero, registers } = prepareTest(Result.error(ZeroVoidError.NoMachine), 10_000, 5);
 
     // when
