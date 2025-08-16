@@ -3,7 +3,7 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
-import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
+import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
 import { NewServiceError, type PartialState } from "../externalities/partial-state.js";
@@ -19,6 +19,7 @@ const IN_OUT_REG = 7;
 export class New implements HostCallHandler {
   index = tryAsHostCallIndex(9);
   gasCost = tryAsSmallGas(10);
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10, 11);
 
   constructor(
     public readonly currentServiceId: ServiceId,

@@ -2,6 +2,7 @@ import {
   type HostCallHandler,
   type IHostCallRegisters,
   type PvmExecution,
+  traceRegisters,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
@@ -20,6 +21,7 @@ export class Expunge implements HostCallHandler {
   index = tryAsHostCallIndex(26);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
+  tracedRegisters = traceRegisters(IN_OUT_REG);
 
   constructor(private readonly refine: RefineExternalities) {}
 

@@ -3,7 +3,7 @@ import { BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
-import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
+import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import type { OK, Result } from "@typeberry/utils";
 import { HostCallResult } from "./results.js";
@@ -38,6 +38,7 @@ const IN_OUT_REG = 7;
 export class Write implements HostCallHandler {
   index = tryAsHostCallIndex(3);
   gasCost = tryAsSmallGas(10);
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10);
 
   constructor(
     public readonly currentServiceId: ServiceId,
@@ -50,7 +51,7 @@ export class Write implements HostCallHandler {
     memory: IHostCallMemory,
   ): Promise<undefined | PvmExecution> {
     // k_0
-    const storageKeyStartAddress = regs.get(7);
+    const storageKeyStartAddress = regs.get(IN_OUT_REG);
     // k_z
     const storageKeyLength = regs.get(8);
     // v_0
