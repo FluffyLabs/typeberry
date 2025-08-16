@@ -25,7 +25,7 @@ import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { type State, hashComparator } from "@typeberry/state";
+import { ServiceAccountInfo, type ServicesUpdate, type State, UpdateService, hashComparator } from "@typeberry/state";
 import { binaryMerkleization } from "@typeberry/state-merkleization";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
@@ -384,6 +384,8 @@ export class Accumulate {
     accumulated: WorkReport[],
     toAccumulateLater: NotYetAccumulatedReport[],
     slot: TimeSlot,
+    statistics: Map<ServiceId, CountAndGasUsed>,
+    services: ServicesUpdate,
   ): Pick<AccumulateStateUpdate, "recentlyAccumulated" | "accumulationQueue" | "timeslot"> {
     const epochLength = this.chainSpec.epochLength;
     const phaseIndex = slot % epochLength;
@@ -402,6 +404,22 @@ export class Accumulate {
         const queueIndex = (phaseIndex + epochLength - i) % epochLength;
         accumulationQueue[queueIndex] = pruneQueue(accumulationQueue[queueIndex], accumulatedSet);
       }
+    }
+
+    // update last accumulation
+    for (const serviceId of statistics.keys()) {
+      // https://graypaper.fluffylabs.dev/#/7e6ff6a/181003185103?v=0.6.7
+      const service = this.state.getService(serviceId);
+      if (service === null) {
+        // NOTE If it doesn't exists in state, we dont update it.
+        continue;
+      }
+      services.servicesUpdates.push(
+        UpdateService.update({
+          serviceId,
+          serviceInfo: ServiceAccountInfo.create({ ...service.getInfo(), lastAccumulation: slot }),
+        }),
+      );
     }
 
     return {
@@ -456,7 +474,13 @@ export class Accumulate {
     assertEmpty(rest);
 
     const accumulated = accumulatableReports.slice(0, accumulatedReports);
-    const accStateUpdate = this.getAccumulationStateUpdate(accumulated, toAccumulateLater, slot);
+    const accStateUpdate = this.getAccumulationStateUpdate(
+      accumulated,
+      toAccumulateLater,
+      slot,
+      statistics,
+      state.services,
+    );
     const rootHash = await getRootHash(Array.from(state.yieldedRoots.entries()));
 
     return Result.ok({

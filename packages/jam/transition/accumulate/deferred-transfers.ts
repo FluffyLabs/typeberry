@@ -92,13 +92,6 @@ export class DeferredTransfers {
         continue;
       }
 
-      // update last accumulation
-      // https://graypaper.fluffylabs.dev/#/7e6ff6a/181003185103?v=0.6.7
-      partiallyUpdatedState.updateServiceInfo(
-        serviceId,
-        ServiceAccountInfo.create({ ...newInfo, lastAccumulation: timeslot }),
-      );
-
       const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState });
       const args = Encoder.encodeObject(ON_TRANSFER_ARGS_CODEC, { timeslot, serviceId, transfers }, this.chainSpec);
 
