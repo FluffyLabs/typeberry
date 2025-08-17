@@ -97,7 +97,9 @@ export class DeferredTransfers {
     }
 
     return Result.ok({
-      servicesUpdate,
+      // NOTE: we return only services, since it's impossible to update
+      // anything else during `on_transfer` call.
+      servicesUpdate: partiallyUpdatedState.stateUpdate.services,
       transferStatistics,
     });
   }

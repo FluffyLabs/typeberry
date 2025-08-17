@@ -325,7 +325,6 @@ export class Accumulate {
     return {
       accumulatedReports: tryAsU32(i + accumulatedReports),
       gasCost: tryAsServiceGas(gasCost + seqGasCost),
-      // ideally we would use the already merged state here instead of doing multiple merge rounds
       state,
     };
   }
@@ -396,10 +395,10 @@ export class Accumulate {
     accumulationQueue[phaseIndex] = pruneQueue(toAccumulateLater, accumulatedSet);
 
     for (let i = 1; i < epochLength; i++) {
+      const queueIndex = (phaseIndex + epochLength - i) % epochLength;
       if (i < slot - this.state.timeslot) {
-        accumulationQueue[(phaseIndex + epochLength - i) % epochLength] = [];
+        accumulationQueue[queueIndex] = [];
       } else {
-        const queueIndex = (phaseIndex + epochLength - i) % epochLength;
         accumulationQueue[queueIndex] = pruneQueue(accumulationQueue[queueIndex], accumulatedSet);
       }
     }
@@ -457,16 +456,30 @@ export class Accumulate {
 
     const accumulated = accumulatableReports.slice(0, accumulatedReports);
     const accStateUpdate = this.getAccumulationStateUpdate(accumulated, toAccumulateLater, slot);
-    const rootHash = await getRootHash(Array.from(state.yieldedRoots.entries()));
+    const {
+      services,
+      yieldedRoots,
+      transfers,
+      validatorsData,
+      privilegedServices,
+      authorizationQueues,
+      ...stateUpdateRest
+    } = state;
+    assertEmpty(stateUpdateRest);
+
+    const rootHash = await getRootHash(Array.from(yieldedRoots.entries()));
 
     return Result.ok({
       root: rootHash,
       stateUpdate: {
         ...accStateUpdate,
-        ...state.services,
+        ...{ designatedValidatorData: validatorsData ?? undefined },
+        ...{ privilegedServices: privilegedServices ?? undefined },
+        ...{ authorizationQueues },
+        ...services,
       },
       accumulationStatistics: statistics,
-      pendingTransfers: state.transfers,
+      pendingTransfers: transfers,
     });
   }
 }
