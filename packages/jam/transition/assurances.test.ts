@@ -36,15 +36,17 @@ const DEFAULT_HEADER_HASH: HeaderHash = Bytes.parseBytes(
 
 describe("Assurances", () => {
   it("should perform a transition with empty state", async () => {
-    const assurances = new Assurances(tinyChainSpec, {
+    const initialState = {
       availabilityAssignment: tryAsPerCore([null, null], tinyChainSpec),
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
-    });
+    };
+    const assurances = new Assurances(tinyChainSpec, initialState);
 
     const input: AssurancesInput = {
       parentHash: DEFAULT_HEADER_HASH,
       slot: tryAsTimeSlot(12),
       assurances: assurancesAsView(tinyChainSpec, []),
+      disputesAvailAssignment: initialState.availabilityAssignment,
     };
 
     const res = await assurances.transition(input);
@@ -59,10 +61,11 @@ describe("Assurances", () => {
   });
 
   it("should perform some transition", async () => {
-    const assurances = new Assurances(tinyChainSpec, {
-      availabilityAssignment: tryAsPerCore(INITIAL_ASSIGNMENT.slice(), tinyChainSpec),
+    const initialState = {
+      availabilityAssignment: tryAsPerCore([null, null], tinyChainSpec), // empty assignment to make sure assurances use disputesAvailAssignment
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
-    });
+    };
+    const assurances = new Assurances(tinyChainSpec, initialState);
 
     const input: AssurancesInput = {
       parentHash: DEFAULT_HEADER_HASH,
@@ -108,6 +111,7 @@ describe("Assurances", () => {
           },
         ].map(intoAssurances),
       ),
+      disputesAvailAssignment: tryAsPerCore(INITIAL_ASSIGNMENT.slice(), tinyChainSpec),
     };
 
     const res = await assurances.transition(input);
@@ -126,10 +130,11 @@ describe("Assurances", () => {
   });
 
   it("should reject invalid signatures", async () => {
-    const assurances = new Assurances(tinyChainSpec, {
+    const initialState = {
       availabilityAssignment: tryAsPerCore(INITIAL_ASSIGNMENT.slice(), tinyChainSpec),
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
-    });
+    };
+    const assurances = new Assurances(tinyChainSpec, initialState);
 
     const input: AssurancesInput = {
       parentHash: DEFAULT_HEADER_HASH,
@@ -145,6 +150,7 @@ describe("Assurances", () => {
           },
         ].map(intoAssurances),
       ),
+      disputesAvailAssignment: initialState.availabilityAssignment,
     };
 
     const res = await assurances.transition(input);
@@ -170,10 +176,11 @@ describe("Assurances", () => {
   });
 
   it("should reject invalid validator index", async () => {
-    const assurances = new Assurances(tinyChainSpec, {
+    const initialState = {
       availabilityAssignment: tryAsPerCore(INITIAL_ASSIGNMENT.slice(), tinyChainSpec),
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
-    });
+    };
+    const assurances = new Assurances(tinyChainSpec, initialState);
 
     const input: AssurancesInput = {
       parentHash: DEFAULT_HEADER_HASH,
@@ -189,6 +196,7 @@ describe("Assurances", () => {
           },
         ].map(intoAssurances),
       ),
+      disputesAvailAssignment: initialState.availabilityAssignment,
     };
 
     const res = await assurances.transition(input);
@@ -214,10 +222,11 @@ describe("Assurances", () => {
   });
 
   it("should reject invalid order", async () => {
-    const assurances = new Assurances(tinyChainSpec, {
+    const initialState = {
       availabilityAssignment: tryAsPerCore(INITIAL_ASSIGNMENT.slice(), tinyChainSpec),
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
-    });
+    };
+    const assurances = new Assurances(tinyChainSpec, initialState);
 
     const input: AssurancesInput = {
       parentHash: DEFAULT_HEADER_HASH,
@@ -239,6 +248,7 @@ describe("Assurances", () => {
           },
         ].map(intoAssurances),
       ),
+      disputesAvailAssignment: initialState.availabilityAssignment,
     };
 
     const res = await assurances.transition(input);

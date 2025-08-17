@@ -282,8 +282,9 @@ export class Disputes {
 
   private getClearedCoreAssignment(v: VotesForWorkReports): PerCore<AvailabilityAssignment | null> {
     /**
+     * ρ†
      * We clear any work-reports which we judged as uncertain or invalid from their core.
-     * https://graypaper.fluffylabs.dev/#/579bd12/121a03123f03
+     * https://graypaper.fluffylabs.dev/#/1c979cb/136900139e00?v=0.7.1
      */
     const availabilityAssignment = this.state.availabilityAssignment.slice();
     for (let c = 0; c < availabilityAssignment.length; c++) {

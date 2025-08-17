@@ -16,6 +16,7 @@ describe("Reports - top level", () => {
       slot: tryAsTimeSlot(12),
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
 
     const res = await reports.transition(input);

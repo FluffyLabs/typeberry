@@ -29,6 +29,7 @@ describe("Reports.verifyContextualValidity", () => {
       guarantees,
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks, // note: for full fidelity this should be partially updated state, not prior state as it is now
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -62,6 +63,7 @@ describe("Reports.verifyContextualValidity", () => {
       guarantees,
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -92,6 +94,7 @@ describe("Reports.verifyContextualValidity", () => {
       guarantees,
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -123,6 +126,7 @@ describe("Reports.verifyContextualValidity", () => {
       guarantees,
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -153,6 +157,7 @@ describe("Reports.verifyContextualValidity", () => {
       guarantees,
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -185,6 +190,7 @@ describe("Reports.verifyContextualValidity", () => {
       guarantees,
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -217,6 +223,7 @@ describe("Reports.verifyContextualValidity", () => {
       guarantees,
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -251,6 +258,7 @@ describe("Reports.verifyContextualValidity", () => {
       guarantees,
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -287,6 +295,7 @@ describe("Reports.verifyContextualValidity", () => {
       guarantees,
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -328,6 +337,7 @@ describe("Reports.verifyContextualValidity", () => {
       guarantees,
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -362,6 +372,7 @@ describe("Reports.verifyContextualValidity", () => {
       guarantees,
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const res = reports.verifyContextualValidity(input);
 
