@@ -25,7 +25,7 @@ import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { type State, hashComparator } from "@typeberry/state";
+import { type State, hashComparator, tryAsPerCore } from "@typeberry/state";
 import { binaryMerkleization } from "@typeberry/state-merkleization";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
@@ -469,13 +469,25 @@ export class Accumulate {
 
     const rootHash = await getRootHash(Array.from(yieldedRoots.entries()));
 
+    const authQueues = (() => {
+      if (authorizationQueues.size === 0) {
+        return {};
+      }
+
+      const updatedAuthQueues = this.state.authQueues.slice();
+      for (const [core, queue] of authorizationQueues.entries()) {
+        updatedAuthQueues[core] = queue;
+      }
+      return { authQueues: tryAsPerCore(updatedAuthQueues, this.chainSpec) };
+    })();
+
     return Result.ok({
       root: rootHash,
       stateUpdate: {
         ...accStateUpdate,
-        ...{ designatedValidatorData: validatorsData ?? undefined },
-        ...{ privilegedServices: privilegedServices ?? undefined },
-        ...{ authorizationQueues },
+        ...(validatorsData === null ? {} : { designatedValidatorData: validatorsData }),
+        ...(privilegedServices === null ? {} : { privilegedServices: privilegedServices }),
+        ...authQueues,
         ...services,
       },
       accumulationStatistics: statistics,
