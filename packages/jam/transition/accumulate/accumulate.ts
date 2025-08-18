@@ -25,7 +25,7 @@ import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { ServiceAccountInfo, type State, hashComparator } from "@typeberry/state";
+import { ServiceAccountInfo, type ServicesUpdate, type State, hashComparator } from "@typeberry/state";
 import { binaryMerkleization } from "@typeberry/state-merkleization";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
@@ -384,8 +384,8 @@ export class Accumulate {
     accumulated: WorkReport[],
     toAccumulateLater: NotYetAccumulatedReport[],
     slot: TimeSlot,
-    statistics: Map<ServiceId, CountAndGasUsed>,
-    stateUpdate: AccumulationStateUpdate, // δ†
+    accumulatedServices: ServiceId[],
+    servicesUpdate: ServicesUpdate,
   ): Pick<AccumulateStateUpdate, "recentlyAccumulated" | "accumulationQueue" | "timeslot"> {
     const epochLength = this.chainSpec.epochLength;
     const phaseIndex = slot % epochLength;
@@ -406,17 +406,20 @@ export class Accumulate {
       }
     }
 
-    // δ‡
-    const partialStateUpdate = new PartiallyUpdatedState(this.state, stateUpdate);
-    // update last accumulation
-    for (const serviceId of statistics.keys()) {
-      // https://graypaper.fluffylabs.dev/#/7e6ff6a/181003185103?v=0.6.7
-      const info = partialStateUpdate.getServiceInfo(serviceId);
-      if (info === null) {
-        // NOTE If there is no service, we dont update it.
-        continue;
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      // δ†
+      const partialStateUpdate = new PartiallyUpdatedState(this.state, AccumulationStateUpdate.new(servicesUpdate));
+      // update last accumulation
+      for (const serviceId of accumulatedServices) {
+        // https://graypaper.fluffylabs.dev/#/7e6ff6a/181003185103?v=0.6.7
+        const info = partialStateUpdate.getServiceInfo(serviceId);
+        if (info === null) {
+          // NOTE If there is no service, we dont update it.
+          continue;
+        }
+        // δ‡
+        partialStateUpdate.updateServiceInfo(serviceId, ServiceAccountInfo.create({ ...info, lastAccumulation: slot }));
       }
-      partialStateUpdate.updateServiceInfo(serviceId, ServiceAccountInfo.create({ ...info, lastAccumulation: slot }));
     }
 
     return {
@@ -471,14 +474,20 @@ export class Accumulate {
     assertEmpty(rest);
 
     const accumulated = accumulatableReports.slice(0, accumulatedReports);
-    const accStateUpdate = this.getAccumulationStateUpdate(accumulated, toAccumulateLater, slot, statistics, state);
+    const accStateUpdate = this.getAccumulationStateUpdate(
+      accumulated,
+      toAccumulateLater,
+      slot,
+      Array.from(statistics.keys()),
+      state.services, // δ†
+    );
     const rootHash = await getRootHash(Array.from(state.yieldedRoots.entries()));
 
     return Result.ok({
       root: rootHash,
       stateUpdate: {
         ...accStateUpdate,
-        ...state.services,
+        ...state.services, // δ‡
       },
       accumulationStatistics: statistics,
       pendingTransfers: state.transfers,

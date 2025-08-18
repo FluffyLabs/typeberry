@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   type EntropyHash,
   type ServiceId,
+  type TimeSlot,
   type WorkReportHash,
   tryAsCoreIndex,
   tryAsPerEpochBlock,
@@ -29,8 +30,12 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
-import { deepEqual, resultToString } from "@typeberry/utils";
+import { Compatibility, GpVersion, deepEqual, resultToString } from "@typeberry/utils";
 import { Accumulate, type AccumulateInput, type AccumulateState } from "./accumulate.js";
+
+type TestServiceInfo = {
+  lastAccumulation?: TimeSlot;
+};
 
 describe("accumulate", () => {
   // based on tiny/enqueue_and_unlock_chain_wraps-5.json
@@ -51,6 +56,7 @@ describe("accumulate", () => {
         tryAsServiceId(1729),
         hashFromString("0x3ecc56accce719e5214e8dbb034f49d5cf0c6942da3e5f3f047d1693cc60c74a"),
         preimageBlob,
+        { lastAccumulation: undefined },
       ],
     ]);
     const state = InMemoryState.partial(tinyChainSpec, {
@@ -132,9 +138,18 @@ describe("accumulate", () => {
         tinyChainSpec,
       ),
     });
+
+    const expectedServices = createServices([
+      [
+        tryAsServiceId(1729),
+        hashFromString("0x3ecc56accce719e5214e8dbb034f49d5cf0c6942da3e5f3f047d1693cc60c74a"),
+        preimageBlob,
+        { lastAccumulation: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsTimeSlot(47) : undefined },
+      ],
+    ]);
     const expectedState: AccumulateState = InMemoryState.partial(tinyChainSpec, {
       timeslot: input.slot,
-      services,
+      services: expectedServices,
       privilegedServices: state.privilegedServices,
       recentlyAccumulated: tryAsPerEpochBlock(
         [
@@ -184,33 +199,34 @@ const hashFromString = <T>(blob: string): T => {
   return Bytes.parseBytes(blob, HASH_SIZE).asOpaque();
 };
 
-const createServices = (items: [ServiceId, OpaqueHash, BytesBlob][]) => {
+const createServices = (items: [ServiceId, OpaqueHash, BytesBlob, TestServiceInfo][]) => {
   const services = new Map<ServiceId, InMemoryService>();
-  for (const [serviceId, hash, blob] of items) {
-    const preimages = HashDictionary.new<PreimageHash, PreimageItem>();
-    preimages.set(hash.asOpaque(), PreimageItem.create({ hash: hash.asOpaque(), blob }));
-    services.set(
-      serviceId,
-      new InMemoryService(serviceId, {
-        info: ServiceAccountInfo.create({
-          accumulateMinGas: tryAsServiceGas(0n),
-          codeHash: hash.asOpaque(),
-          balance: tryAsU64(0),
-          onTransferMinGas: tryAsServiceGas(0n),
-          storageUtilisationBytes: tryAsU64(0),
-          storageUtilisationCount: tryAsU32(0),
-          gratisStorage: tryAsU64(0),
-          created: tryAsTimeSlot(0),
-          lastAccumulation: tryAsTimeSlot(0),
-          parentService: tryAsServiceId(0),
-        }),
-        lookupHistory: HashDictionary.new(),
-        preimages,
-        storage: HashDictionary.new(),
-      }),
-    );
+  for (const [serviceId, hash, blob, info] of items) {
+    services.set(serviceId, createService(serviceId, hash, blob, info));
   }
   return services;
+};
+
+const createService = (serviceId: ServiceId, hash: OpaqueHash, blob: BytesBlob, info: TestServiceInfo) => {
+  const preimages = HashDictionary.new<PreimageHash, PreimageItem>();
+  preimages.set(hash.asOpaque(), PreimageItem.create({ hash: hash.asOpaque(), blob }));
+  return new InMemoryService(serviceId, {
+    info: ServiceAccountInfo.create({
+      accumulateMinGas: tryAsServiceGas(0n),
+      codeHash: hash.asOpaque(),
+      balance: tryAsU64(0),
+      onTransferMinGas: tryAsServiceGas(0n),
+      storageUtilisationBytes: tryAsU64(0),
+      storageUtilisationCount: tryAsU32(0),
+      gratisStorage: tryAsU64(0),
+      created: tryAsTimeSlot(0),
+      lastAccumulation: info.lastAccumulation ?? tryAsTimeSlot(0),
+      parentService: tryAsServiceId(0),
+    }),
+    lookupHistory: HashDictionary.new(),
+    preimages,
+    storage: HashDictionary.new(),
+  });
 };
 
 const createPrivilegedServices = (spec: ChainSpec) =>
