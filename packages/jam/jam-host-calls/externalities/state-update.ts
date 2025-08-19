@@ -38,8 +38,6 @@ export class AccumulationStateUpdate {
   /** Updated authorization queues for cores. */
   public readonly authorizationQueues: Map<CoreIndex, FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>> =
     new Map();
-  /** Yielded accumulation root. */
-  public yieldedRoots: Map<ServiceId, OpaqueHash> = new Map();
   /** New validators data. */
   public validatorsData: PerValidator<ValidatorData> | null = null;
   /** Updated priviliged services. */
@@ -50,6 +48,8 @@ export class AccumulationStateUpdate {
     public readonly services: ServicesUpdate,
     /** Pending transfers. */
     public readonly transfers: PendingTransfer[],
+    /** Yielded accumulation root. */
+    public readonly yieldedRoots: Map<ServiceId, OpaqueHash> = new Map(),
   ) {}
 
   /** Create new empty state update. */
@@ -67,7 +67,12 @@ export class AccumulationStateUpdate {
 
   /** Create a state update with some existing, yet uncommited services updates. */
   static new(update: ServicesUpdate): AccumulationStateUpdate {
-    return new AccumulationStateUpdate(update, []);
+    return new AccumulationStateUpdate(
+      {
+        ...update,
+      },
+      [],
+    );
   }
 
   /** Create a copy of another `StateUpdate`. Used by checkpoints. */
@@ -79,20 +84,23 @@ export class AccumulationStateUpdate {
       storage: [...from.services.storage],
     };
     const transfers = [...from.transfers];
-    const update = new AccumulationStateUpdate(serviceUpdates, transfers);
+    const update = new AccumulationStateUpdate(serviceUpdates, transfers, new Map(from.yieldedRoots));
+
     // update entries
     for (const [k, v] of from.authorizationQueues) {
       update.authorizationQueues.set(k, v);
     }
-    update.yieldedRoots = new Map(from.yieldedRoots);
-    update.validatorsData = from.validatorsData === null ? null : asKnownSize([...from.validatorsData]);
-    update.privilegedServices =
-      from.privilegedServices === null
-        ? null
-        : PrivilegedServices.create({
-            ...from.privilegedServices,
-            authManager: asKnownSize([...from.privilegedServices.authManager]),
-          });
+
+    if (from.validatorsData !== null) {
+      update.validatorsData = asKnownSize([...from.validatorsData]);
+    }
+
+    if (from.privilegedServices !== null) {
+      update.privilegedServices = PrivilegedServices.create({
+        ...from.privilegedServices,
+        authManager: asKnownSize([...from.privilegedServices.authManager]),
+      });
+    }
     return update;
   }
 }
@@ -100,12 +108,17 @@ export class AccumulationStateUpdate {
 type StateSlice = Pick<State, "getService" | "privilegedServices">;
 
 export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
+  /** A collection of state updates. */
+  public readonly stateUpdate;
+
   constructor(
     /** Original (unmodified state). */
     public readonly state: T,
-    /** A collection of state updates. */
-    public readonly stateUpdate = AccumulationStateUpdate.empty(),
-  ) {}
+    stateUpdate?: AccumulationStateUpdate,
+  ) {
+    this.stateUpdate =
+      stateUpdate === undefined ? AccumulationStateUpdate.empty() : AccumulationStateUpdate.copyFrom(stateUpdate);
+  }
 
   /**
    * Retrieve info of service with given id.

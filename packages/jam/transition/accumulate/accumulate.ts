@@ -25,7 +25,7 @@ import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { type State, hashComparator } from "@typeberry/state";
+import { type State, hashComparator, tryAsPerCore } from "@typeberry/state";
 import { binaryMerkleization } from "@typeberry/state-merkleization";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
@@ -325,7 +325,6 @@ export class Accumulate {
     return {
       accumulatedReports: tryAsU32(i + accumulatedReports),
       gasCost: tryAsServiceGas(gasCost + seqGasCost),
-      // ideally we would use the already merged state here instead of doing multiple merge rounds
       state,
     };
   }
@@ -396,10 +395,10 @@ export class Accumulate {
     accumulationQueue[phaseIndex] = pruneQueue(toAccumulateLater, accumulatedSet);
 
     for (let i = 1; i < epochLength; i++) {
+      const queueIndex = (phaseIndex + epochLength - i) % epochLength;
       if (i < slot - this.state.timeslot) {
-        accumulationQueue[(phaseIndex + epochLength - i) % epochLength] = [];
+        accumulationQueue[queueIndex] = [];
       } else {
-        const queueIndex = (phaseIndex + epochLength - i) % epochLength;
         accumulationQueue[queueIndex] = pruneQueue(accumulationQueue[queueIndex], accumulatedSet);
       }
     }
@@ -457,16 +456,42 @@ export class Accumulate {
 
     const accumulated = accumulatableReports.slice(0, accumulatedReports);
     const accStateUpdate = this.getAccumulationStateUpdate(accumulated, toAccumulateLater, slot);
-    const rootHash = await getRootHash(Array.from(state.yieldedRoots.entries()));
+    const {
+      services,
+      yieldedRoots,
+      transfers,
+      validatorsData,
+      privilegedServices,
+      authorizationQueues,
+      ...stateUpdateRest
+    } = state;
+    assertEmpty(stateUpdateRest);
+
+    const rootHash = await getRootHash(Array.from(yieldedRoots.entries()));
+
+    const authQueues = (() => {
+      if (authorizationQueues.size === 0) {
+        return {};
+      }
+
+      const updatedAuthQueues = this.state.authQueues.slice();
+      for (const [core, queue] of authorizationQueues.entries()) {
+        updatedAuthQueues[core] = queue;
+      }
+      return { authQueues: tryAsPerCore(updatedAuthQueues, this.chainSpec) };
+    })();
 
     return Result.ok({
       root: rootHash,
       stateUpdate: {
         ...accStateUpdate,
-        ...state.services,
+        ...(validatorsData === null ? {} : { designatedValidatorData: validatorsData }),
+        ...(privilegedServices === null ? {} : { privilegedServices: privilegedServices }),
+        ...authQueues,
+        ...services,
       },
       accumulationStatistics: statistics,
-      pendingTransfers: state.transfers,
+      pendingTransfers: transfers,
     });
   }
 }
