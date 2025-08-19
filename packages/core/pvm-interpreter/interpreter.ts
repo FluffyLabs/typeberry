@@ -8,7 +8,7 @@ import { BasicBlocks } from "./basic-blocks/index.js";
 import { type Gas, type GasCounter, gasCounter, tryAsBigGas, tryAsGas } from "./gas.js";
 import { instructionGasMap } from "./instruction-gas-map.js";
 import { InstructionResult } from "./instruction-result.js";
-import { Instruction } from "./instruction.js";
+import { Instruction, INSTRUCTION_ID_TO_NAME } from "./instruction.js";
 import { Memory } from "./memory/index.js";
 import { PAGE_SIZE } from "./memory/memory-consts.js";
 import { alignToPageSize } from "./memory/memory-utils.js";
@@ -84,6 +84,7 @@ export class Interpreter {
   private argsDecodingResults = createResults();
   private basicBlocks: BasicBlocks;
   private jumpTable = JumpTable.empty();
+  private instructionIndex = 0;
 
   constructor({ useSbrkGas = false, ignoreInstructionGas = false }: InterpreterOptions = {}) {
     this.useSbrkGas = useSbrkGas;
@@ -184,6 +185,7 @@ export class Interpreter {
     const isValidInstruction = Instruction[currentInstruction] !== undefined;
     const gasCost = instructionGasMap[currentInstruction] ?? instructionGasMap[Instruction.TRAP];
     const underflow = this.ignoreInstructionGas ? false : this.gas.sub(gasCost);
+    console.log(this.pc, this.gas.get(), INSTRUCTION_ID_TO_NAME[currentInstruction]);
     if (underflow) {
       this.status = Status.OOG;
       return this.status;
