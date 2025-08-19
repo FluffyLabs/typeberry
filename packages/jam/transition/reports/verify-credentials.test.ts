@@ -35,6 +35,7 @@ describe("Reports.verifyCredentials", () => {
       slot: tryAsTimeSlot(1),
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks, // note: for full fidelity this should be partially updated state, not prior state as it is now
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
@@ -66,6 +67,7 @@ describe("Reports.verifyCredentials", () => {
       slot: tryAsTimeSlot(1),
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
@@ -93,6 +95,7 @@ describe("Reports.verifyCredentials", () => {
       slot: tryAsTimeSlot(6),
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
@@ -120,6 +123,7 @@ describe("Reports.verifyCredentials", () => {
       slot: tryAsTimeSlot(6),
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
@@ -147,6 +151,7 @@ describe("Reports.verifyCredentials", () => {
       slot: tryAsTimeSlot(4),
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
@@ -174,6 +179,7 @@ describe("Reports.verifyCredentials", () => {
       slot: tryAsTimeSlot(25),
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
@@ -201,6 +207,7 @@ describe("Reports.verifyCredentials", () => {
       slot: tryAsTimeSlot(25),
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
+      assurancesAvailAssignment: reports.state.availabilityAssignment,
     };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);

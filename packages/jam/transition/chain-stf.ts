@@ -190,27 +190,12 @@ export class OnChain {
     const { recentBlocks: recentBlocksPartialUpdate, ...recentHistoryPartialRest } = recentHistoryPartialUpdate;
     assertEmpty(recentHistoryPartialRest);
 
-    // reports
-    const reportsResult = await this.reports.transition({
-      slot: timeSlot,
-      guarantees: block.extrinsic.view().guarantees.view(),
-      newEntropy: entropy,
-      recentBlocksPartialUpdate,
-    });
-    if (reportsResult.isError) {
-      return stfError(StfErrorKind.Reports, reportsResult);
-    }
-    // NOTE `reporters` are unused
-    const { reported: workPackages, reporters: _, stateUpdate: reportsUpdate, ...reportsRest } = reportsResult.ok;
-    assertEmpty(reportsRest);
-    const { availabilityAssignment: reportsAvailAssignment, ...reportsUpdateRest } = reportsUpdate;
-    assertEmpty(reportsUpdateRest);
-
     // assurances
     const assurancesResult = await this.assurances.transition({
       assurances: asKnownSize(block.extrinsic.view().assurances.view()),
       slot: timeSlot,
       parentHash: header.parentHeaderHash,
+      disputesAvailAssignment,
     });
     if (assurancesResult.isError) {
       return stfError(StfErrorKind.Assurances, assurancesResult);
@@ -221,6 +206,23 @@ export class OnChain {
 
     const { availabilityAssignment: assurancesAvailAssignment, ...assurancesUpdateRest } = assurancesUpdate;
     assertEmpty(assurancesUpdateRest);
+
+    // reports
+    const reportsResult = await this.reports.transition({
+      slot: timeSlot,
+      guarantees: block.extrinsic.view().guarantees.view(),
+      newEntropy: entropy,
+      recentBlocksPartialUpdate,
+      assurancesAvailAssignment,
+    });
+    if (reportsResult.isError) {
+      return stfError(StfErrorKind.Reports, reportsResult);
+    }
+    // NOTE `reporters` are unused
+    const { reported: workPackages, reporters: _, stateUpdate: reportsUpdate, ...reportsRest } = reportsResult.ok;
+    assertEmpty(reportsRest);
+    const { availabilityAssignment: reportsAvailAssignment, ...reportsUpdateRest } = reportsUpdate;
+    assertEmpty(reportsUpdateRest);
 
     // preimages
     const preimagesResult = this.preimages.integrate({
@@ -316,12 +318,7 @@ export class OnChain {
       authPools,
       preimages: preimages.concat(accumulatePreimages),
       disputesRecords,
-      availabilityAssignment: mergeAvailabilityAssignments(
-        this.state.availabilityAssignment,
-        reportsAvailAssignment,
-        disputesAvailAssignment,
-        assurancesAvailAssignment,
-      ),
+      availabilityAssignment: reportsAvailAssignment,
       recentBlocks,
       statistics,
       timeslot,
@@ -347,38 +344,4 @@ export class OnChain {
     }
     return map;
   }
-}
-
-type AvailAssignment = State["availabilityAssignment"];
-
-/**
- * Since multiple modules might alter the availalbility assignment,
- * we need to merge the results.
- *
- * NOTE: both `Disputes` and `Assurances` will clear out the availability assignment.
- *       reports however will assign new reports to cores. All modules start from
- *       `initialAvailAssigment` and return a new assignment. To merge it we have to
- *       figure out what each module changed and build a new assignment.
- */
-export function mergeAvailabilityAssignments(
-  initialAvailAssigment: AvailAssignment,
-  reportsAvailAssignment: AvailAssignment,
-  disputesAvailAssignment: AvailAssignment,
-  assurancesAvailAssignment: AvailAssignment,
-) {
-  const newAssignments = initialAvailAssigment.slice();
-
-  for (const core of reportsAvailAssignment.keys()) {
-    if (disputesAvailAssignment[core] === null || assurancesAvailAssignment[core] === null) {
-      newAssignments[core] = null;
-    }
-    // override with new report, but only if it's actually changed (otherwise it will
-    // restore reports removed by disputes or assurances).
-    if (reportsAvailAssignment[core] !== null && initialAvailAssigment[core] !== reportsAvailAssignment[core]) {
-      newAssignments[core] = reportsAvailAssignment[core];
-    }
-  }
-
-  // This is safe, since we are cloning the whole array.
-  return asKnownSize(newAssignments);
 }
