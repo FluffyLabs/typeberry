@@ -5,6 +5,7 @@ import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
+import type { DisputesStateUpdate } from "@typeberry/disputes";
 import { blake2b } from "@typeberry/hash";
 import type { State } from "@typeberry/state";
 import { OK, Result, check } from "@typeberry/utils";
@@ -17,6 +18,11 @@ export type AssurancesInput = {
   slot: TimeSlot;
   /** Parent hash that all assurances need to be anchored at. */
   parentHash: HeaderHash;
+  /**
+   * ρ† - Availability assignment resulting from disputes transition:
+   * https://graypaper.fluffylabs.dev/#/1c979cb/136900139e00?v=0.7.1
+   */
+  disputesAvailAssignment: DisputesStateUpdate["availabilityAssignment"];
 };
 
 /** State of the assurances. */
@@ -106,9 +112,11 @@ export class Assurances {
     const availableReports: WorkReport[] = [];
     const coresToClear: number[] = [];
     const validatorsSuperMajority = this.chainSpec.validatorsSuperMajority;
+    const availabilityAssignment = input.disputesAvailAssignment.slice();
+
     for (let c = 0; c < coresCount; c++) {
       const noOfAssurances = perCoreAssurances[c];
-      const workReport = this.state.availabilityAssignment[c];
+      const workReport = availabilityAssignment[c];
       const isReportPending = workReport !== null;
       /**
        * Verify if availability is pending: A bit may only be set if the corresponding
@@ -121,7 +129,7 @@ export class Assurances {
 
       /**
        * Remove work report if it's became available or timed out.
-       * https://graypaper.fluffylabs.dev/#/4bb8fd2/14f50014fd00
+       * https://graypaper.fluffylabs.dev/#/1c979cb/141302144402?v=0.7.1
        */
       if (isReportPending) {
         if (input.slot >= workReport.timeout + REPORT_TIMEOUT_GRACE_PERIOD) {
@@ -140,8 +148,11 @@ export class Assurances {
       return allSignaturesValid;
     }
 
-    // Only clear the state at the very end.
-    const availabilityAssignment = this.state.availabilityAssignment.slice();
+    /**
+     * ρ‡ - equivalent to ρ† except for the removal of items
+     * which are either now available or have timed out
+     * https://graypaper.fluffylabs.dev/#/1c979cb/141302144402?v=0.7.1
+     */
     for (const c of coresToClear) {
       availabilityAssignment[c] = null;
     }

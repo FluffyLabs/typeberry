@@ -74,6 +74,13 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
     return this.dict.values();
   }
 
+  /** Iterator over entries of the dictionary (with truncated keys) */
+  *entries(): Generator<[TruncatedHash, V]> {
+    for (const [key, value] of this.dict.entries()) {
+      yield [Bytes.fromBlob(key.raw.subarray(0, TRUNCATED_HASH_SIZE), TRUNCATED_HASH_SIZE).asOpaque(), value];
+    }
+  }
+
   [Symbol.iterator]() {
     return this.dict[Symbol.iterator]();
   }

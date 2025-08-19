@@ -11,7 +11,7 @@ import { Logger } from "@typeberry/logger";
 import { sumU64, tryAsU32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { ServiceAccountInfo, type ServicesUpdate, type State } from "@typeberry/state";
-import { Result } from "@typeberry/utils";
+import { Result, check } from "@typeberry/utils";
 import type { CountAndGasUsed } from "../statistics.js";
 import { uniquePreserveOrder } from "./accumulate-utils.js";
 import { PvmExecutor } from "./pvm-executor.js";
@@ -53,24 +53,19 @@ export class DeferredTransfers {
   async transition({
     pendingTransfers,
     timeslot,
-    servicesUpdate,
+    servicesUpdate: inputServicesUpdate,
   }: DeferredTransfersInput): Promise<Result<DeferredTransfersResult, DeferredTransfersErrorCode>> {
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/187a03187a03?v=0.6.7
     const transferStatistics = new Map<ServiceId, CountAndGasUsed>();
     const services = uniquePreserveOrder(pendingTransfers.flatMap((x) => [x.source, x.destination]));
-    const partiallyUpdatedState = new PartiallyUpdatedState(this.state, AccumulationStateUpdate.new(servicesUpdate));
+
+    let currentStateUpdate = AccumulationStateUpdate.new(inputServicesUpdate);
 
     for (const serviceId of services) {
+      const partiallyUpdatedState = new PartiallyUpdatedState(this.state, currentStateUpdate);
       const transfers = pendingTransfers.filter((pendingTransfer) => pendingTransfer.destination === serviceId);
 
-      const partialState = new AccumulateExternalities(
-        this.chainSpec,
-        partiallyUpdatedState,
-        serviceId,
-        serviceId,
-        timeslot,
-      );
-      const info = partialState.getServiceInfo(serviceId);
+      const info = partiallyUpdatedState.getServiceInfo(serviceId);
       if (info === null) {
         return Result.error(DeferredTransfersErrorCode.ServiceInfoNotExist);
       }
@@ -86,22 +81,35 @@ export class DeferredTransfers {
       const newInfo = ServiceAccountInfo.create({ ...info, balance: newBalance.value });
       partiallyUpdatedState.updateServiceInfo(serviceId, newInfo);
 
+      const partialState = new AccumulateExternalities(
+        this.chainSpec,
+        partiallyUpdatedState,
+        serviceId,
+        serviceId,
+        timeslot,
+      );
+      let consumedGas = tryAsGas(0);
+
       if (code === null || transfers.length === 0) {
         logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId}, code is null or no transfers`);
-        transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(0) });
-        continue;
+      } else {
+        const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState });
+        const args = Encoder.encodeObject(ON_TRANSFER_ARGS_CODEC, { timeslot, serviceId, transfers }, this.chainSpec);
+
+        const gas = transfers.reduce((acc, item) => acc + item.gas, 0n);
+        consumedGas = (await executor.run(args, tryAsGas(gas))).consumedGas;
       }
 
-      const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState });
-      const args = Encoder.encodeObject(ON_TRANSFER_ARGS_CODEC, { timeslot, serviceId, transfers }, this.chainSpec);
-
-      const gas = transfers.reduce((acc, item) => acc + item.gas, 0n);
-      const { consumedGas } = await executor.run(args, tryAsGas(gas));
       transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(consumedGas) });
+      const [updatedState, checkpointedState] = partialState.getStateUpdates();
+      currentStateUpdate = updatedState;
+      check(checkpointedState === null, "On transfer cannot invoke checkpoint.");
     }
 
     return Result.ok({
-      servicesUpdate,
+      // NOTE: we return only services, since it's impossible to update
+      // anything else during `on_transfer` call.
+      servicesUpdate: currentStateUpdate.services,
       transferStatistics,
     });
   }

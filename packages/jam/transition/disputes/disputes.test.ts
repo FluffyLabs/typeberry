@@ -14,7 +14,10 @@ import {
   type Ed25519Key,
 } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
+import { WithHash } from "@typeberry/hash";
 import { DisputesRecords, VALIDATOR_META_BYTES, ValidatorData, hashComparator, tryAsPerCore } from "@typeberry/state";
+import { AvailabilityAssignment } from "@typeberry/state";
+import { newWorkReport } from "../reports/test.utils.js";
 import { DisputesErrorCode } from "./disputes-error-code.js";
 import type { DisputesState } from "./disputes-state.js";
 import { Disputes } from "./disputes.js";
@@ -306,5 +309,61 @@ describe("Disputes", () => {
 
     assert.strictEqual(error, DisputesErrorCode.BadValidatorIndex);
     assert.strictEqual(ok, undefined);
+  });
+
+  it("should clear work-reports which were judged as invalid", async () => {
+    const workReport1 = newWorkReport({ core: 0 });
+    const workReport2 = newWorkReport({ core: 1 });
+
+    const workReportWithHash1 = new WithHash(
+      Bytes.parseBytes("0x11da6d1f761ddf9bdb4c9d6e5303ebd41f61858d0a5647a1a7bfe089bf921be9", HASH_SIZE).asOpaque(),
+      workReport1,
+    );
+    const workReportWithHash2 = new WithHash(
+      Bytes.parseBytes("0x7b0aa1735e5ba58d3236316c671fe4f00ed366ee72417c9ed02a53a8019e85b8", HASH_SIZE).asOpaque(),
+      workReport2,
+    );
+
+    const availabilityAssignment1 = AvailabilityAssignment.create({
+      workReport: workReportWithHash1,
+      timeout: tryAsTimeSlot(10),
+    });
+    const availabilityAssignment2 = AvailabilityAssignment.create({
+      workReport: workReportWithHash2,
+      timeout: tryAsTimeSlot(10),
+    });
+
+    const preStateWithWorkReports: DisputesState = {
+      disputesRecords: DisputesRecords.create({
+        goodSet: SortedSet.fromArray(hashComparator),
+        badSet: SortedSet.fromArray(hashComparator),
+        wonkySet: SortedSet.fromArray(hashComparator),
+        punishSet: SortedSet.fromArray(hashComparator),
+      }),
+      timeslot: tryAsTimeSlot(0),
+      availabilityAssignment: tryAsPerCore([availabilityAssignment1, availabilityAssignment2], tinyChainSpec),
+      currentValidatorData,
+      previousValidatorData,
+    };
+
+    const disputes = new Disputes(tinyChainSpec, preStateWithWorkReports);
+    const disputesExtrinsic = DisputesExtrinsic.create({
+      verdicts,
+      culprits,
+      faults,
+    });
+
+    const result = await disputes.transition(disputesExtrinsic);
+    const error = result.isError ? result.error : undefined;
+    const stateUpdate = result.isOk ? result.ok.stateUpdate : undefined;
+
+    assert.strictEqual(error, undefined);
+    assert.notStrictEqual(stateUpdate, undefined);
+
+    if (stateUpdate !== undefined) {
+      const clearedAvailabilityAssignment = stateUpdate.availabilityAssignment;
+      assert.strictEqual(clearedAvailabilityAssignment[0], availabilityAssignment1);
+      assert.strictEqual(clearedAvailabilityAssignment[1], null);
+    }
   });
 });
