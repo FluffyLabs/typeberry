@@ -385,7 +385,9 @@ export class Accumulate {
     slot: TimeSlot,
     accumulatedServices: ServiceId[],
     servicesUpdate: ServicesUpdate,
-  ): Pick<AccumulateStateUpdate, "recentlyAccumulated" | "accumulationQueue" | "timeslot"> {
+  ): Pick<AccumulateStateUpdate, "recentlyAccumulated" | "accumulationQueue" | "timeslot"> & {
+    services: ServicesUpdate;
+  } {
     const epochLength = this.chainSpec.epochLength;
     const phaseIndex = slot % epochLength;
     const accumulatedSet = getWorkPackageHashes(accumulated);
@@ -405,9 +407,9 @@ export class Accumulate {
       }
     }
 
+    // δ†
+    const partialStateUpdate = new PartiallyUpdatedState(this.state, AccumulationStateUpdate.new(servicesUpdate));
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      // δ†
-      const partialStateUpdate = new PartiallyUpdatedState(this.state, AccumulationStateUpdate.new(servicesUpdate));
       // update last accumulation
       for (const serviceId of accumulatedServices) {
         // https://graypaper.fluffylabs.dev/#/7e6ff6a/181003185103?v=0.6.7
@@ -425,6 +427,7 @@ export class Accumulate {
       recentlyAccumulated,
       accumulationQueue: tryAsPerEpochBlock(accumulationQueue, this.chainSpec),
       timeslot: slot,
+      services: partialStateUpdate.stateUpdate.services,
     };
   }
 
@@ -474,7 +477,7 @@ export class Accumulate {
 
     const accumulated = accumulatableReports.slice(0, accumulatedReports);
     const {
-      services,
+      services: servicesDagger,
       yieldedRoots,
       transfers,
       validatorsData,
@@ -489,8 +492,16 @@ export class Accumulate {
       toAccumulateLater,
       slot,
       Array.from(statistics.keys()),
-      services, // δ†
+      servicesDagger, // δ†
     );
+    const {
+      timeslot,
+      accumulationQueue,
+      recentlyAccumulated,
+      services, // δ‡
+      ...accStateRest
+    } = accStateUpdate;
+    assertEmpty(accStateRest);
 
     const rootHash = await getRootHash(Array.from(yieldedRoots.entries()));
 
