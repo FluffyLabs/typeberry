@@ -11,12 +11,13 @@ import { type U16, type U32, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/num
 import { Compatibility, TestSuite } from "@typeberry/utils";
 import { type PerCore, codecPerCore } from "./common.js";
 
-const codecServiceId: Descriptor<ServiceId> = Compatibility.isSuite(TestSuite.W3F_DAVXY)
-  ? codec.u32.asOpaque<ServiceId>()
-  : codec.varU32.convert(
-      (s) => tryAsU32(s),
-      (i) => tryAsServiceId(i),
-    );
+const codecServiceId: Descriptor<ServiceId> =
+  Compatibility.isSuite(TestSuite.W3F_DAVXY) || Compatibility.isSuite(TestSuite.JAMDUNA_065)
+    ? codec.u32.asOpaque<ServiceId>()
+    : codec.varU32.convert(
+        (s) => tryAsU32(s),
+        (i) => tryAsServiceId(i),
+      );
 
 /**
  * Activity Record of a single validator.
