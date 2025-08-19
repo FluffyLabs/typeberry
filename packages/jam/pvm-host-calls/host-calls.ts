@@ -90,6 +90,7 @@ export class HostCalls {
       const hostCall = this.hostCalls.get(index);
       const gasBefore = gas.get();
       const gasCost = typeof hostCall.gasCost === "number" ? hostCall.gasCost : hostCall.gasCost(regs);
+      console.log(gasCost, index);
       const underflow = gas.sub(gasCost);
 
       if (underflow) {

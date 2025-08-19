@@ -2,7 +2,8 @@ import { logger, main } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
 main(runners, process.argv.slice(2), "test-vectors/w3f-davxy", {
-  accepted: ["traces/safrole", "traces/fallback"],
+  accepted: ["traces/reports-l0"],
+  // accepted: ["traces/safrole", "traces/fallback"],
   ignored: ["genesis.json"],
 })
   .then((r) => logger.log(r))

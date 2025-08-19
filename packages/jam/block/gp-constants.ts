@@ -26,6 +26,8 @@ export const I = MAX_NUMBER_OF_WORK_ITEMS;
 /** `K`: Max number of tickets which may be submitted in a single extrinsic. */
 export const K = MAX_NUMBER_OF_TICKETS;
 
+export const N = 2;
+
 /** `O`: Maximum number of items in the authorizations pool. */
 export const O = 8;
 
