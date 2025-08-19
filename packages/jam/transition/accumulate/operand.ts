@@ -4,7 +4,7 @@ import { WorkExecResult } from "@typeberry/block/work-result.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { WithDebug } from "@typeberry/utils";
+import { Compatibility, TestSuite, WithDebug } from "@typeberry/utils";
 
 /**
  * The set of wrangled operand tuples, used as an operand to the PVM Accumulation function.
@@ -12,26 +12,47 @@ import { WithDebug } from "@typeberry/utils";
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/173d03173d03?v=0.6.7
  */
 export class Operand extends WithDebug {
-  static Codec = codec.Class(Operand, {
-    hash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
-    exportsRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
-    authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
-    payloadHash: codec.bytes(HASH_SIZE),
-    gas: codec.varU64.asOpaque<ServiceGas>(),
-    result: WorkExecResult.Codec,
-    authorizationOutput: codec.blob,
-  });
+  // JamDuna 0.6.5 uses a different order of operands.
+  static Codec = codec.Class(
+    Operand,
+    Compatibility.isSuite(TestSuite.JAMDUNA_065)
+      ? {
+          hash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
+          exportsRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
+          authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
+          authorizationOutput: codec.blob,
+          payloadHash: codec.bytes(HASH_SIZE),
+          gas: codec.varU64.asOpaque<ServiceGas>(),
+          result: WorkExecResult.Codec,
+        }
+      : {
+          // h
+          hash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
+          // e
+          exportsRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
+          // a
+          authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
+          // y
+          payloadHash: codec.bytes(HASH_SIZE),
+          // g
+          gas: codec.varU64.asOpaque<ServiceGas>(),
+          // d
+          result: WorkExecResult.Codec,
+          // o
+          authorizationOutput: codec.blob,
+        },
+  );
 
   /**
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/181801189d01?v=0.6.7
    */
-  hash: WorkPackageHash; // h
-  exportsRoot: ExportsRootHash; // e
-  authorizerHash: AuthorizerHash; // a
-  authorizationOutput: BytesBlob; // o
-  payloadHash: OpaqueHash; // y
-  gas: ServiceGas; // g
-  result: WorkExecResult; // d
+  hash: WorkPackageHash;
+  exportsRoot: ExportsRootHash;
+  authorizerHash: AuthorizerHash;
+  payloadHash: OpaqueHash;
+  gas: ServiceGas;
+  result: WorkExecResult;
+  authorizationOutput: BytesBlob;
 
   static create({
     authorizationOutput,
