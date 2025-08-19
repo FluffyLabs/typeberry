@@ -70,7 +70,7 @@ export enum MemoryOperation {
 }
 /** Convert a number into MemoryOperation. */
 export const tryAsMemoryOperation = (v: number | bigint): MemoryOperation =>
-  tryAsU64(v) >=  MemoryOperation.Unknown ? MemoryOperation.Unknown : (v as MemoryOperation);
+  tryAsU64(v) >= MemoryOperation.Unknown ? MemoryOperation.Unknown : (v as MemoryOperation);
 
 /** An error that may occur during `peek` or `poke` host call. */
 export enum PeekPokeError {
