@@ -12,7 +12,12 @@ import {
   tryAsSbrkIndex,
 } from "@typeberry/pvm-interpreter";
 import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
-import { type MachineId, PagesError, tryAsMachineId } from "../externalities/refine-externalities.js";
+import {
+  type MachineId,
+  PagesError,
+  tryAsMachineId,
+  tryAsMemoryOperation,
+} from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../results.js";
 import { Pages } from "./pages.js";
@@ -51,7 +56,7 @@ function prepareTest(
   const count = tryAsU64(pageCount);
   const type = tryAsU64(requestType);
   const { registers, memory } = prepareRegsAndMemory(machineIndex, start, count, type);
-  refine.machinePagesData.set(result, machineIndex, start, count, type);
+  refine.machinePagesData.set(result, machineIndex, start, count, tryAsMemoryOperation(type));
 
   return {
     pages,
@@ -125,7 +130,7 @@ describe("HostCalls: Pages", () => {
   });
 
   itPost067("Should return HUH when provided unknown type request", async () => {
-    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidRequest), 10_000, 10_000, 5, 16);
+    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 10_000, 5, 16);
 
     // when
     await pages.execute(gas, registers);
@@ -165,7 +170,7 @@ describe("HostCalls: Pages", () => {
   });
 
   itPost067("Should return HUH when attempting to preserve memory of uninitialized page", async () => {
-    const { pages, registers } = prepareTest(Result.error(PagesError.UninitializedPage), 10_000, 10_000, 5, 3);
+    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 10_000, 5, 3);
 
     // when
     await pages.execute(gas, registers);
@@ -175,7 +180,7 @@ describe("HostCalls: Pages", () => {
   });
 
   itPost067("Should return HUH when attempting to preserve memory of uninitialized page 2", async () => {
-    const { pages, registers } = prepareTest(Result.error(PagesError.UninitializedPage), 10_000, 10_000, 5, 4);
+    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 10_000, 5, 4);
 
     // when
     await pages.execute(gas, registers);

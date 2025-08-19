@@ -53,6 +53,25 @@ export type MachineResult = {
   registers: Registers;
 };
 
+/** Types of possbile operations to request by Pages host call. */
+export enum MemoryOperation {
+  /** Zeroes memory and set access to unreadable. */
+  Void = 0,
+  /** Zeroes memory and set access to read-only. */
+  ZeroRead = 1,
+  /** Zeroes memory and set access to read-write. */
+  ZeroWrite = 2,
+  /** Preserve memory and set access to read-only. */
+  Read = 3,
+  /** Preserve memory and set access to read-write. */
+  Write = 4,
+  /** Fallback. */
+  Unknown = 5,
+}
+/** Converts a number into MemoryOperation. */
+export const tryAsMemoryOperation = (v: number | bigint): MemoryOperation =>
+  tryAsU64(v) > MemoryOperation.Unknown ? MemoryOperation.Unknown : (v as MemoryOperation);
+
 /** An error that may occur during `peek` or `poke` host call. */
 export enum PeekPokeError {
   /** Source page fault. */
@@ -73,10 +92,10 @@ export enum ZeroVoidError {
 export enum PagesError {
   /** No machine under given machine index. */
   NoMachine = 0,
-  /** Provided invalid request type or attempting to change non-accessible page. */
+  /** When provided MachineOperation is `Unknown`. */
   InvalidRequest = 1,
-  /** Trying to preserve value of voided page. */
-  UninitializedPage = 2,
+  /** Attempting to change non-accessible page or trying to preserve value of voided page. */
+  InvalidPage = 2,
 }
 
 /** Error machine is not found. */
@@ -141,6 +160,6 @@ export interface RefineExternalities {
     machineIndex: MachineId,
     pageStart: U64,
     pageCount: U64,
-    requestType: U64,
+    requestType: MemoryOperation,
   ): Promise<Result<OK, PagesError>>;
 }
