@@ -58,7 +58,7 @@ export class DeferredTransfers {
     let currentStateUpdate = AccumulationStateUpdate.new(inputServicesUpdate);
 
     for (const serviceId of services) {
-      const partiallyUpdatedState = new PartiallyUpdatedState(this.state);
+      const partiallyUpdatedState = new PartiallyUpdatedState(this.state, currentStateUpdate);
       const transfers = pendingTransfers.filter((pendingTransfer) => pendingTransfer.destination === serviceId);
 
       const info = partiallyUpdatedState.getServiceInfo(serviceId);
@@ -84,20 +84,19 @@ export class DeferredTransfers {
         serviceId,
         timeslot,
       );
+      let consumedGas = tryAsGas(0);
 
       if (code === null || transfers.length === 0) {
         logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId}, code is null or no transfers`);
-        transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(0) });
-        continue;
+      } else {
+        const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState });
+        const args = Encoder.encodeObject(ON_TRANSFER_ARGS_CODEC, { timeslot, serviceId, transfers }, this.chainSpec);
+
+        const gas = transfers.reduce((acc, item) => acc + item.gas, 0n);
+        consumedGas = (await executor.run(args, tryAsGas(gas))).consumedGas;
       }
 
-      const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState });
-      const args = Encoder.encodeObject(ON_TRANSFER_ARGS_CODEC, { timeslot, serviceId, transfers }, this.chainSpec);
-
-      const gas = transfers.reduce((acc, item) => acc + item.gas, 0n);
-      const { consumedGas } = await executor.run(args, tryAsGas(gas));
       transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(consumedGas) });
-
       const [updatedState, checkpointedState] = partialState.getStateUpdates();
       currentStateUpdate = updatedState;
       check(checkpointedState === null, "On transfer cannot invoke checkpoint.");
