@@ -3,11 +3,11 @@
     "declaration": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "lib": ["dom", "es2021"],
+    "lib": ["dom", "es2023"],
     "module": "ESNext",
     "moduleResolution": "Node",
     "skipLibCheck": true,
     "strict": true,
-    "target": "es2021"
+    "target": "es2023"
   }
 }

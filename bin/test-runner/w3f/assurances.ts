@@ -6,7 +6,7 @@ import type { WorkReport } from "@typeberry/block/work-report.js";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { type AvailabilityAssignment, type ValidatorData, tryAsPerCore } from "@typeberry/state";
+import { type AvailabilityAssignment, type State, type ValidatorData, tryAsPerCore } from "@typeberry/state";
 import { availabilityAssignmentFromJson, validatorDataFromJson } from "@typeberry/state-json";
 import {
   Assurances,
@@ -22,7 +22,11 @@ class Input {
   slot!: TimeSlot;
   parent!: HeaderHash;
 
-  static toAssurancesInput(input: Input, chainSpec: ChainSpec): AssurancesInput {
+  static toAssurancesInput(
+    input: Input,
+    chainSpec: ChainSpec,
+    disputesAvailAssignment: State["availabilityAssignment"],
+  ): AssurancesInput {
     const encoded = Encoder.encodeObject(assurancesExtrinsicCodec, input.assurances, chainSpec);
     const assurances = Decoder.decodeObject(assurancesExtrinsicCodec.View, encoded, chainSpec);
 
@@ -30,6 +34,7 @@ class Input {
       assurances,
       slot: input.slot,
       parentHash: input.parent,
+      disputesAvailAssignment,
     };
   }
 }
@@ -140,7 +145,7 @@ export async function runAssurancesTestTiny(testContent: AssurancesTestTiny, pat
   const spec = tinyChainSpec;
   const preState = TestState.toAssurancesState(testContent.pre_state, spec);
   const postState = TestState.toAssurancesState(testContent.post_state, spec);
-  const input = Input.toAssurancesInput(testContent.input, spec);
+  const input = Input.toAssurancesInput(testContent.input, spec, preState.availabilityAssignment);
   const expectedResult = Output.toAssurancesTransitionResult(testContent.output);
 
   await runAssurancesTest(path, spec, preState, postState, input, expectedResult);
@@ -150,7 +155,7 @@ export async function runAssurancesTestFull(testContent: AssurancesTestFull, pat
   const spec = fullChainSpec;
   const preState = TestState.toAssurancesState(testContent.pre_state, spec);
   const postState = TestState.toAssurancesState(testContent.post_state, spec);
-  const input = Input.toAssurancesInput(testContent.input, spec);
+  const input = Input.toAssurancesInput(testContent.input, spec, preState.availabilityAssignment);
   const expectedResult = Output.toAssurancesTransitionResult(testContent.output);
 
   await runAssurancesTest(path, spec, preState, postState, input, expectedResult);

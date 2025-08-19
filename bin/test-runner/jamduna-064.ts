@@ -7,7 +7,7 @@ const runners = [
   runner("safrole/state_transitions_fuzzed", StateTransitionFuzzed.fromJson, runStateTransitionFuzzed),
 ];
 
-main(runners, process.argv.slice(2), "test-vectors/jamduna", {
+main(runners, process.argv.slice(2), "test-vectors/jamduna_064", {
   accepted: [
     "safrole/state_transitions",
     "disputes/state_transitions",

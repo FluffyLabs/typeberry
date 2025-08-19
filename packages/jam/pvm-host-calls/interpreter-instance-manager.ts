@@ -1,4 +1,5 @@
 import { Interpreter } from "@typeberry/pvm-interpreter";
+import { Compatibility, TestSuite } from "@typeberry/utils";
 
 type ResolveFn = (pvm: Interpreter) => void;
 
@@ -8,7 +9,9 @@ export class InterpreterInstanceManager {
 
   constructor(noOfPvmInstances: number) {
     for (let i = 0; i < noOfPvmInstances; i++) {
-      this.instances.push(new Interpreter({ useSbrkGas: false, ignoreInstructionGas: true }));
+      this.instances.push(
+        new Interpreter({ useSbrkGas: false, ignoreInstructionGas: !Compatibility.isSuite(TestSuite.JAMDUNA_065) }),
+      );
     }
   }
 

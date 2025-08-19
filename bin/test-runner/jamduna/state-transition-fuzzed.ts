@@ -14,14 +14,14 @@ import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain, StfErrorKind, stfError } from "@typeberry/transition/chain-stf.js";
 import { OK, Result } from "@typeberry/utils";
-import { TestState, loadState } from "./state-loader.js";
+import { TestState_0_6_4, loadState } from "./state-loader.js";
 
 export class StateTransitionFuzzed {
   static fromJson: FromJson<StateTransitionFuzzed> = {
-    pre_state: TestState.fromJson,
+    pre_state: TestState_0_6_4.fromJson,
     block: blockFromJson(tinyChainSpec),
   };
-  pre_state!: TestState;
+  pre_state!: TestState_0_6_4;
   block!: Block;
 }
 

@@ -1,4 +1,4 @@
-name: jamduna test vectors
+name: jamduna test vectors 0.6.4
 
 on:
   workflow_dispatch:
@@ -6,9 +6,9 @@ on:
     branches: [ "main" ]
 
 env:
-  TEST_VECTORS_REF: 4757505c22ca9428a1d4897ecb7451525019996e
+  TEST_VECTORS_REF: 9658460523bb5b0250ef6b6fc04852e08dd76d61
   GP_VERSION: 0.6.4
-  TEST_SUITE: jamduna
+  TEST_SUITE: jamduna-064
 
 jobs:
   import:
@@ -34,7 +34,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: rm -rf ./database
-      - run: npm start -- import ./test-vectors/jamduna/data/safrole/blocks/*.json | tee safrole.txt
+      - run: npm start -- import ./test-vectors/jamduna_064/data/safrole/blocks/*.json | tee safrole.txt
       # TODO [ToDr] would probably be best to have some CLI to display the best block and test with that?
       #             or a special mode that would import the blocks for test purposes and print some extra output.
       - run: |
@@ -43,7 +43,7 @@ jobs:
             exit 1
           }
       - run: rm -rf ./database
-      - run: npm start -- import ./test-vectors/jamduna/data/fallback/blocks/*.json | tee fallback.txt
+      - run: npm start -- import ./test-vectors/jamduna_064/data/fallback/blocks/*.json | tee fallback.txt
       - run: |
           grep -q "Best block: #60 (0x5da17ce23b742d103fd40c20353db271601943a260653802f7645da319e10fd8)" fallback.txt || {
             echo "Seems that the blocks were not imported correctly"
@@ -75,11 +75,11 @@ jobs:
       - run: npm start -w @typeberry/test-runner
       - name: Display results
         if: always()
-        run: cat ./dist/jamdunavectors.txt
+        run: cat ./dist/jamdunavectors-064.txt
       - name: Upload new results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           path: |
-            ./dist/jamdunavectors
+            ./dist/jamdunavectors-064
           name: jamdunavectors-results

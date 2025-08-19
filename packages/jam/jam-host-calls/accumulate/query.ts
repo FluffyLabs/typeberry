@@ -8,8 +8,9 @@ import {
   type IHostCallRegisters,
   PvmExecution,
 } from "@typeberry/pvm-host-calls";
-import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
+import { traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { type PartialState, PreimageStatusKind } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 
@@ -20,11 +21,19 @@ const UPPER_BITS_SHIFT = 32n;
 /**
  * Query the state of the accumulator.
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/373002373002?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/373002373002?v=0.6.7
  */
 export class Query implements HostCallHandler {
-  index = tryAsHostCallIndex(13);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 13,
+      versions: {
+        [GpVersion.V0_6_7]: 22,
+      },
+    }),
+  );
   gasCost = tryAsSmallGas(10);
+  tracedRegisters = traceRegisters(IN_OUT_REG_1, IN_OUT_REG_2);
 
   constructor(
     public readonly currentServiceId: ServiceId,

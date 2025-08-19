@@ -85,13 +85,26 @@ export class HostCalls {
       const gas = pvmInstance.getGasCounter();
       const regs = new HostCallRegisters(pvmInstance.getRegisters());
       const memory = new HostCallMemory(pvmInstance.getMemory());
-      const hostCall = this.hostCalls.get(tryAsHostCallIndex(hostCallIndex));
+      const index = tryAsHostCallIndex(hostCallIndex);
+
+      const hostCall = this.hostCalls.get(index);
+      const gasBefore = gas.get();
       const gasCost = typeof hostCall.gasCost === "number" ? hostCall.gasCost : hostCall.gasCost(regs);
       const underflow = gas.sub(gasCost);
+
       if (underflow) {
+        this.hostCalls.traceHostCall("OOG", index, hostCall, regs, gas.get());
         return ReturnValue.fromStatus(pvmInstance.getGasConsumed(), Status.OOG);
       }
+      this.hostCalls.traceHostCall("Invoking", index, hostCall, regs, gasBefore);
       const result = await hostCall.execute(gas, regs, memory);
+      this.hostCalls.traceHostCall(
+        result === undefined ? "Result" : `Status(${result})`,
+        index,
+        hostCall,
+        regs,
+        gas.get(),
+      );
 
       if (result === PvmExecution.Halt) {
         status = Status.HALT;

@@ -1,8 +1,8 @@
 import type { ServiceId } from "@typeberry/block";
 import { Logger } from "@typeberry/logger";
 import type { HostCallHandler, IHostCallMemory } from "@typeberry/pvm-host-calls";
-import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
-import type { IHostCallRegisters } from "@typeberry/pvm-host-calls/host-call-registers.js";
+import { type PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
+import type { IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { clampU64ToU32 } from "./utils.js";
 
@@ -17,6 +17,8 @@ const decoder = new TextDecoder("utf8");
 export class LogHostCall implements HostCallHandler {
   index = tryAsHostCallIndex(100);
   gasCost = tryAsSmallGas(0);
+  // intentionally not tracing anything here, since the message will be printed anyway.
+  tracedRegisters = traceRegisters();
 
   constructor(public readonly currentServiceId: ServiceId) {}
 

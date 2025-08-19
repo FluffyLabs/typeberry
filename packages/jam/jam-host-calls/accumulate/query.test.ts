@@ -5,7 +5,7 @@ import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
-import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler.js";
+import { PvmExecution } from "@typeberry/pvm-host-calls";
 import {
   MemoryBuilder,
   Registers,

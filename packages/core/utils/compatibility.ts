@@ -4,12 +4,14 @@ export enum GpVersion {
   V0_6_6 = "0.6.6",
   V0_6_7 = "0.6.7",
   V0_7_0 = "0.7.0",
+  V0_7_1 = "0.7.1",
 }
 
 export enum TestSuite {
   W3F_DAVXY = "w3f-davxy",
   W3F = "w3f",
-  JAMDUNA = "jamduna",
+  JAMDUNA_064 = "jamduna-064",
+  JAMDUNA_065 = "jamduna-065",
   JAVAJAM = "javajam",
 }
 
@@ -21,6 +23,7 @@ const ALL_VERSIONS_IN_ORDER = [
   GpVersion.V0_6_6,
   GpVersion.V0_6_7,
   GpVersion.V0_7_0,
+  GpVersion.V0_7_1,
 ];
 
 const env = typeof process === "undefined" ? {} : process.env;
@@ -66,5 +69,25 @@ export class Compatibility {
       throw new Error(`Invalid version: ${version}. Not found amongst supported versions: ${ALL_VERSIONS_IN_ORDER}`);
     }
     return Compatibility.is(...ALL_VERSIONS_IN_ORDER.slice(index));
+  }
+
+  /**
+   * Allows selecting different values for different Gray Paper versions from one record.
+   *
+   * @param fallback The default value to return if no value is found for the current.
+   * @param record A record mapping versions to values, checking if the version is greater or equal to the current version.
+   * @returns The value for the current version, or the default value.
+   */
+  static selectIfGreaterOrEqual<T>({
+    fallback,
+    versions,
+  }: { fallback: T; versions: Partial<Record<GpVersion, T>> }): T {
+    for (const version of ALL_VERSIONS_IN_ORDER.toReversed()) {
+      const value = versions[version];
+      if (value !== undefined && Compatibility.isGreaterOrEqual(version)) {
+        return value;
+      }
+    }
+    return fallback;
   }
 }

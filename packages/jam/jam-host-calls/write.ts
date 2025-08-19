@@ -3,9 +3,9 @@ import { BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
-import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
+import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import type { OK, Result } from "@typeberry/utils";
+import { Compatibility, GpVersion, type OK, type Result } from "@typeberry/utils";
 import { HostCallResult } from "./results.js";
 import { SERVICE_ID_BYTES, clampU64ToU32, writeServiceIdAsLeBytes } from "./utils.js";
 
@@ -33,11 +33,21 @@ const IN_OUT_REG = 7;
 /**
  * Write account storage.
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/334b01334b01?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/334901334901?v=0.6.7
+ *
+ * TODO [MaSo] Update storage key extraction https://graypaper.fluffylabs.dev/#/7e6ff6a/337c01337c01?v=0.6.7
  */
 export class Write implements HostCallHandler {
-  index = tryAsHostCallIndex(3);
+  index = tryAsHostCallIndex(
+    Compatibility.selectIfGreaterOrEqual({
+      fallback: 3,
+      versions: {
+        [GpVersion.V0_6_7]: 4,
+      },
+    }),
+  );
   gasCost = tryAsSmallGas(10);
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10);
 
   constructor(
     public readonly currentServiceId: ServiceId,
@@ -50,7 +60,7 @@ export class Write implements HostCallHandler {
     memory: IHostCallMemory,
   ): Promise<undefined | PvmExecution> {
     // k_0
-    const storageKeyStartAddress = regs.get(7);
+    const storageKeyStartAddress = regs.get(IN_OUT_REG);
     // k_z
     const storageKeyLength = regs.get(8);
     // v_0
