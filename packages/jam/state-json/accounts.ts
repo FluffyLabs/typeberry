@@ -2,6 +2,7 @@ import {
   type CodeHash,
   type ServiceGas,
   type ServiceId,
+  type TimeSlot,
   tryAsServiceGas,
   tryAsServiceId,
   tryAsTimeSlot,
@@ -24,8 +25,8 @@ import {
 } from "@typeberry/state";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 
-class JsonServiceInfo {
-  static fromJson = json.object<JsonServiceInfo, ServiceAccountInfo>(
+class JsonServiceInfoPre067 {
+  static fromJson = json.object<JsonServiceInfoPre067, ServiceAccountInfo>(
     {
       code_hash: fromJson.bytes32(),
       balance: json.fromNumber((x) => tryAsU64(x)),
@@ -57,6 +58,43 @@ class JsonServiceInfo {
   min_memo_gas!: ServiceGas;
   bytes!: U64;
   items!: U32;
+}
+
+class JsonServiceInfo extends JsonServiceInfoPre067 {
+  static fromJson = json.object<JsonServiceInfo, ServiceAccountInfo>(
+    {
+      code_hash: fromJson.bytes32(),
+      balance: json.fromNumber((x) => tryAsU64(x)),
+      min_item_gas: json.fromNumber((x) => tryAsServiceGas(x)),
+      min_memo_gas: json.fromNumber((x) => tryAsServiceGas(x)),
+      bytes: json.fromNumber((x) => tryAsU64(x)),
+      items: "number",
+      creation_slot: json.fromNumber((x) => tryAsTimeSlot(x)),
+      deposit_offset: json.fromNumber((x) => tryAsU64(x)),
+      last_accumulation_slot: json.fromNumber((x) => tryAsTimeSlot(x)),
+      parent_service: json.fromNumber((x) => tryAsServiceId(x)),
+    },
+    ({ code_hash, balance, min_item_gas, min_memo_gas, bytes, items }) => {
+      return ServiceAccountInfo.create({
+        codeHash: code_hash,
+        balance,
+        accumulateMinGas: min_item_gas,
+        onTransferMinGas: min_memo_gas,
+        storageUtilisationBytes: bytes,
+        storageUtilisationCount: items,
+        // TODO [MaSo] Should be provided from json
+        gratisStorage: tryAsU64(0),
+        created: tryAsTimeSlot(0),
+        lastAccumulation: tryAsTimeSlot(0),
+        parentService: tryAsServiceId(0),
+      });
+    },
+  );
+
+  creation_slot!: TimeSlot;
+  deposit_offset!: U64;
+  last_accumulation_slot!: TimeSlot;
+  parent_service!: ServiceId;
 }
 
 class JsonPreimageItem {
@@ -119,7 +157,9 @@ export class JsonService {
     {
       id: "number",
       data: {
-        service: JsonServiceInfo.fromJson,
+        service: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+          ? JsonServiceInfo.fromJson
+          : JsonServiceInfoPre067.fromJson,
         preimages: json.optional(json.array(JsonPreimageItem.fromJson)),
         storage: json.optional(
           json.array(Compatibility.is(GpVersion.V0_6_4) ? gp064stateItemFromJson : JsonStorageItem.fromJson),
