@@ -259,6 +259,8 @@ export class OnChain {
       designatedValidatorData: maybeDesignatedValidatorData,
       timeslot: accumulateTimeSlot,
       preimages: accumulatePreimages,
+      accumulationQueue,
+      recentlyAccumulated,
       ...servicesUpdate
     } = accumulateUpdate;
 
@@ -316,7 +318,6 @@ export class OnChain {
       ...(maybeDesignatedValidatorData !== undefined ? { designatedValidatorData: maybeDesignatedValidatorData } : {}),
       ...(maybePrivilegedServices !== undefined ? { privilegedServices: maybePrivilegedServices } : {}),
       authPools,
-      preimages: preimages.concat(accumulatePreimages),
       disputesRecords,
       availabilityAssignment: reportsAvailAssignment,
       recentBlocks,
@@ -329,7 +330,10 @@ export class OnChain {
       previousValidatorData,
       sealingKeySeries,
       ticketsAccumulator,
-      ...servicesUpdate,
+      accumulationQueue,
+      recentlyAccumulated,
+      ...newServicesUpdate,
+      preimages: preimages.concat(accumulatePreimages),
     });
   }
 
