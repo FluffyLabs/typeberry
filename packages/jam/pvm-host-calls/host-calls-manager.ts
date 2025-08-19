@@ -1,6 +1,6 @@
 import { CURRENT_SERVICE_ID, HostCallResult } from "@typeberry/jam-host-calls";
 import { Logger } from "@typeberry/logger";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { type Gas, type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { check } from "@typeberry/utils";
 import {
   type HostCallHandler,
@@ -37,6 +37,7 @@ export class HostCallsManager {
     hostCallIndex: HostCallIndex,
     hostCallHandler: HostCallHandler,
     registers: IHostCallRegisters,
+    gas: Gas,
   ) {
     const { currentServiceId } = hostCallHandler;
     const requested = hostCallIndex !== hostCallHandler.index ? ` (${hostCallIndex})` : "";
@@ -46,7 +47,7 @@ export class HostCallsManager {
         return `${idx}: ${registers.get(idx)}`;
       })
       .join(", ");
-    logger.trace(`[${currentServiceId}] ${context} ${name}${requested}. Registers: ${registerValues}`);
+    logger.trace(`[${currentServiceId}] ${context} ${name}${requested}. Registers: ${registerValues}. Gas: ${gas}`);
   }
 }
 

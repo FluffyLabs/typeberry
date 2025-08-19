@@ -1,5 +1,6 @@
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE, type OpaqueHash, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
+import { Ordering } from "@typeberry/ordering";
 import { TEST_COMPARE_USING } from "@typeberry/utils";
 import { HashDictionary } from "./hash-dictionary.js";
 
@@ -33,7 +34,16 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
   private constructor(private readonly dict: HashDictionary<HashWithZeroedBit<T>, V>) {}
 
   [TEST_COMPARE_USING]() {
-    return this.dict;
+    return Array.from(this.dict.entries()).toSorted((a, b) => {
+      const r = a[0].compare(b[0]);
+      if (r === Ordering.Equal) {
+        return 0;
+      }
+      if (r === Ordering.Less) {
+        return -1;
+      }
+      return 1;
+    });
   }
 
   /** Return number of items in the dictionary. */

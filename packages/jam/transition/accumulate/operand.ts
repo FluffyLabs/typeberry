@@ -16,10 +16,10 @@ export class Operand extends WithDebug {
     hash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
     exportsRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
     authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
+    authorizationOutput: codec.blob,
     payloadHash: codec.bytes(HASH_SIZE),
     gas: codec.varU64.asOpaque<ServiceGas>(),
     result: WorkExecResult.Codec,
-    authorizationOutput: codec.blob,
   });
 
   /**
@@ -28,10 +28,10 @@ export class Operand extends WithDebug {
   hash: WorkPackageHash; // h
   exportsRoot: ExportsRootHash; // e
   authorizerHash: AuthorizerHash; // a
+  authorizationOutput: BytesBlob; // o
   payloadHash: OpaqueHash; // y
   gas: ServiceGas; // g
   result: WorkExecResult; // d
-  authorizationOutput: BytesBlob; // o
 
   static create({
     authorizationOutput,
