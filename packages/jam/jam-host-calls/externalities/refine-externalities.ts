@@ -65,12 +65,12 @@ export enum MemoryOperation {
   Read = 3,
   /** Preserve memory and set access to read-write. */
   Write = 4,
-  /** Fallback. */
+  /** Unknown operation. */
   Unknown = 5,
 }
-/** Converts a number into MemoryOperation. */
+/** Convert a number into MemoryOperation. */
 export const tryAsMemoryOperation = (v: number | bigint): MemoryOperation =>
-  tryAsU64(v) > MemoryOperation.Unknown ? MemoryOperation.Unknown : (v as MemoryOperation);
+  tryAsU64(v) >=  MemoryOperation.Unknown ? MemoryOperation.Unknown : (v as MemoryOperation);
 
 /** An error that may occur during `peek` or `poke` host call. */
 export enum PeekPokeError {
@@ -92,7 +92,7 @@ export enum ZeroVoidError {
 export enum PagesError {
   /** No machine under given machine index. */
   NoMachine = 0,
-  /** When provided MachineOperation is `Unknown`. */
+  /** Provided `Unknown` MachineOperation. */
   InvalidRequest = 1,
   /** Attempting to change non-accessible page or trying to preserve value of voided page. */
   InvalidPage = 2,
