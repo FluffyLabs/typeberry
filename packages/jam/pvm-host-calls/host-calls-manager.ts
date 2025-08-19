@@ -43,11 +43,13 @@ export class HostCallsManager {
     const requested = hostCallIndex !== hostCallHandler.index ? ` (${hostCallIndex})` : "";
     const name = `${hostCallHandler.constructor.name}:${hostCallHandler.index}`;
     const registerValues = hostCallHandler.tracedRegisters
-      .map((idx) => {
-        return `${idx}: ${registers.get(idx)}`;
+      .map((idx) => [idx.toString().padStart(2, "0"), registers.get(idx)] as const)
+      .filter((v) => v[1] !== 0n)
+      .map(([idx, value]) => {
+        return `r${idx}=${value} (0x${value.toString(16)})`;
       })
       .join(", ");
-    logger.trace(`[${currentServiceId}] ${context} ${name}${requested}. Registers: ${registerValues}. Gas: ${gas}`);
+    logger.trace(`[${currentServiceId}] ${context} ${name}${requested}.  Gas: ${gas}. Regs: ${registerValues}.`);
   }
 }
 
