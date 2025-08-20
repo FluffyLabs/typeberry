@@ -15,8 +15,8 @@ import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
 import {
   type MachineId,
   PagesError,
-  tryAsMachineId,
   toMemoryOperation,
+  tryAsMachineId,
 } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../results.js";
@@ -56,13 +56,7 @@ function prepareTest(
   const count = tryAsU64(pageCount);
   const type = tryAsU64(requestType);
   const { registers, memory } = prepareRegsAndMemory(machineIndex, start, count, type);
-  refine.machinePagesData.set(
-    result,
-    machineIndex,
-    start,
-    count,
-    toMemoryOperation(type),
-  );
+  refine.machinePagesData.set(result, machineIndex, start, count, toMemoryOperation(type));
 
   return {
     pages,
