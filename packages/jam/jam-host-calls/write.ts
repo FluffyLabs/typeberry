@@ -34,8 +34,6 @@ const IN_OUT_REG = 7;
  * Write account storage.
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/334901334901?v=0.6.7
- *
- * TODO [MaSo] Update storage key extraction https://graypaper.fluffylabs.dev/#/7e6ff6a/337c01337c01?v=0.6.7
  */
 export class Write implements HostCallHandler {
   index = tryAsHostCallIndex(

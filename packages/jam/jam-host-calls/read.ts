@@ -22,8 +22,6 @@ const IN_OUT_REG = 7;
  * Read account storage.
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/333b00333b00?v=0.6.7
- *
- * TODO [MaSo] Update storage key extraction https://graypaper.fluffylabs.dev/#/7e6ff6a/33d50033d500?v=0.6.7
  */
 export class Read implements HostCallHandler {
   index = tryAsHostCallIndex(
