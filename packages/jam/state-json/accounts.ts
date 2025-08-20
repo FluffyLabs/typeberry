@@ -74,7 +74,7 @@ class JsonServiceInfo extends JsonServiceInfoPre067 {
       last_accumulation_slot: json.fromNumber((x) => tryAsTimeSlot(x)),
       parent_service: json.fromNumber((x) => tryAsServiceId(x)),
     },
-    ({ code_hash, balance, min_item_gas, min_memo_gas, bytes, items }) => {
+    ({ code_hash, balance, min_item_gas, min_memo_gas, bytes, items, deposit_offset, creation_slot, last_accumulation_slot, parent_service }) => {
       return ServiceAccountInfo.create({
         codeHash: code_hash,
         balance,
@@ -82,11 +82,10 @@ class JsonServiceInfo extends JsonServiceInfoPre067 {
         onTransferMinGas: min_memo_gas,
         storageUtilisationBytes: bytes,
         storageUtilisationCount: items,
-        // TODO [MaSo] Should be provided from json
-        gratisStorage: tryAsU64(0),
-        created: tryAsTimeSlot(0),
-        lastAccumulation: tryAsTimeSlot(0),
-        parentService: tryAsServiceId(0),
+        gratisStorage: deposit_offset,
+        created: creation_slot,
+        lastAccumulation: last_accumulation_slot,
+        parentService: parent_service,
       });
     },
   );
