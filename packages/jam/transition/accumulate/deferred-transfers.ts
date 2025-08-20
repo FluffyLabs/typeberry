@@ -41,6 +41,9 @@ export enum DeferredTransfersErrorCode {
 }
 const logger = Logger.new(import.meta.filename, "deferred-transfers");
 
+/**
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/18df0118df01?v=0.6.7
+ */
 export class DeferredTransfers {
   constructor(
     public readonly chainSpec: ChainSpec,
@@ -52,6 +55,7 @@ export class DeferredTransfers {
     timeslot,
     servicesUpdate: inputServicesUpdate,
   }: DeferredTransfersInput): Promise<Result<DeferredTransfersResult, DeferredTransfersErrorCode>> {
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/187a03187a03?v=0.6.7
     const transferStatistics = new Map<ServiceId, CountAndGasUsed>();
     const services = uniquePreserveOrder(pendingTransfers.flatMap((x) => [x.source, x.destination]));
 
