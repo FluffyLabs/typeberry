@@ -46,4 +46,6 @@ export enum ReportsError {
   BadSignature = 21,
   /** Size of authorizer output and all work-item successful output blobs is too big. */
   WorkReportTooBig = 22,
+  /** Contains guarantee from validator that is proven to be an offender. */
+  BannedValidator = 23,
 }

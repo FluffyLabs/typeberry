@@ -2,7 +2,7 @@ import { type PerValidator, type TimeSlot, type WorkReportHash, tryAsTimeSlot } 
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { type BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
-import { type HashDictionary, type KnownSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
+import { type HashDictionary, type HashSet, type KnownSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type Ed25519Key, ed25519 } from "@typeberry/crypto";
 import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
@@ -54,6 +54,12 @@ export type ReportsInput = {
    * https://graypaper.fluffylabs.dev/#/1c979cb/141302144402?v=0.7.1
    */
   assurancesAvailAssignment: AssurancesStateUpdate["availabilityAssignment"];
+  /**
+   * ψ′O - Ed25519 keys of validators that were proven to judge incorrectly.
+   *
+   * https://graypaper.fluffylabs.dev/#/1c979cb/134201134201?v=0.7.1
+   */
+  offenders: HashSet<Ed25519Key>;
 };
 
 export type ReportsState = Pick<
@@ -165,17 +171,21 @@ export class Reports {
       index += 1;
     }
 
+    const reporters = SortedSet.fromArray(
+      bytesBlobComparator,
+      signaturesToVerify.ok.map((x) => x.key),
+    ).slice();
+
+    if (hasAnyOffenders(reporters, input.offenders)) {
+      return Result.error(ReportsError.BannedValidator);
+    }
+
     return Result.ok({
       stateUpdate: {
         availabilityAssignment: tryAsPerCore(availabilityAssignment, this.chainSpec),
       },
       reported: contextualValidity.ok,
-      reporters: asKnownSize(
-        SortedSet.fromArray(
-          bytesBlobComparator,
-          signaturesToVerify.ok.map((x) => x.key),
-        ).slice(),
-      ),
+      reporters: asKnownSize(reporters),
     });
   }
 
@@ -316,4 +326,14 @@ function zip<A, B, R>(a: PerValidator<A>, b: PerValidator<B>, fn: (a: A, b: B) =
       return fn(aValue, b[index]);
     }),
   );
+}
+
+function hasAnyOffenders(reporters: Ed25519Key[], offenders: HashSet<Ed25519Key>) {
+  for (const key of reporters) {
+    if (offenders.has(key)) {
+      return true;
+    }
+  }
+
+  return false;
 }

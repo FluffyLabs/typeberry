@@ -95,7 +95,7 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
 
   const result = await disputes.transition(testContent.input.disputes);
   const error = result.isError ? result.error : undefined;
-  const ok = result.isOk ? result.ok.offendersMark.slice() : undefined;
+  const ok = result.isOk ? Array.from(result.ok.offendersMark) : undefined;
   const stateUpdate = result.isOk ? result.ok.stateUpdate : undefined;
 
   assert.deepEqual(error, testContent.output.err);
