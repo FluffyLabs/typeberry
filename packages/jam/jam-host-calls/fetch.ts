@@ -227,7 +227,9 @@ export class Fetch implements HostCallHandler {
   constructor(
     public readonly currentServiceId: ServiceId,
     private readonly fetch: FetchExternalities,
-  ) {}
+  ) {
+    console.log(fetch.constants().toString());
+  }
 
   async execute(
     _gas: GasCounter,

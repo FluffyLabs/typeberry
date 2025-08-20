@@ -1,5 +1,6 @@
 import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { ArgsDecoder } from "./args-decoder/args-decoder.js";
+import { Logger } from "@typeberry/logger";
+import { ArgsDecoder, type Args } from "./args-decoder/args-decoder.js";
 import { createResults } from "./args-decoder/args-decoding-results.js";
 import { ArgumentType } from "./args-decoder/argument-type.js";
 import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-type-map.js";
@@ -58,6 +59,7 @@ type InterpreterOptions = {
 export class Interpreter {
   private readonly useSbrkGas: boolean;
   private readonly ignoreInstructionGas: boolean;
+  private readonly logger = Logger.new("interpreter.ts", "pvm-interpreter");
   private registers = new Registers();
   private code: Uint8Array = new Uint8Array();
   private mask = Mask.empty();
@@ -185,13 +187,15 @@ export class Interpreter {
     const isValidInstruction = Instruction[currentInstruction] !== undefined;
     const gasCost = instructionGasMap[currentInstruction] ?? instructionGasMap[Instruction.TRAP];
     const underflow = this.ignoreInstructionGas ? false : this.gas.sub(gasCost);
-    console.log(this.pc, this.gas.get(), INSTRUCTION_ID_TO_NAME[currentInstruction]);
     if (underflow) {
       this.status = Status.OOG;
       return this.status;
     }
     const argsType = instructionArgumentTypeMap[currentInstruction] ?? ArgumentType.NO_ARGUMENTS;
     const argsResult = this.argsDecodingResults[argsType];
+    console.log(
+      `${this.pc.toString().padStart(6)} ${this.gas.get().toString().padStart(8)} ${INSTRUCTION_ID_TO_NAME[currentInstruction].padEnd(20)} ${this.formatArgsResult(argsResult)}`,
+    );
     this.argsDecoder.fillArgs(this.pc, argsResult);
 
     if (!isValidInstruction) {
@@ -327,5 +331,96 @@ export class Interpreter {
 
   getMemoryPage(pageNumber: number): null | Uint8Array {
     return this.memory.getPageDump(tryAsPageNumber(pageNumber));
+  }
+
+  formatArgsResult(argsResult: Args): string {
+    const parts: string[] = [];
+
+    switch (argsResult.type) {
+      case ArgumentType.NO_ARGUMENTS:
+        parts.push("no arguments");
+        break;
+
+      case ArgumentType.ONE_IMMEDIATE:
+        parts.push("immediate");
+        parts.push(`(${argsResult.immediateDecoder.getU32()})`);
+        break;
+
+      case ArgumentType.TWO_IMMEDIATES:
+        parts.push("two immediates");
+        parts.push(`first(${argsResult.firstImmediateDecoder.getU32()})`);
+        parts.push(`second(${argsResult.secondImmediateDecoder.getU32()})`);
+        break;
+
+      case ArgumentType.ONE_OFFSET:
+        parts.push("offset");
+        parts.push(`(${argsResult.nextPc})`);
+        break;
+
+      case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE:
+        parts.push(`register ${argsResult.registerIndex}(${this.registers.getU64(argsResult.registerIndex)})`);
+        parts.push("immediate");
+        parts.push(`(${argsResult.immediateDecoder.getU32()})`);
+        break;
+
+      case ArgumentType.ONE_REGISTER_TWO_IMMEDIATES:
+        parts.push(`register ${argsResult.registerIndex}(${this.registers.getU64(argsResult.registerIndex)})`);
+        parts.push("two immediates");
+        parts.push(`first(${argsResult.firstImmediateDecoder.getU32()})`);
+        parts.push(`second(${argsResult.secondImmediateDecoder.getU32()})`);
+        break;
+
+      case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET:
+        parts.push(`register ${argsResult.registerIndex}(${this.registers.getU64(argsResult.registerIndex)})`);
+        parts.push("immediate");
+        parts.push(`(${argsResult.immediateDecoder.getU32()})`);
+        parts.push(`offset(${argsResult.nextPc})`);
+        break;
+
+      case ArgumentType.TWO_REGISTERS:
+        parts.push(
+          `registers ${argsResult.firstRegisterIndex}(${this.registers.getU64(argsResult.firstRegisterIndex)}), ${argsResult.secondRegisterIndex}(${this.registers.getU64(argsResult.secondRegisterIndex)})`,
+        );
+        break;
+
+      case ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE:
+        parts.push(
+          `registers ${argsResult.firstRegisterIndex}(${this.registers.getU64(argsResult.firstRegisterIndex)}), ${argsResult.secondRegisterIndex}(${this.registers.getU64(argsResult.secondRegisterIndex)})`,
+        );
+        parts.push("immediate");
+        parts.push(`(${argsResult.immediateDecoder.getU32()})`);
+        break;
+
+      case ArgumentType.TWO_REGISTERS_ONE_OFFSET:
+        parts.push(
+          `registers ${argsResult.firstRegisterIndex}(${this.registers.getU64(argsResult.firstRegisterIndex)}), ${argsResult.secondRegisterIndex}(${this.registers.getU64(argsResult.secondRegisterIndex)})`,
+        );
+        parts.push(`offset(${argsResult.nextPc})`);
+        break;
+
+      case ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES:
+        parts.push(
+          `registers ${argsResult.firstRegisterIndex}(${this.registers.getU64(argsResult.firstRegisterIndex)}), ${argsResult.secondRegisterIndex}(${this.registers.getU64(argsResult.secondRegisterIndex)})`,
+        );
+        parts.push("two immediates");
+        parts.push(`first(${argsResult.firstImmediateDecoder.getU32()})`);
+        parts.push(`second(${argsResult.secondImmediateDecoder.getU32()})`);
+        break;
+
+      case ArgumentType.THREE_REGISTERS:
+        parts.push(
+          `registers ${argsResult.firstRegisterIndex}(${this.registers.getU64(argsResult.firstRegisterIndex)}), ${argsResult.secondRegisterIndex}(${this.registers.getU64(argsResult.secondRegisterIndex)}), ${argsResult.thirdRegisterIndex}(${this.registers.getU64(argsResult.thirdRegisterIndex)})`,
+        );
+        break;
+
+      case ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE:
+        parts.push(`register ${argsResult.registerIndex}(${this.registers.getU64(argsResult.registerIndex)})`);
+        parts.push("extended immediate");
+        parts.push(`(${argsResult.immediateDecoder.getValue()})`);
+        break;
+    }
+
+    parts.push(`bytes: ${argsResult.noOfBytesToSkip}`);
+    return parts.join(" ");
   }
 }
