@@ -22,8 +22,7 @@ export class SortedSet<V> extends SortedArray<V> implements ImmutableSortedSet<V
       return new SortedSet([], comparator);
     }
 
-    const data = array.slice();
-    data.sort((a, b) => comparator(a, b).value);
+    const data = array.toSorted((a, b) => comparator(a, b).value);
     const dataLength = data.length;
 
     const nonDuplicates = [data[0]];
@@ -40,9 +39,8 @@ export class SortedSet<V> extends SortedArray<V> implements ImmutableSortedSet<V
    * Create SortedSet from array that is not sorted. This function sorts the array.
    * Duplicates are detected an are not allowed.
    */
-  static fromArrayNoDuplicates<V>(comparator: Comparator<V>, array: readonly V[]) {
-    const data = array.slice();
-    data.sort((a, b) => comparator(a, b).value);
+  static fromArrayUnique<V>(comparator: Comparator<V>, array: readonly V[]) {
+    const data = array.toSorted((a, b) => comparator(a, b).value);
     const dataLength = data.length;
 
     for (let i = 1; i < dataLength; i++) {

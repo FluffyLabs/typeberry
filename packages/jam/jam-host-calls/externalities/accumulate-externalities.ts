@@ -653,7 +653,13 @@ export class AccumulateExternalities
     const countDiff = isAddingNew ? 1 : isRemoving ? -1 : 0;
     const lenDiff = (data?.length ?? 0) - (current?.length ?? 0);
     const baseStorageDiff = isAddingNew ? BASE_STORAGE_BYTES : isRemoving ? -BASE_STORAGE_BYTES : 0n;
-    const rawKeyDiff = isAddingNew ? rawKeyBytes : isRemoving ? -rawKeyBytes : 0n;
+    const rawKeyDiff = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? isAddingNew
+        ? rawKeyBytes
+        : isRemoving
+          ? -rawKeyBytes
+          : 0n
+      : 0n;
     const serviceInfo = this.getCurrentServiceInfo();
     const items = serviceInfo.storageUtilisationCount + countDiff;
     const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + baseStorageDiff + rawKeyDiff;

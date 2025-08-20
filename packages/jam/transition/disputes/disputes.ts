@@ -274,9 +274,9 @@ export class Disputes {
     }
 
     return {
-      toAddToGoodSet: SortedSet.fromArrayNoDuplicates(hashComparator, toAddToGoodSet),
-      toAddToBadSet: SortedSet.fromArrayNoDuplicates(hashComparator, toAddToBadSet),
-      toAddToWonkySet: SortedSet.fromArrayNoDuplicates(hashComparator, toAddToWonkySet),
+      toAddToGoodSet: SortedSet.fromArrayUnique(hashComparator, toAddToGoodSet),
+      toAddToBadSet: SortedSet.fromArrayUnique(hashComparator, toAddToBadSet),
+      toAddToWonkySet: SortedSet.fromArrayUnique(hashComparator, toAddToWonkySet),
     };
   }
 
