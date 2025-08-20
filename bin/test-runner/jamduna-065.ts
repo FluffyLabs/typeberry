@@ -6,6 +6,7 @@ const runners = [runner("state_transition", StateTransition.fromJson, runStateTr
 main(runners, process.argv.slice(2), "test-vectors/jamduna_065", {
   accepted: ["generic/state_transitions/", "assurances/state_transitions/", "orderedaccumulation/state_transitions/"],
   ignored: [
+    // TODO: [MaSi]: It looks like those test vectors have incorrect expected state. As 065 is not an official release, we can ignore them for now.
     "assurances/state_transitions/00000035.json",
     "assurances/state_transitions/00000037.json",
     "assurances/state_transitions/00000043.json",
