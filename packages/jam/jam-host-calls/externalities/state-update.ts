@@ -14,7 +14,7 @@ import {
   type State,
   StorageItem,
   type StorageKey,
-  type UpdatePreimage,
+  UpdatePreimage,
   UpdatePreimageKind,
   UpdateService,
   UpdateServiceKind,
@@ -24,6 +24,7 @@ import {
 } from "@typeberry/state";
 import { OK, Result, assertNever } from "@typeberry/utils";
 import type { PendingTransfer } from "./pending-transfer.js";
+import {ChainSpec} from "@typeberry/config";
 
 /** Update of the state entries coming from accumulation of a single service. */
 export type ServiceStateUpdate = Partial<Pick<State, "privilegedServices" | "authQueues" | "designatedValidatorData">> &
@@ -112,6 +113,7 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
   public readonly stateUpdate;
 
   constructor(
+    public readonly chainSpec: ChainSpec,
     /** Original (unmodified state). */
     public readonly state: T,
     stateUpdate?: AccumulationStateUpdate,
@@ -214,6 +216,9 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     // representation soon.
     console.log("getLookupHistory", serviceId.toString(), hash.toString(), length);
     console.log(JSON.stringify(this.stateUpdate.services.preimages, null, 2));
+
+    const preimageRemovalThresholdTimeSlot = currentTimeslot - this.chainSpec.preimageExpungePeriod;
+
     const updatedPreimage = this.stateUpdate.services.preimages.findLast(
       (update) => update.serviceId === serviceId && update.hash.isEqualTo(hash) && BigInt(update.length) === length,
     );
@@ -227,7 +232,18 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
       }
 
       const slots = service.getLookupHistory(hash, lenU32);
-      return slots === null ? null : new LookupHistoryItem(hash, lenU32, slots);
+      const item = slots === null ? null : new LookupHistoryItem(hash, lenU32, slots);
+      // NOTE this isn't a complete solution, since we are only removing preimages if they are touched,
+      // rather we should schedule removal when `expunge` is first called.
+      if (item !== null && LookupHistoryItem.shouldBeRemoved(item.slots, preimageRemovalThresholdTimeSlot)) {
+        // TODO [ToDr] Update service info
+        this.updatePreimage(UpdatePreimage.remove({
+          serviceId,
+          hash,
+          length: lenU32,
+        }));
+      }
+      return item;
     };
 
     if (updatedPreimage === undefined) {

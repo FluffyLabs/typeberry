@@ -212,4 +212,9 @@ export class LookupHistoryItem {
     }
     return item.length === 0;
   }
+
+  static shouldBeRemoved(slots: LookupHistorySlots, removalThresholdTimeSlot: number) {
+    // TODO [ToDr] check if thershold is exclusive or inclusive.
+    return slots.length > 1 && slots[1] < removalThresholdTimeSlot;
+  }
 }
