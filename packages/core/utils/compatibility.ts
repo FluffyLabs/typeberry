@@ -10,7 +10,7 @@ export enum GpVersion {
 export enum TestSuite {
   W3F_DAVXY = "w3f-davxy",
   W3F = "w3f",
-JAMDUNA  = "jamduna",
+  JAMDUNA = "jamduna",
   JAVAJAM = "javajam",
 }
 
@@ -59,11 +59,12 @@ export class Compatibility {
     return version.includes(CURRENT_VERSION);
   }
 
-  static isSuite(suite: TestSuite) {
+  static isSuite(suite: TestSuite, version?: GpVersion) {
     if (CURRENT_SUITE === undefined) {
       return false;
     }
-    return suite === CURRENT_SUITE;
+    const isVersion = version === undefined || Compatibility.is(version);
+    return suite === CURRENT_SUITE && isVersion;
   }
 
   static isGreaterOrEqual(version: GpVersion) {

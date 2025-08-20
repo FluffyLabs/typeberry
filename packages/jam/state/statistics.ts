@@ -8,7 +8,7 @@ import {
 } from "@typeberry/block";
 import { type CodecRecord, type Descriptor, codec } from "@typeberry/codec";
 import { type U16, type U32, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { Compatibility, TestSuite } from "@typeberry/utils";
+import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
 import { type PerCore, codecPerCore } from "./common.js";
 
 const codecServiceId: Descriptor<ServiceId> =

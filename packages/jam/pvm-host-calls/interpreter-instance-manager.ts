@@ -13,7 +13,8 @@ export class InterpreterInstanceManager {
         new Interpreter({
           useSbrkGas: false,
           ignoreInstructionGas: !(
-            Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5) || Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+            Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5) ||
+            Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
           ),
         }),
       );
