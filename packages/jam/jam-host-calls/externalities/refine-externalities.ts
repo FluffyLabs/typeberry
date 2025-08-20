@@ -5,7 +5,7 @@ import { type U64, tryAsU64 } from "@typeberry/numbers";
 import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
 import type { ProgramDecoderError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { type OK, type Opaque, type Result, asOpaqueType, check } from "@typeberry/utils";
+import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/utils";
 
 /**
  * Program counter is a 64-bit unsigned integer that points to the next instruction
@@ -67,14 +67,9 @@ export enum MemoryOperation {
   Write = 4,
 }
 
-export function isMemoryOperation(v: number | bigint): v is MemoryOperation {
-  return v <= MemoryOperation.Write && v >= MemoryOperation.Void;
-}
-/** Convert a number into MemoryOperation. */
-export const tryAsMemoryOperation = (v: number | bigint): MemoryOperation => {
-  check(isMemoryOperation(v), "Invalid memory operation");
-  return Number(v);
-};
+/** Convert a number into MemoryOperation or null (if invalid). */
+export const toMemoryOperation = (v: number | bigint): MemoryOperation | null =>
+  v <= MemoryOperation.Write && v >= MemoryOperation.Void ? Number(v) : null;
 
 /** An error that may occur during `peek` or `poke` host call. */
 export enum PeekPokeError {

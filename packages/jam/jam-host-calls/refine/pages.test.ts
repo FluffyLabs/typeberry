@@ -15,9 +15,8 @@ import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
 import {
   type MachineId,
   PagesError,
-  isMemoryOperation,
   tryAsMachineId,
-  tryAsMemoryOperation,
+  toMemoryOperation,
 } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../results.js";
@@ -62,7 +61,7 @@ function prepareTest(
     machineIndex,
     start,
     count,
-    isMemoryOperation(type) ? tryAsMemoryOperation(type) : null,
+    toMemoryOperation(type),
   );
 
   return {
