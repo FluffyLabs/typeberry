@@ -130,7 +130,8 @@ describe("HostCalls: Pages", () => {
   });
 
   itPost067("Should return HUH when provided unknown type request", async () => {
-    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 10_000, 5, 16);
+    // intentionally setting no machine here.
+    const { pages, registers } = prepareTest(Result.error(PagesError.NoMachine), 10_000, 10_000, 5, 16);
 
     // when
     await pages.execute(gas, registers);
@@ -140,7 +141,7 @@ describe("HostCalls: Pages", () => {
   });
 
   itPost067("Should return HUH when page is too low", async () => {
-    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidRequest), 10_000, 12, 5, 0);
+    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 12, 5, 0);
 
     // when
     await pages.execute(gas, registers);
@@ -150,7 +151,7 @@ describe("HostCalls: Pages", () => {
   });
 
   itPost067("Should return HUH when page is too large", async () => {
-    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidRequest), 10_000, 2 ** 32 - 1, 12_000, 2);
+    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 2 ** 32 - 1, 12_000, 2);
 
     // when
     await pages.execute(gas, registers);
@@ -160,7 +161,7 @@ describe("HostCalls: Pages", () => {
   });
 
   itPost067("Should return HUH when page is too large 2", async () => {
-    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidRequest), 10_000, 2 ** 20 - 5, 5, 3);
+    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 2 ** 20 - 5, 5, 3);
 
     // when
     await pages.execute(gas, registers);

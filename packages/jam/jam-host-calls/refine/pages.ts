@@ -10,6 +10,7 @@ import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
 import {
   PagesError,
   type RefineExternalities,
+  isMemoryOperation,
   tryAsMachineId,
   tryAsMemoryOperation,
 } from "../externalities/refine-externalities.js";
@@ -47,9 +48,19 @@ export class Pages implements HostCallHandler {
     // `c`: page count
     const pageCount = regs.get(9);
     // `r`: request type
-    const requestType = tryAsMemoryOperation(regs.get(10));
+    const requestType = regs.get(10);
 
-    const pagesResult = await this.refine.machinePages(machineIndex, pageStart, pageCount, requestType);
+    if (!isMemoryOperation(requestType)) {
+      regs.set(IN_OUT_REG, HostCallResult.HUH);
+      return;
+    }
+
+    const pagesResult = await this.refine.machinePages(
+      machineIndex,
+      pageStart,
+      pageCount,
+      tryAsMemoryOperation(requestType),
+    );
 
     if (pagesResult.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);
@@ -63,7 +74,7 @@ export class Pages implements HostCallHandler {
       return;
     }
 
-    if (e === PagesError.InvalidRequest || e === PagesError.InvalidPage) {
+    if (e === PagesError.InvalidPage) {
       regs.set(IN_OUT_REG, HostCallResult.HUH);
       return;
     }

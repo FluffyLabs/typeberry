@@ -5,7 +5,7 @@ import { type U64, tryAsU64 } from "@typeberry/numbers";
 import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
 import type { ProgramDecoderError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/utils";
+import { type OK, type Opaque, type Result, asOpaqueType, check } from "@typeberry/utils";
 
 /**
  * Program counter is a 64-bit unsigned integer that points to the next instruction
@@ -66,9 +66,15 @@ export enum MemoryOperation {
   /** Preserve memory and set access to read-write. */
   Write = 4,
 }
+
+export function isMemoryOperation(v: number | bigint): v is MemoryOperation {
+  return v <= MemoryOperation.Write && v >= MemoryOperation.Void;
+}
 /** Convert a number into MemoryOperation. */
-export const tryAsMemoryOperation = (v: number | bigint): MemoryOperation | null =>
-  tryAsU64(v) > MemoryOperation.Write ? null : (v as MemoryOperation);
+export const tryAsMemoryOperation = (v: number | bigint): MemoryOperation => {
+  check(isMemoryOperation(v), "Invalid memory operation");
+  return Number(v);
+};
 
 /** An error that may occur during `peek` or `poke` host call. */
 export enum PeekPokeError {
@@ -90,10 +96,8 @@ export enum ZeroVoidError {
 export enum PagesError {
   /** No machine under given machine index. */
   NoMachine = 0,
-  /** Provided `Unknown` MachineOperation. */
-  InvalidRequest = 1,
   /** Attempting to change non-accessible page or trying to preserve value of voided page. */
-  InvalidPage = 2,
+  InvalidPage = 1,
 }
 
 /** Error machine is not found. */
