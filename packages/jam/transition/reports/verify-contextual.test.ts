@@ -6,12 +6,12 @@ import { Bytes } from "@typeberry/bytes";
 import { HashDictionary, asKnownSize } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import { tinyChainSpec } from "@typeberry/config";
+import type { Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 import { ENTROPY, guaranteesAsView, initialServices, newCredential, newReports, newWorkReport } from "./test.utils.js";
-import {Ed25519Key} from "@typeberry/crypto";
 
 describe("Reports.verifyContextualValidity", () => {
   it("should reject when code hash is not matching", async () => {

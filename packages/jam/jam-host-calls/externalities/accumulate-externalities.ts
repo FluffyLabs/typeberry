@@ -31,7 +31,7 @@ import {
   type ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { OK, Result, assertNever, check } from "@typeberry/utils";
+import { Compatibility, GpVersion, OK, Result, assertNever, check } from "@typeberry/utils";
 import type { AccountsInfo } from "../info.js";
 import type { AccountsLookup } from "../lookup.js";
 import type { AccountsRead } from "../read.js";
@@ -61,6 +61,11 @@ import { AccumulationStateUpdate, type PartiallyUpdatedState } from "./state-upd
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/370202370502?v=0.6.6 */
 const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
+
+/** https://graypaper.fluffylabs.dev/#/7e6ff6a/117101117101?v=0.6.7 */
+const BASE_SERVICE_BYTES = tryAsU64(81);
+/** https://graypaper.fluffylabs.dev/#/7e6ff6a/117a01117a01?v=0.6.7 */
+const BASE_STORAGE_BYTES = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(34) : tryAsU64(32);
 
 const logger = Logger.new(import.meta.filename, "accumulate-externalities");
 
@@ -209,7 +214,7 @@ export class AccumulateExternalities
     const countDiff = hasPreimage ? 0 : 2;
     const lenDiff = length - BigInt(existingPreimage?.length ?? 0);
     const items = serviceInfo.storageUtilisationCount + countDiff;
-    const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + (hasPreimage ? 0n : 81n);
+    const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + (hasPreimage ? 0n : BASE_SERVICE_BYTES);
 
     check(items >= 0, `storageUtilisationCount has to be a positive number, got: ${items}`);
     check(bytes >= 0, `storageUtilisationBytes has to be a positive number, got: ${bytes}`);
@@ -398,7 +403,7 @@ export class AccumulateExternalities
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/115901115901?v=0.6.7
     const items = tryAsU32(2 * 1 + 0);
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/116b01116b01?v=0.6.7
-    const bytes = sumU64(tryAsU64(81), codeLength);
+    const bytes = sumU64(BASE_SERVICE_BYTES, codeLength);
     const clampedLength = clampU64ToU32(codeLength);
 
     // check if we are priviledged to set gratis storage
@@ -604,7 +609,7 @@ export class AccumulateExternalities
     }
 
     // storage items length
-    const minServiceBytes = tryAsU64(81);
+    const minServiceBytes = BASE_SERVICE_BYTES;
     const l = tryAsU64(maxU64(service.storageUtilisationBytes, minServiceBytes) - minServiceBytes);
 
     // check if we have a preimage with the entire storage.
@@ -641,16 +646,17 @@ export class AccumulateExternalities
     return this.updatedState.getStorage(serviceId, key);
   }
 
-  write(key: StorageKey, data: BytesBlob | null): Result<OK, "full"> {
+  write(key: StorageKey, rawKeyBytes: U64, data: BytesBlob | null): Result<OK, "full"> {
     const current = this.read(this.currentServiceId, key);
     const isAddingNew = current === null && data !== null;
     const isRemoving = current !== null && data === null;
     const countDiff = isAddingNew ? 1 : isRemoving ? -1 : 0;
     const lenDiff = (data?.length ?? 0) - (current?.length ?? 0);
-    const keyLen = isAddingNew ? BigInt(HASH_SIZE) : isRemoving ? BigInt(-HASH_SIZE) : 0n;
+    const baseStorageDiff = isAddingNew ? BASE_STORAGE_BYTES : isRemoving ? -BASE_STORAGE_BYTES : 0n;
+    const rawKeyDiff = isAddingNew ? rawKeyBytes : isRemoving ? -rawKeyBytes : 0n;
     const serviceInfo = this.getCurrentServiceInfo();
     const items = serviceInfo.storageUtilisationCount + countDiff;
-    const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + keyLen;
+    const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + baseStorageDiff + rawKeyDiff;
 
     check(items >= 0, `storageUtilisationCount has to be a positive number, got: ${items}`);
     check(bytes >= 0, `storageUtilisationBytes has to be a positive number, got: ${bytes}`);

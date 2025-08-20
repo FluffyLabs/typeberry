@@ -2,8 +2,9 @@ import { describe, it } from "node:test";
 import { tryAsTimeSlot } from "@typeberry/block";
 import { ReportGuarantee } from "@typeberry/block/guarantees.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { HashSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { ED25519_SIGNATURE_BYTES, Ed25519Key } from "@typeberry/crypto";
+import { ED25519_SIGNATURE_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { Compatibility, GpVersion, asOpaqueType, deepEqual } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 import {
@@ -14,7 +15,6 @@ import {
   newReports,
   newWorkReport,
 } from "./test.utils.js";
-import {HashSet} from "@typeberry/collections";
 
 describe("Reports.verifyCredentials", () => {
   it("should reject insufficient credentials", async () => {

@@ -74,7 +74,18 @@ class JsonServiceInfo extends JsonServiceInfoPre067 {
       last_accumulation_slot: json.fromNumber((x) => tryAsTimeSlot(x)),
       parent_service: json.fromNumber((x) => tryAsServiceId(x)),
     },
-    ({ code_hash, balance, min_item_gas, min_memo_gas, bytes, items, deposit_offset, creation_slot, last_accumulation_slot, parent_service }) => {
+    ({
+      code_hash,
+      balance,
+      min_item_gas,
+      min_memo_gas,
+      bytes,
+      items,
+      deposit_offset,
+      creation_slot,
+      last_accumulation_slot,
+      parent_service,
+    }) => {
       return ServiceAccountInfo.create({
         codeHash: code_hash,
         balance,

@@ -2,6 +2,7 @@ import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
+import type { U64 } from "@typeberry/numbers";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
 import type { AccountsInfo } from "./info.js";
@@ -47,7 +48,7 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
     return d;
   }
 
-  write(hash: Blake2bHash, data: BytesBlob | null): Result<OK, "full"> {
+  write(hash: Blake2bHash, _rawKeyLen: U64, data: BytesBlob | null): Result<OK, "full"> {
     if (this.isStorageFull()) {
       return Result.error("full");
     }

@@ -3,10 +3,10 @@ import { tryAsTimeSlot } from "@typeberry/block";
 import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
+import type { Ed25519Key } from "@typeberry/crypto";
 import { deepEqual } from "@typeberry/utils";
 import type { ReportsInput } from "./reports.js";
 import { ENTROPY, guaranteesAsView, newReports } from "./test.utils.js";
-import {Ed25519Key} from "@typeberry/crypto";
 
 describe("Reports - top level", () => {
   it("should perform a transition with empty state", async () => {
