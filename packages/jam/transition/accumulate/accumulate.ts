@@ -25,7 +25,7 @@ import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { type State, hashComparator, tryAsPerCore } from "@typeberry/state";
+import { ServiceAccountInfo, type ServicesUpdate, type State, hashComparator, tryAsPerCore } from "@typeberry/state";
 import { binaryMerkleization } from "@typeberry/state-merkleization";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
@@ -383,7 +383,9 @@ export class Accumulate {
     accumulated: WorkReport[],
     toAccumulateLater: NotYetAccumulatedReport[],
     slot: TimeSlot,
-  ): Pick<AccumulateStateUpdate, "recentlyAccumulated" | "accumulationQueue" | "timeslot"> {
+    accumulatedServices: ServiceId[],
+    servicesUpdate: ServicesUpdate,
+  ): Pick<AccumulateStateUpdate, "recentlyAccumulated" | "accumulationQueue" | "timeslot"> & ServicesUpdate {
     const epochLength = this.chainSpec.epochLength;
     const phaseIndex = slot % epochLength;
     const accumulatedSet = getWorkPackageHashes(accumulated);
@@ -403,10 +405,27 @@ export class Accumulate {
       }
     }
 
+    // δ†
+    const partialStateUpdate = new PartiallyUpdatedState(this.state, AccumulationStateUpdate.new(servicesUpdate));
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      // update last accumulation
+      for (const serviceId of accumulatedServices) {
+        // https://graypaper.fluffylabs.dev/#/7e6ff6a/181003185103?v=0.6.7
+        const info = partialStateUpdate.getServiceInfo(serviceId);
+        if (info === null) {
+          // NOTE If there is no service, we dont update it.
+          continue;
+        }
+        // δ‡
+        partialStateUpdate.updateServiceInfo(serviceId, ServiceAccountInfo.create({ ...info, lastAccumulation: slot }));
+      }
+    }
+
     return {
       recentlyAccumulated,
       accumulationQueue: tryAsPerEpochBlock(accumulationQueue, this.chainSpec),
       timeslot: slot,
+      ...partialStateUpdate.stateUpdate.services,
     };
   }
 
@@ -455,7 +474,6 @@ export class Accumulate {
     assertEmpty(rest);
 
     const accumulated = accumulatableReports.slice(0, accumulatedReports);
-    const accStateUpdate = this.getAccumulationStateUpdate(accumulated, toAccumulateLater, slot);
     const {
       services,
       yieldedRoots,
@@ -466,6 +484,14 @@ export class Accumulate {
       ...stateUpdateRest
     } = state;
     assertEmpty(stateUpdateRest);
+
+    const accStateUpdate = this.getAccumulationStateUpdate(
+      accumulated,
+      toAccumulateLater,
+      slot,
+      Array.from(statistics.keys()),
+      services,
+    );
 
     const rootHash = await getRootHash(Array.from(yieldedRoots.entries()));
 
@@ -488,7 +514,6 @@ export class Accumulate {
         ...(validatorsData === null ? {} : { designatedValidatorData: validatorsData }),
         ...(privilegedServices === null ? {} : { privilegedServices: privilegedServices }),
         ...authQueues,
-        ...services,
       },
       accumulationStatistics: statistics,
       pendingTransfers: transfers,
