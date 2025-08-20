@@ -65,12 +65,10 @@ export enum MemoryOperation {
   Read = 3,
   /** Preserve memory and set access to read-write. */
   Write = 4,
-  /** Unknown operation. */
-  Unknown = 5,
 }
 /** Convert a number into MemoryOperation. */
-export const tryAsMemoryOperation = (v: number | bigint): MemoryOperation =>
-  tryAsU64(v) >= MemoryOperation.Unknown ? MemoryOperation.Unknown : (v as MemoryOperation);
+export const tryAsMemoryOperation = (v: number | bigint): MemoryOperation | null =>
+  tryAsU64(v) > MemoryOperation.Write ? null : (v as MemoryOperation);
 
 /** An error that may occur during `peek` or `poke` host call. */
 export enum PeekPokeError {
@@ -160,6 +158,6 @@ export interface RefineExternalities {
     machineIndex: MachineId,
     pageStart: U64,
     pageCount: U64,
-    requestType: MemoryOperation,
+    requestType: MemoryOperation | null,
   ): Promise<Result<OK, PagesError>>;
 }

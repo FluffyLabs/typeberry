@@ -169,7 +169,7 @@ export class TestRefineExt implements RefineExternalities {
     machineIndex: MachineId,
     pageStart: U64,
     pageCount: U64,
-    requestType: MemoryOperation,
+    requestType: MemoryOperation | null,
   ): Promise<Result<OK, PagesError>> {
     const val = this.machinePagesData.get(machineIndex, pageStart, pageCount, requestType);
     if (val === undefined) {
