@@ -212,6 +212,8 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     // TODO [ToDr] This is most likely wrong. We may have `provide` and `remove` within
     // the same state update. We should however switch to proper "updated state"
     // representation soon.
+    console.log("getLookupHistory", serviceId.toString(), hash.toString(), length);
+    console.log(JSON.stringify(this.stateUpdate.services.preimages, null, 2));
     const updatedPreimage = this.stateUpdate.services.preimages.findLast(
       (update) => update.serviceId === serviceId && update.hash.isEqualTo(hash) && BigInt(update.length) === length,
     );
@@ -312,6 +314,8 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
         storageUtilisationCount: items.value,
       }),
     );
+
+    // console.log(bytes.value, items.value);
     return Result.ok(OK);
   }
 

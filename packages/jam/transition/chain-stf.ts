@@ -313,6 +313,8 @@ export class OnChain {
     const { statistics, ...statisticsRest } = statisticsUpdate;
     assertEmpty(statisticsRest);
 
+    console.log(JSON.stringify(newServicesUpdate, null, 2));
+
     return Result.ok({
       ...(maybeAuthorizationQueues !== undefined ? { authQueues: maybeAuthorizationQueues } : {}),
       ...(maybeDesignatedValidatorData !== undefined ? { designatedValidatorData: maybeDesignatedValidatorData } : {}),

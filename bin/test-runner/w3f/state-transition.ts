@@ -135,9 +135,30 @@ export async function runStateTransition(testContent: StateTransition, testPath:
 
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
   const root = preState.backend.getRootHash();
+
+  // console.log(
+  //   JSON.stringify(
+  //     [...preState.backend.entries.data.entries()].map(([key, value]) => ({
+  //       key: key.toString(),
+  //       value: value.toString(),
+  //     })),
+  //   ),
+  // );
+  // console.log(
+  //   JSON.stringify(
+  //     [...postState.backend.entries.data.entries()].map(([key, value]) => ({
+  //       key: key.toString(),
+  //       value: value.toString(),
+  //     })),
+  //   ),
+  // );
+
   deepEqual(
     Object.fromEntries(preState.backend.entries.data.entries()),
     Object.fromEntries(postState.backend.entries.data.entries()),
   );
+
+  console.log(JSON.stringify(preState.backend.entries.data, null, 2));
+
   assert.deepStrictEqual(root.toString(), postStateRoot.toString());
 }

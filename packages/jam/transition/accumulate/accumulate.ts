@@ -190,6 +190,8 @@ export class Accumulate {
       slot,
     );
 
+    // console.log("partialState", JSON.stringify(partialState, null, 2));
+
     const externalities = {
       partialState,
       serviceExternalities: partialState,
@@ -285,6 +287,8 @@ export class Accumulate {
     stateUpdate: AccumulationStateUpdate,
   ): Promise<SequentialAccumulationResult> {
     const i = this.findReportCutoffIndex(gasLimit, reports);
+
+    // console.log("accumulate sequentially", JSON.stringify(stateUpdate.services, null, 2));
 
     if (i === 0) {
       return {
@@ -466,6 +470,8 @@ export class Accumulate {
       ...stateUpdateRest
     } = state;
     assertEmpty(stateUpdateRest);
+
+    // console.log("services", JSON.stringify(services, null, 2));
 
     const rootHash = await getRootHash(Array.from(yieldedRoots.entries()));
 

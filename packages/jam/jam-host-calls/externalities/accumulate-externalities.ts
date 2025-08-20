@@ -82,6 +82,7 @@ export class AccumulateExternalities
     this.nextNewServiceId = this.getNextAvailableServiceId(nextNewServiceIdCandidate);
 
     const service = this.updatedState.getServiceInfo(this.currentServiceId);
+    // console.log(JSON.stringify(service, null, 2));
     if (service === null) {
       throw new Error(`Invalid state initialization. Service info missing for ${this.currentServiceId}.`);
     }
@@ -136,6 +137,7 @@ export class AccumulateExternalities
    */
   private isPreviousCodeExpired(destination: ServiceId, previousCodeHash: PreimageHash, len: U64): [boolean, string] {
     const slots = this.updatedState.getLookupHistory(this.currentTimeslot, destination, previousCodeHash, len);
+    console.log("existingPreimage - isPreviousCodeExpired", slots);
     const status = slots === null ? null : slotsToPreimageStatus(slots.slots);
     // The previous code needs to be forgotten and expired.
     if (status?.status !== PreimageStatusKind.Unavailable) {
@@ -172,6 +174,8 @@ export class AccumulateExternalities
   checkPreimageStatus(hash: PreimageHash, length: U64): PreimageStatus | null {
     // https://graypaper.fluffylabs.dev/#/9a08063/378102378102?v=0.6.6
     const status = this.updatedState.getLookupHistory(this.currentTimeslot, this.currentServiceId, hash, length);
+    console.log("existingPreimage - checkPreimageStatus", JSON.stringify(status, null, 2));
+
     if (status === null) {
       return null;
     }
@@ -186,6 +190,8 @@ export class AccumulateExternalities
       hash,
       length,
     );
+
+    console.log("existingPreimage - requestPreimage", existingPreimage);
 
     if (existingPreimage !== null) {
       const len = existingPreimage.slots.length;
@@ -206,10 +212,12 @@ export class AccumulateExternalities
     // https://graypaper.fluffylabs.dev/#/9a08063/381201381601?v=0.6.6
     const serviceInfo = this.getCurrentServiceInfo();
     const hasPreimage = existingPreimage !== null;
+    // const hasPreimage = true;
     const countDiff = hasPreimage ? 0 : 2;
     const lenDiff = length - BigInt(existingPreimage?.length ?? 0);
     const items = serviceInfo.storageUtilisationCount + countDiff;
-    const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + (hasPreimage ? 0n : 81n);
+    const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff);
+    console.log(items, bytes);
 
     check(items >= 0, `storageUtilisationCount has to be a positive number, got: ${items}`);
     check(bytes >= 0, `storageUtilisationBytes has to be a positive number, got: ${bytes}`);
@@ -268,6 +276,8 @@ export class AccumulateExternalities
   forgetPreimage(hash: PreimageHash, length: U64): Result<OK, null> {
     const serviceId = this.currentServiceId;
     const status = this.updatedState.getLookupHistory(this.currentTimeslot, this.currentServiceId, hash, length);
+    console.log("existingPreimage - forgetPreimage", status);
+
     if (status === null) {
       return Result.error(null);
     }
@@ -355,6 +365,7 @@ export class AccumulateExternalities
 
     /** https://graypaper.fluffylabs.dev/#/9a08063/371b01371b01?v=0.6.6 */
     const newBalance = source.balance - amount;
+    console.log("transfer", source.storageUtilisationCount, source.storageUtilisationBytes);
     const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(
       source.storageUtilisationCount,
       source.storageUtilisationBytes,
@@ -558,6 +569,7 @@ export class AccumulateExternalities
       preimageHash,
       tryAsU64(preimage.length),
     );
+    console.log("existingPreimage - providePreimage", stateLookup);
     if (stateLookup === null || !LookupHistoryItem.isRequested(stateLookup)) {
       return Result.error(ProvidePreimageError.WasNotRequested);
     }

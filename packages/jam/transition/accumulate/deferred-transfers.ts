@@ -54,6 +54,10 @@ export class DeferredTransfers {
   }: DeferredTransfersInput): Promise<Result<DeferredTransfersResult, DeferredTransfersErrorCode>> {
     const transferStatistics = new Map<ServiceId, CountAndGasUsed>();
     const services = uniquePreserveOrder(pendingTransfers.flatMap((x) => [x.source, x.destination]));
+    // console.log(
+    //   "input",
+    //   JSON.stringify(inputServicesUpdate.servicesUpdates[0].action.account.storageUtilisationCount, null, 2),
+    // );
 
     let currentStateUpdate = AccumulationStateUpdate.new(inputServicesUpdate);
 
@@ -62,6 +66,7 @@ export class DeferredTransfers {
       const transfers = pendingTransfers.filter((pendingTransfer) => pendingTransfer.destination === serviceId);
 
       const info = partiallyUpdatedState.getServiceInfo(serviceId);
+      // console.log(JSON.stringify(info, null, 2));
       if (info === null) {
         return Result.error(DeferredTransfersErrorCode.ServiceInfoNotExist);
       }
