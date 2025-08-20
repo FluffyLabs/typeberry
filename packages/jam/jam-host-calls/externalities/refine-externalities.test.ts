@@ -15,7 +15,9 @@ import {
   type MachineInstance,
   type MachineResult,
   type MachineStatus,
+  type MemoryOperation,
   NoMachineError,
+  type PagesError,
   type PeekPokeError,
   type ProgramCounter,
   type RefineExternalities,
@@ -53,6 +55,8 @@ export class TestRefineExt implements RefineExternalities {
     Parameters<TestRefineExt["machineZeroPages"]>,
     Result<OK, ZeroVoidError>
   > = new MultiMap(3);
+  public readonly machinePagesData: MultiMap<Parameters<TestRefineExt["machinePages"]>, Result<OK, PagesError>> =
+    new MultiMap(4);
 
   public machineInvokeStatus: MachineStatus = { status: Status.OK };
 
@@ -157,6 +161,21 @@ export class TestRefineExt implements RefineExternalities {
     const val = this.historicalLookupData.get(serviceId, hash);
     if (val === undefined) {
       throw new Error(`Unexpected call to historicalLookup with: ${serviceId}, ${hash}`);
+    }
+    return Promise.resolve(val);
+  }
+
+  machinePages(
+    machineIndex: MachineId,
+    pageStart: U64,
+    pageCount: U64,
+    requestType: MemoryOperation | null,
+  ): Promise<Result<OK, PagesError>> {
+    const val = this.machinePagesData.get(machineIndex, pageStart, pageCount, requestType);
+    if (val === undefined) {
+      throw new Error(
+        `Unexpected call to machinePages with: ${machineIndex}, ${pageStart}, ${pageCount}, ${requestType}`,
+      );
     }
     return Promise.resolve(val);
   }
