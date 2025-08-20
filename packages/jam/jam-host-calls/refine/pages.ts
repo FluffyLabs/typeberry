@@ -50,16 +50,11 @@ export class Pages implements HostCallHandler {
     // `r`: request type
     const requestType = regs.get(10);
 
-    if (!isMemoryOperation(requestType)) {
-      regs.set(IN_OUT_REG, HostCallResult.HUH);
-      return;
-    }
-
     const pagesResult = await this.refine.machinePages(
       machineIndex,
       pageStart,
       pageCount,
-      tryAsMemoryOperation(requestType),
+      isMemoryOperation(requestType) ? tryAsMemoryOperation(requestType) : null,
     );
 
     if (pagesResult.isOk) {
@@ -74,7 +69,7 @@ export class Pages implements HostCallHandler {
       return;
     }
 
-    if (e === PagesError.InvalidPage) {
+    if (e === PagesError.InvalidOperation || e === PagesError.InvalidPage) {
       regs.set(IN_OUT_REG, HostCallResult.HUH);
       return;
     }

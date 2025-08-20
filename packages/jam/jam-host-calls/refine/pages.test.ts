@@ -15,6 +15,7 @@ import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
 import {
   type MachineId,
   PagesError,
+  isMemoryOperation,
   tryAsMachineId,
   tryAsMemoryOperation,
 } from "../externalities/refine-externalities.js";
@@ -56,7 +57,13 @@ function prepareTest(
   const count = tryAsU64(pageCount);
   const type = tryAsU64(requestType);
   const { registers, memory } = prepareRegsAndMemory(machineIndex, start, count, type);
-  refine.machinePagesData.set(result, machineIndex, start, count, tryAsMemoryOperation(type));
+  refine.machinePagesData.set(
+    result,
+    machineIndex,
+    start,
+    count,
+    isMemoryOperation(type) ? tryAsMemoryOperation(type) : null,
+  );
 
   return {
     pages,
@@ -129,9 +136,19 @@ describe("HostCalls: Pages", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
   });
 
-  itPost067("Should return HUH when provided unknown type request", async () => {
+  itPost067("Should return WHO when provided unknown type request but machine does not exist", async () => {
     // intentionally setting no machine here.
     const { pages, registers } = prepareTest(Result.error(PagesError.NoMachine), 10_000, 10_000, 5, 16);
+
+    // when
+    await pages.execute(gas, registers);
+
+    // then
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
+  });
+
+  itPost067("Should return HUH when provided unknown type request and machine exist", async () => {
+    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidOperation), 10_000, 12, 5, 16);
 
     // when
     await pages.execute(gas, registers);

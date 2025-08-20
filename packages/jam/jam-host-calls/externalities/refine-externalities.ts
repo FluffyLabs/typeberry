@@ -96,8 +96,10 @@ export enum ZeroVoidError {
 export enum PagesError {
   /** No machine under given machine index. */
   NoMachine = 0,
+  /** Invalid memory operation. */
+  InvalidOperation = 1,
   /** Attempting to change non-accessible page or trying to preserve value of voided page. */
-  InvalidPage = 1,
+  InvalidPage = 2,
 }
 
 /** Error machine is not found. */
