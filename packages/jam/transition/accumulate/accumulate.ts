@@ -385,9 +385,7 @@ export class Accumulate {
     slot: TimeSlot,
     accumulatedServices: ServiceId[],
     servicesUpdate: ServicesUpdate,
-  ): Pick<AccumulateStateUpdate, "recentlyAccumulated" | "accumulationQueue" | "timeslot"> & {
-    services: ServicesUpdate;
-  } {
+  ): Pick<AccumulateStateUpdate, "recentlyAccumulated" | "accumulationQueue" | "timeslot"> & ServicesUpdate {
     const epochLength = this.chainSpec.epochLength;
     const phaseIndex = slot % epochLength;
     const accumulatedSet = getWorkPackageHashes(accumulated);
@@ -427,7 +425,7 @@ export class Accumulate {
       recentlyAccumulated,
       accumulationQueue: tryAsPerEpochBlock(accumulationQueue, this.chainSpec),
       timeslot: slot,
-      services: partialStateUpdate.stateUpdate.services,
+      ...partialStateUpdate.stateUpdate.services,
     };
   }
 
@@ -477,7 +475,7 @@ export class Accumulate {
 
     const accumulated = accumulatableReports.slice(0, accumulatedReports);
     const {
-      services: servicesDagger,
+      services,
       yieldedRoots,
       transfers,
       validatorsData,
@@ -492,16 +490,8 @@ export class Accumulate {
       toAccumulateLater,
       slot,
       Array.from(statistics.keys()),
-      servicesDagger, // δ†
+      services,
     );
-    const {
-      timeslot,
-      accumulationQueue,
-      recentlyAccumulated,
-      services, // δ‡
-      ...accStateRest
-    } = accStateUpdate;
-    assertEmpty(accStateRest);
 
     const rootHash = await getRootHash(Array.from(yieldedRoots.entries()));
 
@@ -521,11 +511,9 @@ export class Accumulate {
       root: rootHash,
       stateUpdate: {
         ...accStateUpdate,
-        ...state.services, // δ‡
         ...(validatorsData === null ? {} : { designatedValidatorData: validatorsData }),
         ...(privilegedServices === null ? {} : { privilegedServices: privilegedServices }),
         ...authQueues,
-        ...services,
       },
       accumulationStatistics: statistics,
       pendingTransfers: transfers,

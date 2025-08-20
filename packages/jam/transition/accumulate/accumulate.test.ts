@@ -199,7 +199,9 @@ const hashFromString = <T>(blob: string): T => {
   return Bytes.parseBytes(blob, HASH_SIZE).asOpaque();
 };
 
-const createServices = (items: [ServiceId, OpaqueHash, BytesBlob, TestServiceInfo][]) => {
+const createServices = (
+  items: [ServiceId, OpaqueHash, BytesBlob, TestServiceInfo][],
+): Map<ServiceId, InMemoryService> => {
   const services = new Map<ServiceId, InMemoryService>();
   for (const [serviceId, hash, blob, info] of items) {
     services.set(serviceId, createService(serviceId, hash, blob, info));
