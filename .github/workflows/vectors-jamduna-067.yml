@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
 
 env:
-  TEST_VECTORS_REF: 9658460523bb5b0250ef6b6fc04852e08dd76d61
+  TEST_VECTORS_REF: a0c8a6a66a7f5e9cc270755498e3b811ae38bf93
   GP_VERSION: 0.6.7
   TEST_SUITE: jamduna-067
 
