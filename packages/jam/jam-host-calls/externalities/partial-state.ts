@@ -144,6 +144,13 @@ export enum NewServiceError {
   UnprivilegedService = 1,
 }
 
+export enum UpdatePrivilegeError {
+  /** Service is not privileged to update privileges. */
+  UnprivilegedService = 0,
+  /** Provided service id is incorrect. */
+  InvalidServiceId = 1,
+}
+
 /** Service is not privileged to perform an action. */
 export const UnprivilegedError = Symbol("Insufficient privileges.");
 export type UnprivilegedError = typeof UnprivilegedError;
@@ -248,7 +255,12 @@ export interface PartialState {
    * `g`: collection of serviceId -> gas that auto-accumulate every block
    *
    */
-  updatePrivilegedServices(m: ServiceId, a: PerCore<ServiceId>, v: ServiceId, g: [ServiceId, ServiceGas][]): void;
+  updatePrivilegedServices(
+    m: ServiceId | null,
+    a: PerCore<ServiceId>,
+    v: ServiceId | null,
+    g: [ServiceId, ServiceGas][],
+  ): Result<OK, UpdatePrivilegeError>;
 
   /** Yield accumulation trie result hash. */
   yield(hash: OpaqueHash): void;

@@ -48,6 +48,7 @@ import {
   type TRANSFER_MEMO_BYTES,
   TransferError,
   UnprivilegedError,
+  UpdatePrivilegeError,
   slotsToPreimageStatus,
 } from "./partial-state.js";
 import { PendingTransfer } from "./pending-transfer.js";
@@ -165,14 +166,6 @@ export class AccumulateExternalities
       // keep trying
       currentServiceId = tryAsServiceId(((currentServiceId - 2 ** 8 + 1 + mod) % mod) + 2 ** 8);
     }
-  }
-
-  /**
-   * `(x_u)_m`: Get most recent manager
-   * https://graypaper.fluffylabs.dev/#/7e6ff6a/174900174900?v=0.6.7
-   */
-  private getManager(): ServiceId {
-    return this.updatedState.getPrivilegedServices().manager;
   }
 
   checkPreimageStatus(hash: PreimageHash, length: U64): PreimageStatus | null {
@@ -409,7 +402,7 @@ export class AccumulateExternalities
 
     // check if we are priviledged to set gratis storage
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/369203369603?v=0.6.7
-    if (gratisStorage !== tryAsU64(0) && this.currentServiceId !== this.getManager()) {
+    if (gratisStorage !== tryAsU64(0) && this.currentServiceId !== this.updatedState.getPrivilegedServices().manager) {
       return Result.error(NewServiceError.UnprivilegedService);
     }
 
@@ -517,28 +510,32 @@ export class AccumulateExternalities
   }
 
   updatePrivilegedServices(
-    manager: ServiceId,
-    authorizer: PerCore<ServiceId>,
-    validators: ServiceId,
+    manager: ServiceId | null,
+    authorizers: PerCore<ServiceId>,
+    validatorsManager: ServiceId | null,
     autoAccumulate: [ServiceId, ServiceGas][],
-  ): void {
+  ): Result<OK, UpdatePrivilegeError> {
     // NOTE [ToDr] I guess we should not fail if the services don't exist. */
-    /** https://graypaper.fluffylabs.dev/#/9a08063/36f40036f400?v=0.6.6 */
-    const currentManager = this.updatedState.getPrivilegedServices().manager;
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
+      const currentManager = this.updatedState.getPrivilegedServices().manager;
 
-    if (currentManager !== this.currentServiceId) {
-      logger.trace(
-        `Current service id (${this.currentServiceId}) is not a manager (${currentManager}) and cannot update privileged services. Ignoring.`,
-      );
-      return;
+      if (currentManager !== this.currentServiceId) {
+        return Result.error(UpdatePrivilegeError.UnprivilegedService);
+      }
+    }
+
+    if (manager === null || validatorsManager === null) {
+      return Result.error(UpdatePrivilegeError.InvalidServiceId);
     }
 
     this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
       manager,
-      authManager: authorizer,
-      validatorsManager: validators,
+      authManager: authorizers,
+      validatorsManager,
       autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) => AutoAccumulate.create({ service, gasLimit })),
     });
+    return Result.ok(OK);
   }
 
   yield(hash: OpaqueHash): void {

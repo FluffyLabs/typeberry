@@ -16,9 +16,6 @@ export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint
  * Designate a new set of validator keys.
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/36b50136b501?v=0.6.7
- *
- * TODO [MaSo] Update method, needs to check privileges
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/362a02362a02?v=0.6.7
  */
 export class Designate implements HostCallHandler {
   index = tryAsHostCallIndex(
