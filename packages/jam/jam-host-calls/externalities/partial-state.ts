@@ -144,6 +144,10 @@ export enum NewServiceError {
   UnprivilegedService = 1,
 }
 
+/** Service is not privileged to perform an action. */
+export const UnprivilegedError = Symbol("Insufficient privileges.");
+export type UnprivilegedError = typeof UnprivilegedError;
+
 /**
  * `U`: state components mutated by the accumulation.
  * - `d`: service accounts state
@@ -218,7 +222,7 @@ export interface PartialState {
   upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void;
 
   /** Designate new validators given their key and meta data. */
-  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void;
+  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): Result<OK, UnprivilegedError>;
 
   /**
    * Checkpoint this partial state.

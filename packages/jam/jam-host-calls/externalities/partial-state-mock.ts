@@ -23,6 +23,7 @@ import {
   type RequestPreimageError,
   type TRANSFER_MEMO_BYTES,
   TransferError,
+  type UnprivilegedError,
 } from "./partial-state.js";
 
 export class PartialStateMock implements PartialState {
@@ -46,6 +47,7 @@ export class PartialStateMock implements PartialState {
   public requestPreimageResponse: Result<OK, RequestPreimageError> = Result.ok(OK);
   public checkPreimageStatusResponse: PreimageStatus | null = null;
   public transferReturnValue: Result<OK, TransferError> = Result.ok(OK);
+  public validatorDataResponse: Result<OK, UnprivilegedError> = Result.ok(OK);
   public providePreimageResponse: Result<OK, ProvidePreimageError> = Result.ok(OK);
 
   eject(from: ServiceId | null, previousCode: PreimageHash): Result<OK, EjectError> {
@@ -100,8 +102,11 @@ export class PartialStateMock implements PartialState {
     this.checkpointCalled += 1;
   }
 
-  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void {
-    this.validatorsData.push(validatorsData);
+  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): Result<OK, UnprivilegedError> {
+    if (this.validatorDataResponse.isOk) {
+      this.validatorsData.push(validatorsData);
+    }
+    return this.validatorDataResponse;
   }
 
   updatePrivilegedServices(m: ServiceId, a: PerCore<ServiceId>, v: ServiceId, g: [ServiceId, ServiceGas][]): void {

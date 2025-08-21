@@ -47,6 +47,7 @@ import {
   RequestPreimageError,
   type TRANSFER_MEMO_BYTES,
   TransferError,
+  UnprivilegedError,
   slotsToPreimageStatus,
 } from "./partial-state.js";
 import { PendingTransfer } from "./pending-transfer.js";
@@ -477,18 +478,18 @@ export class AccumulateExternalities
     );
   }
 
-  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void {
-    /** https://graypaper.fluffylabs.dev/#/9a08063/36e10136e901?v=0.6.6 */
-    const validatorsManager = this.updatedState.getPrivilegedServices().validatorsManager;
+  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): Result<OK, UnprivilegedError> {
+    /** https://graypaper.fluffylabs.dev/#/7e6ff6a/362802362d02?v=0.6.7 */
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      const validatorsManager = this.updatedState.getPrivilegedServices().validatorsManager;
 
-    if (validatorsManager !== this.currentServiceId) {
-      logger.trace(
-        `Current service id (${this.currentServiceId}) is not a validator manager (${validatorsManager}) and cannot update validators. Ignoring.`,
-      );
-      return;
+      if (validatorsManager !== this.currentServiceId) {
+        return Result.error(UnprivilegedError);
+      }
     }
 
     this.updatedState.stateUpdate.validatorsData = validatorsData;
+    return Result.ok(OK);
   }
 
   checkpoint(): void {

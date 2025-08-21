@@ -48,6 +48,7 @@ import {
   RequestPreimageError,
   TRANSFER_MEMO_BYTES,
   TransferError,
+  UnprivilegedError,
 } from "./partial-state.js";
 import { PendingTransfer } from "./pending-transfer.js";
 import { PartiallyUpdatedState } from "./state-update.js";
@@ -666,6 +667,7 @@ describe("PartialState.newService", () => {
 });
 
 describe("PartialState.updateValidatorsData", () => {
+  const itPost067 = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? it : it.skip;
   it("should update validators data", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
@@ -677,7 +679,7 @@ describe("PartialState.updateValidatorsData", () => {
     );
 
     // when
-    partialState.updateValidatorsData(
+    const result = partialState.updateValidatorsData(
       asKnownSize([
         ValidatorData.create({
           bandersnatch: Bytes.fill(BANDERSNATCH_KEY_BYTES, 0x1).asOpaque(),
@@ -689,7 +691,39 @@ describe("PartialState.updateValidatorsData", () => {
     );
 
     // then
+    assert.deepStrictEqual(result, Result.ok(OK));
     assert.deepStrictEqual(state.stateUpdate.validatorsData?.length, 1);
+  });
+
+  itPost067("should return error and not update validator set when service is unprivileged", () => {
+    const state = partiallyUpdatedState();
+    state.state.privilegedServices = PrivilegedServices.create({
+      ...state.state.privilegedServices,
+      validatorsManager: tryAsServiceId(1),
+    });
+    const partialState = new AccumulateExternalities(
+      tinyChainSpec,
+      state,
+      tryAsServiceId(0),
+      tryAsServiceId(10),
+      tryAsTimeSlot(16),
+    );
+
+    // when
+    const result = partialState.updateValidatorsData(
+      asKnownSize([
+        ValidatorData.create({
+          bandersnatch: Bytes.fill(BANDERSNATCH_KEY_BYTES, 0x1).asOpaque(),
+          ed25519: Bytes.fill(ED25519_KEY_BYTES, 0x2).asOpaque(),
+          bls: Bytes.fill(BLS_KEY_BYTES, 0x3).asOpaque(),
+          metadata: Bytes.fill(VALIDATOR_META_BYTES, 0x4).asOpaque(),
+        }),
+      ]),
+    );
+
+    // then
+    assert.deepStrictEqual(result, Result.error(UnprivilegedError));
+    assert.deepStrictEqual(state.stateUpdate.validatorsData, null);
   });
 });
 
