@@ -518,7 +518,11 @@
           "min_item_gas": 100,
           "min_memo_gas": 100,
           "bytes": 1296,
-          "items": 4
+          "items": 4,
+          "deposit_offset": 0,
+          "last_accumulation_slot": 0,
+          "creation_slot": 0,
+          "parent_service": 0
         },
         "preimages": [
           {

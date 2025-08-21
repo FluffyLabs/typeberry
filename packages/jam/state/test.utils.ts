@@ -81,10 +81,10 @@ export const testState = (): InMemoryState => {
     previousValidatorData: testValidatorData(),
     // psi
     disputesRecords: DisputesRecords.create({
-      goodSet: SortedSet.fromArray<WorkReportHash>(hashComparator, []),
-      badSet: SortedSet.fromArray<WorkReportHash>(hashComparator, []),
-      wonkySet: SortedSet.fromArray<WorkReportHash>(hashComparator, []),
-      punishSet: SortedSet.fromArray<Ed25519Key>(hashComparator, []),
+      goodSet: SortedSet.fromArray<WorkReportHash>(hashComparator),
+      badSet: SortedSet.fromArray<WorkReportHash>(hashComparator),
+      wonkySet: SortedSet.fromArray<WorkReportHash>(hashComparator),
+      punishSet: SortedSet.fromArray<Ed25519Key>(hashComparator),
     }),
     // tau
     timeslot: tryAsTimeSlot(16),
