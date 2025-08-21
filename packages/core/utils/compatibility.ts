@@ -63,8 +63,9 @@ export class Compatibility {
     if (CURRENT_SUITE === undefined) {
       return false;
     }
-    const isVersion = version === undefined || Compatibility.is(version);
-    return suite === CURRENT_SUITE && isVersion;
+
+    const isCorrectGPVersion = version === undefined || Compatibility.is(version);
+    return suite === CURRENT_SUITE && isCorrectGPVersion;
   }
 
   static isGreaterOrEqual(version: GpVersion) {
