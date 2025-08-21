@@ -8,14 +8,14 @@ export class InterpreterInstanceManager {
   private waitingQueue: ResolveFn[] = [];
 
   constructor(noOfPvmInstances: number) {
+    const shouldCountGas =
+      Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) || Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5);
+
     for (let i = 0; i < noOfPvmInstances; i++) {
       this.instances.push(
         new Interpreter({
           useSbrkGas: false,
-          ignoreInstructionGas: !(
-            Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5) ||
-            Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-          ),
+          ignoreInstructionGas: !shouldCountGas,
         }),
       );
     }

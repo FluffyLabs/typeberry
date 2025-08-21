@@ -38,11 +38,11 @@ jobs:
       - run: npm start -w @typeberry/test-runner
       - name: Display results
         if: always()
-        run: cat ./dist/jamdunavectors.txt
+        run: cat ./dist/jamduna-064.txt
       - name: Upload new results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           path: |
-            ./dist/jamdunavectors-065
+            ./dist/jamduna-065.txt
           name: jamdunavectors-results

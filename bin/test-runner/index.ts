@@ -52,7 +52,7 @@ const stream = run({
 stream.compose(new spec()).pipe(process.stdout);
 
 const reporter = new Reporter(suiteToRun);
-const fileStream = fs.createWriteStream(`${distDir}/${suite}.txt`);
+const fileStream = fs.createWriteStream(`${distDir}/${suiteToRun}.txt`);
 stream
   .compose(reporter)
   .on("end", () => {
