@@ -5,7 +5,7 @@ import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import type { OpaqueHash } from "@typeberry/hash";
-import { type U32, type U64, tryAsU32 } from "@typeberry/numbers";
+import { type U64, isU32, isU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   LookupHistoryItem,
   PrivilegedServices,
@@ -22,7 +22,7 @@ import {
   type ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { OK, Result, assertNever } from "@typeberry/utils";
+import { OK, Result, assertNever, check } from "@typeberry/utils";
 import type { PendingTransfer } from "./pending-transfer.js";
 
 /** Update of the state entries coming from accumulation of a single service. */
@@ -285,18 +285,24 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
 
   updateServiceStorageUtilisation(
     serviceId: ServiceId,
-    items: { overflow: boolean; value: U32 },
-    bytes: { overflow: boolean; value: U64 },
+    items: number,
+    bytes: bigint,
     serviceInfo: ServiceAccountInfo,
   ): Result<OK, "insufficient funds"> {
+    check(items >= 0, `storageUtilisationCount has to be a positive number, got: ${items}`);
+    check(bytes >= 0, `storageUtilisationBytes has to be a positive number, got: ${bytes}`);
+
+    const overflowItems = !isU32(items);
+    const overflowBytes = !isU64(bytes);
+
     // TODO [ToDr] this is not specified in GP, but it seems sensible.
-    if (items.overflow || bytes.overflow) {
+    if (overflowItems || overflowBytes) {
       return Result.error("insufficient funds");
     }
 
     const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(
-      items.value,
-      bytes.value,
+      overflowItems ? tryAsU32(0) : items,
+      overflowBytes ? tryAsU64(0) : bytes,
       serviceInfo.gratisStorage,
     );
     if (serviceInfo.balance < thresholdBalance) {
@@ -308,8 +314,8 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
       serviceId,
       ServiceAccountInfo.create({
         ...serviceInfo,
-        storageUtilisationBytes: bytes.value,
-        storageUtilisationCount: items.value,
+        storageUtilisationBytes: bytes,
+        storageUtilisationCount: items,
       }),
     );
     return Result.ok(OK);
