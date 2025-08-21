@@ -61,6 +61,7 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: Bless", () => {
+  // TODO [MaSo] Update tests
   it("should set new privileged services and auto-accumualte services", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
