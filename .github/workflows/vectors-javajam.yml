@@ -38,12 +38,12 @@ jobs:
       - run: npm start -w @typeberry/test-runner
       - name: Display results
         if: always()
-        run: cat ./dist/javajamv.txt
+        run: cat ./dist/javajam.txt
       - name: Upload new results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           path: |
-            ./dist/javajamv.txt
+            ./dist/javajam.txt
           name: javajamvectors-results
 
