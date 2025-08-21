@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { run } from "node:test";
 import { spec } from "node:test/reporters";
-import { DEFAULT_SUITE, TestSuite } from "@typeberry/utils";
+import { DEFAULT_SUITE, GpVersion, TestSuite } from "@typeberry/utils";
 import { Reporter } from "./reporter.js";
 
 const distDir = `${import.meta.dirname}/../../dist`;
@@ -18,11 +18,26 @@ const suites: { [key: string]: string } = {
   [TestSuite.JAVAJAM]: "javajamvectors",
 };
 
-const suiteToRun = process.env.TEST_SUITE ?? DEFAULT_SUITE;
+let suiteToRun = process.env.TEST_SUITE ?? DEFAULT_SUITE;
 
 const suite = suites[suiteToRun];
 if (suite === undefined) {
   throw new Error(`Invalid suite ${suiteToRun}. Available suites: ${Object.keys(suites)}`);
+}
+if (suiteToRun === TestSuite.JAMDUNA) {
+  const versionFromEnv = process.env.GP_VERSION;
+  if (versionFromEnv === undefined) {
+    throw new Error("GP_VERSION environment variable is required for JAMDUNA suite.");
+  }
+
+  const jamdunaVersions: string[] = [GpVersion.V0_6_4, GpVersion.V0_6_5, GpVersion.V0_6_7];
+  if (!jamdunaVersions.includes(versionFromEnv)) {
+    throw new Error(
+      `Invalid GP_VERSION ${versionFromEnv} for JAMDUNA suite. Available versions: ${jamdunaVersions.join(", ")}`,
+    );
+  }
+  const versionWithoutDots = versionFromEnv.replace(/\./g, "");
+  suiteToRun = `${suiteToRun}-${versionWithoutDots}`;
 }
 
 const stream = run({
