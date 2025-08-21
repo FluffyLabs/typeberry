@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
 
 env:
-  TEST_VECTORS_REF: 4757505c22ca9428a1d4897ecb7451525019996e
+  TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
   GP_VERSION: 0.6.6
   TEST_SUITE: w3f-davxy
 
@@ -21,6 +21,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Load test ref
+        run: .github/scripts/load-test-ref.sh      
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
         with:

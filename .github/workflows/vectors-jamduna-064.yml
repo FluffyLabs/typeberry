@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
 
 env:
-  TEST_VECTORS_REF: 9658460523bb5b0250ef6b6fc04852e08dd76d61
+  TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # it is loaded in scripts/load-test-ref.sh
   GP_VERSION: 0.6.4
   TEST_SUITE: jamduna-064
 
@@ -20,6 +20,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Load test ref
+        run: .github/scripts/load-test-ref.sh
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
         with:
@@ -59,6 +61,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Load test ref
+        run: .github/scripts/load-test-ref.sh
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
         with:
