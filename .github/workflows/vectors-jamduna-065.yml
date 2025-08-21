@@ -38,7 +38,7 @@ jobs:
       - run: npm start -w @typeberry/test-runner
       - name: Display results
         if: always()
-        run: cat ./dist/jamduna-064.txt
+        run: cat ./dist/jamduna-065.txt
       - name: Upload new results
         if: failure()
         uses: actions/upload-artifact@v4
