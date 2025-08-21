@@ -2,8 +2,9 @@ import { describe, it } from "node:test";
 import { tryAsTimeSlot } from "@typeberry/block";
 import { ReportGuarantee } from "@typeberry/block/guarantees.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { HashSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
+import { ED25519_SIGNATURE_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { Compatibility, GpVersion, asOpaqueType, deepEqual } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 import {
@@ -36,6 +37,7 @@ describe("Reports.verifyCredentials", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks, // note: for full fidelity this should be partially updated state, not prior state as it is now
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
@@ -68,6 +70,7 @@ describe("Reports.verifyCredentials", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
@@ -96,6 +99,7 @@ describe("Reports.verifyCredentials", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
@@ -124,6 +128,7 @@ describe("Reports.verifyCredentials", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
@@ -152,6 +157,7 @@ describe("Reports.verifyCredentials", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
@@ -180,6 +186,7 @@ describe("Reports.verifyCredentials", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
@@ -208,6 +215,7 @@ describe("Reports.verifyCredentials", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);

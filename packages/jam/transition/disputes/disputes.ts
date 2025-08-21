@@ -274,9 +274,9 @@ export class Disputes {
     }
 
     return {
-      toAddToGoodSet: SortedSet.fromArray(hashComparator, toAddToGoodSet),
-      toAddToBadSet: SortedSet.fromArray(hashComparator, toAddToBadSet),
-      toAddToWonkySet: SortedSet.fromArray(hashComparator, toAddToWonkySet),
+      toAddToGoodSet: SortedSet.fromArrayUnique(hashComparator, toAddToGoodSet),
+      toAddToBadSet: SortedSet.fromArrayUnique(hashComparator, toAddToBadSet),
+      toAddToWonkySet: SortedSet.fromArrayUnique(hashComparator, toAddToWonkySet),
     };
   }
 
@@ -301,21 +301,24 @@ export class Disputes {
 
   private getOffenders(disputes: DisputesExtrinsic) {
     // https://graypaper.fluffylabs.dev/#/579bd12/12bb0312bb03
-    const offendersMarks: Ed25519Key[] = [];
+    const offendersMarks = HashSet.new<Ed25519Key>();
 
     for (const { key } of disputes.culprits) {
-      offendersMarks.push(key);
+      offendersMarks.insert(key);
     }
 
     for (const { key } of disputes.faults) {
-      offendersMarks.push(key);
+      offendersMarks.insert(key);
     }
 
     return offendersMarks;
   }
 
-  private getUpdatedDisputesRecords(newItems: NewDisputesRecordsItems, offenders: Ed25519Key[]): DisputesRecords {
-    const toAddToPunishSet = SortedArray.fromArray(hashComparator, offenders);
+  private getUpdatedDisputesRecords(
+    newItems: NewDisputesRecordsItems,
+    offenders: HashSet<Ed25519Key>,
+  ): DisputesRecords {
+    const toAddToPunishSet = SortedArray.fromArray(hashComparator, Array.from(offenders));
     return DisputesRecords.create({
       // https://graypaper.fluffylabs.dev/#/579bd12/12690312bc03
       goodSet: SortedSet.fromTwoSortedCollections(this.state.disputesRecords.goodSet, newItems.toAddToGoodSet),
@@ -375,7 +378,7 @@ export class Disputes {
   async transition(disputes: DisputesExtrinsic): Promise<
     Result<
       {
-        offendersMark: Ed25519Key[];
+        offendersMark: HashSet<Ed25519Key>;
         stateUpdate: DisputesStateUpdate;
       },
       DisputesErrorCode

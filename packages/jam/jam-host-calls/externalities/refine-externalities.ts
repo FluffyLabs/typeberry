@@ -10,7 +10,7 @@ import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/util
 /**
  * Program counter is a 64-bit unsigned integer that points to the next instruction
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/2e09012e0901?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/1c979cb/2e3f012e3f01?v=0.7.1
  */
 export type ProgramCounter = Opaque<U64, "ProgramCounter[u64]">;
 /** Convert a number into ProgramCounter. */
@@ -53,6 +53,24 @@ export type MachineResult = {
   registers: Registers;
 };
 
+/** Types of possbile operations to request by Pages host call. */
+export enum MemoryOperation {
+  /** Zeroes memory and set access to unreadable. */
+  Void = 0,
+  /** Zeroes memory and set access to read-only. */
+  ZeroRead = 1,
+  /** Zeroes memory and set access to read-write. */
+  ZeroWrite = 2,
+  /** Preserve memory and set access to read-only. */
+  Read = 3,
+  /** Preserve memory and set access to read-write. */
+  Write = 4,
+}
+
+/** Convert a number into MemoryOperation or null (if invalid). */
+export const toMemoryOperation = (v: number | bigint): MemoryOperation | null =>
+  v <= MemoryOperation.Write && v >= MemoryOperation.Void ? Number(v) : null;
+
 /** An error that may occur during `peek` or `poke` host call. */
 export enum PeekPokeError {
   /** Source page fault. */
@@ -68,6 +86,15 @@ export enum ZeroVoidError {
   NoMachine = 0,
   /** Attempting to void or zero non-accessible page. */
   InvalidPage = 1,
+}
+
+export enum PagesError {
+  /** No machine under given machine index. */
+  NoMachine = 0,
+  /** Invalid memory operation. */
+  InvalidOperation = 1,
+  /** Attempting to change non-accessible page or trying to preserve value of voided page. */
+  InvalidPage = 2,
 }
 
 /** Error machine is not found. */
@@ -126,4 +153,12 @@ export interface RefineExternalities {
 
   /** Lookup a historical preimage. */
   historicalLookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
+
+  /** Change access to and/or zero the value of memory. */
+  machinePages(
+    machineIndex: MachineId,
+    pageStart: U64,
+    pageCount: U64,
+    requestType: MemoryOperation | null,
+  ): Promise<Result<OK, PagesError>>;
 }
