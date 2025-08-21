@@ -63,6 +63,7 @@ class Input {
     entropy: ReportsState["entropy"],
     recentBlocksPartialUpdate: ReportsState["recentBlocks"],
     assurancesAvailAssignment: ReportsState["availabilityAssignment"],
+    offenders: HashSet<Ed25519Key>,
   ): ReportsInput {
     const view = guaranteesAsView(spec, input.guarantees, { disableCredentialsRangeCheck: true });
 
@@ -72,6 +73,7 @@ class Input {
       newEntropy: entropy,
       recentBlocksPartialUpdate,
       assurancesAvailAssignment,
+      offenders,
     };
   }
 }
@@ -101,33 +103,36 @@ class TestState {
   cores_statistics!: CoreStatistics[];
   services_statistics!: ServiceStatisticsEntry[];
 
-  static toReportsState(pre: TestState, spec: ChainSpec): ReportsState {
-    if (pre.offenders.length > 0) {
-      // TODO [ToDr] offenders are not used in `Reports` STF, so there is
-      // probably something wrong there.
-      throw new Error("Ignoring non-empty offenders!");
-    }
-
-    return InMemoryState.partial(spec, {
-      accumulationQueue: tryAsPerEpochBlock(
-        FixedSizeArray.fill(() => [], spec.epochLength),
-        spec,
-      ),
-      recentlyAccumulated: tryAsPerEpochBlock(
-        FixedSizeArray.fill(() => HashSet.new(), spec.epochLength),
-        spec,
-      ),
-      availabilityAssignment: tryAsPerCore(pre.avail_assignments, spec),
-      currentValidatorData: tryAsPerValidator(pre.curr_validators, spec),
-      previousValidatorData: tryAsPerValidator(pre.prev_validators, spec),
-      entropy: FixedSizeArray.new(pre.entropy, ENTROPY_ENTRIES),
-      authPools: tryAsPerCore(
-        pre.auth_pools.map((x) => asKnownSize(x)),
-        spec,
-      ),
-      recentBlocks: pre.recent_blocks,
-      services: new Map(pre.accounts.map((x) => [x.serviceId, x])),
-    });
+  static toReportsState(
+    pre: TestState,
+    spec: ChainSpec,
+  ): {
+    state: ReportsState;
+    offenders: HashSet<Ed25519Key>;
+  } {
+    return {
+      state: InMemoryState.partial(spec, {
+        accumulationQueue: tryAsPerEpochBlock(
+          FixedSizeArray.fill(() => [], spec.epochLength),
+          spec,
+        ),
+        recentlyAccumulated: tryAsPerEpochBlock(
+          FixedSizeArray.fill(() => HashSet.new(), spec.epochLength),
+          spec,
+        ),
+        availabilityAssignment: tryAsPerCore(pre.avail_assignments, spec),
+        currentValidatorData: tryAsPerValidator(pre.curr_validators, spec),
+        previousValidatorData: tryAsPerValidator(pre.prev_validators, spec),
+        entropy: FixedSizeArray.new(pre.entropy, ENTROPY_ENTRIES),
+        authPools: tryAsPerCore(
+          pre.auth_pools.map((x) => asKnownSize(x)),
+          spec,
+        ),
+        recentBlocks: pre.recent_blocks,
+        services: new Map(pre.accounts.map((x) => [x.serviceId, x])),
+      }),
+      offenders: HashSet.from(pre.offenders),
+    };
   }
 }
 
@@ -155,6 +160,7 @@ enum ReportsErrorCode {
   SegmentRootLookupInvalid = "segment_root_lookup_invalid",
   BadSignature = "bad_signature",
   WorkReportTooBig = "work_report_too_big",
+  BannedValidator = "banned_validator",
 }
 
 class OutputData {
@@ -212,6 +218,7 @@ class TestReportsResult {
         [ReportsErrorCode.SegmentRootLookupInvalid]: ReportsError.SegmentRootLookupInvalid,
         [ReportsErrorCode.BadSignature]: ReportsError.BadSignature,
         [ReportsErrorCode.WorkReportTooBig]: ReportsError.WorkReportTooBig,
+        [ReportsErrorCode.BannedValidator]: ReportsError.BannedValidator,
       };
 
       if (map[test.err] !== undefined) {
@@ -254,9 +261,10 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   const input = Input.toReportsInput(
     testContent.input,
     spec,
-    preState.entropy,
-    preState.recentBlocks, // note: for full fidelity this should be partially updated state, not prior state as it is now
-    preState.availabilityAssignment,
+    preState.state.entropy,
+    preState.state.recentBlocks, // note: for full fidelity this should be partially updated state, not prior state as it is now
+    preState.state.availabilityAssignment,
+    preState.offenders,
   );
   const expectedOutput = TestReportsResult.toReportsResult(testContent.output);
 
@@ -270,11 +278,11 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   // blocks history.
   const headerChain = {
     isInChain(hash: HeaderHash) {
-      return preState.recentBlocks.blocks.find((x) => x.headerHash.isEqualTo(hash)) !== undefined;
+      return preState.state.recentBlocks.blocks.find((x) => x.headerHash.isEqualTo(hash)) !== undefined;
     },
   };
 
-  const reports = new Reports(spec, preState, hasher, headerChain);
+  const reports = new Reports(spec, preState.state, hasher, headerChain);
 
   const output = await reports.transition(input);
   let state = reports.state;
@@ -283,5 +291,5 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   }
 
   deepEqual(output, expectedOutput, { context: "output", ignore: ["output.details", "output.ok.stateUpdate"] });
-  deepEqual(state, postState, { context: "postState" });
+  deepEqual(state, postState.state, { context: "postState" });
 }
