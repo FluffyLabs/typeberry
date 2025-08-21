@@ -209,7 +209,7 @@ export const bwasm = BandernsatchWasm.new({ synchronous: false });
 export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const chainSpec = getChainSpec(path);
   const preState = JsonState.toSafroleState(testContent.pre_state, chainSpec);
-  const punishSet = SortedSet.fromArray(hashComparator, testContent.pre_state.post_offenders);
+  const punishSet = SortedSet.fromArrayUnique(hashComparator, testContent.pre_state.post_offenders);
   const safrole = new Safrole(chainSpec, preState, bwasm);
 
   const result = await safrole.transition({ ...testContent.input, punishSet });

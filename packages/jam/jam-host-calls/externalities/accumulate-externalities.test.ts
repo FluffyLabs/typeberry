@@ -1868,7 +1868,7 @@ describe("AccumulateServiceExternalities", () => {
 
       assert.strictEqual(state.stateUpdate.services.storage.length, 0);
 
-      accumulateServiceExternalities.write(hash, blob);
+      accumulateServiceExternalities.write(hash, tryAsU64(1), blob);
 
       assert.strictEqual(state.stateUpdate.services.storage.length, 1);
     });
@@ -1890,7 +1890,7 @@ describe("AccumulateServiceExternalities", () => {
         tryAsTimeSlot(16),
       );
 
-      accumulateServiceExternalities.write(key, newBlob);
+      accumulateServiceExternalities.write(key, tryAsU64(1), newBlob);
 
       assert.strictEqual(state.stateUpdate.services.storage.length, 1);
 
@@ -1940,7 +1940,7 @@ describe("AccumulateServiceExternalities", () => {
         tryAsTimeSlot(16),
       );
 
-      accumulateServiceExternalities.write(key, newBlob);
+      accumulateServiceExternalities.write(key, tryAsU64(0), newBlob);
       const result = accumulateServiceExternalities.readSnapshotLength(key);
 
       assert.deepStrictEqual(result, value.length);

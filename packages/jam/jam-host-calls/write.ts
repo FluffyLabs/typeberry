@@ -1,7 +1,7 @@
 import type { ServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
-import { tryAsU64 } from "@typeberry/numbers";
+import { type U64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
@@ -20,7 +20,7 @@ export interface AccountsWrite {
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/331002331402?v=0.6.6
    */
-  write(hash: Blake2bHash, data: BytesBlob | null): Result<OK, "full">;
+  write(hash: Blake2bHash, storageKeyLength: U64, data: BytesBlob | null): Result<OK, "full">;
   /**
    * Read the length of some value from account snapshot state.
    * Returns `null` if the storage entry was empty.
@@ -93,7 +93,7 @@ export class Write implements HostCallHandler {
     const maybeValue = valueLength === 0n ? null : BytesBlob.blobFrom(value);
 
     // a
-    const result = this.account.write(storageKey, maybeValue);
+    const result = this.account.write(storageKey, storageKeyLength, maybeValue);
     if (result.isError) {
       regs.set(IN_OUT_REG, HostCallResult.FULL);
       return;
