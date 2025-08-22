@@ -20,6 +20,7 @@ import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
+import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import type { FetchExternalities } from "@typeberry/jam-host-calls/fetch.js";
 import { type U64, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
@@ -127,12 +128,14 @@ function getEncodedConstants(chainSpec: ChainSpec) {
   return encodedConsts;
 }
 
-// TODO [ToDr] This needs implementation for other context (refine, auth, on_transfer, etc)
-// and should also be moved to general `externalities` folder.
+type FetchData = {
+  entropy?: EntropyHash;
+  operands?: Operand[];
+  transfers?: PendingTransfer[];
+};
 export class AccumulateFetchExternalities implements FetchExternalities {
   constructor(
-    private entropyHash: EntropyHash,
-    private operands: Operand[],
+    private fetchData: FetchData,
     private chainSpec: ChainSpec,
   ) {}
 
@@ -141,7 +144,12 @@ export class AccumulateFetchExternalities implements FetchExternalities {
   }
 
   entropy(): BytesBlob | null {
-    return this.entropyHash.asOpaque();
+    const { entropy } = this.fetchData;
+    if (entropy === undefined) {
+      return null;
+    }
+
+    return entropy.asOpaque();
   }
 
   authorizerTrace(): BytesBlob | null {
@@ -184,18 +192,30 @@ export class AccumulateFetchExternalities implements FetchExternalities {
     return null;
   }
 
-  allOperands(): BytesBlob {
+  allOperands(): BytesBlob | null {
+    const { operands } = this.fetchData;
+
+    if (operands === undefined) {
+      return null;
+    }
+
     return Compatibility.is(GpVersion.V0_6_4)
-      ? Encoder.encodeObject(codec.sequenceVarLen(Operand_0_6_4.Codec), this.operands, this.chainSpec)
-      : Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), this.operands, this.chainSpec);
+      ? Encoder.encodeObject(codec.sequenceVarLen(Operand_0_6_4.Codec), operands, this.chainSpec)
+      : Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), operands, this.chainSpec);
   }
 
   oneOperand(operandIndex: U64): BytesBlob | null {
+    const { operands } = this.fetchData;
+
+    if (operands === undefined) {
+      return null;
+    }
+
     if (operandIndex >= 2n ** 32n) {
       return null;
     }
 
-    const operand = this.operands[Number(operandIndex)];
+    const operand = operands[Number(operandIndex)];
 
     if (operand === undefined) {
       return null;
@@ -207,10 +227,31 @@ export class AccumulateFetchExternalities implements FetchExternalities {
   }
 
   allTransfers(): BytesBlob | null {
-    return null;
+    const { transfers } = this.fetchData;
+    if (transfers === undefined) {
+      return null;
+    }
+
+    return Encoder.encodeObject(codec.sequenceVarLen(PendingTransfer.Codec), transfers, this.chainSpec);
   }
 
-  oneTransfer(_transferIndex: U64): BytesBlob | null {
-    return null;
+  oneTransfer(transferIndex: U64): BytesBlob | null {
+    const { transfers } = this.fetchData;
+
+    if (transfers === undefined) {
+      return null;
+    }
+
+    if (transferIndex >= 2n ** 32n) {
+      return null;
+    }
+
+    const transfer = transfers[Number(transferIndex)];
+
+    if (transfer === undefined) {
+      return null;
+    }
+
+    return Encoder.encodeObject(PendingTransfer.Codec, transfer, this.chainSpec);
   }
 }

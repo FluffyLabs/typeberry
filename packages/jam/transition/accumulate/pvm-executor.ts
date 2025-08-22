@@ -54,6 +54,7 @@ type AccumulateHostCallExternalities = {
 
 type OnTransferHostCallExternalities = {
   partialState: AccountsInfo & AccountsLookup & AccountsWrite & AccountsRead;
+  fetchExternalities: FetchExternalities;
 };
 
 namespace entrypoint {

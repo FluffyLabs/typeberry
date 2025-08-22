@@ -42,7 +42,11 @@ describe("accumulate-fetch-externalities", () => {
     const defaultChainSpec = tinyChainSpec;
     const defaultEntropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const defaultOperands: Operand[] = [];
-    return [entropy ?? defaultEntropy, operands ?? defaultOperands, chainSpec ?? defaultChainSpec] as const;
+    const fetchData = {
+      entropy: entropy ?? defaultEntropy,
+      operands: operands ?? defaultOperands,
+    };
+    return [fetchData, chainSpec ?? defaultChainSpec] as const;
   };
 
   it("should return different constants for different chain specs", () => {

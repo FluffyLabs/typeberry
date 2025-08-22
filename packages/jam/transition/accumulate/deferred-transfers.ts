@@ -1,4 +1,4 @@
-import { type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
+import { type EntropyHash, type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
 import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { AccumulateExternalities } from "@typeberry/jam-host-calls/externalities/accumulate-externalities.js";
@@ -14,12 +14,15 @@ import { ServiceAccountInfo, type ServicesUpdate, type State } from "@typeberry/
 import { Result, check } from "@typeberry/utils";
 import type { CountAndGasUsed } from "../statistics.js";
 import { uniquePreserveOrder } from "./accumulate-utils.js";
+import { AccumulateFetchExternalities } from "./externalities/accumulate-fetch-externalities.js";
 import { PvmExecutor } from "./pvm-executor.js";
 
 type DeferredTransfersInput = {
   pendingTransfers: PendingTransfer[];
   timeslot: TimeSlot;
   servicesUpdate: ServicesUpdate;
+  /** eta0' (after Safrole STF) - it is not eta0 from state! */
+  entropy: EntropyHash;
 };
 
 export type DeferredTransfersState = Pick<State, "timeslot" | "getService" | "privilegedServices">;
@@ -54,6 +57,7 @@ export class DeferredTransfers {
     pendingTransfers,
     timeslot,
     servicesUpdate: inputServicesUpdate,
+    entropy,
   }: DeferredTransfersInput): Promise<Result<DeferredTransfersResult, DeferredTransfersErrorCode>> {
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/187a03187a03?v=0.6.7
     const transferStatistics = new Map<ServiceId, CountAndGasUsed>();
@@ -88,12 +92,14 @@ export class DeferredTransfers {
         serviceId,
         timeslot,
       );
+
+      const fetchExternalities = new AccumulateFetchExternalities({ entropy, transfers }, this.chainSpec);
       let consumedGas = tryAsGas(0);
 
       if (code === null || transfers.length === 0) {
         logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId}, code is null or no transfers`);
       } else {
-        const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState });
+        const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState, fetchExternalities });
         const args = Encoder.encodeObject(ON_TRANSFER_ARGS_CODEC, { timeslot, serviceId, transfers }, this.chainSpec);
 
         const gas = transfers.reduce((acc, item) => acc + item.gas, 0n);
