@@ -17,7 +17,7 @@ import type { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import { type U64, isU32, isU64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type U64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AutoAccumulate,
   LookupHistoryItem,
@@ -39,6 +39,7 @@ import { clampU64ToU32, writeServiceIdAsLeBytes } from "../utils.js";
 import type { AccountsWrite } from "../write.js";
 import {
   EjectError,
+  ForgetPreimageError,
   NewServiceError,
   type PartialState,
   type PreimageStatus,
@@ -63,7 +64,7 @@ import { AccumulationStateUpdate, type PartiallyUpdatedState } from "./state-upd
 const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 
 /** https://graypaper.fluffylabs.dev/#/7e6ff6a/117101117101?v=0.6.7 */
-const BASE_SERVICE_BYTES = tryAsU64(81);
+const LOOKUP_HISTORY_ENTRY_BYTES = tryAsU64(81);
 /** https://graypaper.fluffylabs.dev/#/7e6ff6a/117a01117a01?v=0.6.7 */
 const BASE_STORAGE_BYTES = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(34) : tryAsU64(32);
 
@@ -214,26 +215,10 @@ export class AccumulateExternalities
     const countDiff = hasPreimage ? 0 : 2;
     const lenDiff = length - BigInt(existingPreimage?.length ?? 0);
     const items = serviceInfo.storageUtilisationCount + countDiff;
-    const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + (hasPreimage ? 0n : BASE_SERVICE_BYTES);
+    const bytes =
+      serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + (hasPreimage ? 0n : LOOKUP_HISTORY_ENTRY_BYTES);
 
-    check(items >= 0, `storageUtilisationCount has to be a positive number, got: ${items}`);
-    check(bytes >= 0, `storageUtilisationBytes has to be a positive number, got: ${bytes}`);
-
-    const overflowItems = !isU32(items);
-    const overflowBytes = !isU64(bytes);
-
-    const res = this.updatedState.updateServiceStorageUtilisation(
-      this.currentServiceId,
-      {
-        overflow: overflowItems,
-        value: overflowItems ? tryAsU32(0) : items,
-      },
-      {
-        overflow: overflowBytes,
-        value: overflowBytes ? tryAsU64(0) : bytes,
-      },
-      serviceInfo,
-    );
+    const res = this.updatedState.updateServiceStorageUtilisation(this.currentServiceId, items, bytes, serviceInfo);
 
     if (res.isError) {
       return Result.error(RequestPreimageError.InsufficientFunds, res.details);
@@ -270,17 +255,28 @@ export class AccumulateExternalities
     return Result.ok(OK);
   }
 
-  forgetPreimage(hash: PreimageHash, length: U64): Result<OK, null> {
+  forgetPreimage(hash: PreimageHash, length: U64): Result<OK, ForgetPreimageError> {
     const serviceId = this.currentServiceId;
     const status = this.updatedState.getLookupHistory(this.currentTimeslot, this.currentServiceId, hash, length);
     if (status === null) {
-      return Result.error(null);
+      return Result.error(ForgetPreimageError.NotFound);
     }
 
     const s = slotsToPreimageStatus(status.slots);
 
+    const updateStorageUtilisation = () => {
+      const serviceInfo = this.getCurrentServiceInfo();
+      const items = serviceInfo.storageUtilisationCount - 2; // subtracting 1 for lookup history item and 1 for the preimage
+      const bytes = serviceInfo.storageUtilisationBytes - length - LOOKUP_HISTORY_ENTRY_BYTES;
+      return this.updatedState.updateServiceStorageUtilisation(this.currentServiceId, items, bytes, serviceInfo);
+    };
+
     // https://graypaper.fluffylabs.dev/#/9a08063/389501389501?v=0.6.6
     if (s.status === PreimageStatusKind.Requested) {
+      const res = updateStorageUtilisation();
+      if (res.isError) {
+        return Result.error(ForgetPreimageError.StorageUtilisationError);
+      }
       this.updatedState.updatePreimage(
         UpdatePreimage.remove({
           serviceId,
@@ -296,6 +292,10 @@ export class AccumulateExternalities
     if (s.status === PreimageStatusKind.Unavailable) {
       const y = s.data[1];
       if (y < t - this.chainSpec.preimageExpungePeriod) {
+        const res = updateStorageUtilisation();
+        if (res.isError) {
+          return Result.error(ForgetPreimageError.StorageUtilisationError);
+        }
         this.updatedState.updatePreimage(
           UpdatePreimage.remove({
             serviceId,
@@ -306,7 +306,7 @@ export class AccumulateExternalities
         return Result.ok(OK);
       }
 
-      return Result.error(null);
+      return Result.error(ForgetPreimageError.NotExpired);
     }
 
     // https://graypaper.fluffylabs.dev/#/9a08063/38c80138c801?v=0.6.6
@@ -334,7 +334,7 @@ export class AccumulateExternalities
         return Result.ok(OK);
       }
 
-      return Result.error(null);
+      return Result.error(ForgetPreimageError.NotExpired);
     }
 
     assertNever(s);
@@ -403,7 +403,7 @@ export class AccumulateExternalities
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/115901115901?v=0.6.7
     const items = tryAsU32(2 * 1 + 0);
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/116b01116b01?v=0.6.7
-    const bytes = sumU64(BASE_SERVICE_BYTES, codeLength);
+    const bytes = sumU64(LOOKUP_HISTORY_ENTRY_BYTES, codeLength);
     const clampedLength = clampU64ToU32(codeLength);
 
     // check if we are priviledged to set gratis storage
@@ -609,8 +609,9 @@ export class AccumulateExternalities
     }
 
     // storage items length
-    const minServiceBytes = BASE_SERVICE_BYTES;
-    const l = tryAsU64(maxU64(service.storageUtilisationBytes, minServiceBytes) - minServiceBytes);
+    const l = tryAsU64(
+      maxU64(service.storageUtilisationBytes, LOOKUP_HISTORY_ENTRY_BYTES) - LOOKUP_HISTORY_ENTRY_BYTES,
+    );
 
     // check if we have a preimage with the entire storage.
     const [isPreviousCodeExpired, errorReason] = this.isPreviousCodeExpired(destination, previousCodeHash, l);
@@ -663,25 +664,7 @@ export class AccumulateExternalities
     const serviceInfo = this.getCurrentServiceInfo();
     const items = serviceInfo.storageUtilisationCount + countDiff;
     const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + baseStorageDiff + rawKeyDiff;
-
-    check(items >= 0, `storageUtilisationCount has to be a positive number, got: ${items}`);
-    check(bytes >= 0, `storageUtilisationBytes has to be a positive number, got: ${bytes}`);
-
-    const overflowItems = !isU32(items);
-    const overflowBytes = !isU64(bytes);
-
-    const res = this.updatedState.updateServiceStorageUtilisation(
-      this.currentServiceId,
-      {
-        overflow: overflowItems,
-        value: overflowItems ? tryAsU32(0) : items,
-      },
-      {
-        overflow: overflowBytes,
-        value: overflowBytes ? tryAsU64(0) : bytes,
-      },
-      serviceInfo,
-    );
+    const res = this.updatedState.updateServiceStorageUtilisation(this.currentServiceId, items, bytes, serviceInfo);
     if (res.isError) {
       return Result.error("full", res.details);
     }

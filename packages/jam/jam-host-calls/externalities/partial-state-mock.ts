@@ -16,6 +16,7 @@ import type { PerCore, ValidatorData } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
 import {
   type EjectError,
+  type ForgetPreimageError,
   type NewServiceError,
   type PartialState,
   type PreimageStatus,
@@ -40,7 +41,7 @@ export class PartialStateMock implements PartialState {
 
   public checkpointCalled = 0;
   public yieldHash: OpaqueHash | null = null;
-  public forgetPreimageResponse: Result<OK, null> = Result.ok(OK);
+  public forgetPreimageResponse: Result<OK, ForgetPreimageError> = Result.ok(OK);
   public newServiceResponse: Result<ServiceId, NewServiceError> = Result.ok(tryAsServiceId(0));
   public ejectReturnValue: Result<OK, EjectError> = Result.ok(OK);
   public requestPreimageResponse: Result<OK, RequestPreimageError> = Result.ok(OK);
@@ -63,7 +64,7 @@ export class PartialStateMock implements PartialState {
     return this.requestPreimageResponse;
   }
 
-  forgetPreimage(hash: Blake2bHash, length: U64): Result<OK, null> {
+  forgetPreimage(hash: Blake2bHash, length: U64): Result<OK, ForgetPreimageError> {
     this.forgetPreimageData.push([hash, length]);
     return this.forgetPreimageResponse;
   }
