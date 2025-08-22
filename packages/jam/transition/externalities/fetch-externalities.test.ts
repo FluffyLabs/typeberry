@@ -9,10 +9,10 @@ import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config"
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import { Compatibility, GpVersion } from "@typeberry/utils";
-import { Operand, Operand_0_6_4 } from "../operand.js";
-import { AccumulateFetchExternalities } from "./accumulate-fetch-externalities.js";
+import { Operand, Operand_0_6_4 } from "../accumulate/operand.js";
+import { FetchExternalities } from "./fetch-externalities.js";
 
-describe("accumulate-fetch-externalities", () => {
+describe("fetch-externalities", () => {
   const prepareOperands = (length: number) => {
     const operands: Operand[] = [];
 
@@ -53,8 +53,8 @@ describe("accumulate-fetch-externalities", () => {
     const tinyArgs = prepareData({ chainSpec: tinyChainSpec });
     const fullArgs = prepareData({ chainSpec: fullChainSpec });
 
-    const tinyFetchExternalities = new AccumulateFetchExternalities(...tinyArgs);
-    const fullFetchExternalities = new AccumulateFetchExternalities(...fullArgs);
+    const tinyFetchExternalities = new FetchExternalities(...tinyArgs);
+    const fullFetchExternalities = new FetchExternalities(...fullArgs);
 
     const tinyContants = tinyFetchExternalities.constants();
     const fullContants = fullFetchExternalities.constants();
@@ -67,7 +67,7 @@ describe("accumulate-fetch-externalities", () => {
   it("should return null for all methods that are not important during accumulate", () => {
     const args = prepareData({ chainSpec: fullChainSpec });
 
-    const fetchExternalities = new AccumulateFetchExternalities(...args);
+    const fetchExternalities = new FetchExternalities(...args);
 
     assert.strictEqual(fetchExternalities.authorizerTrace(), null);
     assert.strictEqual(fetchExternalities.workItemExtrinsic(tryAsU64(0), tryAsU64(0)), null);
@@ -87,7 +87,7 @@ describe("accumulate-fetch-externalities", () => {
     const expectedEntropy: EntropyHash = Bytes.fill(HASH_SIZE, 5).asOpaque();
     const args = prepareData({ entropy: expectedEntropy });
 
-    const fetchExternalities = new AccumulateFetchExternalities(...args);
+    const fetchExternalities = new FetchExternalities(...args);
 
     const entropy = fetchExternalities.entropy();
 
@@ -103,7 +103,7 @@ describe("accumulate-fetch-externalities", () => {
 
     const args = prepareData({ operands: expectedOperands, chainSpec });
 
-    const fetchExternalities = new AccumulateFetchExternalities(...args);
+    const fetchExternalities = new FetchExternalities(...args);
 
     const operands = fetchExternalities.allOperands();
 
@@ -118,7 +118,7 @@ describe("accumulate-fetch-externalities", () => {
 
     const args = prepareData({ operands, chainSpec });
 
-    const fetchExternalities = new AccumulateFetchExternalities(...args);
+    const fetchExternalities = new FetchExternalities(...args);
 
     const operand = fetchExternalities.oneOperand(tryAsU64(expectedOperandIndex));
 
@@ -133,7 +133,7 @@ describe("accumulate-fetch-externalities", () => {
 
     const args = prepareData({ operands, chainSpec });
 
-    const fetchExternalities = new AccumulateFetchExternalities(...args);
+    const fetchExternalities = new FetchExternalities(...args);
 
     const operand = fetchExternalities.oneOperand(tryAsU64(expectedOperandIndex));
 
@@ -151,7 +151,7 @@ describe("accumulate-fetch-externalities", () => {
 
     const args = prepareData({ operands, chainSpec });
 
-    const fetchExternalities = new AccumulateFetchExternalities(...args);
+    const fetchExternalities = new FetchExternalities(...args);
 
     const operand = fetchExternalities.oneOperand(tryAsU64(expectedOperandIndex));
 

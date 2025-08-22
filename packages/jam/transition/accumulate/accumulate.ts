@@ -30,11 +30,11 @@ import { binaryMerkleization } from "@typeberry/state-merkleization";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import { Compatibility, GpVersion, Result, assertEmpty } from "@typeberry/utils";
+import { FetchExternalities } from "../externalities/index.js";
 import type { CountAndGasUsed } from "../statistics.js";
 import { AccumulateData } from "./accumulate-data.js";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 import { generateNextServiceId, getWorkPackageHashes } from "./accumulate-utils.js";
-import { AccumulateFetchExternalities } from "./externalities/index.js";
 import { Operand, Operand_0_6_4 } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
 
@@ -193,7 +193,7 @@ export class Accumulate {
     const externalities = {
       partialState,
       serviceExternalities: partialState,
-      fetchExternalities: new AccumulateFetchExternalities({ entropy, operands }, this.chainSpec),
+      fetchExternalities: new FetchExternalities({ entropy, operands }, this.chainSpec),
     };
 
     const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);

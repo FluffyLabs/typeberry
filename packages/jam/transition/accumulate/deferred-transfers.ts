@@ -12,9 +12,9 @@ import { sumU64, tryAsU32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { ServiceAccountInfo, type ServicesUpdate, type State } from "@typeberry/state";
 import { Result, check } from "@typeberry/utils";
+import { FetchExternalities } from "../externalities/fetch-externalities.js";
 import type { CountAndGasUsed } from "../statistics.js";
 import { uniquePreserveOrder } from "./accumulate-utils.js";
-import { AccumulateFetchExternalities } from "./externalities/accumulate-fetch-externalities.js";
 import { PvmExecutor } from "./pvm-executor.js";
 
 type DeferredTransfersInput = {
@@ -93,7 +93,7 @@ export class DeferredTransfers {
         timeslot,
       );
 
-      const fetchExternalities = new AccumulateFetchExternalities({ entropy, transfers }, this.chainSpec);
+      const fetchExternalities = new FetchExternalities({ entropy, transfers }, this.chainSpec);
       let consumedGas = tryAsGas(0);
 
       if (code === null || transfers.length === 0) {

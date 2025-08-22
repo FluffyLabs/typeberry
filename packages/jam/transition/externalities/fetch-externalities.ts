@@ -21,7 +21,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
-import type { FetchExternalities } from "@typeberry/jam-host-calls/fetch.js";
+import type { IFetchExternalities } from "@typeberry/jam-host-calls/fetch.js";
 import { type U64, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   BASE_SERVICE_BALANCE,
@@ -30,10 +30,10 @@ import {
   MAX_RECENT_HISTORY,
 } from "@typeberry/state";
 import { Compatibility, GpVersion } from "@typeberry/utils";
-import { REPORT_TIMEOUT_GRACE_PERIOD } from "../../assurances.js";
-import { L } from "../../reports/verify-contextual.js";
-import { ACCUMULATE_TOTAL_GAS, GAS_TO_INVOKE_WORK_REPORT } from "../accumulate.js";
-import { Operand, Operand_0_6_4 } from "../operand.js";
+import { ACCUMULATE_TOTAL_GAS, GAS_TO_INVOKE_WORK_REPORT } from "../accumulate/accumulate.js";
+import { Operand, Operand_0_6_4 } from "../accumulate/operand.js";
+import { REPORT_TIMEOUT_GRACE_PERIOD } from "../assurances.js";
+import { L } from "../reports/verify-contextual.js";
 
 // TODO [ToDr] this is a bit bullshit for now, it's based on the GP,
 // yet it does not match what the 0.6.6 test vectors expect, so the
@@ -133,7 +133,7 @@ type FetchData = {
   operands?: Operand[];
   transfers?: PendingTransfer[];
 };
-export class AccumulateFetchExternalities implements FetchExternalities {
+export class FetchExternalities implements IFetchExternalities {
   constructor(
     private fetchData: FetchData,
     private chainSpec: ChainSpec,

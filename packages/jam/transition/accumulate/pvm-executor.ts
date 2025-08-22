@@ -19,7 +19,7 @@ import {
   type ProgramCounter,
   tryAsProgramCounter,
 } from "@typeberry/jam-host-calls/externalities/refine-externalities.js";
-import { Fetch, type FetchExternalities } from "@typeberry/jam-host-calls/fetch.js";
+import { Fetch, type IFetchExternalities } from "@typeberry/jam-host-calls/fetch.js";
 import { GasHostCall } from "@typeberry/jam-host-calls/gas.js";
 import { type AccountsInfo, Info } from "@typeberry/jam-host-calls/info.js";
 import { LogHostCall } from "@typeberry/jam-host-calls/log.js";
@@ -48,13 +48,13 @@ const ACCUMULATE_HOST_CALL_CLASSES = [
 
 type AccumulateHostCallExternalities = {
   partialState: PartialState;
-  fetchExternalities: FetchExternalities;
+  fetchExternalities: IFetchExternalities;
   serviceExternalities: AccountsInfo & AccountsLookup & AccountsWrite & AccountsRead;
 };
 
 type OnTransferHostCallExternalities = {
   partialState: AccountsInfo & AccountsLookup & AccountsWrite & AccountsRead;
-  fetchExternalities: FetchExternalities;
+  fetchExternalities: IFetchExternalities;
 };
 
 namespace entrypoint {
