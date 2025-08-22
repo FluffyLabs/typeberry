@@ -39,6 +39,7 @@ import { clampU64ToU32, writeServiceIdAsLeBytes } from "../utils.js";
 import type { AccountsWrite } from "../write.js";
 import {
   EjectError,
+  ForgetPreimageError,
   NewServiceError,
   type PartialState,
   type PreimageStatus,
@@ -254,11 +255,11 @@ export class AccumulateExternalities
     return Result.ok(OK);
   }
 
-  forgetPreimage(hash: PreimageHash, length: U64): Result<OK, null> {
+  forgetPreimage(hash: PreimageHash, length: U64): Result<OK, ForgetPreimageError> {
     const serviceId = this.currentServiceId;
     const status = this.updatedState.getLookupHistory(this.currentTimeslot, this.currentServiceId, hash, length);
     if (status === null) {
-      return Result.error(null);
+      return Result.error(ForgetPreimageError.NotFound);
     }
 
     const s = slotsToPreimageStatus(status.slots);
@@ -267,11 +268,15 @@ export class AccumulateExternalities
       const serviceInfo = this.getCurrentServiceInfo();
       const items = serviceInfo.storageUtilisationCount - 2; // subtracting 1 for lookup history item and 1 for the preimage
       const bytes = serviceInfo.storageUtilisationBytes - length - LOOKUP_HISTORY_ENTRY_BYTES;
-      this.updatedState.updateServiceStorageUtilisation(this.currentServiceId, items, bytes, serviceInfo);
+      return this.updatedState.updateServiceStorageUtilisation(this.currentServiceId, items, bytes, serviceInfo);
     };
 
     // https://graypaper.fluffylabs.dev/#/9a08063/389501389501?v=0.6.6
     if (s.status === PreimageStatusKind.Requested) {
+      const res = updateStorageUtilisation();
+      if (res.isError) {
+        return Result.error(ForgetPreimageError.StorageUtilisationError);
+      }
       this.updatedState.updatePreimage(
         UpdatePreimage.remove({
           serviceId,
@@ -279,7 +284,6 @@ export class AccumulateExternalities
           length: status.length,
         }),
       );
-      updateStorageUtilisation();
       return Result.ok(OK);
     }
 
@@ -288,6 +292,10 @@ export class AccumulateExternalities
     if (s.status === PreimageStatusKind.Unavailable) {
       const y = s.data[1];
       if (y < t - this.chainSpec.preimageExpungePeriod) {
+        const res = updateStorageUtilisation();
+        if (res.isError) {
+          return Result.error(ForgetPreimageError.StorageUtilisationError);
+        }
         this.updatedState.updatePreimage(
           UpdatePreimage.remove({
             serviceId,
@@ -295,11 +303,10 @@ export class AccumulateExternalities
             length: status.length,
           }),
         );
-        updateStorageUtilisation();
         return Result.ok(OK);
       }
 
-      return Result.error(null);
+      return Result.error(ForgetPreimageError.NotExpired);
     }
 
     // https://graypaper.fluffylabs.dev/#/9a08063/38c80138c801?v=0.6.6
@@ -327,7 +334,7 @@ export class AccumulateExternalities
         return Result.ok(OK);
       }
 
-      return Result.error(null);
+      return Result.error(ForgetPreimageError.NotExpired);
     }
 
     assertNever(s);

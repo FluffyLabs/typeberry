@@ -5,7 +5,7 @@ import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import type { OpaqueHash } from "@typeberry/hash";
-import { type U64, isU32, isU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type U64, isU32, isU64, tryAsU32 } from "@typeberry/numbers";
 import {
   LookupHistoryItem,
   PrivilegedServices,
@@ -24,6 +24,9 @@ import {
 } from "@typeberry/state";
 import { OK, Result, assertNever, check } from "@typeberry/utils";
 import type { PendingTransfer } from "./pending-transfer.js";
+
+export const InsufficientFundsError = "insufficient funds";
+export type InsufficientFundsError = typeof InsufficientFundsError;
 
 /** Update of the state entries coming from accumulation of a single service. */
 export type ServiceStateUpdate = Partial<Pick<State, "privilegedServices" | "authQueues" | "designatedValidatorData">> &
@@ -288,7 +291,7 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     items: number,
     bytes: bigint,
     serviceInfo: ServiceAccountInfo,
-  ): Result<OK, "insufficient funds"> {
+  ): Result<OK, InsufficientFundsError> {
     check(items >= 0, `storageUtilisationCount has to be a positive number, got: ${items}`);
     check(bytes >= 0, `storageUtilisationBytes has to be a positive number, got: ${bytes}`);
 
@@ -297,16 +300,12 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
 
     // TODO [ToDr] this is not specified in GP, but it seems sensible.
     if (overflowItems || overflowBytes) {
-      return Result.error("insufficient funds");
+      return Result.error(InsufficientFundsError);
     }
 
-    const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(
-      overflowItems ? tryAsU32(0) : items,
-      overflowBytes ? tryAsU64(0) : bytes,
-      serviceInfo.gratisStorage,
-    );
+    const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(items, bytes, serviceInfo.gratisStorage);
     if (serviceInfo.balance < thresholdBalance) {
-      return Result.error("insufficient funds");
+      return Result.error(InsufficientFundsError);
     }
 
     // Update service info with new details.

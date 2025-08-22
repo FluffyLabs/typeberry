@@ -42,6 +42,7 @@ import { writeServiceIdAsLeBytes } from "../utils.js";
 import { AccumulateExternalities } from "./accumulate-externalities.js";
 import {
   EjectError,
+  ForgetPreimageError,
   NewServiceError,
   PreimageStatusKind,
   ProvidePreimageError,
@@ -247,32 +248,43 @@ describe("PartialState.forgetPreimage", () => {
     const hash = Bytes.fill(HASH_SIZE, 0x01).asOpaque();
 
     const result = partialState.forgetPreimage(hash, tryAsU64(42));
-    assert.deepStrictEqual(result, Result.error(null));
+    assert.deepStrictEqual(result, Result.error(ForgetPreimageError.NotFound));
   });
 
   it("should error if preimage is already forgotten", () => {
     const state = partiallyUpdatedState();
     const serviceId = tryAsServiceId(0);
-    const hash = Bytes.fill(HASH_SIZE, 0x02).asOpaque();
-    const length = tryAsU64(42);
+    const hash = Bytes.parseBytes(
+      "0xc16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c",
+      HASH_SIZE,
+    ).asOpaque();
+    const length = tryAsU64(35);
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
       state,
       serviceId,
       tryAsServiceId(10),
-      tryAsTimeSlot(16),
+      tryAsTimeSlot(10),
     );
     state.stateUpdate.services.preimages.push(
-      UpdatePreimage.remove({
+      UpdatePreimage.updateOrAdd({
         serviceId,
-        hash,
-        length: tryAsU32(Number(length)),
+        lookupHistory: new LookupHistoryItem(
+          hash,
+          tryAsU32(Number(length)),
+          tryAsLookupHistorySlots([tryAsTimeSlot(0), tryAsTimeSlot(1)]),
+        ),
       }),
     );
 
-    const result = partialState.forgetPreimage(hash, length);
-    assert.deepStrictEqual(result, Result.error(null));
+    const result1 = partialState.forgetPreimage(hash, length);
+    assert.deepStrictEqual(result1, Result.ok(OK));
+
+    state.state.applyUpdate(state.stateUpdate.services);
+
+    const result2 = partialState.forgetPreimage(hash, length);
+    assert.deepStrictEqual(result2, Result.error(ForgetPreimageError.NotFound));
   });
 
   it("should forget a requested preimage", () => {
@@ -477,7 +489,7 @@ describe("PartialState.forgetPreimage", () => {
     ]);
   });
 
-  it("should not update history for reavailable preimage if too recent", () => {
+  it("should not forget reavailable preimage if too recent", () => {
     const state = partiallyUpdatedState();
     state.state.applyUpdate({
       timeslot: tryAsTimeSlot(100),
@@ -493,7 +505,7 @@ describe("PartialState.forgetPreimage", () => {
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
-      tryAsTimeSlot(16),
+      tryAsTimeSlot(100),
     );
     state.stateUpdate.services.preimages.push(
       UpdatePreimage.updateOrAdd({
@@ -507,7 +519,35 @@ describe("PartialState.forgetPreimage", () => {
     );
 
     const result = partialState.forgetPreimage(hash, length);
-    assert.deepStrictEqual(result, Result.error(null));
+    assert.deepStrictEqual(result, Result.error(ForgetPreimageError.NotExpired));
+  });
+
+  it("should not forget unavailable preimage if too recent", () => {
+    const state = partiallyUpdatedState();
+
+    const hash = Bytes.fill(HASH_SIZE, 0x08).asOpaque();
+    const length = tryAsU64(42);
+
+    const partialState = new AccumulateExternalities(
+      tinyChainSpec,
+      state,
+      tryAsServiceId(0),
+      tryAsServiceId(10),
+      tryAsTimeSlot(2),
+    );
+    state.stateUpdate.services.preimages.push(
+      UpdatePreimage.updateOrAdd({
+        serviceId: tryAsServiceId(0),
+        lookupHistory: new LookupHistoryItem(
+          hash,
+          tryAsU32(Number(length)),
+          tryAsLookupHistorySlots([tryAsTimeSlot(0), tryAsTimeSlot(1)]),
+        ),
+      }),
+    );
+
+    const result = partialState.forgetPreimage(hash, length);
+    assert.deepStrictEqual(result, Result.error(ForgetPreimageError.NotExpired));
   });
 });
 
