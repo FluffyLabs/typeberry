@@ -34,8 +34,8 @@ function prepareServiceGasEntires() {
 if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
   function prepareAuthorizers() {
     const authorizers = new Array<ServiceId>();
-    authorizers.push(tryAsServiceId(0));
-    authorizers.push(tryAsServiceId(1));
+    authorizers.push(tryAsServiceId(10));
+    authorizers.push(tryAsServiceId(15));
     return tryAsPerCore(authorizers, tinyChainSpec);
   }
 
@@ -48,8 +48,8 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
     const memStart = 2 ** 16;
     const registers = new HostCallRegisters(new Registers());
     registers.set(MANAGER_REG, tryAsU64(5));
-    registers.set(AUTHORIZATION_REG,tryAsU64(memAuthStart));
-    registers.set(VALIDATOR_REG, tryAsU64(15));
+    registers.set(AUTHORIZATION_REG, tryAsU64(memAuthStart));
+    registers.set(VALIDATOR_REG, tryAsU64(20));
     registers.set(DICTIONARY_START, tryAsU64(memStart));
     registers.set(DICTIONARY_COUNT, tryAsU64(entries.length));
 
@@ -63,7 +63,7 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
     const data = encoder.viewResult();
 
     if (!skipDictionary) {
-      builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + 4 * tinyChainSpec.coresCount), data.raw);
+      builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
     }
 
     PrivilegedServices;
@@ -98,7 +98,7 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       assert.deepStrictEqual(result, undefined);
       assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
       assert.deepStrictEqual(accumulate.privilegedServices, [
-        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(10)], tryAsServiceId(15), entries],
+        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), entries],
       ]);
     });
 
@@ -133,7 +133,7 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       // then
       assert.deepStrictEqual(result, undefined);
       assert.deepStrictEqual(accumulate.privilegedServices, [
-        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(10)], tryAsServiceId(15), entries],
+        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), entries],
       ]);
     });
 
@@ -152,7 +152,7 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       // then
       assert.deepStrictEqual(result, undefined);
       assert.deepStrictEqual(accumulate.privilegedServices, [
-        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(10)], tryAsServiceId(15), entries],
+        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), entries],
       ]);
     });
   });
