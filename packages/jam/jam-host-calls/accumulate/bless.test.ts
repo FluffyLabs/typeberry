@@ -48,10 +48,7 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
     const memStart = 2 ** 16;
     const registers = new HostCallRegisters(new Registers());
     registers.set(MANAGER_REG, tryAsU64(5));
-    registers.set(
-      AUTHORIZATION_REG,
-      Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(memAuthStart) : tryAsU64(10),
-    );
+    registers.set(AUTHORIZATION_REG,tryAsU64(memAuthStart));
     registers.set(VALIDATOR_REG, tryAsU64(15));
     registers.set(DICTIONARY_START, tryAsU64(memStart));
     registers.set(DICTIONARY_COUNT, tryAsU64(entries.length));
@@ -66,11 +63,11 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
     const data = encoder.viewResult();
 
     if (!skipDictionary) {
-      builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
+      builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + 4 * tinyChainSpec.coresCount), data.raw);
     }
 
     PrivilegedServices;
-    const dataAuth = Encoder.encodeObject(codecPerCore(codec.u32.asOpaque<ServiceId>()), authorizerData);
+    const dataAuth = Encoder.encodeObject(codecPerCore(codec.u32.asOpaque<ServiceId>()), authorizerData, tinyChainSpec);
     if (!skipAuth) {
       builder.setReadablePages(
         tryAsMemoryIndex(memAuthStart),
