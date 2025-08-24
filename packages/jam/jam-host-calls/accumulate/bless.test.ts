@@ -118,6 +118,22 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       assert.deepStrictEqual(accumulate.privilegedServices, []);
     });
 
+    it("should return panic when authorizers are not readable", async () => {
+      const accumulate = new PartialStateMock();
+      const serviceId = tryAsServiceId(10_000);
+      const bless = new Bless(serviceId, accumulate, tinyChainSpec);
+      const entries = prepareServiceGasEntires();
+      const authorizers = prepareAuthorizers();
+      const { registers, memory } = prepareRegsAndMemory(entries, authorizers, { skipAuth: true });
+
+      // when
+      const result = await bless.execute(gas, registers, memory);
+
+      // then
+      assert.deepStrictEqual(result, PvmExecution.Panic);
+      assert.deepStrictEqual(accumulate.privilegedServices, []);
+    });
+
     it("should auto-accumualte services when dictionary is out of order", async () => {
       const accumulate = new PartialStateMock();
       const serviceId = tryAsServiceId(10_000);
