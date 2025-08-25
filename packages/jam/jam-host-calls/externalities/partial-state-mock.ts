@@ -117,7 +117,7 @@ export class PartialStateMock implements PartialState {
     v: ServiceId | null,
     g: [ServiceId, ServiceGas][],
   ): Result<OK, UpdatePrivilegeError> {
-    if (this.providePreimageResponse.isOk) {
+    if (this.privilegedServicesResponse.isOk) {
       this.privilegedServices.push([m, a, v, g]);
     }
     return this.privilegedServicesResponse;

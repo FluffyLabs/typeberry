@@ -3,16 +3,18 @@ import { describe, it } from "node:test";
 import { type ServiceGas, type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { Encoder, codec } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
-import { tryAsU64 } from "@typeberry/numbers";
+import { type U64, tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
+import { MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import { type PerCore, PrivilegedServices, codecPerCore, tryAsPerCore } from "@typeberry/state";
-import { Compatibility, GpVersion } from "@typeberry/utils";
+import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
+import { UpdatePrivilegeError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { Bless } from "./bless.js";
 
@@ -42,14 +44,19 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
   function prepareRegsAndMemory(
     entries: [ServiceId, ServiceGas][],
     authorizerData: PerCore<ServiceId>,
-    { skipDictionary = false, skipAuth = false }: { skipDictionary?: boolean; skipAuth?: boolean } = {},
+    {
+      skipDictionary = false,
+      skipAuth = false,
+      manager,
+      validator,
+    }: { skipDictionary?: boolean; skipAuth?: boolean; manager?: U64; validator?: U64 } = {},
   ) {
     const memAuthStart = 2 ** 24;
     const memStart = 2 ** 16;
     const registers = new HostCallRegisters(new Registers());
-    registers.set(MANAGER_REG, tryAsU64(5));
+    registers.set(MANAGER_REG, manager ?? tryAsU64(5));
     registers.set(AUTHORIZATION_REG, tryAsU64(memAuthStart));
-    registers.set(VALIDATOR_REG, tryAsU64(20));
+    registers.set(VALIDATOR_REG, validator ?? tryAsU64(20));
     registers.set(DICTIONARY_START, tryAsU64(memStart));
     registers.set(DICTIONARY_COUNT, tryAsU64(entries.length));
 
@@ -148,6 +155,7 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
 
       // then
       assert.deepStrictEqual(result, undefined);
+      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
       assert.deepStrictEqual(accumulate.privilegedServices, [
         [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), entries],
       ]);
@@ -167,9 +175,64 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
 
       // then
       assert.deepStrictEqual(result, undefined);
+      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
       assert.deepStrictEqual(accumulate.privilegedServices, [
         [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), entries],
       ]);
+    });
+
+    it("should return HUH when service is unprivileged", async () => {
+      const accumulate = new PartialStateMock();
+      accumulate.privilegedServicesResponse = Result.error(UpdatePrivilegeError.UnprivilegedService);
+      const serviceId = tryAsServiceId(11_000);
+      const bless = new Bless(serviceId, accumulate, tinyChainSpec);
+      const entries = prepareServiceGasEntires();
+      const authorizers = prepareAuthorizers();
+      const { registers, memory } = prepareRegsAndMemory(entries, authorizers);
+
+      // when
+      const result = await bless.execute(gas, registers, memory);
+
+      // then
+      assert.deepStrictEqual(result, undefined);
+      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
+      assert.deepStrictEqual(accumulate.privilegedServices, []);
+    });
+
+    it("should return WHO if given manager are invalid", async () => {
+      const accumulate = new PartialStateMock();
+      accumulate.privilegedServicesResponse = Result.error(UpdatePrivilegeError.InvalidServiceId);
+      const serviceId = tryAsServiceId(11_000);
+      const bless = new Bless(serviceId, accumulate, tinyChainSpec);
+      const entries = prepareServiceGasEntires();
+      const authorizers = prepareAuthorizers();
+      const { registers, memory } = prepareRegsAndMemory(entries, authorizers, { manager: tryAsU64(MAX_VALUE_U64) });
+
+      // when
+      const result = await bless.execute(gas, registers, memory);
+
+      // then
+      assert.deepStrictEqual(result, undefined);
+      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
+      assert.deepStrictEqual(accumulate.privilegedServices, []);
+    });
+
+    it("should return WHO if given validator are invalid", async () => {
+      const accumulate = new PartialStateMock();
+      accumulate.privilegedServicesResponse = Result.error(UpdatePrivilegeError.InvalidServiceId);
+      const serviceId = tryAsServiceId(11_000);
+      const bless = new Bless(serviceId, accumulate, tinyChainSpec);
+      const entries = prepareServiceGasEntires();
+      const authorizers = prepareAuthorizers();
+      const { registers, memory } = prepareRegsAndMemory(entries, authorizers, { validator: tryAsU64(MAX_VALUE_U64) });
+
+      // when
+      const result = await bless.execute(gas, registers, memory);
+
+      // then
+      assert.deepStrictEqual(result, undefined);
+      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
+      assert.deepStrictEqual(accumulate.privilegedServices, []);
     });
   });
 } else {
