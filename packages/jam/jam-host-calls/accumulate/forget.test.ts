@@ -12,6 +12,7 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { Result } from "@typeberry/utils";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
+import { ForgetPreimageError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { Forget } from "./forget.js";
 
@@ -78,7 +79,7 @@ describe("HostCalls: Solicit", () => {
     const serviceId = tryAsServiceId(10_000);
     const forget = new Forget(serviceId, accumulate);
 
-    accumulate.forgetPreimageResponse = Result.error(null);
+    accumulate.forgetPreimageResponse = Result.error(ForgetPreimageError.NotFound);
     const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU64(4_096));
 
     // when
