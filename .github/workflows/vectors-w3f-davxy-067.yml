@@ -1,4 +1,4 @@
-name: davxy w3f test vectors
+name: davxy w3f test vectors 0.6.7
 
 on:
   workflow_dispatch:
