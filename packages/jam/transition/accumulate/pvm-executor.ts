@@ -109,6 +109,7 @@ export class PvmExecutor {
     const generalHandlers: HostCallHandler[] = [
       new LogHostCall(serviceId),
       new GasHostCall(serviceId),
+      new Fetch(serviceId, externalities.fetchExternalities),
       new Read(serviceId, externalities.partialState),
       new Write(serviceId, externalities.partialState),
       new Lookup(serviceId, externalities.partialState),
