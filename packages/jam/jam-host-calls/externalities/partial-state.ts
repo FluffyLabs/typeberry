@@ -144,7 +144,7 @@ export enum NewServiceError {
   UnprivilegedService = 1,
 }
 
-export enum UpdatePrivilegeError {
+export enum UpdatePrivilegesError {
   /** Service is not privileged to update privileges. */
   UnprivilegedService = 0,
   /** Provided service id is incorrect. */
@@ -240,11 +240,12 @@ export interface PartialState {
    */
   checkpoint(): void;
 
-  /** Update authorization queue for given core. */
+  /** Update authorization queue for given core and authorize a service for this core. */
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
-  ): void;
+    authManager: ServiceId | null,
+  ): Result<OK, UpdatePrivilegesError>;
 
   /**
    * Update priviliged services and their gas.
@@ -260,7 +261,7 @@ export interface PartialState {
     a: PerCore<ServiceId>,
     v: ServiceId | null,
     g: [ServiceId, ServiceGas][],
-  ): Result<OK, UpdatePrivilegeError>;
+  ): Result<OK, UpdatePrivilegesError>;
 
   /** Yield accumulation trie result hash. */
   yield(hash: OpaqueHash): void;

@@ -24,7 +24,7 @@ import {
   type TRANSFER_MEMO_BYTES,
   TransferError,
   type UnprivilegedError,
-  type UpdatePrivilegeError,
+  type UpdatePrivilegesError,
 } from "./partial-state.js";
 
 export class PartialStateMock implements PartialState {
@@ -42,9 +42,10 @@ export class PartialStateMock implements PartialState {
 
   public checkpointCalled = 0;
   public yieldHash: OpaqueHash | null = null;
+  public authQueueResponse: Result<OK, UpdatePrivilegesError> = Result.ok(OK);
   public forgetPreimageResponse: Result<OK, null> = Result.ok(OK);
   public newServiceResponse: Result<ServiceId, NewServiceError> = Result.ok(tryAsServiceId(0));
-  public privilegedServicesResponse: Result<OK, UpdatePrivilegeError> = Result.ok(OK);
+  public privilegedServicesResponse: Result<OK, UpdatePrivilegesError> = Result.ok(OK);
   public ejectReturnValue: Result<OK, EjectError> = Result.ok(OK);
   public requestPreimageResponse: Result<OK, RequestPreimageError> = Result.ok(OK);
   public checkPreimageStatusResponse: PreimageStatus | null = null;
@@ -116,7 +117,7 @@ export class PartialStateMock implements PartialState {
     a: PerCore<ServiceId>,
     v: ServiceId | null,
     g: [ServiceId, ServiceGas][],
-  ): Result<OK, UpdatePrivilegeError> {
+  ): Result<OK, UpdatePrivilegesError> {
     if (this.privilegedServicesResponse.isOk) {
       this.privilegedServices.push([m, a, v, g]);
     }
@@ -126,8 +127,11 @@ export class PartialStateMock implements PartialState {
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
-  ): void {
-    this.authQueue.push([coreIndex, authQueue]);
+  ): Result<OK, UpdatePrivilegesError> {
+    if (this.authQueueResponse.isOk) {
+      this.authQueue.push([coreIndex, authQueue]);
+    }
+    return this.authQueueResponse;
   }
 
   yield(hash: OpaqueHash): void {

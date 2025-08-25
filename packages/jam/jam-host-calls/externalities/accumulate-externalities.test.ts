@@ -49,7 +49,7 @@ import {
   TRANSFER_MEMO_BYTES,
   TransferError,
   UnprivilegedError,
-  UpdatePrivilegeError,
+  UpdatePrivilegesError,
 } from "./partial-state.js";
 import { PendingTransfer } from "./pending-transfer.js";
 import { PartiallyUpdatedState } from "./state-update.js";
@@ -873,7 +873,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     const result = partialState.updatePrivilegedServices(manager, authManager, validatorsManager, autoAccumulate);
 
     // then
-    assert.deepStrictEqual(result, Result.error(UpdatePrivilegeError.UnprivilegedService));
+    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.UnprivilegedService));
     assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
   });
 
@@ -902,7 +902,7 @@ describe("PartialState.updatePrivilegedServices", () => {
       const result = partialState.updatePrivilegedServices(manager, authManager, validatorsManager, autoAccumulate);
 
       // then
-      assert.deepStrictEqual(result, Result.error(UpdatePrivilegeError.UnprivilegedService));
+      assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.UnprivilegedService));
       assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
     },
   );
@@ -932,7 +932,7 @@ describe("PartialState.updatePrivilegedServices", () => {
       const result = partialState.updatePrivilegedServices(manager, authManager, validatorsManager, autoAccumulate);
 
       // then
-      assert.deepStrictEqual(result, Result.error(UpdatePrivilegeError.UnprivilegedService));
+      assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.UnprivilegedService));
       assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
     },
   );
@@ -959,7 +959,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     const result = partialState.updatePrivilegedServices(manager, authManager, validatorsManager, autoAccumulate);
 
     // then
-    assert.deepStrictEqual(result, Result.error(UpdatePrivilegeError.InvalidServiceId));
+    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.InvalidServiceId));
     assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
   });
 
@@ -985,7 +985,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     const result = partialState.updatePrivilegedServices(manager, authManager, validatorsManager, autoAccumulate);
 
     // then
-    assert.deepStrictEqual(result, Result.error(UpdatePrivilegeError.InvalidServiceId));
+    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.InvalidServiceId));
     assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
   });
 });

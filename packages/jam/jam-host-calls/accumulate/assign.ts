@@ -8,9 +8,11 @@ import type { HostCallHandler, IHostCallMemory } from "@typeberry/pvm-host-calls
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import type { IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { Compatibility, GpVersion } from "@typeberry/utils";
-import type { PartialState } from "../externalities/partial-state.js";
+import { assertNever, Compatibility, GpVersion } from "@typeberry/utils";
+import { UpdatePrivilegesError, type PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
+import { PrivilegedServices } from "@typeberry/state";
+import { getServiceId } from "../utils.js";
 
 const IN_OUT_REG = 7;
 
@@ -45,9 +47,12 @@ export class Assign implements HostCallHandler {
     regs: IHostCallRegisters,
     memory: IHostCallMemory,
   ): Promise<undefined | PvmExecution> {
+    // c
     const coreIndex = regs.get(IN_OUT_REG);
     // o
     const authorizationQueueStart = regs.get(8);
+    // a
+    const authManager = getServiceId(regs.get(9));
 
     const res = new Uint8Array(HASH_SIZE * AUTHORIZATION_QUEUE_SIZE);
     const memoryReadResult = memory.loadInto(res, authorizationQueueStart);
@@ -66,8 +71,31 @@ export class Assign implements HostCallHandler {
     const authQueue = decoder.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
     const fixedSizeAuthQueue = FixedSizeArray.new(authQueue, AUTHORIZATION_QUEUE_SIZE);
 
-    regs.set(IN_OUT_REG, HostCallResult.OK);
-    // NOTE [MaSo] its safe to cast to Number because we know that the coreIndex is less than cores count = 341
-    this.partialState.updateAuthorizationQueue(tryAsCoreIndex(Number(coreIndex)), fixedSizeAuthQueue);
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      // NOTE [MaSo] its safe to cast to Number because we know that the coreIndex is less than cores count = 341
+      const result = this.partialState.updateAuthorizationQueue(tryAsCoreIndex(Number(coreIndex)), fixedSizeAuthQueue, authManager);
+      if (result.isOk) {
+        regs.set(IN_OUT_REG, HostCallResult.OK);
+        return;
+      }
+
+      const e = result.error;
+
+      if (e === UpdatePrivilegesError.UnprivilegedService) {
+        regs.set(IN_OUT_REG, HostCallResult.HUH);
+        return;
+      }
+
+      if (e === UpdatePrivilegesError.InvalidServiceId) {
+        regs.set(IN_OUT_REG, HostCallResult.WHO);
+        return;
+      }
+
+      assertNever(e);
+    } else {
+      regs.set(IN_OUT_REG, HostCallResult.OK);
+      // NOTE [MaSo] its safe to cast to Number because we know that the coreIndex is less than cores count = 341
+      this.partialState.updateAuthorizationQueue(tryAsCoreIndex(Number(coreIndex)), fixedSizeAuthQueue, authManager);
+    }
   }
 }

@@ -7,7 +7,7 @@ import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { tryAsPerCore } from "@typeberry/state";
 import { Compatibility, GpVersion, asOpaqueType, assertNever } from "@typeberry/utils";
-import { type PartialState, UpdatePrivilegeError } from "../externalities/partial-state.js";
+import { type PartialState, UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { getServiceId } from "../utils.js";
 
@@ -104,12 +104,12 @@ export class Bless implements HostCallHandler {
 
       const e = result.error;
 
-      if (e === UpdatePrivilegeError.UnprivilegedService) {
+      if (e === UpdatePrivilegesError.UnprivilegedService) {
         regs.set(IN_OUT_REG, HostCallResult.HUH);
         return;
       }
 
-      if (e === UpdatePrivilegeError.InvalidServiceId) {
+      if (e === UpdatePrivilegesError.InvalidServiceId) {
         regs.set(IN_OUT_REG, HostCallResult.WHO);
         return;
       }

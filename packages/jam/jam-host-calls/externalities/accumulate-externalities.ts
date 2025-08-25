@@ -48,7 +48,7 @@ import {
   type TRANSFER_MEMO_BYTES,
   TransferError,
   UnprivilegedError,
-  UpdatePrivilegeError,
+  UpdatePrivilegesError,
   slotsToPreimageStatus,
 } from "./partial-state.js";
 import { PendingTransfer } from "./pending-transfer.js";
@@ -493,20 +493,20 @@ export class AccumulateExternalities
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>,
-  ): void {
+    authManager: ServiceId | null,
+  ): Result<OK, UpdatePrivilegesError> {
     // NOTE `coreIndex` is already verified in the HC, so this is infallible.
     /** https://graypaper.fluffylabs.dev/#/9a08063/368401368401?v=0.6.6 */
 
+    // TODO [MaSo] Add Compatibility, check auth manager
     const currentAuthManager = this.updatedState.getPrivilegedServices().authManager[coreIndex];
 
     if (currentAuthManager !== this.currentServiceId) {
-      logger.trace(
-        `Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentAuthManager}) and cannot update authorization queue. Ignoring`,
-      );
-      return;
+      return Result.error(UpdatePrivilegesError.UnprivilegedService);
     }
 
     this.updatedState.stateUpdate.authorizationQueues.set(coreIndex, authQueue);
+    return Result.ok(OK);
   }
 
   updatePrivilegedServices(
@@ -514,19 +514,19 @@ export class AccumulateExternalities
     authorizers: PerCore<ServiceId>,
     validatorsManager: ServiceId | null,
     autoAccumulate: [ServiceId, ServiceGas][],
-  ): Result<OK, UpdatePrivilegeError> {
+  ): Result<OK, UpdatePrivilegesError> {
     // NOTE [ToDr] I guess we should not fail if the services don't exist. */
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
       const currentManager = this.updatedState.getPrivilegedServices().manager;
 
       if (currentManager !== this.currentServiceId) {
-        return Result.error(UpdatePrivilegeError.UnprivilegedService);
+        return Result.error(UpdatePrivilegesError.UnprivilegedService);
       }
     }
 
     if (manager === null || validatorsManager === null) {
-      return Result.error(UpdatePrivilegeError.InvalidServiceId);
+      return Result.error(UpdatePrivilegesError.InvalidServiceId);
     }
 
     this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
