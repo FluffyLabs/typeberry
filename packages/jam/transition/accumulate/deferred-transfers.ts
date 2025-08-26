@@ -99,7 +99,7 @@ export class DeferredTransfers {
         timeslot,
       );
 
-      const fetchExternalities = new FetchExternalities({ entropy, transfers }, this.chainSpec);
+      const fetchExternalities = FetchExternalities.createForOnTransfer({ entropy, transfers }, this.chainSpec);
       let consumedGas = tryAsGas(0);
 
       if (code === null || transfers.length === 0) {

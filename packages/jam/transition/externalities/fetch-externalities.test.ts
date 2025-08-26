@@ -53,7 +53,22 @@ describe("fetch-externalities", () => {
     return transfers;
   };
 
-  const prepareData = ({
+  const prepareAccumulateData = ({
+    chainSpec,
+    operands,
+    entropy,
+  }: { chainSpec?: ChainSpec; operands?: Operand[]; entropy?: EntropyHash; transfers?: PendingTransfer[] }) => {
+    const defaultChainSpec = tinyChainSpec;
+    const defaultEntropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
+    const defaultOperands: Operand[] = [];
+    const fetchData = {
+      entropy: entropy ?? defaultEntropy,
+      operands: operands ?? defaultOperands,
+    };
+    return FetchExternalities.createForAccumulate(fetchData, chainSpec ?? defaultChainSpec);
+  };
+
+  const prepareOnTransferData = ({
     chainSpec,
     operands,
     entropy,
@@ -68,15 +83,12 @@ describe("fetch-externalities", () => {
       operands: operands ?? defaultOperands,
       transfers: transfers ?? defaultTransfers,
     };
-    return [fetchData, chainSpec ?? defaultChainSpec] as const;
+    return FetchExternalities.createForOnTransfer(fetchData, chainSpec ?? defaultChainSpec);
   };
 
-  it("should return different constants for different chain specs", () => {
-    const tinyArgs = prepareData({ chainSpec: tinyChainSpec });
-    const fullArgs = prepareData({ chainSpec: fullChainSpec });
-
-    const tinyFetchExternalities = new FetchExternalities(...tinyArgs);
-    const fullFetchExternalities = new FetchExternalities(...fullArgs);
+  it("should return different constants for different chain specs (Accumulate)", () => {
+    const tinyFetchExternalities = prepareAccumulateData({ chainSpec: tinyChainSpec });
+    const fullFetchExternalities = prepareAccumulateData({ chainSpec: fullChainSpec });
 
     const tinyContants = tinyFetchExternalities.constants();
     const fullContants = fullFetchExternalities.constants();
@@ -86,11 +98,30 @@ describe("fetch-externalities", () => {
     assert.notDeepStrictEqual(tinyContants, fullContants);
   });
 
-  it("should return entropy hash", () => {
-    const expectedEntropy: EntropyHash = Bytes.fill(HASH_SIZE, 5).asOpaque();
-    const args = prepareData({ entropy: expectedEntropy });
+  it("should return different constants for different chain specs (OnTransfer)", () => {
+    const tinyFetchExternalities = prepareOnTransferData({ chainSpec: tinyChainSpec });
+    const fullFetchExternalities = prepareOnTransferData({ chainSpec: fullChainSpec });
 
-    const fetchExternalities = new FetchExternalities(...args);
+    const tinyContants = tinyFetchExternalities.constants();
+    const fullContants = fullFetchExternalities.constants();
+
+    assert.notStrictEqual(tinyContants.length, 0);
+    assert.notStrictEqual(fullContants.length, 0);
+    assert.notDeepStrictEqual(tinyContants, fullContants);
+  });
+
+  it("should return entropy hash (Accumulate)", () => {
+    const expectedEntropy: EntropyHash = Bytes.fill(HASH_SIZE, 5).asOpaque();
+    const fetchExternalities = prepareAccumulateData({ entropy: expectedEntropy });
+
+    const entropy = fetchExternalities.entropy();
+
+    assert.deepStrictEqual(entropy, expectedEntropy);
+  });
+
+  it("should return entropy hash (OnTransfer)", () => {
+    const expectedEntropy: EntropyHash = Bytes.fill(HASH_SIZE, 5).asOpaque();
+    const fetchExternalities = prepareOnTransferData({ entropy: expectedEntropy });
 
     const entropy = fetchExternalities.entropy();
 
@@ -104,9 +135,7 @@ describe("fetch-externalities", () => {
       ? Encoder.encodeObject(codec.sequenceVarLen(Operand_0_6_4.Codec), expectedOperands, chainSpec)
       : Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), expectedOperands, chainSpec);
 
-    const args = prepareData({ operands: expectedOperands, chainSpec });
-
-    const fetchExternalities = new FetchExternalities(...args);
+    const fetchExternalities = prepareAccumulateData({ operands: expectedOperands, chainSpec });
 
     const operands = fetchExternalities.allOperands();
 
@@ -119,9 +148,7 @@ describe("fetch-externalities", () => {
     const expectedOperandIndex = 2 ** 32 + 3;
     const expectedOperand: Operand | null = null;
 
-    const args = prepareData({ operands, chainSpec });
-
-    const fetchExternalities = new FetchExternalities(...args);
+    const fetchExternalities = prepareAccumulateData({ operands, chainSpec });
 
     const operand = fetchExternalities.oneOperand(tryAsU64(expectedOperandIndex));
 
@@ -134,9 +161,7 @@ describe("fetch-externalities", () => {
     const expectedOperandIndex = 153;
     const expectedOperand: Operand | null = null;
 
-    const args = prepareData({ operands, chainSpec });
-
-    const fetchExternalities = new FetchExternalities(...args);
+    const fetchExternalities = prepareAccumulateData({ operands, chainSpec });
 
     const operand = fetchExternalities.oneOperand(tryAsU64(expectedOperandIndex));
 
@@ -152,9 +177,7 @@ describe("fetch-externalities", () => {
       ? Encoder.encodeObject(Operand_0_6_4.Codec, expectedOperand, chainSpec)
       : Encoder.encodeObject(Operand.Codec, expectedOperand, chainSpec);
 
-    const args = prepareData({ operands, chainSpec });
-
-    const fetchExternalities = new FetchExternalities(...args);
+    const fetchExternalities = prepareAccumulateData({ operands, chainSpec });
 
     const operand = fetchExternalities.oneOperand(tryAsU64(expectedOperandIndex));
 
@@ -170,9 +193,7 @@ describe("fetch-externalities", () => {
       chainSpec,
     );
 
-    const args = prepareData({ transfers: transfersToEncode, chainSpec });
-
-    const fetchExternalities = new FetchExternalities(...args);
+    const fetchExternalities = prepareOnTransferData({ transfers: transfersToEncode, chainSpec });
 
     const transfers = fetchExternalities.allTransfers();
 
@@ -185,9 +206,7 @@ describe("fetch-externalities", () => {
     const expectedTransferIndex = tryAsU64(2 ** 32 + 3);
     const expectedTransfer: PendingTransfer | null = null;
 
-    const args = prepareData({ transfers, chainSpec });
-
-    const fetchExternalities = new FetchExternalities(...args);
+    const fetchExternalities = prepareOnTransferData({ transfers, chainSpec });
 
     const transfer = fetchExternalities.oneTransfer(expectedTransferIndex);
 
@@ -200,9 +219,7 @@ describe("fetch-externalities", () => {
     const expectedTransferIndex = tryAsU64(153);
     const expectedTransfer: PendingTransfer | null = null;
 
-    const args = prepareData({ transfers, chainSpec });
-
-    const fetchExternalities = new FetchExternalities(...args);
+    const fetchExternalities = prepareOnTransferData({ transfers, chainSpec });
 
     const transfer = fetchExternalities.oneTransfer(expectedTransferIndex);
 
@@ -216,9 +233,7 @@ describe("fetch-externalities", () => {
     const expectedTransfer = transfers[expectedOperandIndex];
     const encodedTransfer = Encoder.encodeObject(PendingTransfer.Codec, expectedTransfer, chainSpec);
 
-    const args = prepareData({ transfers, chainSpec });
-
-    const fetchExternalities = new FetchExternalities(...args);
+    const fetchExternalities = prepareOnTransferData({ transfers, chainSpec });
 
     const transfer = fetchExternalities.oneTransfer(tryAsU64(expectedOperandIndex));
 

@@ -193,7 +193,7 @@ export class Accumulate {
     const externalities = {
       partialState,
       serviceExternalities: partialState,
-      fetchExternalities: new FetchExternalities({ entropy, operands }, this.chainSpec),
+      fetchExternalities: FetchExternalities.createForAccumulate({ entropy, operands }, this.chainSpec),
     };
 
     const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);

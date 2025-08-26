@@ -128,16 +128,44 @@ function getEncodedConstants(chainSpec: ChainSpec) {
   return encodedConsts;
 }
 
-type FetchData = {
-  entropy?: EntropyHash;
-  operands?: Operand[];
-  transfers?: PendingTransfer[];
+enum FetchContext {
+  Accumulate = 0,
+  OnTransfer = 1,
+}
+
+type AccumulateFetchData = {
+  context: FetchContext.Accumulate;
+  entropy: EntropyHash;
+  operands: Operand[];
 };
+
+type OnTransferFetchData = {
+  context: FetchContext.OnTransfer;
+  entropy: EntropyHash;
+  transfers: PendingTransfer[];
+};
+
+type FetchData = AccumulateFetchData | OnTransferFetchData;
+
 export class FetchExternalities implements IFetchExternalities {
-  constructor(
+  private constructor(
     private fetchData: FetchData,
     private chainSpec: ChainSpec,
   ) {}
+
+  static createForAccumulate(
+    fetchData: Omit<AccumulateFetchData, "context">,
+    chainSpec: ChainSpec,
+  ): FetchExternalities {
+    return new FetchExternalities({ context: FetchContext.Accumulate, ...fetchData }, chainSpec);
+  }
+
+  static createForOnTransfer(
+    fetchData: Omit<OnTransferFetchData, "context">,
+    chainSpec: ChainSpec,
+  ): FetchExternalities {
+    return new FetchExternalities({ context: FetchContext.OnTransfer, ...fetchData }, chainSpec);
+  }
 
   constants(): BytesBlob {
     return getEncodedConstants(this.chainSpec);
@@ -193,11 +221,11 @@ export class FetchExternalities implements IFetchExternalities {
   }
 
   allOperands(): BytesBlob | null {
-    const { operands } = this.fetchData;
-
-    if (operands === undefined) {
+    if (this.fetchData.context !== FetchContext.Accumulate) {
       return null;
     }
+
+    const operands = this.fetchData.operands;
 
     return Compatibility.is(GpVersion.V0_6_4)
       ? Encoder.encodeObject(codec.sequenceVarLen(Operand_0_6_4.Codec), operands, this.chainSpec)
@@ -205,11 +233,11 @@ export class FetchExternalities implements IFetchExternalities {
   }
 
   oneOperand(operandIndex: U64): BytesBlob | null {
-    const { operands } = this.fetchData;
-
-    if (operands === undefined) {
+    if (this.fetchData.context !== FetchContext.Accumulate) {
       return null;
     }
+
+    const { operands } = this.fetchData;
 
     if (operandIndex >= 2n ** 32n) {
       return null;
@@ -227,20 +255,21 @@ export class FetchExternalities implements IFetchExternalities {
   }
 
   allTransfers(): BytesBlob | null {
-    const { transfers } = this.fetchData;
-    if (transfers === undefined) {
+    if (this.fetchData.context !== FetchContext.OnTransfer) {
       return null;
     }
+
+    const { transfers } = this.fetchData;
 
     return Encoder.encodeObject(codec.sequenceVarLen(PendingTransfer.Codec), transfers, this.chainSpec);
   }
 
   oneTransfer(transferIndex: U64): BytesBlob | null {
-    const { transfers } = this.fetchData;
-
-    if (transfers === undefined) {
+    if (this.fetchData.context !== FetchContext.OnTransfer) {
       return null;
     }
+
+    const { transfers } = this.fetchData;
 
     if (transferIndex >= 2n ** 32n) {
       return null;
