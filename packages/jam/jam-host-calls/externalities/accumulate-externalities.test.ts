@@ -265,7 +265,7 @@ describe("PartialState.forgetPreimage", () => {
       state,
       serviceId,
       tryAsServiceId(10),
-      tryAsTimeSlot(10),
+      tryAsTimeSlot(50),
     );
     state.stateUpdate.services.preimages.push(
       UpdatePreimage.updateOrAdd({
@@ -333,7 +333,7 @@ describe("PartialState.forgetPreimage", () => {
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
-      tryAsTimeSlot(16),
+      tryAsTimeSlot(50),
     );
     state.stateUpdate.services.preimages.push(
       UpdatePreimage.updateOrAdd({
@@ -1558,7 +1558,7 @@ describe("PartialState.eject", () => {
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
-      tryAsTimeSlot(16),
+      tryAsTimeSlot(50),
     );
 
     // set the balance to overflow
@@ -1604,7 +1604,7 @@ describe("PartialState.eject", () => {
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
-      tryAsTimeSlot(16),
+      tryAsTimeSlot(50),
     );
 
     // when

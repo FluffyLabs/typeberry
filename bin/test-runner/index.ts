@@ -39,6 +39,21 @@ if (suiteToRun === TestSuite.JAMDUNA) {
   const versionWithoutDots = versionFromEnv.replace(/\./g, "");
   suiteToRun = `${suiteToRun}-${versionWithoutDots}`;
 }
+if (suiteToRun === TestSuite.W3F_DAVXY) {
+  const versionFromEnv = process.env.GP_VERSION;
+  if (versionFromEnv === undefined) {
+    throw new Error("GP_VERSION environment variable is required for DAVXY suite.");
+  }
+
+  const davxyVersions: string[] = [GpVersion.V0_6_6, GpVersion.V0_6_7];
+  if (!davxyVersions.includes(versionFromEnv)) {
+    throw new Error(
+      `Invalid GP_VERSION ${versionFromEnv} for DAVXY suite. Available versions: ${davxyVersions.join(", ")}`,
+    );
+  }
+  const versionWithoutDots = versionFromEnv.replace(/\./g, "");
+  suiteToRun = `${suiteToRun}-${versionWithoutDots}`;
+}
 
 const stream = run({
   files: [`${import.meta.dirname}/${suiteToRun}.ts`],
