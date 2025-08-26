@@ -14,7 +14,7 @@ import {
   tryAsSbrkIndex,
 } from "@typeberry/pvm-interpreter";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
-import { Fetch, type FetchExternalities, FetchKind } from "./fetch.js";
+import { Fetch, FetchKind, type IFetchExternalities } from "./fetch.js";
 import { HostCallResult } from "./results.js";
 
 describe("Fetch", () => {
@@ -473,7 +473,7 @@ describe("Fetch", () => {
   }
 });
 
-class FetchMock implements FetchExternalities {
+class FetchMock implements IFetchExternalities {
   public readonly workItemExtrinsicData: Parameters<FetchMock["workItemExtrinsic"]>[] = [];
   public readonly workItemImportData: Parameters<FetchMock["workItemImport"]>[] = [];
   public readonly oneWorkItemData: Parameters<FetchMock["oneWorkItem"]>[] = [];
