@@ -281,7 +281,6 @@ export class OnChain {
       pendingTransfers,
       servicesUpdate: { ...servicesUpdate, preimages: accumulatePreimages },
       timeslot: timeSlot,
-      ...servicesUpdate,
     });
 
     if (deferredTransfersResult.isError) {
