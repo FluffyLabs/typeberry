@@ -108,17 +108,17 @@ export namespace stateKeys {
   /** https://graypaper.fluffylabs.dev/#/1c979cb/3b88003b8800?v=0.7.1 */
   export function serviceNested(serviceId: ServiceId, numberPrefix: U32, hash: OpaqueHash): StateKey {
     const inputToHash = BytesBlob.blobFromParts(u32AsLeBytes(numberPrefix), hash.raw.subarray(0, HASH_SIZE));
-    const a = blake2b.hashBytes(inputToHash).raw.subarray(0, 28);
+    const newHash = blake2b.hashBytes(inputToHash).raw.subarray(0, 28);
     const key = Bytes.zero(HASH_SIZE);
     let i = 0;
     for (const byte of u32AsLeBytes(serviceId)) {
       key.raw[i] = byte;
-      key.raw[i + 1] = a[i / 2];
+      key.raw[i + 1] = newHash[i / 2];
       i += 2;
     }
     // no need to floor, since we know it's divisible (adding +2 every iteration).
     const middle = i / 2;
-    key.raw.set(a.subarray(middle, HASH_SIZE - middle), i);
+    key.raw.set(newHash.subarray(middle, HASH_SIZE - middle), i);
     return key.asOpaque();
   }
 }
