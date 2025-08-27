@@ -5,6 +5,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
 import { dumpCodec, serialize } from "./serialize.js";
 
@@ -35,17 +36,23 @@ describe("Serialization keys", () => {
     [
       "state",
       serialize.serviceStorage(tryAsServiceId(0xeeee), Bytes.fill(HASH_SIZE, 15).asOpaque()),
-      "0xeeffeeff00ff00ff0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+      Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+        ? "0xee4bee970050003626c718ce62e1bcfb11cc7efb46f27111c166d8b5bb04fa21"
+        : "0xeeffeeff00ff00ff0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
     ],
     [
       "preimage",
       serialize.servicePreimages(tryAsServiceId(0xeeee), Bytes.fill(HASH_SIZE, 15).asOpaque()),
-      "0xeefeeeff00ff00ff0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+      Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+        ? "0xeec4eef300fd00b4a04dd8ad011395b20fd8e65fc577abbf17103e293fec9a54"
+        : "0xeefeeeff00ff00ff0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
     ],
     [
       "lookup history",
       serialize.serviceLookupHistory(tryAsServiceId(0xeeee), Bytes.fill(HASH_SIZE, 15).asOpaque(), tryAsU32(0xdddd)),
-      "0xeeddeedd00000000a5dcc154c266f9eda35710023afa6d947cb3cae83848f32b",
+      Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+        ? "0xee4aee230054008acdb8294830cc22f321d57276978d0955a8bc33ffdd964cfb"
+        : "0xeeddeedd00000000a5dcc154c266f9eda35710023afa6d947cb3cae83848f32b",
     ],
   ];
 
