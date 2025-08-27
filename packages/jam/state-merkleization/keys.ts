@@ -70,7 +70,7 @@ export namespace stateKeys {
 
   /** https://graypaper.fluffylabs.dev/#/1c979cb/3bba033bba03?v=0.7.1 */
   export function serviceStorage(serviceId: ServiceId, key: StateKey): StateKey {
-    if (!Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+    if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
       const out = Bytes.zero(HASH_SIZE);
       out.raw.set(u32AsLeBytes(tryAsU32(2 ** 32 - 1)), 0);
       out.raw.set(key.raw.subarray(0, HASH_SIZE - U32_BYTES), U32_BYTES);
@@ -82,7 +82,7 @@ export namespace stateKeys {
 
   /** https://graypaper.fluffylabs.dev/#/1c979cb/3bd7033bd703?v=0.7.1 */
   export function servicePreimage(serviceId: ServiceId, hash: PreimageHash): StateKey {
-    if (!Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+    if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
       const out = Bytes.zero(HASH_SIZE);
       out.raw.set(u32AsLeBytes(tryAsU32(2 ** 32 - 2)), 0);
       out.raw.set(hash.raw.subarray(1, HASH_SIZE - U32_BYTES + 1), U32_BYTES);
@@ -94,7 +94,7 @@ export namespace stateKeys {
 
   /** https://graypaper.fluffylabs.dev/#/1c979cb/3b0a043b0a04?v=0.7.1 */
   export function serviceLookupHistory(serviceId: ServiceId, hash: PreimageHash, preimageLength: U32): StateKey {
-    if (!Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+    if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
       const doubleHash = blake2b.hashBytes(hash);
       const out = Bytes.zero(HASH_SIZE);
       out.raw.set(u32AsLeBytes(preimageLength), 0);
