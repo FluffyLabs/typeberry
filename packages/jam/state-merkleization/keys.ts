@@ -69,6 +69,7 @@ export namespace stateKeys {
   }
 
   /** https://graypaper.fluffylabs.dev/#/1c979cb/3bba033bba03?v=0.7.1 */
+  // TODO [MaSi]: StateKey should be BytesBlob!
   export function serviceStorage(serviceId: ServiceId, key: StateKey): StateKey {
     if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
       const out = Bytes.zero(HASH_SIZE);
