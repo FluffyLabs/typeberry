@@ -236,12 +236,15 @@ export class Statistics {
     /**
      * https://graypaper.fluffylabs.dev/#/1c979cb/19a00119a801?v=0.7.1
      */
-    const uniqueGuarantors = new Set<ValidatorIndex>(
-      extrinsic.guarantees.flatMap((g) => g.credentials.map((c) => c.validatorIndex)),
-    );
-    for (const guarantor of uniqueGuarantors) {
-      const newGuaranteesCount = current[guarantor].guarantees + 1;
-      current[guarantor].guarantees = tryAsU32(newGuaranteesCount);
+    const incrementedGuarantors = new Set<ValidatorIndex>();
+    for (const guarantee of extrinsic.guarantees) {
+      for (const { validatorIndex } of guarantee.credentials) {
+        if (!incrementedGuarantors.has(validatorIndex)) {
+          const newGuaranteesCount = current[validatorIndex].guarantees + 1;
+          current[validatorIndex].guarantees = tryAsU32(newGuaranteesCount);
+          incrementedGuarantors.add(validatorIndex);
+        }
+      }
     }
 
     for (const { validatorIndex } of extrinsic.assurances) {
