@@ -118,7 +118,7 @@ export namespace stateKeys {
     }
     // no need to floor, since we know it's divisible (adding +2 every iteration).
     const middle = i / 2;
-    key.raw.set(newHash.subarray(middle, HASH_SIZE - middle), i);
+    key.raw.set(newHash.subarray(middle), i);
     return key.asOpaque();
   }
 }
