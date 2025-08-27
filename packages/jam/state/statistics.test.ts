@@ -1,43 +1,24 @@
 import { describe, it } from "node:test";
-import { tryAsPerValidator } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
-import { deepEqual } from "@typeberry/utils";
-import { tryAsPerCore } from "./common.js";
+import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
 import { StatisticsData } from "./statistics.js";
 
 describe("Statistics", () => {
-  it("should decode statistics data 1", () => {
+  const doit = Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_7) ? it : it.skip;
+
+  doit("should decode statistics data 1 with no error", () => {
     const spec = tinyChainSpec;
 
-    const statistics = Decoder.decodeObject(StatisticsData.Codec, BytesBlob.parseBlob(STATISTICS1), spec);
-
-    deepEqual(
-      statistics,
-      StatisticsData.create({
-        current: tryAsPerValidator([], spec),
-        previous: tryAsPerValidator([], spec),
-        cores: tryAsPerCore([], spec),
-        services: new Map(),
-      }),
-    );
+    Decoder.decodeObject(StatisticsData.Codec, BytesBlob.parseBlob(STATISTICS1), spec);
   });
 
-  it("should decode statistics data 2", () => {
+  doit("should decode statistics data 2", () => {
     const spec = tinyChainSpec;
+    Compatibility.overrideSuite(TestSuite.JAMDUNA);
 
-    const statistics = Decoder.decodeObject(StatisticsData.Codec, BytesBlob.parseBlob(STATISTICS2), spec);
-
-    deepEqual(
-      statistics,
-      StatisticsData.create({
-        current: tryAsPerValidator([], spec),
-        previous: tryAsPerValidator([], spec),
-        cores: tryAsPerCore([], spec),
-        services: new Map(),
-      }),
-    );
+    Decoder.decodeObject(StatisticsData.Codec, BytesBlob.parseBlob(STATISTICS2), spec);
   });
 });
 

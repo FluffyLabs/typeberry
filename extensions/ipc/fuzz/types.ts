@@ -6,6 +6,10 @@ import { type U8, tryAsU8 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
 
 /**
+ * Reference: https://github.com/davxy/jam-conformance/blob/7c6a371a966c6446564f91676e7a2afdec5fa3da/fuzz-proto/fuzz.asn
+ */
+
+/**
  * Version ::= SEQUENCE {
  *     major INTEGER (0..255),
  *     minor INTEGER (0..255),
