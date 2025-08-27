@@ -236,13 +236,9 @@ export class Statistics {
     /**
      * https://graypaper.fluffylabs.dev/#/1c979cb/19a00119a801?v=0.7.1
      */
-    const uniqueGuarantors = extrinsic.guarantees.reduce((acc, { credentials }) => {
-      for (const { validatorIndex } of credentials) {
-        acc.add(validatorIndex);
-      }
-      return acc;
-    }, new Set<ValidatorIndex>());
-
+    const uniqueGuarantors = new Set<ValidatorIndex>(
+      extrinsic.guarantees.flatMap((g) => g.credentials.map((c) => c.validatorIndex)),
+    );
     for (const guarantor of uniqueGuarantors) {
       const newGuaranteesCount = current[guarantor].guarantees + 1;
       current[guarantor].guarantees = tryAsU32(newGuaranteesCount);
