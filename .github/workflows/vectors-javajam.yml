@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
 
 env:
-  TEST_VECTORS_REF: 3e46bb56c75b16bcce8347e19b042f50e8c7d207
+  TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
   GP_VERSION: 0.6.7
   TEST_SUITE: javajam
 
@@ -20,6 +20,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Load test ref
+        run: .github/scripts/load-test-ref.sh
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
         with:
@@ -36,12 +38,12 @@ jobs:
       - run: npm start -w @typeberry/test-runner
       - name: Display results
         if: always()
-        run: cat ./dist/javajamvectors.txt
+        run: cat ./dist/javajam.txt
       - name: Upload new results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           path: |
-            ./dist/javajamvectors
+            ./dist/javajam.txt
           name: javajamvectors-results
 

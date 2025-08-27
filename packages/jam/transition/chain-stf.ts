@@ -3,6 +3,7 @@ import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import type { Ed25519Key } from "@typeberry/crypto";
 import type { BlocksDb } from "@typeberry/database";
 import { Disputes, type DisputesStateUpdate } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code.js";
@@ -12,7 +13,7 @@ import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js"
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
 import type { State } from "@typeberry/state";
-import { type ErrorResult, Result, type TaggedError, assertEmpty } from "@typeberry/utils";
+import { type ErrorResult, OK, Result, type TaggedError, assertEmpty } from "@typeberry/utils";
 import type { ACCUMULATION_ERROR, AccumulateStateUpdate } from "./accumulate/accumulate.js";
 import { DeferredTransfers, type DeferredTransfersErrorCode } from "./accumulate/deferred-transfers.js";
 import { Accumulate } from "./accumulate/index.js";
@@ -33,6 +34,9 @@ class DbHeaderChain implements HeaderChain {
   }
 }
 
+const OFFENDERS_ERROR = "offenders not matching header";
+type OFFENDERS_ERROR = typeof OFFENDERS_ERROR;
+
 export type Ok = SafroleStateUpdate &
   DisputesStateUpdate &
   ReportsStateUpdate &
@@ -52,6 +56,7 @@ export enum StfErrorKind {
   SafroleSeal = 5,
   Accumulate = 6,
   DeferredTransfers = 7,
+  Offenders = 8,
 }
 
 export type StfError =
@@ -62,7 +67,8 @@ export type StfError =
   | TaggedError<StfErrorKind.Preimages, PreimagesErrorCode>
   | TaggedError<StfErrorKind.SafroleSeal, SafroleSealError>
   | TaggedError<StfErrorKind.Accumulate, ACCUMULATION_ERROR>
-  | TaggedError<StfErrorKind.DeferredTransfers, DeferredTransfersErrorCode>;
+  | TaggedError<StfErrorKind.DeferredTransfers, DeferredTransfersErrorCode>
+  | TaggedError<StfErrorKind.Offenders, OFFENDERS_ERROR>;
 
 export const stfError = <Kind extends StfErrorKind, Err extends StfError["error"]>(
   kind: Kind,
@@ -153,11 +159,16 @@ export class OnChain {
       return stfError(StfErrorKind.Disputes, disputesResult);
     }
     const {
-      disputesRecords,
-      availabilityAssignment: disputesAvailAssignment,
-      ...disputesRest
-    } = disputesResult.ok.stateUpdate;
+      stateUpdate: { disputesRecords, availabilityAssignment: disputesAvailAssignment, ...disputesRest },
+      offendersMark,
+    } = disputesResult.ok;
     assertEmpty(disputesRest);
+
+    const headerOffendersMark = block.header.view().offendersMarker.materialize();
+    const offendersResult = checkOffendersMatch(offendersMark, headerOffendersMark);
+    if (offendersResult.isError) {
+      return stfError(StfErrorKind.Offenders, offendersResult);
+    }
 
     // safrole
     const safroleResult = await this.safrole.transition({
@@ -214,6 +225,7 @@ export class OnChain {
       newEntropy: entropy,
       recentBlocksPartialUpdate,
       assurancesAvailAssignment,
+      offenders: offendersMark,
     });
     if (reportsResult.isError) {
       return stfError(StfErrorKind.Reports, reportsResult);
@@ -265,10 +277,10 @@ export class OnChain {
     } = accumulateUpdate;
 
     const deferredTransfersResult = await this.deferredTransfers.transition({
+      entropy: entropy[0],
       pendingTransfers,
       servicesUpdate: { ...servicesUpdate, preimages: accumulatePreimages },
       timeslot: timeSlot,
-      ...servicesUpdate,
     });
 
     if (deferredTransfersResult.isError) {
@@ -348,4 +360,20 @@ export class OnChain {
     }
     return map;
   }
+}
+
+function checkOffendersMatch(
+  offendersMark: HashSet<Ed25519Key>,
+  headerOffendersMark: Ed25519Key[],
+): Result<OK, OFFENDERS_ERROR> {
+  if (offendersMark.size !== headerOffendersMark.length) {
+    return Result.error(OFFENDERS_ERROR, `Length mismatch: ${offendersMark.size} vs ${headerOffendersMark.length}`);
+  }
+  for (const key of headerOffendersMark) {
+    if (!offendersMark.has(key)) {
+      return Result.error(OFFENDERS_ERROR, `Missing key: ${key}`);
+    }
+  }
+
+  return Result.ok(OK);
 }

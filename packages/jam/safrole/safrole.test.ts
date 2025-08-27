@@ -93,7 +93,7 @@ describe("Safrole", () => {
 
   it("should return incorrect timeslot error", async () => {
     const state = { timeslot: 1 } as SafroleState;
-    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator, []);
+    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator);
     const safrole = new Safrole(tinyChainSpec, state, bwasm);
     const timeslot = tryAsTimeSlot(0);
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
@@ -115,7 +115,7 @@ describe("Safrole", () => {
 
   it("should return unexpected ticket because of incorrect length of extrinsic", async () => {
     const state = { timeslot: 1 } as SafroleState;
-    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator, []);
+    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator);
     const safrole = new Safrole(tinyChainSpec, state, bwasm);
     const timeslot = tryAsTimeSlot(2);
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
@@ -138,7 +138,7 @@ describe("Safrole", () => {
 
   it("should return bad ticket attempt because of incorrect ticket attempt", async () => {
     const state = { timeslot: 1 } as SafroleState;
-    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator, []);
+    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator);
     const safrole = new Safrole(tinyChainSpec, state, bwasm);
     const timeslot = tryAsTimeSlot(2);
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
@@ -168,7 +168,7 @@ describe("Safrole", () => {
     mock.method(bandersnatchVrf, "verifyTickets", () =>
       Promise.resolve([{ isValid: false, entropyHash: Bytes.zero(HASH_SIZE) }]),
     );
-    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator, []);
+    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator);
     const state: SafroleState = {
       timeslot: tryAsTimeSlot(1),
       entropy: FixedSizeArray.new(
@@ -220,7 +220,7 @@ describe("Safrole", () => {
         { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
       ]),
     );
-    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator, []);
+    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator);
     const state: SafroleState = {
       timeslot: tryAsTimeSlot(1),
       entropy: FixedSizeArray.new(
@@ -276,7 +276,7 @@ describe("Safrole", () => {
         { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
       ]),
     );
-    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator, []);
+    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator);
     const state: SafroleState = {
       timeslot: tryAsTimeSlot(1),
       entropy: FixedSizeArray.new(
@@ -326,7 +326,7 @@ describe("Safrole", () => {
   });
 
   it("should return correctly sequenced sealingKeySeries", async () => {
-    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator, []);
+    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator);
     const state: SafroleState = {
       // end of epoch
       timeslot: tryAsTimeSlot(9),
@@ -468,7 +468,7 @@ describe("Safrole", () => {
   });
 
   it("should return correct result for empty data", async () => {
-    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator, []);
+    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator);
     const state: SafroleState = {
       timeslot: tryAsTimeSlot(1),
       entropy: FixedSizeArray.new(

@@ -20,7 +20,8 @@ import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import type { FetchExternalities } from "@typeberry/jam-host-calls/fetch.js";
+import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
+import type { IFetchExternalities } from "@typeberry/jam-host-calls/fetch.js";
 import { type U64, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   BASE_SERVICE_BALANCE,
@@ -29,10 +30,10 @@ import {
   MAX_RECENT_HISTORY,
 } from "@typeberry/state";
 import { Compatibility, GpVersion } from "@typeberry/utils";
-import { REPORT_TIMEOUT_GRACE_PERIOD } from "../../assurances.js";
-import { L } from "../../reports/verify-contextual.js";
-import { ACCUMULATE_TOTAL_GAS, GAS_TO_INVOKE_WORK_REPORT } from "../accumulate.js";
-import { Operand, Operand_0_6_4 } from "../operand.js";
+import { ACCUMULATE_TOTAL_GAS, GAS_TO_INVOKE_WORK_REPORT } from "../accumulate/accumulate.js";
+import { Operand, Operand_0_6_4 } from "../accumulate/operand.js";
+import { REPORT_TIMEOUT_GRACE_PERIOD } from "../assurances.js";
+import { L } from "../reports/verify-contextual.js";
 
 // TODO [ToDr] this is a bit bullshit for now, it's based on the GP,
 // yet it does not match what the 0.6.6 test vectors expect, so the
@@ -127,21 +128,56 @@ function getEncodedConstants(chainSpec: ChainSpec) {
   return encodedConsts;
 }
 
-// TODO [ToDr] This needs implementation for other context (refine, auth, on_transfer, etc)
-// and should also be moved to general `externalities` folder.
-export class AccumulateFetchExternalities implements FetchExternalities {
-  constructor(
-    private entropyHash: EntropyHash,
-    private operands: Operand[],
+enum FetchContext {
+  Accumulate = 0,
+  OnTransfer = 1,
+}
+
+type AccumulateFetchData = {
+  context: FetchContext.Accumulate;
+  entropy: EntropyHash;
+  operands: Operand[];
+};
+
+type OnTransferFetchData = {
+  context: FetchContext.OnTransfer;
+  entropy: EntropyHash;
+  transfers: PendingTransfer[];
+};
+
+type FetchData = AccumulateFetchData | OnTransferFetchData;
+
+export class FetchExternalities implements IFetchExternalities {
+  private constructor(
+    private fetchData: FetchData,
     private chainSpec: ChainSpec,
   ) {}
+
+  static createForAccumulate(
+    fetchData: Omit<AccumulateFetchData, "context">,
+    chainSpec: ChainSpec,
+  ): FetchExternalities {
+    return new FetchExternalities({ context: FetchContext.Accumulate, ...fetchData }, chainSpec);
+  }
+
+  static createForOnTransfer(
+    fetchData: Omit<OnTransferFetchData, "context">,
+    chainSpec: ChainSpec,
+  ): FetchExternalities {
+    return new FetchExternalities({ context: FetchContext.OnTransfer, ...fetchData }, chainSpec);
+  }
 
   constants(): BytesBlob {
     return getEncodedConstants(this.chainSpec);
   }
 
   entropy(): BytesBlob | null {
-    return this.entropyHash.asOpaque();
+    const { entropy } = this.fetchData;
+    if (entropy === undefined) {
+      return null;
+    }
+
+    return entropy.asOpaque();
   }
 
   authorizerTrace(): BytesBlob | null {
@@ -184,18 +220,30 @@ export class AccumulateFetchExternalities implements FetchExternalities {
     return null;
   }
 
-  allOperands(): BytesBlob {
+  allOperands(): BytesBlob | null {
+    if (this.fetchData.context !== FetchContext.Accumulate) {
+      return null;
+    }
+
+    const operands = this.fetchData.operands;
+
     return Compatibility.is(GpVersion.V0_6_4)
-      ? Encoder.encodeObject(codec.sequenceVarLen(Operand_0_6_4.Codec), this.operands, this.chainSpec)
-      : Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), this.operands, this.chainSpec);
+      ? Encoder.encodeObject(codec.sequenceVarLen(Operand_0_6_4.Codec), operands, this.chainSpec)
+      : Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), operands, this.chainSpec);
   }
 
   oneOperand(operandIndex: U64): BytesBlob | null {
+    if (this.fetchData.context !== FetchContext.Accumulate) {
+      return null;
+    }
+
+    const { operands } = this.fetchData;
+
     if (operandIndex >= 2n ** 32n) {
       return null;
     }
 
-    const operand = this.operands[Number(operandIndex)];
+    const operand = operands[Number(operandIndex)];
 
     if (operand === undefined) {
       return null;
@@ -207,10 +255,32 @@ export class AccumulateFetchExternalities implements FetchExternalities {
   }
 
   allTransfers(): BytesBlob | null {
-    return null;
+    if (this.fetchData.context !== FetchContext.OnTransfer) {
+      return null;
+    }
+
+    const { transfers } = this.fetchData;
+
+    return Encoder.encodeObject(codec.sequenceVarLen(PendingTransfer.Codec), transfers, this.chainSpec);
   }
 
-  oneTransfer(_transferIndex: U64): BytesBlob | null {
-    return null;
+  oneTransfer(transferIndex: U64): BytesBlob | null {
+    if (this.fetchData.context !== FetchContext.OnTransfer) {
+      return null;
+    }
+
+    const { transfers } = this.fetchData;
+
+    if (transferIndex >= 2n ** 32n) {
+      return null;
+    }
+
+    const transfer = transfers[Number(transferIndex)];
+
+    if (transfer === undefined) {
+      return null;
+    }
+
+    return Encoder.encodeObject(PendingTransfer.Codec, transfer, this.chainSpec);
   }
 }

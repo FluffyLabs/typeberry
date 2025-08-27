@@ -1,4 +1,4 @@
-import { Compatibility, TestSuite } from "@typeberry/utils";
+import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
 import { type SmallGas, tryAsSmallGas } from "./gas.js";
 import { Instruction } from "./instruction.js";
 import type { Mask } from "./program-decoder/mask.js";
@@ -13,7 +13,7 @@ const instructionsWithoutArgs: InstructionTuple[] = [
 ];
 
 const instructionsWithOneImmediate: InstructionTuple[] = [
-  [Instruction.ECALLI, Compatibility.isSuite(TestSuite.JAMDUNA_065) ? 0 : 1],
+  [Instruction.ECALLI, Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5) ? 0 : 1],
 ];
 
 const instructionsWithOneRegisterAndOneExtendedWidthImmediate: InstructionTuple[] = [[Instruction.LOAD_IMM_64, 1]];

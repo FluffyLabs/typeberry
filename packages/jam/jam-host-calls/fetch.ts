@@ -9,7 +9,7 @@ import { HostCallResult } from "./results.js";
 import { clampU64ToU32 } from "./utils.js";
 
 /** Fetchable data. */
-export interface FetchExternalities {
+export interface IFetchExternalities {
   /**
    * Encoded constants info.
    *
@@ -226,7 +226,7 @@ export class Fetch implements HostCallHandler {
 
   constructor(
     public readonly currentServiceId: ServiceId,
-    private readonly fetch: FetchExternalities,
+    private readonly fetch: IFetchExternalities,
   ) {}
 
   async execute(

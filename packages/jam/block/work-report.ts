@@ -87,7 +87,7 @@ export class WorkReport extends WithDebug {
     workPackageSpec: WorkPackageSpec.Codec,
     context: RefineContext.Codec,
     coreIndex:
-      Compatibility.isGreaterOrEqual(GpVersion.V0_6_5) && !Compatibility.isSuite(TestSuite.JAMDUNA_065)
+      Compatibility.isGreaterOrEqual(GpVersion.V0_6_5) && !Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5)
         ? codec.varU32.convert(
             (o) => tryAsU32(o),
             (i) => {

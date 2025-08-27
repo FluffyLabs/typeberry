@@ -6,6 +6,7 @@ import { Bytes } from "@typeberry/bytes";
 import { HashDictionary, asKnownSize } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import { tinyChainSpec } from "@typeberry/config";
+import type { Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
@@ -30,6 +31,7 @@ describe("Reports.verifyContextualValidity", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks, // note: for full fidelity this should be partially updated state, not prior state as it is now
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -64,6 +66,7 @@ describe("Reports.verifyContextualValidity", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -95,6 +98,7 @@ describe("Reports.verifyContextualValidity", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -127,6 +131,7 @@ describe("Reports.verifyContextualValidity", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -158,6 +163,7 @@ describe("Reports.verifyContextualValidity", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -191,6 +197,7 @@ describe("Reports.verifyContextualValidity", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -224,6 +231,7 @@ describe("Reports.verifyContextualValidity", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -259,6 +267,7 @@ describe("Reports.verifyContextualValidity", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -296,6 +305,7 @@ describe("Reports.verifyContextualValidity", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -338,6 +348,7 @@ describe("Reports.verifyContextualValidity", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -373,6 +384,7 @@ describe("Reports.verifyContextualValidity", () => {
       newEntropy: ENTROPY,
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
+      offenders: HashSet.new<Ed25519Key>(),
     };
     const res = reports.verifyContextualValidity(input);
 
