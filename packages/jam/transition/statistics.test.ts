@@ -344,7 +344,7 @@ describe("Statistics", () => {
       assert.deepEqual(state.statistics.current[validatorIndex], expectedStatistics);
     });
 
-    it.only("should update guarantees for each validator based on guarantees from extrinstic, a maximum of once per validator", () => {
+    it("should update guarantees for each validator based on guarantees from extrinstic, a maximum of once per validator", () => {
       const { statistics, currentSlot, validatorIndex, currentStatistics } = prepareData({
         previousSlot: 0,
         currentSlot: 1,
