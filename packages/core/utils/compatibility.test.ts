@@ -17,7 +17,7 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
     assert.equal(Compatibility.is(gpVersion), true);
   });
 
-  it("Should check an order of versions", () => {
+  it("Should check an order of versions (isGreaterOrEqual)", () => {
     const gpVersion = GpVersion.V0_6_5;
     Compatibility.override(gpVersion);
 
@@ -26,6 +26,17 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
     assert.equal(Compatibility.isGreaterOrEqual(GpVersion.V0_6_6), false);
     assert.equal(Compatibility.isGreaterOrEqual(GpVersion.V0_6_7), false);
     assert.equal(Compatibility.isGreaterOrEqual(GpVersion.V0_7_0), false);
+  });
+
+  it("Should check an order of versions (isLessThan)", () => {
+    const gpVersion = GpVersion.V0_6_5;
+    Compatibility.override(gpVersion);
+
+    assert.equal(Compatibility.isLessThan(GpVersion.V0_7_0), true);
+    assert.equal(Compatibility.isLessThan(GpVersion.V0_6_7), true);
+    assert.equal(Compatibility.isLessThan(GpVersion.V0_6_6), true);
+    assert.equal(Compatibility.isLessThan(gpVersion), false);
+    assert.equal(Compatibility.isLessThan(GpVersion.V0_6_4), false);
   });
 
   it("Should return lowest value that is greater or equal current value", () => {
