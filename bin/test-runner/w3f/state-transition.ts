@@ -135,6 +135,7 @@ export async function runStateTransition(testContent: StateTransition, testPath:
 
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
   const root = preState.backend.getRootHash();
+
   deepEqual(
     Object.fromEntries(preState.backend.entries.data.entries()),
     Object.fromEntries(postState.backend.entries.data.entries()),
