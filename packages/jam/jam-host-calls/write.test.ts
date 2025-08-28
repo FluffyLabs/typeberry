@@ -91,7 +91,7 @@ describe("HostCalls: Write", () => {
     const write = new Write(serviceId, accounts);
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
-    accounts.snapshotData.set(BytesBlob.blobFromString("old data"), serviceId, hash);
+    accounts.storage.set(BytesBlob.blobFromString("old data"), serviceId, hash);
 
     // when
     const result = await write.execute(gas, registers, memory);
@@ -109,7 +109,7 @@ describe("HostCalls: Write", () => {
     const write = new Write(serviceId, accounts);
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
-    accounts.snapshotData.set(BytesBlob.blobFromString("old data"), serviceId, hash);
+    accounts.storage.set(BytesBlob.blobFromString("old data"), serviceId, hash);
 
     // when
     const result = await write.execute(gas, registers, memory);
@@ -128,7 +128,7 @@ describe("HostCalls: Write", () => {
     const { key, hash } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromNumbers([]));
     accounts.storage.set(BytesBlob.blobFromString("hello world!"), serviceId, hash);
-    accounts.snapshotData.set(null, serviceId, hash);
+    accounts.storage.set(null, serviceId, hash);
 
     // when
     const result = await write.execute(gas, registers, memory);
@@ -210,8 +210,11 @@ describe("HostCalls: Write", () => {
     const accounts = prepareAccounts(serviceId, { balance: 100n });
     const write = new Write(serviceId, accounts);
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
-    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
-    accounts.snapshotData.set(BytesBlob.blobFromString("old data"), serviceId, hash);
+    const { registers, memory } = prepareRegsAndMemory(
+      key,
+      BytesBlob.blobFromString("hello world! Is super long very very very."),
+    );
+    accounts.storage.set(BytesBlob.blobFromString("old data"), serviceId, hash);
 
     // when
     const result = await write.execute(gas, registers, memory);
@@ -219,6 +222,6 @@ describe("HostCalls: Write", () => {
     // then
     assert.strictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.FULL);
-    assert.deepStrictEqual(accounts.storage.data.size, 0);
+    assert.deepStrictEqual(accounts.storage.data.size, 1);
   });
 });
