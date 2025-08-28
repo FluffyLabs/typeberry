@@ -1,5 +1,4 @@
 export enum GpVersion {
-  V0_6_4 = "0.6.4",
   V0_6_5 = "0.6.5",
   V0_6_6 = "0.6.6",
   V0_6_7 = "0.6.7",
@@ -17,7 +16,6 @@ export enum TestSuite {
 export const DEFAULT_SUITE = TestSuite.W3F;
 
 const ALL_VERSIONS_IN_ORDER = [
-  GpVersion.V0_6_4,
   GpVersion.V0_6_5,
   GpVersion.V0_6_6,
   GpVersion.V0_6_7,

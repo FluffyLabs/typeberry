@@ -35,7 +35,7 @@ import type { CountAndGasUsed } from "../statistics.js";
 import { AccumulateData } from "./accumulate-data.js";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 import { generateNextServiceId, getWorkPackageHashes } from "./accumulate-utils.js";
-import { Operand, Operand_0_6_4 } from "./operand.js";
+import { Operand } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
 
 export type AccumulateRoot = OpaqueHash;
@@ -105,12 +105,6 @@ export const GAS_TO_INVOKE_WORK_REPORT = 10_000_000n;
 export const ACCUMULATE_TOTAL_GAS = 3_500_000_000n;
 
 const logger = Logger.new(import.meta.filename, "accumulate");
-
-const ARGS_CODEC_0_6_4 = codec.object({
-  slot: codec.u32.asOpaque<TimeSlot>(),
-  serviceId: codec.u32.asOpaque<ServiceId>(),
-  operands: codec.sequenceVarLen(Operand_0_6_4.Codec),
-});
 
 const ARGS_CODEC_0_6_5 = codec.object({
   slot: codec.u32.asOpaque<TimeSlot>(),
@@ -199,9 +193,7 @@ export class Accumulate {
     const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);
 
     let args = BytesBlob.empty();
-    if (Compatibility.is(GpVersion.V0_6_4)) {
-      args = Encoder.encodeObject(ARGS_CODEC_0_6_4, { slot, serviceId, operands }, this.chainSpec);
-    } else if (Compatibility.is(GpVersion.V0_6_5)) {
+    if (Compatibility.is(GpVersion.V0_6_5)) {
       args = Encoder.encodeObject(ARGS_CODEC_0_6_5, { slot, serviceId, operands }, this.chainSpec);
     } else {
       args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands: tryAsU32(operands.length) });

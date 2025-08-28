@@ -1,4 +1,4 @@
-import { Compatibility, GpVersion, TestSuite, WithDebug } from "@typeberry/utils";
+import { WithDebug } from "@typeberry/utils";
 
 /**
  * Estimated number of validators.
@@ -98,7 +98,8 @@ export const tinyChainSpec = new ChainSpec({
   ticketsPerValidator: 3,
   validatorsCount: 6,
   numberECPiecesPerSegment: 1026,
-  preimageExpungePeriod: Compatibility.isSuite(TestSuite.JAMDUNA) && Compatibility.is(GpVersion.V0_6_4) ? 6 : 32, // why 32: https://github.com/davxy/jam-test-vectors/tree/v0.6.6/traces#preimage-expunge-delay
+  // https://github.com/davxy/jam-test-vectors/tree/v0.6.6/traces#preimage-expunge-delay
+  preimageExpungePeriod: 32,
 });
 
 /**
