@@ -185,15 +185,19 @@ export class JsonService {
         lookupHistory.set(item.hash, data);
       }
       const preimages = HashDictionary.fromEntries((data.preimages ?? []).map((x) => [x.hash, x]));
-      const storage = HashDictionary.fromEntries(
-        (data.storage ?? []).map(({ key, value }) => {
-          const keyWithServiceId = BytesBlob.blobFromParts(u32AsLeBytes(id), key.raw);
-          const keyHash = Compatibility.is(GpVersion.V0_6_4)
-            ? Bytes.parseBytes(key.toString(), HASH_SIZE).asOpaque<StorageKey>()
-            : blake2b.hashBytes(keyWithServiceId).asOpaque<StorageKey>();
-          return [keyHash, StorageItem.create({ key: keyHash, value })];
-        }),
-      );
+      const storage = new Map<string, StorageItem>();
+
+      const entries = (data.storage ?? []).map(({ key, value }) => {
+        const keyWithServiceId = BytesBlob.blobFromParts(u32AsLeBytes(id), key.raw);
+        const keyHash = Compatibility.is(GpVersion.V0_6_4)
+          ? Bytes.parseBytes(key.toString(), HASH_SIZE).asOpaque<StorageKey>()
+          : blake2b.hashBytes(keyWithServiceId).asOpaque<StorageKey>();
+        return [keyHash, StorageItem.create({ key: keyHash, value })];
+      });
+
+      for (const [key, item] of entries) {
+        storage.set(key.toString(), item);
+      }
 
       return new InMemoryService(id, {
         info: data.service,

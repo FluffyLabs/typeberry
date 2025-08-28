@@ -15,7 +15,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES } from "@typeberry/crypto";
-import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
+import { HASH_SIZE, blake2b } from "@typeberry/hash";
 import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AutoAccumulate,
@@ -28,6 +28,7 @@ import {
   type Service,
   ServiceAccountInfo,
   StorageItem,
+  type StorageKey,
   UpdatePreimage,
   UpdateService,
   VALIDATOR_META_BYTES,
@@ -867,7 +868,7 @@ describe("PartialState.transfer", () => {
         }),
         preimages: HashDictionary.new(),
         lookupHistory: HashDictionary.new(),
-        storage: HashDictionary.new(),
+        storage: new Map(),
       }),
     );
     return {
@@ -1056,7 +1057,7 @@ describe("PartialState.providePreimage", () => {
       }),
       preimages: self ? HashDictionary.new() : preimages,
       lookupHistory: self ? HashDictionary.new() : lookupHistory,
-      storage: HashDictionary.new(),
+      storage: new Map(),
     });
     state.state.services.set(secondService.serviceId, secondService);
 
@@ -1360,7 +1361,7 @@ describe("PartialState.eject", () => {
       }),
       preimages,
       lookupHistory,
-      storage: HashDictionary.new(),
+      storage: new Map(),
     });
 
     stateUpdate.services.set(destinationId, destinationService);
@@ -1635,12 +1636,12 @@ describe("AccumulateServiceExternalities", () => {
       preimages,
       info,
     }: {
-      storage?: HashDictionary<OpaqueHash, StorageItem>;
+      storage?: Map<string, StorageItem>;
       preimages?: HashDictionary<PreimageHash, PreimageItem>;
       info?: Partial<ServiceAccountInfo>;
     } = {},
   ) => {
-    const initialStorage = storage ?? HashDictionary.new();
+    const initialStorage = storage ?? new Map();
     const storageUtilisationBytes = Array.from(initialStorage.values()).reduce(
       (sum, item) => sum + (item?.value.length ?? 0),
       0,
@@ -1873,7 +1874,7 @@ describe("AccumulateServiceExternalities", () => {
       const currentServiceId = tryAsServiceId(10_000);
       const serviceId = tryAsServiceId(33);
       const key = Bytes.fill(HASH_SIZE, 1).asOpaque();
-      const initialStorage = HashDictionary.new<OpaqueHash, StorageItem>();
+      const initialStorage = new Map<string, StorageItem>();
       const value = BytesBlob.empty();
       initialStorage.set(key, StorageItem.create({ key, value }));
       const service = prepareService(serviceId, { storage: initialStorage });
@@ -1914,11 +1915,11 @@ describe("AccumulateServiceExternalities", () => {
 
     it("should return new value if there was a write", () => {
       const currentServiceId = tryAsServiceId(10_000);
-      const key = Bytes.fill(HASH_SIZE, 2).asOpaque();
-      const initialStorage = HashDictionary.new<OpaqueHash, StorageItem>();
+      const key: StorageKey = Bytes.fill(HASH_SIZE, 2).asOpaque();
+      const initialStorage = new Map<string, StorageItem>();
       const value = BytesBlob.empty();
       const newBlob = BytesBlob.parseBlob("0x11111111");
-      initialStorage.set(key, StorageItem.create({ key, value }));
+      initialStorage.set(key.toString(), StorageItem.create({ key, value }));
 
       const state = prepareState([prepareService(currentServiceId, { storage: initialStorage })]);
       const accumulateServiceExternalities = new AccumulateExternalities(
@@ -1942,10 +1943,10 @@ describe("AccumulateServiceExternalities", () => {
   describe("readSnapshotLength", () => {
     it("should correctly read from storage", () => {
       const serviceId = tryAsServiceId(33);
-      const key = Bytes.fill(HASH_SIZE, 1).asOpaque();
-      const initialStorage = HashDictionary.new<OpaqueHash, StorageItem>();
+      const key: StorageKey = Bytes.fill(HASH_SIZE, 1).asOpaque();
+      const initialStorage = new Map<string, StorageItem>();
       const value = BytesBlob.empty();
-      initialStorage.set(key, StorageItem.create({ key, value }));
+      initialStorage.set(key.toString(), StorageItem.create({ key, value }));
       const service = prepareService(serviceId, { storage: initialStorage });
       const state = prepareState([service]);
 
@@ -1965,7 +1966,7 @@ describe("AccumulateServiceExternalities", () => {
     it("should return snapshot length even if a new value if was written", () => {
       const currentServiceId = tryAsServiceId(10_000);
       const key = Bytes.fill(HASH_SIZE, 1).asOpaque();
-      const initialStorage = HashDictionary.new<OpaqueHash, StorageItem>();
+      const initialStorage = new Map<string, StorageItem>();
       const value = BytesBlob.empty();
       const newBlob = BytesBlob.parseBlob("0x11111111");
       initialStorage.set(key, StorageItem.create({ key, value }));
