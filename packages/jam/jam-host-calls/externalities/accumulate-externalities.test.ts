@@ -1873,10 +1873,10 @@ describe("AccumulateServiceExternalities", () => {
     it("should correctly read from storage", () => {
       const currentServiceId = tryAsServiceId(10_000);
       const serviceId = tryAsServiceId(33);
-      const key = Bytes.fill(HASH_SIZE, 1).asOpaque();
+      const key: StorageKey = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const initialStorage = new Map<string, StorageItem>();
       const value = BytesBlob.empty();
-      initialStorage.set(key, StorageItem.create({ key, value }));
+      initialStorage.set(key.toString(), StorageItem.create({ key, value }));
       const service = prepareService(serviceId, { storage: initialStorage });
       const state = prepareState([prepareService(currentServiceId), service]);
 
@@ -1965,11 +1965,11 @@ describe("AccumulateServiceExternalities", () => {
 
     it("should return snapshot length even if a new value if was written", () => {
       const currentServiceId = tryAsServiceId(10_000);
-      const key = Bytes.fill(HASH_SIZE, 1).asOpaque();
+      const key: StorageKey = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const initialStorage = new Map<string, StorageItem>();
       const value = BytesBlob.empty();
       const newBlob = BytesBlob.parseBlob("0x11111111");
-      initialStorage.set(key, StorageItem.create({ key, value }));
+      initialStorage.set(key.toString(), StorageItem.create({ key, value }));
       const service = prepareService(currentServiceId, { storage: initialStorage });
       const state = prepareState([service]);
       const accumulateServiceExternalities = new AccumulateExternalities(
