@@ -133,7 +133,7 @@ export const codecHashDictionary = <K extends OpaqueHash, T>(
   );
 };
 
-/** Codec for a map. */
+/** Codec for a map with string keys. */
 export const codecMap = <T>(
   value: Descriptor<T>,
   extractKey: (val: T) => string,
