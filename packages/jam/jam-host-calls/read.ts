@@ -13,7 +13,7 @@ import { SERVICE_ID_BYTES, clampU64ToU32, getServiceIdOrCurrent, writeServiceIdA
 /** Account data interface for read host calls. */
 export interface AccountsRead {
   /** Read service storage. */
-  read(serviceId: ServiceId | null, hash: Blake2bHash | BytesBlob): BytesBlob | null;
+  read(serviceId: ServiceId | null, rawKey: BytesBlob): BytesBlob | null;
 }
 
 const IN_OUT_REG = 7;
