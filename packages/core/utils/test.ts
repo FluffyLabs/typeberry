@@ -63,19 +63,23 @@ export function deepEqual<T>(
       const [major, minor] = process.versions.node.split(".").map(Number);
       const isOoMWorkaroundNeeded = major > 22 || (major === 22 && minor >= 12);
       const message = isOoMWorkaroundNeeded ? new Error(`${actual} != ${expected}`) : undefined;
-      if (isOoMWorkaroundNeeded) {
-        console.warn(
-          [
-            "Stacktrace may be crappy because of a problem in nodejs.",
-            "Use older version than 22.12.0 or check this issue: https://github.com/nodejs/node/issues/57242",
-            "Maybe we do not need it anymore",
-          ].join("\n"),
-        );
-      }
       const actualDisp = actual === null || actual === undefined ? actual : `${inspect(actual)}`;
       const expectedDisp = expected === null || expected === undefined ? expected : `${inspect(expected)}`;
 
-      assert.strictEqual(actualDisp, expectedDisp, message);
+      try {
+        assert.strictEqual(actualDisp, expectedDisp, message);
+      } catch (e) {
+        if (isOoMWorkaroundNeeded) {
+          console.warn(
+            [
+              "Stacktrace may be crappy because of a problem in nodejs.",
+              "Use older version than 22.12.0 or check this issue: https://github.com/nodejs/node/issues/57242",
+              "Maybe we do not need it anymore",
+            ].join("\n"),
+          );
+        }
+        throw e;
+      }
     }, ctx);
     return errors.exitOrThrow();
   }
