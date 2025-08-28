@@ -2,7 +2,7 @@ import { logger, main } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
 main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_066", {
-  accepted: ["traces/safrole", "traces/fallback", "traces/reports-l0", "traces/reports-l1"],
+  accepted: ["traces"],
   ignored: [
     "genesis.json",
     // most reports-l0/l1 are failing with gas differences.
