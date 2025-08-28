@@ -7,7 +7,7 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_066", {
     "genesis.json",
     // most reports-l0/l1 are failing with gas differences.
     // See log files in the same dir.
-    // /*
+     /*
     "traces/reports-l0/00000005.json",
     "traces/reports-l0/00000007.json",
     "traces/reports-l0/00000011.json",
