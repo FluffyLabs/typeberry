@@ -30,7 +30,7 @@ import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519K
 import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { OK, Result, WithDebug, assertNever, check } from "@typeberry/utils";
+import { OK, Result, WithDebug, asOpaqueType, assertNever, check } from "@typeberry/utils";
 import type { AccumulationOutput } from "./accumulation-output.js";
 import type { AvailabilityAssignment } from "./assurances.js";
 import { type PerCore, tryAsPerCore } from "./common.js";
@@ -86,7 +86,7 @@ export class InMemoryService extends WithDebug implements Service {
       /** https://graypaper.fluffylabs.dev/#/85129da/115400115800?v=0.6.3 */
       readonly lookupHistory: HashDictionary<PreimageHash, LookupHistoryItem[]>;
       /** https://graypaper.fluffylabs.dev/#/85129da/10f80010f800?v=0.6.3 */
-      readonly storage: HashDictionary<StorageKey, StorageItem>;
+      readonly storage: Map<string, StorageItem>;
     },
   ) {
     super();
@@ -97,7 +97,7 @@ export class InMemoryService extends WithDebug implements Service {
   }
 
   getStorage(key: StorageKey): BytesBlob | null {
-    return this.data.storage.get(key)?.value ?? null;
+    return this.data.storage.get(key.toString())?.value ?? null;
   }
 
   hasPreimage(hash: PreimageHash): boolean {
@@ -118,7 +118,7 @@ export class InMemoryService extends WithDebug implements Service {
 
   getEntries(): ServiceEntries {
     return {
-      storageKeys: Array.from(this.data.storage.keys()),
+      storageKeys: Array.from(this.data.storage.values()).map((x) => x.key),
       preimages: Array.from(this.data.preimages.keys()),
       lookupHistory: Array.from(this.data.lookupHistory.entries()).map(([hash, val]) => {
         return { hash, length: val[0].length };
@@ -133,7 +133,7 @@ export class InMemoryService extends WithDebug implements Service {
   static copyFrom(service: Service, entries: ServiceEntries) {
     const info = service.getInfo();
     const preimages = HashDictionary.new<PreimageHash, PreimageItem>();
-    const storage = HashDictionary.new<StorageKey, StorageItem>();
+    const storage = new Map<string, StorageItem>();
     const lookupHistory = HashDictionary.new<PreimageHash, LookupHistoryItem[]>();
 
     // copy preimages
@@ -162,7 +162,7 @@ export class InMemoryService extends WithDebug implements Service {
       if (value === null) {
         throw new Error(`Service ${service.serviceId} is missing expected storage: ${key}`);
       }
-      storage.set(key, StorageItem.create({ key, value }));
+      storage.set(key.toString(), StorageItem.create({ key, value }));
     }
 
     return new InMemoryService(service.serviceId, {
@@ -240,7 +240,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     const servicesData = new Map<ServiceId, ServiceEntries>();
     for (const [serviceId, { data }] of this.services) {
       servicesData.set(serviceId, {
-        storageKeys: Array.from(data.storage.keys()),
+        storageKeys: Array.from(data.storage.values()).map((x) => x.key),
         preimages: Array.from(data.preimages.keys()),
         lookupHistory: Array.from(data.lookupHistory).flatMap(([hash, items]) =>
           items.map((item) => ({ hash, length: item.length })),
@@ -296,13 +296,13 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       }
 
       if (kind === UpdateStorageKind.Set) {
-        service.data.storage.set(action.storage.key, action.storage);
+        service.data.storage.set(action.storage.key.toString(), action.storage);
       } else if (kind === UpdateStorageKind.Remove) {
         check(
-          service.data.storage.has(action.key),
+          service.data.storage.has(action.key.toString()),
           `Attempting to remove non-existing storage item at ${serviceId}: ${action.key}`,
         );
-        service.data.storage.delete(action.key);
+        service.data.storage.delete(action.key.toString());
       } else {
         assertNever(kind);
       }
@@ -375,7 +375,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
           new InMemoryService(serviceId, {
             info: account,
             preimages: HashDictionary.new(),
-            storage: HashDictionary.new(),
+            storage: new Map(),
             lookupHistory: HashDictionary.fromEntries(
               lookupHistory === null ? [] : [[lookupHistory.hash, [lookupHistory]]],
             ),
@@ -573,7 +573,12 @@ export type ServiceEntries = {
 };
 
 export const serviceEntriesCodec = codec.object<ServiceEntries>({
-  storageKeys: codec.sequenceVarLen(codec.bytes(HASH_SIZE).asOpaque<StorageKey>()),
+  storageKeys: codec.sequenceVarLen(
+    codec.blob.convert(
+      (i) => i,
+      (o) => asOpaqueType(o),
+    ),
+  ),
   preimages: codec.sequenceVarLen(codec.bytes(HASH_SIZE).asOpaque<PreimageHash>()),
   lookupHistory: codec.sequenceVarLen(
     codec.object({

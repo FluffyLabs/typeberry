@@ -3,6 +3,7 @@ import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
+import type { StorageKey } from "@typeberry/state";
 import { Compatibility, GpVersion, type Opaque } from "@typeberry/utils";
 
 export type StateKey = Opaque<OpaqueHash, "stateKey">;
@@ -69,8 +70,7 @@ export namespace stateKeys {
   }
 
   /** https://graypaper.fluffylabs.dev/#/1c979cb/3bba033bba03?v=0.7.1 */
-  // TODO [MaSi]: StateKey should be BytesBlob!
-  export function serviceStorage(serviceId: ServiceId, key: StateKey): StateKey {
+  export function serviceStorage(serviceId: ServiceId, key: StorageKey): StateKey {
     if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
       const out = Bytes.zero(HASH_SIZE);
       out.raw.set(u32AsLeBytes(tryAsU32(2 ** 32 - 1)), 0);
@@ -107,7 +107,7 @@ export namespace stateKeys {
   }
 
   /** https://graypaper.fluffylabs.dev/#/1c979cb/3b88003b8800?v=0.7.1 */
-  export function serviceNested(serviceId: ServiceId, numberPrefix: U32, hash: OpaqueHash): StateKey {
+  export function serviceNested(serviceId: ServiceId, numberPrefix: U32, hash: OpaqueHash | BytesBlob): StateKey {
     const inputToHash = BytesBlob.blobFromParts(u32AsLeBytes(numberPrefix), hash.raw);
     const newHash = blake2b.hashBytes(inputToHash).raw.subarray(0, 28);
     const key = Bytes.zero(HASH_SIZE);

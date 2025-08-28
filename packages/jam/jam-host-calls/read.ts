@@ -1,5 +1,5 @@
 import type { ServiceId } from "@typeberry/block";
-import type { BytesBlob } from "@typeberry/bytes";
+import { BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
 import { minU64 } from "@typeberry/numbers";
 import { tryAsU64 } from "@typeberry/numbers";
@@ -13,7 +13,7 @@ import { SERVICE_ID_BYTES, clampU64ToU32, getServiceIdOrCurrent, writeServiceIdA
 /** Account data interface for read host calls. */
 export interface AccountsRead {
   /** Read service storage. */
-  read(serviceId: ServiceId | null, hash: Blake2bHash): BytesBlob | null;
+  read(serviceId: ServiceId | null, hash: Blake2bHash | BytesBlob): BytesBlob | null;
 }
 
 const IN_OUT_REG = 7;
@@ -21,9 +21,7 @@ const IN_OUT_REG = 7;
 /**
  * Read account storage.
  *
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/333b00333b00?v=0.6.7
- *
- * TODO [MaSo] Update storage key extraction https://graypaper.fluffylabs.dev/#/7e6ff6a/33d50033d500?v=0.6.7
+ * https://graypaper.fluffylabs.dev/#/1c979cb/325301325301?v=0.7.1
  */
 export class Read implements HostCallHandler {
   index = tryAsHostCallIndex(
@@ -59,19 +57,25 @@ export class Read implements HostCallHandler {
 
     const storageKeyLengthClamped = clampU64ToU32(storageKeyLength);
 
-    // allocate extra bytes for the serviceId
-    const serviceIdStorageKey = new Uint8Array(SERVICE_ID_BYTES + storageKeyLengthClamped);
+    // allocate extra bytes for the serviceId (< 0.6.7)
+    const keyLength = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? storageKeyLengthClamped
+      : SERVICE_ID_BYTES + storageKeyLengthClamped;
+    const serviceIdStorageKey = new Uint8Array(keyLength);
     // if the serviceId is null, we will leave 0 to the first 4 bytes
-    if (serviceId !== null) {
+    if (serviceId !== null && Compatibility.isLessThan(GpVersion.V0_6_7)) {
       writeServiceIdAsLeBytes(serviceId, serviceIdStorageKey);
     }
-    const memoryReadResult = memory.loadInto(serviceIdStorageKey.subarray(SERVICE_ID_BYTES), storageKeyStartAddress);
+    const serviceIdOffset = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 0 : SERVICE_ID_BYTES;
+    const memoryReadResult = memory.loadInto(serviceIdStorageKey.subarray(serviceIdOffset), storageKeyStartAddress);
     if (memoryReadResult.isError) {
       return PvmExecution.Panic;
     }
 
     // k
-    const storageKey = blake2b.hashBytes(serviceIdStorageKey);
+    const storageKey = Compatibility.isLessThan(GpVersion.V0_6_7)
+      ? blake2b.hashBytes(serviceIdStorageKey)
+      : BytesBlob.blobFrom(serviceIdStorageKey);
 
     // v
     const value = this.account.read(serviceId, storageKey);

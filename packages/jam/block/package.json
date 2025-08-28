@@ -11,6 +11,7 @@
     "@typeberry/crypto": "0.0.1",
     "@typeberry/hash": "0.0.1",
     "@typeberry/numbers": "0.0.1",
+    "@typeberry/ordering": "0.0.1",
     "@typeberry/utils": "0.0.1"
   },
   "scripts": {

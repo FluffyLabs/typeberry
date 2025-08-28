@@ -1,5 +1,5 @@
 import { type ServiceId, type TimeSlot, codecPerValidator } from "@typeberry/block";
-import { codecHashDictionary } from "@typeberry/block/codec.js";
+import { codecHashDictionary, codecMap } from "@typeberry/block/codec.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Ticket } from "@typeberry/block/tickets.js";
 import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
@@ -75,7 +75,7 @@ class ServiceWithCodec extends InMemoryService {
       info: ServiceAccountInfo.Codec,
       preimages: codecHashDictionary(PreimageItem.Codec, (x) => x.hash),
       lookupHistory: lookupHistoryCodec,
-      storage: codecHashDictionary(StorageItem.Codec, (x) => x.key),
+      storage: codecMap(StorageItem.Codec, (x) => x.key.toString()),
     }),
   });
 

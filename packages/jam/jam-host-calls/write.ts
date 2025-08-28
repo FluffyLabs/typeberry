@@ -5,7 +5,8 @@ import { type U64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { Compatibility, GpVersion, type OK, type Result } from "@typeberry/utils";
+import type { StorageKey } from "@typeberry/state";
+import { Compatibility, GpVersion, type OK, type Result, asOpaqueType } from "@typeberry/utils";
 import { HostCallResult } from "./results.js";
 import { SERVICE_ID_BYTES, clampU64ToU32, writeServiceIdAsLeBytes } from "./utils.js";
 
@@ -20,12 +21,12 @@ export interface AccountsWrite {
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/331002331402?v=0.6.6
    */
-  write(hash: Blake2bHash, storageKeyLength: U64, data: BytesBlob | null): Result<OK, "full">;
+  write(hash: Blake2bHash | BytesBlob, storageKeyLength: U64, data: BytesBlob | null): Result<OK, "full">;
   /**
    * Read the length of some value from account snapshot state.
    * Returns `null` if the storage entry was empty.
    */
-  readSnapshotLength(hash: Blake2bHash): number | null;
+  readSnapshotLength(hash: Blake2bHash | BytesBlob): number | null;
 }
 
 const IN_OUT_REG = 7;
@@ -71,15 +72,23 @@ export class Write implements HostCallHandler {
     const storageKeyLengthClamped = clampU64ToU32(storageKeyLength);
 
     // allocate extra bytes for the serviceId
-    const serviceIdStorageKey = new Uint8Array(SERVICE_ID_BYTES + storageKeyLengthClamped);
-    writeServiceIdAsLeBytes(this.currentServiceId, serviceIdStorageKey);
-    const keyLoadingResult = memory.loadInto(serviceIdStorageKey.subarray(SERVICE_ID_BYTES), storageKeyStartAddress);
+    const keyLength = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? storageKeyLengthClamped
+      : SERVICE_ID_BYTES + storageKeyLengthClamped;
+    const serviceIdStorageKey = new Uint8Array(keyLength);
+    if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
+      writeServiceIdAsLeBytes(this.currentServiceId, serviceIdStorageKey);
+    }
+    const offset = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 0 : SERVICE_ID_BYTES;
+    const keyLoadingResult = memory.loadInto(serviceIdStorageKey.subarray(offset), storageKeyStartAddress);
     if (keyLoadingResult.isError) {
       return PvmExecution.Panic;
     }
 
     // k
-    const storageKey = blake2b.hashBytes(serviceIdStorageKey);
+    const storageKey: StorageKey = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? asOpaqueType(BytesBlob.blobFrom(serviceIdStorageKey))
+      : asOpaqueType(blake2b.hashBytes(serviceIdStorageKey));
 
     const valueLengthClamped = clampU64ToU32(valueLength);
     const value = new Uint8Array(valueLengthClamped);

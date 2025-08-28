@@ -3,7 +3,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
-import { ServiceAccountInfo } from "@typeberry/state";
+import { ServiceAccountInfo, type StorageKey } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
 import type { AccountsInfo } from "./info.js";
 import type { AccountsLookup } from "./lookup.js";
@@ -16,7 +16,7 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
     null,
     (hash) => hash.toString(),
   ]);
-  public readonly storage: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
+  public readonly storage: MultiMap<[ServiceId, StorageKey], BytesBlob | null> = new MultiMap(2, [
     null,
     (hash) => hash.toString(),
   ]);
@@ -37,7 +37,7 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
     return preImage;
   }
 
-  read(serviceId: ServiceId | null, hash: Blake2bHash): BytesBlob | null {
+  read(serviceId: ServiceId | null, hash: StorageKey): BytesBlob | null {
     if (serviceId === null) {
       return null;
     }
@@ -48,7 +48,7 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
     return d;
   }
 
-  write(hash: Blake2bHash, _rawKeyLen: U64, data: BytesBlob | null): Result<OK, "full"> {
+  write(hash: StorageKey, _rawKeyLen: U64, data: BytesBlob | null): Result<OK, "full"> {
     if (this.isStorageFull()) {
       return Result.error("full");
     }

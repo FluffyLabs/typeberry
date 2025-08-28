@@ -11,7 +11,8 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
-import { OK, Result } from "@typeberry/utils";
+import type { StorageKey } from "@typeberry/state";
+import { Compatibility, GpVersion, OK, Result, asOpaqueType } from "@typeberry/utils";
 import { Read } from "./read.js";
 import { HostCallResult } from "./results.js";
 import { TestAccounts } from "./test-accounts.js";
@@ -26,12 +27,16 @@ const DEST_START_REG = 10;
 const VALUE_OFFSET_REG = 11;
 const VALUE_LENGTH_TO_WRITE_REG = 12;
 
-function prepareKey(serviceId: ServiceId, key: string) {
+function prepareKey(serviceId: ServiceId, key: string): { key: BytesBlob; hash: StorageKey } {
   const keyBytes = BytesBlob.blobFromString(key);
-  const serviceIdAndKey = new Uint8Array(SERVICE_ID_BYTES + keyBytes.length);
-  writeServiceIdAsLeBytes(serviceId, serviceIdAndKey);
-  serviceIdAndKey.set(keyBytes.raw, SERVICE_ID_BYTES);
-  return { key: keyBytes, hash: blake2b.hashBytes(serviceIdAndKey) };
+  if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
+    const serviceIdAndKey = new Uint8Array(SERVICE_ID_BYTES + keyBytes.length);
+    writeServiceIdAsLeBytes(serviceId, serviceIdAndKey);
+    serviceIdAndKey.set(keyBytes.raw, SERVICE_ID_BYTES);
+    return { key: keyBytes, hash: blake2b.hashBytes(serviceIdAndKey).asOpaque() };
+  }
+
+  return { key: keyBytes, hash: asOpaqueType(keyBytes) };
 }
 
 function prepareRegsAndMemory(
