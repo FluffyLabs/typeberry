@@ -234,15 +234,21 @@ export class Statistics {
     current[authorIndex].preImagesSize = tryAsU32(newPreImagesSize);
 
     /**
-     * NOTE [MaSi] Please note I don't use Kappa' here. If I understand correctly we don't need it.
+     * * NOTE [MaSi] Please note I don't use Kappa' here. If I understand correctly we don't need it.
      * Kappa' is not needed because we can use validator indexes directly from guarantees extrinsic.
      * I asked a question to ensure it is true but I didn't get any response yet:
-     * https://github.com/w3f/jamtestvectors/pull/28#discussion_r1907237004
+     * https://github.com/w3f/jamtestvectors/pull/28#discussion_r190723700
+     *
+     * https://graypaper.fluffylabs.dev/#/1c979cb/19a00119a801?v=0.7.1
      */
-    for (const { credentials } of extrinsic.guarantees) {
-      for (const { validatorIndex } of credentials) {
-        const newGuaranteesCount = current[validatorIndex].guarantees + 1;
-        current[validatorIndex].guarantees = tryAsU32(newGuaranteesCount);
+    const incrementedGuarantors = new Set<ValidatorIndex>();
+    for (const guarantee of extrinsic.guarantees) {
+      for (const { validatorIndex } of guarantee.credentials) {
+        if (!incrementedGuarantors.has(validatorIndex)) {
+          const newGuaranteesCount = current[validatorIndex].guarantees + 1;
+          current[validatorIndex].guarantees = tryAsU32(newGuaranteesCount);
+          incrementedGuarantors.add(validatorIndex);
+        }
       }
     }
 
