@@ -185,6 +185,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
     };
   }
 
+  // NOTE [ToDr] This should rather be using the import queue, instead of going directly.
   private async importBlock(block: unknown): Promise<RespondAndTransitionTo<Uint8Array | null, Finished>> {
     if (this.importer === null) {
       logger.error(`${this.constructor.name} importer not initialized yet!`);
@@ -196,10 +197,14 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
     if (block instanceof Uint8Array) {
       const config = this.getConfig();
       const blockView = Decoder.decodeObject(Block.Codec.View, block, config.chainSpec);
+      const headerView = blockView.header.view();
+      const timeSlot = headerView.timeSlotIndex.materialize();
       try {
         const res = await this.importer.importBlock(blockView, null);
-        if (res.isError) {
-          logger.error(`Last block imported with error: ${resultToString(res)}`);
+        if (res.isOk) {
+          logger.info(`🧊 Best block: #${timeSlot} (${res.ok.hash})`);
+        } else {
+          logger.log(`❌ Rejected block #${timeSlot}: ${resultToString(res)}`);
         }
       } catch (e) {
         logger.error(`Failed to import block: ${e}`);
