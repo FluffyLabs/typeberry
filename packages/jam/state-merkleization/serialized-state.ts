@@ -1,9 +1,10 @@
 import { type ServiceId, tryAsTimeSlot } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import type { BytesBlob } from "@typeberry/bytes";
+import { BytesBlob } from "@typeberry/bytes";
 import { type Decode, Decoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import type { U32 } from "@typeberry/numbers";
+import { blake2b } from "@typeberry/hash";
+import { type U32, u32AsLeBytes } from "@typeberry/numbers";
 import {
   type EnumerableState,
   type LookupHistorySlots,
@@ -13,7 +14,7 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { Compatibility, GpVersion, TEST_COMPARE_USING } from "@typeberry/utils";
+import { Compatibility, GpVersion, TEST_COMPARE_USING, asOpaqueType } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
 import { serialize } from "./serialize.js";
 import type { StateEntries } from "./state-entries.js";
@@ -200,6 +201,15 @@ export class SerializedService implements Service {
 
   /** Retrieve a storage item. */
   getStorage(rawKey: StorageKey): BytesBlob | null {
+    if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
+      const SERVICE_ID_BYTES = 4;
+      const serviceIdAndKey = new Uint8Array(SERVICE_ID_BYTES + rawKey.length);
+      serviceIdAndKey.set(u32AsLeBytes(this.serviceId));
+      serviceIdAndKey.set(rawKey.raw, SERVICE_ID_BYTES);
+      const key: StorageKey = asOpaqueType(BytesBlob.blobFrom(blake2b.hashBytes(serviceIdAndKey).raw));
+      return this.retrieveOptional(serialize.serviceStorage(this.serviceId, key)) ?? null;
+    }
+
     return this.retrieveOptional(serialize.serviceStorage(this.serviceId, rawKey)) ?? null;
   }
 

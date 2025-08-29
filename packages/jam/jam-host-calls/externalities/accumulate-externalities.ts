@@ -12,12 +12,12 @@ import {
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { AuthorizerHash } from "@typeberry/block/work-report.js";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import { type U64, maxU64, sumU64, tryAsU32, tryAsU64, u32AsLeBytes } from "@typeberry/numbers";
+import { type U64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AutoAccumulate,
   LookupHistoryItem,
@@ -31,7 +31,7 @@ import {
   type ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { Compatibility, GpVersion, OK, Result, asOpaqueType, assertNever, check } from "@typeberry/utils";
+import { Compatibility, GpVersion, OK, Result, assertNever, check } from "@typeberry/utils";
 import type { AccountsInfo } from "../info.js";
 import type { AccountsLookup } from "../lookup.js";
 import type { AccountsRead } from "../read.js";
@@ -643,22 +643,10 @@ export class AccumulateExternalities
     if (serviceId === null) {
       return null;
     }
-    const key = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? rawKey : this.prepareLegacyKey(serviceId, rawKey);
-    return this.updatedState.getStorage(serviceId, key);
-  }
-
-  private prepareLegacyKey(serviceId: ServiceId, keyBytes: BytesBlob): StorageKey {
-    const SERVICE_ID_BYTES = 4;
-    const serviceIdAndKey = new Uint8Array(SERVICE_ID_BYTES + keyBytes.length);
-    serviceIdAndKey.set(u32AsLeBytes(serviceId));
-    serviceIdAndKey.set(keyBytes.raw, SERVICE_ID_BYTES);
-    return asOpaqueType(BytesBlob.blobFrom(blake2b.hashBytes(serviceIdAndKey).raw));
+    return this.updatedState.getStorage(serviceId, rawKey);
   }
 
   write(rawKey: StorageKey, data: BytesBlob | null): Result<number | null, "full"> {
-    const key = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? rawKey
-      : this.prepareLegacyKey(this.currentServiceId, rawKey);
     const rawKeyBytes = tryAsU64(rawKey.length);
     const current = this.read(this.currentServiceId, rawKey);
     const isAddingNew = current === null && data !== null;
@@ -681,7 +669,7 @@ export class AccumulateExternalities
       return Result.error("full", res.details);
     }
 
-    this.updatedState.updateStorage(this.currentServiceId, key, data);
+    this.updatedState.updateStorage(this.currentServiceId, rawKey, data);
 
     return Result.ok(current === null ? null : current.length);
   }
