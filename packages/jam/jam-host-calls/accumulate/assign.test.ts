@@ -24,16 +24,20 @@ const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 const CORE_INDEX_REG = 7;
 const AUTH_QUEUE_START_REG = 8;
+const AUTH_MANAGER_REG = 9;
 
 function prepareRegsAndMemory(
   coreIndex: CoreIndex,
   authQueue: Blake2bHash[],
-  { skipAuthQueue = false }: { skipAuthQueue?: boolean } = {},
+  { skipAuthQueue = false, authManager = null }: { skipAuthQueue?: boolean; authManager?: bigint | number | null } = {},
 ) {
   const memStart = 2 ** 16;
   const registers = new HostCallRegisters(new Registers());
   registers.set(CORE_INDEX_REG, tryAsU64(coreIndex));
   registers.set(AUTH_QUEUE_START_REG, tryAsU64(memStart));
+  if (authManager !== null) {
+    registers.set(AUTH_MANAGER_REG, tryAsU64(authManager));
+  }
 
   const builder = new MemoryBuilder();
 
@@ -136,7 +140,7 @@ describe("HostCalls: Assign", () => {
       accumulate.authQueueResponse = Result.error(UpdatePrivilegesError.UnprivilegedService);
       const serviceId = tryAsServiceId(10_000);
       const assign = new Assign(serviceId, accumulate, tinyChainSpec);
-      const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), []);
+      const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { authManager: 0 });
 
       // when
       const result = await assign.execute(gas, registers, memory);
@@ -152,7 +156,7 @@ describe("HostCalls: Assign", () => {
       accumulate.authQueueResponse = Result.error(UpdatePrivilegesError.InvalidServiceId);
       const serviceId = tryAsServiceId(10_000);
       const assign = new Assign(serviceId, accumulate, tinyChainSpec);
-      const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), []);
+      const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { authManager: null });
 
       // when
       const result = await assign.execute(gas, registers, memory);

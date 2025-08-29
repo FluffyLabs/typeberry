@@ -64,7 +64,10 @@ export class Bless implements HostCallHandler {
     // `n`: number of items in the auto-accumulate dictionary
     const numberOfItems = regs.get(11);
 
-    // `z` or `g` (pre 067): array of key-value pairs serviceId -> gas that auto-accumulate every block
+    /*
+     * `z`: array of key-value pairs serviceId -> gas that auto-accumulate every block
+     * https://graypaper.fluffylabs.dev/#/7e6ff6a/368100368100?v=0.6.7
+     */
     const autoAccumulateEntries = new Array<[ServiceId, ServiceGas]>();
     const result = new Uint8Array(tryAsExactBytes(serviceIdAndGasCodec.sizeHint));
     const decoder = Decoder.fromBlob(result);
@@ -84,6 +87,7 @@ export class Bless implements HostCallHandler {
     }
 
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      // https://graypaper.fluffylabs.dev/#/7e6ff6a/367200367200?v=0.6.7
       const res = new Uint8Array(4 * this.chainSpec.coresCount);
       const decoder = Decoder.fromBlob(res);
       const memoryReadResult = memory.loadInto(res, authorization);

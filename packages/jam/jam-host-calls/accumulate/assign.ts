@@ -16,7 +16,7 @@ import { getServiceId } from "../utils.js";
 const IN_OUT_REG = 7;
 
 /**
- * Assign new fixed-length authorization queue to some core.
+ * Assign new fixed-length authorization queue to some core and authorize a service for this core.
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/360d01360d01?v=0.6.7
  */
@@ -68,7 +68,7 @@ export class Assign implements HostCallHandler {
     const fixedSizeAuthQueue = FixedSizeArray.new(authQueue, AUTHORIZATION_QUEUE_SIZE);
 
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      // NOTE [MaSo] its safe to cast to Number because we know that the coreIndex is less than cores count = 341
+      // NOTE [MaSo] it's safe to cast to Number because we know that the coreIndex is less than cores count = 341
       const result = this.partialState.updateAuthorizationQueue(
         tryAsCoreIndex(Number(coreIndex)),
         fixedSizeAuthQueue,
@@ -94,7 +94,7 @@ export class Assign implements HostCallHandler {
       assertNever(e);
     } else {
       regs.set(IN_OUT_REG, HostCallResult.OK);
-      // NOTE [MaSo] its safe to cast to Number because we know that the coreIndex is less than cores count = 341
+      // NOTE [MaSo] it's safe to cast to Number because we know that the coreIndex is less than cores count = 341
       this.partialState.updateAuthorizationQueue(tryAsCoreIndex(Number(coreIndex)), fixedSizeAuthQueue, authManager);
     }
   }
