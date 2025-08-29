@@ -315,10 +315,14 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       }
 
       if (kind === UpdateStorageKind.Set) {
-        const key: StorageKey = this.getLegacyStorageKey(serviceId, action.storage.key);
+        const key: StorageKey = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+          ? action.storage.key
+          : this.getLegacyStorageKey(serviceId, action.storage.key);
         service.data.storage.set(key.toString(), StorageItem.create({ key, value: action.storage.value }));
       } else if (kind === UpdateStorageKind.Remove) {
-        const key: StorageKey = this.getLegacyStorageKey(serviceId, action.key);
+        const key: StorageKey = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+          ? action.key
+          : this.getLegacyStorageKey(serviceId, action.key);
         check(
           service.data.storage.has(key.toString()),
           `Attempting to remove non-existing storage item at ${serviceId}: ${action.key}`,

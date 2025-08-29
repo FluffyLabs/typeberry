@@ -78,9 +78,7 @@ function* serializeStorage(storage: UpdateStorage[] | undefined): Generator<Stat
         break;
       }
       case UpdateStorageKind.Remove: {
-        const key = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-          ? action.key
-          : getLegacyKey(serviceId, action.storage.key);
+        const key = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? action.key : getLegacyKey(serviceId, action.key);
         const codec = serialize.serviceStorage(serviceId, key);
         yield [StateEntryUpdateAction.Remove, codec.key, EMPTY_BLOB];
         break;
