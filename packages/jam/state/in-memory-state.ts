@@ -96,8 +96,8 @@ export class InMemoryService extends WithDebug implements Service {
     return this.data.info;
   }
 
-  getStorage(key: StorageKey): BytesBlob | null {
-    return this.data.storage.get(key.toString())?.value ?? null;
+  getStorage(rawKey: StorageKey): BytesBlob | null {
+    return this.data.storage.get(rawKey.toString())?.value ?? null;
   }
 
   hasPreimage(hash: PreimageHash): boolean {

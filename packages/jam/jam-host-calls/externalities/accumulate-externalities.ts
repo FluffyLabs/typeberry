@@ -639,12 +639,12 @@ export class AccumulateExternalities
     return Result.ok(OK);
   }
 
-  read(serviceId: ServiceId | null, key: StorageKey): BytesBlob | null {
+  read(serviceId: ServiceId | null, rawKey: StorageKey): BytesBlob | null {
     if (serviceId === null) {
       return null;
     }
 
-    return this.updatedState.getStorage(serviceId, key);
+    return this.updatedState.getStorage(serviceId, rawKey);
   }
 
   write(key: StorageKey, rawKeyBytes: U64, data: BytesBlob | null): Result<OK, "full"> {
