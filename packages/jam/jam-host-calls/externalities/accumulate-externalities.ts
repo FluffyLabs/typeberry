@@ -647,7 +647,8 @@ export class AccumulateExternalities
     return this.updatedState.getStorage(serviceId, rawKey);
   }
 
-  write(key: StorageKey, rawKeyBytes: U64, data: BytesBlob | null): Result<number | null, "full"> {
+  write(key: StorageKey, data: BytesBlob | null): Result<number | null, "full"> {
+    const rawKeyBytes = tryAsU64(key.length);
     const current = this.read(this.currentServiceId, key);
     const isAddingNew = current === null && data !== null;
     const isRemoving = current !== null && data === null;

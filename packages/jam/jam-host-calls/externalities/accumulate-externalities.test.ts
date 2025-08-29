@@ -1908,7 +1908,7 @@ describe("AccumulateServiceExternalities", () => {
 
       assert.strictEqual(state.stateUpdate.services.storage.length, 0);
 
-      accumulateServiceExternalities.write(hash, tryAsU64(1), blob);
+      accumulateServiceExternalities.write(hash, blob);
 
       assert.strictEqual(state.stateUpdate.services.storage.length, 1);
     });
@@ -1930,7 +1930,7 @@ describe("AccumulateServiceExternalities", () => {
         tryAsTimeSlot(16),
       );
 
-      accumulateServiceExternalities.write(key, tryAsU64(1), newBlob);
+      accumulateServiceExternalities.write(key, newBlob);
 
       assert.strictEqual(state.stateUpdate.services.storage.length, 1);
 
