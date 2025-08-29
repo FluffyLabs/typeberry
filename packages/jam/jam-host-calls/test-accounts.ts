@@ -4,7 +4,7 @@ import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { OK, Result } from "@typeberry/utils";
+import { Result } from "@typeberry/utils";
 import type { AccountsInfo } from "./info.js";
 import type { AccountsLookup } from "./lookup.js";
 import type { AccountsRead } from "./read.js";
@@ -17,10 +17,6 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
     (hash) => hash.toString(),
   ]);
   public readonly storage: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
-    null,
-    (hash) => hash.toString(),
-  ]);
-  public readonly snapshotData: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
     null,
     (hash) => hash.toString(),
   ]);
@@ -48,18 +44,19 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
     return d;
   }
 
-  write(hash: Blake2bHash, _rawKeyLen: U64, data: BytesBlob | null): Result<OK, "full"> {
+  write(hash: Blake2bHash, _rawKeyLen: U64, data: BytesBlob | null): Result<number | null, "full"> {
     if (this.isStorageFull()) {
       return Result.error("full");
     }
 
+    const prev = this.storage.get(this.serviceId, hash);
     if (data === null) {
       this.storage.delete(this.serviceId, hash);
     } else {
       this.storage.set(data, this.serviceId, hash);
     }
 
-    return Result.ok(OK);
+    return Result.ok(prev?.length ?? null);
   }
 
   private isStorageFull(): boolean {
@@ -74,14 +71,6 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
         accountInfo.gratisStorage,
       ) > accountInfo.balance
     );
-  }
-
-  readSnapshotLength(hash: Blake2bHash): number | null {
-    const data = this.snapshotData.get(this.serviceId, hash);
-    if (data === undefined) {
-      return null;
-    }
-    return data?.length ?? null;
   }
 
   getServiceInfo(serviceId: ServiceId | null): ServiceAccountInfo | null {

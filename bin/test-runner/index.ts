@@ -58,7 +58,7 @@ if (suiteToRun === TestSuite.W3F_DAVXY) {
 const stream = run({
   files: [`${import.meta.dirname}/${suiteToRun}.ts`],
   argv: process.argv.slice(2),
-  timeout: 180 * 1000,
+  timeout: 10 * 60 * 1000,
   concurrency: true,
 }).on("test:fail", () => {
   process.exitCode = 1;

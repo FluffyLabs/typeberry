@@ -647,7 +647,7 @@ export class AccumulateExternalities
     return this.updatedState.getStorage(serviceId, key);
   }
 
-  write(key: StorageKey, rawKeyBytes: U64, data: BytesBlob | null): Result<OK, "full"> {
+  write(key: StorageKey, rawKeyBytes: U64, data: BytesBlob | null): Result<number | null, "full"> {
     const current = this.read(this.currentServiceId, key);
     const isAddingNew = current === null && data !== null;
     const isRemoving = current !== null && data === null;
@@ -671,12 +671,7 @@ export class AccumulateExternalities
 
     this.updatedState.updateStorage(this.currentServiceId, key, data);
 
-    return Result.ok(OK);
-  }
-
-  readSnapshotLength(key: StorageKey): number | null {
-    const service = this.updatedState.state.getService(this.currentServiceId);
-    return service?.getStorage(key)?.length ?? null;
+    return Result.ok(current === null ? null : current.length);
   }
 
   lookup(serviceId: ServiceId | null, hash: PreimageHash): BytesBlob | null {

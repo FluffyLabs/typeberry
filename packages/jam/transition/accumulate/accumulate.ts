@@ -264,7 +264,7 @@ export class Accumulate {
       return { stateUpdate: null, consumedGas: gasCost };
     }
 
-    logger.trace(`Accumulation successful for ${serviceId}.`);
+    logger.trace(`Accumulation successful for ${serviceId}. Consumed: ${result.ok.consumedGas}`);
     return result.ok;
   }
 
