@@ -6,7 +6,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import type { StorageKey } from "@typeberry/state";
-import { Compatibility, GpVersion, type OK, type Result, asOpaqueType } from "@typeberry/utils";
+import { Compatibility, GpVersion, type Result, asOpaqueType } from "@typeberry/utils";
 import { HostCallResult } from "./results.js";
 import { SERVICE_ID_BYTES, clampU64ToU32, writeServiceIdAsLeBytes } from "./utils.js";
 
@@ -17,16 +17,11 @@ export interface AccountsWrite {
    * `null` indicates the storage entry should be removed.
    *
    * Returns "full" error if there is not enough balance to pay for
-   * the storage.
+   * the storage and previous value length otherwise.
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/331002331402?v=0.6.6
    */
-  write(hash: Blake2bHash | BytesBlob, storageKeyLength: U64, data: BytesBlob | null): Result<OK, "full">;
-  /**
-   * Read the length of some value from account snapshot state.
-   * Returns `null` if the storage entry was empty.
-   */
-  readSnapshotLength(hash: Blake2bHash | BytesBlob): number | null;
+  write(hash: Blake2bHash | BytesBlob, storageKeyLength: U64, data: BytesBlob | null): Result<number | null, "full">;
 }
 
 const IN_OUT_REG = 7;
@@ -109,7 +104,6 @@ export class Write implements HostCallHandler {
     }
 
     // l
-    const previousLength = this.account.readSnapshotLength(storageKey);
-    regs.set(IN_OUT_REG, previousLength === null ? HostCallResult.NONE : tryAsU64(previousLength));
+    regs.set(IN_OUT_REG, result.ok === null ? HostCallResult.NONE : tryAsU64(result.ok));
   }
 }
