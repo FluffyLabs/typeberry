@@ -88,7 +88,7 @@ export class Bless implements HostCallHandler {
 
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       // https://graypaper.fluffylabs.dev/#/7e6ff6a/367200367200?v=0.6.7
-      const res = new Uint8Array(4 * this.chainSpec.coresCount);
+      const res = new Uint8Array(tryAsExactBytes(codec.u32.sizeHint) * this.chainSpec.coresCount);
       const decoder = Decoder.fromBlob(res);
       const memoryReadResult = memory.loadInto(res, authorization);
       if (memoryReadResult.isError) {
