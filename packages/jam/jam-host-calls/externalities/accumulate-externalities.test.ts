@@ -37,7 +37,7 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { testState } from "@typeberry/state/test.utils.js";
-import { Compatibility, GpVersion, OK, Result, deepEqual, ensure } from "@typeberry/utils";
+import { Compatibility, GpVersion, OK, Result, asOpaqueType, deepEqual, ensure } from "@typeberry/utils";
 import { writeServiceIdAsLeBytes } from "../utils.js";
 import { AccumulateExternalities } from "./accumulate-externalities.js";
 import {
@@ -829,7 +829,6 @@ describe("PartialState.upgradeService", () => {
 
 describe("PartialState.updateAuthorizationQueue", () => {
   if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-    // TODO [MaSo] Make tests
     it("should update the authorization queue for a given core index", () => {
       const state = partiallyUpdatedState();
       const partialState = new AccumulateExternalities(
@@ -841,16 +840,100 @@ describe("PartialState.updateAuthorizationQueue", () => {
       );
 
       const coreIndex = tryAsCoreIndex(0);
+      const authManager = tryAsServiceId(0);
       const queue = FixedSizeArray.new(
         Array.from({ length: AUTHORIZATION_QUEUE_SIZE }, () => Bytes.fill(HASH_SIZE, 0xee).asOpaque()),
         AUTHORIZATION_QUEUE_SIZE,
       );
 
       // when
-      partialState.updateAuthorizationQueue(coreIndex, queue, null);
+      partialState.updateAuthorizationQueue(coreIndex, queue, authManager);
 
       // then
       assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), queue);
+    });
+
+    it("should return InvalidServiceId when given auth manager is invalid", () => {
+      const state = partiallyUpdatedState();
+      const partialState = new AccumulateExternalities(
+        tinyChainSpec,
+        state,
+        tryAsServiceId(0),
+        tryAsServiceId(10),
+        tryAsTimeSlot(16),
+      );
+
+      const coreIndex = tryAsCoreIndex(0);
+      const authManager: ServiceId | null = null;
+      const queue = FixedSizeArray.new(
+        Array.from({ length: AUTHORIZATION_QUEUE_SIZE }, () => Bytes.fill(HASH_SIZE, 0xee).asOpaque()),
+        AUTHORIZATION_QUEUE_SIZE,
+      );
+
+      // when
+      const result = partialState.updateAuthorizationQueue(coreIndex, queue, authManager);
+
+      // then
+      assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.InvalidServiceId));
+      assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), undefined);
+    });
+
+    it("should return UnprivilegedService when current service is not privileged", () => {
+      const state = partiallyUpdatedState();
+      state.state.privilegedServices = PrivilegedServices.create({
+        ...state.state.privilegedServices,
+        authManager: asOpaqueType(FixedSizeArray.new([tryAsServiceId(1), tryAsServiceId(2)], tinyChainSpec.coresCount)),
+      });
+      const partialState = new AccumulateExternalities(
+        tinyChainSpec,
+        state,
+        tryAsServiceId(0),
+        tryAsServiceId(10),
+        tryAsTimeSlot(16),
+      );
+
+      const coreIndex = tryAsCoreIndex(0);
+      const authManager = tryAsServiceId(0);
+      const queue = FixedSizeArray.new(
+        Array.from({ length: AUTHORIZATION_QUEUE_SIZE }, () => Bytes.fill(HASH_SIZE, 0xee).asOpaque()),
+        AUTHORIZATION_QUEUE_SIZE,
+      );
+
+      // when
+      const result = partialState.updateAuthorizationQueue(coreIndex, queue, authManager);
+
+      // then
+      assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.UnprivilegedService));
+      assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), undefined);
+    });
+
+    it("should return UnprivilegedService before InvalidServiceId if given auth manager is incorrect, but current servis is also unprivileged", () => {
+      const state = partiallyUpdatedState();
+      state.state.privilegedServices = PrivilegedServices.create({
+        ...state.state.privilegedServices,
+        authManager: asOpaqueType(FixedSizeArray.new([tryAsServiceId(1), tryAsServiceId(2)], tinyChainSpec.coresCount)),
+      });
+      const partialState = new AccumulateExternalities(
+        tinyChainSpec,
+        state,
+        tryAsServiceId(0),
+        tryAsServiceId(10),
+        tryAsTimeSlot(16),
+      );
+
+      const coreIndex = tryAsCoreIndex(0);
+      const authManager: ServiceId | null = null;
+      const queue = FixedSizeArray.new(
+        Array.from({ length: AUTHORIZATION_QUEUE_SIZE }, () => Bytes.fill(HASH_SIZE, 0xee).asOpaque()),
+        AUTHORIZATION_QUEUE_SIZE,
+      );
+
+      // when
+      const result = partialState.updateAuthorizationQueue(coreIndex, queue, authManager);
+
+      // then
+      assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.UnprivilegedService));
+      assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), undefined);
     });
   } else {
     it("should update the authorization queue for a given core index", () => {
