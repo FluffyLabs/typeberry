@@ -1,6 +1,6 @@
 import { logger, main, runner } from "./common.js";
-import { StateTransitionFuzzed, runStateTransitionFuzzed } from "./jamduna/state-transition-fuzzed.js";
-import { StateTransition, runStateTransition } from "./jamduna/state-transition.js";
+import { StateTransitionFuzzed, runStateTransitionFuzzed } from "./jamduna-064/state-transition-fuzzed.js";
+import { StateTransition, runStateTransition } from "./jamduna-064/state-transition.js";
 
 const runners = [
   runner("state_transitions", StateTransition.fromJson, runStateTransition),
