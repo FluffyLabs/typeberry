@@ -45,7 +45,7 @@ if (suiteToRun === TestSuite.W3F_DAVXY) {
     throw new Error("GP_VERSION environment variable is required for DAVXY suite.");
   }
 
-  const davxyVersions: string[] = [GpVersion.V0_6_6, GpVersion.V0_6_7];
+  const davxyVersions: string[] = [GpVersion.V0_6_6, GpVersion.V0_6_7, GpVersion.V0_7_0];
   if (!davxyVersions.includes(versionFromEnv)) {
     throw new Error(
       `Invalid GP_VERSION ${versionFromEnv} for DAVXY suite. Available versions: ${davxyVersions.join(", ")}`,
