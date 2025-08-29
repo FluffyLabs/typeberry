@@ -10,8 +10,7 @@ export enum GpVersion {
 export enum TestSuite {
   W3F_DAVXY = "w3f-davxy",
   W3F = "w3f",
-  JAMDUNA_064 = "jamduna-064",
-  JAMDUNA_065 = "jamduna-065",
+  JAMDUNA = "jamduna",
   JAVAJAM = "javajam",
 }
 
@@ -27,7 +26,7 @@ const ALL_VERSIONS_IN_ORDER = [
 ];
 
 const env = typeof process === "undefined" ? {} : process.env;
-export const DEFAULT_VERSION = GpVersion.V0_6_5;
+export const DEFAULT_VERSION = GpVersion.V0_6_7;
 export let CURRENT_VERSION = parseCurrentVersion(env.GP_VERSION);
 export let CURRENT_SUITE = (env.TEST_SUITE as TestSuite) ?? DEFAULT_SUITE;
 
@@ -60,11 +59,13 @@ export class Compatibility {
     return version.includes(CURRENT_VERSION);
   }
 
-  static isSuite(suite: TestSuite) {
+  static isSuite(suite: TestSuite, version?: GpVersion) {
     if (CURRENT_SUITE === undefined) {
       return false;
     }
-    return suite === CURRENT_SUITE;
+
+    const isCorrectGPVersion = version === undefined || Compatibility.is(version);
+    return suite === CURRENT_SUITE && isCorrectGPVersion;
   }
 
   static isGreaterOrEqual(version: GpVersion) {
@@ -73,6 +74,10 @@ export class Compatibility {
       throw new Error(`Invalid version: ${version}. Not found amongst supported versions: ${ALL_VERSIONS_IN_ORDER}`);
     }
     return Compatibility.is(...ALL_VERSIONS_IN_ORDER.slice(index));
+  }
+
+  static isLessThan(version: GpVersion) {
+    return !Compatibility.isGreaterOrEqual(version);
   }
 
   /**

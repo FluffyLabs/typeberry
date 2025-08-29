@@ -1,4 +1,4 @@
-name: davxy w3f test vectors
+name: davxy w3f test vectors 0.6.7
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
 
 env:
   TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
-  GP_VERSION: 0.6.6
+  GP_VERSION: 0.6.7
   TEST_SUITE: w3f-davxy
 
 jobs:
@@ -39,11 +39,11 @@ jobs:
       - run: npm start -w @typeberry/test-runner
       - name: Display results
         if: always()
-        run: cat ./dist/jamtestvectors-davxy.txt
+        run: cat ./dist/w3f-davxy-067.txt
       - name: Upload new transaction log
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           path: |
-            ./dist/jamtestvectors-davxy.txt
+            ./dist/w3f-davxy-067.txt
           name: jamtestvectors-davxy-results

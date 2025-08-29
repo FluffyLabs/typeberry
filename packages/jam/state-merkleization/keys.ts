@@ -1,9 +1,9 @@
 import type { ServiceId } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import { Bytes } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
-import type { Opaque } from "@typeberry/utils";
+import { Compatibility, GpVersion, type Opaque } from "@typeberry/utils";
 
 export type StateKey = Opaque<OpaqueHash, "stateKey">;
 
@@ -68,43 +68,73 @@ export namespace stateKeys {
     return key.asOpaque();
   }
 
-  /** https://graypaper.fluffylabs.dev/#/85129da/384103384103?v=0.6.3 */
+  /** https://graypaper.fluffylabs.dev/#/1c979cb/3bba033bba03?v=0.7.1 */
+  // TODO [MaSi]: StateKey should be BytesBlob!
   export function serviceStorage(serviceId: ServiceId, key: StateKey): StateKey {
-    const out = Bytes.zero(HASH_SIZE);
-    out.raw.set(u32AsLeBytes(tryAsU32(2 ** 32 - 1)), 0);
-    out.raw.set(key.raw.subarray(0, HASH_SIZE - U32_BYTES), U32_BYTES);
-    return serviceNested(serviceId, out);
+    if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
+      const out = Bytes.zero(HASH_SIZE);
+      out.raw.set(u32AsLeBytes(tryAsU32(2 ** 32 - 1)), 0);
+      out.raw.set(key.raw.subarray(0, HASH_SIZE - U32_BYTES), U32_BYTES);
+      return legacyServiceNested(serviceId, out);
+    }
+
+    return serviceNested(serviceId, tryAsU32(2 ** 32 - 1), key);
   }
 
-  /** https://graypaper.fluffylabs.dev/#/85129da/385403385403?v=0.6.3 */
+  /** https://graypaper.fluffylabs.dev/#/1c979cb/3bd7033bd703?v=0.7.1 */
   export function servicePreimage(serviceId: ServiceId, hash: PreimageHash): StateKey {
-    const out = Bytes.zero(HASH_SIZE);
-    out.raw.set(u32AsLeBytes(tryAsU32(2 ** 32 - 2)), 0);
-    out.raw.set(hash.raw.subarray(1, HASH_SIZE - U32_BYTES + 1), U32_BYTES);
-    return serviceNested(serviceId, out);
+    if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
+      const out = Bytes.zero(HASH_SIZE);
+      out.raw.set(u32AsLeBytes(tryAsU32(2 ** 32 - 2)), 0);
+      out.raw.set(hash.raw.subarray(1, HASH_SIZE - U32_BYTES + 1), U32_BYTES);
+      return legacyServiceNested(serviceId, out);
+    }
+
+    return serviceNested(serviceId, tryAsU32(2 ** 32 - 2), hash);
   }
 
-  /** https://graypaper.fluffylabs.dev/#/85129da/386703386703?v=0.6.3 */
+  /** https://graypaper.fluffylabs.dev/#/1c979cb/3b0a043b0a04?v=0.7.1 */
   export function serviceLookupHistory(serviceId: ServiceId, hash: PreimageHash, preimageLength: U32): StateKey {
-    const doubleHash = blake2b.hashBytes(hash);
-    const out = Bytes.zero(HASH_SIZE);
-    out.raw.set(u32AsLeBytes(preimageLength), 0);
-    out.raw.set(doubleHash.raw.subarray(2, HASH_SIZE - U32_BYTES + 2), U32_BYTES);
-    return serviceNested(serviceId, out);
+    if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
+      const doubleHash = blake2b.hashBytes(hash);
+      const out = Bytes.zero(HASH_SIZE);
+      out.raw.set(u32AsLeBytes(preimageLength), 0);
+      out.raw.set(doubleHash.raw.subarray(2, HASH_SIZE - U32_BYTES + 2), U32_BYTES);
+      return legacyServiceNested(serviceId, out);
+    }
+
+    return serviceNested(serviceId, preimageLength, hash);
   }
 
-  /** https://graypaper.fluffylabs.dev/#/85129da/380101380101?v=0.6.3 */
-  export function serviceNested(serviceId: ServiceId, hash: OpaqueHash): StateKey {
+  /** https://graypaper.fluffylabs.dev/#/1c979cb/3b88003b8800?v=0.7.1 */
+  export function serviceNested(serviceId: ServiceId, numberPrefix: U32, hash: OpaqueHash): StateKey {
+    const inputToHash = BytesBlob.blobFromParts(u32AsLeBytes(numberPrefix), hash.raw);
+    const newHash = blake2b.hashBytes(inputToHash).raw.subarray(0, 28);
     const key = Bytes.zero(HASH_SIZE);
     let i = 0;
     for (const byte of u32AsLeBytes(serviceId)) {
       key.raw[i] = byte;
-      key.raw[i + 1] = hash.raw[i / 2];
+      key.raw[i + 1] = newHash[i / 2];
       i += 2;
     }
     // no need to floor, since we know it's divisible (adding +2 every iteration).
     const middle = i / 2;
-    key.raw.set(hash.raw.subarray(middle, HASH_SIZE - middle), i);
+    key.raw.set(newHash.subarray(middle), i);
     return key.asOpaque();
   }
+}
+
+/** https://graypaper.fluffylabs.dev/#/85129da/380101380101?v=0.6.3 */
+export function legacyServiceNested(serviceId: ServiceId, hash: OpaqueHash): StateKey {
+  const key = Bytes.zero(HASH_SIZE);
+  let i = 0;
+  for (const byte of u32AsLeBytes(serviceId)) {
+    key.raw[i] = byte;
+    key.raw[i + 1] = hash.raw[i / 2];
+    i += 2;
+  }
+  // no need to floor, since we know it's divisible (adding +2 every iteration).
+  const middle = i / 2;
+  key.raw.set(hash.raw.subarray(middle, HASH_SIZE - middle), i);
+  return key.asOpaque();
 }

@@ -32,9 +32,11 @@
   "scripts": {
     "start": "tsx --test-timeout=600000 ./index.ts",
     "w3f": "TEST_SUITE=w3f tsx ./w3f.ts",
-    "w3f-davxy": "TEST_SUITE=w3f-davxy tsx ./w3f-davxy.ts",
-    "jamduna:0.6.4": "TEST_SUITE=jamduna-064 tsx ./jamduna-064.ts",
-    "jamduna:0.6.5": "TEST_SUITE=jamduna-065 tsx ./jamduna-065.ts",
+    "w3f-davxy:0.6.6": "GP_VERSION=0.6.6 TEST_SUITE=w3f-davxy tsx ./w3f-davxy-066.ts",
+    "w3f-davxy:0.6.7": "GP_VERSION=0.6.7 TEST_SUITE=w3f-davxy tsx ./w3f-davxy-067.ts",
+    "jamduna:0.6.4": "GP_VERSION=0.6.4 TEST_SUITE=jamduna tsx ./jamduna-064.ts",
+    "jamduna:0.6.5": "GP_VERSION=0.6.5 TEST_SUITE=jamduna tsx ./jamduna-065.ts",
+    "jamduna:0.6.7": "GP_VERSION=0.6.7 TEST_SUITE=jamduna tsx ./jamduna-067.ts",
     "javajam": "TEST_SUITE=javajam tsx ./javajam.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },

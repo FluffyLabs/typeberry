@@ -277,10 +277,10 @@ export class OnChain {
     } = accumulateUpdate;
 
     const deferredTransfersResult = await this.deferredTransfers.transition({
+      entropy: entropy[0],
       pendingTransfers,
       servicesUpdate: { ...servicesUpdate, preimages: accumulatePreimages },
       timeslot: timeSlot,
-      ...servicesUpdate,
     });
 
     if (deferredTransfersResult.isError) {

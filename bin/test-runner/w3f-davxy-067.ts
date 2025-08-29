@@ -1,8 +1,8 @@
 import { logger, main } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
-main(runners, process.argv.slice(2), "test-vectors/w3f-davxy", {
-  accepted: ["traces/safrole", "traces/fallback"],
+main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_067", {
+  accepted: ["traces/fallback", "traces/safrole"],
   ignored: ["genesis.json"],
 })
   .then((r) => logger.log(r))

@@ -95,6 +95,16 @@ export enum RequestPreimageError {
   InsufficientFunds = 2,
 }
 
+/** Possible error when forgetting a preimage. */
+export enum ForgetPreimageError {
+  /** Preimage was already forgotten or does not exist. */
+  NotFound = 0,
+  /** The preimage hasn't expired yet. */
+  NotExpired = 1,
+  /** Error when updating storage utilisation info. */
+  StorageUtilisationError = 2,
+}
+
 /**
  * Errors that may occur when the transfer is invoked.
  *
@@ -186,7 +196,7 @@ export interface PartialState {
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/335602335602
    */
-  forgetPreimage(hash: PreimageHash, length: U64): Result<OK, null>;
+  forgetPreimage(hash: PreimageHash, length: U64): Result<OK, ForgetPreimageError>;
 
   /**
    * Remove the provided source account and transfer the remaining account balance to current service.

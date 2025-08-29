@@ -1,4 +1,4 @@
-name: jamduna test vectors 0.6.5
+name: jamduna test vectors 0.6.7
 
 on:
   workflow_dispatch:
@@ -6,8 +6,8 @@ on:
     branches: [ "main" ]
 
 env:
-  TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # it is loaded in scripts/load-test-ref.sh
-  GP_VERSION: 0.6.5
+  TEST_VECTORS_REF: a0c8a6a66a7f5e9cc270755498e3b811ae38bf93
+  GP_VERSION: 0.6.7
   TEST_SUITE: jamduna
 
 jobs:
@@ -20,8 +20,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Load test ref
-        run: .github/scripts/load-test-ref.sh
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
         with:
@@ -38,11 +36,11 @@ jobs:
       - run: npm start -w @typeberry/test-runner
       - name: Display results
         if: always()
-        run: cat ./dist/jamduna-065.txt
+        run: cat ./dist/jamduna-067.txt
       - name: Upload new results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           path: |
-            ./dist/jamduna-065.txt
+            ./dist/jamduna-067.txt
           name: jamdunavectors-results
