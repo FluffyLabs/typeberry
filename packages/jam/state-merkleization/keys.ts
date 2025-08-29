@@ -107,7 +107,7 @@ export namespace stateKeys {
   }
 
   /** https://graypaper.fluffylabs.dev/#/1c979cb/3b88003b8800?v=0.7.1 */
-  export function serviceNested(serviceId: ServiceId, numberPrefix: U32, hash: OpaqueHash | BytesBlob): StateKey {
+  export function serviceNested(serviceId: ServiceId, numberPrefix: U32, hash: BytesBlob): StateKey {
     const inputToHash = BytesBlob.blobFromParts(u32AsLeBytes(numberPrefix), hash.raw);
     const newHash = blake2b.hashBytes(inputToHash).raw.subarray(0, 28);
     const key = Bytes.zero(HASH_SIZE);
