@@ -16,7 +16,7 @@ import { FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collecti
 import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
-import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type U32, type U64, tryAsU32, tryAsU64, u32AsLeBytes } from "@typeberry/numbers";
 import {
   AutoAccumulate,
   InMemoryService,
@@ -37,7 +37,7 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { testState } from "@typeberry/state/test.utils.js";
-import { Compatibility, GpVersion, OK, Result, deepEqual, ensure } from "@typeberry/utils";
+import { Compatibility, GpVersion, OK, Result, asOpaqueType, deepEqual, ensure } from "@typeberry/utils";
 import { writeServiceIdAsLeBytes } from "../utils.js";
 import { AccumulateExternalities } from "./accumulate-externalities.js";
 import {
@@ -1870,13 +1870,28 @@ describe("AccumulateServiceExternalities", () => {
       assert.strictEqual(result, null);
     });
 
+    const prepareLegacyKey = (serviceId: ServiceId, keyBytes: BytesBlob): StorageKey => {
+      const SERVICE_ID_BYTES = 4;
+      const serviceIdAndKey = new Uint8Array(SERVICE_ID_BYTES + keyBytes.length);
+      serviceIdAndKey.set(u32AsLeBytes(serviceId));
+      serviceIdAndKey.set(keyBytes.raw, SERVICE_ID_BYTES);
+      return asOpaqueType(BytesBlob.blobFrom(blake2b.hashBytes(serviceIdAndKey).raw));
+    };
+
     it("should correctly read from storage", () => {
       const currentServiceId = tryAsServiceId(10_000);
       const serviceId = tryAsServiceId(33);
       const key: StorageKey = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const initialStorage = new Map<string, StorageItem>();
       const value = BytesBlob.empty();
-      initialStorage.set(key.toString(), StorageItem.create({ key, value }));
+      const storageKey = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? key : prepareLegacyKey(serviceId, key);
+      initialStorage.set(
+        storageKey.toString(),
+        StorageItem.create({
+          key: storageKey,
+          value,
+        }),
+      );
       const service = prepareService(serviceId, { storage: initialStorage });
       const state = prepareState([prepareService(currentServiceId), service]);
 
@@ -1889,7 +1904,6 @@ describe("AccumulateServiceExternalities", () => {
       );
 
       const result = accumulateServiceExternalities.read(serviceId, key);
-
       assert.strictEqual(result, value);
     });
 
