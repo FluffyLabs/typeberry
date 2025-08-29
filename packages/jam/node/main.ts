@@ -21,7 +21,6 @@ export type NodeApi = {
   importBlock(block: BlockView): Promise<StateRootHash | null>;
   getBestStateRootHash(): Promise<StateRootHash>;
   close(): Promise<void>;
-  waitForFinish(): Promise<void>;
 };
 
 export async function main(config: JamConfig, withRelPath: (v: string) => string): Promise<NodeApi> {
@@ -81,11 +80,6 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
       importerReady.transition<Finished>((importer, port) => {
         return importer.finish(port);
       });
-      return await this.waitForFinish();
-    },
-    async waitForFinish() {
-      logger.log("[main]⌛ waiting for importer to finish");
-      await importerReady.waitForState("finished");
       logger.log("[main] ☠️  Closing the extensions");
       closeExtensions();
       logger.log("[main] ☠️  Closing the authorship module");
