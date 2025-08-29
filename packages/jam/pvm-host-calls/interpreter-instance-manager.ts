@@ -9,7 +9,9 @@ export class InterpreterInstanceManager {
 
   constructor(noOfPvmInstances: number) {
     const shouldCountGas =
-      Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) || Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5);
+      Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ||
+      Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5) ||
+      Compatibility.isSuite(TestSuite.W3F_DAVXY, GpVersion.V0_6_6);
 
     for (let i = 0; i < noOfPvmInstances; i++) {
       this.instances.push(
