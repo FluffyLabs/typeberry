@@ -148,6 +148,6 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
 ];
 
 const stateFromKeyvals = (spec: ChainSpec, state: TestState) => {
-  const entries = StateEntries.fromEntriesUnsafe(state.keyvals.map((x) => [x.key.asOpaque(), x.value]));
+  const entries = StateEntries.fromEntriesUnsafe(state.keyvals.map((x) => [x.key, x.value]));
   return SerializedState.fromStateEntries(spec, entries);
 };
