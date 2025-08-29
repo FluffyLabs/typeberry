@@ -11,7 +11,7 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
-import { type PerCore, PrivilegedServices, codecPerCore, tryAsPerCore } from "@typeberry/state";
+import { type PerCore, codecPerCore, tryAsPerCore } from "@typeberry/state";
 import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
@@ -73,7 +73,6 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
     }
 
-    PrivilegedServices;
     const dataAuth = Encoder.encodeObject(codecPerCore(codec.u32.asOpaque<ServiceId>()), authorizerData, tinyChainSpec);
     if (!skipAuth) {
       builder.setReadablePages(
