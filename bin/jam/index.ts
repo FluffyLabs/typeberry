@@ -55,20 +55,34 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     process.exit(1);
   }
 
-  const jamNodeConfig = prepareConfigFile(args);
-
-  const running =
-    args.command === Command.FuzzTarget
-      ? mainFuzz({ jamNodeConfig }, withRelPath)
-      : main(jamNodeConfig, withRelPath).then((api) => {
-          if (args.command === Command.Import) {
-            return importBlocks(api, args.args.files);
-          }
-          return null;
-        });
+  const running = startNode(args, withRelPath);
 
   running.catch((e) => {
     console.error(`${e}`);
     process.exit(-1);
   });
+}
+
+async function startNode(args: Arguments, withRelPath: (p: string) => string) {
+  const jamNodeConfig = prepareConfigFile(args);
+  // Start fuzz-target
+  if (args.command === Command.FuzzTarget) {
+    return mainFuzz({ jamNodeConfig }, withRelPath);
+  }
+
+  // Just import a bunch of blocks
+  if (args.command === Command.Import) {
+    const node = await main(
+      {
+        ...jamNodeConfig,
+        // disable networking for import, since we close right after.
+        network: null,
+      },
+      withRelPath,
+    );
+    return await importBlocks(node, args.args.files);
+  }
+
+  // Run regular node.
+  return main(jamNodeConfig, withRelPath);
 }
