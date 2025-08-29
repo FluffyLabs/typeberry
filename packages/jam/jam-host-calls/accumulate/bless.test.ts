@@ -14,7 +14,7 @@ import { MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import { type PerCore, PrivilegedServices, codecPerCore, tryAsPerCore } from "@typeberry/state";
 import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
-import { UpdatePrivilegeError } from "../externalities/partial-state.js";
+import { UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { Bless } from "./bless.js";
 
@@ -183,7 +183,7 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
 
     it("should return HUH when service is unprivileged", async () => {
       const accumulate = new PartialStateMock();
-      accumulate.privilegedServicesResponse = Result.error(UpdatePrivilegeError.UnprivilegedService);
+      accumulate.privilegedServicesResponse = Result.error(UpdatePrivilegesError.UnprivilegedService);
       const serviceId = tryAsServiceId(11_000);
       const bless = new Bless(serviceId, accumulate, tinyChainSpec);
       const entries = prepareServiceGasEntires();
@@ -199,9 +199,9 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       assert.deepStrictEqual(accumulate.privilegedServices, []);
     });
 
-    it("should return WHO if given manager are invalid", async () => {
+    it("should return WHO if given manager is invalid", async () => {
       const accumulate = new PartialStateMock();
-      accumulate.privilegedServicesResponse = Result.error(UpdatePrivilegeError.InvalidServiceId);
+      accumulate.privilegedServicesResponse = Result.error(UpdatePrivilegesError.InvalidServiceId);
       const serviceId = tryAsServiceId(11_000);
       const bless = new Bless(serviceId, accumulate, tinyChainSpec);
       const entries = prepareServiceGasEntires();
@@ -217,9 +217,9 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       assert.deepStrictEqual(accumulate.privilegedServices, []);
     });
 
-    it("should return WHO if given validator are invalid", async () => {
+    it("should return WHO if given validator is invalid", async () => {
       const accumulate = new PartialStateMock();
-      accumulate.privilegedServicesResponse = Result.error(UpdatePrivilegeError.InvalidServiceId);
+      accumulate.privilegedServicesResponse = Result.error(UpdatePrivilegesError.InvalidServiceId);
       const serviceId = tryAsServiceId(11_000);
       const bless = new Bless(serviceId, accumulate, tinyChainSpec);
       const entries = prepareServiceGasEntires();

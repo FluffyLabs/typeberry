@@ -828,28 +828,55 @@ describe("PartialState.upgradeService", () => {
 });
 
 describe("PartialState.updateAuthorizationQueue", () => {
-  it("should update the authorization queue for a given core index", () => {
-    const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+  if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+    // TODO [MaSo] Make tests
+    it("should update the authorization queue for a given core index", () => {
+      const state = partiallyUpdatedState();
+      const partialState = new AccumulateExternalities(
+        tinyChainSpec,
+        state,
+        tryAsServiceId(0),
+        tryAsServiceId(10),
+        tryAsTimeSlot(16),
+      );
 
-    const coreIndex = tryAsCoreIndex(0);
-    const queue = FixedSizeArray.new(
-      Array.from({ length: AUTHORIZATION_QUEUE_SIZE }, () => Bytes.fill(HASH_SIZE, 0xee).asOpaque()),
-      AUTHORIZATION_QUEUE_SIZE,
-    );
+      const coreIndex = tryAsCoreIndex(0);
+      const queue = FixedSizeArray.new(
+        Array.from({ length: AUTHORIZATION_QUEUE_SIZE }, () => Bytes.fill(HASH_SIZE, 0xee).asOpaque()),
+        AUTHORIZATION_QUEUE_SIZE,
+      );
 
-    // when
-    partialState.updateAuthorizationQueue(coreIndex, queue);
+      // when
+      partialState.updateAuthorizationQueue(coreIndex, queue, null);
 
-    // then
-    assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), queue);
-  });
+      // then
+      assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), queue);
+    });
+  } else {
+    it("should update the authorization queue for a given core index", () => {
+      const state = partiallyUpdatedState();
+      const partialState = new AccumulateExternalities(
+        tinyChainSpec,
+        state,
+        tryAsServiceId(0),
+        tryAsServiceId(10),
+        tryAsTimeSlot(16),
+      );
+
+      const coreIndex = tryAsCoreIndex(0);
+      const queue = FixedSizeArray.new(
+        Array.from({ length: AUTHORIZATION_QUEUE_SIZE }, () => Bytes.fill(HASH_SIZE, 0xee).asOpaque()),
+        AUTHORIZATION_QUEUE_SIZE,
+      );
+
+      // when
+      // NOTE It's ok to add `null` as a last parameter here, because in pre067 this value is unused.
+      partialState.updateAuthorizationQueue(coreIndex, queue, null);
+
+      // then
+      assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), queue);
+    });
+  }
 });
 
 describe("PartialState.updatePrivilegedServices", () => {

@@ -8,10 +8,9 @@ import type { HostCallHandler, IHostCallMemory } from "@typeberry/pvm-host-calls
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import type { IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { assertNever, Compatibility, GpVersion } from "@typeberry/utils";
-import { UpdatePrivilegesError, type PartialState } from "../externalities/partial-state.js";
+import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
+import { type PartialState, UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
-import { PrivilegedServices } from "@typeberry/state";
 import { getServiceId } from "../utils.js";
 
 const IN_OUT_REG = 7;
@@ -20,9 +19,6 @@ const IN_OUT_REG = 7;
  * Assign new fixed-length authorization queue to some core.
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/360d01360d01?v=0.6.7
- *
- * TODO [MaSo] Update assign, check privileges
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/369101369101?v=0.6.7
  */
 export class Assign implements HostCallHandler {
   index = tryAsHostCallIndex(
@@ -73,7 +69,11 @@ export class Assign implements HostCallHandler {
 
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       // NOTE [MaSo] its safe to cast to Number because we know that the coreIndex is less than cores count = 341
-      const result = this.partialState.updateAuthorizationQueue(tryAsCoreIndex(Number(coreIndex)), fixedSizeAuthQueue, authManager);
+      const result = this.partialState.updateAuthorizationQueue(
+        tryAsCoreIndex(Number(coreIndex)),
+        fixedSizeAuthQueue,
+        authManager,
+      );
       if (result.isOk) {
         regs.set(IN_OUT_REG, HostCallResult.OK);
         return;
