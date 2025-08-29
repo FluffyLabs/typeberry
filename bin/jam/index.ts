@@ -3,13 +3,12 @@ import { loadConfig } from "@typeberry/config-node";
 import { deriveEd25519SecretKey } from "@typeberry/crypto/key-derivation.js";
 import { blake2b } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
-import { JamConfig, main, mainFuzz } from "@typeberry/node";
+import { JamConfig, importBlocks, main, mainFuzz } from "@typeberry/node";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 
 export * from "./args.js";
 
 export const prepareConfigFile = (args: Arguments): JamConfig => {
-  const blocksToImport = args.command === Command.Import ? args.args.files : null;
   const nodeConfig = loadConfig(args.args.configPath);
   const nodeName = args.command === Command.Dev ? `${args.args.nodeName}-${args.args.index}` : args.args.nodeName;
 
@@ -26,7 +25,6 @@ export const prepareConfigFile = (args: Arguments): JamConfig => {
   return JamConfig.new({
     isAuthoring: args.command === Command.Dev,
     nodeName,
-    blocksToImport,
     nodeConfig,
     networkConfig: {
       key: networkingKey,
@@ -57,10 +55,17 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     process.exit(1);
   }
 
+  const jamNodeConfig = prepareConfigFile(args);
+
   const running =
     args.command === Command.FuzzTarget
-      ? mainFuzz({ jamNodeConfig: prepareConfigFile(args) }, withRelPath)
-      : main(prepareConfigFile(args), withRelPath);
+      ? mainFuzz({ jamNodeConfig }, withRelPath)
+      : main(jamNodeConfig, withRelPath).then((api) => {
+          if (args.command === Command.Import) {
+            return importBlocks(api, args.args.files);
+          }
+          return null;
+        });
 
   running.catch((e) => {
     console.error(`${e}`);

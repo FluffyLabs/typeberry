@@ -87,13 +87,13 @@ export class MessageChannelStateMachine<
   // [`TypedChannel`] API.
 
   /** Send a signal to the other thread. */
-  sendSignal(name: string, data: unknown) {
-    this.port.sendSignal(this.currentState().stateName, name, data);
+  sendSignal(name: string, data: unknown, transferList?: Transferable[]) {
+    this.port.sendSignal(this.currentState().stateName, name, data, transferList);
   }
 
   /** Send a request to the other thread. */
-  async sendRequest<TRes>(name: string, data: unknown): Promise<TRes> {
-    return this.port.sendRequest(this.currentState().stateName, name, data);
+  async sendRequest<TRes>(name: string, data: unknown, transferList?: Transferable[]): Promise<TRes> {
+    return this.port.sendRequest(this.currentState().stateName, name, data, transferList);
   }
 
   /** Close the communication channel. */

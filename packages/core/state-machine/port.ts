@@ -93,16 +93,18 @@ export class TypedPort {
   /**
    * Send a response given the worker that has previously requested something.
    */
-  respond(localState: string, request: Message, data: unknown) {
+  respond(localState: string, request: Message, data: unknown, transferList?: Transferable[]) {
     check(request.kind === "request");
-    // TODO [ToDr] transfer list is missing!
-    this.postMessage({
-      kind: "response",
-      id: request.id,
-      name: request.name,
-      data,
-      localState,
-    });
+    this.postMessage(
+      {
+        kind: "response",
+        id: request.id,
+        name: request.name,
+        data,
+        localState,
+      },
+      transferList,
+    );
   }
 
   /**

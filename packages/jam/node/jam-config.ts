@@ -15,7 +15,6 @@ export const DEFAULT_DEV_CONFIG = {
 export class JamConfig {
   static new({
     isAuthoring,
-    blocksToImport,
     nodeName,
     nodeConfig,
     devConfig,
@@ -23,7 +22,6 @@ export class JamConfig {
     networkConfig,
   }: {
     isAuthoring?: boolean;
-    blocksToImport?: string[] | null;
     nodeName: string;
     nodeConfig: NodeConfiguration;
     devConfig?: DevConfig;
@@ -36,21 +34,12 @@ export class JamConfig {
       fullConfig = { ...fullConfig, ...seedConfig };
     }
 
-    return new JamConfig(
-      isAuthoring ?? false,
-      blocksToImport ?? null,
-      nodeName,
-      nodeConfig,
-      fullConfig,
-      networkConfig ?? null,
-    );
+    return new JamConfig(isAuthoring ?? false, nodeName, nodeConfig, fullConfig, networkConfig ?? null);
   }
 
   private constructor(
     /** Whether we should be authoring blocks. */
     public readonly isAuthoring: boolean,
-    /** Paths to JSON or binary blocks to import (ordered). */
-    public readonly blocksToImport: string[] | null,
     /** Node name. */
     public readonly nodeName: string,
     /** Node starting configuration. */

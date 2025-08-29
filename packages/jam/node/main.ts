@@ -14,9 +14,9 @@ import { getChainSpec, initializeDatabase, logger, openDatabase } from "./common
 import { initializeExtensions } from "./extensions.js";
 import type { JamConfig, NetworkConfig } from "./jam-config.js";
 import { startNetwork } from "./network.js";
-import { startBlocksReader } from "./reader.js";
 
 export type NodeApi = {
+  chainSpec: ChainSpec;
   getStateEntries(hash: HeaderHash): Promise<StateEntries | null>;
   importBlock(block: BlockView): Promise<StateRootHash | null>;
   getBestStateRootHash(): Promise<StateRootHash>;
@@ -51,33 +51,17 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
     return state.sendConfig(port, workerConfig);
   });
 
-  // TODO [ToDr] This should be outside of the node and should just use NodeApi to import
-  // the blocks.
-  //
-  // Initialize block reader and wait for it to finish
-  const blocksReader = initBlocksReader(importerReady, chainSpec, config.blocksToImport);
-
   // Authorship initialization.
   // 1. load validator keys (bandersnatch, ed25519, bls)
   // 2. allow the validator to specify metadata.
   // 3. if we have validator keys, we should start the authorship module.
-  const closeAuthorship = await initAuthorship(
-    importerReady,
-    config.isAuthoring && config.blocksToImport === null,
-    workerConfig,
-  );
+  const closeAuthorship = await initAuthorship(importerReady, config.isAuthoring, workerConfig);
 
   // Networking initialization
-  const closeNetwork = await initNetwork(
-    importerReady,
-    workerConfig,
-    genesisHeaderHash,
-    config.network,
-    config.blocksToImport === null,
-    bestHeader,
-  );
+  const closeNetwork = await initNetwork(importerReady, workerConfig, genesisHeaderHash, config.network, bestHeader);
 
-  return {
+  const api: NodeApi = {
+    chainSpec,
     async importBlock(block: BlockView) {
       return await importerReady.execute(async (importer, port) => {
         return importer.importBlock(port, block.encoded().raw);
@@ -97,15 +81,13 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
       importerReady.transition<Finished>((importer, port) => {
         return importer.finish(port);
       });
-      return await (await this).waitForFinish();
+      return await this.waitForFinish();
     },
     async waitForFinish() {
-      logger.info("[main]⌛ waiting for importer to finish");
-      const importerDone = await blocksReader;
+      logger.log("[main]⌛ waiting for importer to finish");
+      await importerReady.waitForState("finished");
       logger.log("[main] ☠️  Closing the extensions");
       closeExtensions();
-      logger.log("[main]⌛ waiting for tasks to finish");
-      await importerDone.currentState().waitForWorkerToFinish();
       logger.log("[main] ☠️  Closing the authorship module");
       closeAuthorship();
       logger.log("[main] ☠️  Closing the networking module");
@@ -115,6 +97,8 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
       logger.info("[main] ✅ Done.");
     },
   };
+
+  return api;
 }
 
 type ImporterReady = MessageChannelStateMachine<MainReady, Finished | MainReady | MainInit<MainReady>>;
@@ -138,41 +122,15 @@ const initAuthorship = async (importerReady: ImporterReady, isAuthoring: boolean
   return finish;
 };
 
-const initBlocksReader = async (
-  importerReady: ImporterReady,
-  chainSpec: ChainSpec,
-  blocksToImport: string[] | null,
-) => {
-  if (blocksToImport === null) {
-    return importerReady.waitForState<Finished>("finished");
-  }
-
-  logger.info(`📖 Reading ${blocksToImport.length} blocks`);
-  return importerReady.transition<Finished>((importer, port) => {
-    const reader = startBlocksReader({
-      files: blocksToImport,
-      chainSpec,
-    });
-    for (const block of reader) {
-      logger.log(`📖 Importing block: #${block.header.view().timeSlotIndex.materialize()}`);
-      importer.sendBlock(port, block.encoded().raw);
-    }
-    // close the importer.
-    logger.info("All blocks scheduled to be imported.");
-    return importer.finish(port);
-  });
-};
-
 const initNetwork = async (
   importerReady: ImporterReady,
   workerConfig: WorkerConfig,
   genesisHeaderHash: HeaderHash,
   networkConfig: NetworkConfig | null,
-  shouldStartNetwork: boolean,
   bestHeader: Listener<WithHash<HeaderHash, HeaderView>>,
 ) => {
-  if (!shouldStartNetwork || networkConfig === null) {
-    logger.log(`🛜 Networking off: ${networkConfig === null ? "no config" : "disabled"}`);
+  if (networkConfig === null) {
+    logger.log("🛜 Networking off: no config");
     return () => Promise.resolve();
   }
 
