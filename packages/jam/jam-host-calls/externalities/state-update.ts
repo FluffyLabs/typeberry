@@ -156,14 +156,14 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     return maybeService.getInfo();
   }
 
-  getStorage(serviceId: ServiceId, key: StorageKey): BytesBlob | null {
-    const item = this.stateUpdate.services.storage.find((x) => x.serviceId === serviceId && x.key.isEqualTo(key));
+  getStorage(serviceId: ServiceId, rawKey: StorageKey): BytesBlob | null {
+    const item = this.stateUpdate.services.storage.find((x) => x.serviceId === serviceId && x.key.isEqualTo(rawKey));
     if (item !== undefined) {
       return item.value;
     }
 
     const service = this.state.getService(serviceId);
-    return service?.getStorage(key) ?? null;
+    return service?.getStorage(rawKey) ?? null;
   }
 
   /**

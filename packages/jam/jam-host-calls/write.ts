@@ -1,13 +1,13 @@
 import type { ServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import { type Blake2bHash, blake2b } from "@typeberry/hash";
-import { type U64, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { Compatibility, GpVersion, type Result } from "@typeberry/utils";
+import type { StorageKey } from "@typeberry/state";
+import { Compatibility, GpVersion, type Result, asOpaqueType } from "@typeberry/utils";
 import { HostCallResult } from "./results.js";
-import { SERVICE_ID_BYTES, clampU64ToU32, writeServiceIdAsLeBytes } from "./utils.js";
+import { clampU64ToU32 } from "./utils.js";
 
 /** Account data interface for write host calls. */
 export interface AccountsWrite {
@@ -20,7 +20,7 @@ export interface AccountsWrite {
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/331002331402?v=0.6.6
    */
-  write(hash: Blake2bHash, storageKeyLength: U64, data: BytesBlob | null): Result<number | null, "full">;
+  write(rawKey: BytesBlob, data: BytesBlob | null): Result<number | null, "full">;
 }
 
 const IN_OUT_REG = 7;
@@ -29,8 +29,6 @@ const IN_OUT_REG = 7;
  * Write account storage.
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/334901334901?v=0.6.7
- *
- * TODO [MaSo] Update storage key extraction https://graypaper.fluffylabs.dev/#/7e6ff6a/337c01337c01?v=0.6.7
  */
 export class Write implements HostCallHandler {
   index = tryAsHostCallIndex(
@@ -65,16 +63,14 @@ export class Write implements HostCallHandler {
 
     const storageKeyLengthClamped = clampU64ToU32(storageKeyLength);
 
-    // allocate extra bytes for the serviceId
-    const serviceIdStorageKey = new Uint8Array(SERVICE_ID_BYTES + storageKeyLengthClamped);
-    writeServiceIdAsLeBytes(this.currentServiceId, serviceIdStorageKey);
-    const keyLoadingResult = memory.loadInto(serviceIdStorageKey.subarray(SERVICE_ID_BYTES), storageKeyStartAddress);
+    const rawStorageKey = new Uint8Array(storageKeyLengthClamped);
+    const keyLoadingResult = memory.loadInto(rawStorageKey, storageKeyStartAddress);
     if (keyLoadingResult.isError) {
       return PvmExecution.Panic;
     }
 
     // k
-    const storageKey = blake2b.hashBytes(serviceIdStorageKey);
+    const storageKey: StorageKey = asOpaqueType(BytesBlob.blobFrom(rawStorageKey));
 
     const valueLengthClamped = clampU64ToU32(valueLength);
     const value = new Uint8Array(valueLengthClamped);
@@ -88,7 +84,7 @@ export class Write implements HostCallHandler {
     const maybeValue = valueLength === 0n ? null : BytesBlob.blobFrom(value);
 
     // a
-    const result = this.account.write(storageKey, storageKeyLength, maybeValue);
+    const result = this.account.write(storageKey, maybeValue);
     if (result.isError) {
       regs.set(IN_OUT_REG, HostCallResult.FULL);
       return;
