@@ -8,6 +8,10 @@ import { type CommonArguments, HELP, type RequiredFlag, parseArgs, requiredSeedF
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 const withRelPath = (v: string) => `../../${v}`;
 
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main(process.argv.slice(2));
+}
+
 /**
  * JAM Node entry w/ common command lines arguments
  * understood by all JAM nodes implementations
@@ -77,8 +81,4 @@ export function createJamConfig(argv: CommonArguments): node.JamConfig {
   }
 
   return node.JamConfig.new({ nodeName: NODE_DEFAULTS.name, nodeConfig, devConfig, seedConfig });
-}
-
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main(process.argv.slice(2));
 }

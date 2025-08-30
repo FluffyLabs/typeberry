@@ -14,7 +14,6 @@ import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 
 import { HashSet } from "@typeberry/collections";
 import { KeccakHasher } from "@typeberry/hash/keccak.js";
-import { AccumulateExternalities } from "@typeberry/jam-host-calls/externalities/accumulate-externalities.js";
 import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import {
   AccumulationStateUpdate,
@@ -37,6 +36,7 @@ import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 import { generateNextServiceId, getWorkPackageHashes } from "./accumulate-utils.js";
 import { Operand, Operand_0_6_4 } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
+import {AccumulateExternalities} from "../externalities/accumulate-externalities.js";
 
 export type AccumulateRoot = OpaqueHash;
 

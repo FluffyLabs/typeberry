@@ -1,7 +1,6 @@
 import { type EntropyHash, type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
 import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { AccumulateExternalities } from "@typeberry/jam-host-calls/externalities/accumulate-externalities.js";
 import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import {
   AccumulationStateUpdate,
@@ -16,6 +15,7 @@ import { FetchExternalities } from "../externalities/fetch-externalities.js";
 import type { CountAndGasUsed } from "../statistics.js";
 import { uniquePreserveOrder } from "./accumulate-utils.js";
 import { PvmExecutor } from "./pvm-executor.js";
+import {AccumulateExternalities} from "../externalities/accumulate-externalities.js";
 
 type DeferredTransfersInput = {
   pendingTransfers: PendingTransfer[];

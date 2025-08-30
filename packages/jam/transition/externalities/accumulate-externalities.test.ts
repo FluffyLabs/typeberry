@@ -38,7 +38,6 @@ import {
 } from "@typeberry/state";
 import { testState } from "@typeberry/state/test.utils.js";
 import { Compatibility, GpVersion, OK, Result, deepEqual, ensure } from "@typeberry/utils";
-import { writeServiceIdAsLeBytes } from "../utils.js";
 import { AccumulateExternalities } from "./accumulate-externalities.js";
 import {
   EjectError,
@@ -49,9 +48,10 @@ import {
   RequestPreimageError,
   TRANSFER_MEMO_BYTES,
   TransferError,
-} from "./partial-state.js";
-import { PendingTransfer } from "./pending-transfer.js";
-import { PartiallyUpdatedState } from "./state-update.js";
+  writeServiceIdAsLeBytes,
+  PendingTransfer,
+  PartiallyUpdatedState
+} from "@typeberry/jam-host-calls";
 
 function partiallyUpdatedState() {
   return new PartiallyUpdatedState(testState());
