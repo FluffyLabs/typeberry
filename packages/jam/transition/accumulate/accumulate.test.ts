@@ -227,7 +227,7 @@ const createService = (serviceId: ServiceId, hash: OpaqueHash, blob: BytesBlob, 
     }),
     lookupHistory: HashDictionary.new(),
     preimages,
-    storage: HashDictionary.new(),
+    storage: new Map(),
   });
 };
 

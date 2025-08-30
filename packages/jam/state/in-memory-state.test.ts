@@ -6,13 +6,14 @@ import { HashDictionary } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { Compatibility, GpVersion, OK, Result, deepEqual } from "@typeberry/utils";
+import { Compatibility, GpVersion, OK, Result, asOpaqueType, deepEqual } from "@typeberry/utils";
 import { InMemoryState, UpdateError } from "./in-memory-state.js";
 import {
   LookupHistoryItem,
   PreimageItem,
   ServiceAccountInfo,
   StorageItem,
+  type StorageKey,
   tryAsLookupHistorySlots,
 } from "./service.js";
 import { UpdatePreimage, UpdateServiceKind, UpdateStorage } from "./state-update.js";
@@ -76,7 +77,7 @@ describe("InMemoryState", () => {
       assert.fail("Service not created!");
     }
     assert.deepEqual(service.data.info, accountInfo);
-    assert.deepEqual(service.data.storage, HashDictionary.new());
+    assert.deepEqual(service.data.storage, new Map());
     assert.deepEqual(service.data.preimages, HashDictionary.new());
     assert.deepEqual(service.data.lookupHistory, HashDictionary.new());
   });
@@ -157,11 +158,11 @@ describe("InMemoryState", () => {
     });
 
     assert.deepEqual(result, Result.ok(OK));
-
     // Now set storage
-    const key = Bytes.fill(1, HASH_SIZE).asOpaque();
+    const key: StorageKey = asOpaqueType(Bytes.fill(1, HASH_SIZE));
     const value = BytesBlob.blobFromString("hello");
     const item = StorageItem.create({ key, value });
+    const expectedItem = StorageItem.create({ key, value });
 
     result = state.applyUpdate({
       storage: [
@@ -179,8 +180,8 @@ describe("InMemoryState", () => {
       assert.fail("Service not found after update.");
     }
 
-    const actual = service.data.storage.get(key);
-    assert.deepEqual(actual, item);
+    const actual = service.data.storage.get(key.toString());
+    assert.deepEqual(actual, expectedItem);
   });
 
   it("should fail to update storage of non-existing service", () => {
