@@ -1,11 +1,11 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type ServiceId, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import { tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
-import { tryAsU32, tryAsU64, u32AsLeBytes } from "@typeberry/numbers";
+import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { Compatibility, GpVersion, OK, Result, asOpaqueType, deepEqual } from "@typeberry/utils";
 import { InMemoryState, UpdateError } from "./in-memory-state.js";
 import {
@@ -158,19 +158,11 @@ describe("InMemoryState", () => {
     });
 
     assert.deepEqual(result, Result.ok(OK));
-    const getLegacyStorageKey = (serviceId: ServiceId, rawKey: StorageKey): StorageKey => {
-      const SERVICE_ID_BYTES = 4;
-      const serviceIdAndKey = new Uint8Array(SERVICE_ID_BYTES + rawKey.length);
-      serviceIdAndKey.set(u32AsLeBytes(serviceId));
-      serviceIdAndKey.set(rawKey.raw, SERVICE_ID_BYTES);
-      return asOpaqueType(BytesBlob.blobFrom(blake2b.hashBytes(serviceIdAndKey).raw));
-    };
     // Now set storage
-    const rawKey: StorageKey = asOpaqueType(Bytes.fill(1, HASH_SIZE));
-    const key = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? rawKey : getLegacyStorageKey(serviceId, rawKey);
+    const key: StorageKey = asOpaqueType(Bytes.fill(1, HASH_SIZE));
     const value = BytesBlob.blobFromString("hello");
-    const item = StorageItem.create({ key: rawKey, value });
-    const expectedItem = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? item : StorageItem.create({ key, value });
+    const item = StorageItem.create({ key, value });
+    const expectedItem = StorageItem.create({ key, value });
 
     result = state.applyUpdate({
       storage: [
