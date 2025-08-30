@@ -22,7 +22,7 @@ import {
   StorageItem,
   type StorageKey,
 } from "@typeberry/state";
-import { asOpaqueType, Compatibility, GpVersion } from "@typeberry/utils";
+import { Compatibility, GpVersion, asOpaqueType } from "@typeberry/utils";
 
 class JsonServiceInfoPre067 {
   static fromJson = json.object<JsonServiceInfoPre067, ServiceAccountInfo>(

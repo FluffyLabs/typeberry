@@ -1,5 +1,6 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
+import { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { LeafDb, StateUpdateError, type StatesDb } from "@typeberry/database";
 import type { ServicesUpdate, State } from "@typeberry/state";
@@ -93,20 +94,24 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     trie: InMemoryTrie,
     data: Iterable<[StateEntryUpdateAction, StateKey, BytesBlob]>,
   ): Promise<Result<OK, StateUpdateError>> {
-    // We will collect all values that don't fit directly into leaf nodes.
-    const values: [ValueHash, BytesBlob][] = [];
-    // add all new data to the trie and take care of the values that didn't fit into leaves.
+    const leafData = HashDictionary.new<StateKey, BytesBlob>();
     for (const [action, key, value] of data) {
       if (action === StateEntryUpdateAction.Insert) {
-        const leaf = trie.set(key.asOpaque(), value);
-        if (!leaf.hasEmbeddedValue()) {
-          values.push([leaf.getValueHash(), value]);
-        }
+        leafData.set(key, value);
       } else if (action === StateEntryUpdateAction.Remove) {
-        trie.remove(key.asOpaque());
+        leafData.delete(key);
         // TODO [ToDr] Handle ref-counting values or updating some header-hash-based references.
       } else {
         assertNever(action);
+      }
+    }
+    // We will collect all values that don't fit directly into leaf nodes.
+    const values: [ValueHash, BytesBlob][] = [];
+    // add all new data to the trie and take care of the values that didn't fit into leaves.
+    for (const [key, value] of leafData) {
+      const leaf = trie.set(key.asOpaque(), value);
+      if (!leaf.hasEmbeddedValue()) {
+        values.push([leaf.getValueHash(), value]);
       }
     }
     const stateLeafs = BytesBlob.blobFromParts(Array.from(trie.nodes.leaves()).map((x) => x.node.raw));

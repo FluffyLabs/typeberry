@@ -2,8 +2,8 @@ export enum GpVersion {
   V0_6_5 = "0.6.5",
   V0_6_6 = "0.6.6",
   V0_6_7 = "0.6.7",
-  V0_7_0 = "0.7.0",
-  V0_7_1 = "0.7.1",
+  V0_7_0 = "0.7.0-preview",
+  V0_7_1 = "0.7.1-preview",
 }
 
 export enum TestSuite {
