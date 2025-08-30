@@ -11,11 +11,11 @@ import { sumU64, tryAsU32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { ServiceAccountInfo, type ServicesUpdate, type State } from "@typeberry/state";
 import { Compatibility, GpVersion, Result, check } from "@typeberry/utils";
+import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/fetch-externalities.js";
 import type { CountAndGasUsed } from "../statistics.js";
 import { uniquePreserveOrder } from "./accumulate-utils.js";
 import { PvmExecutor } from "./pvm-executor.js";
-import {AccumulateExternalities} from "../externalities/accumulate-externalities.js";
 
 type DeferredTransfersInput = {
   pendingTransfers: PendingTransfer[];

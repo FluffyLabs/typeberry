@@ -6,6 +6,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { Compatibility, GpVersion, type Result } from "@typeberry/utils";
+import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { SERVICE_ID_BYTES, clampU64ToU32, writeServiceIdAsLeBytes } from "./utils.js";
 
@@ -89,6 +90,9 @@ export class Write implements HostCallHandler {
 
     // a
     const result = this.account.write(storageKey, storageKeyLength, maybeValue);
+
+    logger.trace(`WRITE(${storageKey}, ${storageKeyLength}, ${maybeValue}) <- ${result}`);
+
     if (result.isError) {
       regs.set(IN_OUT_REG, HostCallResult.FULL);
       return;

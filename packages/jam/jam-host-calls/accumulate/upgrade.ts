@@ -6,6 +6,7 @@ import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 
 const IN_OUT_REG = 7; // `o`
@@ -54,6 +55,7 @@ export class Upgrade implements HostCallHandler {
     }
 
     this.partialState.upgradeService(codeHash.asOpaque(), gas, allowance);
+    logger.trace(`UPGRADE(${codeHash}, ${gas}, ${allowance})`);
 
     regs.set(IN_OUT_REG, HostCallResult.OK);
   }

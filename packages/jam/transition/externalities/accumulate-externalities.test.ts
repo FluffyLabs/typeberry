@@ -16,6 +16,19 @@ import { FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collecti
 import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
+import {
+  EjectError,
+  ForgetPreimageError,
+  NewServiceError,
+  PartiallyUpdatedState,
+  PendingTransfer,
+  PreimageStatusKind,
+  ProvidePreimageError,
+  RequestPreimageError,
+  TRANSFER_MEMO_BYTES,
+  TransferError,
+  writeServiceIdAsLeBytes,
+} from "@typeberry/jam-host-calls";
 import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AutoAccumulate,
@@ -39,19 +52,6 @@ import {
 import { testState } from "@typeberry/state/test.utils.js";
 import { Compatibility, GpVersion, OK, Result, deepEqual, ensure } from "@typeberry/utils";
 import { AccumulateExternalities } from "./accumulate-externalities.js";
-import {
-  EjectError,
-  ForgetPreimageError,
-  NewServiceError,
-  PreimageStatusKind,
-  ProvidePreimageError,
-  RequestPreimageError,
-  TRANSFER_MEMO_BYTES,
-  TransferError,
-  writeServiceIdAsLeBytes,
-  PendingTransfer,
-  PartiallyUpdatedState
-} from "@typeberry/jam-host-calls";
 
 function partiallyUpdatedState() {
   return new PartiallyUpdatedState(testState());

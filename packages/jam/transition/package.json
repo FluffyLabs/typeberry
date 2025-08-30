@@ -16,6 +16,7 @@
     "@typeberry/logger": "0.0.1",
     "@typeberry/mmr": "0.0.1",
     "@typeberry/numbers": "0.0.1",
+    "@typeberry/jam-host-calls": "0.0.1",
     "@typeberry/pvm-host-calls": "0.0.1",
     "@typeberry/pvm-interpreter": "0.0.1",
     "@typeberry/pvm-program": "0.0.1",

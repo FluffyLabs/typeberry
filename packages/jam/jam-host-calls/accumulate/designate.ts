@@ -7,6 +7,7 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.j
 import { ValidatorData } from "@typeberry/state";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 
 const IN_OUT_REG = 7;
@@ -58,5 +59,6 @@ export class Designate implements HostCallHandler {
 
     regs.set(IN_OUT_REG, HostCallResult.OK);
     this.partialState.updateValidatorsData(tryAsPerValidator(validatorsData, this.chainSpec));
+    logger.trace(`DESIGNATE(${validatorsData})`);
   }
 }

@@ -12,8 +12,8 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { Compatibility, GpVersion } from "@typeberry/utils";
+import { TestAccounts } from "./externalities/test-accounts.js";
 import { HostCallResult } from "./results.js";
-import { TestAccounts } from "./test-accounts.js";
 import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils.js";
 import { Write } from "./write.js";
 

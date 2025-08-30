@@ -8,6 +8,7 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { tryAsPerCore } from "@typeberry/state";
 import { Compatibility, GpVersion, asOpaqueType } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 import { getServiceId } from "../utils.js";
 
@@ -95,12 +96,9 @@ export class Bless implements HostCallHandler {
     }
 
     // TODO: [MaSo] need to be updated properly to gp ^0.6.7
-    this.partialState.updatePrivilegedServices(
-      manager,
-      tryAsPerCore(new Array(this.chainSpec.coresCount).fill(authorization), this.chainSpec),
-      validator,
-      autoAccumulateEntries,
-    );
+    const authorizer = tryAsPerCore(new Array(this.chainSpec.coresCount).fill(authorization), this.chainSpec);
+    this.partialState.updatePrivilegedServices(manager, authorizer, validator, autoAccumulateEntries);
+    logger.trace(`BLESS(${manager}, ${authorizer}, ${validator}, ${autoAccumulateEntries})`);
     regs.set(IN_OUT_REG, HostCallResult.OK);
   }
 }

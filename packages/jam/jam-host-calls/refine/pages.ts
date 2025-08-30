@@ -6,13 +6,14 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
+import { Compatibility, GpVersion, assertNever, resultToString } from "@typeberry/utils";
 import {
   PagesError,
   type RefineExternalities,
   toMemoryOperation,
   tryAsMachineId,
 } from "../externalities/refine-externalities.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID } from "../utils.js";
 
@@ -50,6 +51,9 @@ export class Pages implements HostCallHandler {
     const requestType = toMemoryOperation(regs.get(10));
 
     const pagesResult = await this.refine.machinePages(machineIndex, pageStart, pageCount, requestType);
+    logger.trace(
+      `PAGES(${machineIndex}, ${pageStart}, ${pageCount}, ${requestType}) <- ${resultToString(pagesResult)}`,
+    );
 
     if (pagesResult.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);
