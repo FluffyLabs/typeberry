@@ -275,7 +275,7 @@ export const testState = (): InMemoryState => {
               ),
             ].map((x) => [x.hash, [x]]),
           ),
-          storage: HashDictionary.new(),
+          storage: new Map(),
         }),
       ],
     ]),

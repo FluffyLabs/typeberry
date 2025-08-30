@@ -868,7 +868,7 @@ describe("PartialState.transfer", () => {
         }),
         preimages: HashDictionary.new(),
         lookupHistory: HashDictionary.new(),
-        storage: HashDictionary.new(),
+        storage: new Map(),
       }),
     );
     return {
@@ -1057,7 +1057,7 @@ describe("PartialState.providePreimage", () => {
       }),
       preimages: self ? HashDictionary.new() : preimages,
       lookupHistory: self ? HashDictionary.new() : lookupHistory,
-      storage: HashDictionary.new(),
+      storage: new Map(),
     });
     state.state.services.set(secondService.serviceId, secondService);
 
@@ -1361,7 +1361,7 @@ describe("PartialState.eject", () => {
       }),
       preimages,
       lookupHistory,
-      storage: HashDictionary.new(),
+      storage: new Map(),
     });
 
     stateUpdate.services.set(destinationId, destinationService);
@@ -1636,12 +1636,12 @@ describe("AccumulateServiceExternalities", () => {
       preimages,
       info,
     }: {
-      storage?: HashDictionary<StorageKey, StorageItem>;
+      storage?: Map<string, StorageItem>;
       preimages?: HashDictionary<PreimageHash, PreimageItem>;
       info?: Partial<ServiceAccountInfo>;
     } = {},
   ) => {
-    const initialStorage = storage ?? HashDictionary.new();
+    const initialStorage = storage ?? new Map();
     const storageUtilisationBytes = Array.from(initialStorage.values()).reduce(
       (sum, item) => sum + (item?.value.length ?? 0),
       0,
@@ -1873,10 +1873,16 @@ describe("AccumulateServiceExternalities", () => {
     it("should correctly read from storage", () => {
       const currentServiceId = tryAsServiceId(10_000);
       const serviceId = tryAsServiceId(33);
-      const key = Bytes.fill(HASH_SIZE, 1).asOpaque();
-      const initialStorage = HashDictionary.new<StorageKey, StorageItem>();
+      const key: StorageKey = Bytes.fill(HASH_SIZE, 1).asOpaque();
+      const initialStorage = new Map<string, StorageItem>();
       const value = BytesBlob.empty();
-      initialStorage.set(key, StorageItem.create({ key, value }));
+      initialStorage.set(
+        key.toString(),
+        StorageItem.create({
+          key,
+          value,
+        }),
+      );
       const service = prepareService(serviceId, { storage: initialStorage });
       const state = prepareState([prepareService(currentServiceId), service]);
 
@@ -1889,7 +1895,6 @@ describe("AccumulateServiceExternalities", () => {
       );
 
       const result = accumulateServiceExternalities.read(serviceId, key);
-
       assert.strictEqual(result, value);
     });
 
@@ -1908,18 +1913,18 @@ describe("AccumulateServiceExternalities", () => {
 
       assert.strictEqual(state.stateUpdate.services.storage.length, 0);
 
-      accumulateServiceExternalities.write(hash, tryAsU64(1), blob);
+      accumulateServiceExternalities.write(hash, blob);
 
       assert.strictEqual(state.stateUpdate.services.storage.length, 1);
     });
 
     it("should return new value if there was a write", () => {
       const currentServiceId = tryAsServiceId(10_000);
-      const key = Bytes.fill(HASH_SIZE, 2).asOpaque();
-      const initialStorage = HashDictionary.new<StorageKey, StorageItem>();
+      const key: StorageKey = Bytes.fill(HASH_SIZE, 2).asOpaque();
+      const initialStorage = new Map<string, StorageItem>();
       const value = BytesBlob.empty();
       const newBlob = BytesBlob.parseBlob("0x11111111");
-      initialStorage.set(key, StorageItem.create({ key, value }));
+      initialStorage.set(key.toString(), StorageItem.create({ key, value }));
 
       const state = prepareState([prepareService(currentServiceId, { storage: initialStorage })]);
       const accumulateServiceExternalities = new AccumulateExternalities(
@@ -1930,7 +1935,7 @@ describe("AccumulateServiceExternalities", () => {
         tryAsTimeSlot(16),
       );
 
-      accumulateServiceExternalities.write(key, tryAsU64(1), newBlob);
+      accumulateServiceExternalities.write(key, newBlob);
 
       assert.strictEqual(state.stateUpdate.services.storage.length, 1);
 
