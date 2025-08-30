@@ -14,7 +14,7 @@ import { AUTHORIZATION_QUEUE_SIZE, type MAX_AUTH_POOL_SIZE } from "@typeberry/bl
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { Ticket } from "@typeberry/block/tickets.js";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report.js";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { codec } from "@typeberry/codec";
 import {
   FixedSizeArray,
@@ -28,9 +28,9 @@ import {
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/crypto/bandersnatch.js";
-import { HASH_SIZE, blake2b } from "@typeberry/hash";
-import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
-import { Compatibility, GpVersion, OK, Result, WithDebug, asOpaqueType, assertNever, check } from "@typeberry/utils";
+import { HASH_SIZE } from "@typeberry/hash";
+import { type U32, tryAsU32 } from "@typeberry/numbers";
+import { OK, Result, WithDebug, asOpaqueType, assertNever, check } from "@typeberry/utils";
 import type { AccumulationOutput } from "./accumulation-output.js";
 import type { AvailabilityAssignment } from "./assurances.js";
 import { type PerCore, tryAsPerCore } from "./common.js";
@@ -95,19 +95,8 @@ export class InMemoryService extends WithDebug implements Service {
   getInfo(): ServiceAccountInfo {
     return this.data.info;
   }
-  private getLegacyStorageKey(rawKey: StorageKey): StorageKey {
-    const SERVICE_ID_BYTES = 4;
-    const serviceIdAndKey = new Uint8Array(SERVICE_ID_BYTES + rawKey.length);
-    serviceIdAndKey.set(u32AsLeBytes(this.serviceId));
-    serviceIdAndKey.set(rawKey.raw, SERVICE_ID_BYTES);
-    return asOpaqueType(BytesBlob.blobFrom(blake2b.hashBytes(serviceIdAndKey).raw));
-  }
 
   getStorage(rawKey: StorageKey): BytesBlob | null {
-    if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
-      const key: StorageKey = this.getLegacyStorageKey(rawKey);
-      return this.data.storage.get(key.toString())?.value ?? null;
-    }
     return this.data.storage.get(rawKey.toString())?.value ?? null;
   }
 
@@ -295,14 +284,6 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     }
   }
 
-  private getLegacyStorageKey(serviceId: ServiceId, rawKey: StorageKey): StorageKey {
-    const SERVICE_ID_BYTES = 4;
-    const serviceIdAndKey = new Uint8Array(SERVICE_ID_BYTES + rawKey.length);
-    serviceIdAndKey.set(u32AsLeBytes(serviceId));
-    serviceIdAndKey.set(rawKey.raw, SERVICE_ID_BYTES);
-    return asOpaqueType(BytesBlob.blobFrom(blake2b.hashBytes(serviceIdAndKey).raw));
-  }
-
   private updateStorage(storage: UpdateStorage[] | undefined): Result<OK, UpdateError> {
     for (const { serviceId, action } of storage ?? []) {
       const { kind } = action;
@@ -315,14 +296,10 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       }
 
       if (kind === UpdateStorageKind.Set) {
-        const key: StorageKey = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-          ? action.storage.key
-          : this.getLegacyStorageKey(serviceId, action.storage.key);
-        service.data.storage.set(key.toString(), StorageItem.create({ key, value: action.storage.value }));
+        const { key, value } = action.storage;
+        service.data.storage.set(key.toString(), StorageItem.create({ key, value }));
       } else if (kind === UpdateStorageKind.Remove) {
-        const key: StorageKey = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-          ? action.key
-          : this.getLegacyStorageKey(serviceId, action.key);
+        const { key } = action;
         check(
           service.data.storage.has(key.toString()),
           `Attempting to remove non-existing storage item at ${serviceId}: ${action.key}`,
