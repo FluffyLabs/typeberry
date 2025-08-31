@@ -60,7 +60,6 @@ export class InMemoryTrie {
     const lastNode = nodes.length === 1 ? undefined : nodes[nodes.length - 1];
     for (const node of nodes) {
       const isLastNode = node === lastNode;
-      const isFirstNode = node === last;
       const key = node.leaf.getKey();
       const prevDepth = currentDepth;
       currentDepth = node.sharedBitsWithPrev;
@@ -68,7 +67,7 @@ export class InMemoryTrie {
       // first push all missing right-hand zero nodes.
       // Handle the case if all nodes are on the left side and we need one more top-level
       // extra.
-      const startDepth = isFirstNode ? prevDepth : prevDepth + 1;
+      const startDepth = isLastNode ? prevDepth : prevDepth + 1;
       for (let i = startDepth; i <= currentDepth; i++) {
         if (getBit(key, i) === false) {
           stack.push(zero);
