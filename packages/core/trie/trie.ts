@@ -1,5 +1,5 @@
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import { HASH_SIZE } from "@typeberry/hash";
+import { HASH_SIZE, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
 import { check } from "@typeberry/utils";
 import {
   BranchNode,
@@ -15,6 +15,11 @@ import {
 } from "./nodes.js";
 import { type NodesDb, type TrieHasher, WriteableNodesDb } from "./nodesDb.js";
 
+/** Compare two trie `LeafNode`s only by their key. */
+export const leafComparator = (x: LeafNode, y: LeafNode) => x.getKey().compare(y.getKey());
+
+const zero = Bytes.zero(HASH_SIZE).asOpaque();
+
 export class InMemoryTrie {
   /** Create an empty in-memory trie. */
   static empty(hasher: TrieHasher): InMemoryTrie {
@@ -22,10 +27,86 @@ export class InMemoryTrie {
   }
 
   /** Given a collection of leaves, compute the state root. */
-  static computeStateRoot(hasher: TrieHasher, leaves: readonly LeafNode[]) {
-    // TODO [ToDr] [opti] Simple loop to just compute the root hash instead of
-    // constructing the entire trie.
-    return InMemoryTrie.fromLeaves(hasher, leaves).getRootHash();
+  static computeStateRoot(hasher: TrieHasher, leaves: readonly LeafNode[]): TrieNodeHash {
+    const sorted = leaves.slice().toSorted((a, b) => leafComparator(a, b).value);
+    const firstSorted = sorted.shift();
+    if (firstSorted === undefined) {
+      return zero;
+    }
+
+    const nodes = [{
+      leaf: firstSorted,
+      sharedBitsWithPrev: 0,
+    }];
+    let last = nodes[0];
+    // first we go through all of the sorted leaves and figure out how much in common
+    // they have with the previous node.
+    // If the shared-prefix drops, it means we are going up in depth (i.e. we are in different branch).
+    for (const leaf of sorted) {
+      const sharedBitsCount = findSharedPrefix(leaf.getKey(), last.leaf.getKey());
+      last = {
+        leaf,
+        sharedBitsWithPrev: sharedBitsCount,
+      };
+      nodes.push(last);
+    }
+    // Now we will go backwards and hash them together (or create branch nodes).
+    nodes.reverse();
+    const stack: TrieNodeHash[] = [];
+    let currentDepth = 0;
+    const lastNode = nodes.length === 1 ? undefined : nodes[nodes.length - 1];
+    for (const node of nodes) {
+      const isLastNode = node === lastNode;
+      const isFirstNode = node === last;
+      const key = node.leaf.getKey();
+      const prevDepth = currentDepth;
+      currentDepth = node.sharedBitsWithPrev;
+
+      // first push all missing right-hand zero nodes.
+      // Handle the case if all nodes are on the left side and we need one more top-level
+      // extra.
+      const startDepth = isFirstNode ? prevDepth : prevDepth + 1;
+      for (let i = startDepth; i <= currentDepth; i++) {
+        if (getBit(key, i) === false) {
+          stack.push(zero);
+        }
+      }
+
+      // now let's push the hash of the current leaf
+      const hash = hasher.hashConcat(node.leaf.node.raw);
+      stack.push(hash);
+      // we are going further down, so no need to merge anything
+      if (prevDepth < currentDepth) {
+        continue;
+      }
+      // jumping back to some lower depth, we need to merge what we have on the stack.
+      // we need to handle a case where we have no nodes on the top-most left side.
+      // in such case we just add extra zero on the left.
+      const endDepth = isLastNode ? currentDepth - 1 : currentDepth;
+      for (let i = prevDepth; i > endDepth; i--) {
+        if (getBit(key, i) === true) {
+          stack.push(zero);
+        }
+        const current = stack.pop()!;
+        const next = stack.pop()!;
+        const branchNode = BranchNode.fromSubNodes(current, next);
+        const hash = hasher.hashConcat(branchNode.node.raw);
+        stack.push(hash);
+      }
+    }
+
+    return stack.pop()!;
+  }
+
+  /**
+   * Construct a `LeafNode` from given `key` and `value`.
+   *
+   * NOTE: for large value it WILL NOT be embedded in the leaf node,
+   * and should rather be stored separately.
+   */
+  static constructLeaf(hasher: TrieHasher, key: InputKey, value: BytesBlob, maybeValueHash?: ValueHash) {
+    const valueHash = () => maybeValueHash ?? hasher.hashConcat(value.raw).asOpaque();
+    return LeafNode.fromValue(key, value, valueHash);
   }
 
   /**
@@ -170,7 +251,7 @@ function findNodeToReplace(root: TrieNode, nodes: NodesDb, key: TruncatedStateKe
 
     const nextNode = nodes.get(nextHash);
     if (nextNode === null) {
-      if (nextHash.isEqualTo(Bytes.zero(HASH_SIZE))) {
+      if (nextHash.isEqualTo(zero)) {
         return traversedPath;
       }
 
@@ -305,3 +386,33 @@ function trieStringify(root: TrieNode | null, nodes: NodesDb): string {
   const value = valueLength > 0 ? `'${leaf.getValue()}'(len:${valueLength})` : `'<hash>${leaf.getValueHash()}'`;
   return `\nLeaf('${leaf.getKey().toString()}',${value})`;
 }
+
+export function findSharedPrefix(a: TruncatedStateKey, b: TruncatedStateKey) {
+  for (let i = 0; i < TRUNCATED_HASH_SIZE; i++) {
+    const diff = a.raw[i] ^ b.raw[i];
+    if (diff === 0) {
+      continue;
+    }
+    // check how many bits match
+    for (const [mask, matchingBits] of bitLookup) {
+      if ((mask & diff) !== 0) {
+        return i * 8 + matchingBits;
+      }
+    }
+    return i;
+  }
+  return TRUNCATED_HASH_SIZE * 8;
+}
+
+const bitLookup = [
+  [0b10000000, 0],
+  [0b01000000, 1],
+  [0b00100000, 2],
+  [0b00010000, 3],
+  [0b00001000, 4],
+  [0b00000100, 5],
+  [0b00000010, 6],
+  [0b00000001, 7],
+  [0b00000000, 8],
+];
+

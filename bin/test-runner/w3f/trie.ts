@@ -40,9 +40,15 @@ export async function runTrieTest(testContent: TrieTestSuite) {
       const trie = InMemoryTrie.empty(blake2bTrieHasher);
 
       for (const [key, value] of testData.input.entries()) {
+        console.log(`Trieadd: ${key} -> ${value}`);
         trie.set(key, value);
       }
-      assert.deepStrictEqual(testData.output, trie.getRootHash());
+      assert.deepStrictEqual(trie.getRootHash(), testData.output);
+
+      const quickStateRoot = InMemoryTrie.computeStateRoot(blake2bTrieHasher, Array.from(testData.input.entries()).map(([key, value]) => {
+        return InMemoryTrie.constructLeaf(blake2bTrieHasher, key, value)
+      }));
+      assert.deepStrictEqual(quickStateRoot, testData.output);
     });
   }
 }
