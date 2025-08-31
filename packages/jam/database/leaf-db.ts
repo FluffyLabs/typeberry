@@ -1,8 +1,8 @@
 import type { StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import { TruncatedHashDictionary } from "@typeberry/collections";
+import { SortedSet, TruncatedHashDictionary } from "@typeberry/collections";
 import type { SerializedStateBackend, StateKey } from "@typeberry/state-merkleization";
-import { InMemoryTrie, type LeafNode, TrieNode } from "@typeberry/trie";
+import { InMemoryTrie, type LeafNode, TrieNode, leafComparator } from "@typeberry/trie";
 import { NodeType, TRIE_NODE_BYTES } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { Result, assertNever } from "@typeberry/utils";
@@ -41,13 +41,13 @@ export class LeafDb implements SerializedStateBackend {
       );
     }
 
-    const leaves: LeafNode[] = [];
+    const leaves = SortedSet.fromArray(leafComparator, []);
     for (const nodeData of blob.chunks(TRIE_NODE_BYTES)) {
       const node = new TrieNode(nodeData.raw);
       if (node.getNodeType() === NodeType.Branch) {
         return Result.error(LeafDbError.InvalidLeafData, `Branch node detected: ${nodeData}`);
       }
-      leaves.push(node.asLeafNode());
+      leaves.insert(node.asLeafNode());
     }
 
     return Result.ok(new LeafDb(leaves, db));
@@ -57,11 +57,11 @@ export class LeafDb implements SerializedStateBackend {
   private readonly lookup: TruncatedHashDictionary<StateKey, Lookup>;
 
   private constructor(
-    public readonly leaves: readonly LeafNode[],
+    public readonly leaves: SortedSet<LeafNode>,
     public readonly db: ValuesDb,
   ) {
     this.lookup = TruncatedHashDictionary.fromEntries(
-      leaves.map((leaf) => {
+      leaves.array.map((leaf) => {
         const key: StateKey = leaf.getKey().asOpaque();
         const value: Lookup = leaf.hasEmbeddedValue()
           ? {

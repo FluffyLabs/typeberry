@@ -1,4 +1,5 @@
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
+import type { SortedSet } from "@typeberry/collections";
 import { HASH_SIZE, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
 import { check } from "@typeberry/utils";
 import {
@@ -27,17 +28,19 @@ export class InMemoryTrie {
   }
 
   /** Given a collection of leaves, compute the state root. */
-  static computeStateRoot(hasher: TrieHasher, leaves: readonly LeafNode[]): TrieNodeHash {
-    const sorted = leaves.slice().toSorted((a, b) => leafComparator(a, b).value);
+  static computeStateRoot(hasher: TrieHasher, leaves: SortedSet<LeafNode>): TrieNodeHash {
+    const sorted = leaves.slice();
     const firstSorted = sorted.shift();
     if (firstSorted === undefined) {
       return zero;
     }
 
-    const nodes = [{
-      leaf: firstSorted,
-      sharedBitsWithPrev: 0,
-    }];
+    const nodes = [
+      {
+        leaf: firstSorted,
+        sharedBitsWithPrev: 0,
+      },
+    ];
     let last = nodes[0];
     // first we go through all of the sorted leaves and figure out how much in common
     // they have with the previous node.
@@ -87,15 +90,15 @@ export class InMemoryTrie {
         if (getBit(key, i) === true) {
           stack.push(zero);
         }
-        const current = stack.pop()!;
-        const next = stack.pop()!;
+        const current = stack.pop() ?? zero;
+        const next = stack.pop() ?? zero;
         const branchNode = BranchNode.fromSubNodes(current, next);
         const hash = hasher.hashConcat(branchNode.node.raw);
         stack.push(hash);
       }
     }
 
-    return stack.pop()!;
+    return stack.pop() ?? zero;
   }
 
   /**
@@ -415,4 +418,3 @@ const bitLookup = [
   [0b00000001, 7],
   [0b00000000, 8],
 ];
-

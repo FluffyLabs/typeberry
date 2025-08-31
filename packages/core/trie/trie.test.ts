@@ -1,16 +1,17 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { SortedSet } from "@typeberry/collections";
+import { HASH_SIZE, type OpaqueHash, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
 import { deepEqual } from "@typeberry/utils";
 import { blake2bTrieHasher } from "./hasher.js";
-import { InputKey, LeafNode, parseInputKey } from "./nodes.js";
-import { findSharedPrefix, InMemoryTrie } from "./trie.js";
-import {HASH_SIZE, OpaqueHash, TRUNCATED_HASH_SIZE} from "@typeberry/hash";
+import { type InputKey, LeafNode, parseInputKey } from "./nodes.js";
+import { InMemoryTrie, findSharedPrefix, leafComparator } from "./trie.js";
 
 describe("Root hash", () => {
   it("should compute state root hash that is equal to the trie one (complex)", () => {
     const data: [InputKey, BytesBlob][] = Object.entries(testVector10.input).map(([key, val]) => {
-      return [parseInputKey(key), BytesBlob.parseBlobNoPrefix(val)]
+      return [parseInputKey(key), BytesBlob.parseBlobNoPrefix(val)];
     });
 
     const trie = InMemoryTrie.empty(blake2bTrieHasher);
@@ -19,9 +20,12 @@ describe("Root hash", () => {
     }
     const expected = trie.getRootHash();
 
-    const leaves = data.map(([key, value]) => {
-      return InMemoryTrie.constructLeaf(blake2bTrieHasher, key.asOpaque(), value);
-    });
+    const leaves = SortedSet.fromArray(
+      leafComparator,
+      data.map(([key, value]) => {
+        return InMemoryTrie.constructLeaf(blake2bTrieHasher, key.asOpaque(), value);
+      }),
+    );
 
     deepEqual(InMemoryTrie.computeStateRoot(blake2bTrieHasher, leaves), expected);
     deepEqual(`0x${testVector10.output}`, expected.toString());
@@ -40,14 +44,17 @@ describe("Root hash", () => {
     }
     const expected = trie.getRootHash();
 
-    const leaves = data.map(([key, value]) => {
-      return InMemoryTrie.constructLeaf(blake2bTrieHasher, key.asOpaque(), value);
-    });
+    const leaves = SortedSet.fromArray(
+      leafComparator,
+      data.map(([key, value]) => {
+        return InMemoryTrie.constructLeaf(blake2bTrieHasher, key.asOpaque(), value);
+      }),
+    );
 
     deepEqual(InMemoryTrie.computeStateRoot(blake2bTrieHasher, leaves), expected);
   });
 
-  it('should find shared prefix bits number', () => {
+  it("should find shared prefix bits number", () => {
     const examples: [string, string, number][] = [
       [
         "0x03345958f90731bce89d07c2722dc693425a541b5230f99a6867882993576a",
@@ -72,13 +79,13 @@ describe("Root hash", () => {
       [
         "0x7723a8383e43a1713eb920bae44880b2ae9225ea2d38c031cf3b22434b4507",
         "0xc2d3bda8f77cc483d2f4368cf998203097230fd353d2223e5a333eb58f76a4",
-        0
+        0,
       ],
       [
         "0xc2d3bda8f77cc483d2f4368cf998203097230fd353d2223e5a333eb58f76a4",
         "0xc7a04effd2c0cede0279747f58bd210d0cc9d65c2eba265c6b4dfbc058a704",
         5,
-      ]
+      ],
     ];
 
     for (const [left, right, len] of examples) {
@@ -394,4 +401,3 @@ const testVector10 = {
   },
   output: "7d874bf70ea045e278f5cd2eafb28b74cdaee9c225ca884dee82532caa7bad0f",
 };
-
