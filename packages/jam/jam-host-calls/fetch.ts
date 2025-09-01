@@ -238,7 +238,7 @@ export class Fetch implements HostCallHandler {
     const fetchKindU64 = regs.get(10);
     const kind = clampU64ToU32(fetchKindU64);
     const value = this.getValue(kind, regs);
-    logger.trace(`FETCH(${kind}) <- ${value}`);
+    logger.trace(`FETCH(${kind}) <- ${value?.toStringTruncated()}`);
     // o
     const output = regs.get(IN_OUT_REG);
 

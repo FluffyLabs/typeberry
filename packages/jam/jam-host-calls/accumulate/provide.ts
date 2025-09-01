@@ -59,7 +59,7 @@ export class Provide implements HostCallHandler {
     }
 
     const result = this.partialState.providePreimage(serviceId, preimage);
-    logger.trace(`PROVIDE(${serviceId}, ${preimage}) <- ${resultToString(result)}`);
+    logger.trace(`PROVIDE(${serviceId}, ${preimage.toStringTruncated()}) <- ${resultToString(result)}`);
 
     if (result.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);

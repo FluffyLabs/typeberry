@@ -10,10 +10,10 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
-import { asOpaqueType, OK, Result } from "@typeberry/utils";
+import { OK, Result, asOpaqueType } from "@typeberry/utils";
+import { TestAccounts } from "./externalities/test-accounts.js";
 import { Read } from "./read.js";
 import { HostCallResult } from "./results.js";
-import {TestAccounts} from "./externalities/test-accounts.js";
 
 const gas = gasCounter(tryAsGas(0));
 const SERVICE_ID_REG = 7;

@@ -57,17 +57,17 @@ export class Read implements HostCallHandler {
 
     const storageKeyLengthClamped = clampU64ToU32(storageKeyLength);
     // k
-    const rawKey = new Uint8Array(storageKeyLengthClamped);
+    const rawKey = BytesBlob.blobFrom(new Uint8Array(storageKeyLengthClamped));
 
-    const memoryReadResult = memory.loadInto(rawKey, storageKeyStartAddress);
+    const memoryReadResult = memory.loadInto(rawKey.raw, storageKeyStartAddress);
     if (memoryReadResult.isError) {
       return PvmExecution.Panic;
     }
 
     // v
-    const value = this.account.read(serviceId, BytesBlob.blobFrom(rawKey));
+    const value = this.account.read(serviceId, rawKey);
 
-    logger.trace(`READ(${serviceId}, ${storageKey}) <- ${value}`);
+    logger.trace(`READ(${serviceId}, ${rawKey}) <- ${value?.toStringTruncated()}`);
 
     const valueLength = value === null ? tryAsU64(0) : tryAsU64(value.raw.length);
     const valueBlobOffset = regs.get(11);

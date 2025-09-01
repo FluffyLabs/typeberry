@@ -59,6 +59,6 @@ export class Designate implements HostCallHandler {
 
     regs.set(IN_OUT_REG, HostCallResult.OK);
     this.partialState.updateValidatorsData(tryAsPerValidator(validatorsData, this.chainSpec));
-    logger.trace(`DESIGNATE(${validatorsData})`);
+    logger.trace(`DESIGNATE([${validatorsData[0]}, ${validatorsData[1]}, ...])`);
   }
 }

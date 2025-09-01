@@ -57,7 +57,7 @@ export class Machine implements HostCallHandler {
 
     // NOTE: Highly unlikely, but machineId could potentially collide with HOST_CALL_RESULT.
     const machinInitResult = await this.refine.machineInit(code, entrypoint);
-    logger.trace(`MACHINE(${code}, ${entrypoint}) <- ${resultToString(machinInitResult)}`);
+    logger.trace(`MACHINE(${code.toStringTruncated()}, ${entrypoint}) <- ${resultToString(machinInitResult)}`);
 
     if (machinInitResult.isError) {
       regs.set(IN_OUT_REG, HostCallResult.HUH);

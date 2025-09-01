@@ -58,7 +58,7 @@ export class Export implements HostCallHandler {
 
     // attempt to export a segment and fail if it's above the maximum.
     const segmentExported = this.refine.exportSegment(segment);
-    logger.trace(`EXPORT(${segment}) <- ${resultToString(segmentExported)}`);
+    logger.trace(`EXPORT(${segment.toStringTruncated()}) <- ${resultToString(segmentExported)}`);
 
     if (segmentExported.isOk) {
       regs.set(IN_OUT_REG, tryAsU64(segmentExported.ok));
