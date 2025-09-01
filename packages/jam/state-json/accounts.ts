@@ -129,19 +129,6 @@ class JsonStorageItem {
   value!: BytesBlob;
 }
 
-class Gp064JsonStorageItem {
-  hash!: BytesBlob;
-  blob!: BytesBlob;
-}
-
-const gp064stateItemFromJson = json.object<Gp064JsonStorageItem, JsonStorageItem>(
-  {
-    hash: fromJson.bytes32(),
-    blob: json.fromString(BytesBlob.parseBlob),
-  },
-  ({ hash, blob }) => ({ key: hash, value: blob }),
-);
-
 const lookupMetaFromJson = json.object<JsonLookupMeta, LookupHistoryItem>(
   {
     key: {
@@ -170,9 +157,7 @@ export class JsonService {
           ? JsonServiceInfo.fromJson
           : JsonServiceInfoPre067.fromJson,
         preimages: json.optional(json.array(JsonPreimageItem.fromJson)),
-        storage: json.optional(
-          json.array(Compatibility.is(GpVersion.V0_6_4) ? gp064stateItemFromJson : JsonStorageItem.fromJson),
-        ),
+        storage: json.optional(json.array(JsonStorageItem.fromJson)),
         lookup_meta: json.optional(json.array(lookupMetaFromJson)),
       },
     },

@@ -30,7 +30,7 @@ if (suiteToRun === TestSuite.JAMDUNA) {
     throw new Error("GP_VERSION environment variable is required for JAMDUNA suite.");
   }
 
-  const jamdunaVersions: string[] = [GpVersion.V0_6_4, GpVersion.V0_6_5, GpVersion.V0_6_7];
+  const jamdunaVersions: string[] = [GpVersion.V0_6_5, GpVersion.V0_6_7];
   if (!jamdunaVersions.includes(versionFromEnv)) {
     throw new Error(
       `Invalid GP_VERSION ${versionFromEnv} for JAMDUNA suite. Available versions: ${jamdunaVersions.join(", ")}`,
