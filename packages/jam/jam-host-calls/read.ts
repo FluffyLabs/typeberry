@@ -1,6 +1,5 @@
 import type { ServiceId } from "@typeberry/block";
-import type { BytesBlob } from "@typeberry/bytes";
-import { type Blake2bHash, blake2b } from "@typeberry/hash";
+import { BytesBlob } from "@typeberry/bytes";
 import { minU64 } from "@typeberry/numbers";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
@@ -9,12 +8,12 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.j
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
-import { SERVICE_ID_BYTES, clampU64ToU32, getServiceIdOrCurrent, writeServiceIdAsLeBytes } from "./utils.js";
+import { clampU64ToU32, getServiceIdOrCurrent } from "./utils.js";
 
 /** Account data interface for read host calls. */
 export interface AccountsRead {
   /** Read service storage. */
-  read(serviceId: ServiceId | null, hash: Blake2bHash): BytesBlob | null;
+  read(serviceId: ServiceId | null, rawKey: BytesBlob): BytesBlob | null;
 }
 
 const IN_OUT_REG = 7;
@@ -22,9 +21,7 @@ const IN_OUT_REG = 7;
 /**
  * Read account storage.
  *
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/333b00333b00?v=0.6.7
- *
- * TODO [MaSo] Update storage key extraction https://graypaper.fluffylabs.dev/#/7e6ff6a/33d50033d500?v=0.6.7
+ * https://graypaper.fluffylabs.dev/#/1c979cb/325301325301?v=0.7.1
  */
 export class Read implements HostCallHandler {
   index = tryAsHostCallIndex(
@@ -59,23 +56,16 @@ export class Read implements HostCallHandler {
     const destinationAddress = regs.get(10);
 
     const storageKeyLengthClamped = clampU64ToU32(storageKeyLength);
+    // k
+    const rawKey = new Uint8Array(storageKeyLengthClamped);
 
-    // allocate extra bytes for the serviceId
-    const serviceIdStorageKey = new Uint8Array(SERVICE_ID_BYTES + storageKeyLengthClamped);
-    // if the serviceId is null, we will leave 0 to the first 4 bytes
-    if (serviceId !== null) {
-      writeServiceIdAsLeBytes(serviceId, serviceIdStorageKey);
-    }
-    const memoryReadResult = memory.loadInto(serviceIdStorageKey.subarray(SERVICE_ID_BYTES), storageKeyStartAddress);
+    const memoryReadResult = memory.loadInto(rawKey, storageKeyStartAddress);
     if (memoryReadResult.isError) {
       return PvmExecution.Panic;
     }
 
-    // k
-    const storageKey = blake2b.hashBytes(serviceIdStorageKey);
-
     // v
-    const value = this.account.read(serviceId, storageKey);
+    const value = this.account.read(serviceId, BytesBlob.blobFrom(rawKey));
 
     logger.trace(`READ(${serviceId}, ${storageKey}) <- ${value}`);
 

@@ -24,7 +24,10 @@ const gas = gasCounter(tryAsGas(0));
 
 function prepareRegsAndMemory(
   serviceId: ServiceId,
-  accountInfoLength = tryAsExactBytes(codecServiceAccountInfoWithThresholdBalance.sizeHint),
+  // TODO [ToDr] Due to changes in GP for some time this wasn't constant.
+  accountInfoLength = Compatibility.is(GpVersion.V0_6_5, GpVersion.V0_6_6)
+    ? 44
+    : tryAsExactBytes(codecServiceAccountInfoWithThresholdBalance.sizeHint),
 ) {
   const pageStart = 2 ** 16;
   const memStart = pageStart + PAGE_SIZE - accountInfoLength - 1;

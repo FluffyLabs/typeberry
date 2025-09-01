@@ -2,7 +2,6 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { blake2b } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
@@ -11,10 +10,9 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import { TestAccounts } from "./externalities/test-accounts.js";
 import { HostCallResult } from "./results.js";
-import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils.js";
+import { Compatibility, GpVersion, asOpaqueType } from "@typeberry/utils";
 import { Write } from "./write.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -45,14 +43,6 @@ function prepareAccounts(
     }),
   );
   return accounts;
-}
-
-function prepareKey(serviceId: ServiceId, key: string) {
-  const keyBytes = BytesBlob.blobFromString(key);
-  const serviceIdAndKey = new Uint8Array(SERVICE_ID_BYTES + keyBytes.length);
-  writeServiceIdAsLeBytes(serviceId, serviceIdAndKey);
-  serviceIdAndKey.set(keyBytes.raw, SERVICE_ID_BYTES);
-  return { key: keyBytes, hash: blake2b.hashBytes(serviceIdAndKey) };
 }
 
 function prepareRegsAndMemory(
@@ -89,9 +79,9 @@ describe("HostCalls: Write", () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
     const write = new Write(serviceId, accounts);
-    const { key, hash } = prepareKey(write.currentServiceId, "imma key");
+    const key = BytesBlob.blobFromString("imma key");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
-    accounts.storage.set(BytesBlob.blobFromString("old data"), serviceId, hash);
+    accounts.storage.set(BytesBlob.blobFromString("old data"), serviceId, asOpaqueType(key));
 
     // when
     const result = await write.execute(gas, registers, memory);
@@ -99,7 +89,7 @@ describe("HostCalls: Write", () => {
     // then
     assert.strictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64("old data".length));
-    assert.deepStrictEqual(accounts.storage.get(serviceId, hash)?.asText(), "hello world!");
+    assert.deepStrictEqual(accounts.storage.get(serviceId, asOpaqueType(key))?.asText(), "hello world!");
     assert.deepStrictEqual(accounts.storage.data.size, 1);
   });
 
@@ -107,9 +97,9 @@ describe("HostCalls: Write", () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId, { balance: 100n, gratisStorage: 150_000n });
     const write = new Write(serviceId, accounts);
-    const { key, hash } = prepareKey(write.currentServiceId, "imma key");
+    const key = BytesBlob.blobFromString("imma key");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
-    accounts.storage.set(BytesBlob.blobFromString("old data"), serviceId, hash);
+    accounts.storage.set(BytesBlob.blobFromString("old data"), serviceId, asOpaqueType(key));
 
     // when
     const result = await write.execute(gas, registers, memory);
@@ -117,7 +107,7 @@ describe("HostCalls: Write", () => {
     // then
     assert.strictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64("old data".length));
-    assert.deepStrictEqual(accounts.storage.get(serviceId, hash)?.asText(), "hello world!");
+    assert.deepStrictEqual(accounts.storage.get(serviceId, asOpaqueType(key))?.asText(), "hello world!");
     assert.deepStrictEqual(accounts.storage.data.size, 1);
   });
 
@@ -125,10 +115,10 @@ describe("HostCalls: Write", () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
     const write = new Write(serviceId, accounts);
-    const { key, hash } = prepareKey(write.currentServiceId, "xyz");
+    const key = BytesBlob.blobFromString("xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromNumbers([]));
-    accounts.storage.set(BytesBlob.blobFromString("hello world!"), serviceId, hash);
-    accounts.storage.set(null, serviceId, hash);
+    accounts.storage.set(BytesBlob.blobFromString("hello world!"), serviceId, asOpaqueType(key));
+    accounts.storage.set(null, serviceId, asOpaqueType(key));
 
     // when
     const result = await write.execute(gas, registers, memory);
@@ -136,14 +126,14 @@ describe("HostCalls: Write", () => {
     // then
     assert.strictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.NONE);
-    assert.deepStrictEqual(accounts.storage.get(serviceId, hash), undefined);
+    assert.deepStrictEqual(accounts.storage.get(serviceId, asOpaqueType(key)), undefined);
   });
 
   it("should fail if there is no memory for key", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
     const write = new Write(serviceId, accounts);
-    const { key } = prepareKey(write.currentServiceId, "xyz");
+    const key = BytesBlob.blobFromString("xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"), {
       skipKey: true,
     });
@@ -160,7 +150,7 @@ describe("HostCalls: Write", () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
     const write = new Write(serviceId, accounts);
-    const { key } = prepareKey(write.currentServiceId, "xyz");
+    const key = BytesBlob.blobFromString("xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"), {
       skipValue: true,
     });
@@ -177,7 +167,7 @@ describe("HostCalls: Write", () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
     const write = new Write(serviceId, accounts);
-    const { key } = prepareKey(write.currentServiceId, "xyz");
+    const key = BytesBlob.blobFromString("xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
     registers.set(KEY_LEN_REG, tryAsU64(PAGE_SIZE + 1));
 
@@ -193,7 +183,7 @@ describe("HostCalls: Write", () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
     const write = new Write(serviceId, accounts);
-    const { key } = prepareKey(write.currentServiceId, "xyz");
+    const key = BytesBlob.blobFromString("xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
     registers.set(DEST_LEN_REG, tryAsU64(PAGE_SIZE + 1));
 
@@ -209,12 +199,12 @@ describe("HostCalls: Write", () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId, { balance: 100n });
     const write = new Write(serviceId, accounts);
-    const { key, hash } = prepareKey(write.currentServiceId, "imma key");
+    const key = BytesBlob.blobFromString("imma key");
     const { registers, memory } = prepareRegsAndMemory(
       key,
       BytesBlob.blobFromString("hello world! Is super long very very very."),
     );
-    accounts.storage.set(BytesBlob.blobFromString("old data"), serviceId, hash);
+    accounts.storage.set(BytesBlob.blobFromString("old data"), serviceId, asOpaqueType(key));
 
     // when
     const result = await write.execute(gas, registers, memory);

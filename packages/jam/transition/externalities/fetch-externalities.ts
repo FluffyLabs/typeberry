@@ -1,17 +1,16 @@
 import type { EntropyHash } from "@typeberry/block";
 import {
   G_I,
-  G_R,
+  K,
   MAX_REPORT_DEPENDENCIES,
+  N,
   O,
   Q,
-  S,
+  T,
+  W_A,
   W_B,
   W_C,
-  W_E,
-  W_G,
   W_M,
-  W_P,
   W_R,
   W_T,
   W_X,
@@ -29,16 +28,13 @@ import {
   ELECTIVE_ITEM_BALANCE,
   MAX_RECENT_HISTORY,
 } from "@typeberry/state";
-import { Compatibility, GpVersion } from "@typeberry/utils";
-import { ACCUMULATE_TOTAL_GAS, GAS_TO_INVOKE_WORK_REPORT } from "../accumulate/accumulate.js";
-import { Operand, Operand_0_6_4 } from "../accumulate/operand.js";
+import { GAS_TO_INVOKE_WORK_REPORT } from "../accumulate/accumulate.js";
+import { Operand } from "../accumulate/operand.js";
 import { REPORT_TIMEOUT_GRACE_PERIOD } from "../assurances.js";
 import { L } from "../reports/verify-contextual.js";
 
-// TODO [ToDr] this is a bit bullshit for now, it's based on the GP,
-// yet it does not match what the 0.6.6 test vectors expect, so the
-// values for these are hand picked in the constant implementation
-// to make it work, so take a look at the comments there.
+// https://github.com/gavofyork/graypaper/pull/414
+// 0.7.0 encoding is used for prior versions as well.
 const CONSTANTS_CODEC = codec.object({
   B_I: codec.u64,
   B_L: codec.u64,
@@ -53,22 +49,20 @@ const CONSTANTS_CODEC = codec.object({
   H: codec.u16,
   I: codec.u16,
   J: codec.u16,
-  // K: codec.u16, // GP0.7.0
+  K: codec.u16,
   L: codec.u32,
-  // N: codec.u16, // GP0.7.0
+  N: codec.u16,
   O: codec.u16,
   P: codec.u16,
   Q: codec.u16,
   R: codec.u16,
-  S: codec.u16, // not in gp0.7.0
   T: codec.u16,
   U: codec.u16,
   V: codec.u16,
-  W_A: codec.u16,
+  W_A: codec.u32,
   W_B: codec.u32,
   W_C: codec.u32,
   W_E: codec.u32,
-  W_G: codec.u32, // not in gp0.7.0
   W_M: codec.u32,
   W_P: codec.u32,
   W_R: codec.u32,
@@ -89,38 +83,36 @@ function getEncodedConstants(chainSpec: ChainSpec) {
     B_I: tryAsU64(ELECTIVE_ITEM_BALANCE),
     B_L: tryAsU64(ELECTIVE_BYTE_BALANCE),
     B_S: tryAsU64(BASE_SERVICE_BALANCE),
-    C: tryAsU16(chainSpec.coresCount), //cores count (precise)
+    C: tryAsU16(chainSpec.coresCount),
     D: tryAsU32(chainSpec.preimageExpungePeriod),
-    E: tryAsU32(chainSpec.epochLength), // epoch period (precise)
+    E: tryAsU32(chainSpec.epochLength),
     G_A: tryAsU64(GAS_TO_INVOKE_WORK_REPORT),
     G_I: tryAsU64(G_I),
-    G_R: tryAsU64(G_R),
-    G_T: tryAsU64(ACCUMULATE_TOTAL_GAS),
+    G_R: tryAsU64(chainSpec.maxRefineGas),
+    G_T: tryAsU64(chainSpec.maxBlockGas),
     H: tryAsU16(MAX_RECENT_HISTORY),
     I: tryAsU16(MAX_NUMBER_OF_WORK_ITEMS),
     J: tryAsU16(MAX_REPORT_DEPENDENCIES),
-    // K: tryAsU16(K), // GP 0.7.0
+    K: tryAsU16(K),
     L: tryAsU32(L),
-    // N: tryAsU16(N), // GP 0.7.0
+    N: tryAsU16(N),
     O: tryAsU16(O),
     P: tryAsU16(chainSpec.slotDuration),
     Q: tryAsU16(Q),
-    R: tryAsU16(0), /// ???
-    S: tryAsU16(S),
-    T: tryAsU16(chainSpec.rotationPeriod), // rotation period (precise)
+    R: tryAsU16(chainSpec.rotationPeriod),
+    T: tryAsU16(T),
     U: tryAsU16(REPORT_TIMEOUT_GRACE_PERIOD),
-    V: tryAsU16(0),
-    W_A: tryAsU16(chainSpec.validatorsCount), // validators count (precise)
+    V: chainSpec.validatorsCount,
+    W_A: tryAsU32(W_A),
     W_B: tryAsU32(W_B),
     W_C: tryAsU32(W_C),
-    W_E: tryAsU32(W_E),
-    W_G: tryAsU32(W_G), // basic piece len (precise)
+    W_E: tryAsU32(chainSpec.erasureCodedPieceSize),
     W_M: tryAsU32(W_M),
-    W_P: tryAsU32(W_P),
+    W_P: tryAsU32(chainSpec.numberECPiecesPerSegment),
     W_R: tryAsU32(W_R),
-    W_T: tryAsU32(W_T), // transfer memo bytes (precise)
+    W_T: tryAsU32(W_T),
     W_X: tryAsU32(W_X),
-    Y: tryAsU32(chainSpec.contestLength), // epoch tail start (precise)
+    Y: tryAsU32(chainSpec.contestLength),
   });
 
   encodedConstantsCache.set(chainSpec, encodedConsts);
@@ -227,9 +219,7 @@ export class FetchExternalities implements IFetchExternalities {
 
     const operands = this.fetchData.operands;
 
-    return Compatibility.is(GpVersion.V0_6_4)
-      ? Encoder.encodeObject(codec.sequenceVarLen(Operand_0_6_4.Codec), operands, this.chainSpec)
-      : Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), operands, this.chainSpec);
+    return Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), operands, this.chainSpec);
   }
 
   oneOperand(operandIndex: U64): BytesBlob | null {
@@ -249,9 +239,7 @@ export class FetchExternalities implements IFetchExternalities {
       return null;
     }
 
-    return Compatibility.isGreaterOrEqual(GpVersion.V0_6_5)
-      ? Encoder.encodeObject(Operand.Codec, operand, this.chainSpec)
-      : Encoder.encodeObject(Operand_0_6_4.Codec, operand, this.chainSpec);
+    return Encoder.encodeObject(Operand.Codec, operand, this.chainSpec);
   }
 
   allTransfers(): BytesBlob | null {

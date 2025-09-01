@@ -8,11 +8,10 @@ import {
   tryAsPerValidator,
   tryAsServiceGas,
 } from "@typeberry/block";
-import { W_G } from "@typeberry/block/gp-constants.js";
 import type { Preimage, PreimagesExtrinsic } from "@typeberry/block/preimage.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import type { WorkResult } from "@typeberry/block/work-result.js";
-import type { ChainSpec } from "@typeberry/config";
+import { type ChainSpec, EC_SEGMENT_SIZE } from "@typeberry/config";
 import { type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { ServiceStatistics, type State, StatisticsData } from "@typeberry/state";
 import { ValidatorStatistics } from "@typeberry/state";
@@ -109,7 +108,7 @@ export class Statistics {
 
     const workPackageLength = availableWorkReports.workPackageSpec.length;
     const workPackageSegment = Math.ceil((availableWorkReports.workPackageSpec.exportsCount * 65) / 64);
-    sum += workPackageLength + W_G * workPackageSegment;
+    sum += workPackageLength + EC_SEGMENT_SIZE * workPackageSegment;
 
     /** Available work report score can be up to `W_R + W_G * ((W_M * 65) / 64) = 0x00C4_2180` */
     return tryAsU32(sum);

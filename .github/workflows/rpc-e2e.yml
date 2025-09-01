@@ -6,8 +6,7 @@ on:
     branches: [ "main" ]
 
 env:
-  JAMTESTNET_REF: 6d41bb2e8f4d60dc1806df42401363b54f956c0a
-  GP_VERSION: 0.6.4
+  TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # it is loaded in scripts/load-test-ref.sh
 
 jobs:
   e2e:
@@ -19,12 +18,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Load test ref
+        run: .github/scripts/load-test-ref.sh
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
         with:
-          repository: jam-duna/jamtestnet
-          path: "./jamdunavectors"
-          ref: ${{ env.JAMTESTNET_REF }}
+          repository: fluffylabs/test-vectors
+          path: "./test-vectors"
+          ref: ${{ env.TEST_VECTORS_REF }}
+          submodules: true
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:

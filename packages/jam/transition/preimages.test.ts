@@ -47,7 +47,7 @@ function createAccount(
       lastAccumulation: tryAsTimeSlot(0),
       parentService: tryAsServiceId(0),
     }),
-    storage: HashDictionary.new(),
+    storage: new Map(),
     preimages,
     lookupHistory,
   });

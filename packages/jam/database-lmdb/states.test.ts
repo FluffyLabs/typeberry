@@ -2,9 +2,10 @@ import assert from "node:assert";
 import * as fs from "node:fs";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { type HeaderHash, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
-import { Bytes } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { SortedSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { HASH_SIZE } from "@typeberry/hash";
+import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   InMemoryState,
@@ -17,6 +18,8 @@ import {
 } from "@typeberry/state";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { testState } from "@typeberry/state/test.utils.js";
+import { InMemoryTrie, leafComparator } from "@typeberry/trie";
+import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { OK, Result, deepEqual } from "@typeberry/utils";
 import { LmdbRoot } from "./root.js";
 import { LmdbStates } from "./states.js";
@@ -130,6 +133,30 @@ describe("LMDB States database", () => {
       state,
     );
     assert.strictEqual(`${updatedStateRoot}`, `${StateEntries.serializeInMemory(spec, state).getRootHash()}`);
+  });
+
+  it("sorted set should be actual to trie", () => {
+    const data: [OpaqueHash, BytesBlob][] = [
+      [Bytes.fill(HASH_SIZE, 5), BytesBlob.blobFromString("five")],
+      [Bytes.fill(HASH_SIZE, 1), BytesBlob.blobFromString("one")],
+      [Bytes.fill(HASH_SIZE, 3), BytesBlob.blobFromString("three")],
+      [Bytes.fill(HASH_SIZE, 4), BytesBlob.blobFromString("four")],
+      [Bytes.fill(HASH_SIZE, 2), BytesBlob.blobFromString("two")],
+    ];
+
+    const trie = InMemoryTrie.empty(blake2bTrieHasher);
+    for (const [key, val] of data) {
+      trie.set(key.asOpaque(), val);
+    }
+
+    const set = SortedSet.fromArray(
+      leafComparator,
+      data.map(([key, value]) => {
+        return InMemoryTrie.constructLeaf(blake2bTrieHasher, key.asOpaque(), value);
+      }),
+    );
+
+    deepEqual(Array.from(set), Array.from(SortedSet.fromArray(leafComparator, Array.from(trie.nodes.leaves()))));
   });
 
   it("should import more complex state", async () => {

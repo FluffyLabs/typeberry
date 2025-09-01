@@ -8,12 +8,13 @@ import type { BlocksDb } from "@typeberry/database";
 import { Disputes, type DisputesStateUpdate } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code.js";
 import { blake2b } from "@typeberry/hash";
+import { Logger } from "@typeberry/logger";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
 import type { State } from "@typeberry/state";
-import { type ErrorResult, OK, Result, type TaggedError, assertEmpty } from "@typeberry/utils";
+import { type ErrorResult, OK, Result, type TaggedError, assertEmpty, measure } from "@typeberry/utils";
 import type { ACCUMULATION_ERROR, AccumulateStateUpdate } from "./accumulate/accumulate.js";
 import { DeferredTransfers, type DeferredTransfersErrorCode } from "./accumulate/deferred-transfers.js";
 import { Accumulate } from "./accumulate/index.js";
@@ -76,6 +77,8 @@ export const stfError = <Kind extends StfErrorKind, Err extends StfError["error"
 ) => {
   return Result.taggedError<Ok, Kind, Err>(StfErrorKind, kind, nested);
 };
+
+const logger = Logger.new(import.meta.filename, "stf");
 
 export class OnChain {
   // chapter 6: https://graypaper.fluffylabs.dev/#/68eaa1f/0d13000d1300?v=0.6.4
@@ -247,12 +250,14 @@ export class OnChain {
     const { preimages, ...preimagesRest } = preimagesResult.ok;
     assertEmpty(preimagesRest);
 
+    const timerAccumulate = measure("import:accumulate");
     // accumulate
     const accumulateResult = await this.accumulate.transition({
       slot: timeSlot,
       reports: availableReports,
       entropy: entropy[0],
     });
+    logger.log(timerAccumulate());
     if (accumulateResult.isError) {
       return stfError(StfErrorKind.Accumulate, accumulateResult);
     }

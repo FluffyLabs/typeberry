@@ -123,12 +123,12 @@ export const codecServiceAccountInfoWithThresholdBalance = Compatibility.isGreat
   : codec.object(
       {
         codeHash: codec.bytes(HASH_SIZE),
-        balance: codec.u64,
-        thresholdBalance: codec.u64,
-        accumulateMinGas: codec.u64.convert((i) => i, tryAsServiceGas),
-        onTransferMinGas: codec.u64.convert((i) => i, tryAsServiceGas),
-        storageUtilisationBytes: codec.u64,
-        storageUtilisationCount: codec.u32,
+        balance: codec.varU64,
+        thresholdBalance: codec.varU64,
+        accumulateMinGas: codec.varU64.convert((i) => i, tryAsServiceGas),
+        onTransferMinGas: codec.varU64.convert((i) => i, tryAsServiceGas),
+        storageUtilisationBytes: codec.varU64,
+        storageUtilisationCount: codec.varU32,
         gratisStorage: ignoreValueWithDefault(tryAsU64(0)),
         created: ignoreValueWithDefault(tryAsTimeSlot(0)),
         lastAccumulation: ignoreValueWithDefault(tryAsTimeSlot(0)),

@@ -1,12 +1,37 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { deepEqual } from "@typeberry/utils";
 import { blake2bTrieHasher } from "./hasher.js";
 import { LeafNode, parseInputKey } from "./nodes.js";
 import { InMemoryTrie } from "./trie.js";
 
-describe("Trie", async () => {
+describe("Root hash", () => {
+  it("should compute state root hash that is equal to the trie one", () => {
+    const data: [OpaqueHash, BytesBlob][] = [
+      [Bytes.fill(HASH_SIZE, 5), BytesBlob.blobFromString("five")],
+      [Bytes.fill(HASH_SIZE, 1), BytesBlob.blobFromString("one")],
+      [Bytes.fill(HASH_SIZE, 3), BytesBlob.blobFromString("three")],
+      [Bytes.fill(HASH_SIZE, 4), BytesBlob.blobFromString("four")],
+      [Bytes.fill(HASH_SIZE, 2), BytesBlob.blobFromString("two")],
+    ];
+
+    const trie = InMemoryTrie.empty(blake2bTrieHasher);
+    for (const [key, val] of data) {
+      trie.set(key.asOpaque(), val);
+    }
+    const expected = trie.getRootHash();
+
+    const leaves = data.map(([key, value]) => {
+      return InMemoryTrie.constructLeaf(blake2bTrieHasher, key.asOpaque(), value);
+    });
+
+    deepEqual(InMemoryTrie.computeStateRoot(blake2bTrieHasher, leaves), expected);
+  });
+});
+
+describe("Trie", () => {
   it("Empty trie", () => {
     const trie = InMemoryTrie.empty(blake2bTrieHasher);
 
