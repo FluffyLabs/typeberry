@@ -1,7 +1,6 @@
 import type { EntropyHash } from "@typeberry/block";
 import {
   G_I,
-  G_R,
   K,
   MAX_REPORT_DEPENDENCIES,
   N,
@@ -11,9 +10,7 @@ import {
   W_A,
   W_B,
   W_C,
-  W_E,
   W_M,
-  W_P,
   W_R,
   W_T,
   W_X,
@@ -31,8 +28,9 @@ import {
   ELECTIVE_ITEM_BALANCE,
   MAX_RECENT_HISTORY,
 } from "@typeberry/state";
-import { ACCUMULATE_TOTAL_GAS, GAS_TO_INVOKE_WORK_REPORT } from "../accumulate/accumulate.js";
-import { Operand } from "../accumulate/operand.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
+import { GAS_TO_INVOKE_WORK_REPORT } from "../accumulate/accumulate.js";
+import { Operand  } from "../accumulate/operand.js";
 import { REPORT_TIMEOUT_GRACE_PERIOD } from "../assurances.js";
 import { L } from "../reports/verify-contextual.js";
 
@@ -91,8 +89,8 @@ function getEncodedConstants(chainSpec: ChainSpec) {
     E: tryAsU32(chainSpec.epochLength),
     G_A: tryAsU64(GAS_TO_INVOKE_WORK_REPORT),
     G_I: tryAsU64(G_I),
-    G_R: tryAsU64(G_R),
-    G_T: tryAsU64(ACCUMULATE_TOTAL_GAS),
+    G_R: tryAsU64(chainSpec.maxRefineGas),
+    G_T: tryAsU64(chainSpec.maxBlockGas),
     H: tryAsU16(MAX_RECENT_HISTORY),
     I: tryAsU16(MAX_NUMBER_OF_WORK_ITEMS),
     J: tryAsU16(MAX_REPORT_DEPENDENCIES),
@@ -105,13 +103,13 @@ function getEncodedConstants(chainSpec: ChainSpec) {
     R: tryAsU16(chainSpec.rotationPeriod),
     T: tryAsU16(T),
     U: tryAsU16(REPORT_TIMEOUT_GRACE_PERIOD),
-    V: tryAsU16(chainSpec.validatorsCount),
+    V: chainSpec.validatorsCount,
     W_A: tryAsU32(W_A),
     W_B: tryAsU32(W_B),
     W_C: tryAsU32(W_C),
-    W_E: tryAsU32(W_E),
+    W_E: tryAsU32(chainSpec.erasureCodedPieceSize),
     W_M: tryAsU32(W_M),
-    W_P: tryAsU32(W_P),
+    W_P: tryAsU32(chainSpec.numberECPiecesPerSegment),
     W_R: tryAsU32(W_R),
     W_T: tryAsU32(W_T),
     W_X: tryAsU32(W_X),
