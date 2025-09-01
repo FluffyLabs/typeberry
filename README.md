@@ -111,9 +111,8 @@ cases by altering the glob pattern in the path.
 
 ### Running JSON RPC E2E tests
 
-To run JSON RPC E2E tests the 6d41bb2e8f4d60dc1806df42401363b54f956c0a ref (0.6.4.4)
-of [jamduna/jamtestnet](https://github.com/jam-duna/jamtestnet) repo needs to be checked out
-into the `jamdunavectors` directory. Then to run the tests:
+To run JSON RPC E2E test-vectors [test-vectors](https://github.com/fluffylabs/test-vectors) 
+repository needs to be checked out with ref matching our tests. Then to run tests:
 
 ```bash
 $ npm run test:e2e -w @typeberry/rpc

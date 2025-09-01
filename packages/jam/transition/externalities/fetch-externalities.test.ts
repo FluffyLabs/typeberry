@@ -10,8 +10,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { TRANSFER_MEMO_BYTES } from "@typeberry/jam-host-calls/externalities/partial-state.js";
 import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import { tryAsU64 } from "@typeberry/numbers";
-import { Compatibility, GpVersion } from "@typeberry/utils";
-import { Operand, Operand_0_6_4 } from "../accumulate/operand.js";
+import { Operand } from "../accumulate/operand.js";
 import { FetchExternalities } from "./fetch-externalities.js";
 
 describe("fetch-externalities", () => {
@@ -131,9 +130,7 @@ describe("fetch-externalities", () => {
   it("should return all operands", () => {
     const expectedOperands = prepareOperands(5);
     const chainSpec = tinyChainSpec;
-    const encodedOperands = Compatibility.is(GpVersion.V0_6_4)
-      ? Encoder.encodeObject(codec.sequenceVarLen(Operand_0_6_4.Codec), expectedOperands, chainSpec)
-      : Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), expectedOperands, chainSpec);
+    const encodedOperands = Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), expectedOperands, chainSpec);
 
     const fetchExternalities = prepareAccumulateData({ operands: expectedOperands, chainSpec });
 
@@ -173,9 +170,7 @@ describe("fetch-externalities", () => {
     const chainSpec = tinyChainSpec;
     const expectedOperandIndex = 3;
     const expectedOperand = operands[expectedOperandIndex];
-    const encodedOperand = Compatibility.is(GpVersion.V0_6_4)
-      ? Encoder.encodeObject(Operand_0_6_4.Codec, expectedOperand, chainSpec)
-      : Encoder.encodeObject(Operand.Codec, expectedOperand, chainSpec);
+    const encodedOperand = Encoder.encodeObject(Operand.Codec, expectedOperand, chainSpec);
 
     const fetchExternalities = prepareAccumulateData({ operands, chainSpec });
 

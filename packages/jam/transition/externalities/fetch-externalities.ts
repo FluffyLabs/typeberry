@@ -28,9 +28,8 @@ import {
   ELECTIVE_ITEM_BALANCE,
   MAX_RECENT_HISTORY,
 } from "@typeberry/state";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import { GAS_TO_INVOKE_WORK_REPORT } from "../accumulate/accumulate.js";
-import { Operand, Operand_0_6_4 } from "../accumulate/operand.js";
+import { Operand } from "../accumulate/operand.js";
 import { REPORT_TIMEOUT_GRACE_PERIOD } from "../assurances.js";
 import { L } from "../reports/verify-contextual.js";
 
@@ -220,9 +219,7 @@ export class FetchExternalities implements IFetchExternalities {
 
     const operands = this.fetchData.operands;
 
-    return Compatibility.is(GpVersion.V0_6_4)
-      ? Encoder.encodeObject(codec.sequenceVarLen(Operand_0_6_4.Codec), operands, this.chainSpec)
-      : Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), operands, this.chainSpec);
+    return Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), operands, this.chainSpec);
   }
 
   oneOperand(operandIndex: U64): BytesBlob | null {
@@ -242,9 +239,7 @@ export class FetchExternalities implements IFetchExternalities {
       return null;
     }
 
-    return Compatibility.isGreaterOrEqual(GpVersion.V0_6_5)
-      ? Encoder.encodeObject(Operand.Codec, operand, this.chainSpec)
-      : Encoder.encodeObject(Operand_0_6_4.Codec, operand, this.chainSpec);
+    return Encoder.encodeObject(Operand.Codec, operand, this.chainSpec);
   }
 
   allTransfers(): BytesBlob | null {
