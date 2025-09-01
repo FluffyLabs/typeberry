@@ -4,7 +4,7 @@ import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { BANDERSNATCH_KEY_BYTES, type BandersnatchKey } from "@typeberry/crypto";
 import { BANDERSNATCH_VRF_SIGNATURE_BYTES, type BandersnatchVrfSignature } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE, WithHash } from "@typeberry/hash";
-import { WithDebug } from "@typeberry/utils";
+import { Compatibility, GpVersion, WithDebug } from "@typeberry/utils";
 import {
   type EntropyHash,
   type PerEpochBlock,
@@ -86,24 +86,46 @@ export const encodeUnsealedHeader = (view: HeaderView): BytesBlob => {
   const encodedUnsealedLen = encodedFullHeader.length - BANDERSNATCH_VRF_SIGNATURE_BYTES;
   return BytesBlob.blobFrom(encodedFullHeader.subarray(0, encodedUnsealedLen));
 };
+
+/**
+ * Codec with pre 0.7.0 encoding order
+ */
+const LegacyCodec = {
+  parentHeaderHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
+  priorStateRoot: codec.bytes(HASH_SIZE).asOpaque<StateRootHash>(),
+  extrinsicHash: codec.bytes(HASH_SIZE).asOpaque<ExtrinsicHash>(),
+  timeSlotIndex: codec.u32.asOpaque<TimeSlot>(),
+  epochMarker: codec.optional(EpochMarker.Codec),
+  ticketsMarker: codec.optional(codecPerEpochBlock(Ticket.Codec)),
+  offendersMarker: codec.sequenceVarLen(codec.bytes(ED25519_KEY_BYTES).asOpaque<Ed25519Key>()),
+  bandersnatchBlockAuthorIndex: codec.u16.asOpaque<ValidatorIndex>(),
+  entropySource: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque<BandersnatchVrfSignature>(),
+  seal: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque<BandersnatchVrfSignature>(),
+};
+
 /**
  * The header of the JAM block.
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/0c66000c7200
  */
 export class Header extends WithDebug {
-  static Codec = codec.Class(Header, {
-    parentHeaderHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
-    priorStateRoot: codec.bytes(HASH_SIZE).asOpaque<StateRootHash>(),
-    extrinsicHash: codec.bytes(HASH_SIZE).asOpaque<ExtrinsicHash>(),
-    timeSlotIndex: codec.u32.asOpaque<TimeSlot>(),
-    epochMarker: codec.optional(EpochMarker.Codec),
-    ticketsMarker: codec.optional(codecPerEpochBlock(Ticket.Codec)),
-    offendersMarker: codec.sequenceVarLen(codec.bytes(ED25519_KEY_BYTES).asOpaque<Ed25519Key>()),
-    bandersnatchBlockAuthorIndex: codec.u16.asOpaque<ValidatorIndex>(),
-    entropySource: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque<BandersnatchVrfSignature>(),
-    seal: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque<BandersnatchVrfSignature>(),
-  });
+  static Codec = codec.Class(
+    Header,
+    Compatibility.isLessThan(GpVersion.V0_7_0)
+      ? LegacyCodec
+      : {
+          parentHeaderHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
+          priorStateRoot: codec.bytes(HASH_SIZE).asOpaque<StateRootHash>(),
+          extrinsicHash: codec.bytes(HASH_SIZE).asOpaque<ExtrinsicHash>(),
+          timeSlotIndex: codec.u32.asOpaque<TimeSlot>(),
+          epochMarker: codec.optional(EpochMarker.Codec),
+          ticketsMarker: codec.optional(codecPerEpochBlock(Ticket.Codec)),
+          bandersnatchBlockAuthorIndex: codec.u16.asOpaque<ValidatorIndex>(),
+          entropySource: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque<BandersnatchVrfSignature>(),
+          offendersMarker: codec.sequenceVarLen(codec.bytes(ED25519_KEY_BYTES).asOpaque<Ed25519Key>()),
+          seal: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque<BandersnatchVrfSignature>(),
+        },
+  );
 
   static create(h: CodecRecord<Header>) {
     return Object.assign(Header.empty(), h);
@@ -131,12 +153,12 @@ export class Header extends WithDebug {
    *        for the next epoch.
    */
   public ticketsMarker: PerEpochBlock<Ticket> | null = null;
-  /** `H_o`: Sequence of keys of newly misbehaving validators. */
-  public offendersMarker: Ed25519Key[] = [];
   /** `H_i`: Block author's index in the current validator set. */
   public bandersnatchBlockAuthorIndex: ValidatorIndex = tryAsValidatorIndex(0);
   /** `H_v`: Entropy-yielding VRF signature. */
   public entropySource: BandersnatchVrfSignature = Bytes.zero(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque();
+  /** `H_o`: Sequence of keys of newly misbehaving validators. */
+  public offendersMarker: Ed25519Key[] = [];
   /**
    * `H_s`: Block seal.
    *
