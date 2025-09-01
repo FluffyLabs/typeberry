@@ -18,7 +18,6 @@ import { type NodesDb, type TrieHasher, WriteableNodesDb } from "./nodesDb.js";
 
 /** Compare two trie `LeafNode`s only by their key. */
 export const leafComparator = (x: LeafNode, y: LeafNode) => x.getKey().compare(y.getKey());
-
 const zero = Bytes.zero(HASH_SIZE).asOpaque();
 
 export class InMemoryTrie {
@@ -133,8 +132,7 @@ export class InMemoryTrie {
   ) {}
 
   set(key: InputKey, value: BytesBlob, maybeValueHash?: ValueHash) {
-    const valueHash = () => maybeValueHash ?? this.nodes.hasher.hashConcat(value.raw).asOpaque();
-    const leafNode = LeafNode.fromValue(key, value, valueHash);
+    const leafNode = InMemoryTrie.constructLeaf(this.nodes.hasher, key, value, maybeValueHash);
     this.root = trieInsert(this.root, this.nodes, leafNode);
     return leafNode;
   }

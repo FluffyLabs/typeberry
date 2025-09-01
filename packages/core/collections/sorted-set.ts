@@ -82,7 +82,11 @@ export class SortedSet<V> extends SortedArray<V> implements ImmutableSortedSet<V
     }
   }
 
-  /** Replace an existing element matching the comparator to given ref. */
+  /**
+   * Insert given element to the sorted set EVEN IF it's already present.
+   *
+   * Putting another value that's equal via comparator will replace the current one.
+   */
   public replace(v: V) {
     const findIdx = this.binarySearch(v);
     const toRemove = findIdx.isEqual ? 1 : 0;

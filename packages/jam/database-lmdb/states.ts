@@ -62,6 +62,7 @@ import type { LmdbRoot, SubDb } from "./root.js";
  * - [ ] state pruning on finality / pre-defined window (warp threshold?)
  * - [ ] removing unused values
  */
+
 export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
   private readonly states: SubDb;
   private readonly values: SubDb;
@@ -95,22 +96,23 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
   ): Promise<Result<OK, StateUpdateError>> {
     // We will collect all values that don't fit directly into leaf nodes.
     const values: [ValueHash, BytesBlob][] = [];
-    // add all new data to the trie and take care of the values that didn't fit into leaves.
     for (const [action, key, value] of data) {
       if (action === StateEntryUpdateAction.Insert) {
-        const leaf = InMemoryTrie.constructLeaf(blake2bTrieHasher, key.asOpaque(), value);
-        leafs.replace(leaf);
-        if (!leaf.hasEmbeddedValue()) {
-          values.push([leaf.getValueHash(), value]);
+        const leafNode = InMemoryTrie.constructLeaf(blake2bTrieHasher, key.asOpaque(), value);
+        leafs.replace(leafNode);
+        if (!leafNode.hasEmbeddedValue()) {
+          values.push([leafNode.getValueHash(), value]);
         }
       } else if (action === StateEntryUpdateAction.Remove) {
-        const leaf = InMemoryTrie.constructLeaf(blake2bTrieHasher, key.asOpaque(), BytesBlob.empty());
-        leafs.removeOne(leaf);
+        const leafNode = InMemoryTrie.constructLeaf(blake2bTrieHasher, key.asOpaque(), BytesBlob.empty());
+        leafs.removeOne(leafNode);
         // TODO [ToDr] Handle ref-counting values or updating some header-hash-based references.
       } else {
         assertNever(action);
       }
     }
+    // TODO [ToDr] could be optimized to already have leaves written to one big chunk
+    // (we could pre-allocate one buffer for all the leafs)
     const stateLeafs = BytesBlob.blobFromParts(leafs.array.map((x) => x.node.raw));
     // now we have the leaves and the values, so let's write it down to the DB.
     const statesWrite = this.states.put(headerHash.raw, stateLeafs.raw);
@@ -134,7 +136,6 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     state: SerializedState<LeafDb>,
     update: Partial<State & ServicesUpdate>,
   ): Promise<Result<OK, StateUpdateError>> {
-    // First we reconstruct the trie
     // TODO [ToDr] We should probably detect a conflicting state (i.e. two services
     // updated at once, etc), for now we're just ignoring it.
     const updatedValues = serializeStateUpdate(this.spec, update);

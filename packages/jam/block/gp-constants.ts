@@ -17,9 +17,6 @@ import { MAX_NUMBER_OF_WORK_ITEMS } from "./work-package.js";
 /** `G_I`: The gas allocated to invoke a work-package’s Is-Authorized logic. */
 export const G_I = 50_000_000;
 
-/** `G_R`: The gas allocated to invoke a work-package’s Refine logic. */
-export const G_R = 5_000_000_000;
-
 /** `I`: Maximum number of work items in a package. */
 export const I = MAX_NUMBER_OF_WORK_ITEMS;
 
@@ -50,20 +47,11 @@ export const W_B = 13_794_305;
 /** `W_C`: The maximum size of service code in octets. */
 export const W_C = 4_000_000;
 
-/** `W_E`: The basic size of erasure-coded pieces in octets. */
-export const W_E = 684;
-
 /** `W_M`: The maximum number of imports in a work-package. */
 export const W_M = 3_072;
 
-/** `W_P`: The number of erasure-coded pieces in a segment. */
-export const W_P = 6;
-
 /** `W_R`: The maximum total size of all output blobs in a work-report, in octets. */
 export const W_R = 49_152;
-
-/** `W_G`: W_P * W_E = 4104 The size of a segment in octets. */
-export const W_G = W_P * W_E;
 
 /** `W_T`: The size of a transfer memo in octets. */
 export const W_T = 128;
