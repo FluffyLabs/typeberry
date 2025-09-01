@@ -32,7 +32,7 @@ export type DeferredTransfersResult = {
   transferStatistics: Map<ServiceId, CountAndGasUsed>;
 };
 
-const ARGS_CODEC_0_6_4 = codec.object({
+const ARGS_CODEC_PRE_067 = codec.object({
   timeslot: codec.u32.asOpaque<TimeSlot>(),
   serviceId: codec.u32.asOpaque<ServiceId>(),
   transfers: codec.sequenceVarLen(PendingTransfer.Codec),
@@ -113,7 +113,11 @@ export class DeferredTransfers {
               this.chainSpec,
             );
           }
-          return Encoder.encodeObject(ARGS_CODEC_0_6_4, { timeslot, serviceId, transfers: transfers }, this.chainSpec);
+          return Encoder.encodeObject(
+            ARGS_CODEC_PRE_067,
+            { timeslot, serviceId, transfers: transfers },
+            this.chainSpec,
+          );
         };
 
         const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState, fetchExternalities });
