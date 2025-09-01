@@ -28,9 +28,8 @@ import {
   ELECTIVE_ITEM_BALANCE,
   MAX_RECENT_HISTORY,
 } from "@typeberry/state";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import { GAS_TO_INVOKE_WORK_REPORT } from "../accumulate/accumulate.js";
-import { Operand  } from "../accumulate/operand.js";
+import { Operand } from "../accumulate/operand.js";
 import { REPORT_TIMEOUT_GRACE_PERIOD } from "../assurances.js";
 import { L } from "../reports/verify-contextual.js";
 

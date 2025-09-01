@@ -1,5 +1,5 @@
 import { type U8, type U16, type U32, type U64, tryAsU8, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { Compatibility, GpVersion, TestSuite, WithDebug } from "@typeberry/utils";
+import { WithDebug } from "@typeberry/utils";
 
 /**
  * Estimated number of validators.
@@ -111,9 +111,7 @@ export const tinyChainSpec = new ChainSpec({
   ticketsPerValidator: tryAsU8(3),
   numberECPiecesPerSegment: tryAsU32(1026),
   // https://github.com/davxy/jam-test-vectors/tree/v0.6.6/traces#preimage-expunge-delay
-  preimageExpungePeriod: tryAsU32(
-    Compatibility.isSuite(TestSuite.JAMDUNA) && Compatibility.is(GpVersion.V0_6_4) ? 6 : 32,
-  ),
+  preimageExpungePeriod: tryAsU32(32),
   maxBlockGas: tryAsU64(20_000_000),
   maxRefineGas: tryAsU64(1_000_000_000),
 });
