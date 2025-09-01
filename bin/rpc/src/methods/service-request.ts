@@ -32,7 +32,6 @@ export const serviceRequest: RpcMethod<ServiceRequestParams, [readonly Slot[]] |
   }
 
   const service = state.getService(tryAsServiceId(serviceId));
-
   if (service === null) {
     return null;
   }

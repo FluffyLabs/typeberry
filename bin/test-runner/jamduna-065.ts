@@ -10,7 +10,6 @@ main(runners, process.argv.slice(2), "test-vectors/jamduna_065", {
     "assurances/state_transitions/00000035.json",
     "assurances/state_transitions/00000037.json",
     "assurances/state_transitions/00000043.json",
-    "assurances/state_transitions/00000047.json",
   ],
 })
   .then((r) => logger.log(r))

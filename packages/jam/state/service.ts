@@ -11,9 +11,9 @@ import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Descriptor, type SizeHint, codec } from "@typeberry/codec";
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
-import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
-import { Compatibility, GpVersion, type Opaque, WithDebug, check } from "@typeberry/utils";
+import { Compatibility, GpVersion, type Opaque, WithDebug, asOpaqueType, check } from "@typeberry/utils";
 
 /**
  * `B_S`: The basic minimum balance which all services require.
@@ -164,11 +164,14 @@ export class PreimageItem extends WithDebug {
   }
 }
 
-export type StorageKey = Opaque<OpaqueHash, "stateKey">;
+export type StorageKey = Opaque<BytesBlob, "storage key">;
 
 export class StorageItem extends WithDebug {
   static Codec = codec.Class(StorageItem, {
-    key: codec.bytes(HASH_SIZE).asOpaque<StorageKey>(),
+    key: codec.blob.convert(
+      (i) => i,
+      (o) => asOpaqueType(o),
+    ),
     value: codec.blob,
   });
 

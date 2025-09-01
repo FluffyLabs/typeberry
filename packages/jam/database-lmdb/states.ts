@@ -1,5 +1,6 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
+import { SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { LeafDb, StateUpdateError, type StatesDb } from "@typeberry/database";
 import type { TruncatedHash } from "@typeberry/hash";
@@ -8,8 +9,8 @@ import { SerializedState, serializeStateUpdate } from "@typeberry/state-merkleiz
 import type { StateKey } from "@typeberry/state-merkleization";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import { StateEntryUpdateAction } from "@typeberry/state-merkleization";
-import { InMemoryTrie } from "@typeberry/trie";
-import type { ValueHash } from "@typeberry/trie";
+import { InMemoryTrie, leafComparator } from "@typeberry/trie";
+import type { LeafNode, ValueHash } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { OK, Result, assertNever, resultToString } from "@typeberry/utils";
 import type { LmdbRoot, SubDb } from "./root.js";
@@ -62,6 +63,7 @@ import type { LmdbRoot, SubDb } from "./root.js";
  * - [ ] state pruning on finality / pre-defined window (warp threshold?)
  * - [ ] removing unused values
  */
+
 export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
   private readonly states: SubDb;
   private readonly values: SubDb;
@@ -81,36 +83,37 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
    */
   async insertState(headerHash: HeaderHash, serializedState: StateEntries): Promise<Result<OK, StateUpdateError>> {
     // we start with an empty trie, so that all value will be added.
-    const trie = InMemoryTrie.empty(blake2bTrieHasher);
     return await this.updateAndCommit(
       headerHash,
-      trie,
+      SortedSet.fromArray<LeafNode>(leafComparator, []),
       Array.from(serializedState, (x) => [StateEntryUpdateAction.Insert, x[0], x[1]]),
     );
   }
 
   private async updateAndCommit(
     headerHash: HeaderHash,
-    trie: InMemoryTrie,
+    leafs: SortedSet<LeafNode>,
     data: Iterable<[StateEntryUpdateAction, StateKey | TruncatedHash, BytesBlob]>,
   ): Promise<Result<OK, StateUpdateError>> {
     // We will collect all values that don't fit directly into leaf nodes.
     const values: [ValueHash, BytesBlob][] = [];
-    // add all new data to the trie and take care of the values that didn't fit into leaves.
     for (const [action, key, value] of data) {
       if (action === StateEntryUpdateAction.Insert) {
-        const leaf = trie.set(key.asOpaque(), value);
-        if (!leaf.hasEmbeddedValue()) {
-          values.push([leaf.getValueHash(), value]);
+        const leafNode = InMemoryTrie.constructLeaf(blake2bTrieHasher, key.asOpaque(), value);
+        leafs.replace(leafNode);
+        if (!leafNode.hasEmbeddedValue()) {
+          values.push([leafNode.getValueHash(), value]);
         }
       } else if (action === StateEntryUpdateAction.Remove) {
-        trie.remove(key.asOpaque());
+        const leafNode = InMemoryTrie.constructLeaf(blake2bTrieHasher, key.asOpaque(), BytesBlob.empty());
+        leafs.removeOne(leafNode);
         // TODO [ToDr] Handle ref-counting values or updating some header-hash-based references.
       } else {
         assertNever(action);
       }
     }
-    const stateLeafs = BytesBlob.blobFromParts(Array.from(trie.nodes.leaves()).map((x) => x.node.raw));
+    // TODO [ToDr] could be optimized to already have leaves written to one big chunk.
+    const stateLeafs = BytesBlob.blobFromParts(leafs.array.map((x) => x.node.raw));
     // now we have the leaves and the values, so let's write it down to the DB.
     const statesWrite = this.states.put(headerHash.raw, stateLeafs.raw);
     const valuesWrite = this.values.transaction(() => {
@@ -133,15 +136,13 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     state: SerializedState<LeafDb>,
     update: Partial<State & ServicesUpdate>,
   ): Promise<Result<OK, StateUpdateError>> {
-    // First we reconstruct the trie
-    // TODO [ToDr] [opti] reconstructing the trie is not really needed,
-    // we could simply produce new leaf nodes and append & sort them.
-    const trie = InMemoryTrie.fromLeaves(blake2bTrieHasher, state.backend.leaves);
+    // get existing trie leafs
+    const leafs = SortedSet.fromSortedArray(leafComparator, state.backend.leaves);
     // TODO [ToDr] We should probably detect a conflicting state (i.e. two services
     // updated at once, etc), for now we're just ignoring it.
     const updatedValues = serializeStateUpdate(this.spec, update);
     // and finally we insert new values and store leaves in the DB.
-    return await this.updateAndCommit(headerHash, trie, updatedValues);
+    return await this.updateAndCommit(headerHash, leafs, updatedValues);
   }
 
   async getStateRoot(state: SerializedState<LeafDb>): Promise<StateRootHash> {

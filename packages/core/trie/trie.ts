@@ -15,6 +15,8 @@ import {
 } from "./nodes.js";
 import { type NodesDb, type TrieHasher, WriteableNodesDb } from "./nodesDb.js";
 
+export const leafComparator = (x: LeafNode, y: LeafNode) => y.getKey().compare(x.getKey());
+
 export class InMemoryTrie {
   /** Create an empty in-memory trie. */
   static empty(hasher: TrieHasher): InMemoryTrie {
@@ -43,6 +45,11 @@ export class InMemoryTrie {
     return new InMemoryTrie(nodes, root);
   }
 
+  static constructLeaf(hasher: TrieHasher, key: InputKey, value: BytesBlob, maybeValueHash?: ValueHash) {
+    const valueHash = () => maybeValueHash ?? hasher.hashConcat(value.raw).asOpaque();
+    return LeafNode.fromValue(key, value, valueHash);
+  }
+
   private constructor(
     // Exposed for trie-visualiser
     public readonly nodes: WriteableNodesDb,
@@ -50,8 +57,7 @@ export class InMemoryTrie {
   ) {}
 
   set(key: InputKey, value: BytesBlob, maybeValueHash?: ValueHash) {
-    const valueHash = () => maybeValueHash ?? this.nodes.hasher.hashConcat(value.raw).asOpaque();
-    const leafNode = LeafNode.fromValue(key, value, valueHash);
+    const leafNode = InMemoryTrie.constructLeaf(this.nodes.hasher, key, value, maybeValueHash);
     this.root = trieInsert(this.root, this.nodes, leafNode);
     return leafNode;
   }
