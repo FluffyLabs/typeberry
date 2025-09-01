@@ -88,9 +88,9 @@ export const encodeUnsealedHeader = (view: HeaderView): BytesBlob => {
 };
 
 /**
- * Codec with pre 0.7.0 encoding order
+ * Codec descriptor with pre 0.7.0 encoding order
  */
-const LegacyCodec = {
+const legacyDescriptor = {
   parentHeaderHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
   priorStateRoot: codec.bytes(HASH_SIZE).asOpaque<StateRootHash>(),
   extrinsicHash: codec.bytes(HASH_SIZE).asOpaque<ExtrinsicHash>(),
@@ -112,7 +112,7 @@ export class Header extends WithDebug {
   static Codec = codec.Class(
     Header,
     Compatibility.isLessThan(GpVersion.V0_7_0)
-      ? LegacyCodec
+      ? legacyDescriptor
       : {
           parentHeaderHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
           priorStateRoot: codec.bytes(HASH_SIZE).asOpaque<StateRootHash>(),
