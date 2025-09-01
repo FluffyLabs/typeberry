@@ -101,9 +101,6 @@ enum PvmInvocationError {
 /** `G_A`: The gas allocated to invoke a work-report’s Accumulation logic. */
 export const GAS_TO_INVOKE_WORK_REPORT = 10_000_000n;
 
-/** `G_T`: The total gas allocated across all Accumulation. */
-export const ACCUMULATE_TOTAL_GAS = 3_500_000_000n;
-
 const logger = Logger.new(import.meta.filename, "accumulate");
 
 const ARGS_CODEC_0_6_4 = codec.object({
@@ -432,7 +429,7 @@ export class Accumulate {
   /**
    * A method that calculates the initial gas limit.
    *
-   * Please note it cannot overflow because we use `BigInt`, and the final result is clamped to `ACCUMULATE_TOTAL_GAS`.
+   * Please note it cannot overflow because we use `BigInt`, and the final result is clamped to `maxBlockGas` (W_G).
    *
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/18f40118f401?v=0.6.7
    */
@@ -441,7 +438,7 @@ export class Accumulate {
       GAS_TO_INVOKE_WORK_REPORT * BigInt(this.chainSpec.coresCount) +
       this.state.privilegedServices.autoAccumulateServices.reduce((acc, { gasLimit }) => acc + gasLimit, 0n);
     const gasLimit = tryAsServiceGas(
-      ACCUMULATE_TOTAL_GAS > calculatedGasLimit ? ACCUMULATE_TOTAL_GAS : calculatedGasLimit,
+      this.chainSpec.maxBlockGas > calculatedGasLimit ? this.chainSpec.maxBlockGas : calculatedGasLimit,
     );
 
     return tryAsServiceGas(gasLimit);
