@@ -3,6 +3,7 @@ import { Decoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { Block } from "./block.js";
 import testBlockData_0_6_4 from "./test-block-0-6-4.js";
+import testBlockData_0_6_5 from "./test-block-0-6-5.js";
 import testBlockData from "./test-block.js";
 import testWorkReportData_0_6_4 from "./test-work-report-0-6-4.js";
 import testWorkReportData from "./test-work-report.js";
@@ -10,7 +11,13 @@ import testWorkReportData from "./test-work-report.js";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 
 export function testBlockHex() {
-  return Compatibility.isGreaterOrEqual(GpVersion.V0_6_5) ? testBlockData : testBlockData_0_6_4;
+  if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)) {
+    return testBlockData;
+  }
+  if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_5)) {
+    return testBlockData_0_6_5;
+  }
+  return testBlockData_0_6_4;
 }
 export function testBlock() {
   return Decoder.decodeObject(Block.Codec, BytesBlob.parseBlob(testBlockHex()), tinyChainSpec);
