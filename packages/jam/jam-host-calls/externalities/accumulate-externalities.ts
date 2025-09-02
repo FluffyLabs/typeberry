@@ -492,9 +492,9 @@ export class AccumulateExternalities
     authQueue: FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>,
     authManager: ServiceId | null,
   ): Result<OK, UpdatePrivilegesError> {
-    // NOTE `coreIndex` is already verified in the HC, so this is infallible.
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36a40136a401?v=0.6.7 */
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      // NOTE `coreIndex` is already verified in the HC, so this is infallible.
       const currentAuthManager = this.updatedState.getPrivilegedServices().authManager[coreIndex];
 
       if (currentAuthManager !== this.currentServiceId) {
