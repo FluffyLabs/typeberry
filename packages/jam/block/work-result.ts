@@ -111,30 +111,15 @@ export class WorkRefineLoad extends WithDebug {
  *
  * https://graypaper.fluffylabs.dev/#/68eaa1f/139501139501?v=0.6.4
  */
-// pre-0.7.0 work result codec descriptor
-const legacyWorkResultDescriptor: DescriptorRecord<WorkResult> = {
-  serviceId: codec.u32.asOpaque<ServiceId>(),
-  codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
-  payloadHash: codec.bytes(HASH_SIZE),
-  gas: codec.u64.asOpaque<ServiceGas>(),
-  result: WorkExecResult.Codec,
-  load: WorkRefineLoad.Codec,
-};
-
 export class WorkResult {
-  static Codec = codec.Class(
-    WorkResult,
-    Compatibility.isLessThan(GpVersion.V0_7_0)
-      ? legacyWorkResultDescriptor
-      : {
-          serviceId: codec.u32.asOpaque<ServiceId>(),
-          codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
-          payloadHash: codec.bytes(HASH_SIZE),
-          gas: codec.u64.asOpaque<ServiceGas>(),
-          load: WorkRefineLoad.Codec,
-          result: WorkExecResult.Codec,
-        },
-  );
+  static Codec = codec.Class(WorkResult, {
+    serviceId: codec.u32.asOpaque<ServiceId>(),
+    codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
+    payloadHash: codec.bytes(HASH_SIZE),
+    gas: codec.u64.asOpaque<ServiceGas>(),
+    result: WorkExecResult.Codec,
+    load: WorkRefineLoad.Codec,
+  });
 
   static create({ serviceId, codeHash, payloadHash, gas, result, load }: CodecRecord<WorkResult>) {
     return new WorkResult(serviceId, codeHash, payloadHash, gas, result, load);
