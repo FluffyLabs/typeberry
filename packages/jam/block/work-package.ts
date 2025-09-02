@@ -35,34 +35,30 @@ export const MAX_NUMBER_OF_WORK_ITEMS = 16;
  * https://graypaper.fluffylabs.dev/#/579bd12/197000197200
  */
 // pre-0.7.0 work package codec descriptor
-const legacyWorkPackageDescriptor: DescriptorRecord<WorkPackage> = {
-  authorization: codec.blob,
-  authCodeHost: codec.u32.asOpaque<ServiceId>(),
-  authCodeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
-  parametrization: codec.blob,
-  context: RefineContext.Codec,
-  items: codec.sequenceVarLen(WorkItem.Codec).convert(
-    (x) => x,
-    (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
-  ),
-};
 export class WorkPackage extends WithDebug {
-  static Codec = codec.Class(
-    WorkPackage,
-    Compatibility.isLessThan(GpVersion.V0_7_0)
-      ? legacyWorkPackageDescriptor
-      : {
-          authCodeHost: codec.u32.asOpaque<ServiceId>(),
-          authCodeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
-          context: RefineContext.Codec,
-          authorization: codec.blob,
-          parametrization: codec.blob,
-          items: codec.sequenceVarLen(WorkItem.Codec).convert(
-            (x) => x,
-            (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
-          ),
-        },
-  );
+  static Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
+    ? codec.Class(WorkPackage, {
+        authCodeHost: codec.u32.asOpaque<ServiceId>(),
+        authCodeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
+        context: RefineContext.Codec,
+        authorization: codec.blob,
+        parametrization: codec.blob,
+        items: codec.sequenceVarLen(WorkItem.Codec).convert(
+          (x) => x,
+          (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+        ),
+      })
+    : codec.Class(WorkPackage, {
+        authorization: codec.blob,
+        authCodeHost: codec.u32.asOpaque<ServiceId>(),
+        authCodeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
+        parametrization: codec.blob,
+        context: RefineContext.Codec,
+        items: codec.sequenceVarLen(WorkItem.Codec).convert(
+          (x) => x,
+          (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+        ),
+      });
 
   static create({
     authorization,

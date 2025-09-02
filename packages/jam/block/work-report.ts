@@ -84,39 +84,37 @@ export class WorkPackageInfo extends WithDebug {
  */
 
 // pre-0.7.0 work report codec descriptor
-const legacyWorkReportDescriptor: DescriptorRecord<WorkReport> = {
-  workPackageSpec: WorkPackageSpec.Codec,
-  context: RefineContext.Codec,
-  coreIndex:
-    Compatibility.isGreaterOrEqual(GpVersion.V0_6_5) && !Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5)
-      ? codec.varU32.convert(
-          (o) => tryAsU32(o),
-          (i) => {
-            if (!isU16(i)) {
-              throw new Error(`Core index exceeds U16: ${i}`);
-            }
-            return tryAsCoreIndex(i);
-          },
-        )
-      : codec.u16.asOpaque<CoreIndex>(),
-  authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
-  authorizationOutput: codec.blob,
-  segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
-  results: codec.sequenceVarLen(WorkResult.Codec).convert(
-    (x) => x,
-    (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
-  ),
-  authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
-};
 export class WorkReport extends WithDebug {
-  static Codec = codec.Class(
-    WorkReport,
-    Compatibility.isLessThan(GpVersion.V0_7_0)
-      ? legacyWorkReportDescriptor
-      : {
-          workPackageSpec: WorkPackageSpec.Codec,
-          context: RefineContext.Codec,
-          coreIndex: !Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5)
+  static Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
+    ? codec.Class(WorkReport, {
+        workPackageSpec: WorkPackageSpec.Codec,
+        context: RefineContext.Codec,
+        coreIndex: !Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5)
+          ? codec.varU32.convert(
+              (o) => tryAsU32(o),
+              (i) => {
+                if (!isU16(i)) {
+                  throw new Error(`Core index exceeds U16: ${i}`);
+                }
+                return tryAsCoreIndex(i);
+              },
+            )
+          : codec.u16.asOpaque<CoreIndex>(),
+        authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
+        authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
+        authorizationOutput: codec.blob,
+        segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
+        results: codec.sequenceVarLen(WorkResult.Codec).convert(
+          (x) => x,
+          (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+        ),
+      } as DescriptorRecord<WorkReport>)
+    : codec.Class(WorkReport, {
+        workPackageSpec: WorkPackageSpec.Codec,
+        context: RefineContext.Codec,
+        coreIndex:
+          Compatibility.isGreaterOrEqual(GpVersion.V0_6_5) &&
+          !Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5)
             ? codec.varU32.convert(
                 (o) => tryAsU32(o),
                 (i) => {
@@ -127,16 +125,15 @@ export class WorkReport extends WithDebug {
                 },
               )
             : codec.u16.asOpaque<CoreIndex>(),
-          authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
-          authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
-          authorizationOutput: codec.blob,
-          segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
-          results: codec.sequenceVarLen(WorkResult.Codec).convert(
-            (x) => x,
-            (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
-          ),
-        },
-  );
+        authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
+        authorizationOutput: codec.blob,
+        segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
+        results: codec.sequenceVarLen(WorkResult.Codec).convert(
+          (x) => x,
+          (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+        ),
+        authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
+      });
 
   static create({
     workPackageSpec,

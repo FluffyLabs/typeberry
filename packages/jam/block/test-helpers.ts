@@ -4,6 +4,7 @@ import { tinyChainSpec } from "@typeberry/config";
 import { Block } from "./block.js";
 import testBlockData_0_6_5 from "./test-block-0-6-5.js";
 import testBlockData from "./test-block.js";
+import testWorkReportData_0_6_5 from "./test-work-report-0-6-5.js";
 import testWorkReportData from "./test-work-report.js";
 
 import { Compatibility, GpVersion } from "@typeberry/utils";
@@ -23,5 +24,5 @@ export function testBlockView() {
 }
 
 export function testWorkReportHex() {
-  return testWorkReportData;
+  return Compatibility.isGreaterOrEqual(GpVersion.V0_7_0) ? testWorkReportData : testWorkReportData_0_6_5;
 }
