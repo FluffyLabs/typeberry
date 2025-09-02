@@ -89,7 +89,7 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
     };
   }
   describe("HostCalls: Bless", () => {
-    it("should set new privileged services and auto-accumualte services", async () => {
+    it("should set new privileged services and auto-accumulate services", async () => {
       const accumulate = new PartialStateMock();
       const serviceId = tryAsServiceId(10_000);
       const bless = new Bless(serviceId, accumulate, tinyChainSpec);
@@ -140,7 +140,7 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       assert.deepStrictEqual(accumulate.privilegedServices, []);
     });
 
-    it("should auto-accumualte services when dictionary is out of order", async () => {
+    it("should auto-accumulate services when dictionary is out of order", async () => {
       const accumulate = new PartialStateMock();
       const serviceId = tryAsServiceId(10_000);
       const bless = new Bless(serviceId, accumulate, tinyChainSpec);
@@ -160,7 +160,7 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       ]);
     });
 
-    it("should auto-accumualte services when dictionary contains duplicates", async () => {
+    it("should auto-accumulate services when dictionary contains duplicates", async () => {
       const accumulate = new PartialStateMock();
       const serviceId = tryAsServiceId(10_000);
       const bless = new Bless(serviceId, accumulate, tinyChainSpec);
@@ -268,7 +268,7 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
   }
 
   describe("HostCalls: Bless", () => {
-    it("should set new privileged services and auto-accumualte services", async () => {
+    it("should set new privileged services and auto-accumulate services", async () => {
       const accumulate = new PartialStateMock();
       const serviceId = tryAsServiceId(10_000);
       const bless = new Bless(serviceId, accumulate, tinyChainSpec);
@@ -301,7 +301,7 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       assert.deepStrictEqual(accumulate.privilegedServices, []);
     });
 
-    it("should auto-accumualte services when dictionary is out of order", async () => {
+    it("should auto-accumulate services when dictionary is out of order", async () => {
       const accumulate = new PartialStateMock();
       const serviceId = tryAsServiceId(10_000);
       const bless = new Bless(serviceId, accumulate, tinyChainSpec);
@@ -319,7 +319,7 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       ]);
     });
 
-    it("should auto-accumualte services when dictionary contains duplicates", async () => {
+    it("should auto-accumulate services when dictionary contains duplicates", async () => {
       const accumulate = new PartialStateMock();
       const serviceId = tryAsServiceId(10_000);
       const bless = new Bless(serviceId, accumulate, tinyChainSpec);
