@@ -1,8 +1,8 @@
 import type { StateRootHash } from "@typeberry/block";
 import { Encoder } from "@typeberry/codec";
-import { HashDictionary } from "@typeberry/collections";
-import type { TruncatedHashDictionary } from "@typeberry/collections";
+import { TruncatedHashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import type { TruncatedHash } from "@typeberry/hash";
 import type { InMemoryState } from "@typeberry/state";
 import { type BytesBlob, InMemoryTrie } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
@@ -11,43 +11,15 @@ import type { StateKey } from "./keys.js";
 import { type StateEntryUpdate, StateEntryUpdateAction } from "./serialize-state-update.js";
 import { type StateCodec, serialize } from "./serialize.js";
 
-/** Full (i.e. 32 bytes; non-truncated) state entries. */
-export type FullEntries = {
-  full: true;
-  data: HashDictionary<StateKey, BytesBlob>;
-};
-
-/** Truncated (i.e. 31 bytes extended to 32 bytes) state entries. */
-export type TruncatedEntries = {
-  full: false;
-  data: TruncatedHashDictionary<StateKey, BytesBlob>;
-};
-
 /**
  * Full, in-memory state represented as serialized entries dictionary.
  *
  * State entries may be wrapped into `SerializedState` to access the contained values.
  */
-export class StateEntries<TEntries extends FullEntries | TruncatedEntries = FullEntries | TruncatedEntries> {
+export class StateEntries {
   /** Turn in-memory state into it's serialized form. */
-  static serializeInMemory(spec: ChainSpec, state: InMemoryState): StateEntries<FullEntries> {
-    return new StateEntries({
-      full: true,
-      data: convertInMemoryStateToDictionary(spec, state),
-    });
-  }
-
-  /**
-   * Wrap a collection of state entries and treat it as state.
-   *
-   * NOTE: There is no verification happening, so the state may be
-   * incomplete. Use only if you are sure this is all the entries needed.
-   */
-  static fromDictionaryUnsafe(data: FullEntries["data"]): StateEntries<FullEntries> {
-    return new StateEntries({
-      full: true,
-      data,
-    });
+  static serializeInMemory(spec: ChainSpec, state: InMemoryState) {
+    return new StateEntries(convertInMemoryStateToDictionary(spec, state));
   }
 
   /**
@@ -56,27 +28,38 @@ export class StateEntries<TEntries extends FullEntries | TruncatedEntries = Full
    * NOTE: There is no verification happening, so the state may be
    * incomplete. Use only if you are sure this is all the entries needed.
    */
-  static fromTruncatedDictionaryUnsafe(data: TruncatedEntries["data"]): StateEntries<TruncatedEntries> {
-    return new StateEntries({
-      full: false,
-      data,
-    });
+  static fromDictionaryUnsafe(data: TruncatedHashDictionary<StateKey, BytesBlob>): StateEntries {
+    return new StateEntries(data);
+  }
+
+  /**
+   * Create a new serialized state from a collection of existing entries.
+   *
+   * NOTE: There is no verification happening, so the state may be
+   * incomplete. Use only if you are sure this is all the entries needed.
+   */
+  static fromEntriesUnsafe(entries: Iterable<[StateKey | TruncatedHash, BytesBlob]>) {
+    return new StateEntries(TruncatedHashDictionary.fromEntries(entries));
   }
 
   private trieCache: InMemoryTrie | null = null;
 
-  private constructor(public readonly entries: TEntries) {}
+  private constructor(private readonly entries: TruncatedHashDictionary<StateKey, BytesBlob>) {}
 
   /** When comparing, we can safely ignore `trieCache` and just use entries. */
   [TEST_COMPARE_USING]() {
-    return this.entries.data;
+    return this.entries;
+  }
+
+  [Symbol.iterator]() {
+    return this.entries[Symbol.iterator]();
   }
 
   /** Construct the trie from given set of state entries. */
   public getTrie(): InMemoryTrie {
     if (this.trieCache === null) {
       const trie = InMemoryTrie.empty(blake2bTrieHasher);
-      for (const [key, value] of this.entries.data) {
+      for (const [key, value] of this.entries) {
         trie.set(key.asOpaque(), value);
       }
       this.trieCache = trie;
@@ -86,7 +69,7 @@ export class StateEntries<TEntries extends FullEntries | TruncatedEntries = Full
 
   /** Retrieve value of some serialized key (if present). */
   get(key: StateKey): BytesBlob | null {
-    return this.entries.data.get(key) ?? null;
+    return this.entries.get(key) ?? null;
   }
 
   /** Modify underlying entries dictionary with given update. */
@@ -95,9 +78,9 @@ export class StateEntries<TEntries extends FullEntries | TruncatedEntries = Full
     this.trieCache = null;
     for (const [action, key, value] of stateEntriesUpdate) {
       if (action === StateEntryUpdateAction.Insert) {
-        this.entries.data.set(key, value);
+        this.entries.set(key, value);
       } else if (action === StateEntryUpdateAction.Remove) {
-        this.entries.data.delete(key);
+        this.entries.delete(key);
       } else {
         assertNever(action);
       }
@@ -114,8 +97,11 @@ export class StateEntries<TEntries extends FullEntries | TruncatedEntries = Full
 }
 
 /** https://graypaper.fluffylabs.dev/#/68eaa1f/38a50038a500?v=0.6.4 */
-function convertInMemoryStateToDictionary(spec: ChainSpec, state: InMemoryState): HashDictionary<StateKey, BytesBlob> {
-  const serialized = HashDictionary.new<StateKey, BytesBlob>();
+function convertInMemoryStateToDictionary(
+  spec: ChainSpec,
+  state: InMemoryState,
+): TruncatedHashDictionary<StateKey, BytesBlob> {
+  const serialized = TruncatedHashDictionary.fromEntries<StateKey, BytesBlob>([]);
   function doSerialize<T>(codec: StateCodec<T>) {
     serialized.set(codec.key, Encoder.encodeObject(codec.Codec, codec.extract(state), spec));
   }

@@ -3,6 +3,7 @@ import { BytesBlob } from "@typeberry/bytes";
 import { SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { LeafDb, StateUpdateError, type StatesDb } from "@typeberry/database";
+import type { TruncatedHash } from "@typeberry/hash";
 import type { ServicesUpdate, State } from "@typeberry/state";
 import { SerializedState, serializeStateUpdate } from "@typeberry/state-merkleization";
 import type { StateKey } from "@typeberry/state-merkleization";
@@ -85,14 +86,14 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     return await this.updateAndCommit(
       headerHash,
       SortedSet.fromArray<LeafNode>(leafComparator, []),
-      Array.from(serializedState.entries.data).map((x) => [StateEntryUpdateAction.Insert, x[0], x[1]]),
+      Array.from(serializedState, (x) => [StateEntryUpdateAction.Insert, x[0], x[1]]),
     );
   }
 
   private async updateAndCommit(
     headerHash: HeaderHash,
     leafs: SortedSet<LeafNode>,
-    data: Iterable<[StateEntryUpdateAction, StateKey, BytesBlob]>,
+    data: Iterable<[StateEntryUpdateAction, StateKey | TruncatedHash, BytesBlob]>,
   ): Promise<Result<OK, StateUpdateError>> {
     // We will collect all values that don't fit directly into leaf nodes.
     const values: [ValueHash, BytesBlob][] = [];
