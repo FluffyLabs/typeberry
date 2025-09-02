@@ -1,9 +1,9 @@
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
+import { type CodecRecord, type DescribedBy, DescriptorRecord, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U8 } from "@typeberry/numbers";
-import { WithDebug, ensure } from "@typeberry/utils";
+import { Compatibility, GpVersion, WithDebug, ensure } from "@typeberry/utils";
 import type { ServiceId } from "./common.js";
 import type { CodeHash } from "./hash.js";
 import { RefineContext } from "./refine-context.js";
@@ -34,18 +34,35 @@ export const MAX_NUMBER_OF_WORK_ITEMS = 16;
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/197000197200
  */
+
+const legacyWorkPackageDescriptor: DescriptorRecord<WorkPackage> = {
+  authorization: codec.blob,
+  authCodeHost: codec.u32.asOpaque<ServiceId>(),
+  authCodeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
+  parametrization: codec.blob,
+  context: RefineContext.Codec,
+  items: codec.sequenceVarLen(WorkItem.Codec).convert(
+    (x) => x,
+    (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+  ),
+};
 export class WorkPackage extends WithDebug {
-  static Codec = codec.Class(WorkPackage, {
-    authorization: codec.blob,
-    authCodeHost: codec.u32.asOpaque<ServiceId>(),
-    authCodeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
-    parametrization: codec.blob,
-    context: RefineContext.Codec,
-    items: codec.sequenceVarLen(WorkItem.Codec).convert(
-      (x) => x,
-      (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
-    ),
-  });
+  static Codec = codec.Class(
+    WorkPackage,
+    Compatibility.isLessThan(GpVersion.V0_7_0)
+      ? legacyWorkPackageDescriptor
+      : {
+          authCodeHost: codec.u32.asOpaque<ServiceId>(),
+          authCodeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
+          context: RefineContext.Codec,
+          authorization: codec.blob,
+          parametrization: codec.blob,
+          items: codec.sequenceVarLen(WorkItem.Codec).convert(
+            (x) => x,
+            (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+          ),
+        },
+  );
 
   static create({
     authorization,

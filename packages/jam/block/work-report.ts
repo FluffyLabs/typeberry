@@ -1,5 +1,5 @@
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
+import { type CodecRecord, DescriptorRecord, codec, readonlyArray } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U16, type U32, isU16, tryAsU32 } from "@typeberry/numbers";
@@ -82,31 +82,61 @@ export class WorkPackageInfo extends WithDebug {
  *
  * https://graypaper.fluffylabs.dev/#/cc517d7/131c01132401?v=0.6.5
  */
+
+// pre-0.7.0 work report codec descriptor
+const legacyDescriptor: DescriptorRecord<WorkReport> = {
+  workPackageSpec: WorkPackageSpec.Codec,
+  context: RefineContext.Codec,
+  coreIndex:
+    Compatibility.isGreaterOrEqual(GpVersion.V0_6_5) && !Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5)
+      ? codec.varU32.convert(
+          (o) => tryAsU32(o),
+          (i) => {
+            if (!isU16(i)) {
+              throw new Error(`Core index exceeds U16: ${i}`);
+            }
+            return tryAsCoreIndex(i);
+          },
+        )
+      : codec.u16.asOpaque<CoreIndex>(),
+  authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
+  authorizationOutput: codec.blob,
+  segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
+  results: codec.sequenceVarLen(WorkResult.Codec).convert(
+    (x) => x,
+    (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+  ),
+  authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
+};
 export class WorkReport extends WithDebug {
-  static Codec = codec.Class(WorkReport, {
-    workPackageSpec: WorkPackageSpec.Codec,
-    context: RefineContext.Codec,
-    coreIndex:
-      Compatibility.isGreaterOrEqual(GpVersion.V0_6_5) && !Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5)
-        ? codec.varU32.convert(
-            (o) => tryAsU32(o),
-            (i) => {
-              if (!isU16(i)) {
-                throw new Error(`Core index exceeds U16: ${i}`);
-              }
-              return tryAsCoreIndex(i);
-            },
-          )
-        : codec.u16.asOpaque<CoreIndex>(),
-    authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
-    authorizationOutput: codec.blob,
-    segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
-    results: codec.sequenceVarLen(WorkResult.Codec).convert(
-      (x) => x,
-      (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
-    ),
-    authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
-  });
+  static Codec = codec.Class(
+    WorkReport,
+    Compatibility.isLessThan(GpVersion.V0_7_0)
+      ? legacyDescriptor
+      : {
+          workPackageSpec: WorkPackageSpec.Codec,
+          context: RefineContext.Codec,
+          coreIndex: !Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5)
+            ? codec.varU32.convert(
+                (o) => tryAsU32(o),
+                (i) => {
+                  if (!isU16(i)) {
+                    throw new Error(`Core index exceeds U16: ${i}`);
+                  }
+                  return tryAsCoreIndex(i);
+                },
+              )
+            : codec.u16.asOpaque<CoreIndex>(),
+          authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
+          authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
+          authorizationOutput: codec.blob,
+          segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
+          results: codec.sequenceVarLen(WorkResult.Codec).convert(
+            (x) => x,
+            (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+          ),
+        },
+  );
 
   static create({
     workPackageSpec,

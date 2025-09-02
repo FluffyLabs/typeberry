@@ -1,6 +1,8 @@
 import { logger, main } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
+Error.stackTraceLimit = Number.POSITIVE_INFINITY;
+
 main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_070", {
   accepted: ["traces"],
   ignored: [
@@ -8,8 +10,8 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_070", {
     // storage and preimage tests fail due to encoding issues
     "traces/storage_light",
     "traces/storage",
-    "traces/preimages_light",
-    "traces/preimages",
+    // "traces/preimages_light",
+    // "traces/preimages",
   ],
 })
   .then((r) => logger.log(r))

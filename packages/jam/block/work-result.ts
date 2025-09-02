@@ -1,8 +1,8 @@
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, codec } from "@typeberry/codec";
+import { type CodecRecord, DescriptorRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { WithDebug } from "@typeberry/utils";
+import { Compatibility, GpVersion, WithDebug } from "@typeberry/utils";
 import type { ServiceGas, ServiceId } from "./common.js";
 import type { CodeHash } from "./hash.js";
 
@@ -111,15 +111,29 @@ export class WorkRefineLoad extends WithDebug {
  *
  * https://graypaper.fluffylabs.dev/#/68eaa1f/139501139501?v=0.6.4
  */
+const legacyWorkResultDescriptor: DescriptorRecord<WorkResult> = {
+  serviceId: codec.u32.asOpaque<ServiceId>(),
+  codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
+  payloadHash: codec.bytes(HASH_SIZE),
+  gas: codec.u64.asOpaque<ServiceGas>(),
+  result: WorkExecResult.Codec,
+  load: WorkRefineLoad.Codec,
+};
+
 export class WorkResult {
-  static Codec = codec.Class(WorkResult, {
-    serviceId: codec.u32.asOpaque<ServiceId>(),
-    codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
-    payloadHash: codec.bytes(HASH_SIZE),
-    gas: codec.u64.asOpaque<ServiceGas>(),
-    result: WorkExecResult.Codec,
-    load: WorkRefineLoad.Codec,
-  });
+  static Codec = codec.Class(
+    WorkResult,
+    Compatibility.isLessThan(GpVersion.V0_7_0)
+      ? legacyWorkResultDescriptor
+      : {
+          serviceId: codec.u32.asOpaque<ServiceId>(),
+          codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
+          payloadHash: codec.bytes(HASH_SIZE),
+          gas: codec.u64.asOpaque<ServiceGas>(),
+          load: WorkRefineLoad.Codec,
+          result: WorkExecResult.Codec,
+        },
+  );
 
   static create({ serviceId, codeHash, payloadHash, gas, result, load }: CodecRecord<WorkResult>) {
     return new WorkResult(serviceId, codeHash, payloadHash, gas, result, load);
