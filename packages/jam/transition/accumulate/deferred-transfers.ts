@@ -115,7 +115,7 @@ export class DeferredTransfers {
           }
           return Encoder.encodeObject(
             ARGS_CODEC_PRE_067,
-            { timeslot, serviceId, transfers: transfers },
+            { timeslot, serviceId, transfers },
             this.chainSpec,
           );
         };
