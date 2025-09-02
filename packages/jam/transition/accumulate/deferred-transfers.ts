@@ -113,11 +113,7 @@ export class DeferredTransfers {
               this.chainSpec,
             );
           }
-          return Encoder.encodeObject(
-            ARGS_CODEC_PRE_067,
-            { timeslot, serviceId, transfers },
-            this.chainSpec,
-          );
+          return Encoder.encodeObject(ARGS_CODEC_PRE_067, { timeslot, serviceId, transfers }, this.chainSpec);
         };
 
         const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState, fetchExternalities });

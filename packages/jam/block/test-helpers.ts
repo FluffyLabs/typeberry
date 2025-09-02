@@ -1,6 +1,7 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { Block } from "./block.js";
 import testBlockData_0_6_5 from "./test-block-0-6-5.js";
 import testBlockData from "./test-block.js";
