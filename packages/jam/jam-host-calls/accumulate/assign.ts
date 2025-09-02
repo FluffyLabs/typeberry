@@ -44,7 +44,7 @@ export class Assign implements HostCallHandler {
     memory: IHostCallMemory,
   ): Promise<undefined | PvmExecution> {
     // c
-    const coreIndex = regs.get(IN_OUT_REG);
+    const maybeCoreIndex = regs.get(IN_OUT_REG);
     // o
     const authorizationQueueStart = regs.get(8);
     // a
@@ -57,23 +57,19 @@ export class Assign implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    // the core is unknown
-    if (coreIndex >= this.chainSpec.coresCount) {
+    if (maybeCoreIndex >= this.chainSpec.coresCount) {
       regs.set(IN_OUT_REG, HostCallResult.CORE);
       return;
     }
+    // NOTE: Here we know the core index is valid
+    const coreIndex = tryAsCoreIndex(Number(maybeCoreIndex));
 
     const decoder = Decoder.fromBlob(res);
     const authQueue = decoder.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
     const fixedSizeAuthQueue = FixedSizeArray.new(authQueue, AUTHORIZATION_QUEUE_SIZE);
 
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      // NOTE [MaSo] it's safe to cast to Number because we know that the coreIndex is less than cores count = 341
-      const result = this.partialState.updateAuthorizationQueue(
-        tryAsCoreIndex(Number(coreIndex)),
-        fixedSizeAuthQueue,
-        authManager,
-      );
+      const result = this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, authManager);
       if (result.isOk) {
         regs.set(IN_OUT_REG, HostCallResult.OK);
         return;
@@ -94,8 +90,7 @@ export class Assign implements HostCallHandler {
       assertNever(e);
     } else {
       regs.set(IN_OUT_REG, HostCallResult.OK);
-      // NOTE [MaSo] it's safe to cast to Number because we know that the coreIndex is less than cores count = 341
-      this.partialState.updateAuthorizationQueue(tryAsCoreIndex(Number(coreIndex)), fixedSizeAuthQueue, authManager);
+      this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, authManager);
     }
   }
 }
