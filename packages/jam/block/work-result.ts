@@ -111,6 +111,7 @@ export class WorkRefineLoad extends WithDebug {
  *
  * https://graypaper.fluffylabs.dev/#/68eaa1f/139501139501?v=0.6.4
  */
+// pre-0.7.0 work result codec descriptor
 const legacyWorkResultDescriptor: DescriptorRecord<WorkResult> = {
   serviceId: codec.u32.asOpaque<ServiceId>(),
   codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),

@@ -34,7 +34,7 @@ export const MAX_NUMBER_OF_WORK_ITEMS = 16;
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/197000197200
  */
-
+// pre-0.7.0 work package codec descriptor
 const legacyWorkPackageDescriptor: DescriptorRecord<WorkPackage> = {
   authorization: codec.blob,
   authCodeHost: codec.u32.asOpaque<ServiceId>(),

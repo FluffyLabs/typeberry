@@ -84,7 +84,7 @@ export class WorkPackageInfo extends WithDebug {
  */
 
 // pre-0.7.0 work report codec descriptor
-const legacyDescriptor: DescriptorRecord<WorkReport> = {
+const legacyWorkReportDescriptor: DescriptorRecord<WorkReport> = {
   workPackageSpec: WorkPackageSpec.Codec,
   context: RefineContext.Codec,
   coreIndex:
@@ -112,7 +112,7 @@ export class WorkReport extends WithDebug {
   static Codec = codec.Class(
     WorkReport,
     Compatibility.isLessThan(GpVersion.V0_7_0)
-      ? legacyDescriptor
+      ? legacyWorkReportDescriptor
       : {
           workPackageSpec: WorkPackageSpec.Codec,
           context: RefineContext.Codec,

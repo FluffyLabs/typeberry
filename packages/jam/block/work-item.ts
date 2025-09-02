@@ -109,6 +109,7 @@ export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/198b00199600
  */
+// pre-0.7.0 work item codec descriptor
 const legacyWorkItemDescriptor: DescriptorRecord<WorkItem> = {
   service: codec.u32.asOpaque<ServiceId>(),
   codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
