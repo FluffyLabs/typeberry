@@ -1,5 +1,5 @@
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, type DescribedBy, type DescriptorRecord, codec } from "@typeberry/codec";
+import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U8 } from "@typeberry/numbers";
