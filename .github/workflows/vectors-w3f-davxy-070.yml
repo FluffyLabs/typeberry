@@ -7,7 +7,7 @@ on:
 
 env:
   TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
-  GP_VERSION: 0.7.0
+  GP_VERSION: 0.7.0-preview
   TEST_SUITE: w3f-davxy
 
 jobs:
