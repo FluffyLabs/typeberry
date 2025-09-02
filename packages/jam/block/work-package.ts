@@ -34,7 +34,6 @@ export const MAX_NUMBER_OF_WORK_ITEMS = 16;
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/197000197200
  */
-// pre-0.7.0 work package codec descriptor
 export class WorkPackage extends WithDebug {
   static Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
     ? codec.Class(WorkPackage, {

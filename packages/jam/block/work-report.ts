@@ -83,7 +83,6 @@ export class WorkPackageInfo extends WithDebug {
  * https://graypaper.fluffylabs.dev/#/cc517d7/131c01132401?v=0.6.5
  */
 
-// pre-0.7.0 work report codec descriptor
 export class WorkReport extends WithDebug {
   static Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
     ? codec.Class(WorkReport, {

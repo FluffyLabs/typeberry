@@ -109,7 +109,6 @@ export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/198b00199600
  */
-// pre-0.7.0 work item codec descriptor
 export class WorkItem extends WithDebug {
   static Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
     ? codec.Class(WorkItem, {
