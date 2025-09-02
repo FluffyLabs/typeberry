@@ -194,16 +194,9 @@ describe("Block Verifier", async () => {
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
-    deepEqual(
-      result,
-      Result.ok(
-        Bytes.parseBytes(
-          Compatibility.isGreaterOrEqual(GpVersion.V0_6_5)
-            ? "0xf02989a8c20e88609e3aec79ba7159197bc8e7b5d43e27f98c911a96b61cdcb8"
-            : "0xa1895a132474e9191e8bdc949649ecfe16ad55685db3e4ea9646766cc7ac1fc4",
-          HASH_SIZE,
-        ).asOpaque(),
-      ),
-    );
+    const expectedResult = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
+      ? "0x1d85cc2c4a6cf2ede21cc99f3654e27c555d9b79dfef25a6ac72b8b69651aa74"
+      : "0xf02989a8c20e88609e3aec79ba7159197bc8e7b5d43e27f98c911a96b61cdcb8";
+    deepEqual(result, Result.ok(Bytes.parseBytes(expectedResult, HASH_SIZE).asOpaque()));
   });
 });
