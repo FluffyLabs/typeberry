@@ -90,7 +90,7 @@ export class Assign implements HostCallHandler {
       assertNever(e);
     } else {
       regs.set(IN_OUT_REG, HostCallResult.OK);
-      this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, authManager);
+      void this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, authManager);
     }
   }
 }

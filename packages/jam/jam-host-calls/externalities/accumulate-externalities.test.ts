@@ -829,6 +829,7 @@ describe("PartialState.upgradeService", () => {
 
 describe("PartialState.updateAuthorizationQueue", () => {
   const [itPost067, itPre067] = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? [it, it.skip] : [it.skip, it];
+  const itPost071 = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? it : it.skip;
 
   itPre067("should update the authorization queue for a given core index", () => {
     const state = partiallyUpdatedState();
@@ -878,7 +879,7 @@ describe("PartialState.updateAuthorizationQueue", () => {
     assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), queue);
   });
 
-  itPost067("should return InvalidServiceId when given auth manager is invalid", () => {
+  itPost071("should return InvalidServiceId when given auth manager is invalid", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,

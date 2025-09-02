@@ -16,6 +16,7 @@ import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
+import { Logger } from "@typeberry/logger";
 import { type U64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AutoAccumulate,
@@ -68,6 +69,8 @@ const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 const LOOKUP_HISTORY_ENTRY_BYTES = tryAsU64(81);
 /** https://graypaper.fluffylabs.dev/#/7e6ff6a/117a01117a01?v=0.6.7 */
 const BASE_STORAGE_BYTES = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(34) : tryAsU64(32);
+
+const logger = Logger.new(import.meta.filename, "accumulate-externalities");
 
 export class AccumulateExternalities
   implements PartialState, AccountsWrite, AccountsRead, AccountsInfo, AccountsLookup
@@ -474,6 +477,9 @@ export class AccumulateExternalities
       const validatorsManager = this.updatedState.getPrivilegedServices().validatorsManager;
 
       if (validatorsManager !== this.currentServiceId) {
+        logger.trace(
+          `Current service id (${this.currentServiceId}) is not a validators manager. (expected: ${validatorsManager}) and cannot update validators data. Ignoring`,
+        );
         return Result.error(UnprivilegedError);
       }
     }
@@ -493,17 +499,21 @@ export class AccumulateExternalities
     authManager: ServiceId | null,
   ): Result<OK, UpdatePrivilegesError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36a40136a401?v=0.6.7 */
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      // NOTE `coreIndex` is already verified in the HC, so this is infallible.
-      const currentAuthManager = this.updatedState.getPrivilegedServices().authManager[coreIndex];
 
-      if (currentAuthManager !== this.currentServiceId) {
-        return Result.error(UpdatePrivilegesError.UnprivilegedService);
-      }
+    // NOTE `coreIndex` is already verified in the HC, so this is infallible.
+    const currentAuthManager = this.updatedState.getPrivilegedServices().authManager[coreIndex];
 
-      if (authManager === null) {
-        return Result.error(UpdatePrivilegesError.InvalidServiceId);
-      }
+    if (currentAuthManager !== this.currentServiceId) {
+      logger.trace(
+        `Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentAuthManager}) and cannot update authorization queue. Ignoring`,
+      );
+
+      return Result.error(UpdatePrivilegesError.UnprivilegedService);
+    }
+
+    if (authManager === null && Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
+      logger.trace("The new auth manager is not a valid service id. Ignoring");
+      return Result.error(UpdatePrivilegesError.InvalidServiceId);
     }
 
     this.updatedState.stateUpdate.authorizationQueues.set(coreIndex, authQueue);

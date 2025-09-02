@@ -60,8 +60,6 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: Designate", () => {
-  const itPost067 = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? it : it.skip;
-
   it("should fail when no data in memory", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
@@ -122,7 +120,7 @@ describe("HostCalls: Designate", () => {
     assert.deepStrictEqual(accumulate.validatorsData.length, 1);
   });
 
-  itPost067("should fail when unprivileged service sets new validators", async () => {
+  it("should fail when unprivileged service sets new validators", async () => {
     const accumulate = new PartialStateMock();
     accumulate.validatorDataResponse = Result.error(UnprivilegedError);
     const serviceId = tryAsServiceId(10_000);
@@ -146,7 +144,11 @@ describe("HostCalls: Designate", () => {
     await designate.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
+    } else {
+      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
+    }
     assert.deepStrictEqual(accumulate.validatorsData.length, 0);
   });
 });

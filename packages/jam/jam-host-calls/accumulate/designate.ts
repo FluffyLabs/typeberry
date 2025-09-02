@@ -53,10 +53,15 @@ export class Designate implements HostCallHandler {
     const decoder = Decoder.fromBlob(res);
     const validatorsData = decoder.sequenceFixLen(ValidatorData.Codec, this.chainSpec.validatorsCount);
 
-    const result = this.partialState.updateValidatorsData(tryAsPerValidator(validatorsData, this.chainSpec));
-    if (result.isError) {
-      regs.set(IN_OUT_REG, HostCallResult.HUH);
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      const result = this.partialState.updateValidatorsData(tryAsPerValidator(validatorsData, this.chainSpec));
+      if (result.isError) {
+        regs.set(IN_OUT_REG, HostCallResult.HUH);
+      } else {
+        regs.set(IN_OUT_REG, HostCallResult.OK);
+      }
     } else {
+      void this.partialState.updateValidatorsData(tryAsPerValidator(validatorsData, this.chainSpec));
       regs.set(IN_OUT_REG, HostCallResult.OK);
     }
   }
