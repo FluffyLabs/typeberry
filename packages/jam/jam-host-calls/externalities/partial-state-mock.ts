@@ -128,9 +128,10 @@ export class PartialStateMock implements PartialState {
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
+    authManager: ServiceId | null,
   ): Result<OK, UpdatePrivilegesError> {
     if (this.authQueueResponse.isOk) {
-      this.authQueue.push([coreIndex, authQueue]);
+      this.authQueue.push([coreIndex, authQueue, authManager]);
     }
     return this.authQueueResponse;
   }
