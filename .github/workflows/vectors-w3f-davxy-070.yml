@@ -39,11 +39,11 @@ jobs:
       - run: npm start -w @typeberry/test-runner
       - name: Display results
         if: always()
-        run: cat ./dist/w3f-davxy-070.txt
+        run: cat ./dist/w3f-davxy-070-preview.txt
       - name: Upload new transaction log
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           path: |
-            ./dist/w3f-davxy-070.txt
+            ./dist/w3f-davxy-070-preview.txt
           name: jamtestvectors-davxy-results
