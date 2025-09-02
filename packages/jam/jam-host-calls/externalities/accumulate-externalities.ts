@@ -638,16 +638,16 @@ export class AccumulateExternalities
     return Result.ok(OK);
   }
 
-  read(serviceId: ServiceId | null, key: StorageKey): BytesBlob | null {
+  read(serviceId: ServiceId | null, rawKey: StorageKey): BytesBlob | null {
     if (serviceId === null) {
       return null;
     }
-
-    return this.updatedState.getStorage(serviceId, key);
+    return this.updatedState.getStorage(serviceId, rawKey);
   }
 
-  write(key: StorageKey, rawKeyBytes: U64, data: BytesBlob | null): Result<number | null, "full"> {
-    const current = this.read(this.currentServiceId, key);
+  write(rawKey: StorageKey, data: BytesBlob | null): Result<number | null, "full"> {
+    const rawKeyBytes = tryAsU64(rawKey.length);
+    const current = this.read(this.currentServiceId, rawKey);
     const isAddingNew = current === null && data !== null;
     const isRemoving = current !== null && data === null;
     const countDiff = isAddingNew ? 1 : isRemoving ? -1 : 0;
@@ -668,7 +668,7 @@ export class AccumulateExternalities
       return Result.error("full", res.details);
     }
 
-    this.updatedState.updateStorage(this.currentServiceId, key, data);
+    this.updatedState.updateStorage(this.currentServiceId, rawKey, data);
 
     return Result.ok(current === null ? null : current.length);
   }

@@ -388,7 +388,7 @@ export const initialServices = ({ withDummyCodeHash = false } = {}): Map<Service
     id,
     new InMemoryService(tryAsServiceId(129), {
       preimages: HashDictionary.new(),
-      storage: HashDictionary.new(),
+      storage: new Map(),
       lookupHistory: HashDictionary.new(),
       info: ServiceAccountInfo.create({
         codeHash: withDummyCodeHash

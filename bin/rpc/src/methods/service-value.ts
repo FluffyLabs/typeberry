@@ -36,7 +36,6 @@ export const serviceValue: RpcMethod<ServiceValueParams, [BlobArray] | null> = a
     return null;
   }
 
-  // TODO [ToDr] we should probably hash the blob to get `StateKey` instead.
   const storageValue = service.getStorage(Bytes.fromNumbers(key, HASH_SIZE).asOpaque());
 
   if (storageValue === null) {
