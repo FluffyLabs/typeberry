@@ -1,8 +1,7 @@
 import assert, { deepEqual } from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { TruncatedHashDictionary } from "@typeberry/collections";
-import { HASH_SIZE } from "@typeberry/hash";
+import { HASH_SIZE, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
 import { InMemoryTrie, type InputKey } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { type Result, resultToString } from "@typeberry/utils";
@@ -40,7 +39,10 @@ describe("LeafDb", () => {
     const entries = leafDb.intoStateEntries();
 
     // then
-    deepEqual(entries.entries.data, TruncatedHashDictionary.fromEntries(raw));
+    deepEqual(
+      Array.from(entries),
+      raw.map(([a, b]) => [Bytes.fromBlob(a.raw.subarray(0, TRUNCATED_HASH_SIZE), TRUNCATED_HASH_SIZE).asOpaque(), b]),
+    );
   });
 
   it("should convert into state entries", () => {

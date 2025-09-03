@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Bytes } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { Decoder } from "./decoder.js";
 import { type CodecRecord, codec } from "./descriptors.js";
@@ -399,5 +399,18 @@ describe("Codec Descriptors / dictionary", () => {
       `${encoded}`,
       "0x0100000001010101010101010101010101010101010101010101010101010101010101010a0000000a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0f0000000f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
     );
+  });
+});
+
+describe("Codec Descriptors / pair", () => {
+  it("should encode/decode a pair", () => {
+    const input: [U32, BytesBlob] = [tryAsU32(1245), BytesBlob.blobFromString("hello world!")];
+    const pairCodec = codec.pair(codec.u32, codec.blob);
+
+    const encoded = Encoder.encodeObject(pairCodec, input);
+    const decoded = Decoder.decodeObject(pairCodec, encoded);
+
+    assert.deepStrictEqual(decoded, input);
+    assert.deepStrictEqual(`${encoded}`, "0xdd0400000c68656c6c6f20776f726c6421");
   });
 });

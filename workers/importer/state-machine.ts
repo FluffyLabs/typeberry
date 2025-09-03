@@ -8,7 +8,6 @@ import {
 } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { TruncatedHashDictionary } from "@typeberry/collections";
 import { WorkerConfig } from "@typeberry/config";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
 import { HASH_SIZE, type WithHash } from "@typeberry/hash";
@@ -21,7 +20,7 @@ import {
   type TransitionTo,
   type TypedChannel,
 } from "@typeberry/state-machine";
-import { StateEntries, type TruncatedEntries, truncatedEntriesCodec } from "@typeberry/state-merkleization";
+import { StateEntries } from "@typeberry/state-merkleization";
 import { resultToString } from "@typeberry/utils";
 import type { Importer } from "./importer.js";
 
@@ -83,12 +82,10 @@ export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
     return null;
   }
 
-  async getStateEntries(port: TypedChannel, hash: Uint8Array): Promise<StateEntries<TruncatedEntries> | null> {
+  async getStateEntries(port: TypedChannel, hash: Uint8Array): Promise<StateEntries | null> {
     const res: Uint8Array | null = await port.sendRequest("getStateEntries", hash, [hash.buffer as ArrayBuffer]);
     if (res instanceof Uint8Array) {
-      const entries = Decoder.decodeObject(truncatedEntriesCodec, res);
-      const dict = TruncatedHashDictionary.fromEntries(entries.map(({ key, value }) => [key.asOpaque(), value]));
-      return StateEntries.fromTruncatedDictionaryUnsafe(dict);
+      return Decoder.decodeObject(StateEntries.Codec, res);
     }
     return null;
   }
@@ -158,15 +155,8 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
 
     if (hash instanceof Uint8Array) {
       const headerHash: HeaderHash = Bytes.fromBlob(hash, HASH_SIZE).asOpaque();
-      let stateEntries = this.importer.getStateEntries(headerHash);
-      if (stateEntries === null) {
-        stateEntries = StateEntries.fromTruncatedDictionaryUnsafe(TruncatedHashDictionary.fromEntries([]));
-      }
-
-      const encoded = Encoder.encodeObject(
-        truncatedEntriesCodec,
-        Array.from(stateEntries.entries.data.entries()).map(([key, value]) => ({ key, value })),
-      );
+      const stateEntries = this.importer.getStateEntries(headerHash);
+      const encoded = Encoder.encodeObject(StateEntries.Codec, stateEntries ?? StateEntries.fromEntriesUnsafe([]));
       return {
         response: encoded.raw,
       };

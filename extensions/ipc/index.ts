@@ -7,14 +7,13 @@ import {
   tryAsTimeSlot,
 } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { TruncatedHashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, TRUNCATED_HASH_SIZE, type WithHash, blake2b } from "@typeberry/hash";
 import { ce129, up0 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
 import type { BlockImportError } from "@typeberry/node";
 import { Listener } from "@typeberry/state-machine";
-import { StateEntries, type TruncatedEntries } from "@typeberry/state-merkleization";
+import { StateEntries } from "@typeberry/state-merkleization";
 import type { Result } from "@typeberry/utils";
 import { type FuzzMessageHandler, FuzzTarget } from "./fuzz/handler.js";
 import { type KeyValue, PeerInfo, type SetState, type Version } from "./fuzz/types.js";
@@ -38,7 +37,7 @@ export interface FuzzTargetApi {
   gpVersion: Version;
   chainSpec: ChainSpec;
   importBlock: (block: Block) => Promise<Result<StateRootHash, BlockImportError>>;
-  resetState: (header: Header, state: StateEntries<TruncatedEntries>) => Promise<StateRootHash>;
+  resetState: (header: Header, state: StateEntries) => Promise<StateRootHash>;
   // TODO [ToDr] key/val instead of state entries?
   getPostSerializedState: (hash: HeaderHash) => Promise<StateEntries | null>;
 }
@@ -97,7 +96,7 @@ class FuzzHandler implements FuzzMessageHandler {
       return [];
     }
 
-    return Array.from(state.entries.data).map(([key, value]) => {
+    return Array.from(state).map(([key, value]) => {
       return {
         key: Bytes.fromBlob(key.raw.subarray(0, TRUNCATED_HASH_SIZE), TRUNCATED_HASH_SIZE),
         value,
@@ -106,8 +105,7 @@ class FuzzHandler implements FuzzMessageHandler {
   }
 
   async resetState(value: SetState): Promise<StateRootHash> {
-    const dict = TruncatedHashDictionary.fromEntries(value.state.map(({ key, value }) => [key.asOpaque(), value]));
-    const entries = StateEntries.fromTruncatedDictionaryUnsafe(dict);
+    const entries = StateEntries.fromEntriesUnsafe(value.state.map(({ key, value }) => [key.asOpaque(), value]));
     const root = this.api.resetState(value.header, entries);
     return root;
   }

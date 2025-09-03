@@ -1,12 +1,7 @@
 import type { StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { TruncatedHashDictionary } from "@typeberry/collections";
-import {
-  type SerializedStateBackend,
-  StateEntries,
-  type StateKey,
-  type TruncatedEntries,
-} from "@typeberry/state-merkleization";
+import { type SerializedStateBackend, StateEntries, type StateKey } from "@typeberry/state-merkleization";
 import { InMemoryTrie, type LeafNode, TrieNode } from "@typeberry/trie";
 import { NodeType, TRIE_NODE_BYTES } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
@@ -103,7 +98,7 @@ export class LeafDb implements SerializedStateBackend {
     return InMemoryTrie.computeStateRoot(blake2bTrieHasher, this.leaves).asOpaque();
   }
 
-  intoStateEntries(): StateEntries<TruncatedEntries> {
+  intoStateEntries(): StateEntries {
     const entries: [StateKey, BytesBlob][] = [];
     for (const [key, lookup] of this.lookup.entries()) {
       if (lookup.kind === LookupKind.EmbeddedValue) {
@@ -118,8 +113,7 @@ export class LeafDb implements SerializedStateBackend {
 
       assertNever(lookup);
     }
-    const dict = TruncatedHashDictionary.fromEntries(entries);
-    return StateEntries.fromTruncatedDictionaryUnsafe(dict);
+    return StateEntries.fromEntriesUnsafe(entries);
   }
 }
 

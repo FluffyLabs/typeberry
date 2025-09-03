@@ -507,6 +507,42 @@ export namespace codec {
     return self;
   };
 
+  /** Encoding of pair of two values. */
+  export const pair = <A, AView, B, BView>(
+    a: Descriptor<A, AView>,
+    b: Descriptor<B, BView>,
+  ): Descriptor<[A, B], [AView, BView]> => {
+    const self = Descriptor.new<[A, B]>(
+      `Pair<${a.name}, ${b.name}>`,
+      addSizeHints(a.sizeHint, b.sizeHint),
+      (e, elem) => {
+        a.encode(e, elem[0]);
+        b.encode(e, elem[1]);
+      },
+      (d) => {
+        const aValue = a.decode(d);
+        const bValue = b.decode(d);
+        return [aValue, bValue];
+      },
+      (s) => {
+        a.skip(s);
+        b.skip(s);
+      },
+    );
+
+    if (hasUniqueView(a) && hasUniqueView(b)) {
+      return Descriptor.withView(
+        self.name,
+        self.sizeHint,
+        self.encode,
+        self.decode,
+        self.skip,
+        codec.pair(a.View, b.View),
+      );
+    }
+    return self;
+  };
+
   /** Custom encoding / decoding logic. */
   export const custom = <T>(
     {

@@ -105,7 +105,7 @@ function loadGenesisState(spec: ChainSpec, data: JipChainSpec["genesisState"]) {
   };
 }
 
-function emptyBlock() {
+export function emptyBlock() {
   return Block.create({
     header: Header.empty(),
     extrinsic: Extrinsic.create({

@@ -2,7 +2,7 @@ import { Block, Header, type HeaderHash, type StateRootHash } from "@typeberry/b
 import { Decoder, Encoder } from "@typeberry/codec";
 import { Version, startFuzzTarget } from "@typeberry/ext-ipc";
 import { Logger } from "@typeberry/logger";
-import type { StateEntries, TruncatedEntries } from "@typeberry/state-merkleization";
+import type { StateEntries } from "@typeberry/state-merkleization";
 import { CURRENT_VERSION, Result } from "@typeberry/utils";
 import { getChainSpec } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
@@ -53,7 +53,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
       }
       return runningNode.getStateEntries(hash);
     },
-    resetState: async (header: Header, state: StateEntries<TruncatedEntries>): Promise<StateRootHash> => {
+    resetState: async (header: Header, state: StateEntries): Promise<StateRootHash> => {
       if (runningNode !== null) {
         const finish = runningNode.close();
         runningNode = null;
@@ -70,7 +70,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
             chainSpec: {
               ...config.node.chainSpec,
               genesisHeader: Encoder.encodeObject(Header.Codec, header, chainSpec),
-              genesisState: new Map(state.entries.data.entries()),
+              genesisState: new Map(state),
             },
           },
           network: null,
