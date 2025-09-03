@@ -61,7 +61,7 @@ function loadBlocks(testPath: string) {
 
   const blocks: Block[] = [];
   for (const file of fs.readdirSync(dir)) {
-    if (!file.endsWith(".json")) {
+    if (!file.endsWith(".json") || file === "genesis.json") {
       continue;
     }
     const data = fs.readFileSync(path.join(dir, file), "utf8");
