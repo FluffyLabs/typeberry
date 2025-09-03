@@ -128,9 +128,9 @@ describe("Block Verifier", async () => {
       result,
       Result.error(
         BlockVerifierError.InvalidExtrinsic,
-        Compatibility.isGreaterOrEqual(GpVersion.V0_6_5)
-          ? "Invalid extrinsic hash: 0x0202020202020202020202020202020202020202020202020202020202020202, expected 0x0cae6b5fb28258312381144a6dd6f8996f7181d7d6ab1016ec6e8108c332f932"
-          : "Invalid extrinsic hash: 0x0202020202020202020202020202020202020202020202020202020202020202, expected 0x170f8e387101ffd117ad93ef6161ef8decc3900b37c38011aef10ba3274052ae",
+        Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
+          ? "Invalid extrinsic hash: 0x0202020202020202020202020202020202020202020202020202020202020202, expected 0x0377c11c61a370e532ce1b18a652aecdd060a3a3a257d53dac8f8e1cb32dea98"
+          : "Invalid extrinsic hash: 0x0202020202020202020202020202020202020202020202020202020202020202, expected 0x0cae6b5fb28258312381144a6dd6f8996f7181d7d6ab1016ec6e8108c332f932",
       ),
     );
   });
@@ -195,7 +195,7 @@ describe("Block Verifier", async () => {
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
     const expectedResult = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
-      ? "0x1d85cc2c4a6cf2ede21cc99f3654e27c555d9b79dfef25a6ac72b8b69651aa74"
+      ? "0x81201f77f6a370731846cae2cbe3cf462c05feacebc3c546347fa4e442fd4fad"
       : "0xf02989a8c20e88609e3aec79ba7159197bc8e7b5d43e27f98c911a96b61cdcb8";
     deepEqual(result, Result.ok(Bytes.parseBytes(expectedResult, HASH_SIZE).asOpaque()));
   });
