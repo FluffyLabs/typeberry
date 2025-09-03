@@ -1,13 +1,14 @@
 import assert from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
-import { Block } from "@typeberry/block";
-import { blockFromJson } from "@typeberry/block-json";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Block, Header } from "@typeberry/block";
+import { blockFromJson, headerFromJson } from "@typeberry/block-json";
+import { Decoder, Encoder, codec } from "@typeberry/codec";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
+import { emptyBlock } from "@typeberry/node";
 import { serializeStateUpdate } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
@@ -15,12 +16,34 @@ import { OnChain } from "@typeberry/transition/chain-stf.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
 import { TestState, loadState } from "./state-loader.js";
 
+export class StateTransitionGenesis {
+  static fromJson: FromJson<StateTransitionGenesis> = {
+    header: headerFromJson,
+    state: TestState.fromJson,
+  };
+
+  static Codec = codec.object({
+    header: Header.Codec,
+    state: TestState.Codec,
+  });
+
+  header!: Header;
+  state!: TestState;
+}
+
 export class StateTransition {
   static fromJson: FromJson<StateTransition> = {
     pre_state: TestState.fromJson,
     post_state: TestState.fromJson,
     block: blockFromJson(tinyChainSpec),
   };
+
+  static Codec = codec.object({
+    pre_state: TestState.Codec,
+    block: Block.Codec,
+    post_state: TestState.Codec,
+  });
+
   pre_state!: TestState;
   post_state!: TestState;
   block!: Block;
@@ -43,8 +66,14 @@ function loadBlocks(testPath: string) {
     }
     const data = fs.readFileSync(path.join(dir, file), "utf8");
     const parsed = JSON.parse(data);
-    const content = parseFromJson(parsed, StateTransition.fromJson);
-    blocks.push(content.block);
+    if (file.endsWith("genesis.json")) {
+      const content = parseFromJson(parsed, StateTransitionGenesis.fromJson);
+      const genesisBlock = Block.create({ header: content.header, extrinsic: emptyBlock().extrinsic });
+      blocks.push(genesisBlock);
+    } else {
+      const content = parseFromJson(parsed, StateTransition.fromJson);
+      blocks.push(content.block);
+    }
   }
 
   blocks.sort((a, b) => a.header.timeSlotIndex - b.header.timeSlotIndex);
@@ -104,9 +133,6 @@ export async function runStateTransition(testContent: StateTransition, testPath:
 
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
   const root = preState.backend.getRootHash();
-  deepEqual(
-    Object.fromEntries(preState.backend.entries.data.entries()),
-    Object.fromEntries(postState.backend.entries.data.entries()),
-  );
+  deepEqual(preState, postState);
   assert.deepStrictEqual(root.toString(), postStateRoot.toString());
 }

@@ -83,30 +83,7 @@ export class WorkPackageInfo extends WithDebug {
  * https://graypaper.fluffylabs.dev/#/cc517d7/131c01132401?v=0.6.5
  */
 export class WorkReport extends WithDebug {
-  static Codec = codec.Class(WorkReport, {
-    workPackageSpec: WorkPackageSpec.Codec,
-    context: RefineContext.Codec,
-    coreIndex:
-      Compatibility.isGreaterOrEqual(GpVersion.V0_6_5) && !Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5)
-        ? codec.varU32.convert(
-            (o) => tryAsU32(o),
-            (i) => {
-              if (!isU16(i)) {
-                throw new Error(`Core index exceeds U16: ${i}`);
-              }
-              return tryAsCoreIndex(i);
-            },
-          )
-        : codec.u16.asOpaque<CoreIndex>(),
-    authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
-    authorizationOutput: codec.blob,
-    segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
-    results: codec.sequenceVarLen(WorkResult.Codec).convert(
-      (x) => x,
-      (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
-    ),
-    authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
-  });
+  static Codec: typeof WorkReportCodec;
 
   static create({
     workPackageSpec,
@@ -154,3 +131,52 @@ export class WorkReport extends WithDebug {
     super();
   }
 }
+
+const WorkReportCodec = codec.Class(WorkReport, {
+  workPackageSpec: WorkPackageSpec.Codec,
+  context: RefineContext.Codec,
+  coreIndex: codec.varU32.convert(
+    (o) => tryAsU32(o),
+    (i) => {
+      if (!isU16(i)) {
+        throw new Error(`Core index exceeds U16: ${i}`);
+      }
+      return tryAsCoreIndex(i);
+    },
+  ),
+  authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
+  authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
+  authorizationOutput: codec.blob,
+  segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
+  results: codec.sequenceVarLen(WorkResult.Codec).convert(
+    (x) => x,
+    (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+  ),
+});
+
+const WorkReportCodecPre070 = codec.Class(WorkReport, {
+  workPackageSpec: WorkPackageSpec.Codec,
+  context: RefineContext.Codec,
+  coreIndex:
+    Compatibility.isGreaterOrEqual(GpVersion.V0_6_5) && !Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5)
+      ? codec.varU32.convert(
+          (o) => tryAsU32(o),
+          (i) => {
+            if (!isU16(i)) {
+              throw new Error(`Core index exceeds U16: ${i}`);
+            }
+            return tryAsCoreIndex(i);
+          },
+        )
+      : codec.u16.asOpaque<CoreIndex>(),
+  authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
+  authorizationOutput: codec.blob,
+  segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
+  results: codec.sequenceVarLen(WorkResult.Codec).convert(
+    (x) => x,
+    (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+  ),
+  authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
+});
+
+WorkReport.Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0) ? WorkReportCodec : WorkReportCodecPre070;

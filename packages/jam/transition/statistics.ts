@@ -8,11 +8,10 @@ import {
   tryAsPerValidator,
   tryAsServiceGas,
 } from "@typeberry/block";
-import { W_G } from "@typeberry/block/gp-constants.js";
 import type { Preimage, PreimagesExtrinsic } from "@typeberry/block/preimage.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import type { WorkResult } from "@typeberry/block/work-result.js";
-import type { ChainSpec } from "@typeberry/config";
+import { type ChainSpec, EC_SEGMENT_SIZE } from "@typeberry/config";
 import { type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { ServiceStatistics, type State, StatisticsData } from "@typeberry/state";
 import { ValidatorStatistics } from "@typeberry/state";
@@ -109,7 +108,7 @@ export class Statistics {
 
     const workPackageLength = availableWorkReports.workPackageSpec.length;
     const workPackageSegment = Math.ceil((availableWorkReports.workPackageSpec.exportsCount * 65) / 64);
-    sum += workPackageLength + W_G * workPackageSegment;
+    sum += workPackageLength + EC_SEGMENT_SIZE * workPackageSegment;
 
     /** Available work report score can be up to `W_R + W_G * ((W_M * 65) / 64) = 0x00C4_2180` */
     return tryAsU32(sum);
@@ -234,15 +233,21 @@ export class Statistics {
     current[authorIndex].preImagesSize = tryAsU32(newPreImagesSize);
 
     /**
-     * NOTE [MaSi] Please note I don't use Kappa' here. If I understand correctly we don't need it.
+     * * NOTE [MaSi] Please note I don't use Kappa' here. If I understand correctly we don't need it.
      * Kappa' is not needed because we can use validator indexes directly from guarantees extrinsic.
      * I asked a question to ensure it is true but I didn't get any response yet:
-     * https://github.com/w3f/jamtestvectors/pull/28#discussion_r1907237004
+     * https://github.com/w3f/jamtestvectors/pull/28#discussion_r190723700
+     *
+     * https://graypaper.fluffylabs.dev/#/1c979cb/19a00119a801?v=0.7.1
      */
-    for (const { credentials } of extrinsic.guarantees) {
-      for (const { validatorIndex } of credentials) {
-        const newGuaranteesCount = current[validatorIndex].guarantees + 1;
-        current[validatorIndex].guarantees = tryAsU32(newGuaranteesCount);
+    const incrementedGuarantors = new Set<ValidatorIndex>();
+    for (const guarantee of extrinsic.guarantees) {
+      for (const { validatorIndex } of guarantee.credentials) {
+        if (!incrementedGuarantors.has(validatorIndex)) {
+          const newGuaranteesCount = current[validatorIndex].guarantees + 1;
+          current[validatorIndex].guarantees = tryAsU32(newGuaranteesCount);
+          incrementedGuarantors.add(validatorIndex);
+        }
       }
     }
 

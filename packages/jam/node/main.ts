@@ -12,8 +12,11 @@ import type { StateEntries } from "@typeberry/state-merkleization";
 import { startBlockGenerator } from "./author.js";
 import { getChainSpec, initializeDatabase, logger, openDatabase } from "./common.js";
 import { initializeExtensions } from "./extensions.js";
-import type { JamConfig, NetworkConfig } from "./jam-config.js";
 import { startNetwork } from "./network.js";
+
+import { CURRENT_SUITE, CURRENT_VERSION } from "@typeberry/utils";
+import type { JamConfig, NetworkConfig } from "./jam-config.js";
+import packageJson from "./package.json" with { type: "json" };
 
 export type NodeApi = {
   chainSpec: ChainSpec;
@@ -28,7 +31,8 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
     throw new Error("The main binary cannot be running as a Worker!");
   }
 
-  logger.info(`🎸 Starting node: ${config.nodeName}`);
+  logger.info(`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`);
+  logger.info(`🎸 Starting node: ${config.nodeName}.`);
   const chainSpec = getChainSpec(config.node.flavor);
   const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
     config.nodeName,

@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE, type OpaqueHash, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
+import { HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
 import { TruncatedHashDictionary } from "./truncated-hash-dictionary.js";
 
 describe("TruncatedHashDictionary", () => {
@@ -161,7 +161,7 @@ describe("TruncatedHashDictionary", () => {
       dict.set(key1, "first");
       dict.set(key2, "second");
 
-      const keys: OpaqueHash[] = [];
+      const keys: TruncatedHash[] = [];
 
       for (const [key, _] of dict) {
         keys.push(key);

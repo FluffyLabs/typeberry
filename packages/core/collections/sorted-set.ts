@@ -82,6 +82,17 @@ export class SortedSet<V> extends SortedArray<V> implements ImmutableSortedSet<V
     }
   }
 
+  /**
+   * Insert given element to the sorted set EVEN IF it's already present.
+   *
+   * Putting another value that's equal via comparator will replace the current one.
+   */
+  public replace(v: V) {
+    const findIdx = this.binarySearch(v);
+    const toRemove = findIdx.isEqual ? 1 : 0;
+    this.array.splice(findIdx.idx, toRemove, v);
+  }
+
   /** Create a new SortedSet from two sorted collections. */
   static fromTwoSortedCollections<V>(first: ImmutableSortedArray<V>, second: ImmutableSortedArray<V>) {
     check(first.comparator === second.comparator, "Cannot merge arrays if they do not use the same comparator");

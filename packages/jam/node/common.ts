@@ -1,13 +1,13 @@
 import { Block, type BlockView, Extrinsic, Header, type HeaderHash } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { TruncatedHashDictionary, asKnownSize } from "@typeberry/collections";
+import { asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type JipChainSpec, KnownChainSpec } from "@typeberry/config-node";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import { SerializedState, StateEntries, type StateKey } from "@typeberry/state-merkleization";
+import { SerializedState, StateEntries } from "@typeberry/state-merkleization";
 
 export const logger = Logger.new(import.meta.filename, "jam");
 
@@ -92,8 +92,7 @@ export async function initializeDatabase(
 }
 
 function loadGenesisState(spec: ChainSpec, data: JipChainSpec["genesisState"]) {
-  const stateDict = TruncatedHashDictionary.fromEntries<StateKey, BytesBlob>(Array.from(data.entries()));
-  const stateEntries = StateEntries.fromTruncatedDictionaryUnsafe(stateDict);
+  const stateEntries = StateEntries.fromEntriesUnsafe(data.entries());
   const state = SerializedState.fromStateEntries(spec, stateEntries);
 
   const genesisStateRootHash = stateEntries.getRootHash();

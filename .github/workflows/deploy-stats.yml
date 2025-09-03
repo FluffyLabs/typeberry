@@ -31,10 +31,10 @@ jobs:
         cache: 'npm'
     - name: Run links-check and generate notes.
       run: npm run reader-notes
-    - name: Copy schemas
-      run: cp ./configs/**/*.schema.json ./web/schemas/
-    - name: Copy config schemas
-      run: cp ./configs/*.schema.json ./web/schemas/
+    - name: Copy configs & schemas (configs dir)
+      run: cp -r ./configs/* ./web/configs/
+    - name: Copy configs & schemas (schemas dir)
+      run: cp -r ./configs/* ./web/schemas/
     - name: Setup Pages
       uses: actions/configure-pages@v4
     - name: Upload artifact

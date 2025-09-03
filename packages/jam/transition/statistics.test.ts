@@ -11,7 +11,7 @@ import {
   tryAsValidatorIndex,
 } from "@typeberry/block";
 import { type AssurancesExtrinsic, AvailabilityAssurance } from "@typeberry/block/assurances.js";
-import { I, T, W_G, W_M, W_R, W_X } from "@typeberry/block/gp-constants.js";
+import { I, T, W_M, W_R, W_X } from "@typeberry/block/gp-constants.js";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees.js";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage.js";
 import { testWorkReportHex } from "@typeberry/block/test-helpers.js";
@@ -20,7 +20,7 @@ import { WorkReport } from "@typeberry/block/work-report.js";
 import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
-import { tinyChainSpec } from "@typeberry/config";
+import { EC_SEGMENT_SIZE, tinyChainSpec } from "@typeberry/config";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { isU16, isU32, tryAsU32 } from "@typeberry/numbers";
@@ -48,7 +48,7 @@ describe("Statistics", () => {
     });
 
     it("max data availability score formula should fit into U32", () => {
-      assert.strictEqual(isU32(W_R + W_G * ((W_M * 65) / 64)), true);
+      assert.strictEqual(isU32(W_R + EC_SEGMENT_SIZE * ((W_M * 65) / 64)), true);
     });
   });
 
@@ -344,21 +344,31 @@ describe("Statistics", () => {
       assert.deepEqual(state.statistics.current[validatorIndex], expectedStatistics);
     });
 
-    it("should update guarantees for each validator based on guarantees from extrinstic", () => {
-      /**
-       * this tests is probably incorrect, see the comment in statistics.ts
-       */
+    it("should update guarantees for each validator based on guarantees from extrinstic, a maximum of once per validator", () => {
       const { statistics, currentSlot, validatorIndex, currentStatistics } = prepareData({
         previousSlot: 0,
         currentSlot: 1,
       });
+      const validatorIndex2 = tryAsValidatorIndex(1);
+      const validatorIndex3 = tryAsValidatorIndex(2);
       const guarantees = [
-        { report: createWorkReport(tryAsCoreIndex(0)), credentials: [{ validatorIndex }] },
+        {
+          report: createWorkReport(tryAsCoreIndex(0)),
+          credentials: [{ validatorIndex }, { validatorIndex: validatorIndex2 }],
+        },
+        {
+          report: createWorkReport(tryAsCoreIndex(1)),
+          credentials: [{ validatorIndex }, { validatorIndex: validatorIndex3 }],
+        },
       ] as unknown as GuaranteesExtrinsic;
       const extrinsic = getExtrinsic({ guarantees });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1, guarantees: 1 };
+      const expectedStatistics2 = { ...currentStatistics[validatorIndex2], blocks: 0, guarantees: 1 };
+      const expectedStatistics3 = { ...currentStatistics[validatorIndex3], blocks: 0, guarantees: 1 };
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].guarantees, 0);
+      assert.strictEqual(statistics.state.statistics.current[validatorIndex2].guarantees, 0);
+      assert.strictEqual(statistics.state.statistics.current[validatorIndex3].guarantees, 0);
 
       const update = statistics.transition({
         slot: currentSlot,
@@ -372,6 +382,8 @@ describe("Statistics", () => {
       const state = copyAndUpdateState(statistics.state, update);
 
       assert.deepEqual(state.statistics.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(state.statistics.current[validatorIndex2], expectedStatistics2);
+      assert.deepEqual(state.statistics.current[validatorIndex3], expectedStatistics3);
     });
 
     it("should update assurances for each validator based on assurances from extrinstic", () => {
