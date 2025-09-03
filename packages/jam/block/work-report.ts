@@ -135,7 +135,15 @@ export class WorkReport extends WithDebug {
 const WorkReportCodec = codec.Class(WorkReport, {
   workPackageSpec: WorkPackageSpec.Codec,
   context: RefineContext.Codec,
-  coreIndex: codec.u16.asOpaque<CoreIndex>(),
+  coreIndex: codec.varU32.convert(
+    (o) => tryAsU32(o),
+    (i) => {
+      if (!isU16(i)) {
+        throw new Error(`Core index exceeds U16: ${i}`);
+      }
+      return tryAsCoreIndex(i);
+    },
+  ),
   authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
   authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
   authorizationOutput: codec.blob,
@@ -171,4 +179,4 @@ const WorkReportCodecPre070 = codec.Class(WorkReport, {
   authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
 });
 
-WorkReport.Codec = Compatibility.is(GpVersion.V0_7_0) ? WorkReportCodec : WorkReportCodecPre070;
+WorkReport.Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0) ? WorkReportCodec : WorkReportCodecPre070;
