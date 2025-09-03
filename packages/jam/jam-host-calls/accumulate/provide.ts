@@ -9,9 +9,10 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { Compatibility, GpVersion } from "@typeberry/utils";
+import { Compatibility, GpVersion, resultToString } from "@typeberry/utils";
 import { assertNever } from "@typeberry/utils";
 import { type PartialState, ProvidePreimageError } from "../externalities/partial-state.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 import { clampU64ToU32, getServiceIdOrCurrent } from "../utils.js";
 
@@ -58,6 +59,8 @@ export class Provide implements HostCallHandler {
     }
 
     const result = this.partialState.providePreimage(serviceId, preimage);
+    logger.trace(`PROVIDE(${serviceId}, ${preimage.toStringTruncated()}) <- ${resultToString(result)}`);
+
     if (result.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);
       return;

@@ -82,6 +82,6 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
   }
 
   [Symbol.iterator]() {
-    return this.dict[Symbol.iterator]();
+    return this.entries();
   }
 }

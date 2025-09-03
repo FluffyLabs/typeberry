@@ -6,8 +6,9 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { Compatibility, GpVersion } from "@typeberry/utils";
+import { Compatibility, GpVersion, resultToString } from "@typeberry/utils";
 import { type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID } from "../utils.js";
 
@@ -38,6 +39,7 @@ export class Expunge implements HostCallHandler {
     const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG));
 
     const expungeResult = await this.refine.machineExpunge(machineIndex);
+    logger.trace(`EXPUNGE(${machineIndex}) <- ${resultToString(expungeResult)}`);
 
     if (expungeResult.isOk) {
       regs.set(IN_OUT_REG, expungeResult.ok);

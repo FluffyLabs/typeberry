@@ -8,6 +8,7 @@ import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { ServiceAccountInfo, ignoreValueWithDefault } from "@typeberry/state";
 import { Compatibility, GpVersion } from "@typeberry/utils";
+import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { getServiceIdOrCurrent } from "./utils.js";
 
@@ -78,6 +79,8 @@ export class Info implements HostCallHandler {
               accountInfo.gratisStorage,
             ),
           });
+
+    logger.trace(`INFO(${serviceId}) <- ${encodedInfo}`);
 
     const writeResult = memory.storeFrom(outputStart, encodedInfo.raw);
     if (writeResult.isError) {

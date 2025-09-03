@@ -13,6 +13,7 @@ import {
 } from "@typeberry/block-json";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { runner } from "../common.js";
+import { StateTransition, runStateTransition } from "../state-transition/state-transition.js";
 import { AccumulateTest, runAccumulateTest } from "./accumulate.js";
 import { AssurancesTestFull, AssurancesTestTiny, runAssurancesTestFull, runAssurancesTestTiny } from "./assurances.js";
 import { AuthorizationsTest, runAuthorizationsTest } from "./authorizations.js";
@@ -43,7 +44,6 @@ import { ReportsTest, runReportsTestFull, runReportsTestTiny } from "./reports.j
 import { SafroleTest, runSafroleTest } from "./safrole.js";
 import { JsonSchema, ignoreSchemaFiles } from "./schema.js";
 import { runShufflingTests, shufflingTests } from "./shuffling.js";
-import { StateTransition, runStateTransition } from "./state-transition.js";
 import { StatisticsTestFull, StatisticsTestTiny, runStatisticsTestFull, runStatisticsTestTiny } from "./statistics.js";
 import { runTrieTest, trieTestSuiteFromJson } from "./trie.js";
 

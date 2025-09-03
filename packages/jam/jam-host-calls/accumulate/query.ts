@@ -12,6 +12,7 @@ import { traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import { type PartialState, PreimageStatusKind } from "../externalities/partial-state.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 
 const IN_OUT_REG_1 = 7;
@@ -58,6 +59,8 @@ export class Query implements HostCallHandler {
     }
 
     const result = this.partialState.checkPreimageStatus(hash.asOpaque(), length);
+    logger.trace(`QUERY(${hash}, ${length}) <- ${result}`);
+
     const zero = tryAsU64(0n);
 
     if (result === null) {

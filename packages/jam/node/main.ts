@@ -4,7 +4,7 @@ import { Logger } from "@typeberry/logger";
 import { Block, type BlockView, Extrinsic, Header, type HeaderHash, type HeaderView } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { TruncatedHashDictionary, asKnownSize } from "@typeberry/collections";
+import { asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, WorkerConfig, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type JipChainSpec, KnownChainSpec } from "@typeberry/config-node";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
@@ -14,7 +14,7 @@ import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine.js";
 import { NetworkWorkerConfig } from "@typeberry/jam-network/state-machine.js";
 import type { Listener, MessageChannelStateMachine } from "@typeberry/state-machine";
-import { SerializedState, StateEntries, type StateKey } from "@typeberry/state-merkleization";
+import { SerializedState, StateEntries } from "@typeberry/state-merkleization";
 import { startBlockGenerator } from "./author.js";
 import { initializeExtensions } from "./extensions.js";
 import { startNetwork } from "./network.js";
@@ -271,8 +271,7 @@ async function initializeDatabase(
 }
 
 function loadGenesisState(spec: ChainSpec, data: JipChainSpec["genesisState"]) {
-  const stateDict = TruncatedHashDictionary.fromEntries<StateKey, BytesBlob>(Array.from(data.entries()));
-  const stateEntries = StateEntries.fromTruncatedDictionaryUnsafe(stateDict);
+  const stateEntries = StateEntries.fromEntriesUnsafe(data.entries());
   const state = SerializedState.fromStateEntries(spec, stateEntries);
 
   const genesisStateRootHash = stateEntries.getRootHash();
@@ -285,7 +284,7 @@ function loadGenesisState(spec: ChainSpec, data: JipChainSpec["genesisState"]) {
   };
 }
 
-function emptyBlock() {
+export function emptyBlock() {
   return Block.create({
     header: Header.empty(),
     extrinsic: Extrinsic.create({
