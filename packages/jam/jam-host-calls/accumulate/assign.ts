@@ -10,6 +10,7 @@ import type { IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
 import { type PartialState, UpdatePrivilegesError } from "../externalities/partial-state.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 import { getServiceId } from "../utils.js";
 
@@ -69,9 +70,11 @@ export class Assign implements HostCallHandler {
     const fixedSizeAuthQueue = FixedSizeArray.new(authQueue, AUTHORIZATION_QUEUE_SIZE);
 
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue})`);
       const result = this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, authManager);
       if (result.isOk) {
         regs.set(IN_OUT_REG, HostCallResult.OK);
+        logger.trace("ASSIGN result: OK");
         return;
       }
 
@@ -79,11 +82,13 @@ export class Assign implements HostCallHandler {
 
       if (e === UpdatePrivilegesError.UnprivilegedService) {
         regs.set(IN_OUT_REG, HostCallResult.HUH);
+        logger.trace("ASSIGN result: HUH");
         return;
       }
 
       if (e === UpdatePrivilegesError.InvalidServiceId) {
         regs.set(IN_OUT_REG, HostCallResult.WHO);
+        logger.trace("ASSIGN result: WHO");
         return;
       }
 
@@ -91,6 +96,7 @@ export class Assign implements HostCallHandler {
     } else {
       regs.set(IN_OUT_REG, HostCallResult.OK);
       void this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, authManager);
+      logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue})`);
     }
   }
 }

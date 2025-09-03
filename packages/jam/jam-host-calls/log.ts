@@ -1,12 +1,11 @@
 import type { ServiceId } from "@typeberry/block";
-import { Logger } from "@typeberry/logger";
 import type { HostCallHandler, IHostCallMemory } from "@typeberry/pvm-host-calls";
 import { type PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import type { IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { logger } from "./logger.js";
 import { clampU64ToU32 } from "./utils.js";
 
-const logger = Logger.new(import.meta.filename, "host-calls");
 const decoder = new TextDecoder("utf8");
 
 /**
@@ -36,7 +35,7 @@ export class LogHostCall implements HostCallHandler {
     }
     memory.loadInto(message, msgStart);
 
-    logger.trace(`[${this.currentServiceId}] [${lvl}] ${decoder.decode(target)} ${decoder.decode(message)}`);
+    logger.trace(`SERVICE [${this.currentServiceId}] [${lvl}] ${decoder.decode(target)} ${decoder.decode(message)}`);
     return Promise.resolve(undefined);
   }
 }

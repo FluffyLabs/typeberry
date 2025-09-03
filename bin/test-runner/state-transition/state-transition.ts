@@ -8,6 +8,7 @@ import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
+import { emptyBlock } from "@typeberry/node";
 import { serializeStateUpdate } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
@@ -60,13 +61,19 @@ function loadBlocks(testPath: string) {
 
   const blocks: Block[] = [];
   for (const file of fs.readdirSync(dir)) {
-    if (!file.endsWith(".json") || file === "genesis.json") {
+    if (!file.endsWith(".json")) {
       continue;
     }
     const data = fs.readFileSync(path.join(dir, file), "utf8");
     const parsed = JSON.parse(data);
-    const content = parseFromJson(parsed, StateTransition.fromJson);
-    blocks.push(content.block);
+    if (file.endsWith("genesis.json")) {
+      const content = parseFromJson(parsed, StateTransitionGenesis.fromJson);
+      const genesisBlock = Block.create({ header: content.header, extrinsic: emptyBlock().extrinsic });
+      blocks.push(genesisBlock);
+    } else {
+      const content = parseFromJson(parsed, StateTransition.fromJson);
+      blocks.push(content.block);
+    }
   }
 
   blocks.sort((a, b) => a.header.timeSlotIndex - b.header.timeSlotIndex);

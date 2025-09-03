@@ -11,6 +11,7 @@ import { traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 
 const IN_OUT_REG = 7;
@@ -52,6 +53,8 @@ export class Yield implements HostCallHandler {
     }
 
     this.partialState.yield(hash);
+    logger.trace(`YIELD(${hash})`);
+
     regs.set(IN_OUT_REG, HostCallResult.OK);
   }
 }

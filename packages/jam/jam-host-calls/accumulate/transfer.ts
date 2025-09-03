@@ -3,8 +3,9 @@ import { Bytes } from "@typeberry/bytes";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type Gas, type GasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
-import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
+import { Compatibility, GpVersion, assertNever, resultToString } from "@typeberry/utils";
 import { type PartialState, TRANSFER_MEMO_BYTES, TransferError } from "../externalities/partial-state.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 import { getServiceId } from "../utils.js";
 
@@ -66,6 +67,7 @@ export class Transfer implements HostCallHandler {
     }
 
     const transferResult = this.partialState.transfer(destination, amount, onTransferGas, memo);
+    logger.trace(`TRANSFER(${destination}, ${amount}, ${onTransferGas}, ${memo}) <- ${resultToString(transferResult)}`);
 
     // All good!
     if (transferResult.isOk) {

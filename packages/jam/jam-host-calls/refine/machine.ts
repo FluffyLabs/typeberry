@@ -8,8 +8,9 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { Compatibility, GpVersion } from "@typeberry/utils";
+import { Compatibility, GpVersion, resultToString } from "@typeberry/utils";
 import { type RefineExternalities, tryAsProgramCounter } from "../externalities/refine-externalities.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID, clampU64ToU32 } from "../utils.js";
 
@@ -48,14 +49,16 @@ export class Machine implements HostCallHandler {
     const entrypoint = tryAsProgramCounter(regs.get(9));
 
     const codeLengthClamped = clampU64ToU32(codeLength);
-    const code = new Uint8Array(codeLengthClamped);
-    const codeLoadResult = memory.loadInto(code, codeStart);
+    const code = BytesBlob.blobFrom(new Uint8Array(codeLengthClamped));
+    const codeLoadResult = memory.loadInto(code.raw, codeStart);
     if (codeLoadResult.isError) {
       return PvmExecution.Panic;
     }
 
     // NOTE: Highly unlikely, but machineId could potentially collide with HOST_CALL_RESULT.
-    const machinInitResult = await this.refine.machineInit(BytesBlob.blobFrom(code), entrypoint);
+    const machinInitResult = await this.refine.machineInit(code, entrypoint);
+    logger.trace(`MACHINE(${code.toStringTruncated()}, ${entrypoint}) <- ${resultToString(machinInitResult)}`);
+
     if (machinInitResult.isError) {
       regs.set(IN_OUT_REG, HostCallResult.HUH);
     } else {

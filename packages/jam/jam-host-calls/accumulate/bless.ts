@@ -8,6 +8,7 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { tryAsPerCore } from "@typeberry/state";
 import { Compatibility, GpVersion, asOpaqueType, assertNever } from "@typeberry/utils";
 import { type PartialState, UpdatePrivilegesError } from "../externalities/partial-state.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 import { getServiceId } from "../utils.js";
 
@@ -85,7 +86,6 @@ export class Bless implements HostCallHandler {
       // we allow the index to go beyond `MEMORY_SIZE` (i.e. 2**32) and have the next `loadInto` fail with page fault.
       memIndex = tryAsU64(memIndex + tryAsU64(decoder.bytesRead()));
     }
-
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       // https://graypaper.fluffylabs.dev/#/7e6ff6a/367200367200?v=0.6.7
       const res = new Uint8Array(tryAsExactBytes(codec.u32.sizeHint) * this.chainSpec.coresCount);
@@ -101,7 +101,10 @@ export class Bless implements HostCallHandler {
       );
 
       const result = this.partialState.updatePrivilegedServices(manager, authorizers, validator, autoAccumulateEntries);
+      logger.trace(`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries})`);
+
       if (result.isOk) {
+        logger.trace("BLESS result: OK");
         regs.set(IN_OUT_REG, HostCallResult.OK);
         return;
       }
@@ -109,11 +112,13 @@ export class Bless implements HostCallHandler {
       const e = result.error;
 
       if (e === UpdatePrivilegesError.UnprivilegedService) {
+        logger.trace("BLESS result: HUH");
         regs.set(IN_OUT_REG, HostCallResult.HUH);
         return;
       }
 
       if (e === UpdatePrivilegesError.InvalidServiceId) {
+        logger.trace("BLESS result: WHO");
         regs.set(IN_OUT_REG, HostCallResult.WHO);
         return;
       }
@@ -130,6 +135,7 @@ export class Bless implements HostCallHandler {
       // NOTE It's safe to convert to PerCore<ServiceId>, cause it's handled like this in a code base
       const authorizers = tryAsPerCore(new Array(this.chainSpec.coresCount).fill(authorizationIndex), this.chainSpec);
       this.partialState.updatePrivilegedServices(manager, authorizers, validator, autoAccumulateEntries);
+      logger.trace(`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries})`);
       regs.set(IN_OUT_REG, HostCallResult.OK);
     }
   }

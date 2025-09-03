@@ -6,6 +6,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { Compatibility, GpVersion } from "@typeberry/utils";
+import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { getServiceIdOrCurrent } from "./utils.js";
 
@@ -61,6 +62,8 @@ export class Lookup implements HostCallHandler {
 
     // v
     const preImage = this.account.lookup(serviceId, preImageHash);
+
+    logger.trace(`LOOKUP(${serviceId}, ${preImageHash}) <- ${preImage?.toStringTruncated()}...`);
 
     const preImageLength = preImage === null ? tryAsU64(0) : tryAsU64(preImage.raw.length);
     const preimageBlobOffset = regs.get(10);

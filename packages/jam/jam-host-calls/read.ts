@@ -6,6 +6,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { Compatibility, GpVersion } from "@typeberry/utils";
+import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { clampU64ToU32, getServiceIdOrCurrent } from "./utils.js";
 
@@ -56,15 +57,17 @@ export class Read implements HostCallHandler {
 
     const storageKeyLengthClamped = clampU64ToU32(storageKeyLength);
     // k
-    const rawKey = new Uint8Array(storageKeyLengthClamped);
+    const rawKey = BytesBlob.blobFrom(new Uint8Array(storageKeyLengthClamped));
 
-    const memoryReadResult = memory.loadInto(rawKey, storageKeyStartAddress);
+    const memoryReadResult = memory.loadInto(rawKey.raw, storageKeyStartAddress);
     if (memoryReadResult.isError) {
       return PvmExecution.Panic;
     }
 
     // v
-    const value = this.account.read(serviceId, BytesBlob.blobFrom(rawKey));
+    const value = this.account.read(serviceId, rawKey);
+
+    logger.trace(`READ(${serviceId}, ${rawKey}) <- ${value?.toStringTruncated()}`);
 
     const valueLength = value === null ? tryAsU64(0) : tryAsU64(value.raw.length);
     const valueBlobOffset = regs.get(11);
