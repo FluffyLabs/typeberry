@@ -4,7 +4,6 @@ import { WorkItem } from "@typeberry/block/work-item.js";
 import { WorkPackage } from "@typeberry/block/work-package.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
 import { type Decode, type Encode, Encoder } from "@typeberry/codec";
-import { TruncatedHashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { JipChainSpec } from "@typeberry/config/node";
 import { blake2b } from "@typeberry/hash";
@@ -14,11 +13,11 @@ import type { InMemoryState } from "@typeberry/state";
 import { fullStateDumpFromJson } from "@typeberry/state-json";
 import { SerializedState, StateEntries } from "@typeberry/state-merkleization";
 import { inMemoryStateCodec } from "@typeberry/state-merkleization/in-memory-state-codec.js";
+import type { TestState } from "../test-runner/state-transition/state-loader.js";
+import { StateTransition, StateTransitionGenesis } from "../test-runner/state-transition/state-transition.js";
 import { workItemFromJson } from "../test-runner/w3f/codec/work-item.js";
 import { workPackageFromJson } from "../test-runner/w3f/codec/work-package.js";
 import { PvmTest } from "../test-runner/w3f/pvm.js";
-import type { TestState } from "../test-runner/w3f/state-loader.js";
-import { StateTransition, StateTransitionGenesis } from "../test-runner/w3f/state-transition.js";
 
 export type SupportedType = {
   name: string;
@@ -92,19 +91,11 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     decode: inMemoryStateCodec,
     json: fullStateDumpFromJson,
     process: {
-      options: ["as-root-hash", "as-entries", "as-truncated-entries"],
+      options: ["as-root-hash", "as-entries"],
       run(spec: ChainSpec, data: unknown, option: string) {
         const state = data as InMemoryState;
         if (option === "as-entries") {
-          return StateEntries.serializeInMemory(spec, state).entries;
-        }
-
-        if (option === "as-truncated-entries") {
-          const entries = Array.from(StateEntries.serializeInMemory(spec, state).entries.data).map(([key, value]) => [
-            key.toString().substring(2, 64),
-            value.toString().substring(2),
-          ]);
-          return Object.fromEntries(entries);
+          return Object.fromEntries(StateEntries.serializeInMemory(spec, state));
         }
 
         if (option === "as-root-hash") {
@@ -157,7 +148,6 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
 ];
 
 const stateFromKeyvals = (spec: ChainSpec, state: TestState) => {
-  const dict = TruncatedHashDictionary.fromEntries(state.keyvals.map((x) => [x.key.asOpaque(), x.value]));
-  const entries = StateEntries.fromTruncatedDictionaryUnsafe(dict);
+  const entries = StateEntries.fromEntriesUnsafe(state.keyvals.map((x) => [x.key, x.value]));
   return SerializedState.fromStateEntries(spec, entries);
 };
