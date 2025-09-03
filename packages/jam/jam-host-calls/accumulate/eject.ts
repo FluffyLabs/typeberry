@@ -5,8 +5,9 @@ import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
+import { Compatibility, GpVersion, assertNever, resultToString } from "@typeberry/utils";
 import { EjectError, type PartialState } from "../externalities/partial-state.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 import { getServiceId } from "../utils.js";
 
@@ -58,6 +59,7 @@ export class Eject implements HostCallHandler {
     }
 
     const result = this.partialState.eject(serviceId, previousCodeHash);
+    logger.trace(`EJECT(${serviceId}, ${previousCodeHash}) <- ${resultToString(result)}`);
 
     // All good!
     if (result.isOk) {

@@ -11,6 +11,7 @@ import { PvmExecution, traceRegisters } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { RefineExternalities } from "../externalities/refine-externalities.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID, getServiceIdOrCurrent } from "../utils.js";
 
@@ -56,6 +57,8 @@ export class HistoricalLookup implements HostCallHandler {
     }
 
     const value = await this.refine.historicalLookup(serviceId, hash);
+    logger.trace(`HISTORICAL_LOOKUP(${serviceId}, ${hash}) <- ${value}`);
+
     const length = tryAsU64(value === null ? 0 : value.raw.length);
     // f
     const offset = minU64(regs.get(10), length);

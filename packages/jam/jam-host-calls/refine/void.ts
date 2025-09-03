@@ -6,8 +6,9 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
+import { Compatibility, GpVersion, assertNever, resultToString } from "@typeberry/utils";
 import { type RefineExternalities, ZeroVoidError, tryAsMachineId } from "../externalities/refine-externalities.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID } from "../utils.js";
 
@@ -44,6 +45,7 @@ export class Void implements HostCallHandler {
     const pageCount = regs.get(9);
 
     const voidResult = await this.refine.machineVoidPages(machineIndex, pageStart, pageCount);
+    logger.trace(`VOID(${machineIndex}, ${pageStart}, ${pageCount}) <- ${resultToString(voidResult)}`);
 
     if (voidResult.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);

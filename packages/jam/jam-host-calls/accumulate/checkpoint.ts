@@ -6,6 +6,7 @@ import type { RegisterIndex } from "@typeberry/pvm-interpreter/registers.js";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
 import { GasHostCall } from "../gas.js";
+import { logger } from "../logger.js";
 
 /**
  * Checkpoint the partial state.
@@ -37,6 +38,7 @@ export class Checkpoint implements HostCallHandler {
   async execute(gas: GasCounter, regs: IHostCallRegisters): Promise<undefined | PvmExecution> {
     await this.gasHostCall.execute(gas, regs);
     this.partialState.checkpoint();
+    logger.trace("CHECKPOINT()");
     return;
   }
 }

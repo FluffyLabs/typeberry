@@ -10,6 +10,7 @@ import type { IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 
 const IN_OUT_REG = 7;
@@ -69,5 +70,6 @@ export class Assign implements HostCallHandler {
     regs.set(IN_OUT_REG, HostCallResult.OK);
     // NOTE [MaSo] its safe to cast to Number because we know that the coreIndex is less than cores count = 341
     this.partialState.updateAuthorizationQueue(tryAsCoreIndex(Number(coreIndex)), fixedSizeAuthQueue);
+    logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue})`);
   }
 }

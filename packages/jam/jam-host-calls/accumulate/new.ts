@@ -5,8 +5,9 @@ import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
+import { Compatibility, GpVersion, assertNever, resultToString } from "@typeberry/utils";
 import { NewServiceError, type PartialState } from "../externalities/partial-state.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 
 const IN_OUT_REG = 7;
@@ -58,6 +59,9 @@ export class New implements HostCallHandler {
     }
 
     const assignedId = this.partialState.newService(codeHash.asOpaque(), codeLength, gas, allowance, gratisStorage);
+    logger.trace(
+      `NEW(${codeHash}, ${codeLength}, ${gas}, ${allowance}, ${gratisStorage}) <- ${resultToString(assignedId)}`,
+    );
 
     if (assignedId.isOk) {
       regs.set(IN_OUT_REG, tryAsU64(assignedId.ok));
