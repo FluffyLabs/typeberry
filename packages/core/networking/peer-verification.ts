@@ -1,4 +1,4 @@
-import { CryptoError } from "@matrixai/quic/native/types.js";
+import {native} from "@matrixai/quic";
 import { type PeerInfo, VerifyCertError, verifyCertificate } from "./certificate.js";
 
 export function peerVerification() {
@@ -26,15 +26,15 @@ function asCryptoError(error: VerifyCertError | undefined) {
   }
   switch (error) {
     case VerifyCertError.AltNameMismatch:
-      return CryptoError.IllegalParameter;
+      return native.CryptoError.IllegalParameter;
     case VerifyCertError.NotEd25519:
-      return CryptoError.InsufficientSecurity;
+      return native.CryptoError.InsufficientSecurity;
     case VerifyCertError.PublicKeyTypeMismatch:
-      return CryptoError.BadCertificate;
+      return native.CryptoError.BadCertificate;
     case VerifyCertError.NoCertificate:
-      return CryptoError.CertificateRequired;
+      return native.CryptoError.CertificateRequired;
     case VerifyCertError.IncorrectSignature:
-      return CryptoError.BadCertificate;
+      return native.CryptoError.BadCertificate;
     default:
       throw new Error(`Unexpected VerifyCertError: ${error}`);
   }
