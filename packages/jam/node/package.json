@@ -2,7 +2,7 @@
   "name": "@typeberry/node",
   "version": "0.0.1",
   "description": "The main typeberry node.",
-  "main": "main.ts",
+  "main": "index.ts",
   "dependencies": {
     "@typeberry/block": "0.0.1",
     "@typeberry/block-generator": "0.0.1",
@@ -25,7 +25,6 @@
     "@typeberry/utils": "0.0.1"
   },
   "scripts": {
-    "start": "tsx ./index.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",

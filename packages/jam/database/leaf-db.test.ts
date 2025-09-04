@@ -1,7 +1,7 @@
-import assert from "node:assert";
+import assert, { deepEqual } from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { HASH_SIZE } from "@typeberry/hash";
+import { HASH_SIZE, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
 import { InMemoryTrie, type InputKey } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { type Result, resultToString } from "@typeberry/utils";
@@ -26,6 +26,26 @@ describe("LeafDb", () => {
   });
 
   it("should retrieve value from a DB", () => {
+    const raw: [InputKey, BytesBlob][] = [
+      [Bytes.fill(HASH_SIZE, 1).asOpaque(), Bytes.fill(128, 0xff)],
+      [Bytes.fill(HASH_SIZE, 2).asOpaque(), Bytes.fill(129, 0xee)],
+      [Bytes.fill(HASH_SIZE, 3).asOpaque(), BytesBlob.blobFromString("val1")],
+      [Bytes.fill(HASH_SIZE, 4).asOpaque(), BytesBlob.blobFromString("val2")],
+    ];
+    const leafDbRes = constructLeafDb(raw);
+    const leafDb = assertOk(leafDbRes);
+
+    // when
+    const entries = leafDb.intoStateEntries();
+
+    // then
+    deepEqual(
+      Array.from(entries),
+      raw.map(([a, b]) => [Bytes.fromBlob(a.raw.subarray(0, TRUNCATED_HASH_SIZE), TRUNCATED_HASH_SIZE).asOpaque(), b]),
+    );
+  });
+
+  it("should convert into state entries", () => {
     const leafDbRes = constructLeafDb([
       [Bytes.fill(HASH_SIZE, 1).asOpaque(), Bytes.fill(128, 0xff)],
       [Bytes.fill(HASH_SIZE, 2).asOpaque(), Bytes.fill(129, 0xee)],

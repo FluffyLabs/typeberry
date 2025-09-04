@@ -10,6 +10,7 @@ Usage:
   jam [options]
   jam [options] dev <dev-validator-index>
   jam [options] import <bin-or-json-blocks>
+  jam [options] fuzz-target
 
 Options:
   --name                Override node name. Affects networking key and db location.
@@ -26,6 +27,8 @@ export enum Command {
   Dev = "dev",
   /** Import the blocks from CLI and finish. */
   Import = "import",
+  /** Run as a Fuzz Target. */
+  FuzzTarget = "fuzz-target",
 }
 
 export type SharedOptions = {
@@ -35,6 +38,7 @@ export type SharedOptions = {
 
 export type Arguments =
   | CommandArgs<Command.Run, SharedOptions & {}>
+  | CommandArgs<Command.FuzzTarget, SharedOptions & {}>
   | CommandArgs<
       Command.Dev,
       SharedOptions & {
@@ -85,6 +89,11 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
       }
       assertNoMoreArgs(args);
       return { command: Command.Dev, args: { ...data, index: numIndex } };
+    }
+    case Command.FuzzTarget: {
+      const data = parseSharedOptions(args, withRelPath);
+      assertNoMoreArgs(args);
+      return { command: Command.FuzzTarget, args: data };
     }
     case Command.Import: {
       const data = parseSharedOptions(args, withRelPath);
