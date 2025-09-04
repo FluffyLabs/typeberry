@@ -7,11 +7,11 @@ Typeberry is a TypeScript implementation of [JAM protocol](https://graypaper.com
 ## Implementation status
 
 - [x] PVM
-- [ ] STF
+- [x] STF
 - [x] Safrole (without sealing)
 - [x] State Trie
-- [ ] Block Import
-- [ ] Networking
+- [x] Block Import
+- [x] Networking (partial)
 - [ ] GRANDPA
 - [ ] Data Availability
 
@@ -36,6 +36,29 @@ $ npm ci
 ```bash
 $ npm start
 ```
+
+### Running with Docker
+
+Build and run typeberry using Docker:
+
+```bash
+# Build the Docker image
+$ docker build -t typeberry-jam .
+
+# Run with default settings
+$ docker run typeberry-jam
+
+# Run with custom arguments
+$ docker run typeberry-jam --config /app/configs/my-config.json --node-name my-node
+
+# Run with environment variables (e.g., for logging)
+$ docker run -e JAM_LOG=trace GP_VERSION=0.7.0 typeberry-jam
+
+# Run with volume mounts for persistent data
+$ docker run -v $(pwd)/database:/app/database typeberry-jam
+```
+
+The Docker container uses a minimal Alpine Linux image and forwards all arguments to `npm start`.
 
 ### Running the JSON RPC
 
