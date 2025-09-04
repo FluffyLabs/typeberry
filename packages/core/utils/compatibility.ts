@@ -9,6 +9,7 @@ export enum GpVersion {
 export enum TestSuite {
   W3F_DAVXY = "w3f-davxy",
   W3F = "w3f",
+  JAM_CONFORMANCE = "jam-conformance",
   JAMDUNA = "jamduna",
   JAVAJAM = "javajam",
 }
