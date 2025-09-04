@@ -2,7 +2,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { WithDebug } from "@typeberry/utils";
+import { Compatibility, GpVersion, WithDebug } from "@typeberry/utils";
 import type { ServiceGas, ServiceId } from "./common.js";
 import type { CodeHash } from "./hash.js";
 
@@ -14,10 +14,14 @@ export enum WorkExecResultKind {
   outOfGas = 1,
   /** `☇`: unexpected program termination. */
   panic = 2,
+  /** `⊚`: the number of exports made was invalidly reported. */
+  incorrectNumberOfExports = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 3 : -1,
+  /** `⊖`: the size of the digest (refinement output) would cross the acceptable limit. */
+  digestTooBig = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 4 : -1,
   /** `BAD`: service code was not available for lookup in state. */
-  badCode = 3,
+  badCode = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 5 : 3,
   /** `BIG`: the code was too big (beyond the maximum allowed size `W_C`) */
-  codeOversize = 4,
+  codeOversize = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 6 : 4,
 }
 
 /** The execution result of some work-package. */
