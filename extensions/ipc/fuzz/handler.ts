@@ -12,6 +12,7 @@ import {
   type SetState,
   messageCodec,
 } from "./types.js";
+import {assertNever} from "@typeberry/utils";
 
 const logger = Logger.new(import.meta.filename, "ext-ipc-fuzz");
 
@@ -90,7 +91,7 @@ export class FuzzTarget implements IpcHandler {
         case MessageType.State: {
           logger.log(`--> Received unexpected 'State' message from the fuzzer. Closing.`);
           sender.close();
-          break;
+          return;
         }
         case MessageType.StateRoot: {
           logger.log(`--> Received unexpected 'StateRoot' message from the fuzzer. Closing.`);
@@ -100,7 +101,11 @@ export class FuzzTarget implements IpcHandler {
         default: {
           logger.log(`--> Received unexpected message type ${JSON.stringify(message)} from the fuzzer. Closing.`);
           sender.close();
-          return;
+          try {
+            assertNever(message);
+          } catch {
+            return;
+          }
         }
       }
 
