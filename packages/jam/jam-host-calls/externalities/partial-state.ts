@@ -154,6 +154,17 @@ export enum NewServiceError {
   UnprivilegedService = 1,
 }
 
+export enum UpdatePrivilegesError {
+  /** Service is not privileged to update privileges. */
+  UnprivilegedService = 0,
+  /** Provided service id is incorrect. */
+  InvalidServiceId = 1,
+}
+
+/** Service is not privileged to perform an action. */
+export const UnprivilegedError = Symbol("Insufficient privileges.");
+export type UnprivilegedError = typeof UnprivilegedError;
+
 /**
  * `U`: state components mutated by the accumulation.
  * - `d`: service accounts state
@@ -228,7 +239,7 @@ export interface PartialState {
   upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void;
 
   /** Designate new validators given their key and meta data. */
-  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void;
+  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): Result<OK, UnprivilegedError>;
 
   /**
    * Checkpoint this partial state.
@@ -239,11 +250,12 @@ export interface PartialState {
    */
   checkpoint(): void;
 
-  /** Update authorization queue for given core. */
+  /** Update authorization queue for given core and authorize a service for this core. */
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
-  ): void;
+    authManager: ServiceId | null,
+  ): Result<OK, UpdatePrivilegesError>;
 
   /**
    * Update priviliged services and their gas.
@@ -254,7 +266,12 @@ export interface PartialState {
    * `g`: collection of serviceId -> gas that auto-accumulate every block
    *
    */
-  updatePrivilegedServices(m: ServiceId, a: PerCore<ServiceId>, v: ServiceId, g: [ServiceId, ServiceGas][]): void;
+  updatePrivilegedServices(
+    m: ServiceId | null,
+    a: PerCore<ServiceId>,
+    v: ServiceId | null,
+    g: [ServiceId, ServiceGas][],
+  ): Result<OK, UpdatePrivilegesError>;
 
   /** Yield accumulation trie result hash. */
   yield(hash: OpaqueHash): void;

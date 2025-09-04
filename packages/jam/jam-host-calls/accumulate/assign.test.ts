@@ -14,7 +14,9 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
+import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
+import { UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { Assign } from "./assign.js";
 
@@ -22,16 +24,20 @@ const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 const CORE_INDEX_REG = 7;
 const AUTH_QUEUE_START_REG = 8;
+const AUTH_MANAGER_REG = 9;
 
 function prepareRegsAndMemory(
   coreIndex: CoreIndex,
   authQueue: Blake2bHash[],
-  { skipAuthQueue = false }: { skipAuthQueue?: boolean } = {},
+  { skipAuthQueue = false, authManager = null }: { skipAuthQueue?: boolean; authManager?: bigint | number | null } = {},
 ) {
   const memStart = 2 ** 16;
   const registers = new HostCallRegisters(new Registers());
   registers.set(CORE_INDEX_REG, tryAsU64(coreIndex));
   registers.set(AUTH_QUEUE_START_REG, tryAsU64(memStart));
+  if (authManager !== null) {
+    registers.set(AUTH_MANAGER_REG, tryAsU64(authManager));
+  }
 
   const builder = new MemoryBuilder();
 
@@ -65,9 +71,10 @@ describe("HostCalls: Assign", () => {
     ]);
 
     // when
-    await assign.execute(gas, registers, memory);
+    const result = await assign.execute(gas, registers, memory);
 
     // then
+    assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.authQueue[0][0], tryAsCoreIndex(0));
     const expected = new Array(AUTHORIZATION_QUEUE_SIZE);
@@ -89,9 +96,10 @@ describe("HostCalls: Assign", () => {
     const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(3), []);
 
     // when
-    await assign.execute(gas, registers, memory);
+    const result = await assign.execute(gas, registers, memory);
 
     // then
+    assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.CORE);
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
@@ -104,9 +112,10 @@ describe("HostCalls: Assign", () => {
     registers.set(CORE_INDEX_REG, tryAsU64(2 ** 16 + 3));
 
     // when
-    await assign.execute(gas, registers, memory);
+    const result = await assign.execute(gas, registers, memory);
 
     // then
+    assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.CORE);
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
@@ -124,4 +133,38 @@ describe("HostCalls: Assign", () => {
     assert.deepStrictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
+
+  if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+    it("should return an error when current service is unprivileged", async () => {
+      const accumulate = new PartialStateMock();
+      accumulate.authQueueResponse = Result.error(UpdatePrivilegesError.UnprivilegedService);
+      const serviceId = tryAsServiceId(10_000);
+      const assign = new Assign(serviceId, accumulate, tinyChainSpec);
+      const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { authManager: 0 });
+
+      // when
+      const result = await assign.execute(gas, registers, memory);
+
+      // then
+      assert.deepStrictEqual(result, undefined);
+      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
+      assert.deepStrictEqual(accumulate.authQueue.length, 0);
+    });
+
+    it("should return an error when auth manager is invalid", async () => {
+      const accumulate = new PartialStateMock();
+      accumulate.authQueueResponse = Result.error(UpdatePrivilegesError.InvalidServiceId);
+      const serviceId = tryAsServiceId(10_000);
+      const assign = new Assign(serviceId, accumulate, tinyChainSpec);
+      const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { authManager: null });
+
+      // when
+      const result = await assign.execute(gas, registers, memory);
+
+      // then
+      assert.deepStrictEqual(result, undefined);
+      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
+      assert.deepStrictEqual(accumulate.authQueue.length, 0);
+    });
+  }
 });
