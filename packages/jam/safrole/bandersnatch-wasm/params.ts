@@ -1,4 +1,4 @@
-import type { TransferListItem } from "node:worker_threads";
+import type { Transferable } from "node:worker_threads";
 import type { WithTransferList } from "@typeberry/concurrent/messages.js";
 
 export enum Method {
@@ -10,7 +10,7 @@ export enum Method {
 export class Response implements WithTransferList {
   constructor(public readonly data: Uint8Array) {}
 
-  getTransferList(): TransferListItem[] {
+  getTransferList(): Transferable[] {
     return [];
   }
 }
@@ -38,7 +38,7 @@ export type RawParams =
 export class Params implements WithTransferList {
   constructor(public readonly params: RawParams) {}
 
-  getTransferList(): TransferListItem[] {
+  getTransferList(): Transferable[] {
     return [];
   }
 }

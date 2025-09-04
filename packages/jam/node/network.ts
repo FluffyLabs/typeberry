@@ -15,7 +15,6 @@ export async function startNetwork(config: NetworkWorkerConfig) {
       networkReady.transition((ready, port) => {
         return ready.finish(port);
       });
-      return networkReady.waitForState("finished");
     },
   };
 }

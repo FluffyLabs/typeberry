@@ -34,12 +34,18 @@ export function startClient(
     client.on(
       "data",
       handleMessageFragmentation(
-        (data) => {
+        async (data) => {
           try {
-            messageHandler.onSocketMessage(data);
+            // to avoid buffering too much data in our memory, we pause
+            // reading more data from the socket and only resume when the message
+            // is processed.
+            client.pause();
+            await messageHandler.onSocketMessage(data);
           } catch (e) {
             logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
             client.end();
+          } finally {
+            client.resume();
           }
         },
         () => {

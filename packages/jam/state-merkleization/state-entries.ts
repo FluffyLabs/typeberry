@@ -1,8 +1,8 @@
 import type { StateRootHash } from "@typeberry/block";
-import { Encoder } from "@typeberry/codec";
+import { Encoder, codec } from "@typeberry/codec";
 import { TruncatedHashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import type { TruncatedHash } from "@typeberry/hash";
+import { HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
 import type { InMemoryState } from "@typeberry/state";
 import { type BytesBlob, InMemoryTrie } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
@@ -11,12 +11,29 @@ import type { StateKey } from "./keys.js";
 import { type StateEntryUpdate, StateEntryUpdateAction } from "./serialize-state-update.js";
 import { type StateCodec, serialize } from "./serialize.js";
 
+const TYPICAL_STATE_ITEMS = 50;
+const TYPICAL_STATE_ITEM_LEN = 50;
+
+const stateEntriesSequenceCodec = codec.sequenceVarLen(codec.pair(codec.bytes(TRUNCATED_HASH_SIZE), codec.blob));
 /**
  * Full, in-memory state represented as serialized entries dictionary.
  *
  * State entries may be wrapped into `SerializedState` to access the contained values.
  */
 export class StateEntries {
+  static Codec = codec.custom<StateEntries>(
+    {
+      name: "StateEntries",
+      sizeHint: {
+        isExact: false,
+        bytes: TYPICAL_STATE_ITEMS * (HASH_SIZE + TYPICAL_STATE_ITEM_LEN),
+      },
+    },
+    (e, v) => stateEntriesSequenceCodec.encode(e, Array.from(v.entries)),
+    (d) => StateEntries.fromEntriesUnsafe(stateEntriesSequenceCodec.decode(d)),
+    (s) => stateEntriesSequenceCodec.skip(s),
+  );
+
   /** Turn in-memory state into it's serialized form. */
   static serializeInMemory(spec: ChainSpec, state: InMemoryState) {
     return new StateEntries(convertInMemoryStateToDictionary(spec, state));
@@ -38,7 +55,9 @@ export class StateEntries {
    * NOTE: There is no verification happening, so the state may be
    * incomplete. Use only if you are sure this is all the entries needed.
    */
-  static fromEntriesUnsafe(entries: Iterable<[StateKey | TruncatedHash, BytesBlob]>) {
+  static fromEntriesUnsafe(
+    entries: Iterable<[StateKey | TruncatedHash, BytesBlob] | readonly [StateKey | TruncatedHash, BytesBlob]>,
+  ) {
     return new StateEntries(TruncatedHashDictionary.fromEntries(entries));
   }
 

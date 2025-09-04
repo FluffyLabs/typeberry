@@ -5,6 +5,7 @@
   "main": "index.ts",
   "dependencies": {
     "@typeberry/block": "0.0.1",
+    "@typeberry/bytes": "0.0.1",
     "@typeberry/codec": "0.0.1",
     "@typeberry/collections": "0.0.1",
     "@typeberry/config": "0.0.1",

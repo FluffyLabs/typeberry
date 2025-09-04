@@ -126,7 +126,17 @@ export class Importer {
     return Result.ok(new WithHash(headerHash, block.header.view()));
   }
 
-  bestBlockHash() {
+  getBestStateRootHash() {
+    return this.blocks.getPostStateRoot(this.blocks.getBestHeaderHash());
+  }
+
+  getBestBlockHash() {
     return this.blocks.getBestHeaderHash();
+  }
+
+  getStateEntries(headerHash: HeaderHash) {
+    const state = this.states.getState(headerHash);
+    const stateEntries = state?.backend.intoStateEntries();
+    return stateEntries ?? null;
   }
 }
