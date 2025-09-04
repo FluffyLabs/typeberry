@@ -52,6 +52,8 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
       blocks,
       states,
     );
+    // TODO [ToDr] this is shit, since we have circular dependency.
+    worker.setImporter(importer);
 
     // TODO [ToDr] back pressure?
     let isProcessing = false;

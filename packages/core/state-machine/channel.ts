@@ -1,4 +1,4 @@
-import { MessageChannel, MessagePort, type TransferListItem, type Worker } from "node:worker_threads";
+import { MessageChannel, MessagePort, type Transferable, type Worker } from "node:worker_threads";
 import { check } from "@typeberry/utils";
 
 import { Logger } from "@typeberry/logger";
@@ -19,12 +19,12 @@ export interface TypedChannel {
   /**
    * Send a `signal` to another worker thread.
    */
-  sendSignal(name: string, data: unknown, transferList?: TransferListItem[]): void;
+  sendSignal(name: string, data: unknown, transferList?: Transferable[]): void;
 
   /**
    * Send a `request` to another worker thread and await response.
    */
-  sendRequest<T>(name: string, data: unknown, transferList?: TransferListItem[]): Promise<T>;
+  sendRequest<T>(name: string, data: unknown, transferList?: Transferable[]): Promise<T>;
 
   /**
    * Close the communication channel with the other worker.
@@ -87,13 +87,13 @@ export class MessageChannelStateMachine<
   // [`TypedChannel`] API.
 
   /** Send a signal to the other thread. */
-  sendSignal(name: string, data: unknown) {
-    this.port.sendSignal(this.currentState().stateName, name, data);
+  sendSignal(name: string, data: unknown, transferList?: Transferable[]) {
+    this.port.sendSignal(this.currentState().stateName, name, data, transferList);
   }
 
   /** Send a request to the other thread. */
-  async sendRequest<TRes>(name: string, data: unknown): Promise<TRes> {
-    return this.port.sendRequest(this.currentState().stateName, name, data);
+  async sendRequest<TRes>(name: string, data: unknown, transferList?: Transferable[]): Promise<TRes> {
+    return this.port.sendRequest(this.currentState().stateName, name, data, transferList);
   }
 
   /** Close the communication channel. */
@@ -116,6 +116,13 @@ export class MessageChannelStateMachine<
   async waitForState<TState extends TStates>(state: StateNames<TState>) {
     await this.machine.waitForState(state);
     return this.transitionTo<TState>();
+  }
+
+  /**
+   * Execute some work batch without transitioning the state.
+   */
+  execute<T>(work: (state: CurrentState, port: TypedChannel) => Promise<T>) {
+    return work(this.currentState(), this);
   }
 
   /**

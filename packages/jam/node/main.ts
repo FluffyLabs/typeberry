@@ -1,42 +1,34 @@
 import { isMainThread } from "node:worker_threads";
-import { Logger } from "@typeberry/logger";
 
-import { Block, type BlockView, Extrinsic, Header, type HeaderHash, type HeaderView } from "@typeberry/block";
-import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
-import { asKnownSize } from "@typeberry/collections";
-import { type ChainSpec, WorkerConfig, fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import { type JipChainSpec, KnownChainSpec } from "@typeberry/config-node";
-import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
+import type { BlockView, HeaderHash, HeaderView, StateRootHash } from "@typeberry/block";
+import { type ChainSpec, WorkerConfig } from "@typeberry/config";
 import type { Finished, MainInit } from "@typeberry/generic-worker";
-import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
+import type { WithHash } from "@typeberry/hash";
 import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine.js";
 import { NetworkWorkerConfig } from "@typeberry/jam-network/state-machine.js";
 import type { Listener, MessageChannelStateMachine } from "@typeberry/state-machine";
-import { SerializedState, StateEntries } from "@typeberry/state-merkleization";
+import type { StateEntries } from "@typeberry/state-merkleization";
 import { startBlockGenerator } from "./author.js";
+import { getChainSpec, initializeDatabase, logger, openDatabase } from "./common.js";
 import { initializeExtensions } from "./extensions.js";
 import { startNetwork } from "./network.js";
-import { startBlocksReader } from "./reader.js";
 
 import { CURRENT_SUITE, CURRENT_VERSION } from "@typeberry/utils";
 import type { JamConfig, NetworkConfig } from "./jam-config.js";
 import packageJson from "./package.json" with { type: "json" };
 
-export * from "./jam-config.js";
+export type NodeApi = {
+  chainSpec: ChainSpec;
+  getStateEntries(hash: HeaderHash): Promise<StateEntries | null>;
+  importBlock(block: BlockView): Promise<StateRootHash | null>;
+  getBestStateRootHash(): Promise<StateRootHash>;
+  close(): Promise<void>;
+};
 
-const logger = Logger.new(import.meta.filename, "jam");
-
-export enum DatabaseKind {
-  InMemory = 0,
-  Lmdb = 1,
-}
-
-export async function main(config: JamConfig, withRelPath: (v: string) => string) {
+export async function main(config: JamConfig, withRelPath: (v: string) => string): Promise<NodeApi> {
   if (!isMainThread) {
-    logger.error("The main binary cannot be running as a Worker!");
-    return;
+    throw new Error("The main binary cannot be running as a Worker!");
   }
 
   logger.info(`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`);
@@ -62,41 +54,49 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
     return state.sendConfig(port, workerConfig);
   });
 
-  // Initialize block reader and wait for it to finish
-  const blocksReader = initBlocksReader(importerReady, chainSpec, config.blocksToImport);
-
   // Authorship initialization.
   // 1. load validator keys (bandersnatch, ed25519, bls)
   // 2. allow the validator to specify metadata.
   // 3. if we have validator keys, we should start the authorship module.
-  const closeAuthorship = await initAuthorship(
-    importerReady,
-    config.isAuthoring && config.blocksToImport === null,
-    workerConfig,
-  );
+  const closeAuthorship = await initAuthorship(importerReady, config.isAuthoring, workerConfig);
 
   // Networking initialization
-  const closeNetwork = await initNetwork(
-    importerReady,
-    workerConfig,
-    genesisHeaderHash,
-    config.network,
-    config.blocksToImport === null,
-    bestHeader,
-  );
+  const closeNetwork = await initNetwork(importerReady, workerConfig, genesisHeaderHash, config.network, bestHeader);
 
-  logger.info("[main]⌛ waiting for importer to finish");
-  const importerDone = await blocksReader;
-  logger.log("[main] ☠️  Closing the extensions");
-  closeExtensions();
-  logger.log("[main]⌛ waiting for tasks to finish");
-  await importerDone.currentState().waitForWorkerToFinish();
-  logger.log("[main] ☠️  Closing the authorship module");
-  closeAuthorship();
-  logger.log("[main] ☠️  Closing the networking module");
-  closeNetwork();
+  const api: NodeApi = {
+    chainSpec,
+    async importBlock(block: BlockView) {
+      return await importerReady.execute(async (importer, port) => {
+        return importer.importBlock(port, block.encoded().raw);
+      });
+    },
+    async getStateEntries(hash: HeaderHash) {
+      return await importerReady.execute(async (importer, port) => {
+        return importer.getStateEntries(port, hash.raw);
+      });
+    },
+    async getBestStateRootHash() {
+      return await importerReady.execute(async (importer, port) => {
+        return importer.getBestStateRootHash(port);
+      });
+    },
+    async close() {
+      importerReady.transition<Finished>((importer, port) => {
+        return importer.finish(port);
+      });
+      logger.log("[main] ☠️  Closing the extensions");
+      closeExtensions();
+      logger.log("[main] ☠️  Closing the authorship module");
+      closeAuthorship();
+      logger.log("[main] ☠️  Closing the networking module");
+      closeNetwork();
+      logger.log("[main] 🛢️ Closing the database");
+      await rootDb.close();
+      logger.info("[main] ✅ Done.");
+    },
+  };
 
-  logger.info("[main] ✅ Done.");
+  return api;
 }
 
 type ImporterReady = MessageChannelStateMachine<MainReady, Finished | MainReady | MainInit<MainReady>>;
@@ -120,41 +120,15 @@ const initAuthorship = async (importerReady: ImporterReady, isAuthoring: boolean
   return finish;
 };
 
-const initBlocksReader = async (
-  importerReady: ImporterReady,
-  chainSpec: ChainSpec,
-  blocksToImport: string[] | null,
-) => {
-  if (blocksToImport === null) {
-    return importerReady.waitForState<Finished>("finished");
-  }
-
-  logger.info(`📖 Reading ${blocksToImport.length} blocks`);
-  return importerReady.transition<Finished>((importer, port) => {
-    const reader = startBlocksReader({
-      files: blocksToImport,
-      chainSpec,
-    });
-    for (const block of reader) {
-      logger.log(`📖 Importing block: #${block.header.view().timeSlotIndex.materialize()}`);
-      importer.sendBlock(port, block.encoded().raw);
-    }
-    // close the importer.
-    logger.info("All blocks scheduled to be imported.");
-    return importer.finish(port);
-  });
-};
-
 const initNetwork = async (
   importerReady: ImporterReady,
   workerConfig: WorkerConfig,
   genesisHeaderHash: HeaderHash,
   networkConfig: NetworkConfig | null,
-  shouldStartNetwork: boolean,
   bestHeader: Listener<WithHash<HeaderHash, HeaderView>>,
 ) => {
-  if (!shouldStartNetwork || networkConfig === null) {
-    logger.log(`🛜 Networking off: ${networkConfig === null ? "no config" : "disabled"}`);
+  if (networkConfig === null) {
+    logger.log("🛜 Networking off: no config");
     return () => Promise.resolve();
   }
 
@@ -189,114 +163,3 @@ const initNetwork = async (
 
   return finish;
 };
-
-export const getChainSpec = (name: KnownChainSpec) => {
-  if (name === KnownChainSpec.Full) {
-    return fullChainSpec;
-  }
-
-  if (name === KnownChainSpec.Tiny) {
-    return tinyChainSpec;
-  }
-
-  throw new Error(`Unknown chain spec: ${name}. Possible options: ${[KnownChainSpec.Full, KnownChainSpec.Tiny]}`);
-};
-
-export function openDatabase(
-  nodeName: string,
-  genesisHeader: BytesBlob,
-  databaseBasePath: string,
-  { readOnly = false }: { readOnly?: boolean } = {},
-) {
-  const nodeNameHash = blake2b.hashString(nodeName).toString().substring(2, 10);
-  const genesisHeaderHash = blake2b.hashBytes(genesisHeader).asOpaque<HeaderHash>();
-  const genesisHeaderHashNibbles = genesisHeaderHash.toString().substring(2, 10);
-
-  const dbPath = `${databaseBasePath}/${nodeNameHash}/${genesisHeaderHashNibbles}`;
-  logger.info(`🛢️ Opening database at ${dbPath}`);
-  try {
-    return {
-      dbPath,
-      rootDb: new LmdbRoot(dbPath, readOnly),
-      genesisHeaderHash,
-    };
-  } catch (e) {
-    throw new Error(`Unable to open database at ${dbPath}: ${e}`);
-  }
-}
-
-/**
- * Initialize the database unless it's already initialized.
- *
- * The function checks the genesis header
- */
-async function initializeDatabase(
-  spec: ChainSpec,
-  genesisHeaderHash: HeaderHash,
-  rootDb: LmdbRoot,
-  config: JipChainSpec,
-): Promise<void> {
-  const blocks = new LmdbBlocks(spec, rootDb);
-  const states = new LmdbStates(spec, rootDb);
-
-  const header = blocks.getBestHeaderHash();
-  const state = blocks.getPostStateRoot(header);
-  logger.log(`🛢️ Best header hash: ${header}`);
-  logger.log(`🛢️ Best state root: ${state}`);
-
-  // DB seems already initialized, just go with what we have.
-  if (state !== null && !state.isEqualTo(Bytes.zero(HASH_SIZE)) && !header.isEqualTo(Bytes.zero(HASH_SIZE))) {
-    await rootDb.db.close();
-    return;
-  }
-
-  logger.log("🛢️ Database looks fresh. Initializing.");
-  // looks like a fresh db, initialize the state.
-  const genesisHeader = Decoder.decodeObject(Header.Codec, config.genesisHeader, spec);
-  const genesisExtrinsic = emptyBlock().extrinsic;
-  const genesisBlock = Block.create({ header: genesisHeader, extrinsic: genesisExtrinsic });
-  const blockView = Decoder.decodeObject(Block.Codec.View, Encoder.encodeObject(Block.Codec, genesisBlock, spec), spec);
-  logger.log(`🧬 Writing genesis block #${genesisHeader.timeSlotIndex}: ${genesisHeaderHash}`);
-
-  const { genesisStateSerialized, genesisStateRootHash } = loadGenesisState(spec, config.genesisState);
-
-  // write to db
-  await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(genesisHeaderHash, blockView));
-  await states.insertState(genesisHeaderHash, genesisStateSerialized);
-  await blocks.setPostStateRoot(genesisHeaderHash, genesisStateRootHash);
-  await blocks.setBestHeaderHash(genesisHeaderHash);
-
-  // close the DB
-  await rootDb.db.close();
-}
-
-function loadGenesisState(spec: ChainSpec, data: JipChainSpec["genesisState"]) {
-  const stateEntries = StateEntries.fromEntriesUnsafe(data.entries());
-  const state = SerializedState.fromStateEntries(spec, stateEntries);
-
-  const genesisStateRootHash = stateEntries.getRootHash();
-  logger.info(`🧬 Genesis state root: ${genesisStateRootHash}`);
-
-  return {
-    genesisState: state,
-    genesisStateSerialized: stateEntries,
-    genesisStateRootHash,
-  };
-}
-
-export function emptyBlock() {
-  return Block.create({
-    header: Header.empty(),
-    extrinsic: Extrinsic.create({
-      tickets: asKnownSize([]),
-      preimages: [],
-      assurances: asKnownSize([]),
-      guarantees: asKnownSize([]),
-      disputes: {
-        verdicts: [],
-        culprits: [],
-        faults: [],
-      },
-    }),
-  });
-}
