@@ -43,19 +43,19 @@ Build and run typeberry using Docker:
 
 ```bash
 # Build the Docker image
-$ docker build -t typeberry-jam .
+$ docker build -t typeberry .
 
 # Run with default settings
-$ docker run typeberry-jam
+$ docker run typeberry
 
 # Run with custom arguments
-$ docker run typeberry-jam --config /app/configs/my-config.json --node-name my-node
+$ docker run typeberry --config /app/configs/typeberry-dev.json --node-name my-node
 
 # Run with environment variables (e.g., for logging)
-$ docker run -e JAM_LOG=trace GP_VERSION=0.7.0 typeberry-jam
+$ docker run -e JAM_LOG=trace GP_VERSION=0.7.0 typeberry
 
 # Run with volume mounts for persistent data
-$ docker run -v $(pwd)/database:/app/database typeberry-jam
+$ docker run -v $(pwd)/database:/app/database typeberry
 ```
 
 The Docker container uses a minimal Alpine Linux image and forwards all arguments to `npm start`.
