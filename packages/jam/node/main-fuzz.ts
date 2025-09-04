@@ -19,6 +19,8 @@ export enum BlockImportError {
 }
 
 const logger = Logger.new(import.meta.filename, "fuzztarget");
+// A number large enough to not collide with near-future date.
+const NEXT_FUZZ_SEED = BigInt(1_000 * 3_600 * 24 * 30 * 12 * 2);
 
 export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) => string) {
   logger.info("💨 Fuzzer starting up.");
@@ -26,7 +28,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
   const { jamNodeConfig: config } = fuzzConfig;
 
   let runningNode: NodeApi | null = null;
-  let fuzzSeed = Date.now();
+  let fuzzSeed = BigInt(Date.now());
 
   const chainSpec = getChainSpec(config.node.flavor);
 
@@ -59,7 +61,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
         runningNode = null;
         await finish;
       }
-      fuzzSeed += 1_000_000_000;
+      fuzzSeed += NEXT_FUZZ_SEED;
       // update the chainspec
       const newNode = await main(
         {
