@@ -10,7 +10,6 @@
     "@typeberry/utils": "0.0.1"
   },
   "scripts": {
-    "build": "npm run build -w @typeberry/builder -- --environment PACKAGE_NAME:@typeberry/codec",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",

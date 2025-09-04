@@ -1,10 +1,11 @@
 import type { StateRootHash } from "@typeberry/block";
+import type { BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import { TruncatedHashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { TruncatedHash } from "@typeberry/hash";
 import type { InMemoryState } from "@typeberry/state";
-import { type BytesBlob, InMemoryTrie } from "@typeberry/trie";
+import { InMemoryTrie } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { Compatibility, GpVersion, TEST_COMPARE_USING, assertNever } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";

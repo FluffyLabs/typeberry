@@ -33,4 +33,4 @@ jobs:
           echo "package-lock.json is up to date."
         fi
     - run: npm run build
-    - run: npm run build-binary
+    - run: npm run build -w @typeberry/lib

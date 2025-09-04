@@ -12,8 +12,7 @@
   },
   "scripts": {
     "start": "tsx ./bin.ts",
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
-    "build": "npm run build -w @typeberry/builder -- --environment PACKAGE_NAME:@typeberry/pvm-debugger-adapter,PACKAGE_OUT:pvm"
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

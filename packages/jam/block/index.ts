@@ -4,11 +4,6 @@ export * from "./hash.js";
 export * from "./header.js";
 export * from "./work-item-segment.js";
 
-// TODO [ToDr] Temporary re-export to make the published package complete.
-export * as codec from "@typeberry/codec";
-export * as bytes from "@typeberry/bytes";
-export * as config from "@typeberry/config";
-
 export * as codecUtils from "./codec.js";
 export * as assurances from "./assurances.js";
 export * as disputes from "./disputes.js";
