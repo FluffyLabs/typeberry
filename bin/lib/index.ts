@@ -20,6 +20,7 @@ export * as pvm from "@typeberry/pvm-debugger-adapter";
 export * as pvm_host_calls from "@typeberry/pvm-host-calls";
 export * as pvm_interpreter from "@typeberry/pvm-interpreter";
 export * as pvm_program from "@typeberry/pvm-program";
+export * as pvm_spi_decoder from "@typeberry/pvm-spi-decoder";
 export * as shuffling from "@typeberry/shuffling";
 export * as state from "@typeberry/state";
 export * as state_json from "@typeberry/state-json";

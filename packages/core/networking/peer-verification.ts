@@ -1,4 +1,4 @@
-import {native} from "@matrixai/quic";
+import { native } from "@matrixai/quic";
 import { type PeerInfo, VerifyCertError, verifyCertificate } from "./certificate.js";
 
 export function peerVerification() {
