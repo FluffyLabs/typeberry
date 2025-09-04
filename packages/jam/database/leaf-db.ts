@@ -101,17 +101,18 @@ export class LeafDb implements SerializedStateBackend {
   intoStateEntries(): StateEntries {
     const entries: [StateKey, BytesBlob][] = [];
     for (const [key, lookup] of this.lookup.entries()) {
-      switch(lookup.kind) {
-        case LookupKind.EmbeddedValue: 
-          entries.push([key.asOpaque(), lookup.value]);
-          break;
+      switch (lookup.kind) {
         case LookupKind.EmbeddedValue:
+          entries.push([key.asOpaque(), lookup.value]);
+          continue;
+        case LookupKind.DbKey:
           entries.push([key.asOpaque(), BytesBlob.blobFrom(this.db.get(lookup.key))]);
-          break;
+          continue;
         default:
           assertNever(lookup);
       }
-    
+    }
+
     return StateEntries.fromEntriesUnsafe(entries);
   }
 }

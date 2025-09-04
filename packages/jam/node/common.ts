@@ -66,8 +66,9 @@ export async function initializeDatabase(
   logger.log(`🛢️ Best state root: ${state}`);
 
   // DB seems already initialized, just go with what we have.
-  const isDbInitialized =  state !== null && !state.isEqualTo(Bytes.zero(HASH_SIZE)) && !header.isEqualTo(Bytes.zero(HASH_SIZE));
-  
+  const isDbInitialized =
+    state !== null && !state.isEqualTo(Bytes.zero(HASH_SIZE)) && !header.isEqualTo(Bytes.zero(HASH_SIZE));
+
   if (isDbInitialized) {
     await rootDb.db.close();
     return;
