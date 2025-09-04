@@ -64,6 +64,9 @@ const maybeTaggedErrorToString = (err: unknown): string => {
     }
     return `${err.kind} - ${maybeTaggedErrorToString(err.error)}`;
   }
+  if (typeof err === "symbol") {
+    return err.toString();
+  }
   return `${err}`;
 };
 

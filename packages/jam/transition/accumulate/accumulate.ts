@@ -14,7 +14,6 @@ import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 
 import { HashSet } from "@typeberry/collections";
 import { KeccakHasher } from "@typeberry/hash/keccak.js";
-import { AccumulateExternalities } from "@typeberry/jam-host-calls/externalities/accumulate-externalities.js";
 import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import {
   AccumulationStateUpdate,
@@ -30,6 +29,7 @@ import { binaryMerkleization } from "@typeberry/state-merkleization";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import { Compatibility, GpVersion, Result, assertEmpty } from "@typeberry/utils";
+import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/index.js";
 import type { CountAndGasUsed } from "../statistics.js";
 import { AccumulateData } from "./accumulate-data.js";

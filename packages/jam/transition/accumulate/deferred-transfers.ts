@@ -1,7 +1,6 @@
 import { type EntropyHash, type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
 import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { AccumulateExternalities } from "@typeberry/jam-host-calls/externalities/accumulate-externalities.js";
 import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import {
   AccumulationStateUpdate,
@@ -12,6 +11,7 @@ import { sumU64, tryAsU32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { ServiceAccountInfo, type ServicesUpdate, type State } from "@typeberry/state";
 import { Compatibility, GpVersion, Result, check } from "@typeberry/utils";
+import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/fetch-externalities.js";
 import type { CountAndGasUsed } from "../statistics.js";
 import { uniquePreserveOrder } from "./accumulate-utils.js";

@@ -10,8 +10,9 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { Compatibility, GpVersion } from "@typeberry/utils";
+import { Compatibility, GpVersion, resultToString } from "@typeberry/utils";
 import type { RefineExternalities } from "../externalities/refine-externalities.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID } from "../utils.js";
 
@@ -57,6 +58,8 @@ export class Export implements HostCallHandler {
 
     // attempt to export a segment and fail if it's above the maximum.
     const segmentExported = this.refine.exportSegment(segment);
+    logger.trace(`EXPORT(${segment.toStringTruncated()}) <- ${resultToString(segmentExported)}`);
+
     if (segmentExported.isOk) {
       regs.set(IN_OUT_REG, tryAsU64(segmentExported.ok));
     } else {

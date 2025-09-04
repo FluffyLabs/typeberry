@@ -7,6 +7,7 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.j
 import { ValidatorData } from "@typeberry/state";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 
 const IN_OUT_REG = 7;
@@ -16,9 +17,6 @@ export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint
  * Designate a new set of validator keys.
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/36b50136b501?v=0.6.7
- *
- * TODO [MaSo] Update method, needs to check privileges
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/362a02362a02?v=0.6.7
  */
 export class Designate implements HostCallHandler {
   index = tryAsHostCallIndex(
@@ -56,7 +54,21 @@ export class Designate implements HostCallHandler {
     const decoder = Decoder.fromBlob(res);
     const validatorsData = decoder.sequenceFixLen(ValidatorData.Codec, this.chainSpec.validatorsCount);
 
-    regs.set(IN_OUT_REG, HostCallResult.OK);
-    this.partialState.updateValidatorsData(tryAsPerValidator(validatorsData, this.chainSpec));
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      const result = this.partialState.updateValidatorsData(tryAsPerValidator(validatorsData, this.chainSpec));
+      logger.trace(`DESIGNATE([${validatorsData[0]}, ${validatorsData[1]}, ...])`);
+
+      if (result.isError) {
+        regs.set(IN_OUT_REG, HostCallResult.HUH);
+        logger.trace("DESIGNATE result: HUH");
+      } else {
+        regs.set(IN_OUT_REG, HostCallResult.OK);
+        logger.trace("DESIGNATE result: OK");
+      }
+    } else {
+      void this.partialState.updateValidatorsData(tryAsPerValidator(validatorsData, this.chainSpec));
+      regs.set(IN_OUT_REG, HostCallResult.OK);
+      logger.trace(`DESIGNATE([${validatorsData[0]}, ${validatorsData[1]}, ...])`);
+    }
   }
 }

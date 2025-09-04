@@ -16,6 +16,30 @@ import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
+import {
+  AccumulationStateUpdate,
+  EjectError,
+  ForgetPreimageError,
+  NewServiceError,
+  type PartialState,
+  type PartiallyUpdatedState,
+  PendingTransfer,
+  type PreimageStatus,
+  PreimageStatusKind,
+  ProvidePreimageError,
+  RequestPreimageError,
+  type TRANSFER_MEMO_BYTES,
+  TransferError,
+  UnprivilegedError,
+  UpdatePrivilegesError,
+  clampU64ToU32,
+  slotsToPreimageStatus,
+  writeServiceIdAsLeBytes,
+} from "@typeberry/jam-host-calls";
+import type { AccountsInfo } from "@typeberry/jam-host-calls/info.js";
+import type { AccountsLookup } from "@typeberry/jam-host-calls/lookup.js";
+import type { AccountsRead } from "@typeberry/jam-host-calls/read.js";
+import type { AccountsWrite } from "@typeberry/jam-host-calls/write.js";
 import { Logger } from "@typeberry/logger";
 import { type U64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
@@ -32,26 +56,6 @@ import {
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { Compatibility, GpVersion, OK, Result, assertNever, check } from "@typeberry/utils";
-import type { AccountsInfo } from "../info.js";
-import type { AccountsLookup } from "../lookup.js";
-import type { AccountsRead } from "../read.js";
-import { clampU64ToU32, writeServiceIdAsLeBytes } from "../utils.js";
-import type { AccountsWrite } from "../write.js";
-import {
-  EjectError,
-  ForgetPreimageError,
-  NewServiceError,
-  type PartialState,
-  type PreimageStatus,
-  PreimageStatusKind,
-  ProvidePreimageError,
-  RequestPreimageError,
-  type TRANSFER_MEMO_BYTES,
-  TransferError,
-  slotsToPreimageStatus,
-} from "./partial-state.js";
-import { PendingTransfer } from "./pending-transfer.js";
-import { AccumulationStateUpdate, type PartiallyUpdatedState } from "./state-update.js";
 
 /**
  * Number of storage items required for ejection of the service.
@@ -68,7 +72,7 @@ const LOOKUP_HISTORY_ENTRY_BYTES = tryAsU64(81);
 /** https://graypaper.fluffylabs.dev/#/7e6ff6a/117a01117a01?v=0.6.7 */
 const BASE_STORAGE_BYTES = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(34) : tryAsU64(32);
 
-const logger = Logger.new(import.meta.filename, "accumulate-externalities");
+const logger = Logger.new(import.meta.filename, "externalities");
 
 export class AccumulateExternalities
   implements PartialState, AccountsWrite, AccountsRead, AccountsInfo, AccountsLookup
@@ -165,14 +169,6 @@ export class AccumulateExternalities
       // keep trying
       currentServiceId = tryAsServiceId(((currentServiceId - 2 ** 8 + 1 + mod) % mod) + 2 ** 8);
     }
-  }
-
-  /**
-   * `(x_u)_m`: Get most recent manager
-   * https://graypaper.fluffylabs.dev/#/7e6ff6a/174900174900?v=0.6.7
-   */
-  private getManager(): ServiceId {
-    return this.updatedState.getPrivilegedServices().manager;
   }
 
   checkPreimageStatus(hash: PreimageHash, length: U64): PreimageStatus | null {
@@ -408,7 +404,7 @@ export class AccumulateExternalities
 
     // check if we are priviledged to set gratis storage
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/369203369603?v=0.6.7
-    if (gratisStorage !== tryAsU64(0) && this.currentServiceId !== this.getManager()) {
+    if (gratisStorage !== tryAsU64(0) && this.currentServiceId !== this.updatedState.getPrivilegedServices().manager) {
       return Result.error(NewServiceError.UnprivilegedService);
     }
 
@@ -477,18 +473,21 @@ export class AccumulateExternalities
     );
   }
 
-  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void {
-    /** https://graypaper.fluffylabs.dev/#/9a08063/36e10136e901?v=0.6.6 */
-    const validatorsManager = this.updatedState.getPrivilegedServices().validatorsManager;
+  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): Result<OK, UnprivilegedError> {
+    /** https://graypaper.fluffylabs.dev/#/7e6ff6a/362802362d02?v=0.6.7 */
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      const validatorsManager = this.updatedState.getPrivilegedServices().validatorsManager;
 
-    if (validatorsManager !== this.currentServiceId) {
-      logger.trace(
-        `Current service id (${this.currentServiceId}) is not a validator manager (${validatorsManager}) and cannot update validators. Ignoring.`,
-      );
-      return;
+      if (validatorsManager !== this.currentServiceId) {
+        logger.trace(
+          `Current service id (${this.currentServiceId}) is not a validators manager. (expected: ${validatorsManager}) and cannot update validators data. Ignoring`,
+        );
+        return Result.error(UnprivilegedError);
+      }
     }
 
     this.updatedState.stateUpdate.validatorsData = validatorsData;
+    return Result.ok(OK);
   }
 
   checkpoint(): void {
@@ -499,45 +498,57 @@ export class AccumulateExternalities
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>,
-  ): void {
-    // NOTE `coreIndex` is already verified in the HC, so this is infallible.
-    /** https://graypaper.fluffylabs.dev/#/9a08063/368401368401?v=0.6.6 */
+    authManager: ServiceId | null,
+  ): Result<OK, UpdatePrivilegesError> {
+    /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36a40136a401?v=0.6.7 */
 
+    // NOTE `coreIndex` is already verified in the HC, so this is infallible.
     const currentAuthManager = this.updatedState.getPrivilegedServices().authManager[coreIndex];
 
     if (currentAuthManager !== this.currentServiceId) {
       logger.trace(
         `Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentAuthManager}) and cannot update authorization queue. Ignoring`,
       );
-      return;
+
+      return Result.error(UpdatePrivilegesError.UnprivilegedService);
+    }
+
+    if (authManager === null && Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
+      logger.trace("The new auth manager is not a valid service id. Ignoring");
+      return Result.error(UpdatePrivilegesError.InvalidServiceId);
     }
 
     this.updatedState.stateUpdate.authorizationQueues.set(coreIndex, authQueue);
+    return Result.ok(OK);
   }
 
   updatePrivilegedServices(
-    manager: ServiceId,
-    authorizer: PerCore<ServiceId>,
-    validators: ServiceId,
+    manager: ServiceId | null,
+    authorizers: PerCore<ServiceId>,
+    validatorsManager: ServiceId | null,
     autoAccumulate: [ServiceId, ServiceGas][],
-  ): void {
+  ): Result<OK, UpdatePrivilegesError> {
     // NOTE [ToDr] I guess we should not fail if the services don't exist. */
-    /** https://graypaper.fluffylabs.dev/#/9a08063/36f40036f400?v=0.6.6 */
-    const currentManager = this.updatedState.getPrivilegedServices().manager;
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
+      const currentManager = this.updatedState.getPrivilegedServices().manager;
 
-    if (currentManager !== this.currentServiceId) {
-      logger.trace(
-        `Current service id (${this.currentServiceId}) is not a manager (${currentManager}) and cannot update privileged services. Ignoring.`,
-      );
-      return;
+      if (currentManager !== this.currentServiceId) {
+        return Result.error(UpdatePrivilegesError.UnprivilegedService);
+      }
+    }
+
+    if (manager === null || validatorsManager === null) {
+      return Result.error(UpdatePrivilegesError.InvalidServiceId);
     }
 
     this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
       manager,
-      authManager: authorizer,
-      validatorsManager: validators,
+      authManager: authorizers,
+      validatorsManager,
       autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) => AutoAccumulate.create({ service, gasLimit })),
     });
+    return Result.ok(OK);
   }
 
   yield(hash: OpaqueHash): void {

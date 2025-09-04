@@ -12,8 +12,9 @@ import {
 import { type GasCounter, Registers, tryAsBigGas, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { Compatibility, GpVersion, check } from "@typeberry/utils";
+import { Compatibility, GpVersion, check, resultToString } from "@typeberry/utils";
 import { type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID } from "../utils.js";
 
@@ -78,6 +79,7 @@ export class Invoke implements HostCallHandler {
 
     // try run the machine
     const state = await this.refine.machineInvoke(machineIndex, gasCost, registers);
+    logger.trace(`INVOKE(${machineIndex}, ${gasCost}, ${registers}) <- ${resultToString(state)}`);
 
     // machine not found
     if (state.isError) {

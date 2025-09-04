@@ -6,8 +6,9 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { tryAsPerCore } from "@typeberry/state";
-import { Compatibility, GpVersion, asOpaqueType } from "@typeberry/utils";
-import type { PartialState } from "../externalities/partial-state.js";
+import { Compatibility, GpVersion, asOpaqueType, assertNever } from "@typeberry/utils";
+import { type PartialState, UpdatePrivilegesError } from "../externalities/partial-state.js";
+import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
 import { getServiceId } from "../utils.js";
 
@@ -28,10 +29,6 @@ const serviceIdAndGasCodec = codec.object({
  * Modify privileged services and services that auto-accumulate every block.
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/363b00363b00?v=0.6.7
- *
- * TODO [MaSo] Update handle Authorizers and check if service is manager
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/365a00365a00?v=0.6.7
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/36db0036db00?v=0.6.7
  */
 export class Bless implements HostCallHandler {
   index = tryAsHostCallIndex(
@@ -59,7 +56,8 @@ export class Bless implements HostCallHandler {
     // `m`: manager service (can change privileged services)
     const manager = getServiceId(regs.get(IN_OUT_REG));
     // `a`: manages authorization queue
-    const authorization = getServiceId(regs.get(8));
+    // NOTE It can be either ServiceId (pre GP 067) or memory index (GP ^067)
+    const authorization = regs.get(8);
     // `v`: manages validator keys
     const validator = getServiceId(regs.get(9));
     // `o`: memory offset
@@ -67,9 +65,11 @@ export class Bless implements HostCallHandler {
     // `n`: number of items in the auto-accumulate dictionary
     const numberOfItems = regs.get(11);
 
-    // `g`: array of key-value pairs serviceId -> gas that auto-accumulate every block
+    /*
+     * `z`: array of key-value pairs serviceId -> gas that auto-accumulate every block
+     * https://graypaper.fluffylabs.dev/#/7e6ff6a/368100368100?v=0.6.7
+     */
     const autoAccumulateEntries = new Array<[ServiceId, ServiceGas]>();
-
     const result = new Uint8Array(tryAsExactBytes(serviceIdAndGasCodec.sizeHint));
     const decoder = Decoder.fromBlob(result);
     let memIndex = sourceStart;
@@ -82,25 +82,61 @@ export class Bless implements HostCallHandler {
       }
 
       const { serviceId, gas } = decoder.object(serviceIdAndGasCodec);
-
       autoAccumulateEntries.push([serviceId, gas]);
-
       // we allow the index to go beyond `MEMORY_SIZE` (i.e. 2**32) and have the next `loadInto` fail with page fault.
       memIndex = tryAsU64(memIndex + tryAsU64(decoder.bytesRead()));
     }
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      // https://graypaper.fluffylabs.dev/#/7e6ff6a/367200367200?v=0.6.7
+      const res = new Uint8Array(tryAsExactBytes(codec.u32.sizeHint) * this.chainSpec.coresCount);
+      const decoder = Decoder.fromBlob(res);
+      const memoryReadResult = memory.loadInto(res, authorization);
+      if (memoryReadResult.isError) {
+        return PvmExecution.Panic;
+      }
 
-    if (manager === null || authorization === null || validator === null) {
-      regs.set(IN_OUT_REG, HostCallResult.WHO);
-      return;
+      const authorizers = tryAsPerCore(
+        decoder.sequenceFixLen(codec.u32.asOpaque<ServiceId>(), this.chainSpec.coresCount),
+        this.chainSpec,
+      );
+
+      const result = this.partialState.updatePrivilegedServices(manager, authorizers, validator, autoAccumulateEntries);
+      logger.trace(`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries})`);
+
+      if (result.isOk) {
+        logger.trace("BLESS result: OK");
+        regs.set(IN_OUT_REG, HostCallResult.OK);
+        return;
+      }
+
+      const e = result.error;
+
+      if (e === UpdatePrivilegesError.UnprivilegedService) {
+        logger.trace("BLESS result: HUH");
+        regs.set(IN_OUT_REG, HostCallResult.HUH);
+        return;
+      }
+
+      if (e === UpdatePrivilegesError.InvalidServiceId) {
+        logger.trace("BLESS result: WHO");
+        regs.set(IN_OUT_REG, HostCallResult.WHO);
+        return;
+      }
+
+      assertNever(e);
+    } else {
+      // Pre GP 0.6.7
+      const authorizationIndex = getServiceId(authorization);
+      if (manager === null || authorizationIndex === null || validator === null) {
+        regs.set(IN_OUT_REG, HostCallResult.WHO);
+        return;
+      }
+
+      // NOTE It's safe to convert to PerCore<ServiceId>, cause it's handled like this in a code base
+      const authorizers = tryAsPerCore(new Array(this.chainSpec.coresCount).fill(authorizationIndex), this.chainSpec);
+      this.partialState.updatePrivilegedServices(manager, authorizers, validator, autoAccumulateEntries);
+      logger.trace(`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries})`);
+      regs.set(IN_OUT_REG, HostCallResult.OK);
     }
-
-    // TODO: [MaSo] need to be updated properly to gp ^0.6.7
-    this.partialState.updatePrivilegedServices(
-      manager,
-      tryAsPerCore(new Array(this.chainSpec.coresCount).fill(authorization), this.chainSpec),
-      validator,
-      autoAccumulateEntries,
-    );
-    regs.set(IN_OUT_REG, HostCallResult.OK);
   }
 }

@@ -14,7 +14,9 @@ import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
+import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
+import { UnprivilegedError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { Designate } from "./designate.js";
 
@@ -116,5 +118,37 @@ describe("HostCalls: Designate", () => {
     );
     assert.deepStrictEqual(accumulate.validatorsData[0].length, tinyChainSpec.validatorsCount);
     assert.deepStrictEqual(accumulate.validatorsData.length, 1);
+  });
+
+  it("should fail when unprivileged service sets new validators", async () => {
+    const accumulate = new PartialStateMock();
+    accumulate.validatorDataResponse = Result.error(UnprivilegedError);
+    const serviceId = tryAsServiceId(10_000);
+    const designate = new Designate(serviceId, accumulate, tinyChainSpec);
+    const { registers, memory } = prepareRegsAndMemory([
+      ValidatorData.create({
+        ed25519: Bytes.fill(ED25519_KEY_BYTES, 1).asOpaque(),
+        bandersnatch: Bytes.fill(BANDERSNATCH_KEY_BYTES, 1).asOpaque(),
+        bls: Bytes.fill(BLS_KEY_BYTES, 1).asOpaque(),
+        metadata: Bytes.fill(VALIDATOR_META_BYTES, 1),
+      }),
+      ValidatorData.create({
+        ed25519: Bytes.fill(ED25519_KEY_BYTES, 2).asOpaque(),
+        bandersnatch: Bytes.fill(BANDERSNATCH_KEY_BYTES, 2).asOpaque(),
+        bls: Bytes.fill(BLS_KEY_BYTES, 2).asOpaque(),
+        metadata: Bytes.fill(VALIDATOR_META_BYTES, 2),
+      }),
+    ]);
+
+    // when
+    await designate.execute(gas, registers, memory);
+
+    // then
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
+    } else {
+      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
+    }
+    assert.deepStrictEqual(accumulate.validatorsData.length, 0);
   });
 });
