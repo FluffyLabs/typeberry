@@ -24,6 +24,8 @@ import {
   type RequestPreimageError,
   type TRANSFER_MEMO_BYTES,
   TransferError,
+  type UnprivilegedError,
+  type UpdatePrivilegesError,
 } from "./partial-state.js";
 
 export class PartialStateMock implements PartialState {
@@ -41,12 +43,15 @@ export class PartialStateMock implements PartialState {
 
   public checkpointCalled = 0;
   public yieldHash: OpaqueHash | null = null;
+  public authQueueResponse: Result<OK, UpdatePrivilegesError> = Result.ok(OK);
   public forgetPreimageResponse: Result<OK, ForgetPreimageError> = Result.ok(OK);
   public newServiceResponse: Result<ServiceId, NewServiceError> = Result.ok(tryAsServiceId(0));
+  public privilegedServicesResponse: Result<OK, UpdatePrivilegesError> = Result.ok(OK);
   public ejectReturnValue: Result<OK, EjectError> = Result.ok(OK);
   public requestPreimageResponse: Result<OK, RequestPreimageError> = Result.ok(OK);
   public checkPreimageStatusResponse: PreimageStatus | null = null;
   public transferReturnValue: Result<OK, TransferError> = Result.ok(OK);
+  public validatorDataResponse: Result<OK, UnprivilegedError> = Result.ok(OK);
   public providePreimageResponse: Result<OK, ProvidePreimageError> = Result.ok(OK);
 
   eject(from: ServiceId | null, previousCode: PreimageHash): Result<OK, EjectError> {
@@ -101,19 +106,34 @@ export class PartialStateMock implements PartialState {
     this.checkpointCalled += 1;
   }
 
-  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void {
-    this.validatorsData.push(validatorsData);
+  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): Result<OK, UnprivilegedError> {
+    if (this.validatorDataResponse.isOk) {
+      this.validatorsData.push(validatorsData);
+    }
+    return this.validatorDataResponse;
   }
 
-  updatePrivilegedServices(m: ServiceId, a: PerCore<ServiceId>, v: ServiceId, g: [ServiceId, ServiceGas][]): void {
-    this.privilegedServices.push([m, a, v, g]);
+  updatePrivilegedServices(
+    m: ServiceId | null,
+    a: PerCore<ServiceId>,
+    v: ServiceId | null,
+    g: [ServiceId, ServiceGas][],
+  ): Result<OK, UpdatePrivilegesError> {
+    if (this.privilegedServicesResponse.isOk) {
+      this.privilegedServices.push([m, a, v, g]);
+    }
+    return this.privilegedServicesResponse;
   }
 
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
-  ): void {
-    this.authQueue.push([coreIndex, authQueue]);
+    authManager: ServiceId | null,
+  ): Result<OK, UpdatePrivilegesError> {
+    if (this.authQueueResponse.isOk) {
+      this.authQueue.push([coreIndex, authQueue, authManager]);
+    }
+    return this.authQueueResponse;
   }
 
   yield(hash: OpaqueHash): void {

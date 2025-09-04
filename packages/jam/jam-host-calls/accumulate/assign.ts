@@ -8,20 +8,18 @@ import type { HostCallHandler, IHostCallMemory } from "@typeberry/pvm-host-calls
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import type { IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { Compatibility, GpVersion } from "@typeberry/utils";
-import type { PartialState } from "../externalities/partial-state.js";
+import { Compatibility, GpVersion, assertNever } from "@typeberry/utils";
+import { type PartialState, UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
+import { getServiceId } from "../utils.js";
 
 const IN_OUT_REG = 7;
 
 /**
- * Assign new fixed-length authorization queue to some core.
+ * Assign new fixed-length authorization queue to some core and authorize a service for this core.
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/360d01360d01?v=0.6.7
- *
- * TODO [MaSo] Update assign, check privileges
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/369101369101?v=0.6.7
  */
 export class Assign implements HostCallHandler {
   index = tryAsHostCallIndex(
@@ -46,9 +44,12 @@ export class Assign implements HostCallHandler {
     regs: IHostCallRegisters,
     memory: IHostCallMemory,
   ): Promise<undefined | PvmExecution> {
-    const coreIndex = regs.get(IN_OUT_REG);
+    // c
+    const maybeCoreIndex = regs.get(IN_OUT_REG);
     // o
     const authorizationQueueStart = regs.get(8);
+    // a
+    const authManager = getServiceId(regs.get(9));
 
     const res = new Uint8Array(HASH_SIZE * AUTHORIZATION_QUEUE_SIZE);
     const memoryReadResult = memory.loadInto(res, authorizationQueueStart);
@@ -57,19 +58,45 @@ export class Assign implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    // the core is unknown
-    if (coreIndex >= this.chainSpec.coresCount) {
+    if (maybeCoreIndex >= this.chainSpec.coresCount) {
       regs.set(IN_OUT_REG, HostCallResult.CORE);
       return;
     }
+    // NOTE: Here we know the core index is valid
+    const coreIndex = tryAsCoreIndex(Number(maybeCoreIndex));
 
     const decoder = Decoder.fromBlob(res);
     const authQueue = decoder.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
     const fixedSizeAuthQueue = FixedSizeArray.new(authQueue, AUTHORIZATION_QUEUE_SIZE);
 
-    regs.set(IN_OUT_REG, HostCallResult.OK);
-    // NOTE [MaSo] its safe to cast to Number because we know that the coreIndex is less than cores count = 341
-    this.partialState.updateAuthorizationQueue(tryAsCoreIndex(Number(coreIndex)), fixedSizeAuthQueue);
-    logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue})`);
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue})`);
+      const result = this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, authManager);
+      if (result.isOk) {
+        regs.set(IN_OUT_REG, HostCallResult.OK);
+        logger.trace("ASSIGN result: OK");
+        return;
+      }
+
+      const e = result.error;
+
+      if (e === UpdatePrivilegesError.UnprivilegedService) {
+        regs.set(IN_OUT_REG, HostCallResult.HUH);
+        logger.trace("ASSIGN result: HUH");
+        return;
+      }
+
+      if (e === UpdatePrivilegesError.InvalidServiceId) {
+        regs.set(IN_OUT_REG, HostCallResult.WHO);
+        logger.trace("ASSIGN result: WHO");
+        return;
+      }
+
+      assertNever(e);
+    } else {
+      regs.set(IN_OUT_REG, HostCallResult.OK);
+      void this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, authManager);
+      logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue})`);
+    }
   }
 }
