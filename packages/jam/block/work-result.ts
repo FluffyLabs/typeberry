@@ -15,12 +15,16 @@ export enum WorkExecResultKind {
   /** `☇`: unexpected program termination. */
   panic = 2,
   /** `⊚`: the number of exports made was invalidly reported. */
+  // biome-ignore lint/style/useLiteralEnumMembers: Compatibility
   incorrectNumberOfExports = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 3 : -1,
   /** `⊖`: the size of the digest (refinement output) would cross the acceptable limit. */
+  // biome-ignore lint/style/useLiteralEnumMembers: Compatibility
   digestTooBig = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 4 : -1,
   /** `BAD`: service code was not available for lookup in state. */
+  // biome-ignore lint/style/useLiteralEnumMembers: Compatibility
   badCode = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 5 : 3,
   /** `BIG`: the code was too big (beyond the maximum allowed size `W_C`) */
+  // biome-ignore lint/style/useLiteralEnumMembers: Compatibility
   codeOversize = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 6 : 4,
 }
 
