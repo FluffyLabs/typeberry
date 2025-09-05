@@ -66,13 +66,17 @@ function loadBlocks(testPath: string) {
     }
     const data = fs.readFileSync(path.join(dir, file), "utf8");
     const parsed = JSON.parse(data);
-    if (file.endsWith("genesis.json")) {
-      const content = parseFromJson(parsed, StateTransitionGenesis.fromJson);
-      const genesisBlock = Block.create({ header: content.header, extrinsic: emptyBlock().extrinsic });
-      blocks.push(genesisBlock);
-    } else {
-      const content = parseFromJson(parsed, StateTransition.fromJson);
-      blocks.push(content.block);
+    try {
+      if (file.endsWith("genesis.json")) {
+        const content = parseFromJson(parsed, StateTransitionGenesis.fromJson);
+        const genesisBlock = Block.create({ header: content.header, extrinsic: emptyBlock().extrinsic });
+        blocks.push(genesisBlock);
+      } else {
+        const content = parseFromJson(parsed, StateTransition.fromJson);
+        blocks.push(content.block);
+      }
+    } catch {
+      // some blocks might be invalid, but that's fine. We just ignore them.
     }
   }
 
@@ -118,6 +122,8 @@ export async function runStateTransition(testContent: StateTransition, testPath:
   assert.deepStrictEqual(testContent.pre_state.state_root.toString(), preStateRoot.toString());
   assert.deepStrictEqual(testContent.post_state.state_root.toString(), postStateRoot.toString());
 
+  const shouldBlockBeRejected = testContent.pre_state.state_root.isEqualTo(testContent.post_state.state_root);
+
   const verifier = new BlockVerifier(stf.hasher, blocksDb);
   // NOTE [ToDr] we skip full verification here, since we can run tests in isolation
   // (i.e. no block history)
@@ -125,6 +131,15 @@ export async function runStateTransition(testContent: StateTransition, testPath:
 
   // now perform the state transition
   const stfResult = await stf.transition(blockView, headerHash.hash);
+  if (shouldBlockBeRejected) {
+    assert.strictEqual(stfResult.isOk, false, "The block should be rejected, yet we imported it.");
+    // there should be no changes.
+    const root = preState.backend.getRootHash();
+    deepEqual(preState, postState);
+    assert.deepStrictEqual(root.toString(), postStateRoot.toString());
+    return;
+  }
+
   if (stfResult.isError) {
     assert.fail(`Expected the transition to go smoothly, got error: ${resultToString(stfResult)}`);
   }
