@@ -1,9 +1,7 @@
 import type { EntropyHash } from "@typeberry/block";
 import {
   G_I,
-  K,
   MAX_REPORT_DEPENDENCIES,
-  N,
   O,
   Q,
   T,
@@ -93,9 +91,9 @@ function getEncodedConstants(chainSpec: ChainSpec) {
     H: tryAsU16(MAX_RECENT_HISTORY),
     I: tryAsU16(MAX_NUMBER_OF_WORK_ITEMS),
     J: tryAsU16(MAX_REPORT_DEPENDENCIES),
-    K: tryAsU16(K),
+    K: tryAsU16(chainSpec.maxTicketsPerExtrinsic),
     L: tryAsU32(L),
-    N: tryAsU16(N),
+    N: tryAsU16(chainSpec.ticketsPerValidator),
     O: tryAsU16(O),
     P: tryAsU16(chainSpec.slotDuration),
     Q: tryAsU16(Q),
