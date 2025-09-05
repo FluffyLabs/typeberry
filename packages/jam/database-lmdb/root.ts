@@ -19,4 +19,9 @@ export class LmdbRoot {
   subDb(name: string): SubDb {
     return this.db.openDB({ name });
   }
+
+  /** Close the database and all sub-databases. */
+  close() {
+    return this.db.close();
+  }
 }

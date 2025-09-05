@@ -204,12 +204,13 @@ function verifyRefineContexts(
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/155c01155f01
      */
-    // if (!headerChain.isInChain(context.lookupAnchor)) {
-    //   return Result.error(
-    //     ReportsError.SegmentRootLookupInvalid,
-    //     `Lookup anchor is not found in chain. Hash: ${context.lookupAnchor} (slot: ${context.lookupAnchorSlot})`,
-    //   );
-    // }
+    const isInChain = recentBlocks.has(context.lookupAnchor) || headerChain.isInChain(context.lookupAnchor);
+    if (!isInChain) {
+      return Result.error(
+        ReportsError.SegmentRootLookupInvalid,
+        `Lookup anchor is not found in chain. Hash: ${context.lookupAnchor} (slot: ${context.lookupAnchorSlot})`,
+      );
+    }
   }
 
   return Result.ok(OK);
