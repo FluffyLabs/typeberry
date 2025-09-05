@@ -217,6 +217,10 @@ function* serializeBasicKeys(spec: ChainSpec, update: Partial<State>) {
   if (update.recentlyAccumulated !== undefined) {
     yield doSerialize(update.recentlyAccumulated, serialize.recentlyAccumulated); // C(15)
   }
+
+  if (update.accumulationOutputLog !== undefined && Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+    yield doSerialize(update.accumulationOutputLog, serialize.accumulationOutputLog); // C(16)
+  }
 }
 
 function getSafroleData(
