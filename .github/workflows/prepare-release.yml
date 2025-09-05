@@ -1,11 +1,15 @@
 name: Prepare Release
 
+permissions:
+  contents: write       # push branch, create release
+  pull-requests: write  # open PR
+
 on:
   workflow_dispatch:
     inputs:
       version:
         description: 'Release version (e.g., 0.1.0)'
-        required: true
+        required: false
         type: string
       release_type:
         description: 'Release type'
@@ -26,7 +30,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -41,6 +45,12 @@ jobs:
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Validate inputs
+      if: ${{ inputs.release_type == 'custom' && (inputs.version == '' || inputs.version == null) }}
+      run: |
+        echo "Error: 'version' is required when release_type=custom" >&2
+        exit 1
 
     - name: Determine version
       id: version

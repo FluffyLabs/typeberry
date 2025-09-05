@@ -57,8 +57,6 @@ lerna-debug.log*
 .prettierrc*
 .biome*
 eslint.config.*
-tsconfig.json
-**/tsconfig.json
 
 # Temporary files
 tmp/
