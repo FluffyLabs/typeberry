@@ -2,7 +2,7 @@
 FROM node:22-alpine AS build
 
 # needed for `@matrixai/quic`
-RUN apk add libc6-compat
+RUN apk add gcompat
 
 WORKDIR /app
 
