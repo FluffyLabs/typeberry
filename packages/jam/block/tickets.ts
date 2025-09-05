@@ -74,10 +74,10 @@ export class Ticket extends WithDebug {
  * Constrained by `K = 16`:
  * https://graypaper.fluffylabs.dev/#/579bd12/416c00416e00
  */
-export type TicketsExtrinsic = KnownSizeArray<SignedTicket, "Size: [0..chainSpec.maxTicketsPerExtrinsic)">;
+const TicketsExtrinsicBounds = "Size: [0..chainSpec.maxTicketsPerExtrinsic)";
+export type TicketsExtrinsic = KnownSizeArray<SignedTicket, typeof TicketsExtrinsicBounds>;
 
 export const ticketsExtrinsicCodec = codecWithContext((context) => {
-  const TicketsExtrinsicBounds = `Size: [0..${context.maxTicketsPerExtrinsic})`;
   return codecKnownSizeArray(
     SignedTicket.Codec,
     {
