@@ -24,7 +24,14 @@ import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { ServiceAccountInfo, type ServicesUpdate, type State, hashComparator, tryAsPerCore } from "@typeberry/state";
+import {
+  type AccumulationOutput,
+  ServiceAccountInfo,
+  type ServicesUpdate,
+  type State,
+  hashComparator,
+  tryAsPerCore,
+} from "@typeberry/state";
 import { binaryMerkleization } from "@typeberry/state-merkleization";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
@@ -74,6 +81,7 @@ export type AccumulateResult = {
   stateUpdate: AccumulateStateUpdate;
   accumulationStatistics: Map<ServiceId, CountAndGasUsed>;
   pendingTransfers: PendingTransfer[];
+  accumulationOutputLog: AccumulationOutput[];
 };
 
 export const ACCUMULATION_ERROR = "duplicate service created";
@@ -482,7 +490,10 @@ export class Accumulate {
       services,
     );
 
-    const rootHash = await getRootHash(Array.from(yieldedRoots.entries()));
+    const accumulationOutput: AccumulationOutput[] = Array.from(yieldedRoots.entries()).map(([serviceId, root]) => {
+      return { serviceId, output: root.asOpaque() };
+    });
+    const rootHash = await getRootHash(accumulationOutput);
 
     const authQueues = (() => {
       if (authorizationQueues.size === 0) {
@@ -506,6 +517,7 @@ export class Accumulate {
       },
       accumulationStatistics: statistics,
       pendingTransfers: transfers,
+      accumulationOutputLog: accumulationOutput,
     });
   }
 }
@@ -515,12 +527,12 @@ export class Accumulate {
  *
  * https://graypaper.fluffylabs.dev/#/38c4e62/3c9d013c9d01?v=0.7.0
  */
-async function getRootHash(yieldedRoots: [ServiceId, OpaqueHash][]): Promise<AccumulateRoot> {
+async function getRootHash(yieldedRoots: AccumulationOutput[]): Promise<AccumulateRoot> {
   const keccakHasher = await KeccakHasher.create();
   const trieHasher = getKeccakTrieHasher(keccakHasher);
-  const yieldedRootsSortedByServiceId = yieldedRoots.sort((a, b) => a[0] - b[0]);
-  const values = yieldedRootsSortedByServiceId.map(([serviceId, hash]) => {
-    return BytesBlob.blobFromParts([u32AsLeBytes(serviceId), hash.raw]);
+  const yieldedRootsSortedByServiceId = yieldedRoots.sort((a, b) => a.serviceId - b.serviceId);
+  const values = yieldedRootsSortedByServiceId.map(({ serviceId, output }) => {
+    return BytesBlob.blobFromParts([u32AsLeBytes(serviceId), output.raw]);
   });
 
   return binaryMerkleization(values, trieHasher);
