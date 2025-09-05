@@ -1,8 +1,5 @@
 # Build stage
-FROM node:22-alpine AS build
-
-# needed for `@matrixai/quic`
-RUN apk add gcompat
+FROM node:22-bookworm AS build
 
 WORKDIR /app
 
@@ -19,7 +16,7 @@ COPY workers/ ./workers/
 RUN npm ci
 
 # Runtime stage
-FROM node:22-alpine
+FROM node:22-bookworm
 
 WORKDIR /app
 
