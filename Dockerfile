@@ -1,6 +1,9 @@
 # Build stage
 FROM node:22-alpine AS build
 
+# needed for `@matrixai/quic`
+RUN apk add libc6-compat
+
 WORKDIR /app
 
 # Copy package files
