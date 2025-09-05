@@ -2,26 +2,9 @@ import { setTimeout } from "node:timers/promises";
 import { Logger } from "@typeberry/logger";
 import type { Network, Peer, PeerAddress, PeerId } from "@typeberry/networking";
 import { OK } from "@typeberry/utils";
+import { Bootnode } from "@typeberry/config";
 
-/** Bootnode class represents a single contact point in the network */
-export class Bootnode implements PeerAddress {
-  constructor(
-    /** Network address derived from the node's cryptographic public key (always 53-character?) */
-    readonly id: PeerId,
-    /** IP address (either IPv4 or IPv6) of the bootnode */
-    readonly ip: string,
-    /** Port number on which the bootnode is listening for new connections */
-    readonly port: number,
-  ) {}
-
-  get host() {
-    return this.ip;
-  }
-
-  toString() {
-    return `${this.id}@${this.ip}:${this.port}`;
-  }
-}
+export { Bootnode } from "@typeberry/config";
 
 type PeerInfo = {
   peerId: PeerId;

@@ -1,9 +1,9 @@
 import { type JsonObject, fromJson } from "@typeberry/block-json";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
-import { Bootnode } from "@typeberry/jamnp-s";
 import { json } from "@typeberry/json-parser";
 import { isU16 } from "@typeberry/numbers";
 import { WithDebug, asOpaqueType } from "@typeberry/utils";
+import {Bootnode} from "@typeberry/config";
 
 export function parseBootnode(v: string): Bootnode {
   const [name, ipPort] = v.split("@");

@@ -1,7 +1,7 @@
 import { type TimeSlot, type ValidatorIndex, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import type { NodeConfiguration } from "@typeberry/config-node";
 import type { Ed25519SecretSeed, KeySeed } from "@typeberry/crypto/key-derivation.js";
-import type { Bootnode } from "@typeberry/jamnp-s";
+import type { Bootnode } from "@typeberry/config";
 
 export const DEFAULT_DEV_CONFIG = {
   genesisPath: "",
