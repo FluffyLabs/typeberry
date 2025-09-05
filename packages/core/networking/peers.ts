@@ -1,10 +1,10 @@
 import type { ReadableWritablePair } from "node:stream/web";
+import type { PeerAddress, PeerId } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { Logger } from "@typeberry/logger";
 import type { OK } from "@typeberry/utils";
-import {PeerAddress, PeerId} from "@typeberry/config";
 
-export { PeerId, PeerAddress } from "@typeberry/config";
+export type { PeerId, PeerAddress } from "@typeberry/config";
 
 /**
  * Error callback maybe be triggered multiple times.

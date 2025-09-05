@@ -4,8 +4,7 @@ export * as bytes from "@typeberry/bytes";
 export * as codec from "@typeberry/codec";
 export * as collections from "@typeberry/collections";
 export * as config from "@typeberry/config";
-// TODO [ToDr] should not depend on networking.
-// export * as config_node from "@typeberry/config-node";
+export * as config_node from "@typeberry/config-node";
 export * as crypto from "@typeberry/crypto";
 export * as database from "@typeberry/database";
 export * as erasure_coding from "@typeberry/erasure-coding";

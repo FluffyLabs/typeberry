@@ -1,4 +1,4 @@
-import {Opaque} from "@typeberry/utils";
+import type { Opaque } from "@typeberry/utils";
 
 /** Peer id. */
 export type PeerId = Opaque<string, "peerId">;

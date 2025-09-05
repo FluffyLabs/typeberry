@@ -1,8 +1,8 @@
 import { setTimeout } from "node:timers/promises";
+import type { Bootnode } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";
 import type { Network, Peer, PeerAddress, PeerId } from "@typeberry/networking";
 import { OK } from "@typeberry/utils";
-import { Bootnode } from "@typeberry/config";
 
 export { Bootnode } from "@typeberry/config";
 
