@@ -1,10 +1,10 @@
 import { logger, main, runner } from "./common.js";
 import { StateTransition, runStateTransition } from "./state-transition/state-transition.js";
 
-const runners = [runner("state_transition", StateTransition.fromJson, runStateTransition)];
+const runners = [runner("traces", StateTransition.fromJson, runStateTransition)];
 
 main(runners, process.argv.slice(2), "test-vectors/jamduna_067", {
-  accepted: ["safrole/state_transitions/"],
+  accepted: ["traces/"],
   ignored: [
     "safrole/state_transitions/00000019.json",
     "safrole/state_transitions/00000021.json",
