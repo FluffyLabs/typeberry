@@ -67,7 +67,7 @@ export class StateEntries {
 
   /** When comparing, we can safely ignore `trieCache` and just use entries. */
   [TEST_COMPARE_USING]() {
-    return this.entries;
+    return Object.fromEntries(this.entries);
   }
 
   [Symbol.iterator]() {
