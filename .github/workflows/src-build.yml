@@ -49,6 +49,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+    - run: npm ci
     - name: Build distributable npm package.
       run: ./tools/build-for-npm.sh
     - run: |
