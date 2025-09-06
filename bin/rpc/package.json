@@ -12,8 +12,8 @@
   "scripts": {
     "start": "tsx ./index.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
-    "test:e2e-setup": "GP_VERSION=0.6.6 TEST_SUITE=w3f-davxy tsx ./test/e2e-setup.ts",
-    "test:e2e": "npm run test:e2e-setup && GP_VERSION=0.6.6 TEST_SUITE=w3f-davxy tsx --test ./test/e2e.ts"
+    "test:e2e-setup": "GP_VERSION=0.6.7 TEST_SUITE=w3f-davxy tsx ./test/e2e-setup.ts",
+    "test:e2e": "npm run test:e2e-setup && GP_VERSION=0.6.7 TEST_SUITE=w3f-davxy tsx --test ./test/e2e.ts"
   },
   "dependencies": {
     "@typeberry/block": "^0.0.1",
