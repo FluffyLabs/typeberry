@@ -4,8 +4,8 @@ import type { BlockView, HeaderHash, HeaderView, StateRootHash } from "@typeberr
 import { type ChainSpec, WorkerConfig } from "@typeberry/config";
 import type { Finished, MainInit } from "@typeberry/generic-worker";
 import type { WithHash } from "@typeberry/hash";
-import * as blockImporter from "@typeberry/importer/worker.js";
 import type { MainReady } from "@typeberry/importer/state-machine.js";
+import * as blockImporter from "@typeberry/importer/worker.js";
 import { NetworkWorkerConfig } from "@typeberry/jam-network/state-machine.js";
 import type { Listener, MessageChannelStateMachine } from "@typeberry/state-machine";
 import type { StateEntries } from "@typeberry/state-merkleization";

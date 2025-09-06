@@ -1,7 +1,7 @@
 import { isMainThread, parentPort } from "node:worker_threads";
 
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
-import { type Finished } from "@typeberry/generic-worker";
+import type { Finished } from "@typeberry/generic-worker";
 import { SimpleAllocator, keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
@@ -9,12 +9,7 @@ import { TransitionHasher } from "@typeberry/transition";
 import { measure, resultToString } from "@typeberry/utils";
 import { ImportQueue } from "./import-queue.js";
 import { Importer } from "./importer.js";
-import {
-  type ImporterInit,
-  type ImporterReady,
-  type ImporterStates,
-  importerStateMachine,
-} from "./state-machine.js";
+import { type ImporterInit, type ImporterReady, type ImporterStates, importerStateMachine } from "./state-machine.js";
 
 const logger = Logger.new(import.meta.filename, "importer");
 
@@ -45,13 +40,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
     const blocks = new LmdbBlocks(config.chainSpec, lmdb);
     const states = new LmdbStates(config.chainSpec, lmdb);
     const hasher = new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator());
-    const importer = new Importer(
-      config.chainSpec,
-      hasher,
-      logger,
-      blocks,
-      states,
-    );
+    const importer = new Importer(config.chainSpec, hasher, logger, blocks, states);
     // TODO [ToDr] this is shit, since we have circular dependency.
     worker.setImporter(importer);
 

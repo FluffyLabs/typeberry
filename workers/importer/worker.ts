@@ -1,8 +1,6 @@
 import { spawnWorkerGeneric } from "@typeberry/generic-worker";
-import {
-  MainReady,
-} from "./state-machine.js";
-import {Logger} from "@typeberry/logger";
+import { Logger } from "@typeberry/logger";
+import { MainReady } from "./state-machine.js";
 
 const workerFile = new URL("./bootstrap-importer.mjs", import.meta.url);
 const logger = Logger.new(import.meta.filename, "importer");
@@ -12,4 +10,3 @@ export async function spawnWorker(customLogger?: Logger, customMainReady?: MainR
   const mainReady = customMainReady ?? new MainReady();
   return spawnWorkerGeneric(workerFile, workerLogger, "ready(main)", mainReady);
 }
-
