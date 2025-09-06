@@ -1,4 +1,5 @@
 import commonjs from "@rollup/plugin-commonjs";
+import json from "@rollup/plugin-json";
 import resolve from "@rollup/plugin-node-resolve";
 import dts from "rollup-plugin-dts";
 import typescript from "rollup-plugin-typescript2";
@@ -12,7 +13,7 @@ export default [
       file: setup.outFile,
       format: "cjs",
     },
-    plugins: [resolve(), commonjs(), typescript()],
+    plugins: [resolve(), commonjs(), typescript(), json()],
     treeshake: {
       moduleSideEffects: false,
     },
@@ -23,6 +24,7 @@ export default [
     plugins: [
       dts({
         respectExternal: true,
+        resolveJsonModule: true,
       }),
     ],
   },

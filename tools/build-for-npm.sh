@@ -10,7 +10,7 @@ DIST_FOLDER=./dist
 rm -rf $DIST_FOLDER/*
 
 export RUNTIME=bundle
-BUILD="npx @vercel/ncc build -a -e lmdb -e tsx/esm/api"
+BUILD="npx @vercel/ncc build -a -s -e lmdb -e tsx/esm/api"
 
 # Build the main binary
 $BUILD ./bin/jam/index.ts -o $DIST_FOLDER
