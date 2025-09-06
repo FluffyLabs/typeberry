@@ -1,7 +1,7 @@
 import { isMainThread, parentPort } from "node:worker_threads";
 
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
-import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
+import { type Finished } from "@typeberry/generic-worker";
 import { SimpleAllocator, keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
@@ -13,7 +13,6 @@ import {
   type ImporterInit,
   type ImporterReady,
   type ImporterStates,
-  MainReady,
   importerStateMachine,
 } from "./state-machine.js";
 
@@ -45,9 +44,10 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
     const lmdb = new LmdbRoot(config.dbPath);
     const blocks = new LmdbBlocks(config.chainSpec, lmdb);
     const states = new LmdbStates(config.chainSpec, lmdb);
+    const hasher = new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator());
     const importer = new Importer(
       config.chainSpec,
-      new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator()),
+      hasher,
       logger,
       blocks,
       states,
@@ -115,10 +115,4 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
 
   // Close the comms to gracefuly close the app.
   finished.currentState().close(channel);
-}
-
-export async function spawnWorker(customLogger?: Logger, customMainReady?: MainReady) {
-  const workerLogger = customLogger ?? logger;
-  const mainReady = customMainReady ?? new MainReady();
-  return spawnWorkerGeneric(new URL("./bootstrap.mjs", import.meta.url), workerLogger, "ready(main)", mainReady);
 }
