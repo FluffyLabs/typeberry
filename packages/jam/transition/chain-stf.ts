@@ -266,6 +266,7 @@ export class OnChain {
       stateUpdate: accumulateUpdate,
       accumulationStatistics,
       pendingTransfers,
+      accumulationOutputLog,
       ...accumulateRest
     } = accumulateResult.ok;
     assertEmpty(accumulateRest);
@@ -349,6 +350,7 @@ export class OnChain {
       ticketsAccumulator,
       accumulationQueue,
       recentlyAccumulated,
+      accumulationOutputLog,
       ...newServicesUpdate,
       preimages: preimages.concat(accumulatePreimages),
     });

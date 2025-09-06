@@ -4,7 +4,7 @@ import { WorkExecResult } from "@typeberry/block/work-result.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { Compatibility, GpVersion, TestSuite, WithDebug } from "@typeberry/utils";
+import { Compatibility, TestSuite, WithDebug } from "@typeberry/utils";
 
 /**
  * The set of wrangled operand tuples, used as an operand to the PVM Accumulation function.
@@ -15,7 +15,7 @@ export class Operand extends WithDebug {
   // JamDuna 0.6.5 uses a different order of operands.
   static Codec = codec.Class(
     Operand,
-    Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5)
+    Compatibility.isSuite(TestSuite.JAMDUNA)
       ? {
           hash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
           exportsRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),

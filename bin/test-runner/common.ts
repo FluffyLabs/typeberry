@@ -141,7 +141,6 @@ function prepareTest(runners: Runner<unknown>[], testContent: unknown, file: str
 
     try {
       const parsedTest = parseFromJson(testContent, fromJson);
-
       return {
         shouldSkip: false,
         runner: name,
