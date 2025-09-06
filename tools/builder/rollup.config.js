@@ -17,6 +17,7 @@ export default [
     treeshake: {
       moduleSideEffects: false,
     },
+    external: ["lmdb", "@matrixai/quic"],
   },
   {
     input: setup.typesInput,
