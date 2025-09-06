@@ -36,7 +36,7 @@ $BUILD ./workers/block-generator/index.ts -o $DIST_FOLDER/block-generator
 $BUILD ./packages/jam/safrole/bandersnatch-wasm/bootstrap-bandersnatch.ts -o $DIST_FOLDER/bandersnatch
 
 # copy worker wasm files
-cp -f $DIST_FOLDER/**/*.wasm $DIST_FOLDER/
+cp $DIST_FOLDER/**/*.wasm $DIST_FOLDER/ || true # ignore overwrite errors
 cp ./LICENSE $DIST_FOLDER/
 cp ./README.md $DIST_FOLDER/
 
