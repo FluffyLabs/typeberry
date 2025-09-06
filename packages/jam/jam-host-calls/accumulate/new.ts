@@ -48,7 +48,7 @@ export class New implements HostCallHandler {
     // `m`
     const allowance = tryAsServiceGas(regs.get(10));
     // `f`
-    const gratisStorage = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? regs.get(11) : tryAsU64(0);
+    const gratisStorage = regs.get(11);
 
     // `c`
     const codeHash = Bytes.zero(HASH_SIZE);

@@ -3,7 +3,7 @@ import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U16, type U32, isU16, tryAsU32 } from "@typeberry/numbers";
-import { type Opaque, TestSuite, WithDebug } from "@typeberry/utils";
+import { type Opaque, WithDebug } from "@typeberry/utils";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import { type CoreIndex, type ServiceGas, tryAsCoreIndex } from "./common.js";
 import { RefineContext } from "./refine-context.js";
@@ -157,18 +157,15 @@ const WorkReportCodec = codec.Class(WorkReport, {
 const WorkReportCodecPre070 = codec.Class(WorkReport, {
   workPackageSpec: WorkPackageSpec.Codec,
   context: RefineContext.Codec,
-  coreIndex:
-    Compatibility.isGreaterOrEqual(GpVersion.V0_6_5) && !Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5)
-      ? codec.varU32.convert(
-          (o) => tryAsU32(o),
-          (i) => {
-            if (!isU16(i)) {
-              throw new Error(`Core index exceeds U16: ${i}`);
-            }
-            return tryAsCoreIndex(i);
-          },
-        )
-      : codec.u16.asOpaque<CoreIndex>(),
+  coreIndex: codec.varU32.convert(
+    (o) => tryAsU32(o),
+    (i) => {
+      if (!isU16(i)) {
+        throw new Error(`Core index exceeds U16: ${i}`);
+      }
+      return tryAsCoreIndex(i);
+    },
+  ),
   authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
   authorizationOutput: codec.blob,
   segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),

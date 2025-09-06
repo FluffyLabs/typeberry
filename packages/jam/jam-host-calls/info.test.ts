@@ -11,7 +11,6 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import { TestAccounts } from "./externalities/test-accounts.js";
 import { Info, codecServiceAccountInfoWithThresholdBalance } from "./info.js";
 import { HostCallResult } from "./results.js";
@@ -25,9 +24,7 @@ const gas = gasCounter(tryAsGas(0));
 function prepareRegsAndMemory(
   serviceId: ServiceId,
   // TODO [ToDr] Due to changes in GP for some time this wasn't constant.
-  accountInfoLength = Compatibility.is(GpVersion.V0_6_5, GpVersion.V0_6_6)
-    ? 44
-    : tryAsExactBytes(codecServiceAccountInfoWithThresholdBalance.sizeHint),
+  accountInfoLength = tryAsExactBytes(codecServiceAccountInfoWithThresholdBalance.sizeHint),
 ) {
   const pageStart = 2 ** 16;
   const memStart = pageStart + PAGE_SIZE - accountInfoLength - 1;
@@ -51,19 +48,12 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: Info", () => {
-  const serviceComp = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-    ? {
-        gratisStorage: tryAsU64(1024),
-        created: tryAsTimeSlot(10),
-        lastAccumulation: tryAsTimeSlot(15),
-        parentService: tryAsServiceId(1),
-      }
-    : {
-        gratisStorage: tryAsU64(0),
-        created: tryAsTimeSlot(0),
-        lastAccumulation: tryAsTimeSlot(0),
-        parentService: tryAsServiceId(0),
-      };
+  const serviceComp = {
+    gratisStorage: tryAsU64(1024),
+    created: tryAsTimeSlot(10),
+    lastAccumulation: tryAsTimeSlot(15),
+    parentService: tryAsServiceId(1),
+  };
 
   it("should write account info data into memory", async () => {
     const serviceId = tryAsServiceId(10_000);

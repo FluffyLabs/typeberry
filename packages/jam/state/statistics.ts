@@ -12,9 +12,7 @@ import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
 import { type PerCore, codecPerCore } from "./common.js";
 
 const codecServiceId: Descriptor<ServiceId> =
-  Compatibility.isSuite(TestSuite.W3F_DAVXY) ||
-  Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5) ||
-  Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_7)
+  Compatibility.isSuite(TestSuite.W3F_DAVXY) || Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_7)
     ? codec.u32.asOpaque<ServiceId>()
     : codec.varU32.convert(
         (s) => tryAsU32(s),

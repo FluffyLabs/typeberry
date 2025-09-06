@@ -10,7 +10,7 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
-import { Compatibility, GpVersion, Result } from "@typeberry/utils";
+import { Result } from "@typeberry/utils";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { NewServiceError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
@@ -53,7 +53,6 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: New", () => {
-  const itPost067 = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? it : it.skip;
   it("should create a new service", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
@@ -72,7 +71,7 @@ describe("HostCalls: New", () => {
 
     // then
     assert.deepStrictEqual(tryAsServiceId(Number(registers.get(RESULT_REG))), tryAsServiceId(23_000));
-    const gratisStorage = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 1_024n : 0n;
+    const gratisStorage = 1_024n;
     assert.deepStrictEqual(accumulate.newServiceCalled, [
       [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, gratisStorage],
     ]);
@@ -120,7 +119,7 @@ describe("HostCalls: New", () => {
     assert.deepStrictEqual(accumulate.newServiceCalled, []);
   });
 
-  itPost067("should fail when trying to set gratis storage by unprivileged service", async () => {
+  it("should fail when trying to set gratis storage by unprivileged service", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);

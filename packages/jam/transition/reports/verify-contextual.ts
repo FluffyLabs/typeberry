@@ -3,9 +3,7 @@ import type { RefineContext } from "@typeberry/block/refine-context.js";
 import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
-import type { KeccakHash } from "@typeberry/hash";
-import type { MmrHasher } from "@typeberry/mmr";
-import type { LegacyBlockState, State } from "@typeberry/state";
+import type { State } from "@typeberry/state";
 import { type BlockState, RecentBlocksHistory } from "@typeberry/state/recent-blocks.js";
 import { OK, Result } from "@typeberry/utils";
 import type { RecentHistoryStateUpdate } from "../recent-history.js";
@@ -28,7 +26,6 @@ export function verifyContextualValidity(
     State,
     "getService" | "recentBlocks" | "availabilityAssignment" | "accumulationQueue" | "recentlyAccumulated"
   >,
-  hasher: MmrHasher<KeccakHash>,
   headerChain: HeaderChain,
 ): Result<HashDictionary<WorkPackageHash, WorkPackageInfo>, ReportsError> {
   const contexts: RefineContext[] = [];
@@ -76,13 +73,7 @@ export function verifyContextualValidity(
   }
 
   const minLookupSlot = Math.max(0, input.slot - L);
-  const contextResult = verifyRefineContexts(
-    minLookupSlot,
-    contexts,
-    input.recentBlocksPartialUpdate,
-    hasher,
-    headerChain,
-  );
+  const contextResult = verifyRefineContexts(minLookupSlot, contexts, input.recentBlocksPartialUpdate, headerChain);
   if (contextResult.isError) {
     return contextResult;
   }
@@ -144,11 +135,10 @@ function verifyRefineContexts(
   minLookupSlot: number,
   contexts: RefineContext[],
   recentBlocksPartialUpdate: RecentHistoryStateUpdate["recentBlocks"],
-  hasher: MmrHasher<KeccakHash>,
   headerChain: HeaderChain,
 ): Result<OK, ReportsError> {
   // TODO [ToDr] [opti] This could be cached and updated efficiently between runs.
-  const recentBlocks = HashDictionary.new<HeaderHash, LegacyBlockState | BlockState>();
+  const recentBlocks = HashDictionary.new<HeaderHash, BlockState>();
   for (const recentBlock of recentBlocksPartialUpdate.blocks) {
     recentBlocks.set(recentBlock.headerHash, recentBlock);
   }
@@ -175,7 +165,7 @@ function verifyRefineContexts(
     }
 
     // check beefy root
-    const beefyRoot = RecentBlocksHistory.accumulationResult(recentBlock, { hasher });
+    const beefyRoot = RecentBlocksHistory.accumulationResult(recentBlock);
     if (!beefyRoot.isEqualTo(context.beefyRoot)) {
       return Result.error(
         ReportsError.BadBeefyMmrRoot,

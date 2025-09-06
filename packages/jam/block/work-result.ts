@@ -2,7 +2,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { Compatibility, GpVersion, WithDebug } from "@typeberry/utils";
+import { WithDebug } from "@typeberry/utils";
 import type { ServiceGas, ServiceId } from "./common.js";
 import type { CodeHash } from "./hash.js";
 
@@ -15,17 +15,13 @@ export enum WorkExecResultKind {
   /** `☇`: unexpected program termination. */
   panic = 2,
   /** `⊚`: the number of exports made was invalidly reported. */
-  // biome-ignore lint/style/useLiteralEnumMembers: Compatibility
-  incorrectNumberOfExports = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 3 : -1,
+  incorrectNumberOfExports = 3,
   /** `⊖`: the size of the digest (refinement output) would cross the acceptable limit. */
-  // biome-ignore lint/style/useLiteralEnumMembers: Compatibility
-  digestTooBig = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 4 : -1,
+  digestTooBig = 4,
   /** `BAD`: service code was not available for lookup in state. */
-  // biome-ignore lint/style/useLiteralEnumMembers: Compatibility
-  badCode = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 5 : 3,
+  badCode = 5,
   /** `BIG`: the code was too big (beyond the maximum allowed size `W_C`) */
-  // biome-ignore lint/style/useLiteralEnumMembers: Compatibility
-  codeOversize = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? 6 : 4,
+  codeOversize = 6,
 }
 
 /** The execution result of some work-package. */

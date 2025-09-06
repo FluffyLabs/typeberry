@@ -213,7 +213,7 @@ export class Reports {
   }
 
   verifyContextualValidity(input: ReportsInput) {
-    return verifyContextualValidity(input, this.state, this.mmrHasher, this.headerChain);
+    return verifyContextualValidity(input, this.state, this.headerChain);
   }
 
   checkSignatures(
