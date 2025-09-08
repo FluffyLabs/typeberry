@@ -67,9 +67,10 @@ export async function main(channel: MessageChannelStateMachine<GeneratorInit, Ge
   finished.currentState().close(channel);
 }
 
+const workerFile = new URL("./bootstrap-generator.mjs", import.meta.url);
+
 export async function spawnWorker(customLogger?: Logger, customMainReady?: MainReady) {
-  const bootstrapFile = "./bootstrap.mjs";
   const workerLogger = customLogger ?? logger;
   const mainReady = customMainReady ?? new MainReady();
-  return spawnWorkerGeneric(new URL(bootstrapFile, import.meta.url), workerLogger, "ready(main)", mainReady);
+  return spawnWorkerGeneric(workerFile, workerLogger, "ready(main)", mainReady);
 }
