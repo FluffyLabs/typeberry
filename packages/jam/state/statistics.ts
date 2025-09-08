@@ -85,16 +85,27 @@ const codecVarGas: Descriptor<ServiceGas> = codec.varU64.convert(
  * https://github.com/gavofyork/graypaper/blob/9bffb08f3ea7b67832019176754df4fb36b9557d/text/statistics.tex#L65
  */
 export class CoreStatistics {
-  static Codec = codec.Class(CoreStatistics, {
-    dataAvailabilityLoad: codec.varU32,
-    popularity: codecVarU16,
-    imports: codecVarU16,
-    exports: codecVarU16,
-    extrinsicSize: codec.varU32,
-    extrinsicCount: codecVarU16,
-    bundleSize: codec.varU32,
-    gasUsed: codecVarGas,
-  });
+  static Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
+    ? codec.Class(CoreStatistics, {
+        dataAvailabilityLoad: codec.varU32,
+        popularity: codecVarU16,
+        imports: codecVarU16,
+        extrinsicCount: codecVarU16,
+        extrinsicSize: codec.varU32,
+        exports: codecVarU16,
+        bundleSize: codec.varU32,
+        gasUsed: codecVarGas,
+      })
+    : codec.Class(CoreStatistics, {
+        dataAvailabilityLoad: codec.varU32,
+        popularity: codecVarU16,
+        imports: codecVarU16,
+        exports: codecVarU16,
+        extrinsicSize: codec.varU32,
+        extrinsicCount: codecVarU16,
+        bundleSize: codec.varU32,
+        gasUsed: codecVarGas,
+      });
 
   static create(v: CodecRecord<CoreStatistics>) {
     return new CoreStatistics(
@@ -144,20 +155,35 @@ export class CoreStatistics {
  * https://github.com/gavofyork/graypaper/blob/9bffb08f3ea7b67832019176754df4fb36b9557d/text/statistics.tex#L77
  */
 export class ServiceStatistics {
-  static Codec = codec.Class(ServiceStatistics, {
-    providedCount: codecVarU16,
-    providedSize: codec.varU32,
-    refinementCount: codec.varU32,
-    refinementGasUsed: codecVarGas,
-    imports: codecVarU16,
-    exports: codecVarU16,
-    extrinsicSize: codec.varU32,
-    extrinsicCount: codecVarU16,
-    accumulateCount: codec.varU32,
-    accumulateGasUsed: codecVarGas,
-    onTransfersCount: codec.varU32,
-    onTransfersGasUsed: codecVarGas,
-  });
+  static Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
+    ? codec.Class(ServiceStatistics, {
+        providedCount: codecVarU16,
+        providedSize: codec.varU32,
+        refinementCount: codec.varU32,
+        refinementGasUsed: codecVarGas,
+        imports: codecVarU16,
+        extrinsicCount: codecVarU16,
+        extrinsicSize: codec.varU32,
+        exports: codecVarU16,
+        accumulateCount: codec.varU32,
+        accumulateGasUsed: codecVarGas,
+        onTransfersCount: codec.varU32,
+        onTransfersGasUsed: codecVarGas,
+      })
+    : codec.Class(ServiceStatistics, {
+        providedCount: codecVarU16,
+        providedSize: codec.varU32,
+        refinementCount: codec.varU32,
+        refinementGasUsed: codecVarGas,
+        imports: codecVarU16,
+        exports: codecVarU16,
+        extrinsicSize: codec.varU32,
+        extrinsicCount: codecVarU16,
+        accumulateCount: codec.varU32,
+        accumulateGasUsed: codecVarGas,
+        onTransfersCount: codec.varU32,
+        onTransfersGasUsed: codecVarGas,
+      });
 
   static create(v: CodecRecord<ServiceStatistics>) {
     return new ServiceStatistics(
