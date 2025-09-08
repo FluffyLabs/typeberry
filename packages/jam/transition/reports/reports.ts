@@ -1,6 +1,6 @@
 import { type PerValidator, type TimeSlot, type WorkReportHash, tryAsTimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
-import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
+import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { type BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
 import { type HashDictionary, type HashSet, type KnownSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";

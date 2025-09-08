@@ -1,27 +1,32 @@
-import { CURRENT_SERVICE_ID, HostCallResult } from "@typeberry/jam-host-calls";
+import { tryAsServiceId } from "@typeberry/block";
 import { Logger } from "@typeberry/logger";
-import { type Gas, type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { type Gas, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { check } from "@typeberry/utils";
 import {
   type HostCallHandler,
   type HostCallIndex,
   type PvmExecution,
-  traceRegisters,
   tryAsHostCallIndex,
 } from "./host-call-handler.js";
-import type { IHostCallMemory } from "./host-call-memory.js";
 import type { IHostCallRegisters } from "./host-call-registers.js";
 
 const logger = Logger.new(import.meta.filename, "host-calls-pvm");
 
-// TODO [ToDr] Rename to just `HostCalls`
 /** Container for all available host calls. */
 export class HostCallsManager {
   private readonly hostCalls = new Map<HostCallIndex, HostCallHandler>();
-  private readonly missing = new Missing();
+  private readonly missing;
 
-  constructor(...hostCallHandlers: HostCallHandler[]) {
-    for (const handler of hostCallHandlers) {
+  constructor({
+    missing,
+    handlers = [],
+  }: {
+    missing: HostCallHandler;
+    handlers?: HostCallHandler[];
+  }) {
+    this.missing = missing;
+
+    for (const handler of handlers) {
       check(this.hostCalls.get(handler.index) === undefined, `Overwriting host call handler at index ${handler.index}`);
       this.hostCalls.set(handler.index, handler);
     }
@@ -53,14 +58,13 @@ export class HostCallsManager {
   }
 }
 
-class Missing implements HostCallHandler {
+export class NoopMissing implements HostCallHandler {
   index = tryAsHostCallIndex(2 ** 32 - 1);
-  gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
-  tracedRegisters = traceRegisters(7);
+  gasCost = tryAsSmallGas(0);
+  currentServiceId = tryAsServiceId(0);
+  tracedRegisters = [];
 
-  execute(_gas: GasCounter, regs: IHostCallRegisters, _memory: IHostCallMemory): Promise<PvmExecution | undefined> {
-    regs.set(7, HostCallResult.WHAT);
-    return Promise.resolve(undefined);
+  async execute(): Promise<undefined | PvmExecution> {
+    return;
   }
 }

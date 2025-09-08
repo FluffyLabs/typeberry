@@ -1,6 +1,10 @@
 import type { HeaderHash } from "@typeberry/block";
-import type { RefineContext } from "@typeberry/block/refine-context.js";
-import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
+import {
+  type ExportsRootHash,
+  type RefineContext,
+  type WorkPackageHash,
+  WorkPackageInfo,
+} from "@typeberry/block/refine-context.js";
 import { HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import type { KeccakHash } from "@typeberry/hash";

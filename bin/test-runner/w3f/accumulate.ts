@@ -9,7 +9,8 @@ import {
   tryAsServiceId,
 } from "@typeberry/block";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
-import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report.js";
+import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
+import type { WorkReport } from "@typeberry/block/work-report.js";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";

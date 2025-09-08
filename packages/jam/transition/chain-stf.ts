@@ -1,6 +1,6 @@
 import type { BlockView, CoreIndex, EntropyHash, HeaderHash, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
-import type { AuthorizerHash } from "@typeberry/block/work-report.js";
+import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";

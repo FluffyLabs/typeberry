@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import { tryAsTimeSlot } from "@typeberry/block";
 import { ReportGuarantee } from "@typeberry/block/guarantees.js";
-import { WorkPackageInfo } from "@typeberry/block/work-report.js";
+import { WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { Bytes } from "@typeberry/bytes";
 import { HashDictionary, asKnownSize } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";

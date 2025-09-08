@@ -11,7 +11,7 @@ import {
 } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import type { AuthorizerHash } from "@typeberry/block/work-report.js";
+import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";

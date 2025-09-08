@@ -12,9 +12,9 @@ import {
   tryAsTimeSlot,
 } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import { RefineContext } from "@typeberry/block/refine-context.js";
+import { RefineContext, type WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
-import { type WorkPackageHash, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
+import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";

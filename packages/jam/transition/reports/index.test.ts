@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import { tryAsTimeSlot } from "@typeberry/block";
-import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
+import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";

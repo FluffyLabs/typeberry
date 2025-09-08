@@ -9,7 +9,6 @@
     "@typeberry/pvm-interpreter": "0.0.1",
     "@typeberry/pvm-program": "0.0.1",
     "@typeberry/pvm-spi-decoder": "0.0.1",
-    "@typeberry/jam-host-calls": "0.0.1",
     "@typeberry/utils": "0.0.1"
   },
   "scripts": {

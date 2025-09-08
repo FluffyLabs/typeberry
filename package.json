@@ -43,7 +43,7 @@
     "packages/jam/jam-host-calls",
     "packages/jam/jamnp-s",
     "packages/jam/node",
-    "packages/jam/pvm-host-calls",
+    "packages/core/pvm-host-calls",
     "packages/jam/safrole",
     "packages/jam/state",
     "packages/jam/state-json",

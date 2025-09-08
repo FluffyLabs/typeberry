@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
+import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, keccak } from "@typeberry/hash";
