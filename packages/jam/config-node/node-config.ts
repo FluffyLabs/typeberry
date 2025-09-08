@@ -1,8 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import type { JsonObject } from "@typeberry/block-json";
-import defaultConfigJson from "@typeberry/configs/typeberry-default.json" with { type: "json" };
-import devConfigJson from "@typeberry/configs/typeberry-dev.json" with { type: "json" };
+import { configs } from "@typeberry/configs";
 import { type FromJson, json, parseFromJson } from "@typeberry/json-parser";
 import { AuthorshipOptions } from "./authorship.js";
 import { JipChainSpec } from "./jip-chain-spec.js";
@@ -68,11 +67,11 @@ export class NodeConfiguration {
 
 export function loadConfig(configPath: string): NodeConfiguration {
   if (configPath === DEFAULT_CONFIG) {
-    return parseFromJson(defaultConfigJson, NodeConfiguration.fromJson);
+    return parseFromJson(configs.default, NodeConfiguration.fromJson);
   }
 
   if (configPath === DEV_CONFIG) {
-    return parseFromJson(devConfigJson, NodeConfiguration.fromJson);
+    return parseFromJson(configs.dev, NodeConfiguration.fromJson);
   }
 
   try {

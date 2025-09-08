@@ -136,7 +136,7 @@ export function encodePoints(input: Bytes<PIECE_SIZE>): FixedSizeArray<Bytes<POI
 
   // encode and add redundancy shards
   const points = new ShardsCollection(POINT_ALIGNMENT, data);
-  const encodedResult = encode(N_CHUNKS_REDUNDANCY, POINT_ALIGNMENT, points);
+  const encodedResult = encode(N_CHUNKS_REDUNDANCY, points);
   const encodedData = encodedResult.take_data();
 
   for (let i = 0; i < N_CHUNKS_REDUNDANCY; i++) {
@@ -180,7 +180,7 @@ export function decodePiece(
   }
   const points = new ShardsCollection(POINT_ALIGNMENT, data, indices);
 
-  const decodingResult = decode(N_CHUNKS_REQUIRED, N_CHUNKS_REDUNDANCY, POINT_ALIGNMENT, points);
+  const decodingResult = decode(N_CHUNKS_REQUIRED, N_CHUNKS_REDUNDANCY, points);
   const resultIndices = decodingResult.take_indices(); // it has to be called before take_data
   const resultData = decodingResult.take_data(); // it destroys the result object in rust
 

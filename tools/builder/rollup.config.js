@@ -1,6 +1,7 @@
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 import resolve from "@rollup/plugin-node-resolve";
+import wasm from "@rollup/plugin-wasm";
 import dts from "rollup-plugin-dts";
 import typescript from "rollup-plugin-typescript2";
 
@@ -13,11 +14,11 @@ export default [
       file: setup.outFile,
       format: "cjs",
     },
-    plugins: [resolve(), commonjs(), typescript(), json()],
+    plugins: [resolve(), wasm(), commonjs() /* only for blake2b? */, typescript(), json()],
     treeshake: {
       moduleSideEffects: false,
     },
-    external: ["lmdb", "@matrixai/quic"],
+    external: ["lmdb", "@matrixai/quic", "node:fs", "node:assert", "node:os"],
   },
   {
     input: setup.typesInput,
