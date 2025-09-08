@@ -52,11 +52,11 @@ describe("State Serialization", () => {
 
     let expectedRoot: string;
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)) {
-      expectedRoot = "0xf53f78d46a239fa7bf828580751ac75fdcd6096e2599caeff3ea09ae60a75912";
+      expectedRoot = "0xcf33ddfb0987283f7614652d7eb4d3509e5efd93466a4b28ab4865cc912a66e1";
     } else if (Compatibility.is(GpVersion.V0_6_7)) {
-      expectedRoot = "0xc8519fb36cb6cf6444b7c1b2bb49a9cf58b93982a43127d67ef75cfe74f6eeb7";
+      expectedRoot = "0xa6354341d3c232456ec5cdd4fd84daf474d7083ebc4de180363e656c6e62a704";
     } else {
-      expectedRoot = "0x22e5ebfb233c49d833af107ae8933ab229bceb49db1d2604abb2e120bc381eba";
+      expectedRoot = "0xb075c9dacc6df40a4ac189b6573e9a0d35f2744a759b1ce0d51a272bab3bea5f";
     }
 
     assert.strictEqual(serialized.getRootHash().toString(), expectedRoot);
