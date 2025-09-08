@@ -1,0 +1,72 @@
+# Database
+./database/
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
+*.md
+docs/
+README.md
+LICENSE
+
+# Testing
+coverage/
+.nyc_output/
+*.test.ts
+*.spec.ts
+**/__tests__/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Development files
+.eslintrc*
+.prettierrc*
+.biome*
+eslint.config.*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose*.yml

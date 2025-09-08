@@ -1,0 +1,174 @@
+name: Prepare Release
+
+permissions:
+  contents: write       # push branch, create release
+  pull-requests: write  # open PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 0.1.0)'
+        required: false
+        type: string
+      release_type:
+        description: 'Release type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - custom
+        default: patch
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Validate inputs
+      if: ${{ inputs.release_type == 'custom' && (inputs.version == '' || inputs.version == null) }}
+      run: |
+        echo "Error: 'version' is required when release_type=custom" >&2
+        exit 1
+
+    - name: Determine version
+      id: version
+      run: |
+        if [ "${{ inputs.release_type }}" = "custom" ]; then
+          VERSION="${{ inputs.version }}"
+        else
+          # Get current version from root package.json
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          # Use npm version to calculate new version
+          VERSION=$(npm version ${{ inputs.release_type }} --no-git-tag-version --no-commit-hooks | sed 's/^v//')
+          # Reset the change since we'll do it properly later
+          git checkout -- package.json package-lock.json
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Release version will be: $VERSION"
+
+    - name: Update root package version
+      run: |
+        npm version ${{ steps.version.outputs.version }} --no-git-tag-version --no-commit-hooks
+
+    - name: Update workspace packages versions
+      run: |
+        VERSION=${{ steps.version.outputs.version }}
+        # Update all workspace package.json files
+        for pkg in $(find . -name "package.json" -not -path "./node_modules/*" -not -path "./dist/*" -not -path "./test-vectors/*" -not -path "./package.json"); do
+          echo "Updating $pkg"
+          # Update version
+          node -e "const fs = require('fs'); const p = require('$pkg'); p.version = '$VERSION'; fs.writeFileSync('$pkg', JSON.stringify(p, null, 2) + '\n');"
+          # Update dependencies to workspace packages
+          node -e "
+            const fs = require('fs');
+            const p = require('$pkg');
+            if (p.dependencies) {
+              Object.keys(p.dependencies).forEach(dep => {
+                if (dep.startsWith('@typeberry/')) {
+                  p.dependencies[dep] = '$VERSION';
+                }
+              });
+            }
+            if (p.devDependencies) {
+              Object.keys(p.devDependencies).forEach(dep => {
+                if (dep.startsWith('@typeberry/')) {
+                  p.devDependencies[dep] = '$VERSION';
+                }
+              });
+            }
+            fs.writeFileSync('$pkg', JSON.stringify(p, null, 2) + '\n');
+          "
+        done
+
+    - name: Update lock file
+      run: |
+        npm install --package-lock-only
+
+    - name: Create release branch
+      run: |
+        BRANCH="release/v${{ steps.version.outputs.version }}"
+        git checkout -b $BRANCH
+        git add .
+        git commit -m "chore: prepare release v${{ steps.version.outputs.version }}"
+        git push -u origin $BRANCH
+        echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+      id: branch
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v5
+      id: pr
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ steps.branch.outputs.branch }}
+        title: "Release v${{ steps.version.outputs.version }}"
+        body: |
+          ## Release v${{ steps.version.outputs.version }}
+
+          This PR updates all package versions to v${{ steps.version.outputs.version }}.
+
+          After merging this PR, a GitHub release will be created automatically.
+        labels: |
+          release
+          automated
+
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        # Get the last tag
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        if [ -z "$LAST_TAG" ]; then
+          echo "No previous tags found, using initial commit"
+          LAST_TAG=$(git rev-list --max-parents=0 HEAD)
+        fi
+
+        # Generate changelog
+        echo "## What's Changed" > release_notes.md
+        echo "" >> release_notes.md
+
+        # Get commit messages since last tag
+        git log $LAST_TAG..HEAD --pretty=format:"* %s by @%an" >> release_notes.md
+
+        echo "" >> release_notes.md
+        echo "## Full Changelog: $LAST_TAG...v${{ steps.version.outputs.version }}" >> release_notes.md
+
+        # Store for GitHub release
+        echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+        cat release_notes.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create Draft Release
+      uses: softprops/action-gh-release@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag_name: v${{ steps.version.outputs.version }}
+        name: Release v${{ steps.version.outputs.version }}
+        body: |
+          ${{ steps.release_notes.outputs.release_notes }}
+
+          ---
+          ⚠️ **This is a draft release. It will be published after the release PR is merged.**
+        draft: true
+        prerelease: false
+        target_commitish: ${{ steps.branch.outputs.branch }}

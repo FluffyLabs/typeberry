@@ -67,9 +67,13 @@ function parseSharedOptions(args: minimist.ParsedArgs, withRelPath: (v: string) 
   };
 }
 
-export function parseArgs(input: string[], withRelPath: (v: string) => string): Arguments {
+export function parseArgs(input: string[], withRelPath: (v: string) => string): Arguments | null {
   const args = minimist(input);
   const command = args._.shift() ?? Command.Run;
+  const isHelp = args.help !== undefined;
+  if (isHelp) {
+    return null;
+  }
 
   switch (command) {
     case Command.Run: {

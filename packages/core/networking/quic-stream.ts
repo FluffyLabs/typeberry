@@ -1,10 +1,5 @@
 import { events, type QUICStream } from "@matrixai/quic";
-import {
-  ErrorQUICConnectionLocal,
-  ErrorQUICConnectionPeer,
-  ErrorQUICStreamLocalRead,
-  ErrorQUICStreamLocalWrite,
-} from "@matrixai/quic/errors.js";
+import { errors } from "@matrixai/quic";
 import { type Stream, type StreamErrorCallback, StreamErrorKind } from "./peers.js";
 import { addEventListener } from "./quic-utils.js";
 
@@ -27,11 +22,11 @@ export class QuicStream implements Stream {
   addOnError(onError: StreamErrorCallback): void {
     addEventListener(this.stream, events.EventQUICStreamError, (e) => {
       const isLocalClose =
-        e.detail instanceof ErrorQUICStreamLocalRead ||
-        e.detail instanceof ErrorQUICStreamLocalWrite ||
-        e.detail instanceof ErrorQUICConnectionLocal;
+        e.detail instanceof errors.ErrorQUICStreamLocalRead ||
+        e.detail instanceof errors.ErrorQUICStreamLocalWrite ||
+        e.detail instanceof errors.ErrorQUICConnectionLocal;
 
-      const isRemoteClose = e.detail instanceof ErrorQUICConnectionPeer;
+      const isRemoteClose = e.detail instanceof errors.ErrorQUICConnectionPeer;
 
       const kind = isLocalClose
         ? StreamErrorKind.LocalClose

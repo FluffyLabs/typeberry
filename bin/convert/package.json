@@ -18,6 +18,7 @@
     "@typeberry/codec": "0.0.1",
     "@typeberry/collections": "0.0.1",
     "@typeberry/config": "0.0.1",
+    "@typeberry/config-node": "0.0.1",
     "@typeberry/database": "0.0.1",
     "@typeberry/hash": "0.0.1",
     "@typeberry/json-parser": "0.0.1",
@@ -27,7 +28,10 @@
     "@typeberry/state-json": "0.0.1",
     "@typeberry/state-merkleization": "0.0.1",
     "@typeberry/utils": "0.0.1",
-    "json-bigint-patch": "^0.0.8",
-    "minimist": "^1.2.8"
+    "json-bigint-patch": "0.0.8",
+    "minimist": "1.2.8"
+  },
+  "devDependencies": {
+    "@types/minimist": "1.2.5"
   }
 }
