@@ -36,7 +36,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/test-runner
+      - run: npm start -w @typeberry/test-runner -- w3f.ts
       - name: Display results
         if: always()
         run: cat ./dist/w3f.txt

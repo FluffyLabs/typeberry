@@ -1,4 +1,4 @@
-name: davxy w3f test vectors 0.6.6
+name: davxy jam conformance vectors 0.6.7
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
 
 env:
   TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
-  GP_VERSION: 0.6.6
+  GP_VERSION: 0.6.7
   TEST_SUITE: w3f-davxy
 
 jobs:
@@ -17,7 +17,6 @@ jobs:
     strategy:
       matrix:
         node-version: [22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
       - uses: actions/checkout@v4
@@ -36,14 +35,14 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/test-runner -- w3f-davxy-066.ts
+      - run: npm start -w @typeberry/test-runner -- jam-conformance-067.ts
       - name: Display results
         if: always()
-        run: cat ./dist/w3f-davxy-066.txt
+        run: cat ./dist/jam-conformance-067.txt
       - name: Upload new transaction log
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           path: |
-            ./dist/w3f-davxy-066.txt
-          name: jamtestvectors-davxy-results
+            ./dist/jam-conformance-067.txt
+          name: jam-conformance-067-results
