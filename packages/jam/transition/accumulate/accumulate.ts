@@ -38,7 +38,14 @@ import { FetchExternalities } from "../externalities/index.js";
 import type { CountAndGasUsed } from "../statistics.js";
 import { AccumulateData } from "./accumulate-data.js";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
-import type { AccumulateInput, AccumulateResult, AccumulateRoot, AccumulateState, AccumulateStateUpdate } from "./accumulate-state.js";
+import {
+  type AccumulateInput,
+  type AccumulateResult,
+  type AccumulateRoot,
+  type AccumulateState,
+  type AccumulateStateUpdate,
+  GAS_TO_INVOKE_WORK_REPORT,
+} from "./accumulate-state.js";
 import { generateNextServiceId, getWorkPackageHashes } from "./accumulate-utils.js";
 import { Operand } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
@@ -64,9 +71,6 @@ enum PvmInvocationError {
   NoService = 0,
   NoPreimage = 1,
 }
-
-/** `G_A`: The gas allocated to invoke a work-report’s Accumulation logic. */
-export const GAS_TO_INVOKE_WORK_REPORT = 10_000_000n;
 
 const logger = Logger.new(import.meta.filename, "accumulate");
 

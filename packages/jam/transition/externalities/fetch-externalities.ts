@@ -26,7 +26,7 @@ import {
   ELECTIVE_ITEM_BALANCE,
   MAX_RECENT_HISTORY,
 } from "@typeberry/state";
-import { GAS_TO_INVOKE_WORK_REPORT } from "../accumulate/accumulate.js";
+import { GAS_TO_INVOKE_WORK_REPORT } from "../accumulate/accumulate-state.js";
 import { Operand } from "../accumulate/operand.js";
 import { REPORT_TIMEOUT_GRACE_PERIOD } from "../assurances.js";
 import { L } from "../reports/verify-contextual.js";

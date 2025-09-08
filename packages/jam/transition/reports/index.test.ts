@@ -5,7 +5,7 @@ import { HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { deepEqual } from "@typeberry/utils";
-import type { ReportsInput } from "./reports.js";
+import type { ReportsInput } from "./input.js";
 import { ENTROPY, guaranteesAsView, newReports } from "./test.utils.js";
 
 describe("Reports - top level", () => {

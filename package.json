@@ -72,7 +72,7 @@
     "test": "tsx --test $(find . -type d -name node_modules -prune -type f -o -name '*.test.ts' | tr '\\n' ' ')",
     "test-only": "node --test-only --import tsx $(find . -type d -name node_modules -prune -type f -o -name '*.test.ts' | tr '\\n' ' ')",
     "reader-notes": "npx @fluffylabs/links-check --ignore-file=.gitignore --generate-notes ./web/links.json --generate-notes-label typeberry-$(git rev-parse --short HEAD) **/*.ts",
-    "check:cycles": "npx madge --circular --extensions ts ./packages"
+    "check:cycles": "npx madge --circular --warning --extensions ts ./packages"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

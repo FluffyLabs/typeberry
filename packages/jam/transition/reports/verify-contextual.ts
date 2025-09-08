@@ -14,7 +14,7 @@ import { type BlockState, RecentBlocksHistory } from "@typeberry/state/recent-bl
 import { OK, Result } from "@typeberry/utils";
 import type { RecentHistoryStateUpdate } from "../recent-history.js";
 import { ReportsError } from "./error.js";
-import type { ReportsInput } from "./reports.js";
+import type { ReportsInput } from "./input.js";
 
 /** `L`: The maximum age in timeslots of the lookup anchor. */
 export const L = 14_400;

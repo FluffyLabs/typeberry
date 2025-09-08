@@ -5,6 +5,9 @@ import type { PendingTransfer, ServiceStateUpdate } from "@typeberry/jam-host-ca
 import type { AccumulationOutput, State } from "@typeberry/state";
 import type { CountAndGasUsed } from "../statistics.js";
 
+/** `G_A`: The gas allocated to invoke a work-report’s Accumulation logic. */
+export const GAS_TO_INVOKE_WORK_REPORT = 10_000_000n;
+
 export type AccumulateRoot = OpaqueHash;
 
 export type AccumulateInput = {
