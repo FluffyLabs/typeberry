@@ -4,7 +4,7 @@
   "description": "Safrole implementation based on the Gray Paper.",
   "main": "index.ts",
   "dependencies": {
-    "@fluffylabs/bandersnatch": "0.1.0-7821814",
+    "@fluffylabs/bandersnatch": "0.1.0-b38d04e",
     "@typeberry/block": "0.0.1",
     "@typeberry/bytes": "0.0.1",
     "@typeberry/codec": "0.0.1",

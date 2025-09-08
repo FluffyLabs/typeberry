@@ -11,8 +11,8 @@
     "@typeberry/hash": "0.0.1",
     "@typeberry/numbers": "0.0.1",
     "@typeberry/utils": "0.0.1",
-    "ed25519-wasm": "github:fluffylabs/ed25519-wasm#b45e23733057118c37525f8d5857c38ff2afaffa",
-    "@fluffylabs/bandersnatch": "0.1.0-7821814",
+    "ed25519-wasm": "github:fluffylabs/ed25519-wasm#91e50327ae00057c3994b5c436bad5bfcc082a5",
+    "@fluffylabs/bandersnatch": "0.1.0-b38d04e",
     "@noble/ed25519": "2.2.3"
   },
   "author": "Fluffy Labs",
