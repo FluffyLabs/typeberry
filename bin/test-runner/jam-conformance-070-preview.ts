@@ -13,7 +13,7 @@ main(runners, process.argv.slice(2), "test-vectors/jam-conformance/fuzz-reports/
     "traces/1756548706/00000094.json", // note [seko] 2 storage entries should be deleted but they aren't
     "traces/1756548667/00000004.json", // note [seko] service id mismatch
     "traces/1756548583/00000008.json", // note [seko] service id mismatch
-    "traces/1757063641/00000180.json", // note [seko] unrecognized test case - block parsing error
+    "traces/1757063641/00000180.json", // note [seko] test rejected at block parsing stage, which is considered valid behavior
   ],
 })
   .then((r) => logger.log(r))
