@@ -75,6 +75,8 @@ export async function main(channel: MessageChannelStateMachine<NetworkInit, Netw
   finished.currentState().close(channel);
 }
 
+const workerFile = new URL("./bootstrap-network.mjs", import.meta.url);
+
 export async function spawnWorker() {
-  return spawnWorkerGeneric(new URL("./bootstrap.mjs", import.meta.url), logger, "ready(main)", new MainReady());
+  return spawnWorkerGeneric(workerFile, logger, "ready(main)", new MainReady());
 }

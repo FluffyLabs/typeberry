@@ -48,7 +48,12 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   let args: Arguments;
 
   try {
-    args = parseArgs(process.argv.slice(2), withRelPath);
+    const parsed = parseArgs(process.argv.slice(2), withRelPath);
+    if (parsed === null) {
+      console.info(HELP);
+      process.exit(0);
+    }
+    args = parsed;
   } catch (e) {
     console.error(`\n${e}\n`);
     console.info(HELP);

@@ -4,7 +4,6 @@
   "description": "Trie implementation for Typeberry JAM.",
   "main": "index.ts",
   "scripts": {
-    "build": "npm run build -w @typeberry/builder -- --environment PACKAGE_NAME:@typeberry/trie",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {

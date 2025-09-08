@@ -7,13 +7,13 @@
   "dependencies": {
     "@typeberry/bytes": "0.0.1",
     "@typeberry/config": "0.0.1",
-    "@typeberry/config-node": "^0.0.1",
+    "@typeberry/config-node": "0.0.1",
     "@typeberry/hash": "0.0.1",
     "@typeberry/logger": "0.0.1",
-    "@typeberry/node": "^0.0.1",
+    "@typeberry/node": "0.0.1",
     "@typeberry/numbers": "0.0.1",
     "@typeberry/utils": "0.0.1",
-    "minimist": "^1.2.8"
+    "minimist": "1.2.8"
   },
   "scripts": {
     "start": "tsx ./index.ts",
@@ -22,7 +22,7 @@
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
   "devDependencies": {
-    "@types/minimist": "^1.2.5"
+    "@types/minimist": "1.2.5"
   },
   "type": "module"
 }

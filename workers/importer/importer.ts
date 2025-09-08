@@ -28,6 +28,7 @@ const importerError = <Kind extends ImporterErrorKind, Err extends ImporterError
 export class Importer {
   private readonly verifier: BlockVerifier;
   private readonly stf: OnChain;
+
   // TODO [ToDr] we cannot assume state reference does not change.
   private readonly state: SerializedState<LeafDb>;
 

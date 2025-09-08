@@ -11,17 +11,14 @@ import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-repo
 import { Bytes } from "@typeberry/bytes";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { BLS_KEY_BYTES, type BandersnatchKey, type Ed25519Key } from "@typeberry/crypto";
 import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";
-import { type FromJson, json } from "@typeberry/json-parser";
+import { json } from "@typeberry/json-parser";
 import {
   type InMemoryService,
   InMemoryState,
   PrivilegedServices,
   RecentBlocksHistory,
   type State,
-  VALIDATOR_META_BYTES,
-  ValidatorData,
   tryAsPerCore,
 } from "@typeberry/state";
 import { JsonService } from "./accounts.js";
@@ -32,16 +29,7 @@ import { notYetAccumulatedFromJson } from "./not-yet-accumulated.js";
 import { recentBlocksHistoryFromJson } from "./recent-history.js";
 import { TicketsOrKeys, ticketFromJson } from "./safrole.js";
 import { JsonStatisticsData } from "./statistics.js";
-
-const validatorDataFromJson: FromJson<ValidatorData> = json.object<ValidatorData>(
-  {
-    bandersnatch: fromJson.bytes32<BandersnatchKey>(),
-    ed25519: fromJson.bytes32<Ed25519Key>(),
-    bls: json.fromString((v) => Bytes.parseBytes(v, BLS_KEY_BYTES).asOpaque()),
-    metadata: json.fromString((v) => Bytes.parseBytes(v, VALIDATOR_META_BYTES).asOpaque()),
-  },
-  ValidatorData.create,
-);
+import { validatorDataFromJson } from "./validator-data.js";
 
 // NOTE State in line with GP ^0.7.0
 type JsonStateDump = {
