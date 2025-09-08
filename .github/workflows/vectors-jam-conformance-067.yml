@@ -1,4 +1,4 @@
-name: javajam test vectors
+name: davxy jam conformance vectors 0.6.7
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ env:
   GP_VERSION: 0.6.7
 
 jobs:
-  state_transition:
+  run:
     runs-on: self-hosted
 
     strategy:
@@ -34,15 +34,14 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/test-runner -- javajam.ts
+      - run: npm start -w @typeberry/test-runner -- jam-conformance-067.ts
       - name: Display results
         if: always()
-        run: cat ./dist/javajam.txt
-      - name: Upload new results
+        run: cat ./dist/jam-conformance-067.txt
+      - name: Upload new transaction log
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           path: |
-            ./dist/javajam.txt
-          name: javajamvectors-results
-
+            ./dist/jam-conformance-067.txt
+          name: jam-conformance-067-results
