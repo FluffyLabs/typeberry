@@ -1,13 +1,17 @@
+import fs from "node:fs";
 import * as ed from "@noble/ed25519";
-import fs from 'node:fs';
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { type Opaque, check } from "@typeberry/utils";
-import { verify_ed25519, verify_ed25519_batch, default as ed25519init } from "ed25519-wasm/pkg/ed25519_wasm.js";
+import { type Opaque, check, isBrowser } from "@typeberry/utils";
+import { default as ed25519init, verify_ed25519, verify_ed25519_batch } from "ed25519-wasm/pkg/ed25519_wasm.js";
 
-const ed25119ready = await ed25519init(
-  (typeof process === 'undefined')
+const ed25119ready = ed25519init(
+  isBrowser()
     ? undefined
-    : { module_or_path: fs.readFileSync(new URL(import.meta.resolve('ed25519-wasm/pkg/ed25519_wasm_bg.wasm'), import.meta.url)) }
+    : {
+        module_or_path: fs.readFileSync(
+          new URL(import.meta.resolve("ed25519-wasm/pkg/ed25519_wasm_bg.wasm"), import.meta.url),
+        ),
+      },
 );
 
 /** ED25519 private key size. */

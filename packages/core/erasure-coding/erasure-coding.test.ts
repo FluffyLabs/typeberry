@@ -12,6 +12,7 @@ import {
   chunksToShards,
   decodeData,
   decodePiece,
+  ecReady,
   encodePoints,
   join,
   lace,
@@ -44,7 +45,9 @@ function getRandomItems<T, N extends number>(arr: [number, T][], n: N): FixedSiz
   return FixedSizeArray.new(result, n);
 }
 
-describe("erasure coding: general", () => {
+describe("erasure coding: general", async () => {
+  await ecReady;
+
   const data = TEST_DATA.data as string;
   const segmentEc = TEST_DATA.segment.segments[0].segment_ec;
 
@@ -70,7 +73,9 @@ describe("erasure coding: general", () => {
   });
 });
 
-describe("erasure coding: full", () => {
+describe("erasure coding: full", async () => {
+  await ecReady;
+
   const wp_data = WORKPACKAGE_FULL.data as string;
   const wp_shards = WORKPACKAGE_FULL.shards;
   const seg_data = SEGMENT_FULL.data as string;
@@ -129,7 +134,9 @@ describe("erasure coding: full", () => {
   });
 });
 
-describe("erasure coding: tiny", () => {
+describe("erasure coding: tiny", async () => {
+  await ecReady;
+
   const wp_data = WORKPACKAGE_TINY.data as string;
   const wp_shards = WORKPACKAGE_TINY.shards;
   const seg_data = SEGMENT_TINY.data as string;
@@ -209,7 +216,9 @@ describe("erasure coding: tiny", () => {
   });
 });
 
-describe("erasure coding: split", () => {
+describe("erasure coding: split", async () => {
+  await ecReady;
+
   it("should split data", () => {
     const test = [
       {
@@ -252,7 +261,9 @@ describe("erasure coding: split", () => {
   });
 });
 
-describe("erasure coding: join", () => {
+describe("erasure coding: join", async () => {
+  await ecReady;
+
   it("should join data", () => {
     const test = [
       {
@@ -315,7 +326,9 @@ describe("erasure coding: join", () => {
   });
 });
 
-describe("erasure coding: unzip", () => {
+describe("erasure coding: unzip", async () => {
+  await ecReady;
+
   it("should unzip data", () => {
     const test = [
       {
@@ -363,7 +376,9 @@ describe("erasure coding: unzip", () => {
   });
 });
 
-describe("erasure coding: lace", () => {
+describe("erasure coding: lace", async () => {
+  await ecReady;
+
   it("should lace data", () => {
     const test = [
       {

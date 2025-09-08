@@ -1,17 +1,20 @@
-import fs from 'node:fs';
+import fs from "node:fs";
 import { type PerValidator, tryAsPerValidator } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { check } from "@typeberry/utils";
-import { ShardsCollection, decode, encode, default as ecInit } from "reed-solomon-wasm/pkg/reed_solomon_wasm.js";
+import { check, isBrowser } from "@typeberry/utils";
+import { ShardsCollection, decode, default as ecInit, encode } from "reed-solomon-wasm/pkg/reed_solomon_wasm.js";
 
-const _ecReady = await ecInit(
-  (typeof process === 'undefined')
+export const ecReady = ecInit(
+  isBrowser()
     ? undefined
-    : { module_or_path: fs.readFileSync(new URL(import.meta.resolve('reed-solomon-wasm/pkg/reed_solomon_wasm_bg.wasm'), import.meta.url)) }
+    : {
+        module_or_path: fs.readFileSync(
+          new URL(import.meta.resolve("reed-solomon-wasm/pkg/reed_solomon_wasm_bg.wasm"), import.meta.url),
+        ),
+      },
 );
-
 
 /**
  * `point` - [Y_2]

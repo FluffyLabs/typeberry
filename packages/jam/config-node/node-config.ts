@@ -3,6 +3,7 @@ import os from "node:os";
 import type { JsonObject } from "@typeberry/block-json";
 import { configs } from "@typeberry/configs";
 import { type FromJson, json, parseFromJson } from "@typeberry/json-parser";
+import { isBrowser } from "@typeberry/utils";
 import { AuthorshipOptions } from "./authorship.js";
 import { JipChainSpec } from "./jip-chain-spec.js";
 
@@ -12,7 +13,7 @@ export const DEV_CONFIG = "dev";
 export const DEFAULT_CONFIG = "default";
 
 export const NODE_DEFAULTS = {
-  name: os.hostname(),
+  name: isBrowser() ? "browser" : os.hostname(),
   config: DEFAULT_CONFIG,
 };
 
