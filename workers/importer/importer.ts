@@ -127,7 +127,10 @@ export class Importer {
   }
 
   getBestStateRootHash() {
-    return this.blocks.getPostStateRoot(this.blocks.getBestHeaderHash());
+    const bestHeaderHash = this.blocks.getBestHeaderHash();
+    const stateRoot = this.blocks.getPostStateRoot(bestHeaderHash);
+    console.log(`Retrieveing  state root for: ${bestHeaderHash}: ${stateRoot}`);
+    return stateRoot;
   }
 
   getBestBlockHash() {
