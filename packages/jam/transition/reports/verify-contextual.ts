@@ -4,6 +4,7 @@ import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@ty
 import { HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import type { KeccakHash } from "@typeberry/hash";
+import { Logger } from "@typeberry/logger";
 import type { MmrHasher } from "@typeberry/mmr";
 import type { LegacyBlockState, State } from "@typeberry/state";
 import { type BlockState, RecentBlocksHistory } from "@typeberry/state/recent-blocks.js";
@@ -20,6 +21,8 @@ export type HeaderChain = {
   /** Check whether given hash is part of the ancestor chain. */
   isInChain(header: HeaderHash): boolean;
 };
+
+const logger = Logger.new(import.meta.filename, "stf:reports");
 
 /** https://graypaper.fluffylabs.dev/#/7e6ff6a/15eb0115eb01?v=0.6.7 */
 export function verifyContextualValidity(
@@ -206,10 +209,14 @@ function verifyRefineContexts(
      */
     const isInChain = recentBlocks.has(context.lookupAnchor) || headerChain.isInChain(context.lookupAnchor);
     if (!isInChain) {
-      return Result.error(
-        ReportsError.SegmentRootLookupInvalid,
-        `Lookup anchor is not found in chain. Hash: ${context.lookupAnchor} (slot: ${context.lookupAnchorSlot})`,
-      );
+      if (process.env.SKIP_LOOKUP_ANCHOR_CHECK !== undefined) {
+        logger.warn(`Lookup anchor check for ${context.lookupAnchor} would fail, but override is active.`);
+      } else {
+        return Result.error(
+          ReportsError.SegmentRootLookupInvalid,
+          `Lookup anchor is not found in chain. Hash: ${context.lookupAnchor} (slot: ${context.lookupAnchorSlot})`,
+        );
+      }
     }
   }
 
