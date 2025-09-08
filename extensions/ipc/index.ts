@@ -11,7 +11,6 @@ import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, TRUNCATED_HASH_SIZE, type WithHash, blake2b } from "@typeberry/hash";
 import { ce129, up0 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
-import type { BlockImportError } from "@typeberry/node";
 import { Listener } from "@typeberry/state-machine";
 import { StateEntries } from "@typeberry/state-merkleization";
 import type { Result } from "@typeberry/utils";
@@ -29,6 +28,11 @@ export interface ExtensionApi {
 
 export function startExtension(api: ExtensionApi) {
   return startJamnpExtension(api);
+}
+
+export enum BlockImportError {
+  NodeNotRunning = 0,
+  BlockRejected = 1,
 }
 
 export interface FuzzTargetApi {
