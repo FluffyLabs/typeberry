@@ -81,9 +81,10 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
       });
     },
     async close() {
-      importerReady.transition<Finished>((importer, port) => {
+      const importerFinished = importerReady.transition<Finished>((importer, port) => {
         return importer.finish(port);
       });
+      await importerFinished.currentState().waitForWorkerToFinish();
       logger.log("[main] ☠️  Closing the extensions");
       closeExtensions();
       logger.log("[main] ☠️  Closing the authorship module");
