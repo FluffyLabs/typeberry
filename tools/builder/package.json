@@ -9,11 +9,11 @@
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
   "dependencies": {
-    "@rollup/plugin-commonjs": "^28.0.3",
-    "@rollup/plugin-node-resolve": "^15.2.3",
-    "rollup": "^4.20.0",
-    "rollup-plugin-dts": "^6.2.3",
-    "rollup-plugin-typescript2": "^0.36.0",
-    "@rollup/plugin-json": "^6.1.0"
+    "@rollup/plugin-commonjs": "28.0.3",
+    "@rollup/plugin-json": "6.1.0",
+    "@rollup/plugin-node-resolve": "15.2.3",
+    "rollup": "^4.50.1",
+    "rollup-plugin-dts": "6.2.3",
+    "rollup-plugin-typescript2": "0.36.0"
   }
 }

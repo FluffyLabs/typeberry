@@ -10,8 +10,8 @@
   "dependencies": {
     "@typeberry/block-json": "0.0.1",
     "@typeberry/bytes": "0.0.1",
-    "@typeberry/config": "^0.0.1",
-    "@typeberry/configs": "^0.0.1",
+    "@typeberry/config": "0.0.1",
+    "@typeberry/configs": "0.0.1",
     "@typeberry/jamnp-s": "0.0.1",
     "@typeberry/json-parser": "0.0.1",
     "@typeberry/numbers": "0.0.1",

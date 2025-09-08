@@ -18,7 +18,7 @@
     "@typeberry/jam-host-calls": "0.0.1",
     "@typeberry/json-parser": "0.0.1",
     "@typeberry/logger": "0.0.1",
-    "@typeberry/mmr": "^0.0.1",
+    "@typeberry/mmr": "0.0.1",
     "@typeberry/numbers": "0.0.1",
     "@typeberry/ordering": "0.0.1",
     "@typeberry/pvm-debugger-adapter": "0.0.1",
