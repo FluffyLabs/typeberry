@@ -10,14 +10,14 @@ try {
   // ignore
 }
 
-const suiteToRun = process.argv[1];
+const suiteToRun = process.argv[2];
 if (suiteToRun === undefined) {
   throw new Error("Provide 1 argument with a suite filename to run.");
 }
 
 const stream = run({
   files: [`${import.meta.dirname}/${suiteToRun}`],
-  argv: process.argv.slice(2),
+  argv: process.argv.slice(3),
   timeout: 10 * 60 * 1000,
   concurrency: true,
 }).on("test:fail", () => {
