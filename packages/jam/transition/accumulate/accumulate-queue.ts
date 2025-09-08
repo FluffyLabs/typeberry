@@ -4,7 +4,7 @@ import type { WorkReport } from "@typeberry/block/work-report.js";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
-import type { AccumulateState } from "../accumulate/index.js";
+import type { AccumulateState } from "./accumulate-state.js";
 import { getWorkPackageHashes } from "./accumulate-utils.js";
 
 export class AccumulateQueue {

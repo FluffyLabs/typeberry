@@ -31,7 +31,8 @@ import {
 } from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { Compatibility, GpVersion, deepEqual, resultToString } from "@typeberry/utils";
-import { Accumulate, type AccumulateInput, type AccumulateState } from "./accumulate.js";
+import type { AccumulateInput, AccumulateState } from "./accumulate-state.js";
+import { Accumulate } from "./accumulate.js";
 
 type TestServiceInfo = {
   lastAccumulation?: TimeSlot;
