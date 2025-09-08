@@ -10,9 +10,9 @@ try {
   // ignore
 }
 
-let suiteToRun = process.argv[1];
+const suiteToRun = process.argv[1];
 if (suiteToRun === undefined) {
-  throw new Error('Provide 1 argument with a suite filename to run.');
+  throw new Error("Provide 1 argument with a suite filename to run.");
 }
 
 const stream = run({
@@ -27,7 +27,7 @@ const stream = run({
 stream.compose(new spec()).pipe(process.stdout);
 
 const reporter = new Reporter(suiteToRun);
-const fileStream = fs.createWriteStream(`${distDir}/${suiteToRun}.txt`);
+const fileStream = fs.createWriteStream(`${distDir}/${suiteToRun.replace('.ts', '')}.txt`);
 stream
   .compose(reporter)
   .on("end", () => {

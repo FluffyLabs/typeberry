@@ -1,8 +1,7 @@
 import { logger, main } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
-main(runners, process.argv.slice(2), "test-vectors/jam-conformance/fuzz-reports/0.7.0", {
-  accepted: ["traces"],
+main(runners, process.argv.slice(2), "test-vectors/jam-conformance/fuzz-reports/0.7.0/traces", {
   ignored: [
     "traces/1757092821/00000156.json",
     "traces/1757062927/00000091.json",
