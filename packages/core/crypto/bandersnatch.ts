@@ -1,6 +1,13 @@
-import { derive_public_key } from "@fluffylabs/bandersnatch";
+import fs from 'node:fs';
+import { derive_public_key, default as bandersnatchInit } from "@fluffylabs/bandersnatch";
 import { Bytes } from "@typeberry/bytes";
 import { type Opaque, check } from "@typeberry/utils";
+
+export const bandersnatchReady = bandersnatchInit(
+ (typeof process === 'undefined')
+    ? undefined
+    : fs.readFileSync(new URL(import.meta.resolve('@fluffylabs/bandersnatch/bandersnatch_bg.wasm'), import.meta.url))
+);
 
 /** Bandersnatch public key size. */
 export const BANDERSNATCH_KEY_BYTES = 32;
