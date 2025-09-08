@@ -8,7 +8,6 @@ on:
 env:
   TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
   GP_VERSION: 0.6.7
-  TEST_SUITE: javajam
 
 jobs:
   state_transition:
