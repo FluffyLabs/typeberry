@@ -40,7 +40,6 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
   const ready = await channel.waitForState<ImporterReady>("ready(importer)");
 
   const finished = await ready.doUntil<Finished>("finished", async (worker, port) => {
-    logger.info("📥 Importer waiting for blocks.");
     const config = worker.getConfig();
     const lmdb = new LmdbRoot(config.dbPath);
     const blocks = new LmdbBlocks(config.chainSpec, lmdb);
@@ -54,6 +53,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
     );
     // TODO [ToDr] this is shit, since we have circular dependency.
     worker.setImporter(importer);
+    logger.info("📥 Importer waiting for blocks.");
 
     // TODO [ToDr] back pressure?
     let isProcessing = false;
