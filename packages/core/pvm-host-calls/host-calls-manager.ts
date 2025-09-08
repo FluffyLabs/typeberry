@@ -1,5 +1,5 @@
-import { tryAsServiceId } from "@typeberry/block";
 import { Logger } from "@typeberry/logger";
+import { tryAsU32 } from "@typeberry/numbers";
 import { type Gas, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { check } from "@typeberry/utils";
 import {
@@ -61,7 +61,7 @@ export class HostCallsManager {
 export class NoopMissing implements HostCallHandler {
   index = tryAsHostCallIndex(2 ** 32 - 1);
   gasCost = tryAsSmallGas(0);
-  currentServiceId = tryAsServiceId(0);
+  currentServiceId = tryAsU32(0);
   tracedRegisters = [];
 
   async execute(): Promise<undefined | PvmExecution> {
