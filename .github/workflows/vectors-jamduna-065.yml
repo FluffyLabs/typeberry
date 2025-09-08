@@ -35,7 +35,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/test-runner
+      - run: npm start -w @typeberry/test-runner -- jamduna-065.ts
       - name: Display results
         if: always()
         run: cat ./dist/jamduna-065.txt

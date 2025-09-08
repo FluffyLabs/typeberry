@@ -1,4 +1,3 @@
-export * from "./handler.js";
 export * from "./stream.js";
 
 export * as up0 from "./up-0-block-announcement.js";

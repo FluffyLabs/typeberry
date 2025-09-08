@@ -8,7 +8,6 @@ on:
 env:
   TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
   GP_VERSION: 0.6.7
-  TEST_SUITE: w3f-davxy
 
 jobs:
   run:
@@ -22,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Load test ref
-        run: .github/scripts/load-test-ref.sh      
+        run: .github/scripts/load-test-ref.sh
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
         with:
@@ -36,7 +35,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/test-runner
+      - run: npm start -w @typeberry/test-runner -- w3f-davxy-067.ts
       - name: Display results
         if: always()
         run: cat ./dist/w3f-davxy-067.txt

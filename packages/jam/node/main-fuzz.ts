@@ -1,6 +1,6 @@
 import { Block, Header, type HeaderHash, type StateRootHash } from "@typeberry/block";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { Version, startFuzzTarget } from "@typeberry/ext-ipc";
+import { BlockImportError, Version, startFuzzTarget } from "@typeberry/ext-ipc";
 import { Logger } from "@typeberry/logger";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import { CURRENT_VERSION, Result } from "@typeberry/utils";
@@ -12,11 +12,6 @@ import packageJson from "./package.json" with { type: "json" };
 export type FuzzConfig = {
   jamNodeConfig: JamConfig;
 };
-
-export enum BlockImportError {
-  NodeNotRunning = 0,
-  BlockRejected = 1,
-}
 
 const logger = Logger.new(import.meta.filename, "fuzztarget");
 // A number large enough to not collide with near-future date.
