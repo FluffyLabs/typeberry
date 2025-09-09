@@ -12,7 +12,7 @@
     "@typeberry/jamnp-s": "0.0.1",
     "@typeberry/logger": "0.0.1",
     "@typeberry/networking": "0.0.1",
-    "json-rpc-2.0": "^1.7.0"
+    "json-rpc-2.0": "1.7.0"
   },
   "scripts": {
     "start": "tsx index.ts",

@@ -82,9 +82,7 @@ export class WorkPackageInfo extends WithDebug {
  *
  * https://graypaper.fluffylabs.dev/#/cc517d7/131c01132401?v=0.6.5
  */
-export class WorkReport extends WithDebug {
-  static Codec: typeof WorkReportCodec;
-
+export class WorkReportNoCodec extends WithDebug {
   static create({
     workPackageSpec,
     context,
@@ -94,8 +92,8 @@ export class WorkReport extends WithDebug {
     segmentRootLookup,
     results,
     authorizationGasUsed,
-  }: CodecRecord<WorkReport>) {
-    return new WorkReport(
+  }: CodecRecord<WorkReportNoCodec>) {
+    return new WorkReportNoCodec(
       workPackageSpec,
       context,
       coreIndex,
@@ -107,7 +105,7 @@ export class WorkReport extends WithDebug {
     );
   }
 
-  private constructor(
+  protected constructor(
     /** `s`: Work package specification. */
     public readonly workPackageSpec: WorkPackageSpec,
     /** `x`: Refinement context. */
@@ -132,7 +130,7 @@ export class WorkReport extends WithDebug {
   }
 }
 
-const WorkReportCodec = codec.Class(WorkReport, {
+const WorkReportCodec = codec.Class(WorkReportNoCodec, {
   workPackageSpec: WorkPackageSpec.Codec,
   context: RefineContext.Codec,
   coreIndex: codec.varU32.convert(
@@ -154,7 +152,7 @@ const WorkReportCodec = codec.Class(WorkReport, {
   ),
 });
 
-const WorkReportCodecPre070 = codec.Class(WorkReport, {
+const WorkReportCodecPre070 = codec.Class(WorkReportNoCodec, {
   workPackageSpec: WorkPackageSpec.Codec,
   context: RefineContext.Codec,
   coreIndex: codec.varU32.convert(
@@ -176,4 +174,8 @@ const WorkReportCodecPre070 = codec.Class(WorkReport, {
   authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
 });
 
-WorkReport.Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0) ? WorkReportCodec : WorkReportCodecPre070;
+export class WorkReport extends WorkReportNoCodec {
+  static Codec: typeof WorkReportCodec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
+    ? WorkReportCodec
+    : WorkReportCodecPre070;
+}

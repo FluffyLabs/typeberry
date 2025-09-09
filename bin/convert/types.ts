@@ -5,7 +5,7 @@ import { WorkPackage } from "@typeberry/block/work-package.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
 import { type Decode, type Encode, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { JipChainSpec } from "@typeberry/config/node";
+import { JipChainSpec } from "@typeberry/config-node";
 import { blake2b } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
 import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";

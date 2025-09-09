@@ -4,8 +4,8 @@ import type { BlockView, HeaderHash, HeaderView, StateRootHash } from "@typeberr
 import { type ChainSpec, WorkerConfig } from "@typeberry/config";
 import type { Finished, MainInit } from "@typeberry/generic-worker";
 import type { WithHash } from "@typeberry/hash";
-import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine.js";
+import * as blockImporter from "@typeberry/importer/worker.js";
 import { NetworkWorkerConfig } from "@typeberry/jam-network/state-machine.js";
 import type { Listener, MessageChannelStateMachine } from "@typeberry/state-machine";
 import type { StateEntries } from "@typeberry/state-merkleization";
@@ -81,9 +81,10 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
       });
     },
     async close() {
-      importerReady.transition<Finished>((importer, port) => {
+      const importerFinished = importerReady.transition<Finished>((importer, port) => {
         return importer.finish(port);
       });
+      await importerFinished.currentState().waitForWorkerToFinish();
       logger.log("[main] ☠️  Closing the extensions");
       closeExtensions();
       logger.log("[main] ☠️  Closing the authorship module");

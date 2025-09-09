@@ -12,7 +12,7 @@ import {
 import type { IHostCallMemory } from "./host-call-memory.js";
 import type { IHostCallRegisters } from "./host-call-registers.js";
 
-const logger = Logger.new(import.meta.filename, "pvm");
+const logger = Logger.new(import.meta.filename, "host-calls-pvm");
 
 // TODO [ToDr] Rename to just `HostCalls`
 /** Container for all available host calls. */

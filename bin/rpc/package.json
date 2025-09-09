@@ -12,25 +12,25 @@
   "scripts": {
     "start": "tsx ./index.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
-    "test:e2e-setup": "GP_VERSION=0.6.7 TEST_SUITE=w3f-davxy tsx ./test/e2e-setup.ts",
-    "test:e2e": "npm run test:e2e-setup && GP_VERSION=0.6.7 TEST_SUITE=w3f-davxy tsx --test ./test/e2e.ts"
+    "test:e2e-setup": "GP_VERSION=0.7.0 tsx ./test/e2e-setup.ts",
+    "test:e2e": "npm run test:e2e-setup && GP_VERSION=0.7.0 tsx --test ./test/e2e.ts"
   },
   "dependencies": {
-    "@typeberry/block": "^0.0.1",
-    "@typeberry/bytes": "^0.0.1",
-    "@typeberry/codec": "^0.0.1",
-    "@typeberry/config": "^0.0.1",
-    "@typeberry/config-node": "^0.0.1",
-    "@typeberry/database-lmdb": "^0.0.1",
-    "@typeberry/hash": "^0.0.1",
-    "@typeberry/jam": "^0.0.1",
-    "@typeberry/logger": "^0.0.1",
-    "@typeberry/node": "^0.0.1",
-    "@typeberry/numbers": "^0.0.1",
-    "@typeberry/state": "^0.0.1",
-    "@types/ws": "^8.18.1",
-    "minimist": "^1.2.8",
-    "ws": "^8.18.2",
-    "zod": "^3.25.30"
+    "@typeberry/block": "0.0.1",
+    "@typeberry/bytes": "0.0.1",
+    "@typeberry/codec": "0.0.1",
+    "@typeberry/config": "0.0.1",
+    "@typeberry/config-node": "0.0.1",
+    "@typeberry/database-lmdb": "0.0.1",
+    "@typeberry/hash": "0.0.1",
+    "@typeberry/jam": "0.0.1",
+    "@typeberry/logger": "0.0.1",
+    "@typeberry/node": "0.0.1",
+    "@typeberry/numbers": "0.0.1",
+    "@typeberry/state": "0.0.1",
+    "@types/ws": "8.18.1",
+    "minimist": "1.2.8",
+    "ws": "8.18.2",
+    "zod": "3.25.30"
   }
 }

@@ -1,7 +1,7 @@
 import { isMainThread, parentPort } from "node:worker_threads";
 
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
-import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
+import type { Finished } from "@typeberry/generic-worker";
 import { SimpleAllocator, keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
@@ -9,13 +9,7 @@ import { TransitionHasher } from "@typeberry/transition";
 import { measure, resultToString } from "@typeberry/utils";
 import { ImportQueue } from "./import-queue.js";
 import { Importer } from "./importer.js";
-import {
-  type ImporterInit,
-  type ImporterReady,
-  type ImporterStates,
-  MainReady,
-  importerStateMachine,
-} from "./state-machine.js";
+import { type ImporterInit, type ImporterReady, type ImporterStates, importerStateMachine } from "./state-machine.js";
 
 const logger = Logger.new(import.meta.filename, "importer");
 
@@ -40,20 +34,15 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
   const ready = await channel.waitForState<ImporterReady>("ready(importer)");
 
   const finished = await ready.doUntil<Finished>("finished", async (worker, port) => {
-    logger.info("📥 Importer waiting for blocks.");
     const config = worker.getConfig();
     const lmdb = new LmdbRoot(config.dbPath);
     const blocks = new LmdbBlocks(config.chainSpec, lmdb);
     const states = new LmdbStates(config.chainSpec, lmdb);
-    const importer = new Importer(
-      config.chainSpec,
-      new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator()),
-      logger,
-      blocks,
-      states,
-    );
+    const hasher = new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator());
+    const importer = new Importer(config.chainSpec, hasher, logger, blocks, states);
     // TODO [ToDr] this is shit, since we have circular dependency.
     worker.setImporter(importer);
+    logger.info("📥 Importer waiting for blocks.");
 
     // TODO [ToDr] back pressure?
     let isProcessing = false;
@@ -115,11 +104,4 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
 
   // Close the comms to gracefuly close the app.
   finished.currentState().close(channel);
-}
-
-export async function spawnWorker(customLogger?: Logger, customMainReady?: MainReady) {
-  const bootstrapFile = "./bootstrap.mjs";
-  const workerLogger = customLogger ?? logger;
-  const mainReady = customMainReady ?? new MainReady();
-  return spawnWorkerGeneric(new URL(bootstrapFile, import.meta.url), workerLogger, "ready(main)", mainReady);
 }

@@ -1,6 +1,6 @@
 import { Block, Header, type HeaderHash, type StateRootHash } from "@typeberry/block";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { Version, startFuzzTarget } from "@typeberry/ext-ipc";
+import { BlockImportError, Version, startFuzzTarget } from "@typeberry/ext-ipc";
 import { Logger } from "@typeberry/logger";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import { CURRENT_VERSION, Result } from "@typeberry/utils";
@@ -13,14 +13,17 @@ export type FuzzConfig = {
   jamNodeConfig: JamConfig;
 };
 
-export enum BlockImportError {
-  NodeNotRunning = 0,
-  BlockRejected = 1,
-}
-
 const logger = Logger.new(import.meta.filename, "fuzztarget");
 // A number large enough to not collide with near-future date.
 const NEXT_FUZZ_SEED = BigInt(1_000 * 3_600 * 24 * 30 * 12 * 2);
+
+export function getFuzzDetails() {
+  return {
+    nodeName: "@typeberry/jam",
+    nodeVersion: Version.tryFromString(packageJson.version),
+    gpVersion: Version.tryFromString(CURRENT_VERSION.split("-")[0]),
+  };
+}
 
 export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) => string) {
   logger.info("💨 Fuzzer starting up.");
@@ -33,9 +36,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
   const chainSpec = getChainSpec(config.node.flavor);
 
   const closeFuzzTarget = startFuzzTarget({
-    nodeName: packageJson.name,
-    nodeVersion: Version.tryFromString(packageJson.version),
-    gpVersion: Version.tryFromString(CURRENT_VERSION),
+    ...getFuzzDetails(),
     chainSpec,
     importBlock: async (block: Block): Promise<Result<StateRootHash, BlockImportError>> => {
       if (runningNode === null) {

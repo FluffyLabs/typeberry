@@ -1,8 +1,18 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
-import { Compatibility, DEFAULT_VERSION, GpVersion } from "./compatibility.js";
+import { afterEach, beforeEach, describe, it } from "node:test";
+import { CURRENT_VERSION, Compatibility, DEFAULT_VERSION, GpVersion } from "./compatibility.js";
 
 describe("GrayPaper compatibility", { concurrency: false }, () => {
+  let savedVersion = CURRENT_VERSION;
+
+  beforeEach(() => {
+    savedVersion = CURRENT_VERSION;
+  });
+
+  afterEach(() => {
+    Compatibility.override(savedVersion);
+  });
+
   it("Should check with default value if env is not set", () => {
     Compatibility.override(undefined);
 
