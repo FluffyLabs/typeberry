@@ -1,13 +1,6 @@
-import fs from "node:fs";
-import { default as bandersnatchInit, derive_public_key } from "@fluffylabs/bandersnatch";
+import { bandersnatch } from "@typeberry/native";
 import { Bytes } from "@typeberry/bytes";
-import { type Opaque, check, isBrowser } from "@typeberry/utils";
-
-export const bandersnatchReady = bandersnatchInit(
-  isBrowser()
-    ? undefined
-    : fs.readFileSync(new URL(import.meta.resolve("@fluffylabs/bandersnatch/bandersnatch_bg.wasm"), import.meta.url)),
-);
+import { type Opaque, check } from "@typeberry/utils";
 
 /** Bandersnatch public key size. */
 export const BANDERSNATCH_KEY_BYTES = 32;
@@ -66,7 +59,7 @@ export type BlsKey = Opaque<Bytes<BLS_KEY_BYTES>, "BlsKey">;
 
 /** Derive a Bandersnatch public key from a seed. */
 export function publicKey(seed: Uint8Array): BandersnatchKey {
-  const key = derive_public_key(seed);
+  const key = bandersnatch.derive_public_key(seed);
 
   check(key[0] === 0, "Invalid Bandersnatch public key derived from seed");
 

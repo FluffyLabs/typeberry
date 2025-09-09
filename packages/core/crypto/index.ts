@@ -3,7 +3,7 @@ export type { Ed25519Key, Ed25519Signature } from "./ed25519.js";
 export { Ed25519Pair, ED25519_KEY_BYTES, ED25519_PRIV_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "./ed25519.js";
 
 export * as bandersnatch from "./bandersnatch.js";
-export * as bandersnatchWasm from "@fluffylabs/bandersnatch";
+export { bandersnatch as bandersnatchWasm } from "@typeberry/native";
 
 export type {
   BandersnatchKey,

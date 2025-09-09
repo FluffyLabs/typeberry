@@ -1,18 +1,7 @@
-import fs from "node:fs";
 import * as ed from "@noble/ed25519";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { type Opaque, check, isBrowser } from "@typeberry/utils";
-import { default as ed25519init, verify_ed25519, verify_ed25519_batch } from "ed25519-wasm/pkg/ed25519_wasm.js";
-
-const ed25119ready = ed25519init(
-  isBrowser()
-    ? undefined
-    : {
-        module_or_path: fs.readFileSync(
-          new URL(import.meta.resolve("ed25519-wasm/pkg/ed25519_wasm_bg.wasm"), import.meta.url),
-        ),
-      },
-);
+import { type Opaque, check } from "@typeberry/utils";
+import { ed25519 } from "@typeberry/native";
 
 /** ED25519 private key size. */
 export const ED25519_PRIV_KEY_BYTES = 32;
@@ -82,8 +71,6 @@ export type Input<T extends BytesBlob = BytesBlob> = {
  * https://graypaper.fluffylabs.dev/#/5f542d7/081300081b00
  */
 export async function verify<T extends BytesBlob>(input: Input<T>[]): Promise<boolean[]> {
-  await ed25119ready;
-
   if (input.length === 0) {
     return Promise.resolve([]);
   }
@@ -108,7 +95,7 @@ export async function verify<T extends BytesBlob>(input: Input<T>[]): Promise<bo
     offset += messageLength;
   }
 
-  const result = Array.from(verify_ed25519(data)).map((x) => x === 1);
+  const result = Array.from(ed25519.verify_ed25519(data)).map((x) => x === 1);
   return Promise.resolve(result);
 }
 
@@ -130,5 +117,5 @@ export async function verifyBatch<T extends BytesBlob>(input: Input<T>[]): Promi
 
   const data = BytesBlob.blobFromParts(first, ...rest).raw;
 
-  return Promise.resolve(verify_ed25519_batch(data));
+  return Promise.resolve(ed25519.verify_ed25519_batch(data));
 }

@@ -15,7 +15,7 @@
     "@typeberry/bytes": "0.0.1",
     "@typeberry/collections": "0.0.1",
     "@typeberry/config": "0.0.1",
-    "@typeberry/utils": "0.0.1",
-    "reed-solomon-wasm": "github:fluffylabs/reed-solomon-wasm#caaecce3b21ff11bbebdb2b8d4a5d5806ce4e280"
+    "@typeberry/native": "0.0.1-b29cbf6",
+    "@typeberry/utils": "0.0.1"
   }
 }
