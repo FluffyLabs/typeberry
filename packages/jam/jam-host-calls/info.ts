@@ -2,11 +2,10 @@ import { type ServiceId, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "
 import { BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { ServiceAccountInfo, ignoreValueWithDefault } from "@typeberry/state";
+import { ServiceAccountInfo } from "@typeberry/state";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
@@ -103,36 +102,19 @@ export class Info implements HostCallHandler {
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/337602337602?v=0.6.7
  */
-export const codecServiceAccountInfoWithThresholdBalance = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-  ? codec.object(
-      {
-        codeHash: codec.bytes(HASH_SIZE),
-        balance: codec.u64,
-        thresholdBalance: codec.u64,
-        accumulateMinGas: codec.u64.convert((i) => i, tryAsServiceGas),
-        onTransferMinGas: codec.u64.convert((i) => i, tryAsServiceGas),
-        storageUtilisationBytes: codec.u64,
-        storageUtilisationCount: codec.u32,
-        gratisStorage: codec.u64,
-        created: codec.u32.convert((x) => x, tryAsTimeSlot),
-        lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
-        parentService: codec.u32.convert((x) => x, tryAsServiceId),
-      },
-      "ServiceAccountInfoWithThresholdBalance",
-    )
-  : codec.object(
-      {
-        codeHash: codec.bytes(HASH_SIZE),
-        balance: codec.varU64,
-        thresholdBalance: codec.varU64,
-        accumulateMinGas: codec.varU64.convert((i) => i, tryAsServiceGas),
-        onTransferMinGas: codec.varU64.convert((i) => i, tryAsServiceGas),
-        storageUtilisationBytes: codec.varU64,
-        storageUtilisationCount: codec.varU32,
-        gratisStorage: ignoreValueWithDefault(tryAsU64(0)),
-        created: ignoreValueWithDefault(tryAsTimeSlot(0)),
-        lastAccumulation: ignoreValueWithDefault(tryAsTimeSlot(0)),
-        parentService: ignoreValueWithDefault(tryAsServiceId(0)),
-      },
-      "ServiceAccountInfoWithThresholdBalance",
-    );
+export const codecServiceAccountInfoWithThresholdBalance = codec.object(
+  {
+    codeHash: codec.bytes(HASH_SIZE),
+    balance: codec.u64,
+    thresholdBalance: codec.u64,
+    accumulateMinGas: codec.u64.convert((i) => i, tryAsServiceGas),
+    onTransferMinGas: codec.u64.convert((i) => i, tryAsServiceGas),
+    storageUtilisationBytes: codec.u64,
+    storageUtilisationCount: codec.u32,
+    gratisStorage: codec.u64,
+    created: codec.u32.convert((x) => x, tryAsTimeSlot),
+    lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
+    parentService: codec.u32.convert((x) => x, tryAsServiceId),
+  },
+  "ServiceAccountInfoWithThresholdBalance",
+);

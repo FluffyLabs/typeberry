@@ -124,7 +124,7 @@ export class OnChain {
 
     this.disputes = new Disputes(chainSpec, state);
 
-    this.reports = new Reports(chainSpec, state, hasher, new DbHeaderChain(blocks));
+    this.reports = new Reports(chainSpec, state, new DbHeaderChain(blocks));
     this.assurances = new Assurances(chainSpec, state);
     this.accumulate = new Accumulate(chainSpec, state);
     this.deferredTransfers = new DeferredTransfers(chainSpec, state);

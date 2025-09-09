@@ -86,57 +86,47 @@ export class Bless implements HostCallHandler {
       // we allow the index to go beyond `MEMORY_SIZE` (i.e. 2**32) and have the next `loadInto` fail with page fault.
       memIndex = tryAsU64(memIndex + tryAsU64(decoder.bytesRead()));
     }
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      // https://graypaper.fluffylabs.dev/#/7e6ff6a/367200367200?v=0.6.7
-      const res = new Uint8Array(tryAsExactBytes(codec.u32.sizeHint) * this.chainSpec.coresCount);
-      const decoder = Decoder.fromBlob(res);
-      const memoryReadResult = memory.loadInto(res, authorization);
-      if (memoryReadResult.isError) {
-        return PvmExecution.Panic;
-      }
-
-      const authorizers = tryAsPerCore(
-        decoder.sequenceFixLen(codec.u32.asOpaque<ServiceId>(), this.chainSpec.coresCount),
-        this.chainSpec,
-      );
-
-      const result = this.partialState.updatePrivilegedServices(manager, authorizers, validator, autoAccumulateEntries);
-      logger.trace(`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries})`);
-
-      if (result.isOk) {
-        logger.trace("BLESS result: OK");
-        regs.set(IN_OUT_REG, HostCallResult.OK);
-        return;
-      }
-
-      const e = result.error;
-
-      if (e === UpdatePrivilegesError.UnprivilegedService) {
-        logger.trace("BLESS result: HUH");
-        regs.set(IN_OUT_REG, HostCallResult.HUH);
-        return;
-      }
-
-      if (e === UpdatePrivilegesError.InvalidServiceId) {
-        logger.trace("BLESS result: WHO");
-        regs.set(IN_OUT_REG, HostCallResult.WHO);
-        return;
-      }
-
-      assertNever(e);
-    } else {
-      // Pre GP 0.6.7
-      const authorizationIndex = getServiceId(authorization);
-      if (manager === null || authorizationIndex === null || validator === null) {
-        regs.set(IN_OUT_REG, HostCallResult.WHO);
-        return;
-      }
-
-      // NOTE It's safe to convert to PerCore<ServiceId>, cause it's handled like this in a code base
-      const authorizers = tryAsPerCore(new Array(this.chainSpec.coresCount).fill(authorizationIndex), this.chainSpec);
-      this.partialState.updatePrivilegedServices(manager, authorizers, validator, autoAccumulateEntries);
-      logger.trace(`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries})`);
-      regs.set(IN_OUT_REG, HostCallResult.OK);
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/367200367200?v=0.6.7
+    const res = new Uint8Array(tryAsExactBytes(codec.u32.sizeHint) * this.chainSpec.coresCount);
+    const authorizersDecoder = Decoder.fromBlob(res);
+    const memoryReadResult = memory.loadInto(res, authorization);
+    if (memoryReadResult.isError) {
+      return PvmExecution.Panic;
     }
+
+    const authorizers = tryAsPerCore(
+      authorizersDecoder.sequenceFixLen(codec.u32.asOpaque<ServiceId>(), this.chainSpec.coresCount),
+      this.chainSpec,
+    );
+
+    const updateResult = this.partialState.updatePrivilegedServices(
+      manager,
+      authorizers,
+      validator,
+      autoAccumulateEntries,
+    );
+    logger.trace(`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries})`);
+
+    if (updateResult.isOk) {
+      logger.trace("BLESS result: OK");
+      regs.set(IN_OUT_REG, HostCallResult.OK);
+      return;
+    }
+
+    const e = updateResult.error;
+
+    if (e === UpdatePrivilegesError.UnprivilegedService) {
+      logger.trace("BLESS result: HUH");
+      regs.set(IN_OUT_REG, HostCallResult.HUH);
+      return;
+    }
+
+    if (e === UpdatePrivilegesError.InvalidServiceId) {
+      logger.trace("BLESS result: WHO");
+      regs.set(IN_OUT_REG, HostCallResult.WHO);
+      return;
+    }
+
+    assertNever(e);
   }
 }

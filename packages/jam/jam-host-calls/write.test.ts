@@ -10,7 +10,7 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { Compatibility, GpVersion, asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType } from "@typeberry/utils";
 import { TestAccounts } from "./externalities/test-accounts.js";
 import { HostCallResult } from "./results.js";
 import { Write } from "./write.js";
@@ -73,8 +73,6 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: Write", () => {
-  const itPost067 = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? it : it.skip;
-
   it("should write data to account state", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
@@ -93,7 +91,7 @@ describe("HostCalls: Write", () => {
     assert.deepStrictEqual(accounts.storage.data.size, 1);
   });
 
-  itPost067("should write data to account state when low balance but with gratisStorage", async () => {
+  it("should write data to account state when low balance but with gratisStorage", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId, { balance: 100n, gratisStorage: 150_000n });
     const write = new Write(serviceId, accounts);
