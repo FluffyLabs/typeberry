@@ -20,6 +20,7 @@
     "@typeberry/jam-network": "0.0.1",
     "@typeberry/json-parser": "0.0.1",
     "@typeberry/logger": "0.0.1",
+    "@typeberry/numbers": "0.0.1",
     "@typeberry/state-json": "0.0.1",
     "@typeberry/state-merkleization": "0.0.1",
     "@typeberry/utils": "0.0.1"
