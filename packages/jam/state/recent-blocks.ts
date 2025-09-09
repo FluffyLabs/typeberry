@@ -91,8 +91,8 @@ export class RecentBlocksHistory extends WithDebug {
       const recentBlocks = RecentBlocks.Codec.decode(decoder);
       return RecentBlocksHistory.create(recentBlocks);
     },
-    (_sizer) => {
-      return RecentBlocks.Codec.sizeHint;
+    (skip) => {
+      return RecentBlocks.Codec.skip(skip);
     },
   );
 
