@@ -5,8 +5,7 @@ import { type BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
 import { type HashDictionary, type HashSet, type KnownSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type Ed25519Key, ed25519 } from "@typeberry/crypto";
-import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
-import type { MmrHasher } from "@typeberry/mmr";
+import { WithHash, blake2b } from "@typeberry/hash";
 import type { SafroleStateUpdate } from "@typeberry/safrole";
 import { AvailabilityAssignment, type State, tryAsPerCore } from "@typeberry/state";
 import { OK, Result, asOpaqueType } from "@typeberry/utils";
@@ -58,7 +57,6 @@ export class Reports {
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly state: ReportsState,
-    public readonly mmrHasher: MmrHasher<KeccakHash>,
     public readonly headerChain: HeaderChain,
   ) {}
 
@@ -170,7 +168,7 @@ export class Reports {
   }
 
   verifyContextualValidity(input: ReportsInput) {
-    return verifyContextualValidity(input, this.state, this.mmrHasher, this.headerChain);
+    return verifyContextualValidity(input, this.state, this.headerChain);
   }
 
   checkSignatures(

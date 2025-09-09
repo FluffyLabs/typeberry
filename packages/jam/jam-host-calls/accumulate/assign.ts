@@ -69,34 +69,28 @@ export class Assign implements HostCallHandler {
     const authQueue = decoder.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
     const fixedSizeAuthQueue = FixedSizeArray.new(authQueue, AUTHORIZATION_QUEUE_SIZE);
 
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue})`);
-      const result = this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, authManager);
-      if (result.isOk) {
-        regs.set(IN_OUT_REG, HostCallResult.OK);
-        logger.trace("ASSIGN result: OK");
-        return;
-      }
-
-      const e = result.error;
-
-      if (e === UpdatePrivilegesError.UnprivilegedService) {
-        regs.set(IN_OUT_REG, HostCallResult.HUH);
-        logger.trace("ASSIGN result: HUH");
-        return;
-      }
-
-      if (e === UpdatePrivilegesError.InvalidServiceId) {
-        regs.set(IN_OUT_REG, HostCallResult.WHO);
-        logger.trace("ASSIGN result: WHO");
-        return;
-      }
-
-      assertNever(e);
-    } else {
+    logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue})`);
+    const result = this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, authManager);
+    if (result.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);
-      void this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, authManager);
-      logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue})`);
+      logger.trace("ASSIGN result: OK");
+      return;
     }
+
+    const e = result.error;
+
+    if (e === UpdatePrivilegesError.UnprivilegedService) {
+      regs.set(IN_OUT_REG, HostCallResult.HUH);
+      logger.trace("ASSIGN result: HUH");
+      return;
+    }
+
+    if (e === UpdatePrivilegesError.InvalidServiceId) {
+      regs.set(IN_OUT_REG, HostCallResult.WHO);
+      logger.trace("ASSIGN result: WHO");
+      return;
+    }
+
+    assertNever(e);
   }
 }

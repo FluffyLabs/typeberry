@@ -75,8 +75,8 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
     const result = await client.call("bestBlock");
     assert.deepStrictEqual(result, [
       [
-        66, 194, 80, 245, 60, 36, 98, 48, 128, 121, 86, 15, 205, 100, 219, 56, 13, 150, 95, 36, 84, 240, 237, 247, 53,
-        26, 248, 213, 42, 160, 196, 175,
+        27, 205, 76, 67, 50, 215, 111, 248, 191, 130, 156, 35, 94, 95, 149, 183, 75, 112, 167, 197, 106, 191, 38, 205,
+        196, 131, 235, 118, 184, 109, 20, 12,
       ],
       100,
     ]);
@@ -87,8 +87,8 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
     const result = await client.call("finalizedBlock");
     assert.deepStrictEqual(result, [
       [
-        66, 194, 80, 245, 60, 36, 98, 48, 128, 121, 86, 15, 205, 100, 219, 56, 13, 150, 95, 36, 84, 240, 237, 247, 53,
-        26, 248, 213, 42, 160, 196, 175,
+        27, 205, 76, 67, 50, 215, 111, 248, 191, 130, 156, 35, 94, 95, 149, 183, 75, 112, 167, 197, 106, 191, 38, 205,
+        196, 131, 235, 118, 184, 109, 20, 12,
       ],
       100,
     ]);
@@ -100,8 +100,8 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
     const result = await client.call("parent", [bestBlock[0]]);
     assert.deepStrictEqual(result, [
       [
-        159, 166, 42, 25, 26, 110, 58, 161, 135, 35, 22, 226, 246, 110, 143, 51, 78, 118, 231, 78, 58, 182, 97, 51, 26,
-        227, 218, 85, 88, 198, 182, 112,
+        167, 227, 61, 178, 232, 8, 11, 252, 231, 179, 15, 187, 143, 145, 251, 155, 198, 98, 58, 176, 94, 115, 62, 215,
+        124, 179, 39, 47, 18, 168, 230, 96,
       ],
       99,
     ]);
@@ -113,8 +113,8 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
     const result = await client.call("stateRoot", [bestBlock[0]]);
     assert.deepStrictEqual(result, [
       [
-        16, 112, 132, 190, 44, 222, 130, 94, 241, 239, 224, 184, 68, 197, 145, 224, 187, 78, 199, 118, 34, 37, 53, 112,
-        249, 148, 166, 40, 119, 125, 191, 174,
+        181, 215, 155, 230, 97, 89, 39, 179, 94, 250, 150, 113, 51, 30, 149, 97, 124, 93, 224, 129, 2, 219, 70, 133,
+        160, 127, 241, 252, 233, 23, 46, 26,
       ],
     ]);
   });
@@ -127,7 +127,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
     const stats = BytesBlob.blobFromNumbers(result[0] as number[]);
     assert.deepStrictEqual(
       stats.toString(),
-      "0x0100000000000000000000000000000001000000010000000100000000000000020000003d00000002000000010000000200000000000000000000000000000002000000010000000100000000000000010000006200000002000000010000000000000000000000000000000000000001000000010000000000000000000000000000000000000001000000010000000300000000000000040000009300000006000000060000000100000000000000050000003301000006000000060000000200000000000000000000000000000006000000060000000100000000000000020000005500000006000000060000000300000000000000030000008b00000006000000060000000200000000000000020000005a00000006000000060000000000000000008234c0fc7d00000000000000000100000000016204c0fc7d0000000000000000",
+      "0x02000000000000000000000000000000030000000400000001000000000000000000000000000000040000000500000001000000000000000000000000000000030000000500000000000000000000000000000000000000030000000500000000000000000000000000000000000000040000000500000001000000000000000000000000000000040000000300000005000000000000000000000000000000040000000900000001000000000000000000000000000000020000000900000003000000000000000000000000000000040000000a00000000000000000000000000000000000000070000000b00000002000000000000000000000000000000060000000900000001000000000000000000000000000000060000000b000000000000000000000081a905000000008169c0fda50100000000000001c0fda50000000001c04ffb0000",
     );
   });
 
@@ -137,9 +137,10 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
     const result = await client.call("serviceData", [bestBlock[0], 0]);
     assert.deepStrictEqual(result, [
       [
-        2, 66, 162, 149, 169, 58, 199, 243, 186, 86, 79, 11, 232, 48, 137, 166, 71, 169, 189, 56, 97, 121, 140, 249,
-        251, 255, 174, 13, 170, 44, 225, 255, 255, 255, 255, 255, 255, 255, 255, 255, 10, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0,
-        0, 0, 0, 0, 0, 0, 139, 2, 0, 0, 0, 0, 0, 124, 0, 0, 0,
+        47, 70, 180, 238, 140, 80, 45, 11, 158, 102, 199, 136, 35, 180, 149, 158, 34, 193, 1, 217, 163, 209, 184, 37,
+        84, 177, 145, 44, 193, 31, 110, 181, 255, 255, 255, 255, 255, 255, 255, 255, 10, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0,
+        0, 0, 0, 0, 0, 45, 122, 2, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 11, 0, 0, 0, 0, 0, 0, 0, 100,
+        0, 0, 0, 0, 0, 0, 0,
       ],
     ]);
   });
@@ -156,20 +157,20 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
   });
 
   const testPreimageHash = () =>
-    Array.from(Bytes.parseBytes("0x79062971f191d944d07dac7afb6e4425dc3632567f94915e47c04f88f0b25851", HASH_SIZE).raw);
+    Array.from(Bytes.parseBytes("0x2f46b4ee8c502d0b9e66c78823b4959e22c101d9a3d1b82554b1912cc11f6eb5", HASH_SIZE).raw);
 
   it("gets service preimage", async () => {
     const bestBlock = await client.call("bestBlock");
     assert(Array.isArray(bestBlock));
-    const result = await client.call("servicePreimage", [bestBlock[0], 0, testPreimageHash()]);
-    assert.deepStrictEqual(result, [[178, 83, 93, 171, 200, 230, 45, 217, 31, 223, 139, 19, 107, 149, 165, 229]]);
+    const [data] = (await client.call("servicePreimage", [bestBlock[0], 0, testPreimageHash()])) as [number[]];
+    assert.deepStrictEqual(data.length, 116356);
   });
 
   it("gets service request", async () => {
     const bestBlock = await client.call("bestBlock");
     assert(Array.isArray(bestBlock));
-    const result = await client.call("serviceRequest", [bestBlock[0], 0, testPreimageHash(), 16]);
-    assert.deepStrictEqual(result, [[78]]);
+    const result = await client.call("serviceRequest", [bestBlock[0], 0, testPreimageHash(), 116356]);
+    assert.deepStrictEqual(result, [[0]]);
   });
 
   it("lists services", async () => {
@@ -192,7 +193,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
 
     try {
       const [data] = await once(subscription, "data", { signal: abort.signal });
-      assert.deepStrictEqual(data, [[178, 83, 93, 171, 200, 230, 45, 217, 31, 223, 139, 19, 107, 149, 165, 229]]);
+      assert.deepStrictEqual(data[0].length, 116356);
     } finally {
       await subscription.unsubscribe();
     }

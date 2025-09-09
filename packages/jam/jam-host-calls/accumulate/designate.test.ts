@@ -14,7 +14,7 @@ import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
-import { Compatibility, GpVersion, Result } from "@typeberry/utils";
+import { Result } from "@typeberry/utils";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { UnprivilegedError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
@@ -144,11 +144,7 @@ describe("HostCalls: Designate", () => {
     await designate.execute(gas, registers, memory);
 
     // then
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
-    } else {
-      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
-    }
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
     assert.deepStrictEqual(accumulate.validatorsData.length, 0);
   });
 });
