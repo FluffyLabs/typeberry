@@ -12,8 +12,8 @@
   "scripts": {
     "start": "tsx ./index.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
-    "test:e2e-setup": "GP_VERSION=0.7.0 tsx ./test/e2e-setup.ts",
-    "test:e2e": "npm run test:e2e-setup && GP_VERSION=0.7.0 tsx --test ./test/e2e.ts"
+    "test:e2e-setup": "GP_VERSION=0.7.0-preview tsx ./test/e2e-setup.ts",
+    "test:e2e": "GP_VERSION=0.7.0-preview tsx --test ./test/e2e.ts"
   },
   "dependencies": {
     "@typeberry/block": "0.0.1",
