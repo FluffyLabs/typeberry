@@ -25,7 +25,7 @@ jobs:
     - name: Build Typeberry library
       run: npm run build -w @typeberry/lib
     - name: Publish package
-      working-directory: ./dist/typeberry-lib
+      working-directory: ./dist/lib
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       run: npm publish --access public
