@@ -34,8 +34,7 @@ import {
   ED25519_SIGNATURE_BYTES,
   type Ed25519Signature,
 } from "@typeberry/crypto";
-import { HASH_SIZE, type KeccakHash, type OpaqueHash, WithHash, blake2b, keccak } from "@typeberry/hash";
-import type { MmrHasher } from "@typeberry/mmr";
+import { HASH_SIZE, type OpaqueHash, WithHash, blake2b } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AvailabilityAssignment,
@@ -53,13 +52,6 @@ import { asOpaqueType } from "@typeberry/utils";
 import { Reports, type ReportsState } from "./reports.js";
 
 export const ENTROPY = getEntropy(1, 2, 3, 4);
-
-const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then((hasher) => {
-  return {
-    hashConcat: (a, b) => keccak.hashBlobs(hasher, [a, b]),
-    hashConcatPrepend: (id, a, b) => keccak.hashBlobs(hasher, [id, a, b]),
-  };
-});
 
 type WorkReportOptions = {
   core: number;
@@ -165,7 +157,7 @@ export async function newReports(options: Parameters<typeof newReportsState>[0] 
     },
   };
 
-  return new Reports(tinyChainSpec, state, await hasher, headerChain);
+  return new Reports(tinyChainSpec, state, headerChain);
 }
 
 export function newCredential(index: number, signature?: Ed25519Signature) {

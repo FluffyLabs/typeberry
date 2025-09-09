@@ -11,9 +11,7 @@ import type { AuthorizerHash, WorkPackageHash, WorkPackageInfo } from "@typeberr
 import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
-import { type KeccakHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
-import type { MmrHasher } from "@typeberry/mmr";
 import {
   type AvailabilityAssignment,
   type CoreStatistics,
@@ -268,11 +266,6 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   );
   const expectedOutput = TestReportsResult.toReportsResult(testContent.output);
 
-  const keccakHasher = await keccak.KeccakHasher.create();
-  const hasher: MmrHasher<KeccakHash> = {
-    hashConcat: (a, b) => keccak.hashBlobs(keccakHasher, [a, b]),
-    hashConcatPrepend: (id, a, b) => keccak.hashBlobs(keccakHasher, [id, a, b]),
-  };
   // Seems like we don't have any additional source of information
   // for which lookup headers are in chain, so we just use the recent
   // blocks history.
@@ -282,7 +275,7 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
     },
   };
 
-  const reports = new Reports(spec, preState.state, hasher, headerChain);
+  const reports = new Reports(spec, preState.state, headerChain);
 
   const output = await reports.transition(input);
   let state = reports.state;

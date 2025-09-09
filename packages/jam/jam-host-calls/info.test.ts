@@ -23,7 +23,6 @@ const gas = gasCounter(tryAsGas(0));
 
 function prepareRegsAndMemory(
   serviceId: ServiceId,
-  // TODO [ToDr] Due to changes in GP for some time this wasn't constant.
   accountInfoLength = tryAsExactBytes(codecServiceAccountInfoWithThresholdBalance.sizeHint),
 ) {
   const pageStart = 2 ** 16;
