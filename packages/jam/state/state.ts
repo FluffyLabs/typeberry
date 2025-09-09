@@ -1,7 +1,7 @@
 import type { EntropyHash, PerEpochBlock, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report.js";
+import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray, ImmutableHashSet, KnownSizeArray } from "@typeberry/collections";
 import type { U32 } from "@typeberry/numbers";

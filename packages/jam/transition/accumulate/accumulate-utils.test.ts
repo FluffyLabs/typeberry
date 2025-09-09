@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type EntropyHash, tryAsCoreIndex, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
-import { RefineContext } from "@typeberry/block/refine-context.js";
+import { RefineContext, type WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
-import { type WorkPackageHash, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
+import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, HashSet } from "@typeberry/collections";

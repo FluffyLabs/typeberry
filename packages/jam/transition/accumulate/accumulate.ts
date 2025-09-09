@@ -10,15 +10,13 @@ import type { WorkReport } from "@typeberry/block/work-report.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import { HASH_SIZE } from "@typeberry/hash";
 
 import { HashSet } from "@typeberry/collections";
 import { KeccakHasher } from "@typeberry/hash/keccak.js";
-import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import {
   AccumulationStateUpdate,
   PartiallyUpdatedState,
-  type ServiceStateUpdate,
 } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
@@ -28,7 +26,6 @@ import {
   type AccumulationOutput,
   ServiceAccountInfo,
   type ServicesUpdate,
-  type State,
   hashComparator,
   tryAsPerCore,
 } from "@typeberry/state";
@@ -41,48 +38,17 @@ import { FetchExternalities } from "../externalities/index.js";
 import type { CountAndGasUsed } from "../statistics.js";
 import { AccumulateData } from "./accumulate-data.js";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
+import {
+  type AccumulateInput,
+  type AccumulateResult,
+  type AccumulateRoot,
+  type AccumulateState,
+  type AccumulateStateUpdate,
+  GAS_TO_INVOKE_WORK_REPORT,
+} from "./accumulate-state.js";
 import { generateNextServiceId, getWorkPackageHashes } from "./accumulate-utils.js";
 import type { Operand } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
-
-export type AccumulateRoot = OpaqueHash;
-
-export type AccumulateInput = {
-  /** time slot from header */
-  slot: TimeSlot;
-  /** List of newly available work-reports */
-  reports: WorkReport[];
-  /** eta0' (after Safrole STF) - it is not eta0 from state! */
-  entropy: EntropyHash;
-};
-
-export type AccumulateState = Pick<
-  State,
-  | "designatedValidatorData"
-  | "timeslot"
-  | "authQueues"
-  | "getService"
-  | "recentlyAccumulated"
-  | "accumulationQueue"
-  | "privilegedServices"
->;
-
-/** Aggregated update of the accumulation state transition. */
-export type AccumulateStateUpdate = Pick<
-  State,
-  /* TODO [ToDr] seems that we are doing the same stuff as safrole? */
-  "timeslot"
-> &
-  Partial<Pick<State, "recentlyAccumulated" | "accumulationQueue">> &
-  ServiceStateUpdate;
-
-export type AccumulateResult = {
-  root: AccumulateRoot;
-  stateUpdate: AccumulateStateUpdate;
-  accumulationStatistics: Map<ServiceId, CountAndGasUsed>;
-  pendingTransfers: PendingTransfer[];
-  accumulationOutputLog: AccumulationOutput[];
-};
 
 export const ACCUMULATION_ERROR = "duplicate service created";
 export type ACCUMULATION_ERROR = typeof ACCUMULATION_ERROR;
@@ -105,9 +71,6 @@ enum PvmInvocationError {
   NoService = 0,
   NoPreimage = 1,
 }
-
-/** `G_A`: The gas allocated to invoke a work-report’s Accumulation logic. */
-export const GAS_TO_INVOKE_WORK_REPORT = 10_000_000n;
 
 const logger = Logger.new(import.meta.filename, "accumulate");
 

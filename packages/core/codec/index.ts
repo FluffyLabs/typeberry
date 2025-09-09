@@ -1,5 +1,6 @@
 export * from "./decoder.js";
 export * from "./encoder.js";
+export * from "./descriptor.js";
 export * from "./descriptors.js";
 export * from "./validation.js";
-export { ObjectView, SequenceView } from "./view.js";
+export * from "./view.js";

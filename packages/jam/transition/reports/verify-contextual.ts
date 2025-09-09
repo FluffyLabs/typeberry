@@ -1,6 +1,10 @@
 import type { HeaderHash } from "@typeberry/block";
-import type { RefineContext } from "@typeberry/block/refine-context.js";
-import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
+import {
+  type ExportsRootHash,
+  type RefineContext,
+  type WorkPackageHash,
+  WorkPackageInfo,
+} from "@typeberry/block/refine-context.js";
 import { HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import { Logger } from "@typeberry/logger";
@@ -9,7 +13,7 @@ import { type BlockState, RecentBlocksHistory } from "@typeberry/state/recent-bl
 import { OK, Result } from "@typeberry/utils";
 import type { RecentHistoryStateUpdate } from "../recent-history.js";
 import { ReportsError } from "./error.js";
-import type { ReportsInput } from "./reports.js";
+import type { ReportsInput } from "./input.js";
 
 /** `L`: The maximum age in timeslots of the lookup anchor. */
 export const L = 14_400;

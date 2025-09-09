@@ -7,7 +7,7 @@ import {
 } from "@typeberry/block";
 import { fromJson, guaranteesExtrinsicFromJson, segmentRootLookupItemFromJson } from "@typeberry/block-json";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees.js";
-import type { AuthorizerHash, WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
+import type { AuthorizerHash, WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";

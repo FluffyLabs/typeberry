@@ -7,7 +7,7 @@ import {
 } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
 import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
-import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report.js";
+import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { Bytes } from "@typeberry/bytes";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";

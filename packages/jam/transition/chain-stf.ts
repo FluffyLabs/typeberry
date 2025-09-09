@@ -1,6 +1,6 @@
 import type { BlockView, CoreIndex, EntropyHash, HeaderHash, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
-import type { AuthorizerHash } from "@typeberry/block/work-report.js";
+import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
@@ -15,9 +15,13 @@ import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-s
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
 import type { State } from "@typeberry/state";
 import { type ErrorResult, OK, Result, type TaggedError, assertEmpty, measure } from "@typeberry/utils";
-import type { ACCUMULATION_ERROR, AccumulateStateUpdate } from "./accumulate/accumulate.js";
-import { DeferredTransfers, type DeferredTransfersErrorCode } from "./accumulate/deferred-transfers.js";
-import { Accumulate } from "./accumulate/index.js";
+import {
+  type ACCUMULATION_ERROR,
+  Accumulate,
+  type AccumulateStateUpdate,
+  DeferredTransfers,
+  type DeferredTransfersErrorCode,
+} from "./accumulate/index.js";
 import { Assurances, type AssurancesError, type AssurancesStateUpdate } from "./assurances.js";
 import { Authorization, type AuthorizationStateUpdate } from "./authorization.js";
 import type { TransitionHasher } from "./hasher.js";

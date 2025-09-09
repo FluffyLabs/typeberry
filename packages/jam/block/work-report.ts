@@ -3,20 +3,18 @@ import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U16, type U32, isU16, tryAsU32 } from "@typeberry/numbers";
-import { type Opaque, WithDebug } from "@typeberry/utils";
+import { WithDebug } from "@typeberry/utils";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import { type CoreIndex, type ServiceGas, tryAsCoreIndex } from "./common.js";
-import { RefineContext } from "./refine-context.js";
+import {
+  type AuthorizerHash,
+  type ExportsRootHash,
+  RefineContext,
+  type WorkPackageHash,
+  WorkPackageInfo,
+} from "./refine-context.js";
 import { type WorkItemsCount, tryAsWorkItemsCount } from "./work-package.js";
 import { WorkResult } from "./work-result.js";
-
-/** Authorizer hash. */
-export type AuthorizerHash = Opaque<OpaqueHash, "AuthorizerHash">;
-
-/** Blake2B hash of a work package. */
-export type WorkPackageHash = Opaque<OpaqueHash, "WorkPackageHash">;
-/** Work package exported segments merkle root hash. */
-export type ExportsRootHash = Opaque<OpaqueHash, "ExportsRootHash">;
 
 /**
  * Details about the work package being reported on.
@@ -49,31 +47,6 @@ export class WorkPackageSpec extends WithDebug {
     public readonly exportsCount: U16,
   ) {
     super();
-  }
-}
-
-/**
- * Mapping between work package hash and root hash of it's exports.
- *
- * Used to construct a dictionary.
- */
-export class WorkPackageInfo extends WithDebug {
-  static Codec = codec.Class(WorkPackageInfo, {
-    workPackageHash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
-    segmentTreeRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
-  });
-
-  private constructor(
-    /** Hash of the described work package. */
-    readonly workPackageHash: WorkPackageHash,
-    /** Exports root hash. */
-    readonly segmentTreeRoot: ExportsRootHash,
-  ) {
-    super();
-  }
-
-  static create({ workPackageHash, segmentTreeRoot }: CodecRecord<WorkPackageInfo>) {
-    return new WorkPackageInfo(workPackageHash, segmentTreeRoot);
   }
 }
 

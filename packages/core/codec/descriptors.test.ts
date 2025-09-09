@@ -3,7 +3,8 @@ import { describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { Decoder } from "./decoder.js";
-import { type CodecRecord, codec } from "./descriptors.js";
+import type { CodecRecord } from "./descriptor.js";
+import { codec } from "./descriptors.js";
 import { Encoder } from "./encoder.js";
 
 class TestHeader {

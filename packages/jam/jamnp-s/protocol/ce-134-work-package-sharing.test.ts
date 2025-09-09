@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsCoreIndex } from "@typeberry/block";
-import { WorkPackageInfo } from "@typeberry/block/work-report.js";
+import { WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";

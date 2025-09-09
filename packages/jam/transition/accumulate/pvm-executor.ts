@@ -24,6 +24,7 @@ import { GasHostCall } from "@typeberry/jam-host-calls/gas.js";
 import { type AccountsInfo, Info } from "@typeberry/jam-host-calls/info.js";
 import { LogHostCall } from "@typeberry/jam-host-calls/log.js";
 import { type AccountsLookup, Lookup } from "@typeberry/jam-host-calls/lookup.js";
+import { Missing } from "@typeberry/jam-host-calls/missing.js";
 import { type AccountsRead, Read } from "@typeberry/jam-host-calls/read.js";
 import { type AccountsWrite, Write } from "@typeberry/jam-host-calls/write.js";
 import { type HostCallHandler, HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
@@ -77,7 +78,10 @@ export class PvmExecutor {
     hostCallHandlers: HostCallHandler[],
     private entrypoint: ProgramCounter,
   ) {
-    this.hostCalls = new HostCalls(...hostCallHandlers);
+    this.hostCalls = new HostCalls({
+      missing: new Missing(),
+      handlers: hostCallHandlers,
+    });
     this.pvm = new PvmHostCallExtension(this.pvmInstanceManager, this.hostCalls);
   }
 

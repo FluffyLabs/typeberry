@@ -1,4 +1,3 @@
-import type { ServiceId } from "@typeberry/block";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { type RegisterIndex, tryAsRegisterIndex } from "@typeberry/pvm-interpreter/registers.js";
@@ -30,7 +29,7 @@ export interface HostCallHandler {
   readonly gasCost: SmallGas | ((reg: IHostCallRegisters) => Gas);
 
   /** Currently executing service id. */
-  readonly currentServiceId: ServiceId;
+  readonly currentServiceId: U32;
 
   /** Input&Output registers that we should add to tracing log. */
   readonly tracedRegisters: RegisterIndex[];
