@@ -52,12 +52,10 @@ import { Status } from "./status.js";
 
 type InterpreterOptions = {
   useSbrkGas?: boolean;
-  ignoreInstructionGas?: boolean;
 };
 
 export class Interpreter {
   private readonly useSbrkGas: boolean;
-  private readonly ignoreInstructionGas: boolean;
   private registers = new Registers();
   private code: Uint8Array = new Uint8Array();
   private mask = Mask.empty();
@@ -85,9 +83,8 @@ export class Interpreter {
   private basicBlocks: BasicBlocks;
   private jumpTable = JumpTable.empty();
 
-  constructor({ useSbrkGas = false, ignoreInstructionGas = false }: InterpreterOptions = {}) {
+  constructor({ useSbrkGas = false }: InterpreterOptions = {}) {
     this.useSbrkGas = useSbrkGas;
-    this.ignoreInstructionGas = ignoreInstructionGas;
     this.argsDecoder = new ArgsDecoder();
     this.basicBlocks = new BasicBlocks();
     const mathOps = new MathOps(this.registers);
@@ -183,7 +180,7 @@ export class Interpreter {
     const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
     const isValidInstruction = Instruction[currentInstruction] !== undefined;
     const gasCost = instructionGasMap[currentInstruction] ?? instructionGasMap[Instruction.TRAP];
-    const underflow = this.ignoreInstructionGas ? false : this.gas.sub(gasCost);
+    const underflow = this.gas.sub(gasCost);
     if (underflow) {
       this.status = Status.OOG;
       return this.status;

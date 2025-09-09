@@ -47,7 +47,7 @@ import {
   GAS_TO_INVOKE_WORK_REPORT,
 } from "./accumulate-state.js";
 import { generateNextServiceId, getWorkPackageHashes } from "./accumulate-utils.js";
-import { Operand } from "./operand.js";
+import type { Operand } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
 
 export const ACCUMULATION_ERROR = "duplicate service created";
@@ -73,12 +73,6 @@ enum PvmInvocationError {
 }
 
 const logger = Logger.new(import.meta.filename, "accumulate");
-
-const ARGS_CODEC_0_6_5 = codec.object({
-  slot: codec.u32.asOpaque<TimeSlot>(),
-  serviceId: codec.u32.asOpaque<ServiceId>(),
-  operands: codec.sequenceVarLen(Operand.Codec),
-});
 
 const ARGS_CODEC = codec.object({
   slot: codec.varU32.asOpaque<TimeSlot>(),
@@ -159,16 +153,8 @@ export class Accumulate {
     };
 
     const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);
-
-    let args = BytesBlob.empty();
-    if (Compatibility.is(GpVersion.V0_6_5)) {
-      args = Encoder.encodeObject(ARGS_CODEC_0_6_5, { slot, serviceId, operands }, this.chainSpec);
-    } else {
-      args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands: tryAsU32(operands.length) });
-    }
-
+    const args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands: tryAsU32(operands.length) });
     const result = await executor.run(args, tryAsGas(gas));
-
     const [newState, checkpoint] = partialState.getStateUpdates();
 
     /**
