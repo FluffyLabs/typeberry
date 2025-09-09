@@ -110,6 +110,7 @@ export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
 export class ImporterReady extends State<"ready(importer)", Finished, WorkerConfig> {
   public readonly onBlock = new Listener<BlockView>();
   private importer: Importer | null = null;
+  private readonly onImporter = new Listener<void>();
 
   constructor() {
     super({
@@ -129,6 +130,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
 
   setImporter(importer: Importer) {
     this.importer = importer;
+    this.onImporter.emit();
   }
 
   getConfig(): WorkerConfig {
@@ -169,7 +171,15 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
   }
 
   private async getBestStateRootHash(): Promise<RespondAndTransitionTo<Uint8Array, Finished>> {
-    const rootHash = this.importer?.getBestStateRootHash() ?? null;
+    // importer not ready yet, so wait for it.
+    if (this.importer === null) {
+      await new Promise((resolve) => {
+        this.onImporter.once(resolve);
+      });
+      return this.getBestStateRootHash();
+    }
+
+    const rootHash = this.importer.getBestStateRootHash();
     return {
       response: rootHash === null ? Bytes.zero(HASH_SIZE).raw : rootHash.raw,
     };
