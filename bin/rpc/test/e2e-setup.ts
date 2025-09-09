@@ -5,7 +5,7 @@ import { JamConfig, importBlocks, main as node } from "@typeberry/node";
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 
 const withRelPath = (path: string) => {
-  return `../../../${path}`;
+  return `../../${path}`;
 };
 
 async function main() {
