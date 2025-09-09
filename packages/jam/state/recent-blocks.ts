@@ -153,10 +153,10 @@ export class RecentBlocksHistory extends WithDebug {
       const legacyBlocks = LegacyRecentBlocks.Codec.decode(decoder);
       return RecentBlocksHistory.legacyCreate(legacyBlocks);
     },
-    (_sizer) => {
+    (skip) => {
       return Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-        ? RecentBlocks.Codec.sizeHint
-        : LegacyRecentBlocks.Codec.sizeHint;
+        ? RecentBlocks.Codec.skip(skip)
+        : LegacyRecentBlocks.Codec.skip(skip);
     },
   );
 
