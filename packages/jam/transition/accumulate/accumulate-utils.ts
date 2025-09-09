@@ -40,9 +40,9 @@ type NextServiceIdInput = {
 };
 
 const NEXT_ID_CODEC = codec.object({
-  serviceId: codec.u32.asOpaque<ServiceId>(),
+  serviceId: codec.varU32.asOpaque<ServiceId>(),
   entropy: codec.bytes(HASH_SIZE).asOpaque<EntropyHash>(),
-  timeslot: codec.u32.asOpaque<TimeSlot>(),
+  timeslot: codec.varU32.asOpaque<TimeSlot>(),
 });
 
 /**

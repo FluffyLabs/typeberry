@@ -87,7 +87,7 @@ describe("accumulate-utils", () => {
       const serviceId = tryAsServiceId(5);
       const entropy: EntropyHash = Bytes.fill(HASH_SIZE, 4).asOpaque();
       const timeslot = tryAsTimeSlot(6);
-      const expectedServiceId = tryAsServiceId(3570515081);
+      const expectedServiceId = tryAsServiceId(2596189433);
 
       const result = generateNextServiceId({ serviceId, entropy, timeslot }, tinyChainSpec);
 
