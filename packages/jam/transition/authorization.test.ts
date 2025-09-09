@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import { tryAsTimeSlot } from "@typeberry/block";
 import { MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
-import type { AuthorizerHash } from "@typeberry/block/work-report.js";
+import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { Bytes } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";

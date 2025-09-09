@@ -18,9 +18,9 @@ import {
   ReportGuarantee,
   guaranteesExtrinsicCodec,
 } from "@typeberry/block/guarantees.js";
-import { RefineContext } from "@typeberry/block/refine-context.js";
+import { RefineContext, type WorkPackageHash, type WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { testWorkReportHex } from "@typeberry/block/test-helpers.js";
-import { type WorkPackageHash, type WorkPackageInfo, WorkReport } from "@typeberry/block/work-report.js";
+import { WorkReport } from "@typeberry/block/work-report.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder, codec } from "@typeberry/codec";

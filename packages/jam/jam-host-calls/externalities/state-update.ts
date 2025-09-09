@@ -1,7 +1,7 @@
 import type { CoreIndex, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import type { AuthorizerHash } from "@typeberry/block/work-report.js";
+import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import type { OpaqueHash } from "@typeberry/hash";

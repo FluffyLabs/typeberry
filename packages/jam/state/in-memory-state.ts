@@ -12,8 +12,8 @@ import {
 } from "@typeberry/block";
 import { AUTHORIZATION_QUEUE_SIZE, type MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
+import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
 import type { Ticket } from "@typeberry/block/tickets.js";
-import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { codec } from "@typeberry/codec";
 import {

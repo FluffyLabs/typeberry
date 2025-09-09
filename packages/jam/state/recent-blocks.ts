@@ -1,6 +1,6 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import { codecHashDictionary, codecKnownSizeArray } from "@typeberry/block/codec.js";
-import { type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
+import { type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { type CodecRecord, Descriptor, codec, readonlyArray } from "@typeberry/codec";
 import { type HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";

@@ -1,7 +1,7 @@
 import { type CoreIndex, type ServiceGas, tryAsServiceGas } from "@typeberry/block";
-import type { RefineContext } from "@typeberry/block/refine-context.js";
+import { type AuthorizerHash, type RefineContext, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
-import { type AuthorizerHash, WorkPackageInfo, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
+import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
 import type { WorkResult } from "@typeberry/block/work-result.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";

@@ -8,7 +8,7 @@ import {
 import { codecFixedSizeArray, codecKnownSizeArray } from "@typeberry/block/codec.js";
 import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report.js";
+import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Descriptor, codec, readonlyArray } from "@typeberry/codec";
 import { HashSet } from "@typeberry/collections";

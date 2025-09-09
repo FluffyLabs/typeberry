@@ -3,7 +3,6 @@ import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type Opaque, WithDebug } from "@typeberry/utils";
 import type { StateRootHash, TimeSlot } from "./common.js";
 import type { HeaderHash } from "./hash.js";
-import type { WorkPackageHash } from "./work-report.js";
 
 /**
  * Keccak-256 hash of the BEEFY MMR root.
@@ -12,6 +11,39 @@ import type { WorkPackageHash } from "./work-report.js";
  */
 export type BeefyHash = Opaque<OpaqueHash, "BeefyHash">;
 
+/** Authorizer hash. */
+export type AuthorizerHash = Opaque<OpaqueHash, "AuthorizerHash">;
+
+/** Blake2B hash of a work package. */
+export type WorkPackageHash = Opaque<OpaqueHash, "WorkPackageHash">;
+
+/** Work package exported segments merkle root hash. */
+export type ExportsRootHash = Opaque<OpaqueHash, "ExportsRootHash">;
+
+/**
+ * Mapping between work package hash and root hash of it's exports.
+ *
+ * Used to construct a dictionary.
+ */
+export class WorkPackageInfo extends WithDebug {
+  static Codec = codec.Class(WorkPackageInfo, {
+    workPackageHash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
+    segmentTreeRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
+  });
+
+  private constructor(
+    /** Hash of the described work package. */
+    readonly workPackageHash: WorkPackageHash,
+    /** Exports root hash. */
+    readonly segmentTreeRoot: ExportsRootHash,
+  ) {
+    super();
+  }
+
+  static create({ workPackageHash, segmentTreeRoot }: CodecRecord<WorkPackageInfo>) {
+    return new WorkPackageInfo(workPackageHash, segmentTreeRoot);
+  }
+}
 /**
  * `X`: Refinement Context - state of the chain at the point
  * that the report's corresponding work-package was evaluated.

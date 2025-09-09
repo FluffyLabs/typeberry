@@ -1,7 +1,7 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { check, ensure } from "@typeberry/utils";
 import type { Decoder } from "./decoder.js";
-import type { ClassConstructor, CodecRecord, Descriptor, DescriptorRecord } from "./descriptors.js";
+import type { ClassConstructor, CodecRecord, Descriptor, DescriptorRecord } from "./descriptor.js";
 import { Skipper } from "./skip.js";
 
 /** View type for given complex object `T`. */
