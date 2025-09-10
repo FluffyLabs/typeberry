@@ -1,5 +1,5 @@
-import { bandersnatch } from "@typeberry/native";
 import { Bytes } from "@typeberry/bytes";
+import { bandersnatch } from "@typeberry/native";
 import { type Opaque, check } from "@typeberry/utils";
 
 /** Bandersnatch public key size. */

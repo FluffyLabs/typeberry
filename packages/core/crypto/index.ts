@@ -4,6 +4,7 @@ export { Ed25519Pair, ED25519_KEY_BYTES, ED25519_PRIV_KEY_BYTES, ED25519_SIGNATU
 
 export * as bandersnatch from "./bandersnatch.js";
 export { bandersnatch as bandersnatchWasm } from "@typeberry/native";
+export { initAll as initWasm } from "@typeberry/native";
 
 export type {
   BandersnatchKey,

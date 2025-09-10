@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { type PerValidator, tryAsPerValidator } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
@@ -20,6 +20,10 @@ import {
   split,
   unzip,
 } from "./erasure-coding.js";
+
+// NOTE: we can't initialize `wasm` from `@typeberry/crypto`, because
+// for some reason this dependency is not not de-duplicated.
+import { init } from "@typeberry/native";
 
 let seed = 1;
 function random() {
@@ -43,6 +47,8 @@ function getRandomItems<T, N extends number>(arr: [number, T][], n: N): FixedSiz
 
   return FixedSizeArray.new(result, n);
 }
+
+before(async () => await init.reedSolomon());
 
 describe("erasure coding: general", async () => {
   const data = TEST_DATA.data as string;

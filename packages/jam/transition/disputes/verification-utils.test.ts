@@ -1,11 +1,15 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 
 import { tryAsValidatorIndex } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
+import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, initWasm } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { prepareCulpritSignature, prepareJudgementSignature, vefifyAllSignatures } from "./verification-utils.js";
+
+before(async () => {
+  await initWasm();
+});
 
 describe("verification-utils", () => {
   describe("verifyVoteSignature", () => {

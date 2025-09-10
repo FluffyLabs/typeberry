@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 
 import { tryAsEpoch, tryAsPerValidator, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import { Culprit, DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberry/block/disputes.js";
@@ -12,6 +12,7 @@ import {
   ED25519_KEY_BYTES,
   ED25519_SIGNATURE_BYTES,
   type Ed25519Key,
+  initWasm,
 } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { WithHash } from "@typeberry/hash";
@@ -64,6 +65,10 @@ const createFault = ({
     signature: Bytes.parseBytes(signature, ED25519_SIGNATURE_BYTES).asOpaque(),
   });
 const createOffender = (blob: string): Ed25519Key => Bytes.parseBytes(blob, ED25519_KEY_BYTES).asOpaque();
+
+before(async () => {
+  await initWasm();
+});
 
 describe("Disputes", () => {
   const currentValidatorData = tryAsPerValidator(

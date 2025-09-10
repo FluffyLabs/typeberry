@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
-import { type BandersnatchKey } from "./bandersnatch.js";
+import type { BandersnatchKey } from "./bandersnatch.js";
 import { type BandersnatchSecretSeed, SEED_SIZE, deriveBandersnatchPublicKey } from "./key-derivation.js";
 
 describe("BandersnatchKey Derivation", () => {

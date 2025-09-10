@@ -2,8 +2,8 @@ import { type PerValidator, tryAsPerValidator } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { check } from "@typeberry/utils";
 import { reedSolomon } from "@typeberry/native";
+import { check } from "@typeberry/utils";
 
 /**
  * `point` - [Y_2]
