@@ -41,7 +41,7 @@ import type { AccountsLookup } from "@typeberry/jam-host-calls/lookup.js";
 import type { AccountsRead } from "@typeberry/jam-host-calls/read.js";
 import type { AccountsWrite } from "@typeberry/jam-host-calls/write.js";
 import { Logger } from "@typeberry/logger";
-import { U32, type U64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type U64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AutoAccumulate,
   LookupHistoryItem,
@@ -55,7 +55,6 @@ import {
   type ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { stateKeys } from "@typeberry/state-merkleization";
 import { Compatibility, GpVersion, OK, Result, assertNever, check } from "@typeberry/utils";
 
 /**

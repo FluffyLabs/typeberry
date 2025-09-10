@@ -1866,6 +1866,9 @@ describe("PartialState.eject", () => {
     // then
     assert.deepStrictEqual(result, Result.ok(OK));
     assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, [destinationId]);
+    assert.deepStrictEqual(state.stateUpdate.services.preimages, [
+      UpdatePreimage.remove({ serviceId: destinationId, hash: tombstone, length: length }),
+    ]);
   });
 });
 
