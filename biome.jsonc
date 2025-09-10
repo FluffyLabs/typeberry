@@ -48,6 +48,6 @@
     }
   },
   "files": {
-    "ignore": ["dist/*", "benchmarks/**/output/*", "test-vectors/*"]
+    "ignore": ["dist/*", "benchmarks/**/output/*", "test-vectors/*", "tools/builder/pkg.ts"]
   }
 }
