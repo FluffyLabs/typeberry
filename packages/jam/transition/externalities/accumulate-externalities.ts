@@ -41,7 +41,7 @@ import type { AccountsLookup } from "@typeberry/jam-host-calls/lookup.js";
 import type { AccountsRead } from "@typeberry/jam-host-calls/read.js";
 import type { AccountsWrite } from "@typeberry/jam-host-calls/write.js";
 import { Logger } from "@typeberry/logger";
-import { type U64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { U32, type U64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AutoAccumulate,
   LookupHistoryItem,
@@ -55,6 +55,7 @@ import {
   type ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
+import { stateKeys } from "@typeberry/state-merkleization";
 import { Compatibility, GpVersion, OK, Result, assertNever, check } from "@typeberry/utils";
 
 /**
@@ -601,6 +602,7 @@ export class AccumulateExternalities
 
   eject(destination: ServiceId | null, previousCodeHash: PreimageHash): Result<OK, EjectError> {
     const service = this.getServiceInfo(destination);
+
     if (service === null || destination === null) {
       return Result.error(EjectError.InvalidService, "Service missing");
     }
@@ -647,6 +649,13 @@ export class AccumulateExternalities
     );
     // and finally add an ejected service.
     this.updatedState.stateUpdate.services.servicesRemoved.push(destination);
+
+    // take care of the code preimage and its lookup history
+    const preimageLength = tryAsU32(Number(l));
+    this.updatedState.stateUpdate.services.preimages.push(
+      UpdatePreimage.remove({ serviceId: destination, hash: previousCodeHash, length: preimageLength }),
+    );
+
     return Result.ok(OK);
   }
 
