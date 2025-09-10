@@ -16,12 +16,6 @@ main(runners, process.argv.slice(2), "test-vectors/jam-conformance/fuzz-reports/
     "traces/1755252727/00000011.json",
     // Random jump, but involves a bunch of CHECKPOINTs?
     "traces/1755530535/00000011.json",
-    // incorrect TRANSFER logic?
-    "traces/1755530728/00000008.json",
-    // incorrect TRANSFER logic?
-    "traces/1755530896/00000008.json",
-    // incorrect TRANSFER logic?
-    "traces/1755620371/00000008.json",
     // incorrect storage value?
     "traces/1755796851/00000016.json",
     // incorrect storage value?

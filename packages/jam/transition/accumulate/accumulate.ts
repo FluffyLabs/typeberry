@@ -154,7 +154,9 @@ export class Accumulate {
 
     const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);
     const args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands: tryAsU32(operands.length) });
+    logger.trace(`PVM Accumulate Invocation start - ServiceId: ${serviceId}`);
     const result = await executor.run(args, tryAsGas(gas));
+    logger.trace(`PVM Accumulate Invocation end - ServiceId: ${serviceId} result: ${result.toString()}  `);
     const [newState, checkpoint] = partialState.getStateUpdates();
 
     /**
