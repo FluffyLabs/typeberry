@@ -99,7 +99,7 @@ export class HostCalls {
       this.hostCalls.traceHostCall("Invoking", index, hostCall, regs, gasBefore);
       const result = await hostCall.execute(gas, regs, memory);
       this.hostCalls.traceHostCall(
-        result === undefined ? "Result" : `Status(${result})`,
+        result === undefined ? "Result" : `Status(${PvmExecution[result]})`,
         index,
         hostCall,
         regs,

@@ -249,12 +249,6 @@ export class Interpreter {
     }
 
     if (this.instructionResult.status !== null) {
-      // All abnormal terminations should be interpreted as TRAP and we should subtract the gas. In case of FAULT we have to do it manually at the very end.
-      if (this.instructionResult.status === Result.FAULT || this.instructionResult.status === Result.FAULT_ACCESS) {
-        // TODO [ToDr] underflow?
-        this.gas.sub(instructionGasMap[Instruction.TRAP]);
-      }
-
       switch (this.instructionResult.status) {
         case Result.FAULT:
           this.status = Status.FAULT;
