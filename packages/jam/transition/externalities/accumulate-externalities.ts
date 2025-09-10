@@ -650,6 +650,7 @@ export class AccumulateExternalities
     this.updatedState.stateUpdate.services.servicesRemoved.push(destination);
 
     // take care of the code preimage and its lookup history
+    // Safe, because we know the preimage is valid, and it's the code of the service, which is bounded by maximal service code size anyway (much smaller than 2**32 bytes).
     const preimageLength = tryAsU32(Number(l));
     this.updatedState.stateUpdate.services.preimages.push(
       UpdatePreimage.remove({ serviceId: destination, hash: previousCodeHash, length: preimageLength }),
