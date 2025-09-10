@@ -9,6 +9,7 @@ import {
   N_CHUNKS_TOTAL,
   chunksToShards,
   decodeDataAndTrim,
+  initEc,
   padAndEncodeData,
   shardsToChunks,
 } from "@typeberry/erasure-coding";
@@ -28,6 +29,8 @@ export class EcTest {
 
 export async function runEcTest(test: EcTest, path: string) {
   const spec = getChainSpec(path);
+
+  await initEc();
 
   it("should encode data & decode it back", () => {
     const shards = padAndEncodeData(test.data);
