@@ -601,6 +601,7 @@ export class AccumulateExternalities
 
   eject(destination: ServiceId | null, previousCodeHash: PreimageHash): Result<OK, EjectError> {
     const service = this.getServiceInfo(destination);
+
     if (service === null || destination === null) {
       return Result.error(EjectError.InvalidService, "Service missing");
     }
@@ -647,6 +648,14 @@ export class AccumulateExternalities
     );
     // and finally add an ejected service.
     this.updatedState.stateUpdate.services.servicesRemoved.push(destination);
+
+    // take care of the code preimage and its lookup history
+    // Safe, because we know the preimage is valid, and it's the code of the service, which is bounded by maximal service code size anyway (much smaller than 2**32 bytes).
+    const preimageLength = tryAsU32(Number(l));
+    this.updatedState.stateUpdate.services.preimages.push(
+      UpdatePreimage.remove({ serviceId: destination, hash: previousCodeHash, length: preimageLength }),
+    );
+
     return Result.ok(OK);
   }
 
