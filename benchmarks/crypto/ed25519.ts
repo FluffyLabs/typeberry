@@ -62,14 +62,20 @@ export default function run() {
     }),
 
     add("wasm lib", async () => {
-      const result = await ed25519.verify(data);
-      const isCorrect = result.every((x) => x);
-      return isCorrect;
+      await initWasm();
+      return async () => {
+        const result = await ed25519.verify(data);
+        const isCorrect = result.every((x) => x);
+        return isCorrect;
+      };
     }),
 
-    add("wasm lib batch", () => {
-      const isCorrect = ed25519.verifyBatch(data);
-      return isCorrect;
+    add("wasm lib batch", async () => {
+      await initWasm();
+      return () => {
+        const isCorrect = ed25519.verifyBatch(data);
+        return isCorrect;
+      };
     }),
 
     cycle(),
@@ -80,7 +86,5 @@ export default function run() {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  await initWasm();
-
   run();
 }
