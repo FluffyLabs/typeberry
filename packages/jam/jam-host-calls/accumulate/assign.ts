@@ -48,6 +48,7 @@ export class Assign implements HostCallHandler {
     const memoryReadResult = memory.loadInto(res, authorizationQueueStart);
     // error while reading the memory.
     if (memoryReadResult.isError) {
+      logger.trace("ASSIGN() <- PANIC");
       return PvmExecution.Panic;
     }
 
@@ -62,11 +63,10 @@ export class Assign implements HostCallHandler {
     const authQueue = decoder.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
     const fixedSizeAuthQueue = FixedSizeArray.new(authQueue, AUTHORIZATION_QUEUE_SIZE);
 
-    logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue})`);
     const result = this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, authManager);
     if (result.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);
-      logger.trace("ASSIGN result: OK");
+      logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue}) <- OK`);
       return;
     }
 
@@ -74,13 +74,13 @@ export class Assign implements HostCallHandler {
 
     if (e === UpdatePrivilegesError.UnprivilegedService) {
       regs.set(IN_OUT_REG, HostCallResult.HUH);
-      logger.trace("ASSIGN result: HUH");
+      logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue}) <- HUH`);
       return;
     }
 
     if (e === UpdatePrivilegesError.InvalidServiceId) {
       regs.set(IN_OUT_REG, HostCallResult.WHO);
-      logger.trace("ASSIGN result: WHO");
+      logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue}) <- HUH`);
       return;
     }
 

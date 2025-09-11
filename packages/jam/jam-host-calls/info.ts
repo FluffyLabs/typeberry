@@ -71,12 +71,13 @@ export class Info implements HostCallHandler {
             ),
           });
 
-    logger.trace(`INFO(${serviceId}) <- ${encodedInfo}`);
-
     const writeResult = memory.storeFrom(outputStart, encodedInfo.raw);
     if (writeResult.isError) {
+      logger.trace(`INFO(${serviceId}) <- PANIC`);
       return PvmExecution.Panic;
     }
+
+    logger.trace(`INFO(${serviceId}) <- ${encodedInfo}`);
 
     if (accountInfo === null) {
       regs.set(IN_OUT_REG, HostCallResult.NONE);

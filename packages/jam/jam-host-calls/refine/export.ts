@@ -46,6 +46,7 @@ export class Export implements HostCallHandler {
     const segment: Segment = Bytes.zero(SEGMENT_BYTES);
     const segmentReadResult = memory.loadInto(segment.raw.subarray(0, segmentLength), segmentStart);
     if (segmentReadResult.isError) {
+      logger.trace(`EXPORT(${segment.toStringTruncated()}) <- PANIC`);
       return PvmExecution.Panic;
     }
 

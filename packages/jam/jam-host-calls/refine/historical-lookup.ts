@@ -45,6 +45,7 @@ export class HistoricalLookup implements HostCallHandler {
     const hashLoadingResult = memory.loadInto(hash.raw, hashStart);
     // we return Panic in case the key can't be loaded.
     if (hashLoadingResult.isError) {
+      logger.trace(`HISTORICAL_LOOKUP(${serviceId}, ${hash}) <- PANIC`);
       return PvmExecution.Panic;
     }
 

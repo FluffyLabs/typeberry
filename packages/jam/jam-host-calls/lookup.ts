@@ -49,6 +49,7 @@ export class Lookup implements HostCallHandler {
     const preImageHash = Bytes.zero(HASH_SIZE);
     const memoryReadResult = memory.loadInto(preImageHash.raw, hashAddress);
     if (memoryReadResult.isError) {
+      logger.trace(`LOOKUP(${serviceId}, ${preImageHash}) <- PANIC`);
       return PvmExecution.Panic;
     }
 

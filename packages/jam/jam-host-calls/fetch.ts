@@ -230,7 +230,6 @@ export class Fetch implements HostCallHandler {
     const fetchKindU64 = regs.get(10);
     const kind = clampU64ToU32(fetchKindU64);
     const value = this.getValue(kind, regs);
-    logger.trace(`FETCH(${kind}) <- ${value?.toStringTruncated()}`);
     // o
     const output = regs.get(IN_OUT_REG);
 
@@ -245,8 +244,11 @@ export class Fetch implements HostCallHandler {
     const chunk = value === null ? new Uint8Array() : value.raw.subarray(Number(offset), Number(offset + length));
     const storeResult = memory.storeFrom(output, chunk);
     if (storeResult.isError) {
+      logger.trace(`FETCH(${kind}) <- PANIC`);
       return PvmExecution.Panic;
     }
+
+    logger.trace(`FETCH(${kind}) <- ${value?.toStringTruncated()}`);
 
     // write result
     regs.set(IN_OUT_REG, value === null ? HostCallResult.NONE : valueLength);
