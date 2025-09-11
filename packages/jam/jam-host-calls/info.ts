@@ -7,7 +7,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
+import { Compatibility, TestSuite } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { getServiceIdOrCurrent } from "./utils.js";
@@ -42,14 +42,7 @@ export const LEN_REG = Compatibility.isSuite(TestSuite.W3F_DAVXY) ? 10 : 12;
  * https://graypaper.fluffylabs.dev/#/38c4e62/338302338302?v=0.7.0
  */
 export class Info implements HostCallHandler {
-  index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual({
-      fallback: 4,
-      versions: {
-        [GpVersion.V0_6_7]: 5,
-      },
-    }),
-  );
+  index = tryAsHostCallIndex(5);
   gasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, OFFSET_REG, LEN_REG);
 

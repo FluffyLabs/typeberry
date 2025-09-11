@@ -6,7 +6,7 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { Compatibility, GpVersion, resultToString } from "@typeberry/utils";
+import { resultToString } from "@typeberry/utils";
 import { type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -20,14 +20,7 @@ const IN_OUT_REG = 7;
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/358502358502?v=0.6.7
  */
 export class Expunge implements HostCallHandler {
-  index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual({
-      fallback: 26,
-      versions: {
-        [GpVersion.V0_6_7]: 13,
-      },
-    }),
-  );
+  index = tryAsHostCallIndex(13);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(IN_OUT_REG);
