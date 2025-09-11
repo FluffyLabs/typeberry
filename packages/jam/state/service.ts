@@ -55,31 +55,18 @@ export const ignoreValueWithDefault = <T>(defaultValue: T) =>
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/108301108301?v=0.6.7
  */
 export class ServiceAccountInfo extends WithDebug {
-  static Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-    ? codec.Class(ServiceAccountInfo, {
-        codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
-        balance: codec.u64,
-        accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
-        onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
-        storageUtilisationBytes: codec.u64,
-        gratisStorage: codec.u64,
-        storageUtilisationCount: codec.u32,
-        created: codec.u32.convert((x) => x, tryAsTimeSlot),
-        lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
-        parentService: codec.u32.convert((x) => x, tryAsServiceId),
-      })
-    : codec.Class(ServiceAccountInfo, {
-        codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
-        balance: codec.u64,
-        accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
-        onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
-        storageUtilisationBytes: codec.u64,
-        storageUtilisationCount: codec.u32,
-        gratisStorage: ignoreValueWithDefault(tryAsU64(0)),
-        created: ignoreValueWithDefault(tryAsTimeSlot(0)),
-        lastAccumulation: ignoreValueWithDefault(tryAsTimeSlot(0)),
-        parentService: ignoreValueWithDefault(tryAsServiceId(0)),
-      });
+  static Codec = codec.Class(ServiceAccountInfo, {
+    codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
+    balance: codec.u64,
+    accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
+    onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
+    storageUtilisationBytes: codec.u64,
+    gratisStorage: codec.u64,
+    storageUtilisationCount: codec.u32,
+    created: codec.u32.convert((x) => x, tryAsTimeSlot),
+    lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
+    parentService: codec.u32.convert((x) => x, tryAsServiceId),
+  });
 
   static create(a: CodecRecord<ServiceAccountInfo>) {
     return new ServiceAccountInfo(
