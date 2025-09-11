@@ -14,6 +14,7 @@ import { getChainSpec, initializeDatabase, logger, openDatabase } from "./common
 import { initializeExtensions } from "./extensions.js";
 import { startNetwork } from "./network.js";
 
+import { initWasm } from "@typeberry/crypto";
 import { CURRENT_SUITE, CURRENT_VERSION } from "@typeberry/utils";
 import type { JamConfig, NetworkConfig } from "./jam-config.js";
 import packageJson from "./package.json" with { type: "json" };
@@ -30,6 +31,8 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   if (!isMainThread) {
     throw new Error("The main binary cannot be running as a Worker!");
   }
+
+  await initWasm();
 
   logger.info(`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`);
   logger.info(`🎸 Starting node: ${config.nodeName}.`);
