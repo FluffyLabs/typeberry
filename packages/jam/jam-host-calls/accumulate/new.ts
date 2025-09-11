@@ -55,6 +55,7 @@ export class New implements HostCallHandler {
     const memoryReadResult = memory.loadInto(codeHash.raw, codeHashStart);
     // error while reading the memory.
     if (memoryReadResult.isError) {
+      logger.trace(`NEW(${codeHash}, ${codeLength}, ${gas}, ${allowance}, ${gratisStorage}) <- PANIC`);
       return PvmExecution.Panic;
     }
 

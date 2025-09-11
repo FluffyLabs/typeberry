@@ -47,6 +47,7 @@ export class Forget implements HostCallHandler {
     const memoryReadResult = memory.loadInto(hash.raw, hashStart);
     // error while reading the memory.
     if (memoryReadResult.isError) {
+      logger.trace(`FORGET(${hash}, ${length}) <- PANIC`);
       return PvmExecution.Panic;
     }
 

@@ -63,6 +63,7 @@ export class Transfer implements HostCallHandler {
 
     // page fault while reading the memory.
     if (memoryReadResult.isError) {
+      logger.trace(`TRANSFER(${destination}, ${amount}, ${onTransferGas}, ${memo}) <- PANIC`);
       return PvmExecution.Panic;
     }
 

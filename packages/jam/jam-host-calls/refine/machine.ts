@@ -52,6 +52,7 @@ export class Machine implements HostCallHandler {
     const code = BytesBlob.blobFrom(new Uint8Array(codeLengthClamped));
     const codeLoadResult = memory.loadInto(code.raw, codeStart);
     if (codeLoadResult.isError) {
+      logger.trace(`MACHINE(${code.toStringTruncated()}, ${entrypoint}) <- PANIC`);
       return PvmExecution.Panic;
     }
 
