@@ -3,7 +3,7 @@ import type { Gas } from "@typeberry/pvm-interpreter/gas.js";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import type { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { check } from "@typeberry/utils";
+import { assertNever, check } from "@typeberry/utils";
 import { PvmExecution, tryAsHostCallIndex } from "./host-call-handler.js";
 import { HostCallMemory } from "./host-call-memory.js";
 import { HostCallRegisters } from "./host-call-registers.js";
@@ -111,8 +111,18 @@ export class HostCalls {
         return this.getReturnValue(status, pvmInstance);
       }
 
-      pvmInstance.runProgram();
-      status = pvmInstance.getStatus();
+      if (result === PvmExecution.Panic) {
+        status = Status.PANIC;
+        return this.getReturnValue(status, pvmInstance);
+      }
+
+      if (result === undefined) {
+        pvmInstance.runProgram();
+        status = pvmInstance.getStatus();
+        continue;
+      }
+
+      assertNever(result);
     }
   }
 
