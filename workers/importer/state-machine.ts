@@ -150,9 +150,10 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
   private async getStateEntries(hash: unknown): Promise<RespondAndTransitionTo<unknown, Finished>> {
     if (this.importer === null) {
       logger.error(`${this.constructor.name} importer not initialized yet!`);
-      return {
-        response: null,
-      };
+      await new Promise((resolve) => {
+        this.onImporter.once(resolve);
+      });
+      return this.getStateEntries(hash);
     }
 
     if (hash instanceof Uint8Array) {
@@ -189,9 +190,10 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
   private async importBlock(block: unknown): Promise<RespondAndTransitionTo<Uint8Array | null, Finished>> {
     if (this.importer === null) {
       logger.error(`${this.constructor.name} importer not initialized yet!`);
-      return {
-        response: null,
-      };
+      await new Promise((resolve) => {
+        this.onImporter.once(resolve);
+      });
+      return this.importBlock(block);
     }
 
     if (block instanceof Uint8Array) {

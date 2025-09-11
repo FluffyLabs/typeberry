@@ -1,7 +1,7 @@
 import { isMainThread, parentPort } from "node:worker_threads";
 
 import { parseBootnode } from "@typeberry/config-node";
-import { ed25519 } from "@typeberry/crypto";
+import { ed25519, initWasm } from "@typeberry/crypto";
 import { LmdbBlocks } from "@typeberry/database-lmdb";
 import { LmdbRoot } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
@@ -33,6 +33,7 @@ if (!isMainThread) {
  * stream handlers.
  */
 export async function main(channel: MessageChannelStateMachine<NetworkInit, NetworkStates>) {
+  await initWasm();
   logger.trace(`🛜 Network starting ${channel.currentState()}`);
   // Await the configuration object
   const ready = await channel.waitForState<NetworkReady>("ready(network)");

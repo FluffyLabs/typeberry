@@ -7,13 +7,12 @@
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
+    "@noble/ed25519": "2.2.3",
     "@typeberry/bytes": "0.0.1",
     "@typeberry/hash": "0.0.1",
+    "@typeberry/native": "0.0.1-7c38bfd",
     "@typeberry/numbers": "0.0.1",
-    "@typeberry/utils": "0.0.1",
-    "ed25519-wasm": "github:fluffylabs/ed25519-wasm#a69da16025aa39c1b63842189fe841583213c07b",
-    "@fluffylabs/bandersnatch": "0.1.0-c227660",
-    "@noble/ed25519": "2.2.3"
+    "@typeberry/utils": "0.0.1"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
