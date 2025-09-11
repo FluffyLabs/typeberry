@@ -104,7 +104,7 @@ export class DeferredTransfers {
       let consumedGas = tryAsGas(0);
 
       const hasTransfers = transfers.length > 0;
-      const isCodeCorrect = code !== null && code.length < W_C;
+      const isCodeCorrect = code !== null && code.length <= W_C;
       if (!hasTransfers || !isCodeCorrect) {
         if (code === null) {
           logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId} because code is null`);
