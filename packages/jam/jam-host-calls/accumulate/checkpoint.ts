@@ -3,7 +3,6 @@ import type { HostCallHandler, IHostCallRegisters } from "@typeberry/pvm-host-ca
 import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import type { RegisterIndex } from "@typeberry/pvm-interpreter/registers.js";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
 import { GasHostCall } from "../gas.js";
 import { logger } from "../logger.js";
@@ -14,14 +13,7 @@ import { logger } from "../logger.js";
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/364402364402?v=0.6.7
  */
 export class Checkpoint implements HostCallHandler {
-  index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual({
-      fallback: 8,
-      versions: {
-        [GpVersion.V0_6_7]: 17,
-      },
-    }),
-  );
+  index = tryAsHostCallIndex(17);
   gasCost = tryAsSmallGas(10);
   tracedRegisters: RegisterIndex[];
 

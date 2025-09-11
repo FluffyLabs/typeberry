@@ -7,7 +7,7 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { Compatibility, GpVersion, assertNever, resultToString } from "@typeberry/utils";
+import { assertNever, resultToString } from "@typeberry/utils";
 import { PeekPokeError, type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -21,14 +21,7 @@ const IN_OUT_REG = 7;
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/347402347402?v=0.6.7
  */
 export class Peek implements HostCallHandler {
-  index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual({
-      fallback: 21,
-      versions: {
-        [GpVersion.V0_6_7]: 9,
-      },
-    }),
-  );
+  index = tryAsHostCallIndex(9);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10);

@@ -9,7 +9,6 @@ import {
 } from "@typeberry/pvm-host-calls";
 import { traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -22,14 +21,7 @@ const IN_OUT_REG = 7;
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/381c02381c02?v=0.6.7
  */
 export class Yield implements HostCallHandler {
-  index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual({
-      fallback: 16,
-      versions: {
-        [GpVersion.V0_6_7]: 25,
-      },
-    }),
-  );
+  index = tryAsHostCallIndex(25);
   gasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG);
 
