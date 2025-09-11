@@ -46,6 +46,7 @@ export class Solicit implements HostCallHandler {
     const hash = Bytes.zero(HASH_SIZE);
     const memoryReadResult = memory.loadInto(hash.raw, hashStart);
     if (memoryReadResult.isError) {
+      logger.trace(`SOLICIT(${hash}, ${length}) <- PANIC`);
       return PvmExecution.Panic;
     }
 

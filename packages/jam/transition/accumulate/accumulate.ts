@@ -167,9 +167,9 @@ export class Accumulate {
       if (status === Status.OOG || status === Status.PANIC) {
         logger.trace(`[${serviceId}] accumulate finished with ${Status[status]} reverting to checkpoint.`);
         return Result.ok({ stateUpdate: checkpoint, consumedGas: tryAsServiceGas(result.consumedGas) });
-      } else {
-        logger.trace(`[${serviceId}] accumulate finished with ${Status[status]}`);
       }
+
+      logger.trace(`[${serviceId}] accumulate finished with ${Status[status]}`);
     }
 
     /**

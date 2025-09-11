@@ -55,6 +55,7 @@ export class Query implements HostCallHandler {
     const memoryReadResult = memory.loadInto(hash.raw, hashStart);
     // error while reading the memory.
     if (memoryReadResult.isError) {
+      logger.trace(`QUERY(${hash}, ${length}) <- PANIC`);
       return PvmExecution.Panic;
     }
 

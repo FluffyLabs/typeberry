@@ -55,6 +55,7 @@ export class Provide implements HostCallHandler {
     const preimage = BytesBlob.blobFrom(new Uint8Array(length));
     const memoryReadResult = memory.loadInto(preimage.raw, preimageStart);
     if (memoryReadResult.isError) {
+      logger.trace(`PROVIDE(${serviceId}, ${preimage.toStringTruncated()}) <- PANIC`);
       return PvmExecution.Panic;
     }
 
