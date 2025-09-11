@@ -1,6 +1,6 @@
 import { Block, Header, type HeaderHash, type StateRootHash } from "@typeberry/block";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { BlockImportError, Version, startFuzzTarget } from "@typeberry/ext-ipc";
+import { BlockImportError, type FuzzVersion, Version, startFuzzTarget } from "@typeberry/ext-ipc";
 import { Logger } from "@typeberry/logger";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import { CURRENT_VERSION, Result } from "@typeberry/utils";
@@ -10,6 +10,7 @@ import { type NodeApi, main } from "./main.js";
 import packageJson from "./package.json" with { type: "json" };
 
 export type FuzzConfig = {
+  version: FuzzVersion;
   jamNodeConfig: JamConfig;
 };
 
@@ -35,7 +36,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
 
   const chainSpec = getChainSpec(config.node.flavor);
 
-  const closeFuzzTarget = startFuzzTarget({
+  const closeFuzzTarget = startFuzzTarget(fuzzConfig.version, {
     ...getFuzzDetails(),
     chainSpec,
     importBlock: async (block: Block): Promise<Result<StateRootHash, BlockImportError>> => {

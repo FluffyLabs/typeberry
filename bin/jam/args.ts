@@ -10,7 +10,7 @@ Usage:
   jam [options]
   jam [options] dev <dev-validator-index>
   jam [options] import <bin-or-json-blocks>
-  jam [options] fuzz-target
+  jam [options] [--version=0] fuzz-target
 
 Options:
   --name                Override node name. Affects networking key and db location.
@@ -36,9 +36,13 @@ export type SharedOptions = {
   configPath: string;
 };
 
+export type FuzzOptions = {
+  version: 0 | 1;
+};
+
 export type Arguments =
   | CommandArgs<Command.Run, SharedOptions & {}>
-  | CommandArgs<Command.FuzzTarget, SharedOptions & {}>
+  | CommandArgs<Command.FuzzTarget, SharedOptions & FuzzOptions>
   | CommandArgs<
       Command.Dev,
       SharedOptions & {
@@ -96,8 +100,15 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
     }
     case Command.FuzzTarget: {
       const data = parseSharedOptions(args, withRelPath);
+      const { version } = parseValueOption(args, "version", parseFuzzVersion, 0);
       assertNoMoreArgs(args);
-      return { command: Command.FuzzTarget, args: data };
+      return {
+        command: Command.FuzzTarget,
+        args: {
+          ...data,
+          version,
+        },
+      };
     }
     case Command.Import: {
       const data = parseSharedOptions(args, withRelPath);
@@ -169,3 +180,15 @@ type CommandArgs<T extends Command, Args> = {
   command: T;
   args: Args;
 };
+
+function parseFuzzVersion(v: string): 0 | 1 | null {
+  if (v === "") {
+    return null;
+  }
+
+  const parsed = Number(v);
+  if (parsed === 0 || parsed === 1) {
+    return parsed;
+  }
+  throw new Error(`Invalid fuzzer version: ${v}. Must be either 0 or 1`);
+}

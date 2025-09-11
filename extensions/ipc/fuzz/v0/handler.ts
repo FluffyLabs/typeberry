@@ -3,7 +3,7 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";
 import { assertNever } from "@typeberry/utils";
-import type { IpcHandler, IpcSender } from "../server.js";
+import type { IpcHandler, IpcSender } from "../../server.js";
 import {
   type KeyValue,
   type Message,
@@ -23,9 +23,9 @@ export interface FuzzMessageHandler {
   /** Initialize or reset target state. */
   resetState(value: SetState): Promise<StateRootHash>;
   /** Process block and return resulting state root. */
-  importBlock(value: Block): Promise<StateRootHash>;
+  importBlockV0(value: Block): Promise<StateRootHash>;
   /** Handshake and versioning exchange. */
-  getPeerInfo(value: PeerInfo): Promise<PeerInfo>;
+  getPeerInfoV0(value: PeerInfo): Promise<PeerInfo>;
 }
 
 export class FuzzTarget implements IpcHandler {
@@ -41,7 +41,7 @@ export class FuzzTarget implements IpcHandler {
     logger.log(`[${message.type}] incoming message`);
 
     await processAndRespond(this.spec, message, this.msgHandler, this.sender).catch((e) => {
-      logger.error(`Error while processing fuzz message: ${e}`);
+      logger.error(`Error while processing fuzz v0 message: ${e}`);
       logger.error(e);
       this.sender.close();
     });
@@ -57,7 +57,7 @@ export class FuzzTarget implements IpcHandler {
       let response: Message | null = null;
       switch (message.type) {
         case MessageType.PeerInfo: {
-          const handshake = await msgHandler.getPeerInfo(message.value);
+          const handshake = await msgHandler.getPeerInfoV0(message.value);
           response = {
             type: MessageType.PeerInfo,
             value: handshake,
@@ -65,7 +65,7 @@ export class FuzzTarget implements IpcHandler {
           break;
         }
         case MessageType.ImportBlock: {
-          const stateRoot = await msgHandler.importBlock(message.value);
+          const stateRoot = await msgHandler.importBlockV0(message.value);
           response = {
             type: MessageType.StateRoot,
             value: stateRoot,

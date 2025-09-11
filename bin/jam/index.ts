@@ -72,7 +72,8 @@ async function startNode(args: Arguments, withRelPath: (p: string) => string) {
   const jamNodeConfig = prepareConfigFile(args);
   // Start fuzz-target
   if (args.command === Command.FuzzTarget) {
-    return mainFuzz({ jamNodeConfig }, withRelPath);
+    const version = args.args.version;
+    return mainFuzz({ jamNodeConfig, version }, withRelPath);
   }
 
   // Just import a bunch of blocks
