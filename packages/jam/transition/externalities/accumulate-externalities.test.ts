@@ -572,9 +572,7 @@ describe("PartialState.newService", () => {
     const codeLengthU64 = tryAsU64(codeLength);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
-    // NOTE compatibility is neede here, as we are using `calculateThresholdBalance`
-    // which throws an error when `gratisStorage > 0` is provided for GP versions earlier than 0.6.7.
-    const gratisStorage = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(50) : tryAsU64(0);
+    const gratisStorage = tryAsU64(50);
 
     const items = tryAsU32(2); // 2 * 1 + 0
     const bytes = tryAsU64(81 + codeLength);
@@ -648,8 +646,7 @@ describe("PartialState.newService", () => {
     const codeLength = tryAsU64(2 ** 32 + 1);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
-    // NOTE compatibility is needed since newService uses calculateThresholdBalance internally
-    const gratisStorage = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(1024) : tryAsU64(0);
+    const gratisStorage = tryAsU64(1024);
 
     // when
     const result = partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, gratisStorage);
@@ -1902,19 +1899,6 @@ describe("AccumulateServiceExternalities", () => {
       (sum, item) => sum + (item?.value.length ?? 0),
       0,
     );
-    const serviceComp = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? {
-          gratisStorage: tryAsU64(1024),
-          created: tryAsTimeSlot(10),
-          lastAccumulation: tryAsTimeSlot(15),
-          parentService: tryAsServiceId(1),
-        }
-      : {
-          gratisStorage: tryAsU64(0),
-          created: tryAsTimeSlot(0),
-          lastAccumulation: tryAsTimeSlot(0),
-          parentService: tryAsServiceId(0),
-        };
 
     return new InMemoryService(serviceId, {
       info: ServiceAccountInfo.create({
@@ -1924,7 +1908,10 @@ describe("AccumulateServiceExternalities", () => {
         storageUtilisationCount: tryAsU32(initialStorage.size),
         codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
         onTransferMinGas: tryAsServiceGas(1000),
-        ...serviceComp,
+        gratisStorage: tryAsU64(1024),
+        created: tryAsTimeSlot(10),
+        lastAccumulation: tryAsTimeSlot(15),
+        parentService: tryAsServiceId(1),
         ...info,
       }),
       storage: initialStorage,

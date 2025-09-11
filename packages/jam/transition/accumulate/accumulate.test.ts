@@ -30,7 +30,7 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
-import { Compatibility, GpVersion, deepEqual, resultToString } from "@typeberry/utils";
+import { deepEqual, resultToString } from "@typeberry/utils";
 import type { AccumulateInput, AccumulateState } from "./accumulate-state.js";
 import { Accumulate } from "./accumulate.js";
 
@@ -145,7 +145,7 @@ describe("accumulate", () => {
         tryAsServiceId(1729),
         hashFromString("0x3ecc56accce719e5214e8dbb034f49d5cf0c6942da3e5f3f047d1693cc60c74a"),
         preimageBlob,
-        { lastAccumulation: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsTimeSlot(47) : undefined },
+        { lastAccumulation: tryAsTimeSlot(47) },
       ],
     ]);
     const expectedState: AccumulateState = InMemoryState.partial(tinyChainSpec, {

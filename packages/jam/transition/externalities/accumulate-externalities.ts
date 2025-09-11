@@ -70,7 +70,7 @@ const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 /** https://graypaper.fluffylabs.dev/#/7e6ff6a/117101117101?v=0.6.7 */
 const LOOKUP_HISTORY_ENTRY_BYTES = tryAsU64(81);
 /** https://graypaper.fluffylabs.dev/#/7e6ff6a/117a01117a01?v=0.6.7 */
-const BASE_STORAGE_BYTES = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(34) : tryAsU64(32);
+const BASE_STORAGE_BYTES = tryAsU64(34);
 
 const logger = Logger.new(import.meta.filename, "externalities");
 
@@ -475,15 +475,13 @@ export class AccumulateExternalities
 
   updateValidatorsData(validatorsData: PerValidator<ValidatorData>): Result<OK, UnprivilegedError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/362802362d02?v=0.6.7 */
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      const validatorsManager = this.updatedState.getPrivilegedServices().validatorsManager;
+    const validatorsManager = this.updatedState.getPrivilegedServices().validatorsManager;
 
-      if (validatorsManager !== this.currentServiceId) {
-        logger.trace(
-          `Current service id (${this.currentServiceId}) is not a validators manager. (expected: ${validatorsManager}) and cannot update validators data. Ignoring`,
-        );
-        return Result.error(UnprivilegedError);
-      }
+    if (validatorsManager !== this.currentServiceId) {
+      logger.trace(
+        `Current service id (${this.currentServiceId}) is not a validators manager. (expected: ${validatorsManager}) and cannot update validators data. Ignoring`,
+      );
+      return Result.error(UnprivilegedError);
     }
 
     this.updatedState.stateUpdate.validatorsData = validatorsData;
@@ -528,14 +526,11 @@ export class AccumulateExternalities
     validatorsManager: ServiceId | null,
     autoAccumulate: [ServiceId, ServiceGas][],
   ): Result<OK, UpdatePrivilegesError> {
-    // NOTE [ToDr] I guess we should not fail if the services don't exist. */
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
-      const currentManager = this.updatedState.getPrivilegedServices().manager;
+    /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
+    const currentManager = this.updatedState.getPrivilegedServices().manager;
 
-      if (currentManager !== this.currentServiceId) {
-        return Result.error(UpdatePrivilegesError.UnprivilegedService);
-      }
+    if (currentManager !== this.currentServiceId) {
+      return Result.error(UpdatePrivilegesError.UnprivilegedService);
     }
 
     if (manager === null || validatorsManager === null) {
@@ -674,13 +669,10 @@ export class AccumulateExternalities
     const countDiff = isAddingNew ? 1 : isRemoving ? -1 : 0;
     const lenDiff = (data?.length ?? 0) - (current?.length ?? 0);
     const baseStorageDiff = isAddingNew ? BASE_STORAGE_BYTES : isRemoving ? -BASE_STORAGE_BYTES : 0n;
-    const rawKeyDiff = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? isAddingNew
-        ? rawKeyBytes
-        : isRemoving
-          ? -rawKeyBytes
-          : 0n
-      : 0n;
+    const keyDiffRemoving = isRemoving ? -rawKeyBytes : 0n;
+    const keyDiffAdding = isAddingNew ? rawKeyBytes : 0n;
+    const rawKeyDiff = keyDiffRemoving + keyDiffAdding;
+
     const serviceInfo = this.getCurrentServiceInfo();
     const items = serviceInfo.storageUtilisationCount + countDiff;
     const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + baseStorageDiff + rawKeyDiff;
