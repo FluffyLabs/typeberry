@@ -6,9 +6,9 @@ on:
     branches: [ "main" ]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
-  
+
 env:
   TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
   GP_VERSION: 0.7.0-preview
