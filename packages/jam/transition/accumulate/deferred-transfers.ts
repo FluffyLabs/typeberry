@@ -1,4 +1,5 @@
 import { type EntropyHash, type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
+import { W_C } from "@typeberry/block/gp-constants.js";
 import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
@@ -102,8 +103,16 @@ export class DeferredTransfers {
       const fetchExternalities = FetchExternalities.createForOnTransfer({ entropy, transfers }, this.chainSpec);
       let consumedGas = tryAsGas(0);
 
-      if (code === null || transfers.length === 0) {
-        logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId}, code is null or no transfers`);
+      const hasTransfers = transfers.length > 0;
+      const isCodeCorrect = code !== null && code.length < W_C;
+      if (!hasTransfers || !isCodeCorrect) {
+        if (code === null) {
+          logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId} because code is null`);
+        } else if (!hasTransfers) {
+          logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId} because there are no transfers`);
+        } else {
+          logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId} because code is too long`);
+        }
       } else {
         const getArgs = () => {
           if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
