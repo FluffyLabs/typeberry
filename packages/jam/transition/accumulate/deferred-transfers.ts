@@ -2,7 +2,7 @@ import { type EntropyHash, type ServiceId, type TimeSlot, tryAsServiceGas } from
 import { W_C } from "@typeberry/block/gp-constants.js";
 import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
+import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import {
   AccumulationStateUpdate,
   PartiallyUpdatedState,
@@ -11,7 +11,7 @@ import { Logger } from "@typeberry/logger";
 import { sumU64, tryAsU32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { ServiceAccountInfo, type ServicesUpdate, type State } from "@typeberry/state";
-import { Compatibility, GpVersion, Result, check } from "@typeberry/utils";
+import { Result, check } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/fetch-externalities.js";
 import type { CountAndGasUsed } from "../statistics.js";
@@ -32,12 +32,6 @@ export type DeferredTransfersResult = {
   servicesUpdate: ServicesUpdate;
   transferStatistics: Map<ServiceId, CountAndGasUsed>;
 };
-
-const ARGS_CODEC_PRE_067 = codec.object({
-  timeslot: codec.u32.asOpaque<TimeSlot>(),
-  serviceId: codec.u32.asOpaque<ServiceId>(),
-  transfers: codec.sequenceVarLen(PendingTransfer.Codec),
-});
 
 const ARGS_CODEC = codec.object({
   timeslot: codec.varU32.asOpaque<TimeSlot>(),
@@ -114,19 +108,12 @@ export class DeferredTransfers {
           logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId} because code is too long`);
         }
       } else {
-        const getArgs = () => {
-          if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-            return Encoder.encodeObject(
-              ARGS_CODEC,
-              { timeslot, serviceId, transfersLength: tryAsU32(transfers.length) },
-              this.chainSpec,
-            );
-          }
-          return Encoder.encodeObject(ARGS_CODEC_PRE_067, { timeslot, serviceId, transfers }, this.chainSpec);
-        };
-
         const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState, fetchExternalities });
-        const args = getArgs();
+        const args = Encoder.encodeObject(
+          ARGS_CODEC,
+          { timeslot, serviceId, transfersLength: tryAsU32(transfers.length) },
+          this.chainSpec,
+        );
 
         const gas = transfers.reduce((acc, item) => acc + item.gas, 0n);
         consumedGas = (await executor.run(args, tryAsGas(gas))).consumedGas;
