@@ -1,3 +1,4 @@
+import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { ArgsDecoder } from "./args-decoder/args-decoder.js";
 import { createResults } from "./args-decoder/args-decoding-results.js";
@@ -53,6 +54,8 @@ import { Status } from "./status.js";
 type InterpreterOptions = {
   useSbrkGas?: boolean;
 };
+
+const logger = Logger.new(import.meta.filename, "pvm");
 
 export class Interpreter {
   private readonly useSbrkGas: boolean;
@@ -188,6 +191,8 @@ export class Interpreter {
     const argsType = instructionArgumentTypeMap[currentInstruction] ?? ArgumentType.NO_ARGUMENTS;
     const argsResult = this.argsDecodingResults[argsType];
     this.argsDecoder.fillArgs(this.pc, argsResult);
+
+    logger.insane(`[PC: ${this.pc}] ${Instruction[currentInstruction]}`);
 
     if (!isValidInstruction) {
       this.instructionResult.status = Result.PANIC;

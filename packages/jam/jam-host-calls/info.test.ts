@@ -87,7 +87,7 @@ describe("HostCalls: Info", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), 96n);
     assert.deepStrictEqual(readInfo(), {
       ...accounts.details.get(serviceId),
       thresholdBalance,

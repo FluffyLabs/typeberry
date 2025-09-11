@@ -77,6 +77,11 @@ export class Logger {
     private readonly config: typeof GLOBAL_CONFIG,
   ) {}
 
+  /** Log a message with `INSANE` level. */
+  insane(val: string) {
+    this.config.transport.insane(this.moduleName, this.fileName, val);
+  }
+
   /** Log a message with `TRACE` level. */
   trace(val: string) {
     this.config.transport.trace(this.moduleName, this.fileName, val);

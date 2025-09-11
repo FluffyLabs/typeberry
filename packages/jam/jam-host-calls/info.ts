@@ -2,6 +2,7 @@ import { type ServiceId, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "
 import { BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
+import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
@@ -22,7 +23,7 @@ const IN_OUT_REG = 7;
 /**
  * Return info about some account.
  *
- * `E(t_c, E8(t_b, t_t, t_g , t_m, t_o), E4(t_i), E8(t_f), E4(t_r, t_a, t_p))`
+ * `E(a_c, E8(a_b, a_t, a_g , a_m, a_o), E4(a_i), E8(a_f), E4(a_r, a_a, a_p))`
  * c = code hash
  * b = balance
  * t = threshold balance
@@ -35,7 +36,7 @@ const IN_OUT_REG = 7;
  * a = last accumulation timeslot
  * p = parent service
  *
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/332702332702?v=0.6.7
+ * https://graypaper.fluffylabs.dev/#/38c4e62/338302338302?v=0.7.0
  */
 export class Info implements HostCallHandler {
   index = tryAsHostCallIndex(
@@ -92,7 +93,7 @@ export class Info implements HostCallHandler {
       return;
     }
 
-    regs.set(IN_OUT_REG, HostCallResult.OK);
+    regs.set(IN_OUT_REG, tryAsU64(encodedInfo.length));
   }
 }
 

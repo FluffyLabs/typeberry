@@ -12,6 +12,11 @@ export class ConsoleTransport implements Transport {
    */
   static create(minimalLevel: Level, options: Options) {
     // optimised transports if we don't care about trace/log levels
+    if (minimalLevel === Level.INSANE) {
+      return new InsaneConsoleLogger(options);
+    }
+
+    // optimised transports if we don't care about trace/log levels
     if (minimalLevel === Level.TRACE) {
       return new TraceConsoleTransport(options);
     }
@@ -28,6 +33,10 @@ export class ConsoleTransport implements Transport {
   }
 
   protected constructor(private options: Options) {}
+
+  insane(_moduleName: string, _fileName: string, _val: string) {
+    /* no-op */
+  }
 
   trace(_moduleName: string, _fileName: string, _val: string) {
     /* no-op */
@@ -70,9 +79,34 @@ export class ConsoleTransport implements Transport {
 }
 
 /**
+ * Insane version of console logger - supports insane level.
+ */
+class InsaneConsoleLogger extends ConsoleTransport {
+  insane(moduleName: string, fileName: string, val: string) {
+    this.push(Level.INSANE, moduleName, fileName, val);
+  }
+
+  trace(moduleName: string, fileName: string, val: string) {
+    this.push(Level.TRACE, moduleName, fileName, val);
+  }
+
+  log(moduleName: string, fileName: string, val: string) {
+    this.push(Level.LOG, moduleName, fileName, val);
+  }
+
+  info(moduleName: string, fileName: string, val: string) {
+    this.push(Level.INFO, moduleName, fileName, val);
+  }
+}
+
+/**
  * A basic version of console logger - printing everything.
  */
 class TraceConsoleTransport extends ConsoleTransport {
+  insane(_moduleName: string, _fileName: string, _val: string) {
+    /* no-op */
+  }
+
   trace(moduleName: string, fileName: string, val: string) {
     this.push(Level.TRACE, moduleName, fileName, val);
   }
@@ -90,6 +124,10 @@ class TraceConsoleTransport extends ConsoleTransport {
  * An optimized version of the logger - completely ignores `TRACE` level calls.
  */
 class LogConsoleTransport extends ConsoleTransport {
+  insane(_moduleName: string, _fileName: string, _val: string) {
+    /* no-op */
+  }
+
   trace(_moduleName: string, _fileName: string, _val: string) {
     /* no-op */
   }
@@ -107,6 +145,10 @@ class LogConsoleTransport extends ConsoleTransport {
  * An optimized version of the logger - completely ignores `TRACE` & `DEBUG` level calls.
  */
 class InfoConsoleTransport extends ConsoleTransport {
+  insane(_moduleName: string, _fileName: string, _val: string) {
+    /* no-op */
+  }
+
   trace(_moduleName: string, _fileName: string, _val: string) {
     /* no-op */
   }

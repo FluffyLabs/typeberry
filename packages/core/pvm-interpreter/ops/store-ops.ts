@@ -103,6 +103,8 @@ export class StoreOps {
   }
 
   private store(address: number, bytes: Uint8Array) {
+    if (address <= 207232 && address + bytes.length >= 207232) {
+    }
     const storeResult = this.memory.storeFrom(tryAsMemoryIndex(address), bytes);
     if (storeResult.isOk) {
       return;

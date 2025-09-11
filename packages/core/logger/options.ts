@@ -1,9 +1,10 @@
 export enum Level {
-  TRACE = 1,
-  LOG = 2,
-  INFO = 3,
-  WARN = 4,
-  ERROR = 5,
+  INSANE = 1,
+  TRACE = 2,
+  LOG = 3,
+  INFO = 4,
+  WARN = 5,
+  ERROR = 6,
 }
 
 export type Options = {
