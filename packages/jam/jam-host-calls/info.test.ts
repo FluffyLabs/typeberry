@@ -12,7 +12,7 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { TestAccounts } from "./externalities/test-accounts.js";
-import { Info, codecServiceAccountInfoWithThresholdBalance } from "./info.js";
+import { Info, LEN_REG, codecServiceAccountInfoWithThresholdBalance } from "./info.js";
 import { HostCallResult } from "./results.js";
 
 const SERVICE_ID_REG = 7;
@@ -21,26 +21,31 @@ const DEST_START_REG = 8;
 
 const gas = gasCounter(tryAsGas(0));
 
-function prepareRegsAndMemory(
-  serviceId: ServiceId,
-  accountInfoLength = tryAsExactBytes(codecServiceAccountInfoWithThresholdBalance.sizeHint),
-) {
+const serviceAccountInfoSize = tryAsExactBytes(codecServiceAccountInfoWithThresholdBalance.sizeHint);
+
+function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = serviceAccountInfoSize) {
   const pageStart = 2 ** 16;
   const memStart = pageStart + PAGE_SIZE - accountInfoLength - 1;
   const registers = new HostCallRegisters(new Registers());
   registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
   registers.set(DEST_START_REG, tryAsU64(memStart));
+  registers.set(LEN_REG, tryAsU64(serviceAccountInfoSize));
 
   const builder = new MemoryBuilder();
   builder.setWriteablePages(tryAsMemoryIndex(pageStart), tryAsMemoryIndex(pageStart + PAGE_SIZE));
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
+
+  const readRaw = () => {
+    const result = new Uint8Array(Number(registers.get(LEN_REG)));
+    assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)).isOk, true);
+    return BytesBlob.blobFrom(result);
+  };
   return {
     registers,
     memory: new HostCallMemory(memory),
+    readRaw,
     readInfo: () => {
-      const result = new Uint8Array(accountInfoLength);
-      assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)).isOk, true);
-      const data = BytesBlob.blobFrom(result);
+      const data = readRaw();
       return Decoder.decodeObject(codecServiceAccountInfoWithThresholdBalance, data);
     },
   };
@@ -92,6 +97,38 @@ describe("HostCalls: Info", () => {
       ...accounts.details.get(serviceId),
       thresholdBalance,
     });
+  });
+
+  it("should write ONLY PART of account info data into memory", async () => {
+    const serviceId = tryAsServiceId(10_000);
+    const currentServiceId = serviceId;
+    const accounts = new TestAccounts(currentServiceId);
+    const info = new Info(currentServiceId, accounts);
+    const { registers, memory, readRaw } = prepareRegsAndMemory(serviceId);
+    registers.set(LEN_REG, tryAsU64(10));
+    const storageUtilisationBytes = tryAsU64(10_000);
+    const storageUtilisationCount = tryAsU32(1_000);
+
+    accounts.details.set(
+      serviceId,
+      ServiceAccountInfo.create({
+        codeHash: Bytes.fill(32, 5).asOpaque(),
+        balance: tryAsU64(150_000),
+        accumulateMinGas: tryAsServiceGas(0n),
+        onTransferMinGas: tryAsServiceGas(0n),
+        storageUtilisationBytes,
+        storageUtilisationCount,
+        ...serviceComp,
+      }),
+    );
+
+    // when
+    const result = await info.execute(gas, registers, memory);
+
+    // then
+    assert.strictEqual(result, undefined);
+    assert.deepStrictEqual(registers.get(RESULT_REG), 96n);
+    assert.deepStrictEqual(readRaw().toString(), "0x05050505050505050505");
   });
 
   it("should write none if account info is missing", async () => {

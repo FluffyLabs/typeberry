@@ -86,7 +86,9 @@ function parseLevel(lvl: string): Level {
   const typedLvl: keyof typeof Level = lvl === "debug" ? "LOG" : (lvl.toUpperCase() as keyof typeof Level);
 
   if (Level[typedLvl] === undefined) {
-    throw new Error(`Unknown logging level: "${lvl}". Use one of "trace", "debug", "log","info", "warn", "error"`);
+    throw new Error(
+      `Unknown logging level: "${lvl}". Use one of "trace", "debug", "log","info", "warn", "error" or "insane"`,
+    );
   }
 
   return Level[typedLvl];

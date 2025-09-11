@@ -4,10 +4,7 @@ import { runners } from "./w3f/runners.js";
 main(runners, process.argv.slice(2), "test-vectors/jam-conformance/fuzz-reports/0.7.0/traces", {
   ignored: [
     "traces/1757062927/00000091.json", // note [seko] block should be rejected but isn't
-    "traces/1757423902/00000148.json", // note [seko] major discrepancy. differences in service info, storage, statistics, recent blocks and accumulation output log
     "traces/1757423433/00000024.json", // note [seko] The block should be rejected, yet we imported it.
-    // difference in statistics
-    "traces/1757422206/00000011.json",
     "traces/1757421952/00000011.json", // note [seko] The block should be rejected, yet we imported it.
   ].concat([
     // CORRECT: note [seko] test rejected at block parsing stage, which is considered valid behavior

@@ -269,6 +269,7 @@ export class Interpreter {
           this.status = Status.HOST;
           break;
       }
+      logger.insane(`[PC: ${this.pc}] Status: ${Result[this.instructionResult.status]}`);
       return this.status;
     }
 
