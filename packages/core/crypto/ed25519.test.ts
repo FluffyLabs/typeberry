@@ -1,9 +1,11 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asOpaqueType } from "@typeberry/utils";
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "./ed25519.js";
-import { ed25519 } from "./index.js";
+import { ed25519, initWasm } from "./index.js";
+
+before(initWasm);
 
 describe("crypto.ed25519", () => {
   it("should produce a signature and verify it", async () => {

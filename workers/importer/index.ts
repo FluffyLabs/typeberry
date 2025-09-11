@@ -1,5 +1,6 @@
 import { isMainThread, parentPort } from "node:worker_threads";
 
+import { initWasm } from "@typeberry/crypto";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import type { Finished } from "@typeberry/generic-worker";
 import { SimpleAllocator, keccak } from "@typeberry/hash";
@@ -29,6 +30,7 @@ const keccakHasher = keccak.KeccakHasher.create();
  * These blocks should be decoded, verified and later imported.
  */
 export async function main(channel: MessageChannelStateMachine<ImporterInit, ImporterStates>) {
+  const wasmPromise = initWasm();
   logger.info(`📥 Importer starting ${channel.currentState()}`);
   // Await the configuration object
   const ready = await channel.waitForState<ImporterReady>("ready(importer)");
@@ -98,6 +100,8 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
         isProcessing = false;
       }
     });
+
+    await wasmPromise;
   });
 
   logger.info("📥 Importer finished. Closing channel.");

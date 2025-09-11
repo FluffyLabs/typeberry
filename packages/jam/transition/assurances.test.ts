@@ -17,7 +17,13 @@ import { WorkReport } from "@typeberry/block/work-report.js";
 import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
-import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
+import {
+  BANDERSNATCH_KEY_BYTES,
+  BLS_KEY_BYTES,
+  ED25519_KEY_BYTES,
+  ED25519_SIGNATURE_BYTES,
+  initWasm,
+} from "@typeberry/crypto";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import { AvailabilityAssignment, VALIDATOR_META_BYTES, ValidatorData, tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
@@ -33,6 +39,8 @@ const DEFAULT_HEADER_HASH: HeaderHash = Bytes.parseBytes(
   "0xd61a38a0f73beda90e8c1dfba731f65003742539f4260694f44e22cabef24a8e",
   HASH_SIZE,
 ).asOpaque();
+
+await initWasm();
 
 describe("Assurances", () => {
   it("should perform a transition with empty state", async () => {

@@ -110,6 +110,8 @@ describe("SyncTask", () => {
       theirs: tryAsTimeSlot(10),
     });
 
+    await tick();
+
     const result = self.syncTask.maintainSync();
     deepEqual(result, {
       kind: SyncResult.BlocksRequested,

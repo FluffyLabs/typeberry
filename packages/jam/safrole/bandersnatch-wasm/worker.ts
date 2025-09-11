@@ -1,9 +1,11 @@
 import { ConcurrentWorker } from "@typeberry/concurrent";
-import { bandersnatchWasm } from "@typeberry/crypto";
+import { bandersnatchWasm, initWasm } from "@typeberry/crypto";
 import { assertNever } from "@typeberry/utils";
 import { Method, type Params, Response } from "./params.js";
 
-export const worker = ConcurrentWorker.new<Params, Response, null>((p: Params) => {
+export const worker = ConcurrentWorker.new<Params, Response, null>(async (p: Params) => {
+  await initWasm();
+
   const params = p.params;
   const method = params.method;
   if (method === Method.RingCommitment) {

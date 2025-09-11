@@ -13,11 +13,11 @@ export default [
       file: setup.outFile,
       format: "cjs",
     },
-    plugins: [resolve(), commonjs(), typescript(), json()],
+    plugins: [resolve(), commonjs() /* only for blake2b? */, typescript(), json()],
     treeshake: {
       moduleSideEffects: false,
     },
-    external: ["lmdb", "@matrixai/quic"],
+    external: ["lmdb", "@matrixai/quic", "node:fs", "node:assert", "node:os"],
   },
   {
     input: setup.typesInput,

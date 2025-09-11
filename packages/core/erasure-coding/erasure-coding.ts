@@ -2,8 +2,8 @@ import { type PerValidator, tryAsPerValidator } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import { reedSolomon } from "@typeberry/native";
 import { check } from "@typeberry/utils";
-import { ShardsCollection, decode, encode } from "reed-solomon-wasm/pkg/reed_solomon_wasm.js";
 
 /**
  * `point` - [Y_2]
@@ -135,8 +135,8 @@ export function encodePoints(input: Bytes<PIECE_SIZE>): FixedSizeArray<Bytes<POI
   }
 
   // encode and add redundancy shards
-  const points = new ShardsCollection(POINT_ALIGNMENT, data);
-  const encodedResult = encode(N_CHUNKS_REDUNDANCY, POINT_ALIGNMENT, points);
+  const points = new reedSolomon.ShardsCollection(POINT_ALIGNMENT, data);
+  const encodedResult = reedSolomon.encode(N_CHUNKS_REDUNDANCY, points);
   const encodedData = encodedResult.take_data();
 
   for (let i = 0; i < N_CHUNKS_REDUNDANCY; i++) {
@@ -178,9 +178,9 @@ export function decodePiece(
       result.raw.set(points.raw, pointStartInResult);
     }
   }
-  const points = new ShardsCollection(POINT_ALIGNMENT, data, indices);
+  const points = new reedSolomon.ShardsCollection(POINT_ALIGNMENT, data, indices);
 
-  const decodingResult = decode(N_CHUNKS_REQUIRED, N_CHUNKS_REDUNDANCY, POINT_ALIGNMENT, points);
+  const decodingResult = reedSolomon.decode(N_CHUNKS_REQUIRED, N_CHUNKS_REDUNDANCY, points);
   const resultIndices = decodingResult.take_indices(); // it has to be called before take_data
   const resultData = decodingResult.take_data(); // it destroys the result object in rust
 
