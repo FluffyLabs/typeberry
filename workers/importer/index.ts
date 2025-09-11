@@ -30,7 +30,7 @@ const keccakHasher = keccak.KeccakHasher.create();
  * These blocks should be decoded, verified and later imported.
  */
 export async function main(channel: MessageChannelStateMachine<ImporterInit, ImporterStates>) {
-  await initWasm();
+  const wasmPromise = initWasm();
   logger.info(`📥 Importer starting ${channel.currentState()}`);
   // Await the configuration object
   const ready = await channel.waitForState<ImporterReady>("ready(importer)");
@@ -100,6 +100,8 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
         isProcessing = false;
       }
     });
+
+    await wasmPromise;
   });
 
   logger.info("📥 Importer finished. Closing channel.");
