@@ -12,6 +12,7 @@ import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 
+import { W_C } from "@typeberry/block/gp-constants.js";
 import { HashSet } from "@typeberry/collections";
 import { KeccakHasher } from "@typeberry/hash/keccak.js";
 import {
@@ -70,6 +71,7 @@ type SequentialAccumulationResult = ParallelAccumulationResult & {
 enum PvmInvocationError {
   NoService = 0,
   NoPreimage = 1,
+  PreimageTooLong = 2,
 }
 
 const logger = Logger.new(import.meta.filename, "accumulate");
@@ -135,6 +137,11 @@ export class Accumulate {
     if (code === null) {
       logger.log(`Code with hash ${codeHash} not found for service ${serviceId}.`);
       return Result.error(PvmInvocationError.NoPreimage);
+    }
+
+    if (code.length > W_C) {
+      logger.log(`Code with hash ${codeHash} is too long for service ${serviceId}.`);
+      return Result.error(PvmInvocationError.PreimageTooLong);
     }
 
     const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec);
@@ -209,8 +216,9 @@ export class Accumulate {
     const result = await this.pvmAccumulateInvocation(slot, serviceId, operands, gasCost, entropy, inputStateUpdate);
 
     if (result.isError) {
+      // https://graypaper.fluffylabs.dev/#/7e6ff6a/2fb6012fb601?v=0.6.7
       logger.trace(`Accumulation failed for ${serviceId}.`);
-      return { stateUpdate: null, consumedGas: gasCost };
+      return { stateUpdate: null, consumedGas: 0n };
     }
 
     logger.trace(`Accumulation successful for ${serviceId}. Consumed: ${result.ok.consumedGas}`);

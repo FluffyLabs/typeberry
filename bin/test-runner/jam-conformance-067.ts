@@ -6,8 +6,6 @@ main(runners, process.argv.slice(2), "test-vectors/jam-conformance/fuzz-reports/
     "genesis.json",
     // invalid UPGRADE (lookup history and some storage not updated)?
     "traces/1754982630/00000008.json",
-    // incorrect statistics - service code not found?
-    "traces/1754982630/00000009.json",
     // incorrect DESIGNATE?
     "traces/1754990132/00000012.json",
     // incorrect UPGRADE (lookup history not updated)?
