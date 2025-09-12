@@ -117,6 +117,7 @@ export const tinyChainSpec = new ChainSpec({
   preimageExpungePeriod: tryAsU32(32),
   maxBlockGas: tryAsU64(20_000_000),
   maxRefineGas: tryAsU64(1_000_000_000),
+  // https://github.com/davxy/jam-conformance/pull/47/files#diff-27e26142b3a96e407dab40d388b63d553f5d9cdb66dec58cd93e63dd434f9e45R260
   maxLookupAnchorAge: tryAsU32(24),
 });
 
