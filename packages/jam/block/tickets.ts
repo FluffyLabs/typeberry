@@ -64,10 +64,6 @@ export class Ticket extends WithDebug {
   ) {
     super();
   }
-
-  public isEqualTo(other: Ticket) {
-    return this.id.isEqualTo(other.id) && this.attempt === other.attempt;
-  }
 }
 
 /**

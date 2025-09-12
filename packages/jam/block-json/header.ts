@@ -6,13 +6,13 @@ import {
   type HeaderHash,
   type PerValidator,
   type StateRootHash,
+  TicketsMarker,
   type TimeSlot,
   type ValidatorIndex,
   ValidatorKeys,
 } from "@typeberry/block";
 import { Ticket } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
-import type { KnownSizeArray } from "@typeberry/collections";
 import type { BandersnatchKey, Ed25519Key } from "@typeberry/crypto";
 import type { BandersnatchVrfSignature } from "@typeberry/crypto/bandersnatch.js";
 import { json } from "@typeberry/json-parser";
@@ -43,12 +43,19 @@ const epochMark = json.object<JsonEpochMarker, EpochMarker>(
   (x) => EpochMarker.create({ entropy: x.entropy, ticketsEntropy: x.tickets_entropy, validators: x.validators }),
 );
 
-const ticketsMark = json.object<Ticket>(
+const ticket = json.object<Ticket>(
   {
     id: fromJson.bytes32(),
     attempt: fromJson.ticketAttempt,
   },
   (x) => Ticket.create({ id: x.id, attempt: x.attempt }),
+);
+
+const ticketsMark = json.object<TicketsMarker>(
+  {
+    tickets: json.array(ticket),
+  },
+  ({ tickets }) => TicketsMarker.create({ tickets }),
 );
 
 type JsonHeader = {
@@ -57,7 +64,7 @@ type JsonHeader = {
   extrinsic_hash: ExtrinsicHash;
   slot: TimeSlot;
   epoch_mark?: EpochMarker;
-  tickets_mark?: KnownSizeArray<Ticket, "EpochLength">;
+  tickets_mark?: TicketsMarker;
   offenders_mark: Ed25519Key[];
   author_index: ValidatorIndex;
   entropy_source: BandersnatchVrfSignature;
@@ -71,7 +78,7 @@ export const headerFromJson = json.object<JsonHeader, Header>(
     extrinsic_hash: fromJson.bytes32(),
     slot: "number",
     epoch_mark: json.optional(epochMark),
-    tickets_mark: json.optional<Ticket[]>(json.array(ticketsMark)),
+    tickets_mark: json.optional(ticketsMark),
     offenders_mark: json.array(fromJson.bytes32<Ed25519Key>()),
     author_index: "number",
     entropy_source: bandersnatchVrfSignature,

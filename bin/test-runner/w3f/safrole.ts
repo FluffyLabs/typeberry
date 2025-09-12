@@ -1,6 +1,7 @@
 import {
   type EntropyHash,
   EpochMarker,
+  TicketsMarker,
   type TimeSlot,
   type ValidatorKeys,
   tryAsPerEpochBlock,
@@ -148,7 +149,7 @@ export class Output {
             validators: tryAsPerValidator(output.ok.epoch_mark.validators, spec),
           });
     const tickets = output.ok?.tickets_mark ?? null;
-    const ticketsMark = tickets === null ? null : tryAsPerEpochBlock(tickets, spec);
+    const ticketsMark = tickets === null ? null : TicketsMarker.create({ tickets: tryAsPerEpochBlock(tickets, spec) });
 
     return Result.ok({
       epochMark,

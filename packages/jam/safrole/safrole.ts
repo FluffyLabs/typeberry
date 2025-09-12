@@ -1,15 +1,17 @@
 import {
   type EntropyHash,
   EpochMarker,
-  type PerEpochBlock,
+  type EpochMarkerView,
   type PerValidator,
+  TicketsMarker,
+  type TicketsMarkerView,
   type TimeSlot,
   ValidatorKeys,
   tryAsPerEpochBlock,
 } from "@typeberry/block";
 import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets.js";
 import { Bytes, bytesBlobComparator } from "@typeberry/bytes";
-import { Decoder } from "@typeberry/codec";
+import { type Codec, Decoder, type DescriptorRecord, Encoder, type ViewOf } from "@typeberry/codec";
 import { FixedSizeArray, type ImmutableSortedSet, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import {
@@ -23,7 +25,7 @@ import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
-import { Compatibility, Result, TestSuite, asOpaqueType } from "@typeberry/utils";
+import { OK, Result, asOpaqueType } from "@typeberry/utils";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 import type { SafroleSealState } from "./safrole-seal.js";
@@ -58,11 +60,9 @@ export type SafroleStateUpdate = Pick<
   | "ticketsAccumulator"
 >;
 
-type TicketsMark = PerEpochBlock<Ticket>;
-
 export type OkResult = {
   epochMark: EpochMarker | null;
-  ticketsMark: TicketsMark | null;
+  ticketsMark: TicketsMarker | null;
   stateUpdate: SafroleStateUpdate;
 };
 
@@ -76,9 +76,9 @@ export type Input = {
   /** Punish set from disputes */
   punishSet: ImmutableSortedSet<Ed25519Key>;
   /** Epoch marker from header */
-  epochMarker: EpochMarker | null;
+  epochMarker: EpochMarkerView | null;
   /** Tickets marker from header */
-  ticketsMarker: TicketsMark | null;
+  ticketsMarker: TicketsMarkerView | null;
 };
 
 export enum SafroleErrorCode {
@@ -245,7 +245,9 @@ export class Safrole {
       reorderedTickets[2 * middle] = tickets[middle];
     }
 
-    return tryAsPerEpochBlock(reorderedTickets, this.chainSpec);
+    return TicketsMarker.create({
+      tickets: tryAsPerEpochBlock(reorderedTickets, this.chainSpec),
+    });
   }
 
   /**
@@ -288,7 +290,7 @@ export class Safrole {
       m >= this.chainSpec.contestLength &&
       this.state.ticketsAccumulator.length === this.chainSpec.epochLength
     ) {
-      return SafroleSealingKeysData.tickets(this.outsideInSequencer(this.state.ticketsAccumulator));
+      return SafroleSealingKeysData.tickets(this.outsideInSequencer(this.state.ticketsAccumulator).tickets);
     }
 
     if (this.isSameEpoch(timeslot)) {
@@ -408,7 +410,7 @@ export class Safrole {
     return Result.ok(mergedTickets.array.slice(0, this.chainSpec.epochLength));
   }
 
-  private shouldIncludeTicketsMark(timeslot: TimeSlot): boolean {
+  private shouldIncludeTicketsMarker(timeslot: TimeSlot): boolean {
     const m = this.getSlotPhaseIndex(this.state.timeslot);
     const mPrime = this.getSlotPhaseIndex(timeslot);
     return (
@@ -425,8 +427,8 @@ export class Safrole {
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/0ea0030ea003
    */
-  private getTicketsMark(timeslot: TimeSlot): TicketsMark | null {
-    if (this.shouldIncludeTicketsMark(timeslot)) {
+  private getTicketsMarker(timeslot: TimeSlot): TicketsMarker | null {
+    if (this.shouldIncludeTicketsMarker(timeslot)) {
       return this.outsideInSequencer(this.state.ticketsAccumulator);
     }
 
@@ -522,36 +524,63 @@ export class Safrole {
       ticketsAccumulator: asKnownSize(newTicketsAccumulatorResult.ok),
     };
 
-    const epochMark = this.getEpochMark(input.slot, nextValidatorData);
-
-    if (
-      (epochMark !== null && !epochMark.isEqualTo(input.epochMarker)) ||
-      (epochMark === null && input.epochMarker !== null)
-    ) {
-      return Result.error(SafroleErrorCode.EpochMarkerInvalid);
+    const epochMarker = this.getEpochMark(input.slot, nextValidatorData);
+    const epochMarkerRes = compareWithEncoding(
+      this.chainSpec,
+      SafroleErrorCode.EpochMarkerInvalid,
+      epochMarker,
+      input.epochMarker,
+      EpochMarker.Codec,
+    );
+    if (epochMarkerRes.isError) {
+      return epochMarkerRes;
     }
 
-    const ticketsMark = this.getTicketsMark(input.slot);
+    const ticketsMarker = this.getTicketsMarker(input.slot);
+    // console.log(JSON.stringify(ticketsMarker, null, 2));
+    // console.log(JSON.stringify(input.ticketsMarker, null, 2));
 
-    console.log(JSON.stringify(ticketsMark, null, 2));
-    console.log(JSON.stringify(input.ticketsMarker, null, 2));
-
-    if (
-      (ticketsMark !== null &&
-        input.ticketsMarker !== null &&
-        // biome-ignore lint/style/noNonNullAssertion: input.ticketsMarker not being null is checked above
-        !ticketsMark.every((ticket, index) => ticket.isEqualTo(input.ticketsMarker![index]))) ||
-      ticketsMark !== input.ticketsMarker
-    ) {
-      return Result.error(SafroleErrorCode.TicketsMarkerInvalid);
+    const ticketsMarkerRes = compareWithEncoding(
+      this.chainSpec,
+      SafroleErrorCode.TicketsMarkerInvalid,
+      ticketsMarker,
+      input.ticketsMarker,
+      TicketsMarker.Codec,
+    );
+    if (ticketsMarkerRes.isError) {
+      return ticketsMarkerRes;
     }
 
     const result = {
-      epochMark,
-      ticketsMark,
+      epochMark: epochMarker,
+      ticketsMark: ticketsMarker,
       stateUpdate,
     };
 
     return Result.ok(result);
   }
+}
+
+function compareWithEncoding<T, D extends DescriptorRecord<T>>(
+  chainSpec: ChainSpec,
+  error: SafroleErrorCode,
+  actual: T | null,
+  expected: ViewOf<T, D> | null,
+  codec: Codec<T>,
+): Result<OK, SafroleErrorCode> {
+  if (actual === null || expected === null) {
+    // if one of them is `null`, both need to be.
+    if (actual !== expected) {
+      return Result.error(error, `Expected: ${expected}, got: ${actual}`);
+    }
+    return Result.ok(OK);
+  }
+
+  // compare the literal encoding.
+  const encoded = Encoder.encodeObject(codec, actual, chainSpec);
+  if (!encoded.isEqualTo(expected.encoded())) {
+    return Result.error(error, `Expected: ${expected.encoded()}, got: ${encoded}`);
+  }
+
+  return Result.ok(OK);
 }
