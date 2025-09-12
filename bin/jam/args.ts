@@ -10,7 +10,7 @@ Usage:
   jam [options]
   jam [options] dev <dev-validator-index>
   jam [options] import <bin-or-json-blocks>
-  jam [options] [--version=0] fuzz-target
+  jam [options] [--version=0] fuzz-target [socket-path=/tmp/jam_target.sock]
 
 Options:
   --name                Override node name. Affects networking key and db location.
@@ -36,13 +36,12 @@ export type SharedOptions = {
   configPath: string;
 };
 
-export type FuzzOptions = {
-  version: 0 | 1;
-};
-
 export type Arguments =
   | CommandArgs<Command.Run, SharedOptions & {}>
-  | CommandArgs<Command.FuzzTarget, SharedOptions & FuzzOptions>
+  | CommandArgs<Command.FuzzTarget, SharedOptions & {
+    socket: string | null;
+    version: 0 | 1;
+  }>
   | CommandArgs<
       Command.Dev,
       SharedOptions & {
@@ -101,12 +100,14 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
     case Command.FuzzTarget: {
       const data = parseSharedOptions(args, withRelPath);
       const { version } = parseValueOption(args, "version", "number", parseFuzzVersion, 0);
+      const socket = args._.shift() ?? 'jam_target.sock';
       assertNoMoreArgs(args);
       return {
         command: Command.FuzzTarget,
         args: {
           ...data,
           version,
+          socket,
         },
       };
     }

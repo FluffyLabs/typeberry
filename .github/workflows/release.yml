@@ -5,6 +5,7 @@ permissions:
   packages: write    # push to ghcr.io
 
 on:
+  workflow_dispatch:
   release:
     types: [published]
 

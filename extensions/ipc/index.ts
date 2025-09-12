@@ -49,17 +49,17 @@ export interface FuzzTargetApi {
   getBestStateRootHash(): Promise<StateRootHash>;
 }
 
-export function startFuzzTarget(version: FuzzVersion, api: FuzzTargetApi) {
+export function startFuzzTarget(version: FuzzVersion, socket: string, api: FuzzTargetApi) {
   if (version === FuzzVersion.V0) {
     return startIpcServer(
-      "jam_target.sock",
+      socket,
       (sender) => new v0.FuzzTarget(new FuzzHandler(api), sender, api.chainSpec),
     );
   }
 
   if (version === FuzzVersion.V1) {
     return startIpcServer(
-      "jam_target.sock",
+      socket,
       (sender) => new v1.FuzzTarget(new FuzzHandler(api), sender, api.chainSpec),
     );
   }
