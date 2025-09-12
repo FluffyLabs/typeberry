@@ -14,7 +14,7 @@ import packageJson from "./package.json" with { type: "json" };
 export type FuzzConfig = {
   version: FuzzVersion;
   jamNodeConfig: JamConfig;
-  socket: string;
+  socket: string | null;
 };
 
 const logger = Logger.new(import.meta.filename, "fuzztarget");

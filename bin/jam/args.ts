@@ -38,10 +38,13 @@ export type SharedOptions = {
 
 export type Arguments =
   | CommandArgs<Command.Run, SharedOptions & {}>
-  | CommandArgs<Command.FuzzTarget, SharedOptions & {
-    socket: string | null;
-    version: 0 | 1;
-  }>
+  | CommandArgs<
+      Command.FuzzTarget,
+      SharedOptions & {
+        socket: string | null;
+        version: 0 | 1;
+      }
+    >
   | CommandArgs<
       Command.Dev,
       SharedOptions & {
@@ -100,7 +103,7 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
     case Command.FuzzTarget: {
       const data = parseSharedOptions(args, withRelPath);
       const { version } = parseValueOption(args, "version", "number", parseFuzzVersion, 0);
-      const socket = args._.shift() ?? 'jam_target.sock';
+      const socket = args._.shift() ?? null;
       assertNoMoreArgs(args);
       return {
         command: Command.FuzzTarget,

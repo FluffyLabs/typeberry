@@ -34,10 +34,8 @@ export class IpcSender {
 export function startIpcServer(name: string, newMessageHandler: (socket: IpcSender) => IpcHandler) {
   // Define the path for the socket or named pipe
   const isWindows = os.platform() === "win32";
-  const linuxPath = name.startsWith('/') ? name : path.join(os.tmpdir(), `${name}`);
-  const socketPath = isWindows
-    ? `\\\\.\\pipe\\${name}`
-    : linuxPath;
+  const linuxPath = name.startsWith("/") ? name : path.join(os.tmpdir(), `${name}`);
+  const socketPath = isWindows ? `\\\\.\\pipe\\${name}` : linuxPath;
 
   const logger = Logger.new(import.meta.filename, "ext-ipc");
 
