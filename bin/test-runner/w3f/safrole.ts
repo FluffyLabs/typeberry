@@ -1,7 +1,9 @@
 import {
   type EntropyHash,
   EpochMarker,
+  type EpochMarkerView,
   TicketsMarker,
+  type TicketsMarkerView,
   type TimeSlot,
   type ValidatorKeys,
   tryAsPerEpochBlock,
@@ -10,6 +12,7 @@ import {
 import { fromJson } from "@typeberry/block-json";
 import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
+import { Decoder, Encoder } from "@typeberry/codec";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
@@ -212,10 +215,16 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const preState = JsonState.toSafroleState(testContent.pre_state, chainSpec);
   const punishSet = SortedSet.fromArrayUnique(hashComparator, testContent.pre_state.post_offenders);
   const safrole = new Safrole(chainSpec, preState, bwasm);
-
-  const result = await safrole.transition({ ...testContent.input, punishSet, epochMarker: null, ticketsMarker: null });
-
   const expectedResult = Output.toSafroleOutput(testContent.output, chainSpec);
+  const { epochMarker, ticketsMarker } = extractMarkers(expectedResult, chainSpec);
+
+  const result = await safrole.transition({
+    ...testContent.input,
+    punishSet,
+    epochMarker,
+    ticketsMarker,
+  });
+
   const expectedState = JsonState.toSafroleState(testContent.post_state, chainSpec);
 
   if (result.isError) {
@@ -232,4 +241,41 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
     );
     deepEqual(state, expectedState);
   }
+}
+function extractMarkers(
+  expectedResult: Result<Omit<OkResult, "stateUpdate">, SafroleErrorCode>,
+  chainSpec: ChainSpec,
+): {
+  epochMarker: EpochMarkerView | null;
+  ticketsMarker: TicketsMarkerView | null;
+} {
+  if (expectedResult.isOk) {
+    const { ok } = expectedResult;
+    const epochMarker =
+      ok.epochMark === null
+        ? null
+        : Decoder.decodeObject(
+            EpochMarker.Codec.View,
+            Encoder.encodeObject(EpochMarker.Codec, ok.epochMark, chainSpec),
+            chainSpec,
+          );
+    const ticketsMarker =
+      ok.ticketsMark === null
+        ? null
+        : Decoder.decodeObject(
+            TicketsMarker.Codec.View,
+            Encoder.encodeObject(TicketsMarker.Codec, ok.ticketsMark, chainSpec),
+            chainSpec,
+          );
+
+    return {
+      epochMarker,
+      ticketsMarker,
+    };
+  }
+
+  return {
+    epochMarker: null,
+    ticketsMarker: null,
+  };
 }
