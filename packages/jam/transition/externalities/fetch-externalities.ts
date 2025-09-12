@@ -29,7 +29,6 @@ import {
 import { GAS_TO_INVOKE_WORK_REPORT } from "../accumulate/accumulate-state.js";
 import { Operand } from "../accumulate/operand.js";
 import { REPORT_TIMEOUT_GRACE_PERIOD } from "../assurances.js";
-import { L } from "../reports/verify-contextual.js";
 
 // https://github.com/gavofyork/graypaper/pull/414
 // 0.7.0 encoding is used for prior versions as well.
@@ -92,7 +91,7 @@ function getEncodedConstants(chainSpec: ChainSpec) {
     I: tryAsU16(MAX_NUMBER_OF_WORK_ITEMS),
     J: tryAsU16(MAX_REPORT_DEPENDENCIES),
     K: tryAsU16(chainSpec.maxTicketsPerExtrinsic),
-    L: tryAsU32(L),
+    L: tryAsU32(chainSpec.maxLookupAnchorAge),
     N: tryAsU16(chainSpec.ticketsPerValidator),
     O: tryAsU16(O),
     P: tryAsU16(chainSpec.slotDuration),

@@ -15,14 +15,14 @@ import { initializeExtensions } from "./extensions.js";
 import { startNetwork } from "./network.js";
 
 import { initWasm } from "@typeberry/crypto";
-import { CURRENT_SUITE, CURRENT_VERSION } from "@typeberry/utils";
+import { CURRENT_SUITE, CURRENT_VERSION, type Result } from "@typeberry/utils";
 import type { JamConfig, NetworkConfig } from "./jam-config.js";
 import packageJson from "./package.json" with { type: "json" };
 
 export type NodeApi = {
   chainSpec: ChainSpec;
   getStateEntries(hash: HeaderHash): Promise<StateEntries | null>;
-  importBlock(block: BlockView): Promise<StateRootHash | null>;
+  importBlock(block: BlockView): Promise<Result<StateRootHash, string>>;
   getBestStateRootHash(): Promise<StateRootHash>;
   close(): Promise<void>;
 };
@@ -44,7 +44,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   );
 
   // Initialize the database with genesis state and block if there isn't one.
-  await initializeDatabase(chainSpec, genesisHeaderHash, rootDb, config.node.chainSpec);
+  await initializeDatabase(chainSpec, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
 
   // Start extensions
   const importerInit = await blockImporter.spawnWorker();

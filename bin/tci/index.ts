@@ -8,10 +8,6 @@ import { type CommonArguments, HELP, type RequiredFlag, parseArgs, requiredSeedF
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 const withRelPath = (v: string) => `../../${v}`;
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main(process.argv.slice(2));
-}
-
 /**
  * JAM Node entry w/ common command lines arguments
  * understood by all JAM nodes implementations
@@ -34,11 +30,12 @@ export async function main(args: string[]) {
 
 export function createJamConfig(argv: CommonArguments): node.JamConfig {
   let nodeConfig = loadConfig(NODE_DEFAULTS.config);
-  let devConfig = node.DEFAULT_DEV_CONFIG;
-  let seedConfig: node.SeedDevConfig | undefined;
+  let devConfig: node.DevConfig = {
+    ...node.DEFAULT_DEV_CONFIG,
+  };
 
   if (argv.bandersnatch !== undefined && argv.bls !== undefined && argv.ed25519 !== undefined) {
-    seedConfig = {
+    devConfig.seed = {
       bandersnatchSeed: argv.bandersnatch,
       blsSeed: argv.bls,
       ed25519Seed: argv.ed25519,
@@ -80,5 +77,9 @@ export function createJamConfig(argv: CommonArguments): node.JamConfig {
     };
   }
 
-  return node.JamConfig.new({ nodeName: NODE_DEFAULTS.name, nodeConfig, devConfig, seedConfig });
+  return node.JamConfig.new({ nodeName: NODE_DEFAULTS.name, nodeConfig, devConfig });
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main(process.argv.slice(2));
 }

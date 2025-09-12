@@ -39,6 +39,7 @@ import {
   type ReportsState,
 } from "@typeberry/transition/reports/index.js";
 import { guaranteesAsView } from "@typeberry/transition/reports/test.utils.js";
+import type { HeaderChain } from "@typeberry/transition/reports/verify-contextual.js";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { Result, deepEqual } from "@typeberry/utils";
 
@@ -269,9 +270,10 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   // Seems like we don't have any additional source of information
   // for which lookup headers are in chain, so we just use the recent
   // blocks history.
-  const headerChain = {
-    isInChain(hash: HeaderHash) {
-      return preState.state.recentBlocks.blocks.find((x) => x.headerHash.isEqualTo(hash)) !== undefined;
+  // NOTE: this is done internally by reports checking.
+  const headerChain: HeaderChain = {
+    isAncestor(_hash: HeaderHash) {
+      return false;
     },
   };
 

@@ -7,7 +7,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { tryAsU8 } from "@typeberry/numbers";
-import { IpcSender } from "../server.js";
+import { IpcSender } from "../../server.js";
 import { type FuzzMessageHandler, FuzzTarget } from "./handler.js";
 import { KeyValue, type Message, MessageType, PeerInfo, SetState, Version, messageCodec } from "./types.js";
 
@@ -16,8 +16,8 @@ const spec = tinyChainSpec;
 class MockMessageHandler implements FuzzMessageHandler {
   getSerializedState: Mock<(value: HeaderHash) => Promise<KeyValue[]>> = mock.fn();
   resetState: Mock<(value: SetState) => Promise<StateRootHash>> = mock.fn();
-  importBlock: Mock<(value: Block) => Promise<StateRootHash>> = mock.fn();
-  getPeerInfo: Mock<(value: PeerInfo) => Promise<PeerInfo>> = mock.fn();
+  importBlockV0: Mock<(value: Block) => Promise<StateRootHash>> = mock.fn();
+  getPeerInfoV0: Mock<(value: PeerInfo) => Promise<PeerInfo>> = mock.fn();
 }
 
 class MockSender extends IpcSender {
@@ -82,7 +82,7 @@ describe("FuzzTarget Handler", () => {
       };
 
       // Mock the handler method
-      mockMessageHandler.getPeerInfo.mock.mockImplementation(async () => responsePeerInfo);
+      mockMessageHandler.getPeerInfoV0.mock.mockImplementation(async () => responsePeerInfo);
 
       const fuzzTarget = new FuzzTarget(mockMessageHandler, mockSender, spec);
       const testMessage = Encoder.encodeObject(messageCodec, incomingMessage);
@@ -153,7 +153,7 @@ describe("FuzzTarget Handler", () => {
         value: expectedStateRoot,
       };
 
-      mockMessageHandler.importBlock.mock.mockImplementation(async () => expectedStateRoot);
+      mockMessageHandler.importBlockV0.mock.mockImplementation(async () => expectedStateRoot);
 
       const fuzzTarget = new FuzzTarget(mockMessageHandler, mockSender, spec);
       const testMessage = Encoder.encodeObject(messageCodec, incomingMessage, spec);
@@ -161,8 +161,8 @@ describe("FuzzTarget Handler", () => {
       // when
       await fuzzTarget.onSocketMessage(testMessage.raw);
 
-      assert.strictEqual(mockMessageHandler.importBlock.mock.callCount(), 1);
-      assert.deepStrictEqual(mockMessageHandler.importBlock.mock.calls[0].arguments, [testBlock]);
+      assert.strictEqual(mockMessageHandler.importBlockV0.mock.callCount(), 1);
+      assert.deepStrictEqual(mockMessageHandler.importBlockV0.mock.calls[0].arguments, [testBlock]);
 
       assert.deepStrictEqual(mockSender._sentData, [Encoder.encodeObject(messageCodec, expectedResponse, spec)]);
       assert.strictEqual(mockSender._closeCalled, 0);
@@ -226,10 +226,10 @@ describe("FuzzTarget Handler", () => {
       assert.deepStrictEqual(mockSender._sentData, []);
 
       // Should not call any handler methods
-      assert.strictEqual(mockMessageHandler.getPeerInfo.mock.callCount(), 0);
+      assert.strictEqual(mockMessageHandler.getPeerInfoV0.mock.callCount(), 0);
       assert.strictEqual(mockMessageHandler.getSerializedState.mock.callCount(), 0);
       assert.strictEqual(mockMessageHandler.resetState.mock.callCount(), 0);
-      assert.strictEqual(mockMessageHandler.importBlock.mock.callCount(), 0);
+      assert.strictEqual(mockMessageHandler.importBlockV0.mock.callCount(), 0);
     });
 
     it("should close connection when receiving unexpected StateRoot message", async () => {
@@ -265,10 +265,10 @@ describe("FuzzTarget Handler", () => {
       }, new Error("Unknown message type: 99"));
 
       // Verify no handler methods were called
-      assert.strictEqual(mockMessageHandler.getPeerInfo.mock.callCount(), 0);
+      assert.strictEqual(mockMessageHandler.getPeerInfoV0.mock.callCount(), 0);
       assert.strictEqual(mockMessageHandler.getSerializedState.mock.callCount(), 0);
       assert.strictEqual(mockMessageHandler.resetState.mock.callCount(), 0);
-      assert.strictEqual(mockMessageHandler.importBlock.mock.callCount(), 0);
+      assert.strictEqual(mockMessageHandler.importBlockV0.mock.callCount(), 0);
     });
   });
 });
