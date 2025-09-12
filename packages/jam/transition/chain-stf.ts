@@ -147,6 +147,7 @@ export class OnChain {
     preverifiedSeal: EntropyHash | null = null,
     omitSealVerification = false,
   ): Promise<Result<Ok, StfError>> {
+    const headerView = block.header.view();
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
 
@@ -186,8 +187,9 @@ export class OnChain {
       entropy: newEntropyHash,
       extrinsic: block.extrinsic.view().tickets.materialize(),
       punishSet: disputesRecords.punishSet,
+      epochMarker: headerView.epochMarker.view(),
+      ticketsMarker: headerView.ticketsMarker.view(),
     });
-    // TODO [ToDr] shall we verify the ticket mark & epoch mark as well?
     if (safroleResult.isError) {
       return stfError(StfErrorKind.Safrole, safroleResult);
     }
