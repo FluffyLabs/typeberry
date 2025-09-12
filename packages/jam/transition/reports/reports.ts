@@ -168,7 +168,7 @@ export class Reports {
   }
 
   verifyContextualValidity(input: ReportsInput) {
-    return verifyContextualValidity(input, this.state, this.headerChain);
+    return verifyContextualValidity(input, this.state, this.headerChain, this.chainSpec.maxLookupAnchorAge);
   }
 
   checkSignatures(

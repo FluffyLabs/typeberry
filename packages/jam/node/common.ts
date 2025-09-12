@@ -1,4 +1,12 @@
-import { Block, type BlockView, Extrinsic, Header, type HeaderHash } from "@typeberry/block";
+import {
+  Block,
+  type BlockView,
+  Extrinsic,
+  Header,
+  type HeaderHash,
+  type TimeSlot,
+  tryAsTimeSlot,
+} from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
@@ -56,6 +64,7 @@ export async function initializeDatabase(
   genesisHeaderHash: HeaderHash,
   rootDb: LmdbRoot,
   config: JipChainSpec,
+  ancestry: [HeaderHash, TimeSlot][],
 ): Promise<void> {
   const blocks = new LmdbBlocks(spec, rootDb);
   const states = new LmdbStates(spec, rootDb);
@@ -79,13 +88,17 @@ export async function initializeDatabase(
   const genesisHeader = Decoder.decodeObject(Header.Codec, config.genesisHeader, spec);
   const genesisExtrinsic = emptyBlock().extrinsic;
   const genesisBlock = Block.create({ header: genesisHeader, extrinsic: genesisExtrinsic });
-  const blockView = Decoder.decodeObject(Block.Codec.View, Encoder.encodeObject(Block.Codec, genesisBlock, spec), spec);
+  const blockView = blockAsView(genesisBlock, spec);
   logger.log(`🧬 Writing genesis block #${genesisHeader.timeSlotIndex}: ${genesisHeaderHash}`);
 
   const { genesisStateSerialized, genesisStateRootHash } = loadGenesisState(spec, config.genesisState);
 
   // write to db
   await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(genesisHeaderHash, blockView));
+  // insert fake blocks for ancestry data
+  for (const [hash, slot] of ancestry) {
+    await blocks.insertBlock(new WithHash(hash, blockAsView(emptyBlock(slot), spec)));
+  }
   await states.insertState(genesisHeaderHash, genesisStateSerialized);
   await blocks.setPostStateRoot(genesisHeaderHash, genesisStateRootHash);
   await blocks.setBestHeaderHash(genesisHeaderHash);
@@ -107,10 +120,15 @@ function loadGenesisState(spec: ChainSpec, data: JipChainSpec["genesisState"]) {
     genesisStateRootHash,
   };
 }
+function blockAsView(block: Block, spec: ChainSpec): BlockView {
+  return Decoder.decodeObject(Block.Codec.View, Encoder.encodeObject(Block.Codec, block, spec), spec);
+}
 
-export function emptyBlock() {
+export function emptyBlock(slot: TimeSlot = tryAsTimeSlot(0)) {
+  const header = Header.empty();
+  header.timeSlotIndex = slot;
   return Block.create({
-    header: Header.empty(),
+    header,
     extrinsic: Extrinsic.create({
       tickets: asKnownSize([]),
       preimages: [],

@@ -1,6 +1,8 @@
-import { Block, Header, type HeaderHash, type StateRootHash } from "@typeberry/block";
+import { Block, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
+import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { BlockImportError, Version, startFuzzTarget } from "@typeberry/ext-ipc";
+import { type FuzzVersion, Version, startFuzzTarget } from "@typeberry/ext-ipc";
+import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import { CURRENT_VERSION, Result } from "@typeberry/utils";
@@ -10,6 +12,7 @@ import { type NodeApi, main } from "./main.js";
 import packageJson from "./package.json" with { type: "json" };
 
 export type FuzzConfig = {
+  version: FuzzVersion;
   jamNodeConfig: JamConfig;
 };
 
@@ -26,7 +29,7 @@ export function getFuzzDetails() {
 }
 
 export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) => string) {
-  logger.info("💨 Fuzzer starting up.");
+  logger.info(`💨 Fuzzer V${fuzzConfig.version} starting up.`);
 
   const { jamNodeConfig: config } = fuzzConfig;
 
@@ -35,20 +38,23 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
 
   const chainSpec = getChainSpec(config.node.flavor);
 
-  const closeFuzzTarget = startFuzzTarget({
+  const closeFuzzTarget = startFuzzTarget(fuzzConfig.version, {
     ...getFuzzDetails(),
     chainSpec,
-    importBlock: async (block: Block): Promise<Result<StateRootHash, BlockImportError>> => {
+    importBlock: async (block: Block): Promise<Result<StateRootHash, string>> => {
       if (runningNode === null) {
-        return Result.error(BlockImportError.NodeNotRunning);
+        return Result.error("node not running");
       }
       const encoded = Encoder.encodeObject(Block.Codec, block, chainSpec);
       const blockView = Decoder.decodeObject(Block.Codec.View, encoded, chainSpec);
       const importResult = await runningNode.importBlock(blockView);
-      if (importResult === null) {
-        return Result.error(BlockImportError.BlockRejected);
+      return importResult;
+    },
+    getBestStateRootHash: async (): Promise<StateRootHash> => {
+      if (runningNode === null) {
+        return Bytes.zero(HASH_SIZE).asOpaque();
       }
-      return Result.ok(importResult);
+      return runningNode.getBestStateRootHash();
     },
     getPostSerializedState: async (hash: HeaderHash): Promise<StateEntries | null> => {
       if (runningNode === null) {
@@ -56,7 +62,11 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
       }
       return runningNode.getStateEntries(hash);
     },
-    resetState: async (header: Header, state: StateEntries): Promise<StateRootHash> => {
+    resetState: async (
+      header: Header,
+      state: StateEntries,
+      ancestry: [HeaderHash, TimeSlot][],
+    ): Promise<StateRootHash> => {
       if (runningNode !== null) {
         const finish = runningNode.close();
         runningNode = null;
@@ -76,6 +86,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
               genesisState: new Map(state),
             },
           },
+          ancestry,
           network: null,
         },
         withRelPath,

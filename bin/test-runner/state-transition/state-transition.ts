@@ -4,11 +4,12 @@ import path from "node:path";
 import { Block, Header } from "@typeberry/block";
 import { blockFromJson, headerFromJson } from "@typeberry/block-json";
 import { Decoder, Encoder, codec } from "@typeberry/codec";
-import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
+import { ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { emptyBlock } from "@typeberry/node";
+import { tryAsU32 } from "@typeberry/numbers";
 import { serializeStateUpdate } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
@@ -91,8 +92,20 @@ function blockAsView(spec: ChainSpec, block: Block) {
   return blockView;
 }
 
+// A special chain spec, just for some conformance 0.7.0 tests
+// that were run pre-V1 fuzzer version.
+const jamConformance070V0Spec = new ChainSpec({
+  ...tinyChainSpec,
+  maxLookupAnchorAge: tryAsU32(14_400),
+});
+
 export async function runStateTransition(testContent: StateTransition, testPath: string) {
-  const spec = tinyChainSpec;
+  // a bit of a hack, but the new value for `maxLookupAnchorAge` was proposed with V1
+  // version of the fuzzer, yet these tests were still depending on the older value.
+  // To simplify the chain spec, we just special case this one vector here.
+  const spec = testPath.includes("fuzz-reports/0.7.0/traces/1756548916/00000082.json")
+    ? jamConformance070V0Spec
+    : tinyChainSpec;
   const preState = loadState(spec, testContent.pre_state.keyvals);
   const postState = loadState(spec, testContent.post_state.keyvals);
 
