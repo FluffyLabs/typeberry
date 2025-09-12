@@ -12,7 +12,7 @@ import {
 import { type GasCounter, Registers, tryAsBigGas, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { Compatibility, GpVersion, check, resultToString } from "@typeberry/utils";
+import { check, resultToString } from "@typeberry/utils";
 import { type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -32,14 +32,7 @@ const GAS_REGISTERS_SIZE = tryAsExactBytes(gasAndRegistersCodec.sizeHint);
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/354301354301?v=0.6.7
  */
 export class Invoke implements HostCallHandler {
-  index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual({
-      fallback: 25,
-      versions: {
-        [GpVersion.V0_6_7]: 12,
-      },
-    }),
-  );
+  index = tryAsHostCallIndex(12);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(IN_OUT_REG_1, IN_OUT_REG_2);

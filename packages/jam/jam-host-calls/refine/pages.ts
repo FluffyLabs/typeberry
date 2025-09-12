@@ -6,7 +6,7 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { Compatibility, GpVersion, assertNever, resultToString } from "@typeberry/utils";
+import { assertNever, resultToString } from "@typeberry/utils";
 import {
   PagesError,
   type RefineExternalities,
@@ -26,14 +26,7 @@ const IN_OUT_REG = 7;
  * https://graypaper.fluffylabs.dev/#/1c979cb/349602349602?v=0.7.1
  */
 export class Pages implements HostCallHandler {
-  index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual({
-      fallback: -1,
-      versions: {
-        [GpVersion.V0_6_7]: 11,
-      },
-    }),
-  );
+  index = tryAsHostCallIndex(11);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10);

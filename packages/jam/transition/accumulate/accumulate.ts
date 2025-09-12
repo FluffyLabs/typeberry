@@ -211,17 +211,17 @@ export class Accumulate {
     entropy: EntropyHash,
     inputStateUpdate: AccumulationStateUpdate,
   ) {
-    logger.trace(`Accumulating service ${serviceId}, items: ${operands.length} at slot: ${slot}.`);
+    logger.log(`Accumulating service ${serviceId}, items: ${operands.length} at slot: ${slot}.`);
 
     const result = await this.pvmAccumulateInvocation(slot, serviceId, operands, gasCost, entropy, inputStateUpdate);
 
     if (result.isError) {
       // https://graypaper.fluffylabs.dev/#/7e6ff6a/2fb6012fb601?v=0.6.7
-      logger.trace(`Accumulation failed for ${serviceId}.`);
+      logger.log(`Accumulation failed for ${serviceId}.`);
       return { stateUpdate: null, consumedGas: 0n };
     }
 
-    logger.trace(`Accumulation successful for ${serviceId}. Consumed: ${result.ok.consumedGas}`);
+    logger.log(`Accumulation successful for ${serviceId}. Consumed: ${result.ok.consumedGas}`);
     return result.ok;
   }
 

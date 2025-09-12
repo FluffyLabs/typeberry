@@ -2,11 +2,12 @@ import { type ServiceId, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "
 import { BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
+import { minU64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { Compatibility, GpVersion } from "@typeberry/utils";
+import { Compatibility, TestSuite } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { getServiceIdOrCurrent } from "./utils.js";
@@ -19,35 +20,31 @@ export interface AccountsInfo {
 
 const IN_OUT_REG = 7;
 
+const OFFSET_REG = Compatibility.isSuite(TestSuite.W3F_DAVXY) ? 9 : 11;
+export const LEN_REG = Compatibility.isSuite(TestSuite.W3F_DAVXY) ? 10 : 12;
+
 /**
  * Return info about some account.
  *
- * `E(t_c, E8(t_b, t_t, t_g , t_m, t_o), E4(t_i), E8(t_f), E4(t_r, t_a, t_p))`
+ * `E(a_c, E8(a_b, a_t, a_g , a_m, a_o), E4(a_i), E8(a_f), E4(a_r, a_a, a_p))`
  * c = code hash
  * b = balance
  * t = threshold balance
  * g = minimum gas for accumulate
  * m = minimum gas for on transfer
- * i = number of items in the storage
  * o = total number of octets stored.
+ * i = number of items in the storage
  * f = gratis storage (can bring down whole threshold cost to zero)
  * r = creation timeslot
  * a = last accumulation timeslot
  * p = parent service
  *
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/332702332702?v=0.6.7
+ * https://graypaper.fluffylabs.dev/#/38c4e62/338302338302?v=0.7.0
  */
 export class Info implements HostCallHandler {
-  index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual({
-      fallback: 4,
-      versions: {
-        [GpVersion.V0_6_7]: 5,
-      },
-    }),
-  );
+  index = tryAsHostCallIndex(5);
   gasCost = tryAsSmallGas(10);
-  tracedRegisters = traceRegisters(IN_OUT_REG, 8);
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8, OFFSET_REG, LEN_REG);
 
   constructor(
     public readonly currentServiceId: ServiceId,
@@ -64,7 +61,7 @@ export class Info implements HostCallHandler {
     // o
     const outputStart = regs.get(8);
 
-    // t
+    // v
     const accountInfo = this.account.getServiceInfo(serviceId);
 
     const encodedInfo =
@@ -79,20 +76,28 @@ export class Info implements HostCallHandler {
             ),
           });
 
-    const writeResult = memory.storeFrom(outputStart, encodedInfo.raw);
+    const valueLength = tryAsU64(encodedInfo.length);
+    // f
+    const offset = minU64(regs.get(OFFSET_REG), valueLength);
+    // l
+    const length = minU64(regs.get(LEN_REG), tryAsU64(valueLength - offset));
+
+    const chunk = encodedInfo.raw.subarray(Number(offset), Number(offset + length));
+
+    const writeResult = memory.storeFrom(outputStart, chunk);
     if (writeResult.isError) {
       logger.trace(`INFO(${serviceId}) <- PANIC`);
       return PvmExecution.Panic;
     }
 
-    logger.trace(`INFO(${serviceId}) <- ${encodedInfo}`);
+    logger.trace(`INFO(${serviceId}) <- ${BytesBlob.blobFrom(chunk)}`);
 
     if (accountInfo === null) {
       regs.set(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
-    regs.set(IN_OUT_REG, HostCallResult.OK);
+    regs.set(IN_OUT_REG, valueLength);
   }
 }
 

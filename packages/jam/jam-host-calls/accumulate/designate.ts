@@ -5,7 +5,6 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { ValidatorData } from "@typeberry/state";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -19,14 +18,7 @@ export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/36b50136b501?v=0.6.7
  */
 export class Designate implements HostCallHandler {
-  index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual({
-      fallback: 7,
-      versions: {
-        [GpVersion.V0_6_7]: 16,
-      },
-    }),
-  );
+  index = tryAsHostCallIndex(16);
   gasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG);
 
