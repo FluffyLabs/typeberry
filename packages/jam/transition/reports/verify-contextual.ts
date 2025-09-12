@@ -18,8 +18,8 @@ import type { ReportsInput } from "./input.js";
 
 /** Recently imported blocks. */
 export type HeaderChain = {
-  /** Check whether given hash is part of the ancestor chain. */
-  isInChain(header: HeaderHash): boolean;
+  /** Check whether given `pastBlock` hash is part of the ancestor chain of `currentBlock` */
+  isAncestor(pastBlock: HeaderHash /*, currentBlock: HeaderHash*/): boolean;
 };
 
 const logger = Logger.new(import.meta.filename, "stf:reports");
@@ -200,7 +200,7 @@ function verifyRefineContexts(
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/155c01155f01
      */
-    const isInChain = recentBlocks.has(context.lookupAnchor) || headerChain.isInChain(context.lookupAnchor);
+    const isInChain = recentBlocks.has(context.lookupAnchor) || headerChain.isAncestor(context.lookupAnchor);
     if (!isInChain) {
       if (process.env.SKIP_LOOKUP_ANCHOR_CHECK !== undefined) {
         logger.warn(`Lookup anchor check for ${context.lookupAnchor} would fail, but override is active.`);

@@ -34,7 +34,10 @@ import { Statistics, type StatisticsStateUpdate } from "./statistics.js";
 class DbHeaderChain implements HeaderChain {
   constructor(private readonly blocks: BlocksDb) {}
 
-  isInChain(header: HeaderHash): boolean {
+  isAncestor(header: HeaderHash): boolean {
+    // TODO [ToDr] This works only for simple forks scenario. We rather
+    // should make sure that the `header` we are checking is a descendant
+    // of the current header (i.e. there is a direct path when going by parent).
     return this.blocks.getHeader(header) !== null;
   }
 }

@@ -409,7 +409,7 @@ describe("FuzzV1Target Handler", () => {
     mockSender: MockSender,
     fuzzTarget?: FuzzTarget,
   ): Promise<FuzzTarget> {
-    const target = fuzzTarget || new FuzzTarget(mockMessageHandler, mockSender, spec);
+    const target = fuzzTarget ?? new FuzzTarget(mockMessageHandler, mockSender, spec);
 
     const inputPeerInfo = PeerInfo.create({
       fuzzVersion: tryAsU8(1),

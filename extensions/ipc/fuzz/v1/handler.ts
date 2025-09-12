@@ -75,6 +75,13 @@ export class FuzzTarget implements IpcHandler {
 
     switch (message.type) {
       case MessageType.PeerInfo: {
+        // only support V1
+        if (message.value.fuzzVersion !== 1) {
+          logger.warn(`Unsupported fuzzer protocol version: ${message.value.fuzzVersion}. Closing`);
+          this.sender.close();
+          return;
+        }
+
         // Handle handshake
         const ourPeerInfo = await this.msgHandler.getPeerInfo(message.value);
 

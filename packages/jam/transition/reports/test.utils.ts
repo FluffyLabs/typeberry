@@ -50,6 +50,7 @@ import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulat
 import { RecentBlocks, RecentBlocksHistory } from "@typeberry/state/recent-blocks.js";
 import { asOpaqueType } from "@typeberry/utils";
 import { Reports, type ReportsState } from "./reports.js";
+import type { HeaderChain } from "./verify-contextual.js";
 
 export const ENTROPY = getEntropy(1, 2, 3, 4);
 
@@ -151,9 +152,9 @@ export function guaranteesAsView(
 
 export async function newReports(options: Parameters<typeof newReportsState>[0] = {}) {
   const state = newReportsState(options);
-  const headerChain = {
-    isInChain(header: HeaderHash) {
-      return state.recentBlocks.blocks.find((x) => x.headerHash.isEqualTo(header)) !== undefined;
+  const headerChain: HeaderChain = {
+    isAncestor(_header: HeaderHash) {
+      return false;
     },
   };
 

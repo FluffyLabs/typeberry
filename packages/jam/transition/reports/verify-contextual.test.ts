@@ -205,7 +205,7 @@ describe("Reports.verifyContextualValidity", () => {
       isOk: false,
       isError: true,
       error: ReportsError.SegmentRootLookupInvalid,
-      details: "Lookup anchor slot's too old. Got: 1, minimal: 5600",
+      details: "Lookup anchor slot's too old. Got: 1, minimal: 19976",
     });
   });
 

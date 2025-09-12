@@ -105,7 +105,7 @@ describe("Fuzzer V1 Data Structures", () => {
       //   "jam_version": { "major": 0, "minor": 7, "patch": 0 },
       //   "name": "fuzzer"
       // }
-      // Expected: 0x0001020000000001190007000666757a7a6572
+      // Expected: 0x0001020000000001170007000666757a7a6572
 
       const peerInfo = PeerInfo.create({
         fuzzVersion: tryAsU8(1),
@@ -124,7 +124,7 @@ describe("Fuzzer V1 Data Structures", () => {
       });
 
       const encoded = Encoder.encodeObject(PeerInfo.Codec, peerInfo, spec);
-      const expectedHex = "0x01020000000001190007000666757a7a6572";
+      const expectedHex = "0x01020000000001170007000666757a7a6572";
 
       assert.strictEqual(encoded.toString(), expectedHex);
     });

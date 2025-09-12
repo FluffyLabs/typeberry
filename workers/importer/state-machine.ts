@@ -6,12 +6,13 @@ import {
   type StateRootHash,
   headerViewWithHashCodec,
 } from "@typeberry/block";
-import { Bytes } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Decoder, Encoder, codec } from "@typeberry/codec";
 import { WorkerConfig } from "@typeberry/config";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
 import { HASH_SIZE, type WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
+import { tryAsU32 } from "@typeberry/numbers";
 import {
   Listener,
   type RespondAndTransitionTo,
@@ -21,7 +22,7 @@ import {
   type TypedChannel,
 } from "@typeberry/state-machine";
 import { StateEntries } from "@typeberry/state-merkleization";
-import { resultToString } from "@typeberry/utils";
+import { Result, resultToString } from "@typeberry/utils";
 import type { Importer } from "./importer.js";
 
 export type ImporterInit = WorkerInit<ImporterReady>;
@@ -36,6 +37,44 @@ export function importerStateMachine() {
 }
 
 const logger = Logger.new(import.meta.filename, "importer");
+
+const importBlockCodec = codec.custom<Result<StateRootHash, string>>(
+  {
+    name: "Result<StateRootHash, string>",
+    sizeHint: { bytes: 1, isExact: false },
+  },
+  (e, x) => {
+    e.varU32(tryAsU32(x.isOk ? 0 : 1));
+    if (x.isOk) {
+      e.bytes(x.ok);
+    } else {
+      e.bytesBlob(BytesBlob.blobFromString(`${x.error}`));
+    }
+  },
+  (d) => {
+    const kind = d.varU32();
+    if (kind === 0) {
+      const hash = d.bytes(HASH_SIZE);
+      return Result.ok(hash.asOpaque<StateRootHash>());
+    }
+    if (kind === 1) {
+      const error = d.bytesBlob();
+      return Result.error(error.asText());
+    }
+
+    throw new Error(`Invalid Result: ${kind}`);
+  },
+  (s) => {
+    const kind = s.decoder.varU32();
+    if (kind === 0) {
+      s.bytes(HASH_SIZE);
+    } else if (kind === 1) {
+      s.bytesBlob();
+    } else {
+      throw new Error(`Invalid Result: ${kind}`);
+    }
+  },
+);
 
 export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
   public readonly onBestBlock = new Listener<WithHash<HeaderHash, HeaderView>>();
@@ -74,12 +113,12 @@ export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
     port.sendSignal("block", block, [block.buffer as ArrayBuffer]);
   }
 
-  async importBlock(port: TypedChannel, block: Uint8Array): Promise<StateRootHash | null> {
+  async importBlock(port: TypedChannel, block: Uint8Array): Promise<Result<StateRootHash, string>> {
     const res: Uint8Array | null = await port.sendRequest("importBlock", block, [block.buffer as ArrayBuffer]);
     if (res instanceof Uint8Array) {
-      return Bytes.fromBlob(res, HASH_SIZE).asOpaque();
+      return Decoder.decodeObject(importBlockCodec, BytesBlob.blobFrom(res));
     }
-    return null;
+    return Result.error("Invalid worker response.");
   }
 
   async getStateEntries(port: TypedChannel, hash: Uint8Array): Promise<StateEntries | null> {
@@ -201,20 +240,24 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
       const blockView = Decoder.decodeObject(Block.Codec.View, block, config.chainSpec);
       const headerView = blockView.header.view();
       const timeSlot = headerView.timeSlotIndex.materialize();
+      let response: Result<StateRootHash, string>;
       try {
         const res = await this.importer.importBlock(blockView, null);
         if (res.isOk) {
           logger.info(`🧊 Best block: #${timeSlot} (${res.ok.hash})`);
+          response = Result.ok(this.importer.getBestStateRootHash() ?? Bytes.zero(HASH_SIZE).asOpaque());
         } else {
           logger.log(`❌ Rejected block #${timeSlot}: ${resultToString(res)}`);
+          response = Result.error(resultToString(res));
         }
       } catch (e) {
         logger.error(`Failed to import block: ${e}`);
         logger.error(`${e instanceof Error ? e.stack : ""}`);
+        response = Result.error(`${e}`);
       }
-      const stateRootHash = this.importer.getBestStateRootHash();
+      const encoded = Encoder.encodeObject(importBlockCodec, response);
       return {
-        response: stateRootHash === null ? Bytes.zero(HASH_SIZE).raw : stateRootHash.raw,
+        response: encoded.raw,
       };
     }
 
