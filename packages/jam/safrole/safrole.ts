@@ -537,9 +537,6 @@ export class Safrole {
     }
 
     const ticketsMarker = this.getTicketsMarker(input.slot);
-    // console.log(JSON.stringify(ticketsMarker, null, 2));
-    // console.log(JSON.stringify(input.ticketsMarker, null, 2));
-
     const ticketsMarkerRes = compareWithEncoding(
       this.chainSpec,
       SafroleErrorCode.TicketsMarkerInvalid,
