@@ -8,15 +8,13 @@ import {
 import { HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import { Logger } from "@typeberry/logger";
+import type { U32 } from "@typeberry/numbers";
 import type { State } from "@typeberry/state";
 import { type BlockState, RecentBlocksHistory } from "@typeberry/state/recent-blocks.js";
 import { OK, Result } from "@typeberry/utils";
 import type { RecentHistoryStateUpdate } from "../recent-history.js";
 import { ReportsError } from "./error.js";
 import type { ReportsInput } from "./input.js";
-
-/** `L`: The maximum age in timeslots of the lookup anchor. */
-export const L = 14_400;
 
 /** Recently imported blocks. */
 export type HeaderChain = {
@@ -34,6 +32,7 @@ export function verifyContextualValidity(
     "getService" | "recentBlocks" | "availabilityAssignment" | "accumulationQueue" | "recentlyAccumulated"
   >,
   headerChain: HeaderChain,
+  maxLookupAnchorAge: U32,
 ): Result<HashDictionary<WorkPackageHash, WorkPackageInfo>, ReportsError> {
   const contexts: RefineContext[] = [];
   // hashes of work packages reported in this extrinsic
@@ -79,7 +78,7 @@ export function verifyContextualValidity(
     return Result.error(ReportsError.DuplicatePackage, "Duplicate work package detected.");
   }
 
-  const minLookupSlot = Math.max(0, input.slot - L);
+  const minLookupSlot = Math.max(0, input.slot - maxLookupAnchorAge);
   const contextResult = verifyRefineContexts(minLookupSlot, contexts, input.recentBlocksPartialUpdate, headerChain);
   if (contextResult.isError) {
     return contextResult;

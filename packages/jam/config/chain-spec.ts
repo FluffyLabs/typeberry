@@ -77,6 +77,8 @@ export class ChainSpec extends WithDebug {
   readonly maxBlockGas: U64;
   /** `G_R`: The gas allocated to invoke a work-package’s Refine logic. */
   readonly maxRefineGas: U64;
+  /** `L`: The maximum age in timeslots of the lookup anchor. */
+  readonly maxLookupAnchorAge: U32;
 
   constructor(data: Omit<ChainSpec, "validatorsSuperMajority" | "thirdOfValidators" | "erasureCodedPieceSize">) {
     super();
@@ -96,6 +98,7 @@ export class ChainSpec extends WithDebug {
     this.erasureCodedPieceSize = tryAsU32(EC_SEGMENT_SIZE / data.numberECPiecesPerSegment);
     this.maxBlockGas = data.maxBlockGas;
     this.maxRefineGas = data.maxRefineGas;
+    this.maxLookupAnchorAge = data.maxLookupAnchorAge;
   }
 }
 
@@ -114,6 +117,7 @@ export const tinyChainSpec = new ChainSpec({
   preimageExpungePeriod: tryAsU32(32),
   maxBlockGas: tryAsU64(20_000_000),
   maxRefineGas: tryAsU64(1_000_000_000),
+  maxLookupAnchorAge: tryAsU32(24),
 });
 
 /**
@@ -133,4 +137,5 @@ export const fullChainSpec = new ChainSpec({
   preimageExpungePeriod: tryAsU32(19_200),
   maxBlockGas: tryAsU64(3_500_000_000),
   maxRefineGas: tryAsU64(5_000_000_000),
+  maxLookupAnchorAge: tryAsU32(14_400),
 });
