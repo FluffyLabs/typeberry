@@ -7,7 +7,7 @@ import { HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/h
 import type { InMemoryState } from "@typeberry/state";
 import { InMemoryTrie } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
-import { Compatibility, GpVersion, TEST_COMPARE_USING, assertNever } from "@typeberry/utils";
+import { TEST_COMPARE_USING, assertNever } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
 import { type StateEntryUpdate, StateEntryUpdateAction } from "./serialize-state-update.js";
 import { type StateCodec, serialize } from "./serialize.js";
@@ -141,9 +141,7 @@ function convertInMemoryStateToDictionary(
   doSerialize(serialize.statistics); // C(13)
   doSerialize(serialize.accumulationQueue); // C(14)
   doSerialize(serialize.recentlyAccumulated); // C(15)
-  if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-    doSerialize(serialize.accumulationOutputLog); // C(16)
-  }
+  doSerialize(serialize.accumulationOutputLog); // C(16)
 
   // services
   for (const [serviceId, service] of state.services.entries()) {

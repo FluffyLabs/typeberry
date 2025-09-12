@@ -178,10 +178,7 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
   }
 
   get accumulationOutputLog(): State["accumulationOutputLog"] {
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      return this.retrieve(serialize.accumulationOutputLog, "accumulationOutputLog");
-    }
-    return [];
+    return this.retrieve(serialize.accumulationOutputLog, "accumulationOutputLog");
   }
 }
 

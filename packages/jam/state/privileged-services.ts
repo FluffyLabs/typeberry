@@ -1,8 +1,6 @@
 import type { ServiceGas, ServiceId } from "@typeberry/block";
-import { codecWithContext } from "@typeberry/block/codec.js";
 import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
-import { Compatibility, GpVersion } from "@typeberry/utils";
-import { type PerCore, codecPerCore, tryAsPerCore } from "./common.js";
+import { type PerCore, codecPerCore } from "./common.js";
 
 /** Dictionary entry of services that auto-accumulate every block. */
 export class AutoAccumulate {
@@ -29,20 +27,7 @@ export class AutoAccumulate {
 export class PrivilegedServices {
   static Codec = codec.Class(PrivilegedServices, {
     manager: codec.u32.asOpaque<ServiceId>(),
-    authManager: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? codecPerCore(codec.u32.asOpaque<ServiceId>())
-      : codecWithContext((ctx) =>
-          codec.u32.asOpaque<ServiceId>().convert(
-            // NOTE: [MaSo] In a compatibility mode we are always updating all entries
-            // (all the entries are the same)
-            // so it doesn't matter which one we take here.
-            (perCore: PerCore<ServiceId>) => perCore[0],
-            (serviceId: ServiceId) => {
-              const array = new Array(ctx.coresCount).fill(serviceId);
-              return tryAsPerCore(array, ctx);
-            },
-          ),
-        ),
+    authManager: codecPerCore(codec.u32.asOpaque<ServiceId>()),
     validatorsManager: codec.u32.asOpaque<ServiceId>(),
     autoAccumulateServices: readonlyArray(codec.sequenceVarLen(AutoAccumulate.Codec)),
   });

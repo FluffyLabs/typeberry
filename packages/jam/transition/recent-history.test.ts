@@ -6,7 +6,7 @@ import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, keccak } from "@typeberry/hash";
 import type { MmrHasher, MmrPeaks } from "@typeberry/mmr";
 import { BlockState, type BlocksState, MAX_RECENT_HISTORY, RecentBlocks, RecentBlocksHistory } from "@typeberry/state";
-import { Compatibility, GpVersion, asOpaqueType, check } from "@typeberry/utils";
+import { asOpaqueType, check } from "@typeberry/utils";
 import {
   RecentHistory,
   type RecentHistoryInput,
@@ -24,10 +24,6 @@ const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then
 
 const asRecentHistory = (arr: BlocksState, accumulationLog?: MmrPeaks<KeccakHash>): RecentHistoryState => {
   check(arr.length <= MAX_RECENT_HISTORY, "Invalid size of the state input.");
-  check(
-    accumulationLog === undefined || Compatibility.isGreaterOrEqual(GpVersion.V0_6_7),
-    "Cannot pass accumulation log to versions pre 0.6.7",
-  );
   return {
     recentBlocks: RecentBlocksHistory.create(
       RecentBlocks.create({

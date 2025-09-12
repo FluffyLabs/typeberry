@@ -13,7 +13,7 @@ import { type CodecRecord, Descriptor, type SizeHint, codec } from "@typeberry/c
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
-import { Compatibility, GpVersion, type Opaque, WithDebug, asOpaqueType, check } from "@typeberry/utils";
+import { type Opaque, WithDebug, asOpaqueType } from "@typeberry/utils";
 
 /**
  * `B_S`: The basic minimum balance which all services require.
@@ -88,11 +88,6 @@ export class ServiceAccountInfo extends WithDebug {
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/119e01119e01?v=0.6.7
    */
   static calculateThresholdBalance(items: U32, bytes: U64, gratisStorage: U64): U64 {
-    check(
-      gratisStorage === tryAsU64(0) || Compatibility.isGreaterOrEqual(GpVersion.V0_6_7),
-      "Gratis storage cannot be non-zero before 0.6.7",
-    );
-
     const storageCost =
       BASE_SERVICE_BALANCE + ELECTIVE_ITEM_BALANCE * BigInt(items) + ELECTIVE_BYTE_BALANCE * bytes - gratisStorage;
 

@@ -22,43 +22,9 @@ import {
   StorageItem,
   type StorageKey,
 } from "@typeberry/state";
-import { Compatibility, GpVersion, asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType } from "@typeberry/utils";
 
-class JsonServiceInfoPre067 {
-  static fromJson = json.object<JsonServiceInfoPre067, ServiceAccountInfo>(
-    {
-      code_hash: fromJson.bytes32(),
-      balance: json.fromNumber((x) => tryAsU64(x)),
-      min_item_gas: json.fromNumber((x) => tryAsServiceGas(x)),
-      min_memo_gas: json.fromNumber((x) => tryAsServiceGas(x)),
-      bytes: json.fromNumber((x) => tryAsU64(x)),
-      items: "number",
-    },
-    ({ code_hash, balance, min_item_gas, min_memo_gas, bytes, items }) => {
-      return ServiceAccountInfo.create({
-        codeHash: code_hash,
-        balance,
-        accumulateMinGas: min_item_gas,
-        onTransferMinGas: min_memo_gas,
-        storageUtilisationBytes: bytes,
-        storageUtilisationCount: items,
-        gratisStorage: tryAsU64(0),
-        created: tryAsTimeSlot(0),
-        lastAccumulation: tryAsTimeSlot(0),
-        parentService: tryAsServiceId(0),
-      });
-    },
-  );
-
-  code_hash!: CodeHash;
-  balance!: U64;
-  min_item_gas!: ServiceGas;
-  min_memo_gas!: ServiceGas;
-  bytes!: U64;
-  items!: U32;
-}
-
-class JsonServiceInfo extends JsonServiceInfoPre067 {
+class JsonServiceInfo {
   static fromJson = json.object<JsonServiceInfo, ServiceAccountInfo>(
     {
       code_hash: fromJson.bytes32(),
@@ -99,6 +65,12 @@ class JsonServiceInfo extends JsonServiceInfoPre067 {
     },
   );
 
+  code_hash!: CodeHash;
+  balance!: U64;
+  min_item_gas!: ServiceGas;
+  min_memo_gas!: ServiceGas;
+  bytes!: U64;
+  items!: U32;
   creation_slot!: TimeSlot;
   deposit_offset!: U64;
   last_accumulation_slot!: TimeSlot;
@@ -152,9 +124,7 @@ export class JsonService {
     {
       id: "number",
       data: {
-        service: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-          ? JsonServiceInfo.fromJson
-          : JsonServiceInfoPre067.fromJson,
+        service: JsonServiceInfo.fromJson,
         preimages: json.optional(json.array(JsonPreimageItem.fromJson)),
         storage: json.optional(json.array(JsonStorageItem.fromJson)),
         lookup_meta: json.optional(json.array(lookupMetaFromJson)),

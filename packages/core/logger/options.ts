@@ -1,9 +1,10 @@
 export enum Level {
-  TRACE = 1,
-  LOG = 2,
-  INFO = 3,
-  WARN = 4,
-  ERROR = 5,
+  INSANE = 1,
+  TRACE = 2,
+  LOG = 3,
+  INFO = 4,
+  WARN = 5,
+  ERROR = 6,
 }
 
 export type Options = {
@@ -85,7 +86,9 @@ function parseLevel(lvl: string): Level {
   const typedLvl: keyof typeof Level = lvl === "debug" ? "LOG" : (lvl.toUpperCase() as keyof typeof Level);
 
   if (Level[typedLvl] === undefined) {
-    throw new Error(`Unknown logging level: "${lvl}". Use one of "trace", "debug", "log","info", "warn", "error"`);
+    throw new Error(
+      `Unknown logging level: "${lvl}". Use one of "trace", "debug", "log","info", "warn", "error" or "insane"`,
+    );
   }
 
   return Level[typedLvl];

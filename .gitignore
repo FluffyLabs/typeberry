@@ -4,6 +4,7 @@
 # Logs
 logs
 *.log
+*.trace
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
