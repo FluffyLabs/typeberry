@@ -33,7 +33,7 @@ import {
 import { binaryMerkleization } from "@typeberry/state-merkleization";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
-import { Compatibility, GpVersion, Result, assertEmpty } from "@typeberry/utils";
+import { Result, assertEmpty } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/index.js";
 import type { CountAndGasUsed } from "../statistics.js";
@@ -364,18 +364,16 @@ export class Accumulate {
 
     // δ†
     const partialStateUpdate = new PartiallyUpdatedState(this.state, AccumulationStateUpdate.new(servicesUpdate));
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      // update last accumulation
-      for (const serviceId of accumulatedServices) {
-        // https://graypaper.fluffylabs.dev/#/7e6ff6a/181003185103?v=0.6.7
-        const info = partialStateUpdate.getServiceInfo(serviceId);
-        if (info === null) {
-          // NOTE If there is no service, we dont update it.
-          continue;
-        }
-        // δ‡
-        partialStateUpdate.updateServiceInfo(serviceId, ServiceAccountInfo.create({ ...info, lastAccumulation: slot }));
+    // update last accumulation
+    for (const serviceId of accumulatedServices) {
+      // https://graypaper.fluffylabs.dev/#/7e6ff6a/181003185103?v=0.6.7
+      const info = partialStateUpdate.getServiceInfo(serviceId);
+      if (info === null) {
+        // NOTE If there is no service, we dont update it.
+        continue;
       }
+      // δ‡
+      partialStateUpdate.updateServiceInfo(serviceId, ServiceAccountInfo.create({ ...info, lastAccumulation: slot }));
     }
 
     return {
