@@ -97,7 +97,9 @@ export const headerFromJson = json.object<JsonHeader, Header>(
     header.timeSlotIndex = slot;
     header.epochMarker = epoch_mark ?? null;
     header.ticketsMarker =
-      tickets_mark === undefined ? null : TicketsMarker.create({ tickets: asOpaqueType(tickets_mark) });
+      tickets_mark === undefined || tickets_mark === null
+        ? null
+        : TicketsMarker.create({ tickets: asOpaqueType(tickets_mark) });
     header.offendersMarker = offenders_mark;
     header.bandersnatchBlockAuthorIndex = author_index;
     header.entropySource = entropy_source;
