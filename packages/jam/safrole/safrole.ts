@@ -77,6 +77,8 @@ export type Input = {
   punishSet: ImmutableSortedSet<Ed25519Key>;
   /** Epoch marker from header */
   epochMarker: EpochMarker | null;
+  /** Tickets marker from header */
+  ticketsMarker: TicketsMark | null;
 };
 
 export enum SafroleErrorCode {
@@ -97,6 +99,10 @@ export enum SafroleErrorCode {
   EpochMarkerMissing = 8,
   // Epoch marker present even though epoch is not changed
   EpochMarkerUnexpected = 9,
+  // Tickets mark not present even though required
+  TicketsMarkMissing = 10,
+  // Tickets mark present even though it's not wanted
+  TicketsMarkUnexpected = 11,
 }
 
 type EpochValidators = Pick<
@@ -406,6 +412,17 @@ export class Safrole {
     return Result.ok(mergedTickets.array.slice(0, this.chainSpec.epochLength));
   }
 
+  private shouldIncludeTicketsMark(timeslot: TimeSlot): boolean {
+    const m = this.getSlotPhaseIndex(this.state.timeslot);
+    const mPrime = this.getSlotPhaseIndex(timeslot);
+    return (
+      this.isSameEpoch(timeslot) &&
+      m < this.chainSpec.contestLength &&
+      this.chainSpec.contestLength <= mPrime &&
+      this.state.ticketsAccumulator.length === this.chainSpec.epochLength
+    );
+  }
+
   /**
    * Returns winning-tickets markers if the block is the first after the end of the submission period
    * for tickets and if the ticket accumulator is saturated and null otherwise
@@ -413,14 +430,7 @@ export class Safrole {
    * https://graypaper.fluffylabs.dev/#/5f542d7/0ea0030ea003
    */
   private getTicketsMark(timeslot: TimeSlot): TicketsMark | null {
-    const m = this.getSlotPhaseIndex(this.state.timeslot);
-    const mPrime = this.getSlotPhaseIndex(timeslot);
-    if (
-      this.isSameEpoch(timeslot) &&
-      m < this.chainSpec.contestLength &&
-      this.chainSpec.contestLength <= mPrime &&
-      this.state.ticketsAccumulator.length === this.chainSpec.epochLength
-    ) {
+    if (this.shouldIncludeTicketsMark(timeslot)) {
       return this.outsideInSequencer(this.state.ticketsAccumulator);
     }
 
@@ -494,6 +504,14 @@ export class Safrole {
       return Result.error(SafroleErrorCode.EpochMarkerUnexpected);
     }
 
+    if (this.shouldIncludeTicketsMark(input.slot) && input.ticketsMarker === null) {
+      return Result.error(SafroleErrorCode.TicketsMarkMissing);
+    }
+
+    if (!this.shouldIncludeTicketsMark(input.slot) && input.ticketsMarker !== null) {
+      return Result.error(SafroleErrorCode.TicketsMarkUnexpected);
+    }
+
     const validatorKeysResult = await this.getValidatorKeys(input.slot, input.punishSet);
 
     if (validatorKeysResult.isError) {
@@ -526,8 +544,8 @@ export class Safrole {
     };
 
     const result = {
-      epochMark: this.getEpochMark(input.slot, nextValidatorData),
-      ticketsMark: this.getTicketsMark(input.slot),
+      epochMark: this.getEpochMark(input.slot, nextValidatorData), // note [seko] we may pass epoch marker from the header here instead of computing it albeit thorough validation will be required
+      ticketsMark: this.getTicketsMark(input.slot), // note [seko] we may pass tickets marker from the header here instead of computing it albeit thorough validation will be required
       stateUpdate,
     };
 

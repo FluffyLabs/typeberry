@@ -184,6 +184,7 @@ export class OnChain {
       extrinsic: block.extrinsic.view().tickets.materialize(),
       punishSet: disputesRecords.punishSet,
       epochMarker: header.epochMarker,
+      ticketsMarker: header.ticketsMarker,
     });
     if (safroleResult.isError) {
       return stfError(StfErrorKind.Safrole, safroleResult);
