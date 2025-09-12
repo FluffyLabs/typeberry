@@ -72,6 +72,22 @@ export class EpochMarker extends WithDebug {
   ) {
     super();
   }
+
+  public isEqualTo(other: EpochMarker | null) {
+    if (other === null) {
+      return false;
+    }
+
+    return (
+      this.entropy.isEqualTo(other.entropy) &&
+      this.ticketsEntropy.isEqualTo(other.ticketsEntropy) &&
+      this.validators.every(
+        ({ bandersnatch, ed25519 }, index) =>
+          bandersnatch.isEqualTo(other.validators[index].bandersnatch) &&
+          ed25519.isEqualTo(other.validators[index].ed25519),
+      )
+    );
+  }
 }
 
 /**

@@ -95,14 +95,10 @@ export enum SafroleErrorCode {
   BadTicketAttempt = 6,
   // Found a ticket duplicate.
   DuplicateTicket = 7,
-  // Epoch marker not present even though epoch is changed
-  EpochMarkerMissing = 8,
-  // Epoch marker present even though epoch is not changed
-  EpochMarkerUnexpected = 9,
-  // Tickets mark not present even though required
-  TicketsMarkMissing = 10,
-  // Tickets mark present even though it's not wanted
-  TicketsMarkUnexpected = 11,
+  // Epoch marker missing, unexpected or invalid
+  EpochMarkerInvalid = 8,
+  // Tickets marker missing, unexpected or invalid
+  TicketsMarkerInvalid = 9,
 }
 
 type EpochValidators = Pick<
@@ -495,23 +491,6 @@ export class Safrole {
       return Result.error(SafroleErrorCode.BadTicketAttempt);
     }
 
-    if (this.isEpochChanged(input.slot) && input.epochMarker === null) {
-      // todo [seko] on top of checking for epoch marker presence we might also perform more thorough validation of the marker
-      return Result.error(SafroleErrorCode.EpochMarkerMissing);
-    }
-
-    if (this.isSameEpoch(input.slot) && input.epochMarker !== null) {
-      return Result.error(SafroleErrorCode.EpochMarkerUnexpected);
-    }
-
-    if (this.shouldIncludeTicketsMark(input.slot) && input.ticketsMarker === null) {
-      return Result.error(SafroleErrorCode.TicketsMarkMissing);
-    }
-
-    if (!this.shouldIncludeTicketsMark(input.slot) && input.ticketsMarker !== null) {
-      return Result.error(SafroleErrorCode.TicketsMarkUnexpected);
-    }
-
     const validatorKeysResult = await this.getValidatorKeys(input.slot, input.punishSet);
 
     if (validatorKeysResult.isError) {
@@ -543,9 +522,33 @@ export class Safrole {
       ticketsAccumulator: asKnownSize(newTicketsAccumulatorResult.ok),
     };
 
+    const epochMark = this.getEpochMark(input.slot, nextValidatorData);
+
+    if (
+      (epochMark !== null && !epochMark.isEqualTo(input.epochMarker)) ||
+      (epochMark === null && input.epochMarker !== null)
+    ) {
+      return Result.error(SafroleErrorCode.EpochMarkerInvalid);
+    }
+
+    const ticketsMark = this.getTicketsMark(input.slot);
+
+    console.log(JSON.stringify(ticketsMark, null, 2));
+    console.log(JSON.stringify(input.ticketsMarker, null, 2));
+
+    if (
+      (ticketsMark !== null &&
+        input.ticketsMarker !== null &&
+        // biome-ignore lint/style/noNonNullAssertion: input.ticketsMarker not being null is checked above
+        !ticketsMark.every((ticket, index) => ticket.isEqualTo(input.ticketsMarker![index]))) ||
+      ticketsMark !== input.ticketsMarker
+    ) {
+      return Result.error(SafroleErrorCode.TicketsMarkerInvalid);
+    }
+
     const result = {
-      epochMark: this.getEpochMark(input.slot, nextValidatorData),
-      ticketsMark: this.getTicketsMark(input.slot),
+      epochMark,
+      ticketsMark,
       stateUpdate,
     };
 

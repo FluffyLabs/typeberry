@@ -480,6 +480,7 @@ describe("Safrole", () => {
     };
 
     const result = await safrole.transition(input);
+    console.log(result.error);
     assert.ok(result.isOk, "Expected transition to pass successfully");
 
     deepEqual(
@@ -630,7 +631,7 @@ describe("Safrole", () => {
 
     assert.deepEqual(result.isError, true);
     if (result.isError) {
-      assert.deepEqual(result.error, SafroleErrorCode.EpochMarkerMissing);
+      assert.deepEqual(result.error, SafroleErrorCode.EpochMarkerInvalid);
     }
   });
 
@@ -678,7 +679,7 @@ describe("Safrole", () => {
 
     assert.deepEqual(result.isError, true);
     if (result.isError) {
-      assert.deepEqual(result.error, SafroleErrorCode.EpochMarkerUnexpected);
+      assert.deepEqual(result.error, SafroleErrorCode.EpochMarkerInvalid);
     }
   });
 
@@ -770,7 +771,7 @@ describe("Safrole", () => {
 
     assert.deepEqual(result.isError, true);
     if (result.isError) {
-      assert.deepEqual(result.error, SafroleErrorCode.TicketsMarkMissing);
+      assert.deepEqual(result.error, SafroleErrorCode.TicketsMarkerInvalid);
     }
   });
 
@@ -866,7 +867,7 @@ describe("Safrole", () => {
 
     assert.deepEqual(result.isError, true);
     if (result.isError) {
-      assert.deepEqual(result.error, SafroleErrorCode.TicketsMarkUnexpected);
+      assert.deepEqual(result.error, SafroleErrorCode.TicketsMarkerInvalid);
     }
   });
 });
