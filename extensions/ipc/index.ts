@@ -173,6 +173,7 @@ class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
       appVersion: this.api.nodeVersion,
       jamVersion: this.api.gpVersion,
       fuzzVersion: value.fuzzVersion,
+      // Safe to convert: Features are small enum values that fit in U32 range
       features: tryAsU32(v1.Features.Ancestry | v1.Features.Fork),
     });
   }

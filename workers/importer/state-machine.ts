@@ -116,7 +116,7 @@ export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
   async importBlock(port: TypedChannel, block: Uint8Array): Promise<Result<StateRootHash, string>> {
     const res: Uint8Array | null = await port.sendRequest("importBlock", block, [block.buffer as ArrayBuffer]);
     if (res instanceof Uint8Array) {
-      return Decoder.decodeObject(importBlockCodec, BytesBlob.blobFrom(res));
+      return Decoder.decodeObject(importBlockCodec, res);
     }
     return Result.error("Invalid worker response.");
   }

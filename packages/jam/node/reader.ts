@@ -6,6 +6,7 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { parseFromJson } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
+import { resultToString } from "@typeberry/utils";
 import type { NodeApi } from "./main.js";
 
 export type BlocksImporterConfig = {
@@ -30,7 +31,10 @@ export const importBlocks = async (node: NodeApi, blocksToImport: string[]) => {
   });
   for (const block of reader) {
     logger.log(`📖 Importing block: #${block.header.view().timeSlotIndex.materialize()}`);
-    await node.importBlock(block);
+    const res = await node.importBlock(block);
+    if (res.isError) {
+      logger.error(`📖 ${resultToString(res)}`);
+    }
   }
   // close the importer.
   logger.info("All blocks scheduled to be imported.");

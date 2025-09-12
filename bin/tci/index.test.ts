@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import { tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { NODE_DEFAULTS, loadConfig } from "@typeberry/config-node";
 import { type PublicKeySeed, SEED_SIZE } from "@typeberry/crypto";
@@ -40,7 +40,7 @@ describe("Typeberry Common Interface: Config", () => {
 
   it("should set validator index", () => {
     const config = createJamConfig(parseArgs(["--validatorindex", "16"]));
-    assert.deepStrictEqual(config.dev?.validatorIndex, tryAsServiceId(16));
+    assert.deepStrictEqual(config.dev?.validatorIndex, tryAsValidatorIndex(16));
   });
 
   it("should create config with key seeds", () => {

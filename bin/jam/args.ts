@@ -100,7 +100,7 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
     }
     case Command.FuzzTarget: {
       const data = parseSharedOptions(args, withRelPath);
-      const { version } = parseValueOption(args, "version", typeof 0, parseFuzzVersion, 0);
+      const { version } = parseValueOption(args, "version", "number", parseFuzzVersion, 0);
       assertNoMoreArgs(args);
       return {
         command: Command.FuzzTarget,
@@ -138,13 +138,13 @@ function parseStringOption<S extends string, T>(
   parser: (v: string) => T | null,
   defaultValue: T,
 ): Record<S, T> {
-  return parseValueOption(args, option, typeof "", parser, defaultValue);
+  return parseValueOption(args, option, "string", parser, defaultValue);
 }
 
 function parseValueOption<X, S extends string, T>(
   args: minimist.ParsedArgs,
   option: S,
-  typeOfX: string,
+  typeOfX: "number" | "string",
   parser: (v: X) => T | null,
   defaultValue: T,
 ): Record<S, T> {
@@ -156,8 +156,9 @@ function parseValueOption<X, S extends string, T>(
   }
 
   delete args[option];
-  if (`${typeof val}` !== typeOfX) {
-    throw new Error(`Option '--${option}' requires an argument of type: ${typeOfX}, got: ${typeof val}.`);
+  const valType = typeof val;
+  if (valType !== typeOfX) {
+    throw new Error(`Option '--${option}' requires an argument of type: ${typeOfX}, got: ${valType}.`);
   }
   try {
     const parsed = parser(val);
@@ -191,7 +192,7 @@ type CommandArgs<T extends Command, Args> = {
   args: Args;
 };
 
-function parseFuzzVersion(v: string): 0 | 1 | null {
+function parseFuzzVersion(v: string | number): 0 | 1 | null {
   if (v === "") {
     return null;
   }

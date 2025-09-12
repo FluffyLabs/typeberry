@@ -54,7 +54,7 @@ export class FuzzTarget implements IpcHandler {
   ) {}
 
   async onSocketMessage(msg: Uint8Array): Promise<void> {
-    // attempt to the decode the messsage
+    // attempt to decode the messsage
     try {
       const message = Decoder.decodeObject(messageCodec, msg, this.spec);
       logger.log(`[${message.type}] incoming message`);

@@ -77,7 +77,10 @@ export class AncestryItem extends WithDebug {
  * Ancestry ::= SEQUENCE (SIZE(0..24)) OF AncestryItem
  * Empty when `feature-ancestry` is not supported by both parties
  */
-export const ancestryCodec = codec.sequenceVarLen(AncestryItem.Codec);
+export const ancestryCodec = codec.sequenceVarLen(AncestryItem.Codec, {
+  minLength: 0,
+  maxLength: 24,
+});
 export type Ancestry = AncestryItem[];
 
 /**
