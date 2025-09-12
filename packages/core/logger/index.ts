@@ -77,28 +77,33 @@ export class Logger {
     private readonly config: typeof GLOBAL_CONFIG,
   ) {}
 
+  /** Log a message with `INSANE` level. */
+  insane(val: string) {
+    this.config.transport.insane(this.moduleName, val);
+  }
+
   /** Log a message with `TRACE` level. */
   trace(val: string) {
-    this.config.transport.trace(this.moduleName, this.fileName, val);
+    this.config.transport.trace(this.moduleName, val);
   }
 
   /** Log a message with `DEBUG`/`LOG` level. */
   log(val: string) {
-    this.config.transport.log(this.moduleName, this.fileName, val);
+    this.config.transport.log(this.moduleName, val);
   }
 
   /** Log a message with `INFO` level. */
   info(val: string) {
-    this.config.transport.info(this.moduleName, this.fileName, val);
+    this.config.transport.info(this.moduleName, val);
   }
 
   /** Log a message with `WARN` level. */
   warn(val: string) {
-    this.config.transport.warn(this.moduleName, this.fileName, val);
+    this.config.transport.warn(this.moduleName, val);
   }
 
   /** Log a message with `ERROR` level. */
   error(val: string) {
-    this.config.transport.error(this.moduleName, this.fileName, val);
+    this.config.transport.error(this.moduleName, val);
   }
 }

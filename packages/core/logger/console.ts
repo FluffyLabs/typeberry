@@ -12,6 +12,11 @@ export class ConsoleTransport implements Transport {
    */
   static create(minimalLevel: Level, options: Options) {
     // optimised transports if we don't care about trace/log levels
+    if (minimalLevel === Level.INSANE) {
+      return new InsaneConsoleLogger(options);
+    }
+
+    // optimised transports if we don't care about trace/log levels
     if (minimalLevel === Level.TRACE) {
       return new TraceConsoleTransport(options);
     }
@@ -29,28 +34,31 @@ export class ConsoleTransport implements Transport {
 
   protected constructor(private options: Options) {}
 
-  trace(_moduleName: string, _fileName: string, _val: string) {
+  insane(_moduleName: string, _val: string) {
     /* no-op */
   }
 
-  log(_moduleName: string, _fileName: string, _val: string) {
+  trace(_moduleName: string, _val: string) {
     /* no-op */
   }
 
-  info(_moduleName: string, _fileName: string, _val: string) {
+  log(_moduleName: string, _val: string) {
     /* no-op */
   }
 
-  warn(moduleName: string, fileName: string, val: string) {
-    this.push(Level.WARN, moduleName, fileName, val);
+  info(_moduleName: string, _val: string) {
+    /* no-op */
   }
 
-  error(moduleName: string, fileName: string, val: string) {
-    this.push(Level.ERROR, moduleName, fileName, val);
+  warn(moduleName: string, val: string) {
+    this.push(Level.WARN, moduleName, val);
   }
 
-  push(level: Level, moduleName: string, fileName: string, val: string) {
-    const shortName = fileName.replace(this.options.workingDir, "");
+  error(moduleName: string, val: string) {
+    this.push(Level.ERROR, moduleName, val);
+  }
+
+  push(level: Level, moduleName: string, val: string) {
     const shortModule = moduleName.replace(this.options.workingDir, "");
     const configuredLevel = findLevel(this.options, moduleName);
     const lvlText = Level[level].padEnd(5);
@@ -58,7 +66,7 @@ export class ConsoleTransport implements Transport {
       return;
     }
 
-    const msg = `${lvlText} [${shortModule}] ${val}\n\t@ ${shortName}`;
+    const msg = `${lvlText} [${shortModule}] ${val}`;
     if (level === Level.WARN) {
       console.warn(msg);
     } else if (level === Level.ERROR) {
@@ -70,19 +78,44 @@ export class ConsoleTransport implements Transport {
 }
 
 /**
+ * Insane version of console logger - supports insane level.
+ */
+class InsaneConsoleLogger extends ConsoleTransport {
+  insane(moduleName: string, val: string) {
+    this.push(Level.INSANE, moduleName, val);
+  }
+
+  trace(moduleName: string, val: string) {
+    this.push(Level.TRACE, moduleName, val);
+  }
+
+  log(moduleName: string, val: string) {
+    this.push(Level.LOG, moduleName, val);
+  }
+
+  info(moduleName: string, val: string) {
+    this.push(Level.INFO, moduleName, val);
+  }
+}
+
+/**
  * A basic version of console logger - printing everything.
  */
 class TraceConsoleTransport extends ConsoleTransport {
-  trace(moduleName: string, fileName: string, val: string) {
-    this.push(Level.TRACE, moduleName, fileName, val);
+  insane(_moduleName: string, _val: string) {
+    /* no-op */
   }
 
-  log(moduleName: string, fileName: string, val: string) {
-    this.push(Level.LOG, moduleName, fileName, val);
+  trace(moduleName: string, val: string) {
+    this.push(Level.TRACE, moduleName, val);
   }
 
-  info(moduleName: string, fileName: string, val: string) {
-    this.push(Level.INFO, moduleName, fileName, val);
+  log(moduleName: string, val: string) {
+    this.push(Level.LOG, moduleName, val);
+  }
+
+  info(moduleName: string, val: string) {
+    this.push(Level.INFO, moduleName, val);
   }
 }
 
@@ -90,16 +123,20 @@ class TraceConsoleTransport extends ConsoleTransport {
  * An optimized version of the logger - completely ignores `TRACE` level calls.
  */
 class LogConsoleTransport extends ConsoleTransport {
-  trace(_moduleName: string, _fileName: string, _val: string) {
+  insane(_moduleName: string, _val: string) {
     /* no-op */
   }
 
-  log(moduleName: string, fileName: string, val: string) {
-    this.push(Level.LOG, moduleName, fileName, val);
+  trace(_moduleName: string, _val: string) {
+    /* no-op */
   }
 
-  info(moduleName: string, fileName: string, val: string) {
-    this.push(Level.INFO, moduleName, fileName, val);
+  log(moduleName: string, val: string) {
+    this.push(Level.LOG, moduleName, val);
+  }
+
+  info(moduleName: string, val: string) {
+    this.push(Level.INFO, moduleName, val);
   }
 }
 
@@ -107,15 +144,19 @@ class LogConsoleTransport extends ConsoleTransport {
  * An optimized version of the logger - completely ignores `TRACE` & `DEBUG` level calls.
  */
 class InfoConsoleTransport extends ConsoleTransport {
-  trace(_moduleName: string, _fileName: string, _val: string) {
+  insane(_moduleName: string, _val: string) {
     /* no-op */
   }
 
-  log(_moduleName: string, _fileName: string, _val: string) {
+  trace(_moduleName: string, _val: string) {
     /* no-op */
   }
 
-  info(moduleName: string, fileName: string, val: string) {
-    this.push(Level.INFO, moduleName, fileName, val);
+  log(_moduleName: string, _val: string) {
+    /* no-op */
+  }
+
+  info(moduleName: string, val: string) {
+    this.push(Level.INFO, moduleName, val);
   }
 }

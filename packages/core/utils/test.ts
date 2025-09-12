@@ -37,6 +37,8 @@ export type DeepEqualOptions = {
   errorsCollector?: ErrorsCollector;
 };
 
+let oomWarningPrinted = false;
+
 /** Deeply compare `actual` and `expected` values. */
 export function deepEqual<T>(
   actual: T | undefined,
@@ -69,7 +71,7 @@ export function deepEqual<T>(
       try {
         assert.strictEqual(actualDisp, expectedDisp, message);
       } catch (e) {
-        if (isOoMWorkaroundNeeded) {
+        if (isOoMWorkaroundNeeded && !oomWarningPrinted) {
           console.warn(
             [
               "Stacktrace may be crappy because of a problem in nodejs.",
@@ -77,6 +79,7 @@ export function deepEqual<T>(
               "Maybe we do not need it anymore",
             ].join("\n"),
           );
+          oomWarningPrinted = true;
         }
         throw e;
       }
