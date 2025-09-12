@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
-import { type EntropyHash, type PerValidator, tryAsTimeSlot } from "@typeberry/block";
+import { type EntropyHash, EpochMarker, type PerValidator, ValidatorKeys, tryAsTimeSlot } from "@typeberry/block";
 import { type SignedTicket, Ticket, type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
@@ -103,6 +103,7 @@ describe("Safrole", () => {
       entropy,
       extrinsic,
       punishSet,
+      epochMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -126,6 +127,7 @@ describe("Safrole", () => {
       entropy,
       extrinsic: asKnownSize(extrinsic),
       punishSet,
+      epochMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -154,6 +156,7 @@ describe("Safrole", () => {
       entropy,
       extrinsic,
       punishSet,
+      epochMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -203,6 +206,7 @@ describe("Safrole", () => {
       entropy,
       extrinsic,
       punishSet,
+      epochMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -259,6 +263,7 @@ describe("Safrole", () => {
       entropy,
       extrinsic,
       punishSet,
+      epochMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -315,6 +320,7 @@ describe("Safrole", () => {
       entropy,
       extrinsic,
       punishSet,
+      epochMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -407,6 +413,7 @@ describe("Safrole", () => {
       entropy,
       extrinsic,
       punishSet,
+      epochMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -503,6 +510,7 @@ describe("Safrole", () => {
       entropy,
       extrinsic,
       punishSet,
+      epochMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -517,5 +525,94 @@ describe("Safrole", () => {
       }),
       { ignore: ["ok.stateUpdate"] },
     );
+  });
+
+  it("should return epoch marker missing error when epoch changes but epochMarker is null", async () => {
+    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator);
+    const state: SafroleState = {
+      timeslot: tryAsTimeSlot(11),
+      entropy: FixedSizeArray.new(
+        [
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+        ],
+        4,
+      ),
+      previousValidatorData: validators,
+      currentValidatorData: validators,
+      designatedValidatorData: validators,
+      nextValidatorData: validators,
+      ticketsAccumulator: asKnownSize([]),
+      sealingKeySeries: fakeSealingKeys,
+      epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
+    };
+    const safrole = new Safrole(tinyChainSpec, state, bwasm);
+    const timeslot = tryAsTimeSlot(12);
+    const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
+    const extrinsic: TicketsExtrinsic = asKnownSize([]);
+
+    const input = {
+      slot: timeslot,
+      entropy,
+      extrinsic,
+      punishSet,
+      epochMarker: null,
+    };
+
+    const result = await safrole.transition(input);
+
+    assert.deepEqual(result.isError, true);
+    if (result.isError) {
+      assert.deepEqual(result.error, SafroleErrorCode.EpochMarkerMissing);
+    }
+  });
+
+  it("should return epoch marker unexpected error when epoch is same but epochMarker is not null", async () => {
+    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator);
+    const state: SafroleState = {
+      timeslot: tryAsTimeSlot(1),
+      entropy: FixedSizeArray.new(
+        [
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+        ],
+        4,
+      ),
+      previousValidatorData: validators,
+      currentValidatorData: validators,
+      designatedValidatorData: validators,
+      nextValidatorData: validators,
+      ticketsAccumulator: asKnownSize([]),
+      sealingKeySeries: fakeSealingKeys,
+      epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
+    };
+    const safrole = new Safrole(tinyChainSpec, state, bwasm);
+    const timeslot = tryAsTimeSlot(2);
+    const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
+    const extrinsic: TicketsExtrinsic = asKnownSize([]);
+    const epochMarker = EpochMarker.create({
+      entropy: Bytes.zero(HASH_SIZE).asOpaque(),
+      ticketsEntropy: Bytes.zero(HASH_SIZE).asOpaque(),
+      validators: asKnownSize(validators.map((validator) => ValidatorKeys.create(validator))),
+    });
+
+    const input = {
+      slot: timeslot,
+      entropy,
+      extrinsic,
+      punishSet,
+      epochMarker,
+    };
+
+    const result = await safrole.transition(input);
+
+    assert.deepEqual(result.isError, true);
+    if (result.isError) {
+      assert.deepEqual(result.error, SafroleErrorCode.EpochMarkerUnexpected);
+    }
   });
 });

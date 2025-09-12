@@ -212,7 +212,7 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const punishSet = SortedSet.fromArrayUnique(hashComparator, testContent.pre_state.post_offenders);
   const safrole = new Safrole(chainSpec, preState, bwasm);
 
-  const result = await safrole.transition({ ...testContent.input, punishSet });
+  const result = await safrole.transition({ ...testContent.input, punishSet, epochMarker: null });
 
   const expectedResult = Output.toSafroleOutput(testContent.output, chainSpec);
   const expectedState = JsonState.toSafroleState(testContent.post_state, chainSpec);

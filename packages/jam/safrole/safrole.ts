@@ -75,6 +75,8 @@ export type Input = {
   extrinsic: TicketsExtrinsic;
   /** Punish set from disputes */
   punishSet: ImmutableSortedSet<Ed25519Key>;
+  /** Epoch marker from header */
+  epochMarker: EpochMarker | null;
 };
 
 export enum SafroleErrorCode {
@@ -91,6 +93,10 @@ export enum SafroleErrorCode {
   BadTicketAttempt = 6,
   // Found a ticket duplicate.
   DuplicateTicket = 7,
+  // Epoch marker not present even though epoch is changed
+  EpochMarkerMissing = 8,
+  // Epoch marker present even though epoch is not changed
+  EpochMarkerUnexpected = 9,
 }
 
 type EpochValidators = Pick<
@@ -477,6 +483,15 @@ export class Safrole {
 
     if (!this.areTicketAttemptsValid(input.extrinsic)) {
       return Result.error(SafroleErrorCode.BadTicketAttempt);
+    }
+
+    if (this.isEpochChanged(input.slot) && input.epochMarker === null) {
+      // todo [seko] on top of checking for epoch marker presence we might also perform more thorough validation of the marker
+      return Result.error(SafroleErrorCode.EpochMarkerMissing);
+    }
+
+    if (this.isSameEpoch(input.slot) && input.epochMarker !== null) {
+      return Result.error(SafroleErrorCode.EpochMarkerUnexpected);
     }
 
     const validatorKeysResult = await this.getValidatorKeys(input.slot, input.punishSet);
