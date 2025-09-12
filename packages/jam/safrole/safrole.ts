@@ -23,7 +23,7 @@ import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
-import { Result, asOpaqueType } from "@typeberry/utils";
+import { Compatibility, Result, TestSuite, asOpaqueType } from "@typeberry/utils";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 import type { SafroleSealState } from "./safrole-seal.js";
@@ -544,8 +544,8 @@ export class Safrole {
     };
 
     const result = {
-      epochMark: this.getEpochMark(input.slot, nextValidatorData), // note [seko] we may pass epoch marker from the header here instead of computing it albeit thorough validation will be required
-      ticketsMark: this.getTicketsMark(input.slot), // note [seko] we may pass tickets marker from the header here instead of computing it albeit thorough validation will be required
+      epochMark: this.getEpochMark(input.slot, nextValidatorData),
+      ticketsMark: this.getTicketsMark(input.slot),
       stateUpdate,
     };
 

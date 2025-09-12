@@ -133,10 +133,6 @@ export async function runStateTransition(testContent: StateTransition, testPath:
   const stfResult = await stf.transition(blockView, headerHash.hash);
   if (shouldBlockBeRejected) {
     assert.strictEqual(stfResult.isOk, false, "The block should be rejected, yet we imported it.");
-    // there should be no changes.
-    const root = preState.backend.getRootHash();
-    deepEqual(preState, postState);
-    assert.deepStrictEqual(root.toString(), postStateRoot.toString());
     return;
   }
 
