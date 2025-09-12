@@ -1,6 +1,13 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
-import { type EntropyHash, EpochMarker, type PerValidator, ValidatorKeys, tryAsTimeSlot } from "@typeberry/block";
+import {
+  type EntropyHash,
+  EpochMarker,
+  type PerValidator,
+  ValidatorKeys,
+  tryAsPerEpochBlock,
+  tryAsTimeSlot,
+} from "@typeberry/block";
 import { type SignedTicket, Ticket, type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
@@ -104,6 +111,7 @@ describe("Safrole", () => {
       extrinsic,
       punishSet,
       epochMarker: null,
+      ticketsMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -128,6 +136,7 @@ describe("Safrole", () => {
       extrinsic: asKnownSize(extrinsic),
       punishSet,
       epochMarker: null,
+      ticketsMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -157,6 +166,7 @@ describe("Safrole", () => {
       extrinsic,
       punishSet,
       epochMarker: null,
+      ticketsMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -207,6 +217,7 @@ describe("Safrole", () => {
       extrinsic,
       punishSet,
       epochMarker: null,
+      ticketsMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -264,6 +275,7 @@ describe("Safrole", () => {
       extrinsic,
       punishSet,
       epochMarker: null,
+      ticketsMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -321,6 +333,7 @@ describe("Safrole", () => {
       extrinsic,
       punishSet,
       epochMarker: null,
+      ticketsMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -414,6 +427,56 @@ describe("Safrole", () => {
       extrinsic,
       punishSet,
       epochMarker: null,
+      ticketsMarker: asKnownSize([
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 1),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 12),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 2),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 11),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 3),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 10),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 4),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 9),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 5),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 8),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 6),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 7),
+        }),
+      ]),
     };
 
     const result = await safrole.transition(input);
@@ -511,6 +574,7 @@ describe("Safrole", () => {
       extrinsic,
       punishSet,
       epochMarker: null,
+      ticketsMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -559,6 +623,7 @@ describe("Safrole", () => {
       extrinsic,
       punishSet,
       epochMarker: null,
+      ticketsMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -606,6 +671,7 @@ describe("Safrole", () => {
       extrinsic,
       punishSet,
       epochMarker,
+      ticketsMarker: null,
     };
 
     const result = await safrole.transition(input);
@@ -613,6 +679,194 @@ describe("Safrole", () => {
     assert.deepEqual(result.isError, true);
     if (result.isError) {
       assert.deepEqual(result.error, SafroleErrorCode.EpochMarkerUnexpected);
+    }
+  });
+
+  it("should return tickets mark missing error when tickets marker is required but missing", async () => {
+    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator);
+    const state: SafroleState = {
+      timeslot: tryAsTimeSlot(9),
+      entropy: FixedSizeArray.new(
+        [
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+        ],
+        4,
+      ),
+      previousValidatorData: validators,
+      currentValidatorData: validators,
+      designatedValidatorData: validators,
+      nextValidatorData: validators,
+      ticketsAccumulator: asKnownSize([
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 1),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 2),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 3),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 4),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 5),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 6),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 7),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 8),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 9),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 10),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 11),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 12),
+        }),
+      ]),
+      sealingKeySeries: fakeSealingKeys,
+      epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
+    };
+    const safrole = new Safrole(tinyChainSpec, state, bwasm);
+    const timeslot = tryAsTimeSlot(10);
+    const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
+    const extrinsic: TicketsExtrinsic = asKnownSize([]);
+
+    const input = {
+      slot: timeslot,
+      entropy,
+      extrinsic,
+      punishSet,
+      epochMarker: null,
+      ticketsMarker: null,
+    };
+
+    const result = await safrole.transition(input);
+
+    assert.deepEqual(result.isError, true);
+    if (result.isError) {
+      assert.deepEqual(result.error, SafroleErrorCode.TicketsMarkMissing);
+    }
+  });
+
+  it("should return tickets mark unexpected error when tickets marker is present but not wanted", async () => {
+    const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator);
+    const state: SafroleState = {
+      timeslot: tryAsTimeSlot(1),
+      entropy: FixedSizeArray.new(
+        [
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+        ],
+        4,
+      ),
+      previousValidatorData: validators,
+      currentValidatorData: validators,
+      designatedValidatorData: validators,
+      nextValidatorData: validators,
+      ticketsAccumulator: asKnownSize([]),
+      sealingKeySeries: fakeSealingKeys,
+      epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
+    };
+    const safrole = new Safrole(tinyChainSpec, state, bwasm);
+    const timeslot = tryAsTimeSlot(2);
+    const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
+    const extrinsic: TicketsExtrinsic = asKnownSize([]);
+    const ticketsMarker = tryAsPerEpochBlock(
+      [
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 1),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 2),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 3),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 4),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 5),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 6),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 7),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 8),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 9),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 10),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 11),
+        }),
+        Ticket.create({
+          attempt: tryAsTicketAttempt(0),
+          id: Bytes.fill(HASH_SIZE, 12),
+        }),
+      ],
+      tinyChainSpec,
+    );
+
+    const input = {
+      slot: timeslot,
+      entropy,
+      extrinsic,
+      punishSet,
+      epochMarker: null,
+      ticketsMarker,
+    };
+
+    const result = await safrole.transition(input);
+
+    assert.deepEqual(result.isError, true);
+    if (result.isError) {
+      assert.deepEqual(result.error, SafroleErrorCode.TicketsMarkUnexpected);
     }
   });
 });
