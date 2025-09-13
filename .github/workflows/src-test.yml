@@ -25,5 +25,5 @@ jobs:
     - run: npm run qa
     - run: npm test
     - run: GP_VERSION=0.6.7 npm test
-    - run: GP_VERSION=0.7.0-preview npm test
+    - run: GP_VERSION=0.7.0 npm test
     - run: GP_VERSION=0.7.1-preview npm test

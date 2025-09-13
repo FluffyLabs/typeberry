@@ -14,6 +14,7 @@ import packageJson from "./package.json" with { type: "json" };
 export type FuzzConfig = {
   version: FuzzVersion;
   jamNodeConfig: JamConfig;
+  socket: string | null;
 };
 
 const logger = Logger.new(import.meta.filename, "fuzztarget");
@@ -38,7 +39,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
 
   const chainSpec = getChainSpec(config.node.flavor);
 
-  const closeFuzzTarget = startFuzzTarget(fuzzConfig.version, {
+  const closeFuzzTarget = startFuzzTarget(fuzzConfig.version, fuzzConfig.socket, {
     ...getFuzzDetails(),
     chainSpec,
     importBlock: async (block: Block): Promise<Result<StateRootHash, string>> => {

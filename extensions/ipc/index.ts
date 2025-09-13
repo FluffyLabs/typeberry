@@ -49,19 +49,14 @@ export interface FuzzTargetApi {
   getBestStateRootHash(): Promise<StateRootHash>;
 }
 
-export function startFuzzTarget(version: FuzzVersion, api: FuzzTargetApi) {
+export function startFuzzTarget(version: FuzzVersion, socket: string | null, api: FuzzTargetApi) {
+  const socketName = socket ?? "jam_target.sock";
   if (version === FuzzVersion.V0) {
-    return startIpcServer(
-      "jam_target.sock",
-      (sender) => new v0.FuzzTarget(new FuzzHandler(api), sender, api.chainSpec),
-    );
+    return startIpcServer(socketName, (sender) => new v0.FuzzTarget(new FuzzHandler(api), sender, api.chainSpec));
   }
 
   if (version === FuzzVersion.V1) {
-    return startIpcServer(
-      "jam_target.sock",
-      (sender) => new v1.FuzzTarget(new FuzzHandler(api), sender, api.chainSpec),
-    );
+    return startIpcServer(socketName, (sender) => new v1.FuzzTarget(new FuzzHandler(api), sender, api.chainSpec));
   }
 
   assertNever(version);
@@ -152,7 +147,7 @@ class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
       return res;
     }
     logger.log(`Rejecting block with error: ${res.error}. ${res.details}`);
-    return Result.error(v1.ErrorMessage.create());
+    return Result.error(v1.ErrorMessage.create({ message: res.error }));
   }
 
   async importBlockV0(value: Block): Promise<StateRootHash> {
