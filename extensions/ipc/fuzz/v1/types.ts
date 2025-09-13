@@ -114,29 +114,21 @@ export class Initialize extends WithDebug {
 export const getStateCodec = codec.bytes(HASH_SIZE).asOpaque<HeaderHash>();
 export type GetState = HeaderHash;
 
-/** GetExports ::= OpaqueHash */
-// TODO: Implement OpaqueHash type when available
-// export const getExportsCodec = codec.bytes(HASH_SIZE).asOpaque<OpaqueHash>();
-// export type GetExports = OpaqueHash;
-
 /** StateRoot ::= StateRootHash */
 export const stateRootCodec = codec.bytes(HASH_SIZE).asOpaque<StateRootHash>();
 export type StateRoot = StateRootHash;
 
-/** Error ::= NULL */
+/** Error ::= UTF8String */
 export class ErrorMessage extends WithDebug {
-  static Codec = codec.custom<ErrorMessage>(
-    { name: "Error", sizeHint: { bytes: 0, isExact: true } },
-    () => {}, // No encoding needed for NULL
-    () => ErrorMessage.create(),
-    () => {}, // No skipping needed for NULL
-  );
+  static Codec = codec.Class(ErrorMessage, {
+    message: codec.string,
+  });
 
-  static create(): ErrorMessage {
-    return new ErrorMessage();
+  static create({ message }: CodecRecord<ErrorMessage>): ErrorMessage {
+    return new ErrorMessage(message);
   }
 
-  private constructor() {
+  private constructor(public readonly message: string) {
     super();
   }
 }

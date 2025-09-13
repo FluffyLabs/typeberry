@@ -147,7 +147,7 @@ class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
       return res;
     }
     logger.log(`Rejecting block with error: ${res.error}. ${res.details}`);
-    return Result.error(v1.ErrorMessage.create());
+    return Result.error(v1.ErrorMessage.create({ message: res.error }));
   }
 
   async importBlockV0(value: Block): Promise<StateRootHash> {
