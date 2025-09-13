@@ -95,6 +95,7 @@ $ npm start -w @typeberry/rpc
 ### Additional tooling
 
 - [@typeberry/convert](bin/convert/README.md) - convert common JAM formats
+- [JAM search](https://github.com/fluffylabs/jam-search) - search across all public JAM-related channels
 - [State Viewer](https://github.com/fluffylabs/state-viewer) - load & inspect state of test vectors
 - [PVM Debugger](https://github.com/fluffylabs/pvm-debugger) - load & inspect a PVM program
 - [Gray Paper Reader](https://github.com/fluffylabs/graypaper-reader) - view the Gray Paper
