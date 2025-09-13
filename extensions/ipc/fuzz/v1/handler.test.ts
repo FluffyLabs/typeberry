@@ -216,7 +216,7 @@ describe("FuzzV1Target Handler", () => {
       const mockSender = new MockSender();
 
       const testBlock = testBlockView().materialize();
-      const expectedError = ErrorMessage.create();
+      const expectedError = ErrorMessage.create({ message: "test error" });
 
       const incomingMessage: Message = {
         type: MessageType.ImportBlock,
@@ -350,7 +350,7 @@ describe("FuzzV1Target Handler", () => {
       const mockMessageHandler = new MockV1MessageHandler();
       const mockSender = new MockSender();
 
-      const error = ErrorMessage.create();
+      const error = ErrorMessage.create({ message: "test error" });
 
       const incomingMessage: Message = {
         type: MessageType.Error,

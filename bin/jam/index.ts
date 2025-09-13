@@ -73,7 +73,8 @@ async function startNode(args: Arguments, withRelPath: (p: string) => string) {
   // Start fuzz-target
   if (args.command === Command.FuzzTarget) {
     const version = args.args.version;
-    return mainFuzz({ jamNodeConfig, version }, withRelPath);
+    const socket = args.args.socket;
+    return mainFuzz({ jamNodeConfig, version, socket }, withRelPath);
   }
 
   // Just import a bunch of blocks

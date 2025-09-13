@@ -36,7 +36,11 @@ export async function main(channel: MessageChannelStateMachine<NetworkInit, Netw
   await initWasm();
   logger.trace(`🛜 Network starting ${channel.currentState()}`);
   // Await the configuration object
-  const ready = await channel.waitForState<NetworkReady>("ready(network)");
+  // TODO [ToDr] The whole state machine needs to die.
+  const ready: MessageChannelStateMachine<NetworkReady, NetworkStates> =
+    (channel.currentState().stateName as string) !== "ready(network)"
+      ? await channel.waitForState<NetworkReady>("ready(network)")
+      : (channel as unknown as MessageChannelStateMachine<NetworkReady, NetworkStates>);
 
   const finished = await ready.doUntil<Finished>("finished", async (worker, port) => {
     const config = worker.getConfig();

@@ -262,13 +262,13 @@ describe("Fuzzer V1 Data Structures", () => {
 
   describe("ErrorMessage", () => {
     it("should encode and decode error message", () => {
-      const error = ErrorMessage.create();
+      const error = ErrorMessage.create({ message: "error" });
 
       const encoded = Encoder.encodeObject(ErrorMessage.Codec, error, spec);
       const decoded = Decoder.decodeObject(ErrorMessage.Codec, encoded, spec);
 
       assert.ok(decoded instanceof ErrorMessage);
-      assert.strictEqual(encoded.raw.length, 0); // NULL encoding
+      assert.strictEqual(encoded.toString(), "0x056572726f72");
     });
   });
 
@@ -375,7 +375,7 @@ describe("Fuzzer V1 Data Structures", () => {
     });
 
     it("should encode and decode Error message", () => {
-      const error = ErrorMessage.create();
+      const error = ErrorMessage.create({ message: "test error" });
 
       const message: MessageData = {
         type: MessageType.Error,
@@ -393,7 +393,7 @@ describe("Fuzzer V1 Data Structures", () => {
     });
 
     it("should handle message type encoding consistency", () => {
-      const error = ErrorMessage.create();
+      const error = ErrorMessage.create({ message: "test error" });
       const message: MessageData = {
         type: MessageType.Error,
         value: error,
