@@ -10,7 +10,7 @@ Usage:
   jam [options]
   jam [options] dev <dev-validator-index>
   jam [options] import <bin-or-json-blocks>
-  jam [options] [--version=0] fuzz-target [socket-path=/tmp/jam_target.sock]
+  jam [options] [--version=1] fuzz-target [socket-path=/tmp/jam_target.sock]
 
 Options:
   --name                Override node name. Affects networking key and db location.
@@ -102,7 +102,7 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
     }
     case Command.FuzzTarget: {
       const data = parseSharedOptions(args, withRelPath);
-      const { version } = parseValueOption(args, "version", "number", parseFuzzVersion, 0);
+      const { version } = parseValueOption(args, "version", "number", parseFuzzVersion, 1);
       const socket = args._.shift() ?? null;
       assertNoMoreArgs(args);
       return {
