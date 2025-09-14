@@ -86,14 +86,14 @@ jobs:
             const p = require('$pkg');
             if (p.dependencies) {
               Object.keys(p.dependencies).forEach(dep => {
-                if (dep.startsWith('@typeberry/')) {
+                if (dep.startsWith('@typeberry/') && !dep.startsWith('@typeberry/native')) {
                   p.dependencies[dep] = '$VERSION';
                 }
               });
             }
             if (p.devDependencies) {
               Object.keys(p.devDependencies).forEach(dep => {
-                if (dep.startsWith('@typeberry/')) {
+                if (dep.startsWith('@typeberry/') && !dep.startsWith('@typeberry/native')) {
                   p.devDependencies[dep] = '$VERSION';
                 }
               });
