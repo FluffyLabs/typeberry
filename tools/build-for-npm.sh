@@ -43,7 +43,7 @@ cp ./README.md $DIST_FOLDER/
 # build package.json file
 echo '{
   "name": "@typeberry/jam",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Typeberry - Typescript JAM implementation by Fluffy Labs team.",
   "main": "./index.js",
   "dependencies": {
