@@ -121,6 +121,7 @@ jobs:
       id: pr
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        base: 'main'
         branch: ${{ steps.branch.outputs.branch }}
         title: "Release v${{ steps.version.outputs.version }}"
         body: |
