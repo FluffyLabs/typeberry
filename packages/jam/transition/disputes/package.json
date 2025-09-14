@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/disputes",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Disputes implementation based on the Gray Paper.",
   "main": "index.ts",
   "scripts": {
@@ -9,16 +9,16 @@
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
   "dependencies": {
-    "@typeberry/block": "0.0.1",
-    "@typeberry/bytes": "0.0.1",
-    "@typeberry/codec": "0.0.1",
-    "@typeberry/collections": "0.0.1",
-    "@typeberry/config": "0.0.1",
-    "@typeberry/crypto": "0.0.1",
-    "@typeberry/hash": "0.0.1",
-    "@typeberry/safrole": "0.0.1",
-    "@typeberry/state": "0.0.1",
-    "@typeberry/utils": "0.0.1"
+    "@typeberry/block": "0.0.2",
+    "@typeberry/bytes": "0.0.2",
+    "@typeberry/codec": "0.0.2",
+    "@typeberry/collections": "0.0.2",
+    "@typeberry/config": "0.0.2",
+    "@typeberry/crypto": "0.0.2",
+    "@typeberry/hash": "0.0.2",
+    "@typeberry/safrole": "0.0.2",
+    "@typeberry/state": "0.0.2",
+    "@typeberry/utils": "0.0.2"
   },
   "type": "module"
 }

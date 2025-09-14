@@ -1,19 +1,19 @@
 {
   "name": "@typeberry/pvm-debugger-adapter",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A package that adjust PVM interface to be consumed by PVM debugger",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/block": "0.0.1",
-    "@typeberry/bytes": "0.0.1",
-    "@typeberry/hash": "0.0.1",
-    "@typeberry/jam-host-calls": "0.0.1",
-    "@typeberry/numbers": "0.0.1",
-    "@typeberry/pvm-host-calls": "0.0.1",
-    "@typeberry/pvm-interpreter": "0.0.1",
-    "@typeberry/pvm-program": "0.0.1",
-    "@typeberry/pvm-spi-decoder": "0.0.1",
-    "@typeberry/utils": "0.0.1"
+    "@typeberry/block": "0.0.2",
+    "@typeberry/bytes": "0.0.2",
+    "@typeberry/hash": "0.0.2",
+    "@typeberry/jam-host-calls": "0.0.2",
+    "@typeberry/numbers": "0.0.2",
+    "@typeberry/pvm-host-calls": "0.0.2",
+    "@typeberry/pvm-interpreter": "0.0.2",
+    "@typeberry/pvm-program": "0.0.2",
+    "@typeberry/pvm-spi-decoder": "0.0.2",
+    "@typeberry/utils": "0.0.2"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
