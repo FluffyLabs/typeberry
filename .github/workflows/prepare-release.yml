@@ -106,22 +106,13 @@ jobs:
       run: |
         npm install --package-lock-only
 
-    - name: Create release branch
-      run: |
-        BRANCH="release/v${{ steps.version.outputs.version }}"
-        git checkout -b $BRANCH
-        git add .
-        git commit -m "chore: prepare release v${{ steps.version.outputs.version }}"
-        git push -u origin $BRANCH
-        echo "branch=$BRANCH" >> $GITHUB_OUTPUT
-      id: branch
-
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
       id: pr
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        branch: ${{ steps.branch.outputs.branch }}
+        base: 'main'
+        branch: release/v${{ steps.version.outputs.version }}
         title: "Release v${{ steps.version.outputs.version }}"
         body: |
           ## Release v${{ steps.version.outputs.version }}
@@ -133,31 +124,6 @@ jobs:
           release
           automated
 
-    - name: Generate release notes
-      id: release_notes
-      run: |
-        # Get the last tag
-        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-        if [ -z "$LAST_TAG" ]; then
-          echo "No previous tags found, using initial commit"
-          LAST_TAG=$(git rev-list --max-parents=0 HEAD)
-        fi
-
-        # Generate changelog
-        echo "## What's Changed" > release_notes.md
-        echo "" >> release_notes.md
-
-        # Get commit messages since last tag
-        git log $LAST_TAG..HEAD --pretty=format:"* %s by @%an" >> release_notes.md
-
-        echo "" >> release_notes.md
-        echo "## Full Changelog: $LAST_TAG...v${{ steps.version.outputs.version }}" >> release_notes.md
-
-        # Store for GitHub release
-        echo "release_notes<<EOF" >> $GITHUB_OUTPUT
-        cat release_notes.md >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-
     - name: Create Draft Release
       uses: softprops/action-gh-release@v1
       with:
@@ -165,10 +131,9 @@ jobs:
         tag_name: v${{ steps.version.outputs.version }}
         name: Release v${{ steps.version.outputs.version }}
         body: |
-          ${{ steps.release_notes.outputs.release_notes }}
+          🐲 DRAFT RELEASE, please auto-generate release notes.
 
           ---
           ⚠️ **This is a draft release. It will be published after the release PR is merged.**
         draft: true
         prerelease: false
-        target_commitish: ${{ steps.branch.outputs.branch }}
