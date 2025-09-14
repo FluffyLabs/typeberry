@@ -1,17 +1,17 @@
 {
   "name": "@typeberry/block",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "JAM block definition.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.1",
-    "@typeberry/codec": "0.0.1",
-    "@typeberry/collections": "0.0.1",
-    "@typeberry/config": "0.0.1",
-    "@typeberry/crypto": "0.0.1",
-    "@typeberry/hash": "0.0.1",
-    "@typeberry/numbers": "0.0.1",
-    "@typeberry/utils": "0.0.1"
+    "@typeberry/bytes": "0.0.2",
+    "@typeberry/codec": "0.0.2",
+    "@typeberry/collections": "0.0.2",
+    "@typeberry/config": "0.0.2",
+    "@typeberry/crypto": "0.0.2",
+    "@typeberry/hash": "0.0.2",
+    "@typeberry/numbers": "0.0.2",
+    "@typeberry/utils": "0.0.2"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

@@ -1,13 +1,13 @@
 {
   "name": "@typeberry/codec",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Serialization and deserialization codec for JAM.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.1",
-    "@typeberry/logger": "0.0.1",
-    "@typeberry/numbers": "0.0.1",
-    "@typeberry/utils": "0.0.1"
+    "@typeberry/bytes": "0.0.2",
+    "@typeberry/logger": "0.0.2",
+    "@typeberry/numbers": "0.0.2",
+    "@typeberry/utils": "0.0.2"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

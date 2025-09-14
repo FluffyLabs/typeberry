@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/builder",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Build typeberry package into one CommonJS module",
   "type": "module",
   "scripts": {
