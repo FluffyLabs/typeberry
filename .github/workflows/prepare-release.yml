@@ -106,23 +106,13 @@ jobs:
       run: |
         npm install --package-lock-only
 
-    - name: Create release branch
-      run: |
-        BRANCH="release/v${{ steps.version.outputs.version }}"
-        git checkout -b $BRANCH
-        git add .
-        git commit -m "chore: prepare release v${{ steps.version.outputs.version }}"
-        git push -u origin $BRANCH
-        echo "branch=$BRANCH" >> $GITHUB_OUTPUT
-      id: branch
-
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
       id: pr
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         base: 'main'
-        branch: ${{ steps.branch.outputs.branch }}
+        branch: release/v${{ steps.version.outputs.version }}
         title: "Release v${{ steps.version.outputs.version }}"
         body: |
           ## Release v${{ steps.version.outputs.version }}
@@ -172,4 +162,3 @@ jobs:
           ⚠️ **This is a draft release. It will be published after the release PR is merged.**
         draft: true
         prerelease: false
-        target_commitish: ${{ steps.branch.outputs.branch }}
