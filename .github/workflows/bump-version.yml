@@ -1,4 +1,4 @@
-name: Prepare Release
+name: Bump Version
 
 permissions:
   contents: write       # push branch, create release
@@ -8,11 +8,11 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g., 0.1.0)'
+        description: 'Bump version (e.g., 0.1.0) - only required in custom'
         required: false
         type: string
       release_type:
-        description: 'Release type'
+        description: 'Version bump type'
         required: true
         type: choice
         options:
@@ -113,13 +113,13 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         base: 'main'
         draft: true
-        branch: release/v${{ steps.version.outputs.version }}
-        title: "Release v${{ steps.version.outputs.version }}"
+        branch: version/v${{ steps.version.outputs.version }}
+        title: "Update Version v${{ steps.version.outputs.version }}"
         body: |
-          ## Release v${{ steps.version.outputs.version }}
+          ## Update Version to v${{ steps.version.outputs.version }}
 
           **NOTE: This is an automated pull request and it will not trigger any Github Actions.
-            Close this pull request and reopen one yourself to properly continue the release
+            Close this pull request and reopen one yourself to properly continue the version update
             process.**
 
     - name: Create Draft Release
@@ -129,9 +129,9 @@ jobs:
         tag_name: v${{ steps.version.outputs.version }}
         name: Release v${{ steps.version.outputs.version }}
         body: |
-          🐲 DRAFT RELEASE, please auto-generate release notes.
+          🐲 DRAFT RELEASE, please auto-generate release notes on github.
 
           ---
-          ⚠️ **This is a draft release. It will be published after the release PR is merged.**
+          ⚠️ **This is a draft release. It should be published after the version bump PR is merged.**
         draft: true
         prerelease: false
