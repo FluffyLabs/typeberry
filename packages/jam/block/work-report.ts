@@ -2,9 +2,8 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { type U16, type U32, isU16, tryAsU32 } from "@typeberry/numbers";
-import { WithDebug } from "@typeberry/utils";
-import { Compatibility, GpVersion } from "@typeberry/utils";
+import { isU16, tryAsU32, type U16, type U32 } from "@typeberry/numbers";
+import { Compatibility, GpVersion, WithDebug } from "@typeberry/utils";
 import { type CoreIndex, type ServiceGas, tryAsCoreIndex } from "./common.js";
 import {
   type AuthorizerHash,
@@ -13,7 +12,7 @@ import {
   type WorkPackageHash,
   WorkPackageInfo,
 } from "./refine-context.js";
-import { type WorkItemsCount, tryAsWorkItemsCount } from "./work-package.js";
+import { tryAsWorkItemsCount, type WorkItemsCount } from "./work-package.js";
 import { WorkResult } from "./work-result.js";
 
 /**

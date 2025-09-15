@@ -1,7 +1,7 @@
-import { type U32, tryAsU32 } from "@typeberry/numbers";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
 import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { type RegisterIndex, tryAsRegisterIndex } from "@typeberry/pvm-interpreter/registers.js";
-import { type Opaque, asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType, type Opaque } from "@typeberry/utils";
 import type { IHostCallMemory } from "./host-call-memory.js";
 import type { IHostCallRegisters } from "./host-call-registers.js";
 

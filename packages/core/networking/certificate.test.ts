@@ -7,10 +7,10 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ed25519 } from "@typeberry/crypto";
 import { Result } from "@typeberry/utils";
 import {
-  VerifyCertError,
   altNameJwk,
   ed25519AsJsonWebKeyPair,
   generateCertificate,
+  VerifyCertError,
   verifyCertificate,
 } from "./certificate.js";
 

@@ -1,5 +1,4 @@
-import { events, type QUICStream } from "@matrixai/quic";
-import { errors } from "@matrixai/quic";
+import { errors, events, type QUICStream } from "@matrixai/quic";
 import { type Stream, type StreamErrorCallback, StreamErrorKind } from "./peers.js";
 import { addEventListener } from "./quic-utils.js";
 

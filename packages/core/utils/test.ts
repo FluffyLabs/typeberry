@@ -72,6 +72,7 @@ export function deepEqual<T>(
         assert.strictEqual(actualDisp, expectedDisp, message);
       } catch (e) {
         if (isOoMWorkaroundNeeded && !oomWarningPrinted) {
+          // biome-ignore lint/suspicious/noConsole: warning
           console.warn(
             [
               "Stacktrace may be crappy because of a problem in nodejs.",

@@ -4,8 +4,7 @@ import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
-import { HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
-import { HostCallMemory } from "@typeberry/pvm-host-calls";
+import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
@@ -13,8 +12,8 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { OK, Result } from "@typeberry/utils";
-import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { EjectError } from "../externalities/partial-state.js";
+import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
 import { Eject } from "./eject.js";
 

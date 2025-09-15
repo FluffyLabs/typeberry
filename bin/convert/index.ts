@@ -1,3 +1,5 @@
+// biome-ignore-all lint/suspicious/noConsole: bin file
+
 import { pathToFileURL } from "node:url";
 import { Level, Logger } from "@typeberry/logger";
 import { type Arguments, HELP, parseArgs } from "./args.js";

@@ -1,3 +1,5 @@
+// biome-ignore-all lint/suspicious/noConsole: bin file
+
 import "json-bigint-patch";
 import fs from "node:fs";
 import { start as startRepl } from "node:repl";

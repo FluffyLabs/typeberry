@@ -15,11 +15,11 @@ import {
 } from "@typeberry/block/gp-constants.js";
 import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { Encoder, codec } from "@typeberry/codec";
+import { codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import type { IFetchExternalities } from "@typeberry/jam-host-calls/fetch.js";
-import { type U64, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU16, tryAsU32, tryAsU64, type U64 } from "@typeberry/numbers";
 import {
   BASE_SERVICE_BALANCE,
   ELECTIVE_BYTE_BALANCE,

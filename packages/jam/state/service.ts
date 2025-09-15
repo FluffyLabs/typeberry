@@ -9,11 +9,11 @@ import {
 } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, Descriptor, type SizeHint, codec } from "@typeberry/codec";
-import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { type CodecRecord, codec, Descriptor, type SizeHint } from "@typeberry/codec";
+import { asKnownSize, type KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
-import { type Opaque, WithDebug, asOpaqueType } from "@typeberry/utils";
+import { tryAsU64, type U32, type U64 } from "@typeberry/numbers";
+import { asOpaqueType, type Opaque, WithDebug } from "@typeberry/utils";
 
 /**
  * `B_S`: The basic minimum balance which all services require.

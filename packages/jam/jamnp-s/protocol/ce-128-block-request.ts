@@ -1,11 +1,11 @@
 import { Block, type BlockView, type HeaderHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
+import { type CodecRecord, codec, Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import { type U32, tryAsU8 } from "@typeberry/numbers";
+import { tryAsU8, type U32 } from "@typeberry/numbers";
 import { Result, WithDebug } from "@typeberry/utils";
 import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 

@@ -2,8 +2,8 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
-import { type Opaque, asOpaqueType } from "@typeberry/utils";
+import { type CodecRecord, codec, Decoder, Encoder } from "@typeberry/codec";
+import { asOpaqueType, type Opaque } from "@typeberry/utils";
 import { codecMap } from "./in-memory-state-codec.js";
 
 describe("JAM types codec / Map", () => {

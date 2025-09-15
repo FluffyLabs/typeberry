@@ -1,7 +1,7 @@
 import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { BytesBlob } from "@typeberry/bytes";
-import { PageAllocator, SimpleAllocator, blake2b } from "@typeberry/hash";
+import { blake2b, PageAllocator, SimpleAllocator } from "@typeberry/hash";
 
 const BLOB_SIZE = 1 * 1024 * 1024;
 const NUMBER_OF_HASHES = 512;

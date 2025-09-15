@@ -4,9 +4,9 @@ import { tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { HASH_SIZE, blake2b } from "@typeberry/hash";
+import { blake2b, HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { OK, Result, asOpaqueType, deepEqual } from "@typeberry/utils";
+import { asOpaqueType, deepEqual, OK, Result } from "@typeberry/utils";
 import { InMemoryState, UpdateError } from "./in-memory-state.js";
 import {
   LookupHistoryItem,

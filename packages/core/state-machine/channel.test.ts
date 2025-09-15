@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { type TestContext, describe, it } from "node:test";
+import { describe, it, type TestContext } from "node:test";
 import { MessageChannel } from "node:worker_threads";
 
 import { MessageChannelStateMachine } from "./channel.js";

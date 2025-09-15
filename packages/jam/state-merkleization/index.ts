@@ -23,10 +23,11 @@
  *     - `SerializedState<StateEntries>`: serialized state represented as a simple in-memory
  *        hashmap of `key -> value` entries.
  */
+
+export * from "./binary-merkleization.js";
+export * from "./keys.js";
+export * from "./loader.js";
+export * from "./serialize.js";
 export * from "./serialize-state-update.js";
 export * from "./serialized-state.js";
 export * from "./state-entries.js";
-export * from "./serialize.js";
-export * from "./keys.js";
-export * from "./binary-merkleization.js";
-export * from "./loader.js";

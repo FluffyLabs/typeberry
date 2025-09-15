@@ -5,7 +5,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import type { StorageKey } from "@typeberry/state";
-import { type Result, asOpaqueType, resultToString } from "@typeberry/utils";
+import { asOpaqueType, type Result, resultToString } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { clampU64ToU32 } from "./utils.js";

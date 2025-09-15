@@ -1,5 +1,5 @@
 import type { BytesBlob } from "@typeberry/bytes";
-import { type U8, type U32, tryAsU8, tryAsU32 } from "@typeberry/numbers";
+import { tryAsU8, tryAsU32, type U8, type U32 } from "@typeberry/numbers";
 
 /** Unique stream identifier. */
 export type StreamId = U32;

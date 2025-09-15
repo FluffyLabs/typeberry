@@ -6,21 +6,21 @@ import {
   type PerEpochBlock,
   type PerValidator,
   TicketsMarker,
-  ValidatorKeys,
   tryAsPerEpochBlock,
   tryAsTimeSlot,
+  ValidatorKeys,
 } from "@typeberry/block";
 import { type SignedTicket, Ticket, type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, FixedSizeArray, SortedSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { BANDERSNATCH_PROOF_BYTES, BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
-import { VALIDATOR_META_BYTES, ValidatorData, hashComparator } from "@typeberry/state";
+import { hashComparator, VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
-import { Result, deepEqual } from "@typeberry/utils";
+import { deepEqual, Result } from "@typeberry/utils";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 import { type Input, Safrole, SafroleErrorCode, type SafroleState, type SafroleStateUpdate } from "./safrole.js";

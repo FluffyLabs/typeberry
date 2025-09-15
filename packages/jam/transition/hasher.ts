@@ -2,16 +2,16 @@ import type { ExtrinsicHash, ExtrinsicView, HeaderHash, HeaderView, WorkReportHa
 import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { WorkPackage } from "@typeberry/block/work-package.js";
 import { BytesBlob } from "@typeberry/bytes";
-import { type Codec, Encoder, codec } from "@typeberry/codec";
+import { type Codec, codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import {
+  blake2b,
   type HashAllocator,
   type KeccakHash,
+  keccak,
   type OpaqueHash,
   WithHash,
   WithHashAndBytes,
-  blake2b,
-  keccak,
 } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { dumpCodec } from "@typeberry/state-merkleization/serialize.js";

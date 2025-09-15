@@ -1,5 +1,5 @@
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import { type IHasher, createKeccak } from "hash-wasm";
+import { createKeccak, type IHasher } from "hash-wasm";
 import { HASH_SIZE } from "./hash.js";
 
 export class KeccakHasher {

@@ -1,5 +1,6 @@
 import { ConsoleTransport } from "./console.js";
-import { Level, type Options, findLevel, parseLoggerOptions } from "./options.js";
+import { findLevel, Level, type Options, parseLoggerOptions } from "./options.js";
+
 export { Level, parseLoggerOptions } from "./options.js";
 
 const DEFAULT_OPTIONS = {

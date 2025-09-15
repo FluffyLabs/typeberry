@@ -121,7 +121,7 @@ export function decodeData(input: FixedSizeArray<[number, BytesBlob], N_CHUNKS_R
  *  https://graypaper.fluffylabs.dev/#/9a08063/3e4e013e5a01?v=0.6.6
  */
 export function encodePoints(input: Bytes<PIECE_SIZE>): FixedSizeArray<Bytes<POINT_LENGTH>, N_CHUNKS_TOTAL> {
-  const result = new Array<Bytes<POINT_LENGTH>>();
+  const result: Bytes<POINT_LENGTH>[] = [];
   const data = new Uint8Array(POINT_ALIGNMENT * N_CHUNKS_REQUIRED);
 
   // add original shards to the result
@@ -217,7 +217,7 @@ export function decodePiece(
  */
 export function split<N extends number, K extends number>(input: BytesBlob, n: N, k: K): FixedSizeArray<Bytes<N>, K> {
   check(n * k === input.length);
-  const result = new Array<Bytes<N>>();
+  const result: Bytes<N>[] = [];
   for (let i = 0; i < k; i++) {
     const start = i * n;
     const bytes = Bytes.zero(n);
@@ -314,10 +314,10 @@ export function transpose<T, N extends number, K extends number>(
   k: K,
 ): FixedSizeArray<FixedSizeArray<T, N>, K> {
   const n = input.fixedLength;
-  const columns = new Array<FixedSizeArray<T, N>>();
+  const columns: FixedSizeArray<T, N>[] = [];
 
   for (let c = 0; c < k; c++) {
-    const newColumn = new Array<T>();
+    const newColumn: T[] = [];
     for (let r = 0; r < n; r++) {
       const cell = input[r][c];
       newColumn.push(cell);
@@ -359,7 +359,7 @@ export function chunkingFunction(input: BytesBlob): FixedSizeArray<BytesBlob, N_
 
 /** Split each validator's shard into numbered chunks it originally should have got. */
 export function shardsToChunks(spec: ChainSpec, shards: PerValidator<BytesBlob>): PerValidator<[number, BytesBlob][]> {
-  const result = new Array<[number, BytesBlob][]>();
+  const result: [number, BytesBlob][][] = [];
 
   const shardSize = shards[0].length;
   check(
@@ -373,7 +373,7 @@ export function shardsToChunks(spec: ChainSpec, shards: PerValidator<BytesBlob>)
 
   let currentChunk = 0;
   for (const s of shards) {
-    const validatorChunks = new Array<[number, BytesBlob]>();
+    const validatorChunks: [number, BytesBlob][] = [];
     for (let i = 0; i < piecesPerChunk; i++) {
       const start = i * chunkSize;
       const end = start + chunkSize;
@@ -396,7 +396,7 @@ export function chunksToShards(
   spec: ChainSpec,
   chunks: FixedSizeArray<BytesBlob, N_CHUNKS_TOTAL>,
 ): PerValidator<BytesBlob> {
-  const result = new Array<BytesBlob>();
+  const result: BytesBlob[] = [];
 
   const allChunks = BytesBlob.blobFromParts(chunks.map((c) => c.raw));
   const shardSize = allChunks.length / N_CHUNKS_TOTAL;

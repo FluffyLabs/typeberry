@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { MSG_LEN_PREFIX_BYTES, encodeMessageLength, handleMessageFragmentation } from "./message.js";
+import { encodeMessageLength, handleMessageFragmentation, MSG_LEN_PREFIX_BYTES } from "./message.js";
 
 describe("encodeMessageLength", () => {
   it("should encode message length for normal message", () => {

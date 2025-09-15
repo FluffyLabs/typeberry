@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { type CodeHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U64, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU64, type U64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";

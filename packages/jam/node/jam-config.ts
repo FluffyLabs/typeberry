@@ -1,9 +1,9 @@
 import {
   type HeaderHash,
   type TimeSlot,
-  type ValidatorIndex,
   tryAsTimeSlot,
   tryAsValidatorIndex,
+  type ValidatorIndex,
 } from "@typeberry/block";
 import type { Bootnode } from "@typeberry/config";
 import type { NodeConfiguration } from "@typeberry/config-node";

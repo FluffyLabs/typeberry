@@ -1,5 +1,5 @@
 import { Bytes } from "@typeberry/bytes";
-import { Decoder, Encoder, codec, tryAsExactBytes } from "@typeberry/codec";
+import { codec, Decoder, Encoder, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,

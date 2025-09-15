@@ -1,18 +1,18 @@
 import {
-  type WorkReportHash,
   codecPerValidator,
   tryAsPerEpochBlock,
   tryAsPerValidator,
   tryAsServiceGas,
   tryAsServiceId,
   tryAsTimeSlot,
+  type WorkReportHash,
 } from "@typeberry/block";
 import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { Ticket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
-import { FixedSizeArray, HashDictionary, HashSet, SortedSet, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, FixedSizeArray, HashDictionary, HashSet, SortedSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";
@@ -25,6 +25,7 @@ import {
   CoreStatistics,
   DisputesRecords,
   ENTROPY_ENTRIES,
+  hashComparator,
   InMemoryService,
   InMemoryState,
   LookupHistoryItem,
@@ -36,10 +37,9 @@ import {
   ServiceAccountInfo,
   ServiceStatistics,
   StatisticsData,
+  tryAsPerCore,
   ValidatorData,
   ValidatorStatistics,
-  hashComparator,
-  tryAsPerCore,
 } from "./index.js";
 
 const spec = tinyChainSpec;

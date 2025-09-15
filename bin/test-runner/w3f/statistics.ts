@@ -2,9 +2,9 @@ import assert from "node:assert";
 import {
   type Extrinsic,
   type TimeSlot,
-  type ValidatorIndex,
   tryAsPerValidator,
   tryAsServiceId,
+  type ValidatorIndex,
 } from "@typeberry/block";
 import { getExtrinsicFromJson } from "@typeberry/block-json";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
@@ -14,9 +14,9 @@ import {
   InMemoryState,
   ServiceStatistics,
   StatisticsData,
+  tryAsPerCore,
   type ValidatorData,
   type ValidatorStatistics,
-  tryAsPerCore,
 } from "@typeberry/state";
 import { JsonValidatorStatistics, validatorDataFromJson } from "@typeberry/state-json";
 import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics.js";

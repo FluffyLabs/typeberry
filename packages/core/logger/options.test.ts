@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Level, findLevel, parseLoggerOptions } from "./options.js";
+import { findLevel, Level, parseLoggerOptions } from "./options.js";
 
 describe("Options.findLevel", () => {
   it("should return default level when nothing is present", () => {

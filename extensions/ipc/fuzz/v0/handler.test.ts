@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { Socket } from "node:net";
-import { type Mock, describe, it, mock } from "node:test";
+import { describe, it, type Mock, mock } from "node:test";
 import type { Block, HeaderHash, StateRootHash } from "@typeberry/block";
 import { testBlockView } from "@typeberry/block/test-helpers.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
@@ -9,7 +9,7 @@ import { tinyChainSpec } from "@typeberry/config";
 import { tryAsU8 } from "@typeberry/numbers";
 import { IpcSender } from "../../server.js";
 import { type FuzzMessageHandler, FuzzTarget } from "./handler.js";
-import { KeyValue, type Message, MessageType, PeerInfo, SetState, Version, messageCodec } from "./types.js";
+import { KeyValue, type Message, MessageType, messageCodec, PeerInfo, SetState, Version } from "./types.js";
 
 const spec = tinyChainSpec;
 

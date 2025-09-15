@@ -4,7 +4,7 @@ import { before, describe, it } from "node:test";
 import { tryAsEpoch, tryAsPerValidator, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import { Culprit, DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberry/block/disputes.js";
 import { Bytes } from "@typeberry/bytes";
-import { SortedSet, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, SortedSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import {
   BANDERSNATCH_KEY_BYTES,
@@ -14,14 +14,19 @@ import {
   type Ed25519Key,
   initWasm,
 } from "@typeberry/crypto";
-import { HASH_SIZE } from "@typeberry/hash";
-import { WithHash } from "@typeberry/hash";
-import { DisputesRecords, VALIDATOR_META_BYTES, ValidatorData, hashComparator, tryAsPerCore } from "@typeberry/state";
-import { AvailabilityAssignment } from "@typeberry/state";
+import { HASH_SIZE, WithHash } from "@typeberry/hash";
+import {
+  AvailabilityAssignment,
+  DisputesRecords,
+  hashComparator,
+  tryAsPerCore,
+  VALIDATOR_META_BYTES,
+  ValidatorData,
+} from "@typeberry/state";
 import { newWorkReport } from "../reports/test.utils.js";
+import { Disputes } from "./disputes.js";
 import { DisputesErrorCode } from "./disputes-error-code.js";
 import type { DisputesState } from "./disputes-state.js";
-import { Disputes } from "./disputes.js";
 
 const createValidatorData = ({ bandersnatch, ed25519 }: { bandersnatch: string; ed25519: string }) =>
   ValidatorData.create({
@@ -40,7 +45,11 @@ const createVerdict = ({
   target,
   age,
   votes,
-}: { target: string; age: number; votes: { vote: boolean; index: number; signature: string }[] }) =>
+}: {
+  target: string;
+  age: number;
+  votes: { vote: boolean; index: number; signature: string }[];
+}) =>
   Verdict.create({
     workReportHash: Bytes.parseBytes(target, HASH_SIZE).asOpaque(),
     votesEpoch: tryAsEpoch(age),
@@ -57,7 +66,12 @@ const createFault = ({
   vote,
   key,
   signature,
-}: { target: string; vote: boolean; key: string; signature: string }) =>
+}: {
+  target: string;
+  vote: boolean;
+  key: string;
+  signature: string;
+}) =>
   Fault.create({
     workReportHash: Bytes.parseBytes(target, HASH_SIZE).asOpaque(),
     wasConsideredValid: vote,

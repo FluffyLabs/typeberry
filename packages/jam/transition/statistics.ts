@@ -3,18 +3,17 @@ import {
   type ServiceGas,
   type ServiceId,
   type TimeSlot,
-  type ValidatorIndex,
   tryAsCoreIndex,
   tryAsPerValidator,
   tryAsServiceGas,
+  type ValidatorIndex,
 } from "@typeberry/block";
 import type { Preimage, PreimagesExtrinsic } from "@typeberry/block/preimage.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import type { WorkResult } from "@typeberry/block/work-result.js";
 import { type ChainSpec, EC_SEGMENT_SIZE } from "@typeberry/config";
-import { type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { ServiceStatistics, type State, StatisticsData } from "@typeberry/state";
-import { ValidatorStatistics } from "@typeberry/state";
+import { tryAsU16, tryAsU32, type U32 } from "@typeberry/numbers";
+import { ServiceStatistics, type State, StatisticsData, ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
 
 export type Input = {

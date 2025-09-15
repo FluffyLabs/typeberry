@@ -3,7 +3,7 @@ import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec.js
 import { Credential } from "@typeberry/block/guarantees.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
+import { type CodecRecord, codec, Decoder, Encoder } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";

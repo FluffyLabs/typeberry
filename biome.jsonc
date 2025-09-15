@@ -1,9 +1,9 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.3/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
-    "ignore": [],
+    "includes": ["**"],
     "attributePosition": "auto",
     "indentStyle": "space",
     "indentWidth": 2,
@@ -13,15 +13,24 @@
   "javascript": {
     "formatter": {}
   },
-  "organizeImports": {
-    "enabled": true
-  },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
       "style": {
-        "useShorthandArrayType": "error"
+        "noParameterAssign": "error",
+        "useAsConstAssertion": "error",
+        "useDefaultParameterLast": "error",
+        "useEnumInitializers": "error",
+        "useSelfClosingElements": "error",
+        "useSingleVarDeclarator": "error",
+        "noUnusedTemplateLiteral": "error",
+        "useNumberNamespace": "error",
+        "noInferrableTypes": "error",
+        "noUselessElse": "error",
+        "useConsistentArrayType": { "level": "error", "options": { "syntax": "shorthand" } },
+        "noSubstr": "error"
       },
       "complexity": {
         "noStaticOnlyClass": "off"
@@ -33,21 +42,25 @@
         "noUnusedPrivateClassMembers": "error"
       },
       "suspicious": {
-        "noConsoleLog": "error",
         "noEvolvingTypes": "error",
         "noDoubleEquals": {
           "level": "error",
           "options": {
             "ignoreNull": false
           }
-        }
+        },
+        "noConsole": { "level": "error", "options": { "allow": ["log"] } }
       },
-      "nursery": {
-        "noSubstr": "error"
-      }
+      "nursery": {}
     }
   },
   "files": {
-    "ignore": ["dist/*", "benchmarks/**/output/*", "test-vectors/*", "tools/builder/pkg.ts"]
+    "includes": [
+      "**",
+      "!**/dist/**/*",
+      "!**/benchmarks/**/output/**/*",
+      "!**/test-vectors/**/*",
+      "!**/tools/builder/pkg.ts"
+    ]
   }
 }

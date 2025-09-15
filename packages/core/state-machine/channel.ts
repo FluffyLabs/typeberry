@@ -1,7 +1,6 @@
 import { MessageChannel, MessagePort, type Transferable, type Worker } from "node:worker_threads";
-import { check } from "@typeberry/utils";
-
 import { Logger } from "@typeberry/logger";
+import { check } from "@typeberry/utils";
 import type { StateMachine } from "./machine.js";
 import { type Message, Ok } from "./message.js";
 import { TypedPort } from "./port.js";

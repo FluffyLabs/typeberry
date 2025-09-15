@@ -3,7 +3,7 @@ import { isMainThread, parentPort } from "node:worker_threads";
 import { initWasm } from "@typeberry/crypto";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import type { Finished } from "@typeberry/generic-worker";
-import { SimpleAllocator, keccak } from "@typeberry/hash";
+import { keccak, SimpleAllocator } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 import { TransitionHasher } from "@typeberry/transition";

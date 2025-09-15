@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import { tryAsU8 } from "@typeberry/numbers";
-import { Compatibility, GpVersion, deepEqual } from "@typeberry/utils";
+import { Compatibility, deepEqual, GpVersion } from "@typeberry/utils";
 import { getFuzzDetails } from "./main-fuzz.js";
 
 describe("fuzzing config", () => {

@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 import { type EntropyHash, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { WorkExecResult, WorkExecResultKind } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Encoder, codec } from "@typeberry/codec";
+import { codec, Encoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { TRANSFER_MEMO_BYTES } from "@typeberry/jam-host-calls/externalities/partial-state.js";
@@ -56,7 +56,12 @@ describe("fetch-externalities", () => {
     chainSpec,
     operands,
     entropy,
-  }: { chainSpec?: ChainSpec; operands?: Operand[]; entropy?: EntropyHash; transfers?: PendingTransfer[] }) => {
+  }: {
+    chainSpec?: ChainSpec;
+    operands?: Operand[];
+    entropy?: EntropyHash;
+    transfers?: PendingTransfer[];
+  }) => {
     const defaultChainSpec = tinyChainSpec;
     const defaultEntropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const defaultOperands: Operand[] = [];
@@ -72,7 +77,12 @@ describe("fetch-externalities", () => {
     operands,
     entropy,
     transfers,
-  }: { chainSpec?: ChainSpec; operands?: Operand[]; entropy?: EntropyHash; transfers?: PendingTransfer[] }) => {
+  }: {
+    chainSpec?: ChainSpec;
+    operands?: Operand[];
+    entropy?: EntropyHash;
+    transfers?: PendingTransfer[];
+  }) => {
     const defaultChainSpec = tinyChainSpec;
     const defaultEntropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const defaultOperands: Operand[] = [];

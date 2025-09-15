@@ -1,11 +1,4 @@
-export * as ed25519 from "./ed25519.js";
-export type { Ed25519Key, Ed25519Signature } from "./ed25519.js";
-export { Ed25519Pair, ED25519_KEY_BYTES, ED25519_PRIV_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "./ed25519.js";
-
-export * as bandersnatch from "./bandersnatch.js";
-export { bandersnatch as bandersnatchWasm } from "@typeberry/native";
-export { initAll as initWasm } from "@typeberry/native";
-
+export { bandersnatch as bandersnatchWasm, initAll as initWasm } from "@typeberry/native";
 export type {
   BandersnatchKey,
   BandersnatchProof,
@@ -13,6 +6,8 @@ export type {
   BandersnatchVrfSignature,
   BlsKey,
 } from "./bandersnatch.js";
+
+export * as bandersnatch from "./bandersnatch.js";
 export {
   BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_PROOF_BYTES,
@@ -20,7 +15,10 @@ export {
   BANDERSNATCH_VRF_SIGNATURE_BYTES,
   BLS_KEY_BYTES,
 } from "./bandersnatch.js";
+export type { Ed25519Key, Ed25519Signature } from "./ed25519.js";
+export * as ed25519 from "./ed25519.js";
+export { ED25519_KEY_BYTES, ED25519_PRIV_KEY_BYTES, ED25519_SIGNATURE_BYTES, Ed25519Pair } from "./ed25519.js";
 
-export type { KeySeed as PublicKeySeed, Ed25519SecretSeed, BandersnatchSecretSeed } from "./key-derivation.js";
-export { SEED_SIZE } from "./key-derivation.js";
+export type { BandersnatchSecretSeed, Ed25519SecretSeed, KeySeed as PublicKeySeed } from "./key-derivation.js";
 export * as keyDerivation from "./key-derivation.js";
+export { SEED_SIZE } from "./key-derivation.js";

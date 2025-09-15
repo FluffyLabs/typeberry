@@ -4,11 +4,11 @@ import {
   type PerValidator,
   type ServiceId,
   type TimeSlot,
-  type WorkReportHash,
   tryAsPerEpochBlock,
   tryAsPerValidator,
   tryAsServiceId,
   tryAsTimeSlot,
+  type WorkReportHash,
 } from "@typeberry/block";
 import { AUTHORIZATION_QUEUE_SIZE, type MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
@@ -17,20 +17,20 @@ import type { Ticket } from "@typeberry/block/tickets.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { codec } from "@typeberry/codec";
 import {
+  asKnownSize,
   FixedSizeArray,
   HashDictionary,
   HashSet,
   type ImmutableHashSet,
   type KnownSizeArray,
   SortedSet,
-  asKnownSize,
 } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { OK, Result, WithDebug, asOpaqueType, assertNever, check } from "@typeberry/utils";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
+import { asOpaqueType, assertNever, check, OK, Result, WithDebug } from "@typeberry/utils";
 import type { AccumulationOutput } from "./accumulation-output.js";
 import type { AvailabilityAssignment } from "./assurances.js";
 import { type PerCore, tryAsPerCore } from "./common.js";
@@ -48,6 +48,7 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
 } from "./service.js";
+import { ENTROPY_ENTRIES, type EnumerableState, type Service, type State } from "./state.js";
 import {
   type ServicesUpdate,
   type UpdatePreimage,
@@ -57,7 +58,6 @@ import {
   type UpdateStorage,
   UpdateStorageKind,
 } from "./state-update.js";
-import { ENTROPY_ENTRIES, type EnumerableState, type Service, type State } from "./state.js";
 import { CoreStatistics, StatisticsData, ValidatorStatistics } from "./statistics.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "./validator-data.js";
 

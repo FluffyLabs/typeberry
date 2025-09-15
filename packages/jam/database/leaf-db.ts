@@ -2,10 +2,9 @@ import type { StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { TruncatedHashDictionary } from "@typeberry/collections";
 import { type SerializedStateBackend, StateEntries, type StateKey } from "@typeberry/state-merkleization";
-import { InMemoryTrie, type LeafNode, TrieNode } from "@typeberry/trie";
-import { NodeType, TRIE_NODE_BYTES } from "@typeberry/trie";
+import { InMemoryTrie, type LeafNode, NodeType, TRIE_NODE_BYTES, TrieNode } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
-import { Result, assertNever } from "@typeberry/utils";
+import { assertNever, Result } from "@typeberry/utils";
 
 /** Error during `LeafDb` creation. */
 export enum LeafDbError {
