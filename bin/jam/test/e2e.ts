@@ -45,8 +45,10 @@ test("JAM Node Startup E2E", { timeout: TEST_TIMEOUT }, async () => {
 
 async function terminate(jamProcess: ChildProcess | null) {
   if (jamProcess !== null && !jamProcess.killed) {
-    jamProcess.kill("SIGINT");
-    await promises.setTimeout(SHUTDOWN_GRACE_PERIOD);
+    logger.error("Terminating process.");
+    const grace = promises.setTimeout(SHUTDOWN_GRACE_PERIOD);
+    jamProcess.kill("SIGTERM");
+    await grace;
     if (!jamProcess.killed) {
       logger.error("Process shutdown timing out. Killing");
       jamProcess.kill("SIGKILL");
