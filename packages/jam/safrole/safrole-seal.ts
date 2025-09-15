@@ -149,7 +149,8 @@ export class SafroleSeal {
     if (!sealingKey.isEqualTo(authorKey.bandersnatch)) {
       return Result.error(
         SafroleSealError.InvalidValidator,
-        `Invalid Validator. Expected: ${sealingKey}, got: ${authorKey.bandersnatch}`);
+        `Invalid Validator. Expected: ${sealingKey}, got: ${authorKey.bandersnatch}`,
+      );
     }
 
     // verify seal correctness

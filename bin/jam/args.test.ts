@@ -77,6 +77,7 @@ describe("CLI", () => {
       command: Command.Dev,
       args: {
         ...defaultOptions,
+        configPath: "dev",
         index: tryAsU16(10),
       },
     });
