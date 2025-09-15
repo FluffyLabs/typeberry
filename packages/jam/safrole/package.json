@@ -4,18 +4,18 @@
   "description": "Safrole implementation based on the Gray Paper.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/block": "0.0.3",
-    "@typeberry/bytes": "0.0.3",
-    "@typeberry/codec": "0.0.3",
-    "@typeberry/collections": "0.0.3",
-    "@typeberry/concurrent": "0.0.3",
-    "@typeberry/config": "0.0.3",
-    "@typeberry/crypto": "0.0.3",
-    "@typeberry/hash": "0.0.3",
-    "@typeberry/numbers": "0.0.3",
-    "@typeberry/ordering": "0.0.3",
-    "@typeberry/state": "0.0.3",
-    "@typeberry/utils": "0.0.3"
+    "@typeberry/block": "*",
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/collections": "*",
+    "@typeberry/concurrent": "*",
+    "@typeberry/config": "*",
+    "@typeberry/crypto": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/ordering": "*",
+    "@typeberry/state": "*",
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

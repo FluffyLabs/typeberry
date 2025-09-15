@@ -10,17 +10,17 @@
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
-    "@typeberry/block": "0.0.3",
-    "@typeberry/bytes": "0.0.3",
-    "@typeberry/codec": "0.0.3",
-    "@typeberry/collections": "0.0.3",
-    "@typeberry/config": "0.0.3",
-    "@typeberry/crypto": "0.0.3",
-    "@typeberry/database": "0.0.3",
-    "@typeberry/hash": "0.0.3",
-    "@typeberry/logger": "0.0.3",
-    "@typeberry/networking": "0.0.3",
-    "@typeberry/numbers": "0.0.3",
-    "@typeberry/utils": "0.0.3"
+    "@typeberry/block": "*",
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/collections": "*",
+    "@typeberry/config": "*",
+    "@typeberry/crypto": "*",
+    "@typeberry/database": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/networking": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*"
   }
 }

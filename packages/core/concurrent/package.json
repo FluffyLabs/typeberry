@@ -9,7 +9,7 @@
     "test": "tsx --test $(find . -type f -o -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
-    "@typeberry/utils": "0.0.3"
+    "@typeberry/utils": "*"
   },
   "type": "module"
 }

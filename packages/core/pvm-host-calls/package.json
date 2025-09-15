@@ -4,12 +4,12 @@
   "description": "PVM host calls",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/logger": "0.0.3",
-    "@typeberry/numbers": "0.0.3",
-    "@typeberry/pvm-interpreter": "0.0.3",
-    "@typeberry/pvm-program": "0.0.3",
-    "@typeberry/pvm-spi-decoder": "0.0.3",
-    "@typeberry/utils": "0.0.3"
+    "@typeberry/logger": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/pvm-interpreter": "*",
+    "@typeberry/pvm-program": "*",
+    "@typeberry/pvm-spi-decoder": "*",
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "start": "tsx ./bin.ts",
