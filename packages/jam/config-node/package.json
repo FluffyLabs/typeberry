@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/config-node",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Config for typeberry node.",
   "main": "index.ts",
   "type": "module",
@@ -8,14 +8,14 @@
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
-    "@typeberry/block-json": "0.0.2",
-    "@typeberry/bytes": "0.0.2",
-    "@typeberry/config": "0.0.2",
-    "@typeberry/configs": "0.0.2",
-    "@typeberry/jamnp-s": "0.0.2",
-    "@typeberry/json-parser": "0.0.2",
-    "@typeberry/numbers": "0.0.2",
-    "@typeberry/utils": "0.0.2"
+    "@typeberry/block-json": "0.0.3",
+    "@typeberry/bytes": "0.0.3",
+    "@typeberry/config": "0.0.3",
+    "@typeberry/configs": "0.0.3",
+    "@typeberry/jamnp-s": "0.0.3",
+    "@typeberry/json-parser": "0.0.3",
+    "@typeberry/numbers": "0.0.3",
+    "@typeberry/utils": "0.0.3"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0"

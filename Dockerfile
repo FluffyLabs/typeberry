@@ -1,5 +1,7 @@
 FROM node:22-bookworm
 
+RUN useradd -d /app -m typeberry
+
 WORKDIR /app
 
 # Copy package files
@@ -14,6 +16,9 @@ COPY extensions/ ./extensions/
 COPY workers/ ./workers/
 
 COPY packages/ ./packages/
+RUN chown -R typeberry /app
+
+USER typeberry
 
 # Install dependencies
 # Ideally this would be done only after copying package*.json files,

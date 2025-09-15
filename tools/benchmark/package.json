@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/benchmark",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Benchmarks runner for typeberry.",
   "main": "index.ts",
   "scripts": {
@@ -10,7 +10,7 @@
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
   "dependencies": {
-    "@typeberry/logger": "0.0.2",
+    "@typeberry/logger": "0.0.3",
     "benny": "3.7.1",
     "chalk": "4.1.2"
   },
