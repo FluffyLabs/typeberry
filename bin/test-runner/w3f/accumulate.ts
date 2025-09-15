@@ -151,5 +151,4 @@ export async function runAccumulateTest(test: AccumulateTest, path: string) {
   const post_state = TestState.toAccumulateState(test.post_state as TestState, chainSpec);
 
   deepEqual(state, post_state);
-  deepEqual(result.ok.root, test.output.ok);
 }

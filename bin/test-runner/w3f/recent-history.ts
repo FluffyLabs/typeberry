@@ -32,6 +32,7 @@ class Input {
         priorStateRoot: parent_state_root,
         accumulateRoot: accumulate_root,
         workPackages: HashDictionary.fromEntries(work_packages.map((x) => [x.workPackageHash, x])),
+        accumulationOutputLog: [],
       };
     },
   );
@@ -78,10 +79,10 @@ export async function runHistoryTest(testContent: HistoryTest) {
 
   const recentHistory = new RecentHistory(hasher, testContent.pre_state);
   const partialUpdate = recentHistory.partialTransition({ priorStateRoot: testContent.input.priorStateRoot });
-  const stateUpdate = recentHistory.transition({
+  const stateUpdate = await recentHistory.transition({
     partial: partialUpdate,
     headerHash: testContent.input.headerHash,
-    accumulateRoot: testContent.input.accumulateRoot,
+    accumulationOutputLog: [],
     workPackages: testContent.input.workPackages,
   });
   const result = copyAndUpdateState(recentHistory.state, stateUpdate);
