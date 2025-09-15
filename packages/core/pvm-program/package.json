@@ -4,9 +4,9 @@
   "description": "A tool to parse all types of PVM programs",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.3",
-    "@typeberry/codec": "0.0.3",
-    "@typeberry/pvm-spi-decoder": "0.0.3"
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/pvm-spi-decoder": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts'     | tr '\\n' ' ')"

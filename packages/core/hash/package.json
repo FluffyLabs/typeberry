@@ -7,8 +7,8 @@
     "@types/blake2b": "2.1.3"
   },
   "dependencies": {
-    "@typeberry/bytes": "0.0.3",
-    "@typeberry/utils": "0.0.3",
+    "@typeberry/bytes": "*",
+    "@typeberry/utils": "*",
     "blake2b": "2.1.4",
     "hash-wasm": "4.12.0"
   },

@@ -4,16 +4,16 @@
   "description": "Database abstraction for typeberry.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/block": "0.0.3",
-    "@typeberry/bytes": "0.0.3",
-    "@typeberry/codec": "0.0.3",
-    "@typeberry/collections": "0.0.3",
-    "@typeberry/config": "0.0.3",
-    "@typeberry/hash": "0.0.3",
-    "@typeberry/state": "0.0.3",
-    "@typeberry/state-merkleization": "0.0.3",
-    "@typeberry/trie": "0.0.3",
-    "@typeberry/utils": "0.0.3"
+    "@typeberry/block": "*",
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/collections": "*",
+    "@typeberry/config": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/state": "*",
+    "@typeberry/state-merkleization": "*",
+    "@typeberry/trie": "*",
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

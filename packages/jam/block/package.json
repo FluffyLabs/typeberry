@@ -4,14 +4,14 @@
   "description": "JAM block definition.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.3",
-    "@typeberry/codec": "0.0.3",
-    "@typeberry/collections": "0.0.3",
-    "@typeberry/config": "0.0.3",
-    "@typeberry/crypto": "0.0.3",
-    "@typeberry/hash": "0.0.3",
-    "@typeberry/numbers": "0.0.3",
-    "@typeberry/utils": "0.0.3"
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/collections": "*",
+    "@typeberry/config": "*",
+    "@typeberry/crypto": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

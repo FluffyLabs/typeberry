@@ -4,7 +4,7 @@
   "description": "PVM program runner.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/pvm-interpreter": "0.0.3"
+    "@typeberry/pvm-interpreter": "*"
   },
   "scripts": {
     "start": "tsx ./index.ts",
