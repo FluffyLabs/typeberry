@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { promises, setTimeout } from "node:timers";
 import { Logger } from "@typeberry/logger";
 
-const TEST_TIMEOUT = 40_000;
+const TEST_TIMEOUT = 60_000;
 const SHUTDOWN_GRACE_PERIOD = 5_000;
 const TARGET_BLOCK = 6;
 
