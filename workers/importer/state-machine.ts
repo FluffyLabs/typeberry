@@ -242,7 +242,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
       const timeSlot = headerView.timeSlotIndex.materialize();
       let response: Result<StateRootHash, string>;
       try {
-        const res = await this.importer.importBlock(blockView, null);
+        const res = await this.importer.importBlock(blockView, null, config.omitSealVerification);
         if (res.isOk) {
           logger.info(`🧊 Best block: #${timeSlot} (${res.ok.hash})`);
           response = Result.ok(this.importer.getBestStateRootHash() ?? Bytes.zero(HASH_SIZE).asOpaque());

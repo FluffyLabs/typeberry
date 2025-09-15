@@ -147,7 +147,9 @@ export class SafroleSeal {
     const index = timeSlot % keys.length;
     const sealingKey = keys[index];
     if (!sealingKey.isEqualTo(authorKey.bandersnatch)) {
-      return Result.error(SafroleSealError.InvalidValidator, `Expected: ${sealingKey}, got: ${authorKey.bandersnatch}`);
+      return Result.error(
+        SafroleSealError.InvalidValidator,
+        `Invalid Validator. Expected: ${sealingKey}, got: ${authorKey.bandersnatch}`);
     }
 
     // verify seal correctness

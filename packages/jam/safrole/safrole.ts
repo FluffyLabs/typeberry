@@ -568,7 +568,7 @@ function compareWithEncoding<T, D extends DescriptorRecord<T>>(
   if (actual === null || expected === null) {
     // if one of them is `null`, both need to be.
     if (actual !== expected) {
-      return Result.error(error, `Expected: ${expected}, got: ${actual}`);
+      return Result.error(error, `${SafroleErrorCode[error]} Expected: ${expected}, got: ${actual}`);
     }
     return Result.ok(OK);
   }
@@ -576,7 +576,7 @@ function compareWithEncoding<T, D extends DescriptorRecord<T>>(
   // compare the literal encoding.
   const encoded = Encoder.encodeObject(codec, actual, chainSpec);
   if (!encoded.isEqualTo(expected.encoded())) {
-    return Result.error(error, `Expected: ${expected.encoded()}, got: ${encoded}`);
+    return Result.error(error, `${SafroleErrorCode[error]} Expected: ${expected.encoded()}, got: ${encoded}`);
   }
 
   return Result.ok(OK);

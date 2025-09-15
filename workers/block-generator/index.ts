@@ -17,7 +17,7 @@ import {
   generatorStateMachine,
 } from "./state-machine.js";
 
-const logger = Logger.new(import.meta.filename, "block-generator");
+const logger = Logger.new(import.meta.filename, "generator");
 
 if (!isMainThread) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);

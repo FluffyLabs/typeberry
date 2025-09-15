@@ -71,7 +71,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
         return;
       }
 
-      logger.log(`🧊 Queued block: #${details.ok.data.timeSlot}`);
+      logger.log(`🧊 Queued block: #${details.ok.data.timeSlot} (skip seal: ${config.omitSealVerification})`);
 
       if (isProcessing) {
         return;
