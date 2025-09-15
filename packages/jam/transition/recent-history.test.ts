@@ -1,12 +1,12 @@
-import assert from "node:assert";
 import { describe, it } from "node:test";
+import { tryAsServiceId } from "@typeberry/block";
 import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, keccak } from "@typeberry/hash";
 import type { MmrHasher, MmrPeaks } from "@typeberry/mmr";
 import { BlockState, type BlocksState, MAX_RECENT_HISTORY, RecentBlocks, RecentBlocksHistory } from "@typeberry/state";
-import { asOpaqueType, check } from "@typeberry/utils";
+import { asOpaqueType, check, deepEqual } from "@typeberry/utils";
 import {
   RecentHistory,
   type RecentHistoryInput,
@@ -47,25 +47,28 @@ describe("Recent History", () => {
     const input: RecentHistoryInput = {
       partial: partialUpdate,
       headerHash: Bytes.fill(HASH_SIZE, 2).asOpaque(),
-      accumulateRoot: Bytes.fill(HASH_SIZE, 1).asOpaque(),
+      accumulationOutputLog: [{ serviceId: tryAsServiceId(0), output: Bytes.fill(HASH_SIZE, 1).asOpaque() }],
       workPackages: HashDictionary.new(),
     };
-    const stateUpdate = recentHistory.transition(input);
+    const stateUpdate = await recentHistory.transition(input);
     const state = copyAndUpdateState(recentHistory.state, stateUpdate);
 
-    assert.deepStrictEqual(
+    deepEqual(
       state.recentBlocks.asCurrent(),
       RecentBlocks.create({
         blocks: asOpaqueType([
           BlockState.create({
             headerHash: input.headerHash,
-            accumulationResult: Bytes.fill(HASH_SIZE, 1),
+            accumulationResult: Bytes.parseBytes(
+              "0xc0fd15b831ff9ffa5cadc725c4fb35201f4d1a834a61b01ed9d14106c73e9990",
+              HASH_SIZE,
+            ),
             postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
             reported: HashDictionary.new(),
           }),
         ]),
         accumulationLog: {
-          peaks: [Bytes.fill(HASH_SIZE, 1)],
+          peaks: [Bytes.parseBytes("0xc0fd15b831ff9ffa5cadc725c4fb35201f4d1a834a61b01ed9d14106c73e9990", HASH_SIZE)],
         },
       }),
     );
@@ -89,7 +92,7 @@ describe("Recent History", () => {
     const input: RecentHistoryInput = {
       partial: partialUpdate,
       headerHash: Bytes.fill(HASH_SIZE, 5).asOpaque(),
-      accumulateRoot: Bytes.fill(HASH_SIZE, 6).asOpaque(),
+      accumulationOutputLog: [{ serviceId: tryAsServiceId(0), output: Bytes.fill(HASH_SIZE, 6).asOpaque() }],
       workPackages: HashDictionary.fromEntries(
         [
           {
@@ -99,12 +102,12 @@ describe("Recent History", () => {
         ].map((x) => [x.workPackageHash, x]),
       ),
     };
-    const stateUpdate = recentHistory.transition(input);
+    const stateUpdate = await recentHistory.transition(input);
     const state = copyAndUpdateState(recentHistory.state, stateUpdate);
 
     const recentBlocks = state.recentBlocks.asCurrent();
-    assert.deepStrictEqual(recentBlocks.blocks.length, 2);
-    assert.deepStrictEqual(
+    deepEqual(recentBlocks.blocks.length, 2);
+    deepEqual(
       recentBlocks.blocks[0],
       BlockState.create({
         ...firstBlock,
@@ -112,15 +115,15 @@ describe("Recent History", () => {
         postStateRoot: partialInput.priorStateRoot,
       }),
     );
-    assert.deepStrictEqual(recentBlocks.accumulationLog, {
-      peaks: [null, Bytes.parseBytes("0x6ac9e94853a54beddd428600d8dd68f9c67ea0850f6d9407812a48c71e9f6958", HASH_SIZE)],
+    deepEqual(recentBlocks.accumulationLog, {
+      peaks: [null, Bytes.parseBytes("0xf6553f33681e0bbab7c1a8385fc56f87a3310d99ceaa9667ad6d08ee86b68eee", HASH_SIZE)],
     });
-    assert.deepStrictEqual(
+    deepEqual(
       recentBlocks.blocks[1],
       BlockState.create({
         headerHash: input.headerHash,
         accumulationResult: Bytes.parseBytes(
-          "0x6ac9e94853a54beddd428600d8dd68f9c67ea0850f6d9407812a48c71e9f6958",
+          "0xf6553f33681e0bbab7c1a8385fc56f87a3310d99ceaa9667ad6d08ee86b68eee",
           HASH_SIZE,
         ),
         postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
@@ -144,7 +147,7 @@ describe("Recent History", () => {
       input = {
         partial: partialUpdate,
         headerHash: Bytes.fill(HASH_SIZE, id(2)).asOpaque(),
-        accumulateRoot: Bytes.fill(HASH_SIZE, id(3)).asOpaque(),
+        accumulationOutputLog: [{ serviceId: tryAsServiceId(0), output: Bytes.fill(HASH_SIZE, 3).asOpaque() }],
         workPackages: HashDictionary.fromEntries(
           [
             {
@@ -154,18 +157,18 @@ describe("Recent History", () => {
           ].map((x) => [x.workPackageHash, x]),
         ),
       };
-      const stateUpdate = recentHistory.transition(input);
+      const stateUpdate = await recentHistory.transition(input);
       state = copyAndUpdateState(recentHistory.state, stateUpdate);
     }
 
     const recentBlocks = state.recentBlocks.asCurrent();
-    assert.deepStrictEqual(recentBlocks.blocks.length, 8);
-    assert.deepStrictEqual(recentBlocks.accumulationLog, {
+    deepEqual(recentBlocks.blocks.length, 8);
+    deepEqual(recentBlocks.accumulationLog, {
       peaks: [
         null,
-        Bytes.parseBytes("0xf2b82ebf240c42d9a13a3282f81bc914af9795b8d376fee5ffa70271ad027ef6", HASH_SIZE),
+        Bytes.parseBytes("0x202c128fe0f7c1a1fb34773c605998c176b1b2b888d446acbf9a6a0f7c13ad27", HASH_SIZE),
         null,
-        Bytes.parseBytes("0x9db02578e7a12b19a574f27104e51df3dbcce55d37611fac0abb5da9bd0f5b97", HASH_SIZE),
+        Bytes.parseBytes("0xeb970b73bf081e5e8ff4c310791346a6a708b8a9d44f5d953b7e634ff6046ca4", HASH_SIZE),
       ],
     });
   });

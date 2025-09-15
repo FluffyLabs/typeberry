@@ -40,7 +40,6 @@ export type AccumulateStateUpdate = Pick<
   ServiceStateUpdate;
 
 export type AccumulateResult = {
-  root: AccumulateRoot;
   stateUpdate: AccumulateStateUpdate;
   accumulationStatistics: Map<ServiceId, CountAndGasUsed>;
   pendingTransfers: PendingTransfer[];

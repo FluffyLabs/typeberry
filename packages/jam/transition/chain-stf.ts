@@ -271,7 +271,6 @@ export class OnChain {
       return stfError(StfErrorKind.Accumulate, accumulateResult);
     }
     const {
-      root: accumulateRoot,
       stateUpdate: accumulateUpdate,
       accumulationStatistics,
       pendingTransfers,
@@ -310,10 +309,10 @@ export class OnChain {
     assertEmpty(deferredTransfersRest);
 
     // recent history
-    const recentHistoryUpdate = this.recentHistory.transition({
+    const recentHistoryUpdate = await this.recentHistory.transition({
       partial: recentHistoryPartialUpdate,
       headerHash,
-      accumulateRoot,
+      accumulationOutputLog,
       workPackages,
     });
     const { recentBlocks, ...recentHistoryRest } = recentHistoryUpdate;

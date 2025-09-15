@@ -1,10 +1,22 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
-import { Bytes } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type HashDictionary, asKnownSize } from "@typeberry/collections";
-import { HASH_SIZE, type KeccakHash, type OpaqueHash } from "@typeberry/hash";
+import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";
+import { KeccakHasher } from "@typeberry/hash/keccak.js";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
-import { BlockState, MAX_RECENT_HISTORY, RecentBlocks, RecentBlocksHistory, type State } from "@typeberry/state";
+import { u32AsLeBytes } from "@typeberry/numbers";
+import {
+  type AccumulationOutput,
+  BlockState,
+  MAX_RECENT_HISTORY,
+  RecentBlocks,
+  RecentBlocksHistory,
+  type State,
+} from "@typeberry/state";
+import { binaryMerkleization } from "@typeberry/state-merkleization";
+import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
+import type { AccumulateRoot } from "./accumulate/accumulate-state.js";
 
 export type RecentHistoryPartialInput = {
   /** State root before current header. */
@@ -20,15 +32,9 @@ export type RecentHistoryInput = {
   /**
    * `θ`: accumulation-output
    *
-   * https://graypaper.fluffylabs.dev/#/7e6ff6a/18e60118e801?v=0.6.7
-   *
-   * NOTE === Pre 067 ===
-   *
-   * `C`: BEEFY commitment.
-   *
-   * https://graypaper.fluffylabs.dev/#/579bd12/172803172a03?v=0.5.4
+   * https://graypaper.fluffylabs.dev/#/1c979cb/182002182202?v=0.7.1
    */
-  accumulateRoot: OpaqueHash;
+  accumulationOutputLog: AccumulationOutput[];
   /** Work packages in the guarantees extrinsic. */
   workPackages: HashDictionary<WorkPackageHash, WorkPackageInfo>;
 };
@@ -79,7 +85,7 @@ export class RecentHistory {
    *
    * https://graypaper.fluffylabs.dev/#/1c979cb/0fd2020fd202?v=0.7.1
    */
-  transition(input: RecentHistoryInput): RecentHistoryStateUpdate {
+  async transition(input: RecentHistoryInput): Promise<RecentHistoryStateUpdate> {
     const recentBlocks = input.partial.recentBlocks.blocks.slice();
 
     // `β′_B`
@@ -89,7 +95,8 @@ export class RecentHistory {
         : MerkleMountainRange.empty(this.hasher);
 
     // append the accumulation root
-    mmr.append(input.accumulateRoot);
+    const rootHash = await getRootHash(input.accumulationOutputLog);
+    mmr.append(rootHash);
     const peaks = mmr.getPeaks();
 
     // push new state item
@@ -117,4 +124,20 @@ export class RecentHistory {
       ),
     };
   }
+}
+
+/**
+ * Returns a new root hash
+ *
+ * https://graypaper.fluffylabs.dev/#/38c4e62/3c9d013c9d01?v=0.7.0
+ */
+async function getRootHash(yieldedRoots: AccumulationOutput[]): Promise<AccumulateRoot> {
+  const keccakHasher = await KeccakHasher.create();
+  const trieHasher = getKeccakTrieHasher(keccakHasher);
+  const yieldedRootsSortedByServiceId = yieldedRoots.sort((a, b) => a.serviceId - b.serviceId);
+  const values = yieldedRootsSortedByServiceId.map(({ serviceId, output }) => {
+    return BytesBlob.blobFromParts([u32AsLeBytes(serviceId), output.raw]);
+  });
+
+  return binaryMerkleization(values, trieHasher);
 }
