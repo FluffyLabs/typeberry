@@ -27,7 +27,7 @@ test("JAM Node Startup E2E", { timeout: TEST_TIMEOUT }, async () => {
         const output = data.toString();
         logger.info(output);
 
-        const bestBlockPattern = /🧊 Best block: #(\d+)/;
+        const bestBlockPattern = /🧊 Best block:.+#(\d+)/;
         const match = bestBlockPattern.exec(output);
         if (match !== null) {
           const blockNum = Number.parseInt(match[1]);

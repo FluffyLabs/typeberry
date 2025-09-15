@@ -71,10 +71,6 @@
     "start": "npm start -w @typeberry/jam --",
     "test": "tsx --test $(find . -type d -name node_modules -prune -type f -o -name '*.test.ts' | tr '\\n' ' ')",
     "test-only": "node --test-only --import tsx $(find . -type d -name node_modules -prune -type f -o -name '*.test.ts' | tr '\\n' ' ')",
-    "test:e2e": "npm run test:e2e -w @typeberry/jam",
-    "test:e2e:bash": "./bin/jam/test/jam-startup-e2e-simple.sh",
-    "test:e2e:bash:verbose": "./bin/jam/test/jam-startup-e2e.sh -v",
-    "test:e2e:quick": "E2E_TIMEOUT=20000 E2E_BLOCK_TIMEOUT=5000 npm run test:e2e -w @typeberry/jam",
     "reader-notes": "npx @fluffylabs/links-check --ignore-file=.gitignore --generate-notes ./web/links.json --generate-notes-label typeberry-$(git rev-parse --short HEAD) **/*.ts",
     "check:cycles": "npx madge --circular --warning --extensions ts ./packages"
   },
