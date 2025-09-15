@@ -1,21 +1,22 @@
 import type { ChainSpec } from "@typeberry/config";
 import { LmdbBlocks, type LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import { Logger } from "@typeberry/logger";
-import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
+import { WebSocketServer } from "ws";
 import z from "zod";
 import { SUBSCRIBE_METHOD_MAP, SubscriptionManager } from "./subscription-manager.js";
 import {
   type DatabaseContext,
+  JSON_RPC_VERSION,
   type JsonRpcErrorResponse,
   type JsonRpcId,
   JsonRpcNotification,
   JsonRpcRequest,
   type JsonRpcResponse,
   type JsonRpcResult,
+  RpcError,
   type RpcMethodRepo,
 } from "./types.js";
-import { JSON_RPC_VERSION, RpcError } from "./types.js";
 
 const PING_INTERVAL_MS = 30000;
 

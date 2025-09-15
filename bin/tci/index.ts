@@ -1,9 +1,11 @@
+// biome-ignore-all lint/suspicious/noConsole: bin file
+
 import { pathToFileURL } from "node:url";
 import { tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
-import { NODE_DEFAULTS, loadConfig } from "@typeberry/config-node";
+import { loadConfig, NODE_DEFAULTS } from "@typeberry/config-node";
 import { Level, Logger } from "@typeberry/logger";
 import * as node from "@typeberry/node";
-import { type CommonArguments, HELP, type RequiredFlag, parseArgs, requiredSeedFlags } from "./args.js";
+import { type CommonArguments, HELP, parseArgs, type RequiredFlag, requiredSeedFlags } from "./args.js";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 const withRelPath = (v: string) => `../../${v}`;

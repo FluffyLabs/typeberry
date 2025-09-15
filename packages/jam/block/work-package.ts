@@ -1,9 +1,9 @@
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
+import { type CodecRecord, codec, type DescribedBy } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U8 } from "@typeberry/numbers";
-import { Compatibility, GpVersion, WithDebug, ensure } from "@typeberry/utils";
+import { Compatibility, ensure, GpVersion, WithDebug } from "@typeberry/utils";
 import type { ServiceId } from "./common.js";
 import type { CodeHash } from "./hash.js";
 import { RefineContext } from "./refine-context.js";

@@ -1,7 +1,7 @@
 import * as ed from "@noble/ed25519";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ed25519 } from "@typeberry/native";
-import { type Opaque, check } from "@typeberry/utils";
+import { check, type Opaque } from "@typeberry/utils";
 
 /** ED25519 private key size. */
 export const ED25519_PRIV_KEY_BYTES = 32;

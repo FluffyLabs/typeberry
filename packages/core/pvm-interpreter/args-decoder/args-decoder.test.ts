@@ -14,7 +14,11 @@ describe("ArgsDecoder", () => {
     programBytes,
     maskBytes,
     argumentType,
-  }: { programBytes: number[]; maskBytes: number[]; argumentType: ArgumentType }) {
+  }: {
+    programBytes: number[];
+    maskBytes: number[];
+    argumentType: ArgumentType;
+  }) {
     const code = new Uint8Array(programBytes);
     const mask = new Mask(BitVec.fromBlob(new Uint8Array(maskBytes), programBytes.length));
     const argsDecoder = new ArgsDecoder();

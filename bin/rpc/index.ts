@@ -1,5 +1,5 @@
 import { pathToFileURL } from "node:url";
-import { NODE_DEFAULTS, loadConfig } from "@typeberry/config-node";
+import { loadConfig, NODE_DEFAULTS } from "@typeberry/config-node";
 import { getChainSpec, openDatabase } from "@typeberry/node";
 import minimist from "minimist";
 import { methods } from "./src/method-loader.js";

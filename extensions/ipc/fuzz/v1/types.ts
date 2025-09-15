@@ -3,7 +3,7 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U8, U32 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
-import { type ImportBlock, type KeyValue, Version, importBlockCodec, stateCodec } from "../v0/types.js";
+import { type ImportBlock, importBlockCodec, type KeyValue, stateCodec, Version } from "../v0/types.js";
 
 /**
  * Fuzzer Protocol V1

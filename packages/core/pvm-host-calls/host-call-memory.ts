@@ -1,4 +1,4 @@
-import { type U64, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU64, type U64 } from "@typeberry/numbers";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { OutOfBounds, type PageFault } from "@typeberry/pvm-interpreter/memory/errors.js";
 import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";

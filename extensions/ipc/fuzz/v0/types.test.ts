@@ -4,7 +4,7 @@ import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { tryAsU8 } from "@typeberry/numbers";
-import { KeyValue, type MessageData, MessageType, PeerInfo, Version, messageCodec, stateCodec } from "./types.js";
+import { KeyValue, type MessageData, MessageType, messageCodec, PeerInfo, stateCodec, Version } from "./types.js";
 
 describe("IPC Data Structures", () => {
   describe("Version", () => {

@@ -1,8 +1,7 @@
 import type { ServiceId } from "@typeberry/block";
 import { tryAsU64 } from "@typeberry/numbers";
-import type { HostCallHandler } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import type { IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { logger } from "./logger.js";
 

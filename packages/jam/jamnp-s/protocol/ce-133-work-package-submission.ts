@@ -2,7 +2,7 @@ import type { CoreIndex } from "@typeberry/block";
 import { type WorkItemExtrinsics, workItemExtrinsicsCodec } from "@typeberry/block/work-item.js";
 import { WorkPackage } from "@typeberry/block/work-package.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
+import { type CodecRecord, codec, Decoder, Encoder } from "@typeberry/codec";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
 import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";

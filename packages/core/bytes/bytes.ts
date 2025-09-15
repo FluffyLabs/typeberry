@@ -1,5 +1,5 @@
 import { type Comparator, Ordering } from "@typeberry/ordering";
-import { type Opaque, TEST_COMPARE_USING, type TokenOf, asOpaqueType, check } from "@typeberry/utils";
+import { asOpaqueType, check, type Opaque, TEST_COMPARE_USING, type TokenOf } from "@typeberry/utils";
 
 // TODO: [MaSo] Update BytesBlob and Bytes, so they return Result (not throw error)
 /**

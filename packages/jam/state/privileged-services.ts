@@ -1,6 +1,6 @@
 import type { ServiceGas, ServiceId } from "@typeberry/block";
 import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
-import { type PerCore, codecPerCore } from "./common.js";
+import { codecPerCore, type PerCore } from "./common.js";
 
 /** Dictionary entry of services that auto-accumulate every block. */
 export class AutoAccumulate {

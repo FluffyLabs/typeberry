@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE, type OpaqueHash, keccak } from "@typeberry/hash";
+import { HASH_SIZE, keccak, type OpaqueHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher, type MmrPeaks } from "./index.js";
 
 type Hash = OpaqueHash;

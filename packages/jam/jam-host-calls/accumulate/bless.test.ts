@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceGas, type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
-import { Encoder, codec } from "@typeberry/codec";
+import { codec, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
-import { type U64, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU64, type U64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
@@ -11,10 +11,10 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
-import { type PerCore, codecPerCore, tryAsPerCore } from "@typeberry/state";
+import { codecPerCore, type PerCore, tryAsPerCore } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
-import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
+import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
 import { Bless } from "./bless.js";
 
@@ -27,14 +27,14 @@ const DICTIONARY_START = 10;
 const DICTIONARY_COUNT = 11;
 
 function prepareServiceGasEntires() {
-  const entries = new Array<[ServiceId, ServiceGas]>();
+  const entries: [ServiceId, ServiceGas][] = [];
   entries.push([tryAsServiceId(10_000), tryAsServiceGas(15_000)]);
   entries.push([tryAsServiceId(20_000), tryAsServiceGas(15_000)]);
   return entries;
 }
 
 function prepareAuthorizers() {
-  const authorizers = new Array<ServiceId>();
+  const authorizers: ServiceId[] = [];
   authorizers.push(tryAsServiceId(10));
   authorizers.push(tryAsServiceId(15));
   return tryAsPerCore(authorizers, tinyChainSpec);

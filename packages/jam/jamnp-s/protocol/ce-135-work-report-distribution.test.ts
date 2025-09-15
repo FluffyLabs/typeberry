@@ -7,13 +7,13 @@ import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, FixedSizeArray } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { OK } from "@typeberry/utils";
-import { ClientHandler, GuaranteedWorkReport, STREAM_KIND, ServerHandler } from "./ce-135-work-report-distribution.js";
+import { ClientHandler, GuaranteedWorkReport, ServerHandler, STREAM_KIND } from "./ce-135-work-report-distribution.js";
 import { testClientServer } from "./test-utils.js";
 
 const MOCK_SLOT = tryAsTimeSlot(1000);

@@ -7,8 +7,9 @@ import {
   type IHostCallMemory,
   type IHostCallRegisters,
   PvmExecution,
+  traceRegisters,
+  tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
-import { traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { type PartialState, PreimageStatusKind } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";

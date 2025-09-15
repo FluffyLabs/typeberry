@@ -1,10 +1,10 @@
-import { type CodeHash, tryAsServiceGas } from "@typeberry/block";
 import type { ServiceGas, ServiceId } from "@typeberry/block";
+import { type CodeHash, tryAsServiceGas } from "@typeberry/block";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { BytesBlob } from "@typeberry/bytes";
 import type { OpaqueHash } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";
-import { type U32, tryAsU32 } from "@typeberry/numbers";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { fromJson } from "./common.js";
 
 // TODO [ToDr] Introduce fromJson.union?

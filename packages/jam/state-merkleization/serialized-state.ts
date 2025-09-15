@@ -14,7 +14,7 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { Compatibility, GpVersion, TEST_COMPARE_USING, asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType, Compatibility, GpVersion, TEST_COMPARE_USING } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
 import { serialize } from "./serialize.js";
 import type { StateEntries } from "./state-entries.js";

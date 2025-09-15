@@ -1,11 +1,11 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import { codecHashDictionary, codecKnownSizeArray } from "@typeberry/block/codec.js";
 import { type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
-import { type CodecRecord, Descriptor, codec, readonlyArray } from "@typeberry/codec";
-import { type HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { type CodecRecord, codec, Descriptor, readonlyArray } from "@typeberry/codec";
+import { asKnownSize, type HashDictionary, type KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";
 import type { MmrPeaks } from "@typeberry/mmr";
-import { WithDebug, asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType, WithDebug } from "@typeberry/utils";
 
 /**
  * `H = 8`: The size of recent history, in blocks.

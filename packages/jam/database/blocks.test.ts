@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { testBlockView } from "@typeberry/block/test-helpers.js";
 import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
+import { blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
 import { InMemoryBlocks } from "./index.js";
 
 describe("InMemoryDatabase", () => {

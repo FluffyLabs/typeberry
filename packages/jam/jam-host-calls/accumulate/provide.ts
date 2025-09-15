@@ -9,8 +9,7 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { resultToString } from "@typeberry/utils";
-import { assertNever } from "@typeberry/utils";
+import { assertNever, resultToString } from "@typeberry/utils";
 import { type PartialState, ProvidePreimageError } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";

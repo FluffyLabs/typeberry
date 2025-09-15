@@ -1,9 +1,9 @@
 import type { HeaderHash } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
+import { type CodecRecord, codec, Decoder, Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import { type U32, tryAsU32 } from "@typeberry/numbers";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { TRUNCATED_KEY_BYTES, TrieNode } from "@typeberry/trie/nodes.js";
 import { WithDebug } from "@typeberry/utils";
 import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";

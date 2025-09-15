@@ -1,14 +1,14 @@
 import { Block, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { type FuzzVersion, Version, startFuzzTarget } from "@typeberry/ext-ipc";
+import { type FuzzVersion, startFuzzTarget, Version } from "@typeberry/ext-ipc";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import { CURRENT_VERSION, Result } from "@typeberry/utils";
 import { getChainSpec } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
-import { type NodeApi, main } from "./main.js";
+import { main, type NodeApi } from "./main.js";
 import packageJson from "./package.json" with { type: "json" };
 
 export type FuzzConfig = {

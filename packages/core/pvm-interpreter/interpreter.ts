@@ -1,5 +1,5 @@
 import { Logger } from "@typeberry/logger";
-import { type U32, tryAsU32 } from "@typeberry/numbers";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { ArgsDecoder } from "./args-decoder/args-decoder.js";
 import { createResults } from "./args-decoder/args-decoding-results.js";
 import { ArgumentType } from "./args-decoder/argument-type.js";
@@ -7,28 +7,13 @@ import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-
 import { assemblify } from "./assemblify.js";
 import { BasicBlocks } from "./basic-blocks/index.js";
 import { type Gas, type GasCounter, gasCounter, tryAsBigGas, tryAsGas } from "./gas.js";
+import { Instruction } from "./instruction.js";
 import { instructionGasMap } from "./instruction-gas-map.js";
 import { InstructionResult } from "./instruction-result.js";
-import { Instruction } from "./instruction.js";
 import { Memory } from "./memory/index.js";
 import { PAGE_SIZE } from "./memory/memory-consts.js";
 import { alignToPageSize } from "./memory/memory-utils.js";
 import { tryAsPageNumber } from "./memory/pages/page-utils.js";
-import {
-  NoArgsDispatcher,
-  OneImmDispatcher,
-  OneOffsetDispatcher,
-  OneRegOneExtImmDispatcher,
-  OneRegOneImmDispatcher,
-  OneRegOneImmOneOffsetDispatcher,
-  OneRegTwoImmsDispatcher,
-  ThreeRegsDispatcher,
-  TwoImmsDispatcher,
-  TwoRegsDispatcher,
-  TwoRegsOneImmDispatcher,
-  TwoRegsOneOffsetDispatcher,
-  TwoRegsTwoImmsDispatcher,
-} from "./ops-dispatchers/index.js";
 import {
   BitOps,
   BitRotationOps,
@@ -44,6 +29,21 @@ import {
   ShiftOps,
   StoreOps,
 } from "./ops/index.js";
+import {
+  NoArgsDispatcher,
+  OneImmDispatcher,
+  OneOffsetDispatcher,
+  OneRegOneExtImmDispatcher,
+  OneRegOneImmDispatcher,
+  OneRegOneImmOneOffsetDispatcher,
+  OneRegTwoImmsDispatcher,
+  ThreeRegsDispatcher,
+  TwoImmsDispatcher,
+  TwoRegsDispatcher,
+  TwoRegsOneImmDispatcher,
+  TwoRegsOneOffsetDispatcher,
+  TwoRegsTwoImmsDispatcher,
+} from "./ops-dispatchers/index.js";
 import { JumpTable } from "./program-decoder/jump-table.js";
 import { Mask } from "./program-decoder/mask.js";
 import { ProgramDecoder } from "./program-decoder/program-decoder.js";
@@ -157,6 +157,7 @@ export class Interpreter {
 
   printProgram() {
     const p = assemblify(this.code, this.mask);
+    // biome-ignore lint/suspicious/noConsole: We do want to print that.
     console.table(p);
     return p;
   }

@@ -7,12 +7,12 @@ import {
   tryAsServiceId,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import { fromJson } from "@typeberry/block-json";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
+import { fromJson } from "@typeberry/block-json";
 import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
-import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU64, type U32, type U64 } from "@typeberry/numbers";
 import {
   InMemoryService,
   LookupHistoryItem,

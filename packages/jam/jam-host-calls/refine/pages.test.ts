@@ -1,12 +1,12 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
-import { type U64, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU64, type U64 } from "@typeberry/numbers";
 import { HostCallRegisters } from "@typeberry/pvm-host-calls";
 import {
+  gasCounter,
   MemoryBuilder,
   Registers,
-  gasCounter,
   tryAsGas,
   tryAsMemoryIndex,
   tryAsSbrkIndex,

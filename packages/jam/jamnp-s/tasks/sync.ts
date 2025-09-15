@@ -9,14 +9,14 @@ import {
 import { Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
-import { WithHash, blake2b } from "@typeberry/hash";
+import { blake2b, WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { Peer, PeerId } from "@typeberry/networking";
-import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { OK, assertNever } from "@typeberry/utils";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
+import { assertNever, OK } from "@typeberry/utils";
 import type { AuxData, Connections } from "../peers.js";
 import { BlockSequenceError, handleGetBlockSequence } from "../protocol/ce-128-block-request.js";
-import { type StreamId, ce128, up0 } from "../protocol/index.js";
+import { ce128, type StreamId, up0 } from "../protocol/index.js";
 import type { StreamManager } from "../stream-manager.js";
 import { handleAsyncErrors } from "../utils.js";
 

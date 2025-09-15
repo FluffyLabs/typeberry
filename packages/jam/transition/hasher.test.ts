@@ -20,9 +20,9 @@ import { asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/crypto/bandersnatch.js";
-import { HASH_SIZE, SimpleAllocator, keccak } from "@typeberry/hash";
+import { HASH_SIZE, keccak, SimpleAllocator } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { Compatibility, GpVersion, asOpaqueType, deepEqual } from "@typeberry/utils";
+import { asOpaqueType, Compatibility, deepEqual, GpVersion } from "@typeberry/utils";
 import { TransitionHasher } from "./hasher.js";
 
 describe("TransitionHasher", () => {

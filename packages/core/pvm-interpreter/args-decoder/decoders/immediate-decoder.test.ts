@@ -1,7 +1,6 @@
-import { ImmediateDecoder } from "./immediate-decoder.js";
-
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { ImmediateDecoder } from "./immediate-decoder.js";
 
 describe("ImmediateDecoder", () => {
   describe("reading bytes as signed and unsigned number U32", () => {

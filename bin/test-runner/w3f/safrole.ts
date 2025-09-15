@@ -5,15 +5,15 @@ import {
   TicketsMarker,
   type TicketsMarkerView,
   type TimeSlot,
-  type ValidatorKeys,
   tryAsPerEpochBlock,
   tryAsPerValidator,
+  type ValidatorKeys,
 } from "@typeberry/block";
-import { fromJson } from "@typeberry/block-json";
 import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets.js";
+import { fromJson } from "@typeberry/block-json";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, FixedSizeArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import {
@@ -25,12 +25,12 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
 import { type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole.js";
-import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
-import { TicketsOrKeys, ticketFromJson } from "@typeberry/state-json";
-import { validatorDataFromJson } from "@typeberry/state-json";
+import { ENTROPY_ENTRIES, hashComparator, type ValidatorData } from "@typeberry/state";
+import { TicketsOrKeys, ticketFromJson, validatorDataFromJson } from "@typeberry/state-json";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
-import { Result, deepEqual } from "@typeberry/utils";
+import { deepEqual, Result } from "@typeberry/utils";
 import { getChainSpec } from "./spec.js";
+
 namespace safroleFromJson {
   export const ticketEnvelope: FromJson<SignedTicket> = {
     attempt: "number",

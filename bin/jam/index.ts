@@ -1,9 +1,11 @@
+// biome-ignore-all lint/suspicious/noConsole: bin file
+
 import { pathToFileURL } from "node:url";
 import { loadConfig } from "@typeberry/config-node";
 import { deriveEd25519SecretKey } from "@typeberry/crypto/key-derivation.js";
 import { blake2b } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
-import { JamConfig, importBlocks, main, mainFuzz } from "@typeberry/node";
+import { importBlocks, JamConfig, main, mainFuzz } from "@typeberry/node";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 
 export * from "./args.js";

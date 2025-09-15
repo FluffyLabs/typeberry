@@ -6,8 +6,8 @@ import type { Ed25519Key } from "@typeberry/crypto";
 import {
   type AvailabilityAssignment,
   DisputesRecords,
-  type PerCore,
   hashComparator,
+  type PerCore,
   tryAsPerCore,
 } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
@@ -15,11 +15,11 @@ import { DisputesErrorCode } from "./disputes-error-code.js";
 import type { DisputesState, DisputesStateUpdate } from "./disputes-state.js";
 import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils.js";
 import {
-  type VerificationInput,
-  type VerificationOutput,
   prepareCulpritSignature,
   prepareFaultSignature,
   prepareJudgementSignature,
+  type VerificationInput,
+  type VerificationOutput,
   vefifyAllSignatures,
 } from "./verification-utils.js";
 

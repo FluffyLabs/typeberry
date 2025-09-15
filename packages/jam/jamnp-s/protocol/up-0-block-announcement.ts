@@ -1,6 +1,6 @@
 import { Header, type HeaderHash, type TimeSlot } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
+import { type CodecRecord, codec, Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";

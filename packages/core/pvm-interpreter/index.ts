@@ -1,20 +1,20 @@
-export * from "./interpreter.js";
 export {
-  Memory,
-  MemoryBuilder,
-  tryAsMemoryIndex,
-  type MemoryIndex,
-  type SbrkIndex,
-  tryAsSbrkIndex,
-} from "./memory/index.js";
-export {
+  type BigGas,
   type Gas,
   type GasCounter,
   gasCounter,
   type SmallGas,
-  type BigGas,
-  tryAsSmallGas,
   tryAsBigGas,
   tryAsGas,
+  tryAsSmallGas,
 } from "./gas.js";
+export * from "./interpreter.js";
+export {
+  Memory,
+  MemoryBuilder,
+  type MemoryIndex,
+  type SbrkIndex,
+  tryAsMemoryIndex,
+  tryAsSbrkIndex,
+} from "./memory/index.js";
 export { Registers } from "./registers.js";

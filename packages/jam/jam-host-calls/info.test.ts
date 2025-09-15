@@ -12,7 +12,7 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { TestAccounts } from "./externalities/test-accounts.js";
-import { Info, LEN_REG, codecServiceAccountInfoWithThresholdBalance } from "./info.js";
+import { codecServiceAccountInfoWithThresholdBalance, Info, LEN_REG } from "./info.js";
 import { HostCallResult } from "./results.js";
 
 const SERVICE_ID_REG = 7;
