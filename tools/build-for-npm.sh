@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -ex
 
 # This script compiles the project into "single" JS file (it's actually one per worker thread)
@@ -40,17 +40,19 @@ cp $DIST_FOLDER/**/*.wasm $DIST_FOLDER/ || true # ignore overwrite errors
 cp ./LICENSE $DIST_FOLDER/
 cp ./README.md $DIST_FOLDER/
 
+VERSION=$(jq .version package.json)
+
 # build package.json file
-echo '{
-  "name": "@typeberry/jam",
-  "version": "0.0.2",
-  "description": "Typeberry - Typescript JAM implementation by Fluffy Labs team.",
-  "main": "./index.js",
-  "dependencies": {
-    "lmdb": "3.1.3"
+echo "{
+  \"name\": \"@typeberry/jam\",
+  \"version\": $VERSION,
+  \"description\": \"Typeberry - Typescript JAM implementation by Fluffy Labs team.\",
+  \"main\": \"./index.js\",
+  \"dependencies\": {
+    \"lmdb\": \"3.1.3\"
   },
-  "homepage": "https://typeberry.dev",
-  "author": "Fluffy Labs <hello@fluffylabs.dev>",
-  "license": "MPL-2.0",
-  "type": "module"
-}' > $DIST_FOLDER/package.json
+  \"homepage\": \"https://typeberry.dev\",
+  \"author\": \"Fluffy Labs <hello@fluffylabs.dev>\",
+  \"license\": \"MPL-2.0\",
+  \"type\": \"module\"
+}" > $DIST_FOLDER/package.json
