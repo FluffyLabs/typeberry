@@ -26,6 +26,8 @@ USER typeberry
 # So until we have a proper TS->JS build, we probably need to live with that.
 RUN npm ci
 
+# Make sure that anyone can create a database
+RUN mkdir ./database && chmod 777 ./database
 # Make start script runable
 RUN chmod +x /app/start.sh
 
