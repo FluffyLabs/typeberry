@@ -20,8 +20,8 @@ export enum Features {
  * PeerInfo ::= SEQUENCE {
  *     fuzz-version U8,
  *     features     Features,
- *     app-version  Version,
  *     jam-version  Version,
+ *     app-version  Version,
  *     name         UTF8String
  * }
  */
@@ -29,20 +29,20 @@ export class PeerInfo extends WithDebug {
   static Codec = codec.Class(PeerInfo, {
     fuzzVersion: codec.u8,
     features: codec.u32,
-    appVersion: Version.Codec,
     jamVersion: Version.Codec,
+    appVersion: Version.Codec,
     name: codec.string,
   });
 
   static create({ fuzzVersion, features, appVersion, jamVersion, name }: CodecRecord<PeerInfo>) {
-    return new PeerInfo(fuzzVersion, features, appVersion, jamVersion, name);
+    return new PeerInfo(fuzzVersion, features, jamVersion, appVersion, name);
   }
 
   private constructor(
     public readonly fuzzVersion: U8,
     public readonly features: U32,
-    public readonly appVersion: Version,
     public readonly jamVersion: Version,
+    public readonly appVersion: Version,
     public readonly name: string,
   ) {
     super();
