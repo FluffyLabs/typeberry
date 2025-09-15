@@ -5,14 +5,14 @@
   "private": true,
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.3",
-    "@typeberry/codec": "0.0.3",
-    "@typeberry/crypto": "0.0.3",
-    "@typeberry/collections": "0.0.3",
-    "@typeberry/hash": "0.0.3",
-    "@typeberry/logger": "0.0.3",
-    "@typeberry/numbers": "0.0.3",
-    "@typeberry/ordering": "0.0.3"
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/crypto": "*",
+    "@typeberry/collections": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/ordering": "*"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

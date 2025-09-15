@@ -4,9 +4,9 @@
   "description": "PVM standard program initialization based on the Gray Paper.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.3",
-    "@typeberry/utils": "0.0.3",
-    "@typeberry/codec": "0.0.3"
+    "@typeberry/bytes": "*",
+    "@typeberry/utils": "*",
+    "@typeberry/codec": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts'     | tr '\\n' ' ')"

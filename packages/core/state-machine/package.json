@@ -4,8 +4,8 @@
   "description": "Utilities to help manage state-machine-like services and communication. ",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/logger": "0.0.3",
-    "@typeberry/utils": "0.0.3"
+    "@typeberry/logger": "*",
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
