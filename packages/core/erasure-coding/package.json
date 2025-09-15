@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/erasure-coding",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Erasure encoding implementation",
   "main": "index.ts",
   "scripts": {
@@ -11,11 +11,11 @@
   "license": "MPL-2.0",
   "type": "module",
   "dependencies": {
-    "@typeberry/block": "0.0.2",
-    "@typeberry/bytes": "0.0.2",
-    "@typeberry/collections": "0.0.2",
-    "@typeberry/config": "0.0.2",
+    "@typeberry/block": "0.0.3",
+    "@typeberry/bytes": "0.0.3",
+    "@typeberry/collections": "0.0.3",
+    "@typeberry/config": "0.0.3",
     "@typeberry/native": "^0.0.1-43eee4f",
-    "@typeberry/utils": "0.0.2"
+    "@typeberry/utils": "0.0.3"
   }
 }

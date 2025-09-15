@@ -1,22 +1,22 @@
 {
   "name": "@typeberry/jam-host-calls",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "JAM-specific host calls implementations.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/block": "0.0.2",
-    "@typeberry/bytes": "0.0.2",
-    "@typeberry/codec": "0.0.2",
-    "@typeberry/collections": "0.0.2",
-    "@typeberry/config": "0.0.2",
-    "@typeberry/crypto": "0.0.2",
-    "@typeberry/hash": "0.0.2",
-    "@typeberry/logger": "0.0.2",
-    "@typeberry/numbers": "0.0.2",
-    "@typeberry/pvm-host-calls": "0.0.2",
-    "@typeberry/pvm-interpreter": "0.0.2",
-    "@typeberry/state": "0.0.2",
-    "@typeberry/utils": "0.0.2"
+    "@typeberry/block": "0.0.3",
+    "@typeberry/bytes": "0.0.3",
+    "@typeberry/codec": "0.0.3",
+    "@typeberry/collections": "0.0.3",
+    "@typeberry/config": "0.0.3",
+    "@typeberry/crypto": "0.0.3",
+    "@typeberry/hash": "0.0.3",
+    "@typeberry/logger": "0.0.3",
+    "@typeberry/numbers": "0.0.3",
+    "@typeberry/pvm-host-calls": "0.0.3",
+    "@typeberry/pvm-interpreter": "0.0.3",
+    "@typeberry/state": "0.0.3",
+    "@typeberry/utils": "0.0.3"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
