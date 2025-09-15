@@ -112,17 +112,15 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         base: 'main'
+        draft: true
         branch: release/v${{ steps.version.outputs.version }}
         title: "Release v${{ steps.version.outputs.version }}"
         body: |
           ## Release v${{ steps.version.outputs.version }}
 
-          This PR updates all package versions to v${{ steps.version.outputs.version }}.
-
-          After merging this PR, a GitHub release will be created automatically.
-        labels: |
-          release
-          automated
+          **NOTE: This is an automated pull request and it will not trigger any Github Actions.
+            Close this pull request and reopen one yourself to properly continue the release
+            process.**
 
     - name: Create Draft Release
       uses: softprops/action-gh-release@v1
