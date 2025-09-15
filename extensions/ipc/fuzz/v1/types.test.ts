@@ -101,8 +101,8 @@ describe("Fuzzer V1 Data Structures", () => {
       // {
       //   "fuzz_version": 1,
       //   "features": 2,
-      //   "app_version": { "major": 0, "minor": 1, "patch": 23 },
-      //   "jam_version": { "major": 0, "minor": 7, "patch": 0 },
+      //   "jam_version": { "major": 0, "minor": 1, "patch": 23 },
+      //   "app_version": { "major": 0, "minor": 7, "patch": 0 },
       //   "name": "fuzzer"
       // }
       // Expected: 0x0001020000000001170007000666757a7a6572
@@ -110,12 +110,12 @@ describe("Fuzzer V1 Data Structures", () => {
       const peerInfo = PeerInfo.create({
         fuzzVersion: tryAsU8(1),
         features: tryAsU32(Features.Fork),
-        appVersion: Version.create({
+        jamVersion: Version.create({
           major: tryAsU8(0),
           minor: tryAsU8(1),
           patch: tryAsU8(23),
         }),
-        jamVersion: Version.create({
+        appVersion: Version.create({
           major: tryAsU8(0),
           minor: tryAsU8(7),
           patch: tryAsU8(0),
