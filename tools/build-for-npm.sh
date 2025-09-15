@@ -53,6 +53,7 @@ echo "{
   \"version\": \"$VERSION\",
   \"description\": \"Typeberry - Typescript JAM implementation by Fluffy Labs team.\",
   \"main\": \"./index.js\",
+  \"bin\": \"./index.js\",
   \"dependencies\": {
     \"lmdb\": \"3.1.3\"
   },
