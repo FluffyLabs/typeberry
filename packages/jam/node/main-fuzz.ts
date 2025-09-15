@@ -1,3 +1,4 @@
+import fs from "node:fs/promises";
 import { Block, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
@@ -18,8 +19,6 @@ export type FuzzConfig = {
 };
 
 const logger = Logger.new(import.meta.filename, "fuzztarget");
-// A number large enough to not collide with near-future date.
-const NEXT_FUZZ_SEED = BigInt(1_000 * 3_600 * 24 * 30 * 12 * 2);
 
 export function getFuzzDetails() {
   return {
@@ -35,7 +34,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
   const { jamNodeConfig: config } = fuzzConfig;
 
   let runningNode: NodeApi | null = null;
-  let fuzzSeed = BigInt(Date.now());
+  const fuzzSeed = BigInt(Date.now());
 
   const chainSpec = getChainSpec(config.node.flavor);
 
@@ -73,14 +72,16 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
         runningNode = null;
         await finish;
       }
-      fuzzSeed += NEXT_FUZZ_SEED;
+      const databaseBasePath = `${config.node.databaseBasePath}/fuzz/${fuzzSeed}`;
+      // remove the database
+      await fs.rm(databaseBasePath, { recursive: true, force: true });
       // update the chainspec
       const newNode = await main(
         {
           ...config,
           node: {
             ...config.node,
-            databaseBasePath: `${config.node.databaseBasePath}/fuzz/${fuzzSeed}`,
+            databaseBasePath,
             chainSpec: {
               ...config.node.chainSpec,
               genesisHeader: Encoder.encodeObject(Header.Codec, header, chainSpec),
