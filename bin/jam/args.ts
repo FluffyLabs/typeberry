@@ -67,7 +67,7 @@ function parseSharedOptions(
   const { config } = parseStringOption(
     args,
     "config",
-    (v) => (v === DEV_CONFIG ? DEV_CONFIG : withRelPath(v)),
+    (v) => (v === DEV_CONFIG || v === DEFAULT_CONFIG ? v : withRelPath(v)),
     defaultConfig,
   );
 

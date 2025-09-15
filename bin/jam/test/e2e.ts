@@ -39,7 +39,7 @@ test("JAM Node Startup E2E", { timeout: TEST_TIMEOUT }, async () => {
       });
     });
   } finally {
-    terminate(jamProcess);
+    await terminate(jamProcess);
   }
 });
 
