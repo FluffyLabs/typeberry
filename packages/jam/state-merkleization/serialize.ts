@@ -172,7 +172,7 @@ export namespace serialize {
     key: stateKeys.index(StateKeyIdx.Theta),
     Codec: codec.sequenceVarLen(AccumulationOutput.Codec).convert(
       (i) => i.array,
-      (o) => SortedArray.fromArray(accumulationOutputComparator, o),
+      (o) => SortedArray.fromSortedArray(accumulationOutputComparator, o),
     ),
     extract: (s) => s.accumulationOutputLog,
   };

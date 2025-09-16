@@ -8,6 +8,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";
 import { json } from "@typeberry/json-parser";
 import {
+  type AccumulationOutput,
   accumulationOutputComparator,
   type InMemoryService,
   InMemoryState,
@@ -17,6 +18,7 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { JsonService } from "./accounts.js";
+import { accumulationOutput } from "./accumulation-output.js";
 import { availabilityAssignmentFromJson } from "./availability-assignment.js";
 import { disputesRecordsFromJson } from "./disputes.js";
 import { notYetAccumulatedFromJson } from "./not-yet-accumulated.js";
@@ -52,7 +54,7 @@ type JsonStateDump = {
   pi: JsonStatisticsData;
   omega: State["accumulationQueue"];
   xi: PerEpochBlock<WorkPackageHash[]>;
-  theta: State["accumulationOutputLog"] | null;
+  theta: AccumulationOutput[] | null;
   accounts: InMemoryService[];
 };
 
@@ -89,19 +91,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
       pi: JsonStatisticsData.fromJson,
       omega: json.array(json.array(notYetAccumulatedFromJson)),
       xi: json.array(json.array(fromJson.bytes32())),
-      theta: json.nullable(
-        json.fromAny((v) => {
-          if (Array.isArray(v)) {
-            return SortedArray.fromArray(accumulationOutputComparator, v);
-          }
-
-          if (v === null) {
-            return SortedArray.fromArray(accumulationOutputComparator, []);
-          }
-
-          throw new Error(`Expected an array, got ${typeof v} instead.`);
-        }),
-      ),
+      theta: json.nullable(json.array(accumulationOutput)),
       accounts: json.array(JsonService.fromJson),
     },
     ({
@@ -166,7 +156,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           xi.map((x) => HashSet.from(x)),
           spec,
         ),
-        accumulationOutputLog: theta ?? SortedArray.fromArray(accumulationOutputComparator, []),
+        accumulationOutputLog: SortedArray.fromArray(accumulationOutputComparator, theta ?? []),
         services: new Map(accounts.map((x) => [x.serviceId, x])),
       });
     },
