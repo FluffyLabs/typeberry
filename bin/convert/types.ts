@@ -6,6 +6,7 @@ import { blockFromJson, headerFromJson, workReportFromJson } from "@typeberry/bl
 import { type Decode, type Encode, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { JipChainSpec } from "@typeberry/config-node";
+import { messageCodec } from "@typeberry/ext-ipc/fuzz/v1/types.js";
 import { blake2b } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
 import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
@@ -144,6 +145,11 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
         }
       },
     },
+  },
+  {
+    name: "fuzz-message",
+    encode: messageCodec,
+    decode: messageCodec,
   },
 ];
 
