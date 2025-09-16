@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/config",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Config for typeberry workers.",
   "main": "index.ts",
   "scripts": {

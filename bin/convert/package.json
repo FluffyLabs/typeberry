@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/convert",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Convert JAM-related types between different formats.",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",

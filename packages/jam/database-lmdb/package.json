@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/database-lmdb",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "LMDB-backed database for typeberry.",
   "main": "index.ts",
   "scripts": {
