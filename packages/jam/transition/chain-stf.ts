@@ -15,6 +15,7 @@ import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/sa
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
 import type { State } from "@typeberry/state";
 import { assertEmpty, type ErrorResult, measure, OK, Result, type TaggedError } from "@typeberry/utils";
+import { AccumulateOutput } from "./accumulate/accumulate-output.js";
 import {
   type ACCUMULATION_ERROR,
   Accumulate,
@@ -98,6 +99,7 @@ export class OnChain {
   private readonly assurances: Assurances;
   // chapter 12: https://graypaper.fluffylabs.dev/#/68eaa1f/159f02159f02?v=0.6.4
   private readonly accumulate: Accumulate;
+  private readonly accumulateOutput: AccumulateOutput;
   // chapter 12.3: https://graypaper.fluffylabs.dev/#/68eaa1f/178203178203?v=0.6.4
   private readonly deferredTransfers: DeferredTransfers;
   // chapter 12.4: https://graypaper.fluffylabs.dev/#/68eaa1f/18cc0018cc00?v=0.6.4
@@ -130,6 +132,7 @@ export class OnChain {
     this.reports = new Reports(chainSpec, state, new DbHeaderChain(blocks));
     this.assurances = new Assurances(chainSpec, state);
     this.accumulate = new Accumulate(chainSpec, state);
+    this.accumulateOutput = new AccumulateOutput();
     this.deferredTransfers = new DeferredTransfers(chainSpec, state);
     this.preimages = new Preimages(state);
 
@@ -271,7 +274,6 @@ export class OnChain {
       return stfError(StfErrorKind.Accumulate, accumulateResult);
     }
     const {
-      root: accumulateRoot,
       stateUpdate: accumulateUpdate,
       accumulationStatistics,
       pendingTransfers,
@@ -308,8 +310,9 @@ export class OnChain {
     } = deferredTransfersResult.ok;
     assertEmpty(deferredTransfersRest);
 
+    const accumulateRoot = await this.accumulateOutput.transition({ accumulationOutputLog });
     // recent history
-    const recentHistoryUpdate = this.recentHistory.transition({
+    const recentHistoryUpdate = await this.recentHistory.transition({
       partial: recentHistoryPartialUpdate,
       headerHash,
       accumulateRoot,

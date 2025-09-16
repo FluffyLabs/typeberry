@@ -18,7 +18,8 @@
   "scripts": {
     "start": "tsx ./index.ts",
     "build": "cd ../../ && ./tools/build-for-npm.sh",
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
+    "test:e2e": "tsx --test test/e2e.ts"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

@@ -2,9 +2,10 @@ import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { Bytes } from "@typeberry/bytes";
 import { asKnownSize, type HashDictionary } from "@typeberry/collections";
-import { HASH_SIZE, type KeccakHash, type OpaqueHash } from "@typeberry/hash";
+import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import { BlockState, MAX_RECENT_HISTORY, RecentBlocks, RecentBlocksHistory, type State } from "@typeberry/state";
+import type { AccumulateRoot } from "./accumulate/accumulate-state.js";
 
 export type RecentHistoryPartialInput = {
   /** State root before current header. */
@@ -18,17 +19,12 @@ export type RecentHistoryInput = {
   /** Current header hash. */
   headerHash: HeaderHash;
   /**
-   * `θ`: accumulation-output
+   * Accumulation root calculated from `θ`: accumulation-output
+   * using the basic binary Merklization function (M_B , defined in appendix E)
    *
-   * https://graypaper.fluffylabs.dev/#/7e6ff6a/18e60118e801?v=0.6.7
-   *
-   * NOTE === Pre 067 ===
-   *
-   * `C`: BEEFY commitment.
-   *
-   * https://graypaper.fluffylabs.dev/#/579bd12/172803172a03?v=0.5.4
+   * https://graypaper.fluffylabs.dev/#/1c979cb/0f70020f7202?v=0.7.1
    */
-  accumulateRoot: OpaqueHash;
+  accumulateRoot: AccumulateRoot;
   /** Work packages in the guarantees extrinsic. */
   workPackages: HashDictionary<WorkPackageHash, WorkPackageInfo>;
 };

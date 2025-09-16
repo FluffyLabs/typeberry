@@ -8,30 +8,28 @@ import {
 } from "@typeberry/block";
 import { W_C } from "@typeberry/block/gp-constants.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
-import { HashSet } from "@typeberry/collections";
+import { HashSet, SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { KeccakHasher } from "@typeberry/hash/keccak.js";
 import {
   AccumulationStateUpdate,
   PartiallyUpdatedState,
 } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
-import { tryAsU32, type U32, u32AsLeBytes } from "@typeberry/numbers";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
 import {
   type AccumulationOutput,
+  accumulationOutputComparator,
   hashComparator,
   ServiceAccountInfo,
   type ServicesUpdate,
   tryAsPerCore,
 } from "@typeberry/state";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
-import { binaryMerkleization } from "@typeberry/state-merkleization";
-import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import { assertEmpty, Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/index.js";
@@ -41,7 +39,6 @@ import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 import {
   type AccumulateInput,
   type AccumulateResult,
-  type AccumulateRoot,
   type AccumulateState,
   type AccumulateStateUpdate,
   GAS_TO_INVOKE_WORK_REPORT,
@@ -449,11 +446,12 @@ export class Accumulate {
       services,
     );
 
-    const accumulationOutput: AccumulationOutput[] = Array.from(yieldedRoots.entries()).map(([serviceId, root]) => {
-      return { serviceId, output: root.asOpaque() };
-    });
-    const rootHash = await getRootHash(accumulationOutput);
-
+    const accumulationOutputUnsorted: AccumulationOutput[] = Array.from(yieldedRoots.entries()).map(
+      ([serviceId, root]) => {
+        return { serviceId, output: root.asOpaque() };
+      },
+    );
+    const accumulationOutput = SortedArray.fromArray(accumulationOutputComparator, accumulationOutputUnsorted);
     const authQueues = (() => {
       if (authorizationQueues.size === 0) {
         return {};
@@ -467,7 +465,6 @@ export class Accumulate {
     })();
 
     return Result.ok({
-      root: rootHash,
       stateUpdate: {
         ...accStateUpdate,
         ...(validatorsData === null ? {} : { designatedValidatorData: validatorsData }),
@@ -479,20 +476,4 @@ export class Accumulate {
       accumulationOutputLog: accumulationOutput,
     });
   }
-}
-
-/**
- * Returns a new root hash
- *
- * https://graypaper.fluffylabs.dev/#/38c4e62/3c9d013c9d01?v=0.7.0
- */
-async function getRootHash(yieldedRoots: AccumulationOutput[]): Promise<AccumulateRoot> {
-  const keccakHasher = await KeccakHasher.create();
-  const trieHasher = getKeccakTrieHasher(keccakHasher);
-  const yieldedRootsSortedByServiceId = yieldedRoots.sort((a, b) => a.serviceId - b.serviceId);
-  const values = yieldedRootsSortedByServiceId.map(({ serviceId, output }) => {
-    return BytesBlob.blobFromParts([u32AsLeBytes(serviceId), output.raw]);
-  });
-
-  return binaryMerkleization(values, trieHasher);
 }
