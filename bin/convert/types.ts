@@ -6,6 +6,7 @@ import { blockFromJson, headerFromJson, workReportFromJson } from "@typeberry/bl
 import { type Decode, type Encode, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { JipChainSpec } from "@typeberry/config-node";
+import { messageCodec } from "@typeberry/ext-ipc/fuzz/v1/types.js";
 import { blake2b } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
 import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
@@ -18,7 +19,6 @@ import { StateTransition, StateTransitionGenesis } from "../test-runner/state-tr
 import { workItemFromJson } from "../test-runner/w3f/codec/work-item.js";
 import { workPackageFromJson } from "../test-runner/w3f/codec/work-package.js";
 import { PvmTest } from "../test-runner/w3f/pvm.js";
-import {messageCodec} from "@typeberry/ext-ipc/fuzz/v1/types.js";
 
 export type SupportedType = {
   name: string;
