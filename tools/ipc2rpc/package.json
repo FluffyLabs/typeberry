@@ -1,17 +1,17 @@
 {
   "name": "@typeberry/ipc2rpc",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "JSON-RPC adapter for the JAMCODEC-IPC interface.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/block": "*",
-    "@typeberry/bytes": "*",
-    "@typeberry/config": "*",
-    "@typeberry/ext-ipc": "*",
-    "@typeberry/hash": "*",
-    "@typeberry/jamnp-s": "*",
-    "@typeberry/logger": "*",
-    "@typeberry/networking": "*",
+    "@typeberry/block": "0.0.4",
+    "@typeberry/bytes": "0.0.4",
+    "@typeberry/config": "0.0.4",
+    "@typeberry/ext-ipc": "0.0.4",
+    "@typeberry/hash": "0.0.4",
+    "@typeberry/jamnp-s": "0.0.4",
+    "@typeberry/logger": "0.0.4",
+    "@typeberry/networking": "0.0.4",
     "json-rpc-2.0": "1.7.0"
   },
   "scripts": {

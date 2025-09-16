@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/networking",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "QUIC-based p2p networking.",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",
@@ -15,11 +15,11 @@
     "@matrixai/quic": "2.0.9",
     "@peculiar/webcrypto": "1.5.0",
     "@peculiar/x509": "1.12.3",
-    "@typeberry/bytes": "*",
-    "@typeberry/config": "*",
-    "@typeberry/crypto": "*",
-    "@typeberry/logger": "*",
-    "@typeberry/numbers": "*",
-    "@typeberry/utils": "*"
+    "@typeberry/bytes": "0.0.4",
+    "@typeberry/config": "0.0.4",
+    "@typeberry/crypto": "0.0.4",
+    "@typeberry/logger": "0.0.4",
+    "@typeberry/numbers": "0.0.4",
+    "@typeberry/utils": "0.0.4"
   }
 }

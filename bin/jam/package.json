@@ -1,18 +1,18 @@
 {
   "name": "@typeberry/jam",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Typeberry-JAM CLI.",
   "main": "index.ts",
   "bin": "./index.ts",
   "dependencies": {
-    "@typeberry/bytes": "*",
-    "@typeberry/config": "*",
-    "@typeberry/config-node": "*",
-    "@typeberry/hash": "*",
-    "@typeberry/logger": "*",
-    "@typeberry/node": "*",
-    "@typeberry/numbers": "*",
-    "@typeberry/utils": "*",
+    "@typeberry/bytes": "0.0.4",
+    "@typeberry/config": "0.0.4",
+    "@typeberry/config-node": "0.0.4",
+    "@typeberry/hash": "0.0.4",
+    "@typeberry/logger": "0.0.4",
+    "@typeberry/node": "0.0.4",
+    "@typeberry/numbers": "0.0.4",
+    "@typeberry/utils": "0.0.4",
     "minimist": "1.2.8"
   },
   "scripts": {

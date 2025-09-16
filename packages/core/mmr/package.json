@@ -1,14 +1,14 @@
 {
   "name": "@typeberry/mmr",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Merkle Mountain Range data structure.",
   "main": "index.ts",
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
-    "@typeberry/bytes": "*",
-    "@typeberry/hash": "*"
+    "@typeberry/bytes": "0.0.4",
+    "@typeberry/hash": "0.0.4"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

@@ -1,10 +1,10 @@
 {
   "name": "@typeberry/pvm",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "PVM program runner.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/pvm-interpreter": "*"
+    "@typeberry/pvm-interpreter": "0.0.4"
   },
   "scripts": {
     "start": "tsx ./index.ts",

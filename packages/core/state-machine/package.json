@@ -1,11 +1,11 @@
 {
   "name": "@typeberry/state-machine",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Utilities to help manage state-machine-like services and communication. ",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/logger": "*",
-    "@typeberry/utils": "*"
+    "@typeberry/logger": "0.0.4",
+    "@typeberry/utils": "0.0.4"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

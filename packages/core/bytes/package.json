@@ -1,11 +1,11 @@
 {
   "name": "@typeberry/bytes",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Byte-related utilities and types.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/ordering": "*",
-    "@typeberry/utils": "*"
+    "@typeberry/ordering": "0.0.4",
+    "@typeberry/utils": "0.0.4"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
