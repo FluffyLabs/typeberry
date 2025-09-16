@@ -5,7 +5,7 @@ import { WithHash } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";
 import type { SerializedState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
-import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verifier.js";
+import { BlockVerifier, BlockVerifierError } from "@typeberry/transition/block-verifier.js";
 import { OnChain, type StfError } from "@typeberry/transition/chain-stf.js";
 import { type ErrorResult, measure, Result, resultToString, type TaggedError } from "@typeberry/utils";
 
@@ -31,6 +31,8 @@ export class Importer {
 
   // TODO [ToDr] we cannot assume state reference does not change.
   private readonly state: SerializedState<LeafDb>;
+  // Hash of the block that we have the posterior state for in `state`.
+  private currentHash: HeaderHash;
 
   constructor(
     spec: ChainSpec,
@@ -48,6 +50,7 @@ export class Importer {
     this.verifier = new BlockVerifier(hasher, blocks);
     this.stf = new OnChain(spec, state, blocks, hasher, { enableParallelSealVerification: true });
     this.state = state;
+    this.currentHash = currentBestHeaderHash;
 
     logger.info(`😎 Best time slot: ${state.timeslot} (header hash: ${currentBestHeaderHash})`);
   }
@@ -82,6 +85,21 @@ export class Importer {
       return importerError(ImporterErrorKind.Verifier, hash);
     }
 
+    // TODO [ToDr] This is incomplete/temporary fork support!
+    const parentHash = block.header.view().parentHeaderHash.materialize();
+    if (!this.currentHash.isEqualTo(parentHash)) {
+      const state = this.states.getState(parentHash);
+      if (state === null) {
+        const e = Result.error(BlockVerifierError.StateRootNotFound);
+        if (!e.isError) {
+          throw new Error("unreachable, just adding to make compiler happy");
+        }
+        return importerError(ImporterErrorKind.Verifier, e);
+      }
+      this.state.updateBackend(state?.backend);
+      this.currentHash = parentHash;
+    }
+
     const timeSlot = block.header.view().timeSlotIndex.materialize();
     const headerHash = hash.ok;
     logger.log(`🧱 Verified block: Got hash ${headerHash} for block at slot ${timeSlot}.`);
@@ -107,6 +125,7 @@ export class Importer {
     // TODO [ToDr] This is a temporary measure. We should rather read
     // the state of a parent block to support forks and create a fresh STF.
     this.state.updateBackend(newState.backend);
+    this.currentHash = headerHash;
     logger.log(timerState());
 
     // insert new state and the block to DB.

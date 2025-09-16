@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/database",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "Database abstraction for typeberry.",
   "main": "index.ts",
   "dependencies": {
