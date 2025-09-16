@@ -17,6 +17,7 @@ import type { InMemoryService } from "@typeberry/state";
 import { AutoAccumulate, InMemoryState, PrivilegedServices, tryAsPerCore } from "@typeberry/state";
 import { JsonService } from "@typeberry/state-json/accounts.js";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
+import { AccumulateOutput } from "@typeberry/transition/accumulate/accumulate-output.js";
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
 import { Result, deepEqual } from "@typeberry/utils";
 import { getChainSpec } from "./spec.js";
@@ -140,15 +141,17 @@ export async function runAccumulateTest(test: AccumulateTest, path: string) {
 
   const state = TestState.toAccumulateState(test.pre_state as TestState, chainSpec);
   const accumulate = new Accumulate(chainSpec, state);
+  const accumulateOutput = new AccumulateOutput();
   const result = await accumulate.transition({ ...test.input, entropy });
 
   if (result.isError) {
     assert.fail(`Expected successfull accumulation, got: ${result}`);
   }
-
+  const accumulateRoot = await accumulateOutput.transition({ accumulationOutputLog: result.ok.accumulationOutputLog });
   state.applyUpdate(result.ok.stateUpdate);
 
   const post_state = TestState.toAccumulateState(test.post_state as TestState, chainSpec);
 
   deepEqual(state, post_state);
+  deepEqual(accumulateRoot, test.output.ok);
 }
