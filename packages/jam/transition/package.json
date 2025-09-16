@@ -16,6 +16,7 @@
     "@typeberry/logger": "*",
     "@typeberry/mmr": "*",
     "@typeberry/numbers": "*",
+    "@typeberry/ordering": "*",
     "@typeberry/jam-host-calls": "*",
     "@typeberry/pvm-host-calls": "*",
     "@typeberry/pvm-interpreter": "*",
