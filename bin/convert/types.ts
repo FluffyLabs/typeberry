@@ -18,6 +18,7 @@ import { StateTransition, StateTransitionGenesis } from "../test-runner/state-tr
 import { workItemFromJson } from "../test-runner/w3f/codec/work-item.js";
 import { workPackageFromJson } from "../test-runner/w3f/codec/work-package.js";
 import { PvmTest } from "../test-runner/w3f/pvm.js";
+import {messageCodec} from "@typeberry/ext-ipc/fuzz/v1/types.js";
 
 export type SupportedType = {
   name: string;
@@ -144,6 +145,11 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
         }
       },
     },
+  },
+  {
+    name: "fuzz-message",
+    encode: messageCodec,
+    decode: messageCodec,
   },
 ];
 
