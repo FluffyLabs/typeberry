@@ -25,18 +25,11 @@ export class BandernsatchWasm {
     );
   }
 
-  async verifySeal(
-    keys: Uint8Array,
-    authorIndex: number,
-    signature: Uint8Array,
-    payload: Uint8Array,
-    auxData: Uint8Array,
-  ) {
+  async verifySeal(authorKey: Uint8Array, signature: Uint8Array, payload: Uint8Array, auxData: Uint8Array) {
     const x = await this.executor.run(
       new Params({
         method: Method.VerifySeal,
-        keys,
-        authorIndex,
+        authorKey,
         signature,
         payload,
         auxData,
@@ -55,11 +48,12 @@ export class BandernsatchWasm {
     return x.data;
   }
 
-  async batchVerifyTicket(keys: Uint8Array, ticketsData: Uint8Array, contextLength: number) {
+  async batchVerifyTicket(ringSize: number, commitment: Uint8Array, ticketsData: Uint8Array, contextLength: number) {
     const x = await this.executor.run(
       new Params({
         method: Method.BatchVerifyTickets,
-        keys,
+        ringSize,
+        commitment,
         ticketsData,
         contextLength,
       }),

@@ -17,6 +17,7 @@ import type { ChainSpec } from "@typeberry/config";
 import {
   BANDERSNATCH_KEY_BYTES,
   type BandersnatchKey,
+  type BandersnatchRingRoot,
   BLS_KEY_BYTES,
   ED25519_KEY_BYTES,
   type Ed25519Key,
@@ -352,6 +353,7 @@ export class Safrole {
     timeslot: TimeSlot,
     extrinsic: readonly SignedTicket[],
     validators: readonly ValidatorData[],
+    epochRoot: BandersnatchRingRoot,
     entropy: EntropyHash,
   ): Promise<Result<Ticket[], SafroleErrorCode>> {
     /**
@@ -365,7 +367,8 @@ export class Safrole {
         ? []
         : await bandersnatchVrf.verifyTickets(
             await this.bandersnatch,
-            validators.map((x) => x.bandersnatch),
+            validators.length,
+            epochRoot,
             extrinsic,
             entropy,
           );
@@ -506,6 +509,7 @@ export class Safrole {
       input.slot,
       input.extrinsic,
       this.state.nextValidatorData,
+      epochRoot,
       entropy[2],
     );
 

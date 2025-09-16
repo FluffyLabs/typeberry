@@ -1,4 +1,4 @@
-import type { EntropyHash, ValidatorIndex } from "@typeberry/block";
+import type { EntropyHash } from "@typeberry/block";
 import type { SignedTicket } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { BandersnatchKey } from "@typeberry/crypto";
@@ -30,16 +30,13 @@ export default {
 
 async function verifySeal(
   bandersnatch: BandernsatchWasm,
-  validators: BandersnatchKey[],
-  authorIndex: ValidatorIndex,
+  authorKey: BandersnatchKey,
   signature: BandersnatchVrfSignature,
   payload: BytesBlob,
   encodedUnsealedHeader: BytesBlob,
 ): Promise<Result<EntropyHash, null>> {
-  const keys = BytesBlob.blobFromParts(validators.map((x) => x.raw)).raw;
   const sealResult = await bandersnatch.verifySeal(
-    keys,
-    authorIndex,
+    authorKey.raw,
     signature.raw,
     payload.raw,
     encodedUnsealedHeader.raw,
@@ -68,7 +65,8 @@ async function getRingCommitment(
 
 async function verifyTickets(
   bandersnatch: BandernsatchWasm,
-  validators: readonly BandersnatchKey[],
+  numberOfValidators: number,
+  epochRoot: BandersnatchRingRoot,
   tickets: readonly SignedTicket[],
   entropy: EntropyHash,
 ): Promise<{ isValid: boolean; entropyHash: EntropyHash }[]> {
@@ -82,23 +80,14 @@ async function verifyTickets(
     ),
   ).raw;
 
-  const keys = BytesBlob.blobFromParts(validators.map((x) => x.raw)).raw;
-  try {
-    const verificationResult = await bandersnatch.batchVerifyTicket(keys, ticketsData, contextLength);
-    return Array.from(BytesBlob.blobFrom(verificationResult).chunks(33)).map((result) => ({
-      isValid: result.raw[RESULT_INDEX] === ResultValues.Ok,
-      entropyHash: Bytes.fromBlob(result.raw.subarray(1, 33), HASH_SIZE).asOpaque(),
-    }));
-  } catch (e) {
-    // TODO [ToDr] Temporary workaround for failing verification.
-    // Instead we should handle that in the wasm library.
-    // See stateTransitionFuzzed tests for details.
-    if (`${e}` === "RuntimeError: unreachable") {
-      return Array.from({ length: tickets.length }, () => ({
-        isValid: false,
-        entropyHash: Bytes.zero(HASH_SIZE).asOpaque(),
-      }));
-    }
-    throw e;
-  }
+  const verificationResult = await bandersnatch.batchVerifyTicket(
+    numberOfValidators,
+    epochRoot.raw,
+    ticketsData,
+    contextLength,
+  );
+  return Array.from(BytesBlob.blobFrom(verificationResult).chunks(33)).map((result) => ({
+    isValid: result.raw[RESULT_INDEX] === ResultValues.Ok,
+    entropyHash: Bytes.fromBlob(result.raw.subarray(1, 33), HASH_SIZE).asOpaque(),
+  }));
 }
