@@ -192,7 +192,7 @@ describe("accumulate", () => {
     state.applyUpdate(output.ok.stateUpdate);
 
     // then
-    deepEqual(output.ok.accumulationOutputLog, expectedOutput);
+    deepEqual(output.ok.accumulationOutputLog.array, expectedOutput);
     deepEqual(state, expectedState);
   });
 });

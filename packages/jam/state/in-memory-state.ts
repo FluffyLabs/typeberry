@@ -23,6 +23,7 @@ import {
   HashSet,
   type ImmutableHashSet,
   type KnownSizeArray,
+  SortedArray,
   SortedSet,
 } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
@@ -31,7 +32,7 @@ import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typebe
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { asOpaqueType, assertNever, check, OK, Result, WithDebug } from "@typeberry/utils";
-import type { AccumulationOutput } from "./accumulation-output.js";
+import { type AccumulationOutput, accumulationOutputComparator } from "./accumulation-output.js";
 import type { AvailabilityAssignment } from "./assurances.js";
 import { type PerCore, tryAsPerCore } from "./common.js";
 import { DisputesRecords, hashComparator } from "./disputes.js";
@@ -414,7 +415,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
   sealingKeySeries: SafroleSealingKeys;
   epochRoot: BandersnatchRingRoot;
   privilegedServices: PrivilegedServices;
-  accumulationOutputLog: AccumulationOutput[];
+  accumulationOutputLog: SortedArray<AccumulationOutput>;
   services: Map<ServiceId, InMemoryService>;
 
   recentServiceIds(): readonly ServiceId[] {
@@ -558,7 +559,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
         validatorsManager: tryAsServiceId(0),
         autoAccumulateServices: [],
       }),
-      accumulationOutputLog: [],
+      accumulationOutputLog: SortedArray.fromArray(accumulationOutputComparator, []),
       services: new Map(),
     });
   }

@@ -18,6 +18,7 @@
     "@typeberry/hash": "*",
     "@typeberry/mmr": "*",
     "@typeberry/numbers": "*",
+    "@typeberry/ordering": "*",
     "@typeberry/utils": "*"
   },
   "type": "module"

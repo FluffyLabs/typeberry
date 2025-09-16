@@ -10,7 +10,7 @@ import { W_C } from "@typeberry/block/gp-constants.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
-import { HashSet } from "@typeberry/collections";
+import { HashSet, SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import {
@@ -23,6 +23,7 @@ import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
 import {
   type AccumulationOutput,
+  accumulationOutputComparator,
   hashComparator,
   ServiceAccountInfo,
   type ServicesUpdate,
@@ -445,10 +446,12 @@ export class Accumulate {
       services,
     );
 
-    const accumulationOutput: AccumulationOutput[] = Array.from(yieldedRoots.entries()).map(([serviceId, root]) => {
-      return { serviceId, output: root.asOpaque() };
-    });
-
+    const accumulationOutputUnsorted: AccumulationOutput[] = Array.from(yieldedRoots.entries()).map(
+      ([serviceId, root]) => {
+        return { serviceId, output: root.asOpaque() };
+      },
+    );
+    const accumulationOutput = SortedArray.fromArray(accumulationOutputComparator, accumulationOutputUnsorted);
     const authQueues = (() => {
       if (authorizationQueues.size === 0) {
         return {};

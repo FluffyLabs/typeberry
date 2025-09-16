@@ -3,11 +3,12 @@ import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/g
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { fromJson } from "@typeberry/block-json";
 import { Bytes } from "@typeberry/bytes";
-import { asKnownSize, HashSet } from "@typeberry/collections";
+import { asKnownSize, HashSet, SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";
 import { json } from "@typeberry/json-parser";
 import {
+  accumulationOutputComparator,
   type InMemoryService,
   InMemoryState,
   PrivilegedServices,
@@ -16,7 +17,6 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { JsonService } from "./accounts.js";
-import { accumulationOutput } from "./accumulation-output.js";
 import { availabilityAssignmentFromJson } from "./availability-assignment.js";
 import { disputesRecordsFromJson } from "./disputes.js";
 import { notYetAccumulatedFromJson } from "./not-yet-accumulated.js";
@@ -89,7 +89,19 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
       pi: JsonStatisticsData.fromJson,
       omega: json.array(json.array(notYetAccumulatedFromJson)),
       xi: json.array(json.array(fromJson.bytes32())),
-      theta: json.nullable(json.array(accumulationOutput)),
+      theta: json.nullable(
+        json.fromAny((v) => {
+          if (Array.isArray(v)) {
+            return SortedArray.fromArray(accumulationOutputComparator, v);
+          }
+
+          if (v === null) {
+            return SortedArray.fromArray(accumulationOutputComparator, []);
+          }
+
+          throw new Error(`Expected an array, got ${typeof v} instead.`);
+        }),
+      ),
       accounts: json.array(JsonService.fromJson),
     },
     ({
@@ -154,7 +166,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           xi.map((x) => HashSet.from(x)),
           spec,
         ),
-        accumulationOutputLog: theta ?? [],
+        accumulationOutputLog: theta ?? SortedArray.fromArray(accumulationOutputComparator, []),
         services: new Map(accounts.map((x) => [x.serviceId, x])),
       });
     },

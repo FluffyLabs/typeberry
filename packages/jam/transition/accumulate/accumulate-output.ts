@@ -1,21 +1,19 @@
 import { BytesBlob } from "@typeberry/bytes";
-import { SortedArray } from "@typeberry/collections";
+import type { SortedArray } from "@typeberry/collections";
 import { KeccakHasher } from "@typeberry/hash/keccak.js";
 import { u32AsLeBytes } from "@typeberry/numbers";
-import { Ordering } from "@typeberry/ordering";
 import type { AccumulationOutput } from "@typeberry/state";
 import { binaryMerkleization } from "@typeberry/state-merkleization";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import type { AccumulateRoot } from "./accumulate-state.js";
 
 type AccumulateRootInput = {
-  accumulationOutputLog: AccumulationOutput[];
+  accumulationOutputLog: SortedArray<AccumulationOutput>;
 };
 
 export class AccumulateOutput {
   async transition({ accumulationOutputLog }: AccumulateRootInput): Promise<AccumulateRoot> {
-    const yieldedRootsSortedByServiceId = SortedArray.fromArray(accumulationOutputComparator, accumulationOutputLog);
-    const rootHash = await getRootHash(yieldedRootsSortedByServiceId);
+    const rootHash = await getRootHash(accumulationOutputLog);
     return rootHash;
   }
 }
@@ -33,18 +31,4 @@ async function getRootHash(yieldedRoots: SortedArray<AccumulationOutput>): Promi
   });
 
   return binaryMerkleization(values, trieHasher);
-}
-
-function accumulationOutputComparator(a: AccumulationOutput, b: AccumulationOutput) {
-  const result = a.serviceId - b.serviceId;
-
-  if (result < 0) {
-    return Ordering.Less;
-  }
-
-  if (result > 0) {
-    return Ordering.Greater;
-  }
-
-  return Ordering.Equal;
 }

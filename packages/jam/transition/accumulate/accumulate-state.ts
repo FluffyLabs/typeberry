@@ -1,5 +1,6 @@
 import type { EntropyHash, ServiceId, TimeSlot } from "@typeberry/block";
 import type { WorkReport } from "@typeberry/block/work-report.js";
+import type { SortedArray } from "@typeberry/collections";
 import type { OpaqueHash } from "@typeberry/hash";
 import type { PendingTransfer, ServiceStateUpdate } from "@typeberry/jam-host-calls";
 import type { AccumulationOutput, State } from "@typeberry/state";
@@ -39,5 +40,5 @@ export type AccumulateResult = {
   stateUpdate: AccumulateStateUpdate;
   accumulationStatistics: Map<ServiceId, CountAndGasUsed>;
   pendingTransfers: PendingTransfer[];
-  accumulationOutputLog: AccumulationOutput[];
+  accumulationOutputLog: SortedArray<AccumulationOutput>;
 };

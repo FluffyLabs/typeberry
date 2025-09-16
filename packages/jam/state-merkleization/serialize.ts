@@ -11,7 +11,7 @@ import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { codec, Descriptor, readonlyArray } from "@typeberry/codec";
-import { HashSet } from "@typeberry/collections";
+import { HashSet, SortedArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import {
@@ -26,7 +26,7 @@ import {
   type StorageKey,
   ValidatorData,
 } from "@typeberry/state";
-import { AccumulationOutput } from "@typeberry/state/accumulation-output.js";
+import { AccumulationOutput, accumulationOutputComparator } from "@typeberry/state/accumulation-output.js";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { RecentBlocksHistory } from "@typeberry/state/recent-blocks.js";
 import { SafroleData } from "@typeberry/state/safrole-data.js";
@@ -170,7 +170,10 @@ export namespace serialize {
   /** C(16): https://graypaper.fluffylabs.dev/#/38c4e62/3b46033b4603?v=0.7.0 */
   export const accumulationOutputLog: StateCodec<State["accumulationOutputLog"]> = {
     key: stateKeys.index(StateKeyIdx.Theta),
-    Codec: codec.sequenceVarLen(AccumulationOutput.Codec),
+    Codec: codec.sequenceVarLen(AccumulationOutput.Codec).convert(
+      (i) => i.array,
+      (o) => SortedArray.fromArray(accumulationOutputComparator, o),
+    ),
     extract: (s) => s.accumulationOutputLog,
   };
 
