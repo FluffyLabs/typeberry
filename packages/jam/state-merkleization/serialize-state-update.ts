@@ -7,13 +7,13 @@ import {
   SafroleData,
   type ServicesUpdate,
   type State,
+  tryAsLookupHistorySlots,
   type UpdatePreimage,
   UpdatePreimageKind,
   type UpdateService,
   UpdateServiceKind,
   type UpdateStorage,
   UpdateStorageKind,
-  tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { assertNever } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";

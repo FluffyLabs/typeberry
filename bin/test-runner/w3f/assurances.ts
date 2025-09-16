@@ -1,12 +1,12 @@
 import assert from "node:assert";
 import { type HeaderHash, type TimeSlot, tryAsPerValidator } from "@typeberry/block";
-import { fromJson, getAssurancesExtrinsicFromJson, workReportFromJson } from "@typeberry/block-json";
 import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "@typeberry/block/assurances.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
+import { fromJson, getAssurancesExtrinsicFromJson, workReportFromJson } from "@typeberry/block-json";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { type AvailabilityAssignment, type State, type ValidatorData, tryAsPerCore } from "@typeberry/state";
+import { type AvailabilityAssignment, type State, tryAsPerCore, type ValidatorData } from "@typeberry/state";
 import { availabilityAssignmentFromJson, validatorDataFromJson } from "@typeberry/state-json";
 import {
   Assurances,
@@ -15,7 +15,7 @@ import {
   type AssurancesState,
 } from "@typeberry/transition/assurances.js";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
-import { Result, deepEqual } from "@typeberry/utils";
+import { deepEqual, Result } from "@typeberry/utils";
 
 class Input {
   assurances!: AssurancesExtrinsic;

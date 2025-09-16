@@ -1,4 +1,4 @@
-import { type Opaque, ensure } from "@typeberry/utils";
+import { ensure, type Opaque } from "@typeberry/utils";
 
 import { LAST_PAGE_NUMBER, PAGE_SIZE } from "../memory-consts.js";
 

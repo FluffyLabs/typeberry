@@ -1,7 +1,7 @@
 import { MAX_NUMBER_OF_PAGES, PAGE_SIZE } from "./memory-consts.js";
 import type { MemoryRange } from "./memory-range.js";
 import { getPageNumber } from "./memory-utils.js";
-import { type PageNumber, getNextPageNumber, tryAsPageNumber } from "./pages/page-utils.js";
+import { getNextPageNumber, type PageNumber, tryAsPageNumber } from "./pages/page-utils.js";
 
 /**
  * A half-open range of memory pages. Similarly to [`MemoryRange`], can be empty

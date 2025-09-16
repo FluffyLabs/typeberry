@@ -1,15 +1,14 @@
-import QuicLogger from "@matrixai/logger";
-import { LogLevel, StreamHandler, formatting } from "@matrixai/logger";
+import QuicLogger, { formatting, LogLevel, StreamHandler } from "@matrixai/logger";
 import { events, QUICClient, type QUICConnection, QUICServer, QUICSocket } from "@matrixai/quic";
 import { BytesBlob } from "@typeberry/bytes";
 import type { Ed25519Pair } from "@typeberry/crypto/ed25519.js";
 import { Level, Logger } from "@typeberry/logger";
 import {
-  type PeerInfo,
   altNameRaw,
   certToPEM,
   ed25519AsJsonWebKeyPair,
   generateCertificate,
+  type PeerInfo,
   privateKeyToPEM,
 } from "./certificate.js";
 import { getQuicClientCrypto, getQuicServerCrypto } from "./crypto.js";

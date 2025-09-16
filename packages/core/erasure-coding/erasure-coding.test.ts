@@ -4,26 +4,25 @@ import { type PerValidator, tryAsPerValidator } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
+// NOTE: we can't initialize `wasm` from `@typeberry/crypto`, because
+// for some reason this dependency is not not de-duplicated.
+import { init } from "@typeberry/native";
 import { deepEqual } from "@typeberry/utils";
 import { SEGMENT_FULL, SEGMENT_TINY, TEST_DATA, WORKPACKAGE_FULL, WORKPACKAGE_TINY } from "./ec-test-data.js";
 import {
-  N_CHUNKS_REQUIRED,
-  POINT_LENGTH,
   chunksToShards,
   decodeData,
   decodePiece,
   encodePoints,
   join,
   lace,
+  N_CHUNKS_REQUIRED,
+  POINT_LENGTH,
   padAndEncodeData,
   shardsToChunks,
   split,
   unzip,
 } from "./erasure-coding.js";
-
-// NOTE: we can't initialize `wasm` from `@typeberry/crypto`, because
-// for some reason this dependency is not not de-duplicated.
-import { init } from "@typeberry/native";
 
 let seed = 1;
 function random() {

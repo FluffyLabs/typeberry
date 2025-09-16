@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { Socket } from "node:net";
-import { type Mock, describe, it, mock } from "node:test";
+import { describe, it, type Mock, mock } from "node:test";
 import { type Block, type HeaderHash, type StateRootHash, tryAsTimeSlot } from "@typeberry/block";
 import { testBlockView } from "@typeberry/block/test-helpers.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
@@ -18,8 +18,8 @@ import {
   Initialize,
   type Message,
   MessageType,
-  PeerInfo,
   messageCodec,
+  PeerInfo,
 } from "./types.js";
 
 const spec = tinyChainSpec;

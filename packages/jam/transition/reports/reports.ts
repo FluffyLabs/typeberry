@@ -1,14 +1,14 @@
-import { type PerValidator, type TimeSlot, type WorkReportHash, tryAsTimeSlot } from "@typeberry/block";
+import { type PerValidator, type TimeSlot, tryAsTimeSlot, type WorkReportHash } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { type BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
-import { type HashDictionary, type HashSet, type KnownSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, type HashDictionary, type HashSet, type KnownSizeArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type Ed25519Key, ed25519 } from "@typeberry/crypto";
-import { WithHash, blake2b } from "@typeberry/hash";
+import { blake2b, WithHash } from "@typeberry/hash";
 import type { SafroleStateUpdate } from "@typeberry/safrole";
 import { AvailabilityAssignment, type State, tryAsPerCore } from "@typeberry/state";
-import { OK, Result, asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType, OK, Result } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment.js";
 import type { ReportsInput } from "./input.js";

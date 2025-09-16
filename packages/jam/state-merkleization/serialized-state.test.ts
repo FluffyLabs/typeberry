@@ -8,8 +8,8 @@ import {
   InMemoryState,
   LookupHistoryItem,
   ServiceAccountInfo,
-  UpdateService,
   tryAsLookupHistorySlots,
+  UpdateService,
 } from "@typeberry/state";
 import { deepEqual } from "@typeberry/utils";
 import { SerializedState } from "./serialized-state.js";

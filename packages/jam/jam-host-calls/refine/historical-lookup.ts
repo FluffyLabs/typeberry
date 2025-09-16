@@ -5,9 +5,10 @@ import {
   type HostCallHandler,
   type IHostCallMemory,
   type IHostCallRegisters,
+  PvmExecution,
+  traceRegisters,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
-import { PvmExecution, traceRegisters } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import type { RefineExternalities } from "../externalities/refine-externalities.js";
 import { logger } from "../logger.js";

@@ -1,11 +1,11 @@
 import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
-import { type U64, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU64, type U64 } from "@typeberry/numbers";
 import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
 import type { ProgramDecoderError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType, type OK, type Opaque, type Result } from "@typeberry/utils";
 
 /**
  * Program counter is a 64-bit unsigned integer that points to the next instruction

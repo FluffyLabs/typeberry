@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events";
+import { Logger } from "@typeberry/logger";
 import WebSocket from "ws";
 import { SUBSCRIBE_METHOD_MAP } from "./subscription-manager.js";
 import type { JsonRpcRequest, JsonRpcResponse, JsonRpcSubscriptionNotification } from "./types.js";
@@ -22,6 +23,8 @@ class SubscriptionEventEmitter extends EventEmitter<SubscriptionEventMap> {
   }
 }
 
+const logger = Logger.new(import.meta.filename, "rpc");
+
 export class RpcClient {
   private ws: WebSocket;
   private messageQueue: Map<number, (response: JsonRpcResponse) => void> = new Map();
@@ -33,7 +36,7 @@ export class RpcClient {
     this.ws = new WebSocket(url);
     this.connectionPromise = new Promise((resolve) => {
       this.ws.once("open", () => {
-        console.info("Connected to server");
+        logger.info("Connected to server");
         resolve();
       });
     });
@@ -80,11 +83,11 @@ export class RpcClient {
     });
 
     this.ws.on("error", (error) => {
-      console.error("WebSocket error:", error);
+      logger.error(`WebSocket error: ${error}`);
     });
 
     this.ws.on("close", () => {
-      console.info("Disconnected from server");
+      logger.info("Disconnected from server");
     });
   }
 

@@ -9,7 +9,7 @@ import {
 import type { BytesBlob } from "@typeberry/bytes";
 import { HashSet, SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { WithHash, blake2b } from "@typeberry/hash";
+import { blake2b, WithHash } from "@typeberry/hash";
 import { Ordering } from "@typeberry/ordering";
 import { OK, Result } from "@typeberry/utils";
 import type { Importer } from "./importer.js";

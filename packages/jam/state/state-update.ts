@@ -1,7 +1,7 @@
 import type { ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type U32, tryAsU32 } from "@typeberry/numbers";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { assertNever } from "@typeberry/utils";
 import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service.js";
 
@@ -47,7 +47,11 @@ export class UpdatePreimage {
     serviceId,
     preimage,
     slot,
-  }: { serviceId: ServiceId; preimage: PreimageItem; slot: TimeSlot | null }) {
+  }: {
+    serviceId: ServiceId;
+    preimage: PreimageItem;
+    slot: TimeSlot | null;
+  }) {
     return new UpdatePreimage(serviceId, {
       kind: UpdatePreimageKind.Provide,
       preimage,
@@ -133,7 +137,11 @@ export class UpdateService {
     serviceId,
     serviceInfo,
     lookupHistory,
-  }: { serviceId: ServiceId; serviceInfo: ServiceAccountInfo; lookupHistory: LookupHistoryItem | null }) {
+  }: {
+    serviceId: ServiceId;
+    serviceInfo: ServiceAccountInfo;
+    lookupHistory: LookupHistoryItem | null;
+  }) {
     return new UpdateService(serviceId, {
       kind: UpdateServiceKind.Create,
       account: serviceInfo,

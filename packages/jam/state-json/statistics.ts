@@ -2,7 +2,7 @@ import { type ServiceGas, type ServiceId, tryAsPerValidator, tryAsServiceGas } f
 import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { U16, U32 } from "@typeberry/numbers";
-import { CoreStatistics, ServiceStatistics, StatisticsData, ValidatorStatistics, tryAsPerCore } from "@typeberry/state";
+import { CoreStatistics, ServiceStatistics, StatisticsData, tryAsPerCore, ValidatorStatistics } from "@typeberry/state";
 
 export class JsonValidatorStatistics {
   static fromJson = json.object<JsonValidatorStatistics, ValidatorStatistics>(

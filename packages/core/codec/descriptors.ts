@@ -1,5 +1,5 @@
 import { type BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
-import { type U8, type U16, type U32, type U64, tryAsU32 } from "@typeberry/numbers";
+import { tryAsU32, type U8, type U16, type U32, type U64 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 import type { Decoder } from "./decoder.js";
 import {
@@ -10,7 +10,7 @@ import {
   type OptionalRecord,
   type SimpleDescriptorRecord,
 } from "./descriptor.js";
-import { type Encoder, type SizeHint, addSizeHints } from "./encoder.js";
+import { addSizeHints, type Encoder, type SizeHint } from "./encoder.js";
 import { type Skip, Skipper } from "./skip.js";
 import { type LengthRange, validateLength } from "./validation.js";
 import { ObjectView, SequenceView, type ViewField, type ViewOf } from "./view.js";

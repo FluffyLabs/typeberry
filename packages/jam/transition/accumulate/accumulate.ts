@@ -6,34 +6,33 @@ import {
   tryAsPerEpochBlock,
   tryAsServiceGas,
 } from "@typeberry/block";
+import { W_C } from "@typeberry/block/gp-constants.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Encoder, codec } from "@typeberry/codec";
+import { codec, Encoder } from "@typeberry/codec";
+import { HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-
-import { W_C } from "@typeberry/block/gp-constants.js";
-import { HashSet } from "@typeberry/collections";
 import { KeccakHasher } from "@typeberry/hash/keccak.js";
 import {
   AccumulationStateUpdate,
   PartiallyUpdatedState,
 } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
-import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
+import { tryAsU32, type U32, u32AsLeBytes } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
 import {
   type AccumulationOutput,
+  hashComparator,
   ServiceAccountInfo,
   type ServicesUpdate,
-  hashComparator,
   tryAsPerCore,
 } from "@typeberry/state";
-import { binaryMerkleization } from "@typeberry/state-merkleization";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
+import { binaryMerkleization } from "@typeberry/state-merkleization";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
-import { Result, assertEmpty } from "@typeberry/utils";
+import { assertEmpty, Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/index.js";
 import type { CountAndGasUsed } from "../statistics.js";
@@ -342,7 +341,7 @@ export class Accumulate {
     slot: TimeSlot,
     accumulatedServices: ServiceId[],
     servicesUpdate: ServicesUpdate,
-  ): Pick<AccumulateStateUpdate, "recentlyAccumulated" | "accumulationQueue" | "timeslot"> & ServicesUpdate {
+  ): Pick<AccumulateStateUpdate, "timeslot" | "recentlyAccumulated" | "accumulationQueue"> & ServicesUpdate {
     const epochLength = this.chainSpec.epochLength;
     const phaseIndex = slot % epochLength;
     const accumulatedSet = getWorkPackageHashes(accumulated);
@@ -378,8 +377,8 @@ export class Accumulate {
 
     return {
       recentlyAccumulated,
-      accumulationQueue: tryAsPerEpochBlock(accumulationQueue, this.chainSpec),
       timeslot: slot,
+      accumulationQueue: tryAsPerEpochBlock(accumulationQueue, this.chainSpec),
       ...partialStateUpdate.stateUpdate.services,
     };
   }
@@ -426,6 +425,8 @@ export class Accumulate {
       statistics,
       AccumulationStateUpdate.empty(),
     );
+    // we can safely ignore top-level gas cost from accSequentially.
+    const _gasCost = gasCost;
     assertEmpty(rest);
 
     const accumulated = accumulatableReports.slice(0, accumulatedReports);

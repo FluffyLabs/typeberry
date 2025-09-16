@@ -1,7 +1,7 @@
 import { tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { Program } from "@typeberry/pvm-program";
-import { HostCallsManager, NoopMissing } from "./host-calls-manager.js";
 import { HostCalls } from "./host-calls.js";
+import { HostCallsManager, NoopMissing } from "./host-calls-manager.js";
 import { InterpreterInstanceManager } from "./interpreter-instance-manager.js";
 
 const hostCalls = new HostCallsManager({ missing: new NoopMissing(), handlers: [] });

@@ -1,6 +1,8 @@
-import { NODE_DEFAULTS, loadConfig } from "@typeberry/config-node";
+// biome-ignore-all lint/suspicious/noConsole: bin file
+
+import { loadConfig, NODE_DEFAULTS } from "@typeberry/config-node";
 import { Level, Logger } from "@typeberry/logger";
-import { JamConfig, importBlocks, main as node } from "@typeberry/node";
+import { importBlocks, JamConfig, main as node } from "@typeberry/node";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 

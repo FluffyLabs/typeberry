@@ -1,13 +1,13 @@
-import { type PerEpochBlock, type PerValidator, codecPerValidator, tryAsPerEpochBlock } from "@typeberry/block";
+import { codecPerValidator, type PerEpochBlock, type PerValidator, tryAsPerEpochBlock } from "@typeberry/block";
 import { codecWithContext } from "@typeberry/block/codec.js";
 import { Ticket } from "@typeberry/block/tickets.js";
 import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
-import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, type KnownSizeArray } from "@typeberry/collections";
 import { BANDERSNATCH_KEY_BYTES, type BandersnatchKey } from "@typeberry/crypto";
 import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
-import { WithDebug, seeThrough } from "@typeberry/utils";
+import { seeThrough, WithDebug } from "@typeberry/utils";
 import { ValidatorData } from "./validator-data.js";
 
 export enum SafroleSealingKeysKind {

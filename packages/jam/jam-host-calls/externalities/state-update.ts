@@ -3,9 +3,9 @@ import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js"
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type FixedSizeArray, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, type FixedSizeArray } from "@typeberry/collections";
 import type { OpaqueHash } from "@typeberry/hash";
-import { type U64, isU32, isU64, tryAsU32 } from "@typeberry/numbers";
+import { isU32, isU64, tryAsU32, type U64 } from "@typeberry/numbers";
 import {
   LookupHistoryItem,
   PrivilegedServices,
@@ -14,15 +14,15 @@ import {
   type State,
   StorageItem,
   type StorageKey,
+  tryAsLookupHistorySlots,
   type UpdatePreimage,
   UpdatePreimageKind,
   UpdateService,
   UpdateServiceKind,
   UpdateStorage,
   type ValidatorData,
-  tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { OK, Result, assertNever, check } from "@typeberry/utils";
+import { assertNever, check, OK, Result } from "@typeberry/utils";
 import type { PendingTransfer } from "./pending-transfer.js";
 
 export const InsufficientFundsError = "insufficient funds";

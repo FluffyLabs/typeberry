@@ -13,7 +13,7 @@ import { asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type JipChainSpec, KnownChainSpec } from "@typeberry/config-node";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
-import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
+import { blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { SerializedState, StateEntries } from "@typeberry/state-merkleization";
 

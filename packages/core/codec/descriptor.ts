@@ -1,5 +1,5 @@
 import { BytesBlob } from "@typeberry/bytes";
-import { type Opaque, type TokenOf, asOpaqueType, seeThrough } from "@typeberry/utils";
+import { asOpaqueType, type Opaque, seeThrough, type TokenOf } from "@typeberry/utils";
 import type { Decode, Decoder } from "./decoder.js";
 import type { Encode, Encoder, SizeHint } from "./encoder.js";
 import { type Skip, Skipper } from "./skip.js";

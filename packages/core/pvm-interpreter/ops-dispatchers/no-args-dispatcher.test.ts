@@ -2,8 +2,8 @@ import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
 import { ArgumentType } from "../args-decoder/argument-type.js";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
-import { InstructionResult } from "../instruction-result.js";
 import { Instruction } from "../instruction.js";
+import { InstructionResult } from "../instruction-result.js";
 import { NoArgsOps } from "../ops/index.js";
 import { NoArgsDispatcher } from "./no-args-dispatcher.js";
 

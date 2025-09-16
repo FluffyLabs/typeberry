@@ -1,8 +1,8 @@
 import type { CodeHash, ServiceId } from "@typeberry/block";
-import { fromJson, refineContextFromJson } from "@typeberry/block-json";
 import type { RefineContext } from "@typeberry/block/refine-context.js";
 import type { WorkItem } from "@typeberry/block/work-item.js";
-import { WorkPackage, tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
+import { tryAsWorkItemsCount, WorkPackage } from "@typeberry/block/work-package.js";
+import { fromJson, refineContextFromJson } from "@typeberry/block-json";
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { type FromJson, json } from "@typeberry/json-parser";

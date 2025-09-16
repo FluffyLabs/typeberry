@@ -1,1 +1,1 @@
-export { Program, extractCodeAndMetadata } from "./program.js";
+export { extractCodeAndMetadata, Program } from "./program.js";

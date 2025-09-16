@@ -1,21 +1,22 @@
 import {
+  codecPerEpochBlock,
+  codecPerValidator,
   type EntropyHash,
   type ServiceId,
   type TimeSlot,
-  codecPerEpochBlock,
-  codecPerValidator,
 } from "@typeberry/block";
 import { codecFixedSizeArray, codecKnownSizeArray } from "@typeberry/block/codec.js";
 import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Descriptor, codec, readonlyArray } from "@typeberry/codec";
+import { codec, Descriptor, readonlyArray } from "@typeberry/codec";
 import { HashSet } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import {
   AvailabilityAssignment,
+  codecPerCore,
   DisputesRecords,
   ENTROPY_ENTRIES,
   PrivilegedServices,
@@ -24,7 +25,6 @@ import {
   StatisticsData,
   type StorageKey,
   ValidatorData,
-  codecPerCore,
 } from "@typeberry/state";
 import { AccumulationOutput } from "@typeberry/state/accumulation-output.js";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";

@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import { codecPerValidator } from "@typeberry/block";
 import { Ticket } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder, codec } from "@typeberry/codec";
+import { codec, Decoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";

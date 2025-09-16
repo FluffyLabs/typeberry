@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, it } from "node:test";
-import { CURRENT_VERSION, Compatibility, DEFAULT_VERSION, GpVersion } from "./compatibility.js";
+import { Compatibility, CURRENT_VERSION, DEFAULT_VERSION, GpVersion } from "./compatibility.js";
 
 describe("GrayPaper compatibility", { concurrency: false }, () => {
   let savedVersion = CURRENT_VERSION;

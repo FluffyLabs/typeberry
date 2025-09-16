@@ -7,7 +7,7 @@ import { BANDERSNATCH_VRF_SIGNATURE_BYTES } from "@typeberry/crypto/bandersnatch
 import { HASH_SIZE } from "@typeberry/hash";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import { tryAsTimeSlot, tryAsValidatorIndex } from "./common.js";
-import { Header, encodeUnsealedHeader } from "./header.js";
+import { encodeUnsealedHeader, Header } from "./header.js";
 
 describe("Header", () => {
   it("should encode unsigned header", () => {

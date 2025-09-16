@@ -1,8 +1,8 @@
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, type KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { type U16, type U32, sumU32 } from "@typeberry/numbers";
+import { sumU32, type U16, type U32 } from "@typeberry/numbers";
 import { Compatibility, GpVersion, type Opaque, WithDebug } from "@typeberry/utils";
 import { codecKnownSizeArray } from "./codec.js";
 import type { ServiceGas, ServiceId } from "./common.js";
@@ -71,7 +71,7 @@ export type WorkItemExtrinsics = KnownSizeArray<
  * we need to know their lenghts. Hence this is created dynamically.
  */
 export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
-  const extrinsicLengths = Array<U32>();
+  const extrinsicLengths: U32[] = [];
   for (const item of workItems) {
     for (const extrinsic of item.extrinsic) {
       extrinsicLengths.push(extrinsic.len);
@@ -93,7 +93,7 @@ export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
       }
     },
     (d) => {
-      const extrinsics = Array<Bytes<U32>>();
+      const extrinsics: Bytes<U32>[] = [];
       for (const len of extrinsicLengths) {
         const bytes = d.bytes(len);
         extrinsics.push(bytes);

@@ -1,5 +1,5 @@
 import { type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/block";
-import { Decoder, codec, tryAsExactBytes } from "@typeberry/codec";
+import { codec, Decoder, tryAsExactBytes } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
@@ -62,7 +62,7 @@ export class Bless implements HostCallHandler {
      * `z`: array of key-value pairs serviceId -> gas that auto-accumulate every block
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/368100368100?v=0.6.7
      */
-    const autoAccumulateEntries = new Array<[ServiceId, ServiceGas]>();
+    const autoAccumulateEntries: [ServiceId, ServiceGas][] = [];
     const result = new Uint8Array(tryAsExactBytes(serviceIdAndGasCodec.sizeHint));
     const decoder = Decoder.fromBlob(result);
     let memIndex = sourceStart;
