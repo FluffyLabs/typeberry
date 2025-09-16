@@ -6,7 +6,7 @@ import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { FixedSizeArray, HashSet, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, FixedSizeArray, HashSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";

@@ -319,10 +319,7 @@ describe("Trie", () => {
     runTestVector(vector);
   });
 
-  function runTestVector(vector: {
-    input: { [key: string]: string };
-    output: string;
-  }) {
+  function runTestVector(vector: { input: { [key: string]: string }; output: string }) {
     const trie = InMemoryTrie.empty(blake2bTrieHasher);
 
     for (const [key, val] of Object.entries(vector.input)) {

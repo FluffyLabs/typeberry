@@ -1,12 +1,12 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import type { ServiceId } from "@typeberry/block";
+import { tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { HASH_SIZE, blake2b } from "@typeberry/hash";
+import { blake2b, HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   InMemoryService,

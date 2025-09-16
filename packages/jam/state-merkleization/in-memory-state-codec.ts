@@ -1,9 +1,9 @@
-import { type ServiceId, type TimeSlot, codecPerValidator } from "@typeberry/block";
+import { codecPerValidator, type ServiceId, type TimeSlot } from "@typeberry/block";
 import { type CodecHashDictionaryOptions, codecHashDictionary } from "@typeberry/block/codec.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Ticket } from "@typeberry/block/tickets.js";
-import { type CodecRecord, Descriptor, TYPICAL_DICTIONARY_LENGTH, codec, readonlyArray } from "@typeberry/codec";
-import { HashDictionary, asKnownSize } from "@typeberry/collections";
+import { type CodecRecord, codec, Descriptor, readonlyArray, TYPICAL_DICTIONARY_LENGTH } from "@typeberry/codec";
+import { asKnownSize, HashDictionary } from "@typeberry/collections";
 import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
@@ -16,8 +16,8 @@ import {
   ServiceAccountInfo,
   type State,
   StorageItem,
-  ValidatorData,
   tryAsLookupHistorySlots,
+  ValidatorData,
 } from "@typeberry/state";
 import { SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
 import { seeThrough } from "@typeberry/utils";

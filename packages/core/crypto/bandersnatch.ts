@@ -1,6 +1,6 @@
 import { Bytes } from "@typeberry/bytes";
 import { bandersnatch } from "@typeberry/native";
-import { type Opaque, check } from "@typeberry/utils";
+import { check, type Opaque } from "@typeberry/utils";
 
 /** Bandersnatch public key size. */
 export const BANDERSNATCH_KEY_BYTES = 32;

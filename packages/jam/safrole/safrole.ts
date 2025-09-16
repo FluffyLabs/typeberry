@@ -6,18 +6,18 @@ import {
   TicketsMarker,
   type TicketsMarkerView,
   type TimeSlot,
-  ValidatorKeys,
   tryAsPerEpochBlock,
+  ValidatorKeys,
 } from "@typeberry/block";
 import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets.js";
 import { Bytes, bytesBlobComparator } from "@typeberry/bytes";
 import { type Codec, Decoder, type DescriptorRecord, Encoder, type ViewOf } from "@typeberry/codec";
-import { FixedSizeArray, type ImmutableSortedSet, SortedSet, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, FixedSizeArray, type ImmutableSortedSet, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import {
   BANDERSNATCH_KEY_BYTES,
-  BLS_KEY_BYTES,
   type BandersnatchKey,
+  BLS_KEY_BYTES,
   ED25519_KEY_BYTES,
   type Ed25519Key,
 } from "@typeberry/crypto";
@@ -25,7 +25,7 @@ import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
-import { OK, Result, asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType, OK, Result } from "@typeberry/utils";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 import type { SafroleSealState } from "./safrole-seal.js";

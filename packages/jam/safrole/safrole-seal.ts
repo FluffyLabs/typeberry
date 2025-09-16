@@ -1,11 +1,11 @@
 import {
   type EntropyHash,
+  encodeUnsealedHeader,
   type HeaderView,
   type PerEpochBlock,
   type PerValidator,
   type TimeSlot,
   type ValidatorIndex,
-  encodeUnsealedHeader,
 } from "@typeberry/block";
 import type { Ticket } from "@typeberry/block/tickets.js";
 import { BytesBlob } from "@typeberry/bytes";

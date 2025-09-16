@@ -3,9 +3,9 @@ import { describe, it } from "node:test";
 
 import { OK, Result } from "@typeberry/utils";
 import { PageFault } from "./errors.js";
+import { Memory } from "./memory.js";
 import { MAX_MEMORY_INDEX, MIN_ALLOCATION_LENGTH, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts.js";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index.js";
-import { Memory } from "./memory.js";
 import { ReadablePage, WriteablePage } from "./pages/index.js";
 import type { MemoryPage } from "./pages/memory-page.js";
 import { type PageNumber, tryAsPageNumber } from "./pages/page-utils.js";

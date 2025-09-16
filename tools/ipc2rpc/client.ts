@@ -3,7 +3,7 @@ import { Socket } from "node:net";
 import type { ChainSpec } from "@typeberry/config";
 import { JamnpIpcHandler } from "@typeberry/ext-ipc/jamnp/handler.js";
 import { IpcSender } from "@typeberry/ext-ipc/server.js";
-import { type StreamId, ce129, up0 } from "@typeberry/jamnp-s";
+import { ce129, type StreamId, up0 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
 import { handleMessageFragmentation } from "@typeberry/networking";
 

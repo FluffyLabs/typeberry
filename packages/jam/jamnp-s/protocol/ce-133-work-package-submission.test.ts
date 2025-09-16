@@ -8,7 +8,7 @@ import { Decoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { tryAsU32 } from "@typeberry/numbers";
 import { Compatibility, GpVersion, OK } from "@typeberry/utils";
-import { ClientHandler, STREAM_KIND, ServerHandler } from "./ce-133-work-package-submission.js";
+import { ClientHandler, ServerHandler, STREAM_KIND } from "./ce-133-work-package-submission.js";
 import { testClientServer } from "./test-utils.js";
 
 describe("CE133", () => {

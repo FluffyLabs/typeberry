@@ -1,8 +1,7 @@
 import assert from "node:assert";
 import { it } from "node:test";
-import { type FromJson, json } from "@typeberry/json-parser";
-
 import { Bytes } from "@typeberry/bytes";
+import { type FromJson, json } from "@typeberry/json-parser";
 import { fisherYatesShuffle } from "@typeberry/shuffling";
 
 const bytes32NoPrefix = <T extends Bytes<32>>() =>

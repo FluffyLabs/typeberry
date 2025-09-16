@@ -1,4 +1,4 @@
-import { type Opaque, type TokenOf, asOpaqueType, check, inspect } from "@typeberry/utils";
+import { asOpaqueType, check, inspect, type Opaque, type TokenOf } from "@typeberry/utils";
 
 /** A collection that has a known, but not necessarily verified size. */
 export type KnownSize<T, F extends string> = Opaque<T, F>;

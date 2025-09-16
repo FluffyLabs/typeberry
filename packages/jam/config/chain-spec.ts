@@ -1,4 +1,4 @@
-import { type U8, type U16, type U32, type U64, tryAsU8, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU8, tryAsU16, tryAsU32, tryAsU64, type U8, type U16, type U32, type U64 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
 
 /**

@@ -44,5 +44,3 @@ jobs:
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
-
-    # TODO [ToDr] Deploy benchmark results and test vectors.

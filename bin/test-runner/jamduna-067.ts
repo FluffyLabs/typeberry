@@ -1,5 +1,5 @@
 import { logger, main, runner } from "./common.js";
-import { StateTransition, runStateTransition } from "./state-transition/state-transition.js";
+import { runStateTransition, StateTransition } from "./state-transition/state-transition.js";
 
 const runners = [runner("traces", StateTransition.fromJson, runStateTransition)];
 

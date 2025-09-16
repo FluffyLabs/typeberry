@@ -1,8 +1,8 @@
 import type { ServiceId } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
-import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
+import { blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import { tryAsU32, type U32, u32AsLeBytes } from "@typeberry/numbers";
 import type { StorageKey } from "@typeberry/state";
 import { Compatibility, GpVersion, type Opaque } from "@typeberry/utils";
 

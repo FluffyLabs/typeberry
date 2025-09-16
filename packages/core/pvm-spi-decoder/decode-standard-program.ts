@@ -1,5 +1,5 @@
 import { Decoder } from "@typeberry/codec";
-import { type Opaque, WithDebug, ensure } from "@typeberry/utils";
+import { ensure, type Opaque, WithDebug } from "@typeberry/utils";
 import { ARGS_SEGMENT, DATA_LEGNTH, LAST_PAGE, PAGE_SIZE, SEGMENT_SIZE, STACK_SEGMENT } from "./memory-conts.js";
 import { alignToPageSize, alignToSegmentSize } from "./memory-utils.js";
 

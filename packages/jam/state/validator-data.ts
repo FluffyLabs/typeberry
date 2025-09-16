@@ -2,8 +2,8 @@ import type { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import {
   BANDERSNATCH_KEY_BYTES,
-  BLS_KEY_BYTES,
   type BandersnatchKey,
+  BLS_KEY_BYTES,
   type BlsKey,
   ED25519_KEY_BYTES,
   type Ed25519Key,

@@ -2,13 +2,13 @@ import type { HeaderHash, TimeSlot } from "@typeberry/block";
 import type { AssurancesExtrinsicView } from "@typeberry/block/assurances.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import { BytesBlob } from "@typeberry/bytes";
-import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
 import type { DisputesStateUpdate } from "@typeberry/disputes";
 import { blake2b } from "@typeberry/hash";
 import type { State } from "@typeberry/state";
-import { OK, Result, check } from "@typeberry/utils";
+import { check, OK, Result } from "@typeberry/utils";
 
 /** Assurances transition input. */
 export type AssurancesInput = {

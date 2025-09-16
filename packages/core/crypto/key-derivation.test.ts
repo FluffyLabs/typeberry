@@ -8,13 +8,13 @@ import type { Ed25519Key } from "./ed25519.js";
 import { initWasm } from "./index.js";
 import {
   type BandersnatchSecretSeed,
-  type Ed25519SecretSeed,
-  type KeySeed,
-  SEED_SIZE,
   deriveBandersnatchPublicKey,
   deriveBandersnatchSecretKey,
   deriveEd25519PublicKey,
   deriveEd25519SecretKey,
+  type Ed25519SecretSeed,
+  type KeySeed,
+  SEED_SIZE,
   trivialSeed,
 } from "./key-derivation.js";
 

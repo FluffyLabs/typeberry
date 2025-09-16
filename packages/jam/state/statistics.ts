@@ -1,15 +1,15 @@
 import {
+  codecPerValidator,
   type PerValidator,
   type ServiceGas,
   type ServiceId,
-  codecPerValidator,
   tryAsServiceGas,
   tryAsServiceId,
 } from "@typeberry/block";
-import { type CodecRecord, type Descriptor, codec } from "@typeberry/codec";
-import { type U16, type U32, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type CodecRecord, codec, type Descriptor } from "@typeberry/codec";
+import { tryAsU16, tryAsU32, tryAsU64, type U16, type U32 } from "@typeberry/numbers";
 import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
-import { type PerCore, codecPerCore } from "./common.js";
+import { codecPerCore, type PerCore } from "./common.js";
 
 const codecServiceId: Descriptor<ServiceId> =
   Compatibility.isSuite(TestSuite.W3F_DAVXY) || Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_7)

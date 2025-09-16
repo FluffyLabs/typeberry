@@ -1,5 +1,5 @@
-import { Descriptor, type SequenceView, TYPICAL_DICTIONARY_LENGTH, codec, readonlyArray } from "@typeberry/codec";
-import { FixedSizeArray, HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { codec, Descriptor, readonlyArray, type SequenceView, TYPICAL_DICTIONARY_LENGTH } from "@typeberry/codec";
+import { asKnownSize, FixedSizeArray, HashDictionary, type KnownSizeArray } from "@typeberry/collections";
 import { ChainSpec, fullChainSpec } from "@typeberry/config";
 import type { OpaqueHash } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";

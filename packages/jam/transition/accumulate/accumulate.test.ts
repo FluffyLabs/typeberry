@@ -4,12 +4,12 @@ import {
   type EntropyHash,
   type ServiceId,
   type TimeSlot,
-  type WorkReportHash,
   tryAsCoreIndex,
   tryAsPerEpochBlock,
   tryAsServiceGas,
   tryAsServiceId,
   tryAsTimeSlot,
+  type WorkReportHash,
 } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { RefineContext, type WorkPackageHash } from "@typeberry/block/refine-context.js";
@@ -17,7 +17,7 @@ import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
@@ -31,8 +31,8 @@ import {
 } from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
-import type { AccumulateInput, AccumulateState } from "./accumulate-state.js";
 import { Accumulate } from "./accumulate.js";
+import type { AccumulateInput, AccumulateState } from "./accumulate-state.js";
 
 type TestServiceInfo = {
   lastAccumulation?: TimeSlot;

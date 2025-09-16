@@ -1,6 +1,6 @@
 import { Block, type BlockView, type HeaderHash, type HeaderView, headerViewWithHashCodec } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { Decoder, Encoder, codec } from "@typeberry/codec";
+import { codec, Decoder, Encoder } from "@typeberry/codec";
 import { WorkerConfig } from "@typeberry/config";
 import { type Ed25519SecretSeed, SEED_SIZE } from "@typeberry/crypto";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";

@@ -1,7 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { BitVec } from "@typeberry/bytes";
+import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import type { U32 } from "@typeberry/numbers";
 import { Encoder } from "./encoder.js";
 

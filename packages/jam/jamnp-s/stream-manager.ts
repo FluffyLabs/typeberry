@@ -2,13 +2,13 @@ import type { ReadableStreamDefaultReader } from "node:stream/web";
 import { BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
 import {
+  encodeMessageLength,
+  handleMessageFragmentation,
   type Peer,
   type PeerId,
   type Stream,
   type StreamErrorCallback,
   StreamErrorKind,
-  encodeMessageLength,
-  handleMessageFragmentation,
 } from "@typeberry/networking";
 import type { OK } from "@typeberry/utils";
 import {

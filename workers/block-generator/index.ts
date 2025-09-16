@@ -1,20 +1,18 @@
-import { isMainThread, parentPort } from "node:worker_threads";
-
 import { setTimeout } from "node:timers/promises";
-import { MessageChannelStateMachine } from "@typeberry/state-machine";
-
+import { isMainThread, parentPort } from "node:worker_threads";
 import { LmdbBlocks, LmdbStates } from "@typeberry/database-lmdb";
 import { LmdbRoot } from "@typeberry/database-lmdb/root.js";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
+import { MessageChannelStateMachine } from "@typeberry/state-machine";
 import { Generator } from "./generator.js";
 import {
   type GeneratorInit,
   type GeneratorReady,
   type GeneratorStates,
-  MainReady,
   generatorStateMachine,
+  MainReady,
 } from "./state-machine.js";
 
 const logger = Logger.new(import.meta.filename, "generator");

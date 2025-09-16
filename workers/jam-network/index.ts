@@ -2,8 +2,7 @@ import { isMainThread, parentPort } from "node:worker_threads";
 
 import { parseBootnode } from "@typeberry/config-node";
 import { ed25519, initWasm } from "@typeberry/crypto";
-import { LmdbBlocks } from "@typeberry/database-lmdb";
-import { LmdbRoot } from "@typeberry/database-lmdb";
+import { LmdbBlocks, LmdbRoot } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { setup } from "@typeberry/jamnp-s";
 import { Level, Logger } from "@typeberry/logger";

@@ -4,8 +4,7 @@ import { tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
-import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES } from "@typeberry/crypto";
-import { ED25519_KEY_BYTES } from "@typeberry/crypto";
+import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
@@ -15,8 +14,8 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
-import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { UnprivilegedError } from "../externalities/partial-state.js";
+import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
 import { Designate } from "./designate.js";
 

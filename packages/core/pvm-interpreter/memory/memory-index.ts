@@ -1,4 +1,4 @@
-import { type Opaque, ensure } from "@typeberry/utils";
+import { ensure, type Opaque } from "@typeberry/utils";
 
 import { MAX_MEMORY_INDEX } from "./memory-consts.js";
 

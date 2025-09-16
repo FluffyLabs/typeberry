@@ -2,7 +2,7 @@ import type { Block, HeaderHash, StateRootHash } from "@typeberry/block";
 import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";
-import { type Result, assertNever } from "@typeberry/utils";
+import { assertNever, type Result } from "@typeberry/utils";
 import type { IpcHandler, IpcSender } from "../../server.js";
 import type { KeyValue } from "../v0/types.js";
 import {
@@ -12,8 +12,8 @@ import {
   type Message,
   type MessageData,
   MessageType,
-  type PeerInfo,
   messageCodec,
+  type PeerInfo,
 } from "./types.js";
 
 const logger = Logger.new(import.meta.filename, "ext-ipc-fuzz-v1");

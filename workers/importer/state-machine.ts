@@ -3,11 +3,11 @@ import {
   type BlockView,
   type HeaderHash,
   type HeaderView,
-  type StateRootHash,
   headerViewWithHashCodec,
+  type StateRootHash,
 } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder, codec } from "@typeberry/codec";
+import { codec, Decoder, Encoder } from "@typeberry/codec";
 import { WorkerConfig } from "@typeberry/config";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
 import { HASH_SIZE, type WithHash } from "@typeberry/hash";
