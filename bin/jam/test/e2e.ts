@@ -47,7 +47,10 @@ async function terminate(jamProcess: ChildProcess | null) {
   if (jamProcess !== null && !jamProcess.killed) {
     logger.error("Terminating process.");
     const grace = promises.setTimeout(SHUTDOWN_GRACE_PERIOD);
-    jamProcess.kill("SIGTERM");
+    jamProcess.kill("SIGINT");
+    jamProcess.stdin?.end();
+    jamProcess.stdout?.destroy();
+    jamProcess.stderr?.destroy();
     await grace;
     logger.error("Process shutdown timing out. Killing");
     jamProcess.kill("SIGKILL");
