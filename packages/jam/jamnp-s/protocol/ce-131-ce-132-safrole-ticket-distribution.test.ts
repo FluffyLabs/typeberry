@@ -7,8 +7,8 @@ import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/crypto";
 import { OK } from "@typeberry/utils";
 import {
   ClientHandler,
-  STREAM_KIND_GENERATOR_TO_PROXY,
   ServerHandler,
+  STREAM_KIND_GENERATOR_TO_PROXY,
 } from "./ce-131-ce-132-safrole-ticket-distribution.js";
 import { testClientServer } from "./test-utils.js";
 

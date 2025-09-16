@@ -2,7 +2,7 @@ import { type ReadableStream, WritableStream } from "node:stream/web";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { Logger } from "@typeberry/logger";
-import { OK, asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType, OK } from "@typeberry/utils";
 import type { DialOptions, Network } from "./network.js";
 import {
   type Peer,

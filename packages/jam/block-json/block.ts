@@ -1,7 +1,6 @@
+import { Block } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import { json } from "@typeberry/json-parser";
-
-import { Block } from "@typeberry/block";
 import { getExtrinsicFromJson } from "./extrinsic.js";
 import { headerFromJson } from "./header.js";
 

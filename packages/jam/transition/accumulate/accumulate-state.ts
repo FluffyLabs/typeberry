@@ -21,8 +21,8 @@ export type AccumulateInput = {
 
 export type AccumulateState = Pick<
   State,
-  | "designatedValidatorData"
   | "timeslot"
+  | "designatedValidatorData"
   | "authQueues"
   | "getService"
   | "recentlyAccumulated"
@@ -31,11 +31,7 @@ export type AccumulateState = Pick<
 >;
 
 /** Aggregated update of the accumulation state transition. */
-export type AccumulateStateUpdate = Pick<
-  State,
-  /* TODO [ToDr] seems that we are doing the same stuff as safrole? */
-  "timeslot"
-> &
+export type AccumulateStateUpdate = Pick<State, "timeslot"> &
   Partial<Pick<State, "recentlyAccumulated" | "accumulationQueue">> &
   ServiceStateUpdate;
 

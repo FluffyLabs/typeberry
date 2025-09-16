@@ -1,7 +1,7 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { StreamId, StreamKind } from "@typeberry/jamnp-s";
-import { type U8, tryAsU8 } from "@typeberry/numbers";
+import { tryAsU8, type U8 } from "@typeberry/numbers";
 
 export enum StreamEnvelopeType {
   Msg = 0,

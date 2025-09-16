@@ -1,8 +1,8 @@
 import { Block, Header } from "@typeberry/block";
-import { blockFromJson, headerFromJson, workReportFromJson } from "@typeberry/block-json";
 import { WorkItem } from "@typeberry/block/work-item.js";
 import { WorkPackage } from "@typeberry/block/work-package.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
+import { blockFromJson, headerFromJson, workReportFromJson } from "@typeberry/block-json";
 import { type Decode, type Encode, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { JipChainSpec } from "@typeberry/config-node";

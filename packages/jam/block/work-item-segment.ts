@@ -1,6 +1,6 @@
 import type { Bytes } from "@typeberry/bytes";
-import { type U16, tryAsU16 } from "@typeberry/numbers";
-import { type Opaque, asOpaqueType } from "@typeberry/utils";
+import { tryAsU16, type U16 } from "@typeberry/numbers";
+import { asOpaqueType, type Opaque } from "@typeberry/utils";
 
 /** `W_E`: The basic size of erasure-coded pieces in octets. See equation H.6. */
 const W_E = 684;

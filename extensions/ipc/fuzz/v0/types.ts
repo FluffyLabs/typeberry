@@ -2,7 +2,7 @@ import { Block, Header, type HeaderHash, type StateRootHash } from "@typeberry/b
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
-import { type U8, tryAsU8 } from "@typeberry/numbers";
+import { tryAsU8, type U8 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
 
 /**

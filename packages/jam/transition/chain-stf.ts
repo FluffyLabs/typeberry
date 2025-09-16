@@ -1,7 +1,7 @@
 import type { BlockView, CoreIndex, EntropyHash, HeaderHash, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
-import { HashSet, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import type { BlocksDb } from "@typeberry/database";
@@ -11,10 +11,10 @@ import { blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
-import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
+import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
 import type { State } from "@typeberry/state";
-import { type ErrorResult, OK, Result, type TaggedError, assertEmpty, measure } from "@typeberry/utils";
+import { assertEmpty, type ErrorResult, measure, OK, Result, type TaggedError } from "@typeberry/utils";
 import { AccumulateOutput } from "./accumulate/accumulate-output.js";
 import {
   type ACCUMULATION_ERROR,
@@ -286,7 +286,6 @@ export class OnChain {
       privilegedServices: maybePrivilegedServices,
       authQueues: maybeAuthorizationQueues,
       designatedValidatorData: maybeDesignatedValidatorData,
-      timeslot: accumulateTimeSlot,
       preimages: accumulatePreimages,
       accumulationQueue,
       recentlyAccumulated,

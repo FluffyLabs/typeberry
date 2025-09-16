@@ -1,13 +1,13 @@
 {
   "name": "@typeberry/collections",
   "description": "Known-size collection types.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.3",
-    "@typeberry/hash": "0.0.3",
-    "@typeberry/ordering": "0.0.3",
-    "@typeberry/utils": "0.0.3"
+    "@typeberry/bytes": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/ordering": "*",
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -o -name '*.test.ts' | tr '\\n' ' ')"

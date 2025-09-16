@@ -2,7 +2,7 @@ import { EventEmitter } from "node:events";
 import type { MessagePort, Transferable } from "node:worker_threads";
 import { Logger } from "@typeberry/logger";
 import { check } from "@typeberry/utils";
-import { type Message, isValidMessage } from "./message.js";
+import { isValidMessage, type Message } from "./message.js";
 
 const MAX_ID = 2 ** 32;
 const logger = Logger.new(import.meta.filename, "state-machine/port");

@@ -16,9 +16,9 @@ import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
-import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
+import { blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import { MockNetwork, createTestPeerPair } from "@typeberry/networking/testing.js";
+import { createTestPeerPair, MockNetwork } from "@typeberry/networking/testing.js";
 import { setupPeerListeners } from "../network.js";
 import { Connections } from "../peers.js";
 import { StreamManager } from "../stream-manager.js";
@@ -223,13 +223,7 @@ describe("SyncTask", () => {
   }
 });
 
-function blocksSeq({
-  start,
-  end = start,
-}: {
-  start: number;
-  end?: number;
-}) {
+function blocksSeq({ start, end = start }: { start: number; end?: number }) {
   if (start > end) {
     throw new Error(`No blocks to create: ${start} > ${end}`);
   }
@@ -249,11 +243,7 @@ function blocksSeq({
 }
 
 function createTestBlock(
-  options: {
-    parentHash?: HeaderHash;
-    timeSlot?: TimeSlot;
-    stateRoot?: StateRootHash;
-  } = {},
+  options: { parentHash?: HeaderHash; timeSlot?: TimeSlot; stateRoot?: StateRootHash } = {},
 ): WithHash<HeaderHash, Block> {
   const block = testBlockView().materialize();
   if (options.parentHash !== undefined) {

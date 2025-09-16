@@ -12,10 +12,10 @@ import {
 import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, FixedSizeArray, HashDictionary } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES } from "@typeberry/crypto";
-import { HASH_SIZE, blake2b } from "@typeberry/hash";
+import { blake2b, HASH_SIZE } from "@typeberry/hash";
 import {
   EjectError,
   ForgetPreimageError,
@@ -31,7 +31,7 @@ import {
   UpdatePrivilegesError,
   writeServiceIdAsLeBytes,
 } from "@typeberry/jam-host-calls";
-import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU32, tryAsU64, type U32, type U64 } from "@typeberry/numbers";
 import {
   AutoAccumulate,
   InMemoryService,
@@ -44,15 +44,15 @@ import {
   ServiceAccountInfo,
   StorageItem,
   type StorageKey,
+  tryAsLookupHistorySlots,
+  tryAsPerCore,
   UpdatePreimage,
   UpdateService,
   VALIDATOR_META_BYTES,
   ValidatorData,
-  tryAsLookupHistorySlots,
-  tryAsPerCore,
 } from "@typeberry/state";
 import { testState } from "@typeberry/state/test.utils.js";
-import { Compatibility, GpVersion, OK, Result, asOpaqueType, deepEqual, ensure } from "@typeberry/utils";
+import { asOpaqueType, Compatibility, deepEqual, ensure, GpVersion, OK, Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "./accumulate-externalities.js";
 
 function partiallyUpdatedState() {

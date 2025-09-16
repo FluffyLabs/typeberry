@@ -1,6 +1,6 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
-import { fromJson } from "@typeberry/block-json";
 import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
+import { fromJson } from "@typeberry/block-json";
 import { HashDictionary } from "@typeberry/collections";
 import type { KeccakHash } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";

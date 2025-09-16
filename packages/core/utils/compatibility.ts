@@ -89,7 +89,10 @@ export class Compatibility {
   static selectIfGreaterOrEqual<T>({
     fallback,
     versions,
-  }: { fallback: T; versions: Partial<Record<GpVersion, T>> }): T {
+  }: {
+    fallback: T;
+    versions: Partial<Record<GpVersion, T>>;
+  }): T {
     for (const version of ALL_VERSIONS_IN_ORDER.toReversed()) {
       const value = versions[version];
       if (value !== undefined && Compatibility.isGreaterOrEqual(version)) {

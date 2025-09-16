@@ -3,7 +3,7 @@ import { before, describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import type { BandersnatchKey } from "./bandersnatch.js";
 import { initWasm } from "./index.js";
-import { type BandersnatchSecretSeed, SEED_SIZE, deriveBandersnatchPublicKey } from "./key-derivation.js";
+import { type BandersnatchSecretSeed, deriveBandersnatchPublicKey, SEED_SIZE } from "./key-derivation.js";
 
 before(initWasm);
 

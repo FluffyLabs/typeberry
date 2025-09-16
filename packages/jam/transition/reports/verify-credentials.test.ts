@@ -5,7 +5,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Key } from "@typeberry/crypto";
-import { Compatibility, GpVersion, asOpaqueType, deepEqual } from "@typeberry/utils";
+import { asOpaqueType, Compatibility, deepEqual, GpVersion } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 import {
   ENTROPY,

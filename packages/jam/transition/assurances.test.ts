@@ -24,8 +24,8 @@ import {
   ED25519_SIGNATURE_BYTES,
   initWasm,
 } from "@typeberry/crypto";
-import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
-import { AvailabilityAssignment, VALIDATOR_META_BYTES, ValidatorData, tryAsPerCore } from "@typeberry/state";
+import { blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
+import { AvailabilityAssignment, tryAsPerCore, VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { Assurances, AssurancesError, type AssurancesInput } from "./assurances.js";
 import { copyAndUpdateState } from "./test.utils.js";

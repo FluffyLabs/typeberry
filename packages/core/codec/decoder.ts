@@ -1,6 +1,5 @@
-import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { BitVec } from "@typeberry/bytes";
-import { type U8, type U16, type U32, type U64, tryAsU64 } from "@typeberry/numbers";
+import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
+import { tryAsU64, type U8, type U16, type U32, type U64 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 
 /** A decoder for some specific type `T` */

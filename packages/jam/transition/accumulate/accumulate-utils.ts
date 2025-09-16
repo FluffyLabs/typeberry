@@ -1,10 +1,10 @@
 import { type EntropyHash, type ServiceId, type TimeSlot, tryAsServiceId } from "@typeberry/block";
 import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
-import { Encoder, codec } from "@typeberry/codec";
+import { codec, Encoder } from "@typeberry/codec";
 import { HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { HASH_SIZE, blake2b } from "@typeberry/hash";
+import { blake2b, HASH_SIZE } from "@typeberry/hash";
 import { leBytesAsU32 } from "@typeberry/numbers";
 
 /**

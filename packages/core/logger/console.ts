@@ -1,4 +1,6 @@
-import { Level, type Options, findLevel } from "./options.js";
+// biome-ignore-all lint/suspicious/noConsole: logger
+
+import { findLevel, Level, type Options } from "./options.js";
 import type { Transport } from "./transport.js";
 
 /** An optimized logger that ignores `TRACE`, `DEBUG` and `LOG` messages.

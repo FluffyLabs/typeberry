@@ -3,13 +3,16 @@ import http from "node:http";
 import type { Header } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { JamnpIpcHandler } from "@typeberry/ext-ipc/jamnp/handler.js";
-import { TRUNCATED_HASH_SIZE, blake2b } from "@typeberry/hash";
+import { blake2b, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
 import { ce129 } from "@typeberry/jamnp-s";
+import { Logger } from "@typeberry/logger";
 import { type JSONRPCID, JSONRPCServer, type JSONRPCSuccessResponse } from "json-rpc-2.0";
 
 export interface Database {
   bestHeader: Header | null;
 }
+
+const logger = Logger.new(import.meta.filename, "rpc");
 
 export function startRpc(db: Database, client: JamnpIpcHandler) {
   const server = new JSONRPCServer();
@@ -96,7 +99,7 @@ export function startRpc(db: Database, client: JamnpIpcHandler) {
       port: 3000,
     },
     () => {
-      console.info("Listening for RPC at :3000");
+      logger.info("Listening for RPC at :3000");
     },
   );
 

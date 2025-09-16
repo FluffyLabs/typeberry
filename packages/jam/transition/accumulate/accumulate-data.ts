@@ -1,6 +1,6 @@
 import { type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import type { WorkReport } from "@typeberry/block/work-report.js";
-import { type U32, tryAsU32 } from "@typeberry/numbers";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
 import type { AutoAccumulate } from "@typeberry/state";
 import { Operand } from "./operand.js";
 

@@ -9,19 +9,19 @@ import {
 } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
-import { HASH_SIZE, TRUNCATED_HASH_SIZE, type WithHash, blake2b } from "@typeberry/hash";
+import { blake2b, HASH_SIZE, TRUNCATED_HASH_SIZE, type WithHash } from "@typeberry/hash";
 import { ce129, up0 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
+import { tryAsU32 } from "@typeberry/numbers";
 import { Listener } from "@typeberry/state-machine";
 import { StateEntries } from "@typeberry/state-merkleization";
-import { Result, assertNever } from "@typeberry/utils";
+import { assertNever, Result } from "@typeberry/utils";
 import * as v0 from "./fuzz/v0/index.js";
+import type { Version } from "./fuzz/v0/types.js";
 import * as v1 from "./fuzz/v1/index.js";
 import { startJamnpIpcServer } from "./jamnp/server.js";
 import { startIpcServer } from "./server.js";
 
-import { tryAsU32 } from "@typeberry/numbers";
-import type { Version } from "./fuzz/v0/types.js";
 export { Version } from "./fuzz/v0/types.js";
 
 export interface ExtensionApi {

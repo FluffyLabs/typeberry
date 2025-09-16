@@ -1,7 +1,7 @@
 import type { TimeSlot, WorkReportHash } from "@typeberry/block";
 import { WorkReport } from "@typeberry/block/work-report.js";
-import { type CodecRecord, Descriptor, codec } from "@typeberry/codec";
-import { type OpaqueHash, WithHash, blake2b } from "@typeberry/hash";
+import { type CodecRecord, codec, Descriptor } from "@typeberry/codec";
+import { blake2b, type OpaqueHash, WithHash } from "@typeberry/hash";
 import { WithDebug } from "@typeberry/utils";
 
 const codecWithHash = <T, V, H extends OpaqueHash>(val: Descriptor<T, V>): Descriptor<WithHash<H, T>, V> =>

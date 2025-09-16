@@ -12,15 +12,15 @@ import {
   LookupHistoryItem,
   PrivilegedServices,
   ServiceAccountInfo,
-  UpdateService,
   tryAsLookupHistorySlots,
   tryAsPerCore,
+  UpdateService,
 } from "@typeberry/state";
-import { StateEntries } from "@typeberry/state-merkleization";
 import { testState } from "@typeberry/state/test.utils.js";
+import { StateEntries } from "@typeberry/state-merkleization";
 import { InMemoryTrie, leafComparator } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
-import { OK, Result, deepEqual } from "@typeberry/utils";
+import { deepEqual, OK, Result } from "@typeberry/utils";
 import { LmdbRoot } from "./root.js";
 import { LmdbStates } from "./states.js";
 

@@ -14,8 +14,8 @@ import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
-import { HASH_SIZE, SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
-import { Compatibility, GpVersion, Result, deepEqual } from "@typeberry/utils";
+import { HASH_SIZE, keccak, SimpleAllocator, WithHash } from "@typeberry/hash";
+import { Compatibility, deepEqual, GpVersion, Result } from "@typeberry/utils";
 import { BlockVerifier, BlockVerifierError } from "./block-verifier.js";
 import { TransitionHasher } from "./hasher.js";
 

@@ -4,9 +4,10 @@ set -ex
 # This script compiles the project into "single" JS file (it's actually one per worker thread)
 # using @vercel/ncc. The result is in `./dist
 
-DIST_FOLDER=./dist
+DIST_FOLDER=./dist/jam
 
 # clean dist file
+mkdir $DIST_FOLDER || true
 rm -rf $DIST_FOLDER/*
 
 export RUNTIME=bundle
@@ -40,14 +41,19 @@ cp $DIST_FOLDER/**/*.wasm $DIST_FOLDER/ || true # ignore overwrite errors
 cp ./LICENSE $DIST_FOLDER/
 cp ./README.md $DIST_FOLDER/
 
-VERSION=$(jq .version package.json)
+VERSION=$(node -p "require('./package.json').version")
+if [ -z "$IS_RELEASE" ]; then
+  SHA=$(git rev-parse --short HEAD)
+  VERSION="$VERSION-$SHA"
+fi
 
 # build package.json file
 echo "{
   \"name\": \"@typeberry/jam\",
-  \"version\": $VERSION,
+  \"version\": \"$VERSION\",
   \"description\": \"Typeberry - Typescript JAM implementation by Fluffy Labs team.\",
   \"main\": \"./index.js\",
+  \"bin\": \"./index.js\",
   \"dependencies\": {
     \"lmdb\": \"3.1.3\"
   },

@@ -1,4 +1,4 @@
-import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
+import { type CodecRecord, codec, type DescribedBy } from "@typeberry/codec";
 import { WithDebug } from "@typeberry/utils";
 import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "./assurances.js";
 import { DisputesExtrinsic } from "./disputes.js";

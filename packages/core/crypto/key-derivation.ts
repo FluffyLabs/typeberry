@@ -1,5 +1,5 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { SimpleAllocator, blake2b } from "@typeberry/hash";
+import { blake2b, SimpleAllocator } from "@typeberry/hash";
 import { type U32, u32AsLeBytes } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
 import { type BandersnatchKey, publicKey } from "./bandersnatch.js";

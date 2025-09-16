@@ -1,10 +1,10 @@
 {
   "name": "@typeberry/generic-worker",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Generic stuff for the workers.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/state-machine": "0.0.3"
+    "@typeberry/state-machine": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

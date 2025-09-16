@@ -3,11 +3,11 @@ import { describe, it } from "node:test";
 import {
   EpochMarker,
   Header,
-  ValidatorKeys,
   tryAsPerEpochBlock,
   tryAsPerValidator,
   tryAsTimeSlot,
   tryAsValidatorIndex,
+  ValidatorKeys,
 } from "@typeberry/block";
 import { Ticket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
@@ -22,6 +22,7 @@ import { SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 import { SafroleSeal } from "./safrole-seal.js";
+
 const bandersnatch = BandernsatchWasm.new({ synchronous: true });
 
 if (Compatibility.isLessThan(GpVersion.V0_7_0)) {

@@ -7,19 +7,19 @@ import {
   tryAsPerEpochBlock,
   tryAsServiceGas,
 } from "@typeberry/block";
-import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
-import { HashSet, asKnownSize } from "@typeberry/collections";
+import { fromJson, workReportFromJson } from "@typeberry/block-json";
+import { asKnownSize, HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { InMemoryService } from "@typeberry/state";
 import { AutoAccumulate, InMemoryState, PrivilegedServices, tryAsPerCore } from "@typeberry/state";
-import { JsonService } from "@typeberry/state-json/accounts.js";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
+import { JsonService } from "@typeberry/state-json/accounts.js";
 import { AccumulateOutput } from "@typeberry/transition/accumulate/accumulate-output.js";
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
-import { Result, deepEqual } from "@typeberry/utils";
+import { deepEqual, Result } from "@typeberry/utils";
 import { getChainSpec } from "./spec.js";
 
 class Input {

@@ -1,12 +1,11 @@
 import crypto, { type JsonWebKey } from "node:crypto";
-import { ED25519_KEY_BYTES, type Ed25519Key, type ed25519 } from "@typeberry/crypto";
-import { Result, asOpaqueType } from "@typeberry/utils";
-
-import * as peculiarWebcrypto from "@peculiar/webcrypto";
 import type { CryptoKey } from "@peculiar/webcrypto";
+import * as peculiarWebcrypto from "@peculiar/webcrypto";
 import * as x509 from "@peculiar/x509";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { ED25519_KEY_BYTES, type Ed25519Key, type ed25519 } from "@typeberry/crypto";
 import { Logger } from "@typeberry/logger";
+import { asOpaqueType, Result } from "@typeberry/utils";
 import { base32 } from "./base32.js";
 import type { PeerId } from "./peers.js";
 

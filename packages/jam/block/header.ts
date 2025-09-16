@@ -1,21 +1,20 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
-import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
-import { BANDERSNATCH_KEY_BYTES, type BandersnatchKey } from "@typeberry/crypto";
+import { type CodecRecord, codec, type DescribedBy } from "@typeberry/codec";
+import { BANDERSNATCH_KEY_BYTES, type BandersnatchKey, ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { BANDERSNATCH_VRF_SIGNATURE_BYTES, type BandersnatchVrfSignature } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE, WithHash } from "@typeberry/hash";
 import { Compatibility, GpVersion, WithDebug } from "@typeberry/utils";
 import {
+  codecPerEpochBlock,
+  codecPerValidator,
   type EntropyHash,
   type PerEpochBlock,
   type PerValidator,
   type StateRootHash,
   type TimeSlot,
-  type ValidatorIndex,
-  codecPerEpochBlock,
-  codecPerValidator,
   tryAsTimeSlot,
   tryAsValidatorIndex,
+  type ValidatorIndex,
 } from "./common.js";
 import type { ExtrinsicHash, HeaderHash } from "./hash.js";
 import { Ticket } from "./tickets.js";

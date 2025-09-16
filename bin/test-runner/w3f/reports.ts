@@ -5,10 +5,10 @@ import {
   tryAsPerEpochBlock,
   tryAsPerValidator,
 } from "@typeberry/block";
-import { fromJson, guaranteesExtrinsicFromJson, segmentRootLookupItemFromJson } from "@typeberry/block-json";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash, WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
-import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
+import { fromJson, guaranteesExtrinsicFromJson, segmentRootLookupItemFromJson } from "@typeberry/block-json";
+import { asKnownSize, FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";
@@ -19,15 +19,15 @@ import {
   type InMemoryService,
   InMemoryState,
   type RecentBlocksHistory,
-  type ValidatorData,
   tryAsPerCore,
+  type ValidatorData,
 } from "@typeberry/state";
 import {
+  availabilityAssignmentFromJson,
   JsonCoreStatistics,
   JsonService,
-  type ServiceStatisticsEntry,
-  availabilityAssignmentFromJson,
   recentBlocksHistoryFromJson,
+  type ServiceStatisticsEntry,
   serviceStatisticsEntryFromJson,
   validatorDataFromJson,
 } from "@typeberry/state-json";
@@ -41,7 +41,7 @@ import {
 import { guaranteesAsView } from "@typeberry/transition/reports/test.utils.js";
 import type { HeaderChain } from "@typeberry/transition/reports/verify-contextual.js";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
-import { Result, deepEqual } from "@typeberry/utils";
+import { deepEqual, Result } from "@typeberry/utils";
 
 type TestReportsOutput = Omit<ReportsOutput, "stateUpdate">;
 

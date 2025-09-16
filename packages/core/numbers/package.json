@@ -1,10 +1,10 @@
 {
   "name": "@typeberry/numbers",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Number types for typeberry data structures.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/utils": "0.0.3"
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -o -name '*.test.ts' | tr '\\n' ' ')"

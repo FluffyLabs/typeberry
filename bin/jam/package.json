@@ -1,22 +1,23 @@
 {
   "name": "@typeberry/jam",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Typeberry-JAM CLI.",
   "main": "index.ts",
   "bin": "./index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.3",
-    "@typeberry/config": "0.0.3",
-    "@typeberry/config-node": "0.0.3",
-    "@typeberry/hash": "0.0.3",
-    "@typeberry/logger": "0.0.3",
-    "@typeberry/node": "0.0.3",
-    "@typeberry/numbers": "0.0.3",
-    "@typeberry/utils": "0.0.3",
+    "@typeberry/bytes": "*",
+    "@typeberry/config": "*",
+    "@typeberry/config-node": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/node": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*",
     "minimist": "1.2.8"
   },
   "scripts": {
     "start": "tsx ./index.ts",
+    "build": "cd ../../ && ./tools/build-for-npm.sh",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",

@@ -1,13 +1,13 @@
 import assert from "node:assert";
 import { type TimeSlot, tryAsPerValidator } from "@typeberry/block";
-import { disputesExtrinsicFromJson, fromJson } from "@typeberry/block-json";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes.js";
+import { disputesExtrinsicFromJson, fromJson } from "@typeberry/block-json";
 import type { ChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { Disputes, type DisputesState } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code.js";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { type AvailabilityAssignment, type DisputesRecords, type ValidatorData, tryAsPerCore } from "@typeberry/state";
+import { type AvailabilityAssignment, type DisputesRecords, tryAsPerCore, type ValidatorData } from "@typeberry/state";
 import { availabilityAssignmentFromJson, disputesRecordsFromJson, validatorDataFromJson } from "@typeberry/state-json";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { getChainSpec } from "./spec.js";

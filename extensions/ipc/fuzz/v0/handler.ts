@@ -9,9 +9,9 @@ import {
   type Message,
   type MessageData,
   MessageType,
+  messageCodec,
   type PeerInfo,
   type SetState,
-  messageCodec,
 } from "./types.js";
 
 const logger = Logger.new(import.meta.filename, "ext-ipc-fuzz");

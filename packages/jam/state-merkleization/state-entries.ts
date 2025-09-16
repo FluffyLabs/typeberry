@@ -1,16 +1,16 @@
 import type { StateRootHash } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
-import { Encoder, codec } from "@typeberry/codec";
+import { codec, Encoder } from "@typeberry/codec";
 import { TruncatedHashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
 import type { InMemoryState } from "@typeberry/state";
 import { InMemoryTrie } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
-import { TEST_COMPARE_USING, assertNever } from "@typeberry/utils";
+import { assertNever, TEST_COMPARE_USING } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
-import { type StateEntryUpdate, StateEntryUpdateAction } from "./serialize-state-update.js";
 import { type StateCodec, serialize } from "./serialize.js";
+import { type StateEntryUpdate, StateEntryUpdateAction } from "./serialize-state-update.js";
 
 const TYPICAL_STATE_ITEMS = 50;
 const TYPICAL_STATE_ITEM_LEN = 50;

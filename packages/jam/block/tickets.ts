@@ -3,8 +3,8 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U8, tryAsU8 } from "@typeberry/numbers";
-import { type Opaque, WithDebug, asOpaqueType } from "@typeberry/utils";
+import { tryAsU8, type U8 } from "@typeberry/numbers";
+import { asOpaqueType, type Opaque, WithDebug } from "@typeberry/utils";
 import { codecKnownSizeArray, codecWithContext } from "./codec.js";
 
 /**

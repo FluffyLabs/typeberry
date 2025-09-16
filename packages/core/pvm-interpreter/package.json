@@ -1,14 +1,14 @@
 {
   "name": "@typeberry/pvm-interpreter",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A PVM implementation based on the Gray Paper.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.3",
-    "@typeberry/codec": "0.0.3",
-    "@typeberry/logger": "0.0.3",
-    "@typeberry/numbers": "0.0.3",
-    "@typeberry/utils": "0.0.3"
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "start": "tsx ./bin.ts",

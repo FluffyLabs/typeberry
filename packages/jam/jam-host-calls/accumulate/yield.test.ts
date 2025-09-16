@@ -3,13 +3,12 @@ import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
-import { PvmExecution } from "@typeberry/pvm-host-calls";
+import { tryAsU32, tryAsU64, type U32 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import {
+  gasCounter,
   MemoryBuilder,
   Registers,
-  gasCounter,
   tryAsGas,
   tryAsMemoryIndex,
   tryAsSbrkIndex,

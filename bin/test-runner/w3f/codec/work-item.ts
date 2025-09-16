@@ -1,6 +1,6 @@
 import { type CodeHash, type ServiceId, tryAsServiceGas } from "@typeberry/block";
-import { type JsonObject, fromJson } from "@typeberry/block-json";
 import { ImportSpec, WorkItem, WorkItemExtrinsicSpec } from "@typeberry/block/work-item.js";
+import { fromJson, type JsonObject } from "@typeberry/block-json";
 import { BytesBlob } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
 import type { U16 } from "@typeberry/numbers";

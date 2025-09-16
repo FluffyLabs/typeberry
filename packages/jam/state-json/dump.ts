@@ -1,9 +1,9 @@
 import { type EntropyHash, type PerEpochBlock, tryAsPerEpochBlock, tryAsServiceGas } from "@typeberry/block";
-import { fromJson } from "@typeberry/block-json";
 import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
+import { fromJson } from "@typeberry/block-json";
 import { Bytes } from "@typeberry/bytes";
-import { HashSet, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";
 import { json } from "@typeberry/json-parser";

@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { NODE_DEFAULTS, loadConfig } from "@typeberry/config-node";
+import { loadConfig, NODE_DEFAULTS } from "@typeberry/config-node";
 import { type PublicKeySeed, SEED_SIZE } from "@typeberry/crypto";
 import { DEFAULT_DEV_CONFIG, JamConfig } from "@typeberry/node";
 import { parseArgs } from "./args.js";

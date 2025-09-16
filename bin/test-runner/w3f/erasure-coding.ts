@@ -5,11 +5,11 @@ import { fromJson } from "@typeberry/block-json";
 import type { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import {
-  N_CHUNKS_REQUIRED,
-  N_CHUNKS_TOTAL,
   chunksToShards,
   decodeDataAndTrim,
   initEc,
+  N_CHUNKS_REQUIRED,
+  N_CHUNKS_TOTAL,
   padAndEncodeData,
   shardsToChunks,
 } from "@typeberry/erasure-coding";

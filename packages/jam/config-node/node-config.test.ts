@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { parseFromJson } from "@typeberry/json-parser";
-import { KnownChainSpec, NodeConfiguration, loadConfig } from "./node-config.js";
+import { KnownChainSpec, loadConfig, NodeConfiguration } from "./node-config.js";
 
 const NODE_CONFIG_TEST = {
   $schema: "https://typeberry.dev/schemas/config-v1.schema.json",

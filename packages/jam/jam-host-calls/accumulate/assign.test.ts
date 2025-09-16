@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { type CoreIndex, tryAsCoreIndex, tryAsServiceId } from "@typeberry/block";
 import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import { Bytes } from "@typeberry/bytes";
-import { Encoder, codec } from "@typeberry/codec";
+import { codec, Encoder } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
@@ -15,8 +15,8 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { Result } from "@typeberry/utils";
-import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
+import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
 import { Assign } from "./assign.js";
 

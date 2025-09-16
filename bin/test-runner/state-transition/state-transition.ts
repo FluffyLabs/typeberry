@@ -3,10 +3,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { Block, Header } from "@typeberry/block";
 import { blockFromJson, headerFromJson } from "@typeberry/block-json";
-import { Decoder, Encoder, codec } from "@typeberry/codec";
+import { codec, Decoder, Encoder } from "@typeberry/codec";
 import { ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
-import { SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
+import { keccak, SimpleAllocator, WithHash } from "@typeberry/hash";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { emptyBlock } from "@typeberry/node";
 import { tryAsU32 } from "@typeberry/numbers";
@@ -15,7 +15,7 @@ import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
-import { TestState, loadState } from "./state-loader.js";
+import { loadState, TestState } from "./state-loader.js";
 
 export class StateTransitionGenesis {
   static fromJson: FromJson<StateTransitionGenesis> = {

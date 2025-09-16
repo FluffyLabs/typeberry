@@ -1,5 +1,5 @@
-import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { type Opaque, asOpaqueType } from "@typeberry/utils";
+import { tryAsU32, tryAsU64, type U32, type U64 } from "@typeberry/numbers";
+import { asOpaqueType, type Opaque } from "@typeberry/utils";
 
 /** Gas measuring type. Can be either U64 or U32 for performance reasons. */
 export type Gas = BigGas | SmallGas;

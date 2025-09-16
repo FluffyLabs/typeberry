@@ -1,6 +1,6 @@
-import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { BitVec } from "@typeberry/bytes";
-import { type U32, tryAsU32 } from "@typeberry/numbers";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 
 /** Hint for how big the encoded object will be. */

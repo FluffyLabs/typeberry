@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { OK } from "@typeberry/utils";
 import { PeersManagement } from "./peers.js";
-import { type TestPeerDisconnected, createDisconnectedPeer } from "./testing.js";
+import { createDisconnectedPeer, type TestPeerDisconnected } from "./testing.js";
 
 describe("Peers", () => {
   it("should track peer connection status", () => {
