@@ -4,11 +4,11 @@
   "description": "A PVM implementation based on the Gray Paper.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.4",
-    "@typeberry/codec": "0.0.4",
-    "@typeberry/logger": "0.0.4",
-    "@typeberry/numbers": "0.0.4",
-    "@typeberry/utils": "0.0.4"
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "start": "tsx ./bin.ts",

@@ -7,10 +7,10 @@
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
-    "@typeberry/bytes": "0.0.4",
-    "@typeberry/hash": "0.0.4",
-    "@typeberry/collections": "0.0.4",
-    "@typeberry/utils": "0.0.4"
+    "@typeberry/bytes": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/collections": "*",
+    "@typeberry/utils": "*"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

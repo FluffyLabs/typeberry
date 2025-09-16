@@ -9,18 +9,18 @@
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
-    "@typeberry/block": "0.0.4",
-    "@typeberry/bytes": "0.0.4",
-    "@typeberry/codec": "0.0.4",
-    "@typeberry/collections": "0.0.4",
-    "@typeberry/config": "0.0.4",
-    "@typeberry/crypto": "0.0.4",
-    "@typeberry/hash": "0.0.4",
-    "@typeberry/numbers": "0.0.4",
-    "@typeberry/ordering": "0.0.4",
-    "@typeberry/state": "0.0.4",
-    "@typeberry/trie": "0.0.4",
-    "@typeberry/utils": "0.0.4"
+    "@typeberry/block": "*",
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/collections": "*",
+    "@typeberry/config": "*",
+    "@typeberry/crypto": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/ordering": "*",
+    "@typeberry/state": "*",
+    "@typeberry/trie": "*",
+    "@typeberry/utils": "*"
   },
   "type": "module"
 }

@@ -4,7 +4,7 @@
   "description": "Number types for typeberry data structures.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/utils": "0.0.4"
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -o -name '*.test.ts' | tr '\\n' ' ')"

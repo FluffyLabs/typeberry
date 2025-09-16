@@ -7,8 +7,8 @@
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
-    "@typeberry/numbers": "0.0.4",
-    "@typeberry/utils": "0.0.4"
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

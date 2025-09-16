@@ -4,7 +4,7 @@
   "description": "Generic stuff for the workers.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/state-machine": "0.0.4"
+    "@typeberry/state-machine": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

@@ -4,8 +4,8 @@
   "description": "Byte-related utilities and types.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/ordering": "0.0.4",
-    "@typeberry/utils": "0.0.4"
+    "@typeberry/ordering": "*",
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

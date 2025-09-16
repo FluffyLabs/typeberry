@@ -5,14 +5,14 @@
   "main": "index.ts",
   "bin": "./index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.4",
-    "@typeberry/config": "0.0.4",
-    "@typeberry/config-node": "0.0.4",
-    "@typeberry/hash": "0.0.4",
-    "@typeberry/logger": "0.0.4",
-    "@typeberry/node": "0.0.4",
-    "@typeberry/numbers": "0.0.4",
-    "@typeberry/utils": "0.0.4",
+    "@typeberry/bytes": "*",
+    "@typeberry/config": "*",
+    "@typeberry/config-node": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/node": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*",
     "minimist": "1.2.8"
   },
   "scripts": {

@@ -4,10 +4,10 @@
   "description": "The Fisher-Yates shuffle function based on GP",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.4",
-    "@typeberry/hash": "0.0.4",
-    "@typeberry/numbers": "0.0.4",
-    "@typeberry/utils": "0.0.4"
+    "@typeberry/bytes": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

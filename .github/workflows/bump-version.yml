@@ -80,26 +80,6 @@ jobs:
           echo "Updating $pkg"
           # Update version
           node -e "const fs = require('fs'); const p = require('$pkg'); p.version = '$VERSION'; fs.writeFileSync('$pkg', JSON.stringify(p, null, 2) + '\n');"
-          # Update dependencies to workspace packages
-          node -e "
-            const fs = require('fs');
-            const p = require('$pkg');
-            if (p.dependencies) {
-              Object.keys(p.dependencies).forEach(dep => {
-                if (dep.startsWith('@typeberry/') && !dep.startsWith('@typeberry/native')) {
-                  p.dependencies[dep] = '$VERSION';
-                }
-              });
-            }
-            if (p.devDependencies) {
-              Object.keys(p.devDependencies).forEach(dep => {
-                if (dep.startsWith('@typeberry/') && !dep.startsWith('@typeberry/native')) {
-                  p.devDependencies[dep] = '$VERSION';
-                }
-              });
-            }
-            fs.writeFileSync('$pkg', JSON.stringify(p, null, 2) + '\n');
-          "
         done
 
     - name: Update lock file
