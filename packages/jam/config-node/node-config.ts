@@ -3,9 +3,12 @@ import os from "node:os";
 import type { JsonObject } from "@typeberry/block-json";
 import { configs } from "@typeberry/configs";
 import { type FromJson, json, parseFromJson } from "@typeberry/json-parser";
+import { Logger } from "@typeberry/logger";
 import { isBrowser } from "@typeberry/utils";
 import { AuthorshipOptions } from "./authorship.js";
 import { JipChainSpec } from "./jip-chain-spec.js";
+
+const logger = Logger.new(import.meta.filename, "config");
 
 /** Development config. Will accept unsealed blocks for now. */
 export const DEV_CONFIG = "dev";
@@ -68,14 +71,17 @@ export class NodeConfiguration {
 
 export function loadConfig(configPath: string): NodeConfiguration {
   if (configPath === DEFAULT_CONFIG) {
+    logger.log("🔧 Loading DEFAULT config");
     return parseFromJson(configs.default, NodeConfiguration.fromJson);
   }
 
   if (configPath === DEV_CONFIG) {
+    logger.log("🔧 Loading DEV config");
     return parseFromJson(configs.dev, NodeConfiguration.fromJson);
   }
 
   try {
+    logger.log(`🔧 Loading config from ${configPath}`);
     const configFile = fs.readFileSync(configPath, "utf8");
     const parsed = JSON.parse(configFile);
     return parseFromJson(parsed, NodeConfiguration.fromJson);

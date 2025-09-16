@@ -58,13 +58,17 @@ export type Arguments =
       }
     >;
 
-function parseSharedOptions(args: minimist.ParsedArgs, withRelPath: (v: string) => string): SharedOptions {
+function parseSharedOptions(
+  args: minimist.ParsedArgs,
+  withRelPath: (v: string) => string,
+  defaultConfig: typeof DEV_CONFIG | typeof NODE_DEFAULTS.config = NODE_DEFAULTS.config,
+): SharedOptions {
   const { name } = parseStringOption(args, "name", (v) => v, NODE_DEFAULTS.name);
   const { config } = parseStringOption(
     args,
     "config",
-    (v) => (v === DEV_CONFIG ? DEV_CONFIG : withRelPath(v)),
-    NODE_DEFAULTS.config,
+    (v) => (v === DEV_CONFIG || v === DEFAULT_CONFIG ? v : withRelPath(v)),
+    defaultConfig,
   );
 
   return {
@@ -88,7 +92,7 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
       return { command: Command.Run, args: data };
     }
     case Command.Dev: {
-      const data = parseSharedOptions(args, withRelPath);
+      const data = parseSharedOptions(args, withRelPath, DEV_CONFIG);
       const index = args._.shift();
       if (index === undefined) {
         throw new Error("Missing dev-validator index.");

@@ -14,6 +14,7 @@
     "@typeberry/configs": "*",
     "@typeberry/jamnp-s": "*",
     "@typeberry/json-parser": "*",
+    "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
     "@typeberry/utils": "*"
   },

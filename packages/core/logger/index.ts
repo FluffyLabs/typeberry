@@ -29,7 +29,8 @@ export class Logger {
    */
   static new(fileName?: string, moduleName?: string) {
     const fName = fileName ?? "unknown";
-    return new Logger(moduleName ?? fName, fName, GLOBAL_CONFIG);
+    const module = moduleName ?? fName;
+    return new Logger(module.padStart(8, " "), GLOBAL_CONFIG);
   }
 
   /**
@@ -72,9 +73,8 @@ export class Logger {
     Logger.configureAllFromOptions(options);
   }
 
-  constructor(
+  private constructor(
     private readonly moduleName: string,
-    private readonly fileName: string,
     private readonly config: typeof GLOBAL_CONFIG,
   ) {}
 
