@@ -32,7 +32,6 @@ class Input {
         priorStateRoot: parent_state_root,
         accumulateRoot: accumulate_root,
         workPackages: HashDictionary.fromEntries(work_packages.map((x) => [x.workPackageHash, x])),
-        accumulationOutputLog: [],
       };
     },
   );
