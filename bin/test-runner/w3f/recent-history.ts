@@ -78,7 +78,7 @@ export async function runHistoryTest(testContent: HistoryTest) {
 
   const recentHistory = new RecentHistory(hasher, testContent.pre_state);
   const partialUpdate = recentHistory.partialTransition({ priorStateRoot: testContent.input.priorStateRoot });
-  const stateUpdate = recentHistory.transition({
+  const stateUpdate = await recentHistory.transition({
     partial: partialUpdate,
     headerHash: testContent.input.headerHash,
     accumulateRoot: testContent.input.accumulateRoot,

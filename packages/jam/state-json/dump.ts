@@ -3,11 +3,13 @@ import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/g
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { fromJson } from "@typeberry/block-json";
 import { Bytes } from "@typeberry/bytes";
-import { asKnownSize, HashSet } from "@typeberry/collections";
+import { asKnownSize, HashSet, SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";
 import { json } from "@typeberry/json-parser";
 import {
+  type AccumulationOutput,
+  accumulationOutputComparator,
   type InMemoryService,
   InMemoryState,
   PrivilegedServices,
@@ -52,7 +54,7 @@ type JsonStateDump = {
   pi: JsonStatisticsData;
   omega: State["accumulationQueue"];
   xi: PerEpochBlock<WorkPackageHash[]>;
-  theta: State["accumulationOutputLog"] | null;
+  theta: AccumulationOutput[] | null;
   accounts: InMemoryService[];
 };
 
@@ -154,7 +156,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           xi.map((x) => HashSet.from(x)),
           spec,
         ),
-        accumulationOutputLog: theta ?? [],
+        accumulationOutputLog: SortedArray.fromArray(accumulationOutputComparator, theta ?? []),
         services: new Map(accounts.map((x) => [x.serviceId, x])),
       });
     },
