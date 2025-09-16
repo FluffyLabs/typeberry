@@ -22,6 +22,7 @@ import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
+  type AccumulationOutput,
   InMemoryService,
   InMemoryState,
   PreimageItem,
@@ -180,7 +181,7 @@ describe("accumulate", () => {
       ),
       accumulationQueue: tryAsPerEpochBlock([[], [], [], [], [], [], [], [], [], [], [], []], tinyChainSpec),
     });
-    const expectedOutput = Bytes.zero(HASH_SIZE);
+    const expectedOutput: AccumulationOutput[] = [];
     const accumulate = new Accumulate(tinyChainSpec, state);
 
     // when
@@ -191,7 +192,7 @@ describe("accumulate", () => {
     state.applyUpdate(output.ok.stateUpdate);
 
     // then
-    deepEqual(output.ok.root, expectedOutput);
+    deepEqual(output.ok.accumulationOutputLog.array, expectedOutput);
     deepEqual(state, expectedState);
   });
 });
