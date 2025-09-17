@@ -32,6 +32,7 @@ const packageJson = JSON.stringify(
     main: "index.js",
     author: originalPackageJson.author,
     license: originalPackageJson.license,
+    sideEffects: false,
   },
   null,
   2,
