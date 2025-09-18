@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import { Block, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
+import { Block, BlockView, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { type FuzzVersion, startFuzzTarget, Version } from "@typeberry/ext-ipc";
@@ -41,12 +41,10 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
   const closeFuzzTarget = startFuzzTarget(fuzzConfig.version, fuzzConfig.socket, {
     ...getFuzzDetails(),
     chainSpec,
-    importBlock: async (block: Block): Promise<Result<StateRootHash, string>> => {
+    importBlock: async (blockView: BlockView): Promise<Result<StateRootHash, string>> => {
       if (runningNode === null) {
         return Result.error("node not running");
       }
-      const encoded = Encoder.encodeObject(Block.Codec, block, chainSpec);
-      const blockView = Decoder.decodeObject(Block.Codec.View, encoded, chainSpec);
       const importResult = await runningNode.importBlock(blockView);
       return importResult;
     },

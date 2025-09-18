@@ -153,7 +153,7 @@ export function guaranteesAsView(
 export async function newReports(options: Parameters<typeof newReportsState>[0] = {}) {
   const state = newReportsState(options);
   const headerChain: HeaderChain = {
-    isAncestor(_header: HeaderHash) {
+    isAncestor() {
       return false;
     },
   };

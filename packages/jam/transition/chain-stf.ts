@@ -35,11 +35,32 @@ import { Statistics, type StatisticsStateUpdate } from "./statistics.js";
 class DbHeaderChain implements HeaderChain {
   constructor(private readonly blocks: BlocksDb) {}
 
-  isAncestor(header: HeaderHash): boolean {
-    // TODO [ToDr] This works only for simple forks scenario. We rather
-    // should make sure that the `header` we are checking is a descendant
-    // of the current header (i.e. there is a direct path when going by parent).
-    return this.blocks.getHeader(header) !== null;
+  isAncestor(
+    pastHeaderSlot: TimeSlot,
+    pastHeader: HeaderHash,
+    currentHeader: HeaderHash,
+  ): boolean {
+    let currentHash = currentHeader;
+    for (;;) {
+      // success = we found the right header in the DB
+      if (currentHash.isEqualTo(pastHeader)) {
+        return true;
+      }
+
+      let current = this.blocks.getHeader(currentHash);
+      // fail if we don't find a parent (unlikely?)
+      if (current === null) {
+        return false;
+      }
+
+      // fail if we went pass that time slot index
+      if (current.timeSlotIndex.materialize() < pastHeaderSlot) {
+        return false;
+      }
+
+      // move one block up
+      currentHash = current.parentHeaderHash.materialize();
+    }
   }
 }
 

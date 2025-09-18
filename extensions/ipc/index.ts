@@ -1,5 +1,6 @@
 import {
   type Block,
+  BlockView,
   type Header,
   type HeaderHash,
   type HeaderView,
@@ -43,7 +44,7 @@ export interface FuzzTargetApi {
   nodeVersion: Version;
   gpVersion: Version;
   chainSpec: ChainSpec;
-  importBlock: (block: Block) => Promise<Result<StateRootHash, string>>;
+  importBlock: (block: BlockView) => Promise<Result<StateRootHash, string>>;
   resetState: (header: Header, state: StateEntries, ancestry: [HeaderHash, TimeSlot][]) => Promise<StateRootHash>;
   getPostSerializedState: (hash: HeaderHash) => Promise<StateEntries | null>;
   getBestStateRootHash(): Promise<StateRootHash>;
@@ -141,7 +142,7 @@ class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
     return root;
   }
 
-  async importBlock(value: Block): Promise<Result<StateRootHash, v1.ErrorMessage>> {
+  async importBlock(value: BlockView): Promise<Result<StateRootHash, v1.ErrorMessage>> {
     const res = await this.api.importBlock(value);
     if (res.isOk) {
       return res;
@@ -150,7 +151,7 @@ class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
     return Result.error(v1.ErrorMessage.create({ message: res.error }));
   }
 
-  async importBlockV0(value: Block): Promise<StateRootHash> {
+  async importBlockV0(value: BlockView): Promise<StateRootHash> {
     const res = await this.api.importBlock(value);
     if (res.isOk) {
       return res.ok;

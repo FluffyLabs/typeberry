@@ -1,4 +1,4 @@
-import type { Block, HeaderHash, StateRootHash } from "@typeberry/block";
+import type { Block, BlockView, HeaderHash, StateRootHash } from "@typeberry/block";
 import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";
@@ -23,7 +23,7 @@ export interface FuzzMessageHandler {
   /** Initialize or reset target state. */
   resetState(value: SetState): Promise<StateRootHash>;
   /** Process block and return resulting state root. */
-  importBlockV0(value: Block): Promise<StateRootHash>;
+  importBlockV0(value: BlockView): Promise<StateRootHash>;
   /** Handshake and versioning exchange. */
   getPeerInfoV0(value: PeerInfo): Promise<PeerInfo>;
 }

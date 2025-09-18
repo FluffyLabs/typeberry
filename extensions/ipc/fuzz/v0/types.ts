@@ -1,4 +1,4 @@
-import { Block, Header, type HeaderHash, type StateRootHash } from "@typeberry/block";
+import { Block, BlockView, Header, type HeaderHash, type StateRootHash } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
@@ -106,8 +106,8 @@ export class KeyValue extends WithDebug {
 export const stateCodec = codec.sequenceVarLen(KeyValue.Codec);
 
 /** ImportBlock ::= Block */
-export const importBlockCodec = Block.Codec;
-export type ImportBlock = Block;
+export const importBlockCodec = Block.Codec.View;
+export type ImportBlock = BlockView;
 
 /**
  * SetState ::= SEQUENCE {
@@ -153,7 +153,7 @@ export enum MessageType {
 /** Message data union */
 export type MessageData =
   | { type: MessageType.PeerInfo; value: PeerInfo }
-  | { type: MessageType.ImportBlock; value: Block }
+  | { type: MessageType.ImportBlock; value: BlockView }
   | { type: MessageType.SetState; value: SetState }
   | { type: MessageType.GetState; value: GetState }
   | { type: MessageType.State; value: KeyValue[] }
