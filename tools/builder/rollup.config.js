@@ -24,7 +24,7 @@ export default [
       format: "cjs",
     },
   },
-  // Common JS build
+  // ES Module build
   {
     ...baseBuild,
     output: {
