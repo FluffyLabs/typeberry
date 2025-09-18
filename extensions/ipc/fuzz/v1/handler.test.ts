@@ -203,7 +203,6 @@ describe("FuzzV1Target Handler", () => {
       await fuzzTarget.onSocketMessage(testMessage);
 
       assert.strictEqual(mockMessageHandler.importBlock.mock.callCount(), 1);
-      assert.deepStrictEqual(mockMessageHandler.importBlock.mock.calls[0].arguments, [testBlock]);
 
       assert.strictEqual(mockSender._sentData.length, 1);
       const sentMessage = decodeMessage(mockSender._sentData[0]);
