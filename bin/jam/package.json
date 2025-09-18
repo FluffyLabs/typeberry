@@ -1,28 +1,30 @@
 {
   "name": "@typeberry/jam",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "Typeberry-JAM CLI.",
   "main": "index.ts",
   "bin": "./index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.1",
-    "@typeberry/config": "0.0.1",
-    "@typeberry/config-node": "^0.0.1",
-    "@typeberry/hash": "0.0.1",
-    "@typeberry/logger": "0.0.1",
-    "@typeberry/node": "^0.0.1",
-    "@typeberry/numbers": "0.0.1",
-    "@typeberry/utils": "0.0.1",
-    "minimist": "^1.2.8"
+    "@typeberry/bytes": "*",
+    "@typeberry/config": "*",
+    "@typeberry/config-node": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/node": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*",
+    "minimist": "1.2.8"
   },
   "scripts": {
     "start": "tsx ./index.ts",
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "build": "cd ../../ && ./tools/build-for-npm.sh",
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
+    "test:e2e": "tsx --test test/e2e.ts"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
   "devDependencies": {
-    "@types/minimist": "^1.2.5"
+    "@types/minimist": "1.2.5"
   },
   "type": "module"
 }

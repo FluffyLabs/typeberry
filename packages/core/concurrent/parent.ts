@@ -55,6 +55,7 @@ export class Executor<TParams extends WithTransferList, TResult> implements IExe
   /** Attempt to initialize a new worker. */
   async initNewWorker(onSuccess: () => void = () => {}) {
     if (this.workers.length >= this.maxWorkers) {
+      // biome-ignore lint/suspicious/noConsole: warning
       console.warn(`Task queue has ${this.taskQueue.length} pending items and we can't init any more workers.`);
       return;
     }

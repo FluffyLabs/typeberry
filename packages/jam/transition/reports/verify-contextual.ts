@@ -1,25 +1,28 @@
 import type { HeaderHash } from "@typeberry/block";
-import type { RefineContext } from "@typeberry/block/refine-context.js";
-import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
+import {
+  type ExportsRootHash,
+  type RefineContext,
+  type WorkPackageHash,
+  WorkPackageInfo,
+} from "@typeberry/block/refine-context.js";
 import { HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
-import type { KeccakHash } from "@typeberry/hash";
-import type { MmrHasher } from "@typeberry/mmr";
-import type { LegacyBlockState, State } from "@typeberry/state";
+import { Logger } from "@typeberry/logger";
+import type { U32 } from "@typeberry/numbers";
+import type { State } from "@typeberry/state";
 import { type BlockState, RecentBlocksHistory } from "@typeberry/state/recent-blocks.js";
 import { OK, Result } from "@typeberry/utils";
 import type { RecentHistoryStateUpdate } from "../recent-history.js";
 import { ReportsError } from "./error.js";
-import type { ReportsInput } from "./reports.js";
-
-/** `L`: The maximum age in timeslots of the lookup anchor. */
-export const L = 14_400;
+import type { ReportsInput } from "./input.js";
 
 /** Recently imported blocks. */
 export type HeaderChain = {
-  /** Check whether given hash is part of the ancestor chain. */
-  isInChain(header: HeaderHash): boolean;
+  /** Check whether given `pastBlock` hash is part of the ancestor chain of `currentBlock` */
+  isAncestor(pastBlock: HeaderHash /*, currentBlock: HeaderHash*/): boolean;
 };
+
+const logger = Logger.new(import.meta.filename, "stf:reports");
 
 /** https://graypaper.fluffylabs.dev/#/7e6ff6a/15eb0115eb01?v=0.6.7 */
 export function verifyContextualValidity(
@@ -28,8 +31,8 @@ export function verifyContextualValidity(
     State,
     "getService" | "recentBlocks" | "availabilityAssignment" | "accumulationQueue" | "recentlyAccumulated"
   >,
-  hasher: MmrHasher<KeccakHash>,
   headerChain: HeaderChain,
+  maxLookupAnchorAge: U32,
 ): Result<HashDictionary<WorkPackageHash, WorkPackageInfo>, ReportsError> {
   const contexts: RefineContext[] = [];
   // hashes of work packages reported in this extrinsic
@@ -75,14 +78,8 @@ export function verifyContextualValidity(
     return Result.error(ReportsError.DuplicatePackage, "Duplicate work package detected.");
   }
 
-  const minLookupSlot = Math.max(0, input.slot - L);
-  const contextResult = verifyRefineContexts(
-    minLookupSlot,
-    contexts,
-    input.recentBlocksPartialUpdate,
-    hasher,
-    headerChain,
-  );
+  const minLookupSlot = Math.max(0, input.slot - maxLookupAnchorAge);
+  const contextResult = verifyRefineContexts(minLookupSlot, contexts, input.recentBlocksPartialUpdate, headerChain);
   if (contextResult.isError) {
     return contextResult;
   }
@@ -144,11 +141,10 @@ function verifyRefineContexts(
   minLookupSlot: number,
   contexts: RefineContext[],
   recentBlocksPartialUpdate: RecentHistoryStateUpdate["recentBlocks"],
-  hasher: MmrHasher<KeccakHash>,
   headerChain: HeaderChain,
 ): Result<OK, ReportsError> {
   // TODO [ToDr] [opti] This could be cached and updated efficiently between runs.
-  const recentBlocks = HashDictionary.new<HeaderHash, LegacyBlockState | BlockState>();
+  const recentBlocks = HashDictionary.new<HeaderHash, BlockState>();
   for (const recentBlock of recentBlocksPartialUpdate.blocks) {
     recentBlocks.set(recentBlock.headerHash, recentBlock);
   }
@@ -175,7 +171,7 @@ function verifyRefineContexts(
     }
 
     // check beefy root
-    const beefyRoot = RecentBlocksHistory.accumulationResult(recentBlock, { hasher });
+    const beefyRoot = RecentBlocksHistory.accumulationResult(recentBlock);
     if (!beefyRoot.isEqualTo(context.beefyRoot)) {
       return Result.error(
         ReportsError.BadBeefyMmrRoot,
@@ -204,11 +200,16 @@ function verifyRefineContexts(
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/155c01155f01
      */
-    if (!headerChain.isInChain(context.lookupAnchor)) {
-      return Result.error(
-        ReportsError.SegmentRootLookupInvalid,
-        `Lookup anchor is not found in chain. Hash: ${context.lookupAnchor} (slot: ${context.lookupAnchorSlot})`,
-      );
+    const isInChain = recentBlocks.has(context.lookupAnchor) || headerChain.isAncestor(context.lookupAnchor);
+    if (!isInChain) {
+      if (process.env.SKIP_LOOKUP_ANCHOR_CHECK !== undefined) {
+        logger.warn(`Lookup anchor check for ${context.lookupAnchor} would fail, but override is active.`);
+      } else {
+        return Result.error(
+          ReportsError.SegmentRootLookupInvalid,
+          `Lookup anchor is not found in chain. Hash: ${context.lookupAnchor} (slot: ${context.lookupAnchorSlot})`,
+        );
+      }
     }
   }
 

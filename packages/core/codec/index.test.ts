@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { BytesBlob } from "@typeberry/bytes";
-import { BitVec } from "@typeberry/bytes";
+import { BitVec, BytesBlob } from "@typeberry/bytes";
 import { tryAsU8, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { Decoder } from "./decoder.js";
-import { type Descriptor, codec } from "./descriptors.js";
+import type { Descriptor } from "./descriptor.js";
+import { codec } from "./descriptors.js";
 import { Encoder } from "./encoder.js";
 import { Skipper } from "./skip.js";
 

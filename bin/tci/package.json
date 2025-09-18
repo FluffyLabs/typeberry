@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/tci",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "Typeberry Common Interface - Compatibility wrapper binary with flags understood by all JAM nodes",
   "main": "index.ts",
   "bin": "./index.ts",
@@ -12,16 +12,16 @@
   "license": "MPL-2.0",
   "type": "module",
   "dependencies": {
-    "@typeberry/block": "0.0.1",
-    "@typeberry/bytes": "0.0.1",
-    "@typeberry/config": "^0.0.1",
-    "@typeberry/config-node": "^0.0.1",
-    "@typeberry/crypto": "^0.0.1",
-    "@typeberry/logger": "0.0.1",
-    "@typeberry/node": "^0.0.1",
-    "minimist": "^1.2.8"
+    "@typeberry/block": "*",
+    "@typeberry/bytes": "*",
+    "@typeberry/config": "*",
+    "@typeberry/config-node": "*",
+    "@typeberry/crypto": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/node": "*",
+    "minimist": "1.2.8"
   },
   "devDependencies": {
-    "@types/minimist": "^1.2.5"
+    "@types/minimist": "1.2.5"
   }
 }

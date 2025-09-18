@@ -20,7 +20,7 @@ import {
 import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { fisherYatesShuffle } from "@typeberry/shuffling";
-import { type Opaque, asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType, type Opaque } from "@typeberry/utils";
 
 /** Index of the rotation calculated by dividing a timeslot by rotation period. */
 export type RotationIndex = Opaque<number, "RotationIndex">;

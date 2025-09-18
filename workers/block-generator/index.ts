@@ -1,23 +1,21 @@
-import { isMainThread, parentPort } from "node:worker_threads";
-
 import { setTimeout } from "node:timers/promises";
-import { MessageChannelStateMachine } from "@typeberry/state-machine";
-
+import { isMainThread, parentPort } from "node:worker_threads";
 import { LmdbBlocks, LmdbStates } from "@typeberry/database-lmdb";
 import { LmdbRoot } from "@typeberry/database-lmdb/root.js";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
+import { MessageChannelStateMachine } from "@typeberry/state-machine";
 import { Generator } from "./generator.js";
 import {
   type GeneratorInit,
   type GeneratorReady,
   type GeneratorStates,
-  MainReady,
   generatorStateMachine,
+  MainReady,
 } from "./state-machine.js";
 
-const logger = Logger.new(import.meta.filename, "block-generator");
+const logger = Logger.new(import.meta.filename, "generator");
 
 if (!isMainThread) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
@@ -67,9 +65,10 @@ export async function main(channel: MessageChannelStateMachine<GeneratorInit, Ge
   finished.currentState().close(channel);
 }
 
+const workerFile = new URL("./bootstrap-generator.mjs", import.meta.url);
+
 export async function spawnWorker(customLogger?: Logger, customMainReady?: MainReady) {
-  const bootstrapFile = "./bootstrap.mjs";
   const workerLogger = customLogger ?? logger;
   const mainReady = customMainReady ?? new MainReady();
-  return spawnWorkerGeneric(new URL(bootstrapFile, import.meta.url), workerLogger, "ready(main)", mainReady);
+  return spawnWorkerGeneric(workerFile, workerLogger, "ready(main)", mainReady);
 }

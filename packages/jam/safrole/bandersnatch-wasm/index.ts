@@ -4,6 +4,8 @@ import { Executor } from "@typeberry/concurrent";
 import { Method, Params, type Response } from "./params.js";
 import { worker } from "./worker.js";
 
+const workerFile = new URL("./bootstrap-bandersnatch.mjs", import.meta.url);
+
 export class BandernsatchWasm {
   private constructor(private readonly executor: IExecutor<Params, Response>) {}
 
@@ -15,7 +17,7 @@ export class BandernsatchWasm {
     const workers = os.cpus().length;
     return new BandernsatchWasm(
       !synchronous
-        ? await Executor.initialize<Params, Response>(new URL("./bootstrap.mjs", import.meta.url), {
+        ? await Executor.initialize<Params, Response>(workerFile, {
             minWorkers: Math.max(1, Math.floor(workers / 2)),
             maxWorkers: workers,
           })
@@ -23,18 +25,11 @@ export class BandernsatchWasm {
     );
   }
 
-  async verifySeal(
-    keys: Uint8Array,
-    authorIndex: number,
-    signature: Uint8Array,
-    payload: Uint8Array,
-    auxData: Uint8Array,
-  ) {
+  async verifySeal(authorKey: Uint8Array, signature: Uint8Array, payload: Uint8Array, auxData: Uint8Array) {
     const x = await this.executor.run(
       new Params({
         method: Method.VerifySeal,
-        keys,
-        authorIndex,
+        authorKey,
         signature,
         payload,
         auxData,
@@ -53,11 +48,12 @@ export class BandernsatchWasm {
     return x.data;
   }
 
-  async batchVerifyTicket(keys: Uint8Array, ticketsData: Uint8Array, contextLength: number) {
+  async batchVerifyTicket(ringSize: number, commitment: Uint8Array, ticketsData: Uint8Array, contextLength: number) {
     const x = await this.executor.run(
       new Params({
         method: Method.BatchVerifyTickets,
-        keys,
+        ringSize,
+        commitment,
         ticketsData,
         contextLength,
       }),

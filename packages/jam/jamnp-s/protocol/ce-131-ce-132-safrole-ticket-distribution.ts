@@ -1,7 +1,7 @@
 import type { Epoch } from "@typeberry/block";
 import { SignedTicket } from "@typeberry/block/tickets.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
+import { type CodecRecord, codec, Decoder, Encoder } from "@typeberry/codec";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
 import { type StreamHandler, type StreamMessageSender, tryAsStreamKind } from "./stream.js";

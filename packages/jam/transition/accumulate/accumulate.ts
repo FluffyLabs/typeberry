@@ -6,75 +6,46 @@ import {
   tryAsPerEpochBlock,
   tryAsServiceGas,
 } from "@typeberry/block";
+import { W_C } from "@typeberry/block/gp-constants.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Encoder, codec } from "@typeberry/codec";
+import { Bytes } from "@typeberry/bytes";
+import { codec, Encoder } from "@typeberry/codec";
+import { HashSet, SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-
-import { HashSet } from "@typeberry/collections";
-import { KeccakHasher } from "@typeberry/hash/keccak.js";
-import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
+import { HASH_SIZE } from "@typeberry/hash";
 import {
   AccumulationStateUpdate,
   PartiallyUpdatedState,
-  type ServiceStateUpdate,
 } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
-import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { ServiceAccountInfo, type ServicesUpdate, type State, hashComparator, tryAsPerCore } from "@typeberry/state";
-import { binaryMerkleization } from "@typeberry/state-merkleization";
+import {
+  type AccumulationOutput,
+  accumulationOutputComparator,
+  hashComparator,
+  ServiceAccountInfo,
+  type ServicesUpdate,
+  tryAsPerCore,
+} from "@typeberry/state";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
-import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
-import { Compatibility, GpVersion, Result, assertEmpty } from "@typeberry/utils";
+import { assertEmpty, Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/index.js";
 import type { CountAndGasUsed } from "../statistics.js";
 import { AccumulateData } from "./accumulate-data.js";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
+import {
+  type AccumulateInput,
+  type AccumulateResult,
+  type AccumulateState,
+  type AccumulateStateUpdate,
+  GAS_TO_INVOKE_WORK_REPORT,
+} from "./accumulate-state.js";
 import { generateNextServiceId, getWorkPackageHashes } from "./accumulate-utils.js";
-import { Operand } from "./operand.js";
+import type { Operand } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
-
-export type AccumulateRoot = OpaqueHash;
-
-export type AccumulateInput = {
-  /** time slot from header */
-  slot: TimeSlot;
-  /** List of newly available work-reports */
-  reports: WorkReport[];
-  /** eta0' (after Safrole STF) - it is not eta0 from state! */
-  entropy: EntropyHash;
-};
-
-export type AccumulateState = Pick<
-  State,
-  | "designatedValidatorData"
-  | "timeslot"
-  | "authQueues"
-  | "getService"
-  | "recentlyAccumulated"
-  | "accumulationQueue"
-  | "privilegedServices"
->;
-
-/** Aggregated update of the accumulation state transition. */
-export type AccumulateStateUpdate = Pick<
-  State,
-  /* TODO [ToDr] seems that we are doing the same stuff as safrole? */
-  "timeslot"
-> &
-  Partial<Pick<State, "recentlyAccumulated" | "accumulationQueue">> &
-  ServiceStateUpdate;
-
-export type AccumulateResult = {
-  root: AccumulateRoot;
-  stateUpdate: AccumulateStateUpdate;
-  accumulationStatistics: Map<ServiceId, CountAndGasUsed>;
-  pendingTransfers: PendingTransfer[];
-};
 
 export const ACCUMULATION_ERROR = "duplicate service created";
 export type ACCUMULATION_ERROR = typeof ACCUMULATION_ERROR;
@@ -96,18 +67,10 @@ type SequentialAccumulationResult = ParallelAccumulationResult & {
 enum PvmInvocationError {
   NoService = 0,
   NoPreimage = 1,
+  PreimageTooLong = 2,
 }
 
-/** `G_A`: The gas allocated to invoke a work-report’s Accumulation logic. */
-export const GAS_TO_INVOKE_WORK_REPORT = 10_000_000n;
-
 const logger = Logger.new(import.meta.filename, "accumulate");
-
-const ARGS_CODEC_0_6_5 = codec.object({
-  slot: codec.u32.asOpaque<TimeSlot>(),
-  serviceId: codec.u32.asOpaque<ServiceId>(),
-  operands: codec.sequenceVarLen(Operand.Codec),
-});
 
 const ARGS_CODEC = codec.object({
   slot: codec.varU32.asOpaque<TimeSlot>(),
@@ -172,6 +135,11 @@ export class Accumulate {
       return Result.error(PvmInvocationError.NoPreimage);
     }
 
+    if (code.length > W_C) {
+      logger.log(`Code with hash ${codeHash} is too long for service ${serviceId}.`);
+      return Result.error(PvmInvocationError.PreimageTooLong);
+    }
+
     const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec);
     const partialState = new AccumulateExternalities(
       this.chainSpec,
@@ -188,16 +156,8 @@ export class Accumulate {
     };
 
     const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);
-
-    let args = BytesBlob.empty();
-    if (Compatibility.is(GpVersion.V0_6_5)) {
-      args = Encoder.encodeObject(ARGS_CODEC_0_6_5, { slot, serviceId, operands }, this.chainSpec);
-    } else {
-      args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands: tryAsU32(operands.length) });
-    }
-
+    const args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands: tryAsU32(operands.length) });
     const result = await executor.run(args, tryAsGas(gas));
-
     const [newState, checkpoint] = partialState.getStateUpdates();
 
     /**
@@ -208,8 +168,11 @@ export class Accumulate {
     if (result.hasStatus()) {
       const status = result.status;
       if (status === Status.OOG || status === Status.PANIC) {
+        logger.trace(`[${serviceId}] accumulate finished with ${Status[status]} reverting to checkpoint.`);
         return Result.ok({ stateUpdate: checkpoint, consumedGas: tryAsServiceGas(result.consumedGas) });
       }
+
+      logger.trace(`[${serviceId}] accumulate finished with ${Status[status]}`);
     }
 
     /**
@@ -244,16 +207,17 @@ export class Accumulate {
     entropy: EntropyHash,
     inputStateUpdate: AccumulationStateUpdate,
   ) {
-    logger.trace(`Accumulating service ${serviceId}, items: ${operands.length} at slot: ${slot}.`);
+    logger.log(`Accumulating service ${serviceId}, items: ${operands.length} at slot: ${slot}.`);
 
     const result = await this.pvmAccumulateInvocation(slot, serviceId, operands, gasCost, entropy, inputStateUpdate);
 
     if (result.isError) {
-      logger.trace(`Accumulation failed for ${serviceId}.`);
-      return { stateUpdate: null, consumedGas: gasCost };
+      // https://graypaper.fluffylabs.dev/#/7e6ff6a/2fb6012fb601?v=0.6.7
+      logger.log(`Accumulation failed for ${serviceId}.`);
+      return { stateUpdate: null, consumedGas: 0n };
     }
 
-    logger.trace(`Accumulation successful for ${serviceId}. Consumed: ${result.ok.consumedGas}`);
+    logger.log(`Accumulation successful for ${serviceId}. Consumed: ${result.ok.consumedGas}`);
     return result.ok;
   }
 
@@ -374,7 +338,7 @@ export class Accumulate {
     slot: TimeSlot,
     accumulatedServices: ServiceId[],
     servicesUpdate: ServicesUpdate,
-  ): Pick<AccumulateStateUpdate, "recentlyAccumulated" | "accumulationQueue" | "timeslot"> & ServicesUpdate {
+  ): Pick<AccumulateStateUpdate, "timeslot" | "recentlyAccumulated" | "accumulationQueue"> & ServicesUpdate {
     const epochLength = this.chainSpec.epochLength;
     const phaseIndex = slot % epochLength;
     const accumulatedSet = getWorkPackageHashes(accumulated);
@@ -396,24 +360,22 @@ export class Accumulate {
 
     // δ†
     const partialStateUpdate = new PartiallyUpdatedState(this.state, AccumulationStateUpdate.new(servicesUpdate));
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      // update last accumulation
-      for (const serviceId of accumulatedServices) {
-        // https://graypaper.fluffylabs.dev/#/7e6ff6a/181003185103?v=0.6.7
-        const info = partialStateUpdate.getServiceInfo(serviceId);
-        if (info === null) {
-          // NOTE If there is no service, we dont update it.
-          continue;
-        }
-        // δ‡
-        partialStateUpdate.updateServiceInfo(serviceId, ServiceAccountInfo.create({ ...info, lastAccumulation: slot }));
+    // update last accumulation
+    for (const serviceId of accumulatedServices) {
+      // https://graypaper.fluffylabs.dev/#/7e6ff6a/181003185103?v=0.6.7
+      const info = partialStateUpdate.getServiceInfo(serviceId);
+      if (info === null) {
+        // NOTE If there is no service, we dont update it.
+        continue;
       }
+      // δ‡
+      partialStateUpdate.updateServiceInfo(serviceId, ServiceAccountInfo.create({ ...info, lastAccumulation: slot }));
     }
 
     return {
       recentlyAccumulated,
-      accumulationQueue: tryAsPerEpochBlock(accumulationQueue, this.chainSpec),
       timeslot: slot,
+      accumulationQueue: tryAsPerEpochBlock(accumulationQueue, this.chainSpec),
       ...partialStateUpdate.stateUpdate.services,
     };
   }
@@ -460,6 +422,8 @@ export class Accumulate {
       statistics,
       AccumulationStateUpdate.empty(),
     );
+    // we can safely ignore top-level gas cost from accSequentially.
+    const _gasCost = gasCost;
     assertEmpty(rest);
 
     const accumulated = accumulatableReports.slice(0, accumulatedReports);
@@ -482,8 +446,12 @@ export class Accumulate {
       services,
     );
 
-    const rootHash = await getRootHash(Array.from(yieldedRoots.entries()));
-
+    const accumulationOutputUnsorted: AccumulationOutput[] = Array.from(yieldedRoots.entries()).map(
+      ([serviceId, root]) => {
+        return { serviceId, output: root.asOpaque() };
+      },
+    );
+    const accumulationOutput = SortedArray.fromArray(accumulationOutputComparator, accumulationOutputUnsorted);
     const authQueues = (() => {
       if (authorizationQueues.size === 0) {
         return {};
@@ -497,7 +465,6 @@ export class Accumulate {
     })();
 
     return Result.ok({
-      root: rootHash,
       stateUpdate: {
         ...accStateUpdate,
         ...(validatorsData === null ? {} : { designatedValidatorData: validatorsData }),
@@ -506,22 +473,7 @@ export class Accumulate {
       },
       accumulationStatistics: statistics,
       pendingTransfers: transfers,
+      accumulationOutputLog: accumulationOutput,
     });
   }
-}
-
-/**
- * Returns a new root hash
- *
- * https://graypaper.fluffylabs.dev/#/38c4e62/3c9d013c9d01?v=0.7.0
- */
-async function getRootHash(yieldedRoots: [ServiceId, OpaqueHash][]): Promise<AccumulateRoot> {
-  const keccakHasher = await KeccakHasher.create();
-  const trieHasher = getKeccakTrieHasher(keccakHasher);
-  const yieldedRootsSortedByServiceId = yieldedRoots.sort((a, b) => a[0] - b[0]);
-  const values = yieldedRootsSortedByServiceId.map(([serviceId, hash]) => {
-    return BytesBlob.blobFromParts([u32AsLeBytes(serviceId), hash.raw]);
-  });
-
-  return binaryMerkleization(values, trieHasher);
 }

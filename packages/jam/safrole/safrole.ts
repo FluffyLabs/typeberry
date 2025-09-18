@@ -1,21 +1,24 @@
 import {
   type EntropyHash,
   EpochMarker,
-  type PerEpochBlock,
+  type EpochMarkerView,
   type PerValidator,
+  TicketsMarker,
+  type TicketsMarkerView,
   type TimeSlot,
-  ValidatorKeys,
   tryAsPerEpochBlock,
+  ValidatorKeys,
 } from "@typeberry/block";
 import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets.js";
 import { Bytes, bytesBlobComparator } from "@typeberry/bytes";
-import { Decoder } from "@typeberry/codec";
-import { FixedSizeArray, type ImmutableSortedSet, SortedSet, asKnownSize } from "@typeberry/collections";
+import { type Codec, Decoder, type DescriptorRecord, Encoder, type ViewOf } from "@typeberry/codec";
+import { asKnownSize, FixedSizeArray, type ImmutableSortedSet, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import {
   BANDERSNATCH_KEY_BYTES,
-  BLS_KEY_BYTES,
   type BandersnatchKey,
+  type BandersnatchRingRoot,
+  BLS_KEY_BYTES,
   ED25519_KEY_BYTES,
   type Ed25519Key,
 } from "@typeberry/crypto";
@@ -23,7 +26,7 @@ import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
-import { Result, asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType, OK, Result } from "@typeberry/utils";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 import type { SafroleSealState } from "./safrole-seal.js";
@@ -58,11 +61,9 @@ export type SafroleStateUpdate = Pick<
   | "ticketsAccumulator"
 >;
 
-type TicketsMark = PerEpochBlock<Ticket>;
-
 export type OkResult = {
   epochMark: EpochMarker | null;
-  ticketsMark: TicketsMark | null;
+  ticketsMark: TicketsMarker | null;
   stateUpdate: SafroleStateUpdate;
 };
 
@@ -75,6 +76,10 @@ export type Input = {
   extrinsic: TicketsExtrinsic;
   /** Punish set from disputes */
   punishSet: ImmutableSortedSet<Ed25519Key>;
+  /** Epoch marker from header */
+  epochMarker: EpochMarkerView | null;
+  /** Tickets marker from header */
+  ticketsMarker: TicketsMarkerView | null;
 };
 
 export enum SafroleErrorCode {
@@ -91,6 +96,10 @@ export enum SafroleErrorCode {
   BadTicketAttempt = 6,
   // Found a ticket duplicate.
   DuplicateTicket = 7,
+  // Epoch marker missing, unexpected or invalid
+  EpochMarkerInvalid = 8,
+  // Tickets marker missing, unexpected or invalid
+  TicketsMarkerInvalid = 9,
 }
 
 type EpochValidators = Pick<
@@ -237,7 +246,9 @@ export class Safrole {
       reorderedTickets[2 * middle] = tickets[middle];
     }
 
-    return tryAsPerEpochBlock(reorderedTickets, this.chainSpec);
+    return TicketsMarker.create({
+      tickets: tryAsPerEpochBlock(reorderedTickets, this.chainSpec),
+    });
   }
 
   /**
@@ -280,7 +291,7 @@ export class Safrole {
       m >= this.chainSpec.contestLength &&
       this.state.ticketsAccumulator.length === this.chainSpec.epochLength
     ) {
-      return SafroleSealingKeysData.tickets(this.outsideInSequencer(this.state.ticketsAccumulator));
+      return SafroleSealingKeysData.tickets(this.outsideInSequencer(this.state.ticketsAccumulator).tickets);
     }
 
     if (this.isSameEpoch(timeslot)) {
@@ -342,6 +353,7 @@ export class Safrole {
     timeslot: TimeSlot,
     extrinsic: readonly SignedTicket[],
     validators: readonly ValidatorData[],
+    epochRoot: BandersnatchRingRoot,
     entropy: EntropyHash,
   ): Promise<Result<Ticket[], SafroleErrorCode>> {
     /**
@@ -355,7 +367,8 @@ export class Safrole {
         ? []
         : await bandersnatchVrf.verifyTickets(
             await this.bandersnatch,
-            validators.map((x) => x.bandersnatch),
+            validators.length,
+            epochRoot,
             extrinsic,
             entropy,
           );
@@ -400,21 +413,25 @@ export class Safrole {
     return Result.ok(mergedTickets.array.slice(0, this.chainSpec.epochLength));
   }
 
+  private shouldIncludeTicketsMarker(timeslot: TimeSlot): boolean {
+    const m = this.getSlotPhaseIndex(this.state.timeslot);
+    const mPrime = this.getSlotPhaseIndex(timeslot);
+    return (
+      this.isSameEpoch(timeslot) &&
+      m < this.chainSpec.contestLength &&
+      this.chainSpec.contestLength <= mPrime &&
+      this.state.ticketsAccumulator.length === this.chainSpec.epochLength
+    );
+  }
+
   /**
    * Returns winning-tickets markers if the block is the first after the end of the submission period
    * for tickets and if the ticket accumulator is saturated and null otherwise
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/0ea0030ea003
    */
-  private getTicketsMark(timeslot: TimeSlot): TicketsMark | null {
-    const m = this.getSlotPhaseIndex(this.state.timeslot);
-    const mPrime = this.getSlotPhaseIndex(timeslot);
-    if (
-      this.isSameEpoch(timeslot) &&
-      m < this.chainSpec.contestLength &&
-      this.chainSpec.contestLength <= mPrime &&
-      this.state.ticketsAccumulator.length === this.chainSpec.epochLength
-    ) {
+  private getTicketsMarker(timeslot: TimeSlot): TicketsMarker | null {
+    if (this.shouldIncludeTicketsMarker(timeslot)) {
       return this.outsideInSequencer(this.state.ticketsAccumulator);
     }
 
@@ -492,6 +509,7 @@ export class Safrole {
       input.slot,
       input.extrinsic,
       this.state.nextValidatorData,
+      epochRoot,
       entropy[2],
     );
 
@@ -510,12 +528,60 @@ export class Safrole {
       ticketsAccumulator: asKnownSize(newTicketsAccumulatorResult.ok),
     };
 
+    const epochMarker = this.getEpochMark(input.slot, nextValidatorData);
+    const epochMarkerRes = compareWithEncoding(
+      this.chainSpec,
+      SafroleErrorCode.EpochMarkerInvalid,
+      epochMarker,
+      input.epochMarker,
+      EpochMarker.Codec,
+    );
+    if (epochMarkerRes.isError) {
+      return epochMarkerRes;
+    }
+
+    const ticketsMarker = this.getTicketsMarker(input.slot);
+    const ticketsMarkerRes = compareWithEncoding(
+      this.chainSpec,
+      SafroleErrorCode.TicketsMarkerInvalid,
+      ticketsMarker,
+      input.ticketsMarker,
+      TicketsMarker.Codec,
+    );
+    if (ticketsMarkerRes.isError) {
+      return ticketsMarkerRes;
+    }
+
     const result = {
-      epochMark: this.getEpochMark(input.slot, nextValidatorData),
-      ticketsMark: this.getTicketsMark(input.slot),
+      epochMark: epochMarker,
+      ticketsMark: ticketsMarker,
       stateUpdate,
     };
 
     return Result.ok(result);
   }
+}
+
+function compareWithEncoding<T, D extends DescriptorRecord<T>>(
+  chainSpec: ChainSpec,
+  error: SafroleErrorCode,
+  actual: T | null,
+  expected: ViewOf<T, D> | null,
+  codec: Codec<T>,
+): Result<OK, SafroleErrorCode> {
+  if (actual === null || expected === null) {
+    // if one of them is `null`, both need to be.
+    if (actual !== expected) {
+      return Result.error(error, `${SafroleErrorCode[error]} Expected: ${expected}, got: ${actual}`);
+    }
+    return Result.ok(OK);
+  }
+
+  // compare the literal encoding.
+  const encoded = Encoder.encodeObject(codec, actual, chainSpec);
+  if (!encoded.isEqualTo(expected.encoded())) {
+    return Result.error(error, `${SafroleErrorCode[error]} Expected: ${expected.encoded()}, got: ${encoded}`);
+  }
+
+  return Result.ok(OK);
 }

@@ -4,7 +4,7 @@ import { test } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { SortedSet } from "@typeberry/collections";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { InMemoryTrie, type StateKey, type TrieNodeHash, leafComparator } from "@typeberry/trie";
+import { InMemoryTrie, leafComparator, type StateKey, type TrieNodeHash } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 
 export class TrieTest {

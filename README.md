@@ -1,25 +1,41 @@
 # typeberry 🫐
 
-[![Node.js CI](https://github.com/FluffyLabs/typeberry/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/node.js.yml) [![Publish commits](https://github.com/FluffyLabs/typeberry/actions/workflows/blockchain-git-log.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/blockchain-git-log.yml) [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
+[![JAM Conformance 0.7.0](https://github.com/FluffyLabs/typeberry/actions/workflows/vectors-jam-conformance-070.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/vectors-jam-conformance-070.yml) [![W3F vectors](https://github.com/FluffyLabs/typeberry/actions/workflows/vectors-w3f.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/vectors-w3f.yml) [![Publish commits](https://github.com/FluffyLabs/typeberry/actions/workflows/blockchain-git-log.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/blockchain-git-log.yml) [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 
-Typeberry is a TypeScript implementation of [JAM protocol](https://graypaper.com/).
+Typeberry is a TypeScript implementation of [JAM protocol](https://graypaper.com/) by Fluffy Labs.
+
+**NOTE: Since we are taking part in the JAM Prize, we do not accept any external
+PRs unless the contributor waives any claims to the prize and copy rights for
+the submitted code. By creating the PR you accept this requirement.**
 
 ## Implementation status
 
-- [x] PVM
-- [ ] STF
-- [x] Safrole (without sealing)
-- [x] State Trie
-- [ ] Block Import
-- [ ] Networking
-- [ ] GRANDPA
-- [ ] Data Availability
+Gray Paper compliance can be controlled via `GP_VERSION` environment variable.
+
+- [x] 0.6.7
+- [x] 0.7.0
+- [ ] 0.7.1 (partial)
+
+JAM Prize requirements
+
+- [x] Milestone 1
+    - [x] Block import
+    - [x] W3F test vectors
+    - [x] JAM Conformance Fuzzer
+    - [ ] Performance optimisations
+- [ ] Milestone 2
+    - [x] Networking (partial)
+    - [ ] Fast PVM
+- [ ] Milestone 3
+    - [ ] PVM Recompiler
+- [ ] Milestone 4
+- [ ] Milestone 5
 
 ## Requirements
 
 ```bash
 $ node --version
-v 22.1.0
+v 22.9.0
 ```
 
 We recommend [NVM](https://github.com/nvm-sh/nvm) to install and manage different
@@ -37,6 +53,35 @@ $ npm ci
 $ npm start
 ```
 
+### Running fuzz-target
+
+```bash
+$ npm start -- fuzz-target
+```
+
+### Running with Docker
+
+Build and run typeberry using Docker:
+
+```bash
+# Build the Docker image
+$ docker build -t typeberry .
+
+# Run with default settings
+$ docker run typeberry
+
+# Run with custom arguments
+$ docker run typeberry --config /app/configs/typeberry-dev.json --node-name my-node
+
+# Run with environment variables (e.g., for logging)
+$ docker run -e JAM_LOG=trace GP_VERSION=0.7.0 typeberry
+
+# Run with volume mounts for persistent data
+$ docker run -v $(pwd)/database:/app/database typeberry
+```
+
+The Docker container uses a minimal Alpine Linux image and forwards all arguments to `npm start`.
+
 ### Running the JSON RPC
 
 JSON-RPC does not require `typeberry` to be running, so we just need to point the binary to the correct database.
@@ -44,12 +89,17 @@ JSON-RPC does not require `typeberry` to be running, so we just need to point th
 Note the DB needs to be already initialized.
 
 ```bash
-$ npm start -w @typeberry/rpc -- --genesis-root [genesis state root]
+$ npm start -w @typeberry/rpc 
 ```
 
 ### Additional tooling
 
-- [@typeberry/convert](bin/convert/README.md) - inspect or convert common JAM formats
+- [@typeberry/convert](bin/convert/README.md) - convert common JAM formats
+- [JAM search](https://github.com/fluffylabs/jam-search) - search across all public JAM-related channels
+- [State Viewer](https://github.com/fluffylabs/state-viewer) - load & inspect state of test vectors
+- [PVM Debugger](https://github.com/fluffylabs/pvm-debugger) - load & inspect a PVM program
+- [Gray Paper Reader](https://github.com/fluffylabs/graypaper-reader) - view the Gray Paper
+- [Ananas](https://github.com/tomusdrw/anan-as) - AssemblyScript PVM interpreter
 
 ### Formatting & linting
 
@@ -105,6 +155,9 @@ to execute them.
 $ git clone https://github.com/w3f/jamtestvectors.git
 $ npm run w3f -w @typeberry/test-runner  --  jamtestvectors/**/*.json ../jamtestvectors/erasure_coding/vectors/*
 ```
+
+Since there are multiple sources of test vectors (and their versions may differ),
+all relevant ones can be easily checked out from [our test vectors repository](https://github.com/FluffyLabs/test-vectors).
 
 Obviously it's also possible to run just single test case or part of the test
 cases by altering the glob pattern in the path.

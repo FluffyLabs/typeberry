@@ -1,5 +1,5 @@
 import { DEFAULT_CONFIG, DEV_CONFIG, NODE_DEFAULTS } from "@typeberry/config-node";
-import { type U16, isU16 } from "@typeberry/numbers";
+import { isU16, type U16 } from "@typeberry/numbers";
 import minimist from "minimist";
 import packageJson from "./package.json" with { type: "json" };
 
@@ -10,6 +10,7 @@ Usage:
   jam [options]
   jam [options] dev <dev-validator-index>
   jam [options] import <bin-or-json-blocks>
+  jam [options] [--version=1] fuzz-target [socket-path=/tmp/jam_target.sock]
 
 Options:
   --name                Override node name. Affects networking key and db location.
@@ -26,6 +27,8 @@ export enum Command {
   Dev = "dev",
   /** Import the blocks from CLI and finish. */
   Import = "import",
+  /** Run as a Fuzz Target. */
+  FuzzTarget = "fuzz-target",
 }
 
 export type SharedOptions = {
@@ -35,6 +38,13 @@ export type SharedOptions = {
 
 export type Arguments =
   | CommandArgs<Command.Run, SharedOptions & {}>
+  | CommandArgs<
+      Command.FuzzTarget,
+      SharedOptions & {
+        socket: string | null;
+        version: 0 | 1;
+      }
+    >
   | CommandArgs<
       Command.Dev,
       SharedOptions & {
@@ -48,13 +58,17 @@ export type Arguments =
       }
     >;
 
-function parseSharedOptions(args: minimist.ParsedArgs, withRelPath: (v: string) => string): SharedOptions {
-  const { name } = parseValueOption(args, "name", (v) => v, NODE_DEFAULTS.name);
-  const { config } = parseValueOption(
+function parseSharedOptions(
+  args: minimist.ParsedArgs,
+  withRelPath: (v: string) => string,
+  defaultConfig: typeof DEV_CONFIG | typeof NODE_DEFAULTS.config = NODE_DEFAULTS.config,
+): SharedOptions {
+  const { name } = parseStringOption(args, "name", (v) => v, NODE_DEFAULTS.name);
+  const { config } = parseStringOption(
     args,
     "config",
-    (v) => (v === DEV_CONFIG ? DEV_CONFIG : withRelPath(v)),
-    NODE_DEFAULTS.config,
+    (v) => (v === DEV_CONFIG || v === DEFAULT_CONFIG ? v : withRelPath(v)),
+    defaultConfig,
   );
 
   return {
@@ -63,9 +77,13 @@ function parseSharedOptions(args: minimist.ParsedArgs, withRelPath: (v: string) 
   };
 }
 
-export function parseArgs(input: string[], withRelPath: (v: string) => string): Arguments {
+export function parseArgs(input: string[], withRelPath: (v: string) => string): Arguments | null {
   const args = minimist(input);
   const command = args._.shift() ?? Command.Run;
+  const isHelp = args.help !== undefined;
+  if (isHelp) {
+    return null;
+  }
 
   switch (command) {
     case Command.Run: {
@@ -74,7 +92,7 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
       return { command: Command.Run, args: data };
     }
     case Command.Dev: {
-      const data = parseSharedOptions(args, withRelPath);
+      const data = parseSharedOptions(args, withRelPath, DEV_CONFIG);
       const index = args._.shift();
       if (index === undefined) {
         throw new Error("Missing dev-validator index.");
@@ -85,6 +103,20 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
       }
       assertNoMoreArgs(args);
       return { command: Command.Dev, args: { ...data, index: numIndex } };
+    }
+    case Command.FuzzTarget: {
+      const data = parseSharedOptions(args, withRelPath);
+      const { version } = parseValueOption(args, "version", "number", parseFuzzVersion, 1);
+      const socket = args._.shift() ?? null;
+      assertNoMoreArgs(args);
+      return {
+        command: Command.FuzzTarget,
+        args: {
+          ...data,
+          version,
+          socket,
+        },
+      };
     }
     case Command.Import: {
       const data = parseSharedOptions(args, withRelPath);
@@ -108,10 +140,20 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
   throw new Error(`Invalid arguments: ${JSON.stringify(args)}`);
 }
 
-function parseValueOption<S extends string, T>(
+function parseStringOption<S extends string, T>(
   args: minimist.ParsedArgs,
   option: S,
   parser: (v: string) => T | null,
+  defaultValue: T,
+): Record<S, T> {
+  return parseValueOption(args, option, "string", parser, defaultValue);
+}
+
+function parseValueOption<X, S extends string, T>(
+  args: minimist.ParsedArgs,
+  option: S,
+  typeOfX: "number" | "string",
+  parser: (v: X) => T | null,
   defaultValue: T,
 ): Record<S, T> {
   const val = args[option];
@@ -122,8 +164,9 @@ function parseValueOption<S extends string, T>(
   }
 
   delete args[option];
-  if (typeof val !== "string") {
-    throw new Error(`Option '--${option}' requires an argument.`);
+  const valType = typeof val;
+  if (valType !== typeOfX) {
+    throw new Error(`Option '--${option}' requires an argument of type: ${typeOfX}, got: ${valType}.`);
   }
   try {
     const parsed = parser(val);
@@ -156,3 +199,15 @@ type CommandArgs<T extends Command, Args> = {
   command: T;
   args: Args;
 };
+
+function parseFuzzVersion(v: string | number): 0 | 1 | null {
+  if (v === "") {
+    return null;
+  }
+
+  const parsed = Number(v);
+  if (parsed === 0 || parsed === 1) {
+    return parsed;
+  }
+  throw new Error(`Invalid fuzzer version: ${v}. Must be either 0 or 1`);
+}

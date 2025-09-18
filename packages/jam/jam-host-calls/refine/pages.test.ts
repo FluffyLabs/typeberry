@@ -1,17 +1,17 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
-import { type U64, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU64, type U64 } from "@typeberry/numbers";
 import { HostCallRegisters } from "@typeberry/pvm-host-calls";
 import {
+  gasCounter,
   MemoryBuilder,
   Registers,
-  gasCounter,
   tryAsGas,
   tryAsMemoryIndex,
   tryAsSbrkIndex,
 } from "@typeberry/pvm-interpreter";
-import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
+import { OK, Result } from "@typeberry/utils";
 import {
   type MachineId,
   PagesError,
@@ -67,9 +67,7 @@ function prepareTest(
 }
 
 describe("HostCalls: Pages", () => {
-  const itPost067 = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? it : it.skip;
-
-  itPost067("Should return OK and Void memory", async () => {
+  it("Should return OK and Void memory", async () => {
     const { pages, registers } = prepareTest(Result.ok(OK), 10_000, 10_000, 5, 0);
 
     // when
@@ -79,7 +77,7 @@ describe("HostCalls: Pages", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
   });
 
-  itPost067("Should return OK and set Read-only and Zeroed memory", async () => {
+  it("Should return OK and set Read-only and Zeroed memory", async () => {
     const { pages, registers } = prepareTest(Result.ok(OK), 10_000, 10_000, 5, 1);
 
     // when
@@ -89,7 +87,7 @@ describe("HostCalls: Pages", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
   });
 
-  itPost067("Should return OK and set Read-write and Zeroed memory", async () => {
+  it("Should return OK and set Read-write and Zeroed memory", async () => {
     const { pages, registers } = prepareTest(Result.ok(OK), 10_000, 10_000, 5, 2);
 
     // when
@@ -99,7 +97,7 @@ describe("HostCalls: Pages", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
   });
 
-  itPost067("Should return OK and set Read-only and preserve memory", async () => {
+  it("Should return OK and set Read-only and preserve memory", async () => {
     const { pages, registers } = prepareTest(Result.ok(OK), 10_000, 10_000, 5, 3);
 
     // when
@@ -109,7 +107,7 @@ describe("HostCalls: Pages", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
   });
 
-  itPost067("Should return OK and set Read-write and preserve memory", async () => {
+  it("Should return OK and set Read-write and preserve memory", async () => {
     const { pages, registers } = prepareTest(Result.ok(OK), 10_000, 10_000, 5, 4);
 
     // when
@@ -119,7 +117,7 @@ describe("HostCalls: Pages", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
   });
 
-  itPost067("Should return WHO when machine is unknown", async () => {
+  it("Should return WHO when machine is unknown", async () => {
     const { pages, registers } = prepareTest(Result.error(PagesError.NoMachine), 1, 10_000, 5, 0);
 
     // when
@@ -129,7 +127,7 @@ describe("HostCalls: Pages", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
   });
 
-  itPost067("Should return WHO when provided unknown type request but machine does not exist", async () => {
+  it("Should return WHO when provided unknown type request but machine does not exist", async () => {
     // intentionally setting no machine here.
     const { pages, registers } = prepareTest(Result.error(PagesError.NoMachine), 10_000, 10_000, 5, 16);
 
@@ -140,7 +138,7 @@ describe("HostCalls: Pages", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
   });
 
-  itPost067("Should return HUH when provided unknown type request and machine exist", async () => {
+  it("Should return HUH when provided unknown type request and machine exist", async () => {
     const { pages, registers } = prepareTest(Result.error(PagesError.InvalidOperation), 10_000, 12, 5, 16);
 
     // when
@@ -150,7 +148,7 @@ describe("HostCalls: Pages", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
   });
 
-  itPost067("Should return HUH when page is too low", async () => {
+  it("Should return HUH when page is too low", async () => {
     const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 12, 5, 0);
 
     // when
@@ -160,7 +158,7 @@ describe("HostCalls: Pages", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
   });
 
-  itPost067("Should return HUH when page is too large", async () => {
+  it("Should return HUH when page is too large", async () => {
     const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 2 ** 32 - 1, 12_000, 2);
 
     // when
@@ -170,7 +168,7 @@ describe("HostCalls: Pages", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
   });
 
-  itPost067("Should return HUH when page is too large 2", async () => {
+  it("Should return HUH when page is too large 2", async () => {
     const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 2 ** 20 - 5, 5, 3);
 
     // when
@@ -180,7 +178,7 @@ describe("HostCalls: Pages", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
   });
 
-  itPost067("Should return HUH when attempting to preserve memory of uninitialized page", async () => {
+  it("Should return HUH when attempting to preserve memory of uninitialized page", async () => {
     const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 10_000, 5, 3);
 
     // when
@@ -190,7 +188,7 @@ describe("HostCalls: Pages", () => {
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
   });
 
-  itPost067("Should return HUH when attempting to preserve memory of uninitialized page 2", async () => {
+  it("Should return HUH when attempting to preserve memory of uninitialized page 2", async () => {
     const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 10_000, 5, 4);
 
     // when

@@ -2,7 +2,7 @@ import crypto, { createPublicKey } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { BytesBlob } from "@typeberry/bytes";
-import { ed25519 } from "@typeberry/crypto";
+import { ed25519, initWasm } from "@typeberry/crypto";
 import type { Input } from "@typeberry/crypto/ed25519.js";
 
 const key = BytesBlob.parseBlob("0x3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29");
@@ -62,14 +62,20 @@ export default function run() {
     }),
 
     add("wasm lib", async () => {
-      const result = await ed25519.verify(data);
-      const isCorrect = result.every((x) => x);
-      return isCorrect;
+      await initWasm();
+      return async () => {
+        const result = await ed25519.verify(data);
+        const isCorrect = result.every((x) => x);
+        return isCorrect;
+      };
     }),
 
-    add("wasm lib batch", () => {
-      const isCorrect = ed25519.verifyBatch(data);
-      return isCorrect;
+    add("wasm lib batch", async () => {
+      await initWasm();
+      return () => {
+        const isCorrect = ed25519.verifyBatch(data);
+        return isCorrect;
+      };
     }),
 
     cycle(),

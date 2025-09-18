@@ -1,15 +1,19 @@
 import {
   type EntropyHash,
   EpochMarker,
+  type EpochMarkerView,
+  TicketsMarker,
+  type TicketsMarkerView,
   type TimeSlot,
-  type ValidatorKeys,
   tryAsPerEpochBlock,
   tryAsPerValidator,
+  type ValidatorKeys,
 } from "@typeberry/block";
-import { fromJson } from "@typeberry/block-json";
 import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets.js";
+import { fromJson } from "@typeberry/block-json";
 import { Bytes } from "@typeberry/bytes";
-import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
+import { Decoder, Encoder } from "@typeberry/codec";
+import { asKnownSize, FixedSizeArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import {
@@ -21,12 +25,12 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
 import { type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole.js";
-import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
-import { TicketsOrKeys, ticketFromJson } from "@typeberry/state-json";
-import { validatorDataFromJson } from "@typeberry/state-json";
+import { ENTROPY_ENTRIES, hashComparator, type ValidatorData } from "@typeberry/state";
+import { TicketsOrKeys, ticketFromJson, validatorDataFromJson } from "@typeberry/state-json";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
-import { Result, deepEqual } from "@typeberry/utils";
+import { deepEqual, Result } from "@typeberry/utils";
 import { getChainSpec } from "./spec.js";
+
 namespace safroleFromJson {
   export const ticketEnvelope: FromJson<SignedTicket> = {
     attempt: "number",
@@ -148,7 +152,7 @@ export class Output {
             validators: tryAsPerValidator(output.ok.epoch_mark.validators, spec),
           });
     const tickets = output.ok?.tickets_mark ?? null;
-    const ticketsMark = tickets === null ? null : tryAsPerEpochBlock(tickets, spec);
+    const ticketsMark = tickets === null ? null : TicketsMarker.create({ tickets: tryAsPerEpochBlock(tickets, spec) });
 
     return Result.ok({
       epochMark,
@@ -211,10 +215,16 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const preState = JsonState.toSafroleState(testContent.pre_state, chainSpec);
   const punishSet = SortedSet.fromArrayUnique(hashComparator, testContent.pre_state.post_offenders);
   const safrole = new Safrole(chainSpec, preState, bwasm);
-
-  const result = await safrole.transition({ ...testContent.input, punishSet });
-
   const expectedResult = Output.toSafroleOutput(testContent.output, chainSpec);
+  const { epochMarker, ticketsMarker } = extractMarkers(expectedResult, chainSpec);
+
+  const result = await safrole.transition({
+    ...testContent.input,
+    punishSet,
+    epochMarker,
+    ticketsMarker,
+  });
+
   const expectedState = JsonState.toSafroleState(testContent.post_state, chainSpec);
 
   if (result.isError) {
@@ -231,4 +241,41 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
     );
     deepEqual(state, expectedState);
   }
+}
+function extractMarkers(
+  expectedResult: Result<Omit<OkResult, "stateUpdate">, SafroleErrorCode>,
+  chainSpec: ChainSpec,
+): {
+  epochMarker: EpochMarkerView | null;
+  ticketsMarker: TicketsMarkerView | null;
+} {
+  if (expectedResult.isOk) {
+    const { ok } = expectedResult;
+    const epochMarker =
+      ok.epochMark === null
+        ? null
+        : Decoder.decodeObject(
+            EpochMarker.Codec.View,
+            Encoder.encodeObject(EpochMarker.Codec, ok.epochMark, chainSpec),
+            chainSpec,
+          );
+    const ticketsMarker =
+      ok.ticketsMark === null
+        ? null
+        : Decoder.decodeObject(
+            TicketsMarker.Codec.View,
+            Encoder.encodeObject(TicketsMarker.Codec, ok.ticketsMark, chainSpec),
+            chainSpec,
+          );
+
+    return {
+      epochMarker,
+      ticketsMarker,
+    };
+  }
+
+  return {
+    epochMarker: null,
+    ticketsMarker: null,
+  };
 }

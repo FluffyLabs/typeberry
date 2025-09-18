@@ -1,27 +1,26 @@
 {
   "name": "@typeberry/state-merkleization",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "Serialization and merkelization of the state.",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",
   "main": "index.ts",
   "scripts": {
-    "build": "npm run build -w @typeberry/builder -- --environment PACKAGE_NAME:@typeberry/state-merkleization",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
-    "@typeberry/block": "0.0.1",
-    "@typeberry/bytes": "0.0.1",
-    "@typeberry/codec": "0.0.1",
-    "@typeberry/collections": "0.0.1",
-    "@typeberry/config": "0.0.1",
-    "@typeberry/crypto": "0.0.1",
-    "@typeberry/hash": "0.0.1",
-    "@typeberry/numbers": "0.0.1",
-    "@typeberry/ordering": "0.0.1",
-    "@typeberry/state": "0.0.1",
-    "@typeberry/trie": "0.0.1",
-    "@typeberry/utils": "0.0.1"
+    "@typeberry/block": "*",
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/collections": "*",
+    "@typeberry/config": "*",
+    "@typeberry/crypto": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/ordering": "*",
+    "@typeberry/state": "*",
+    "@typeberry/trie": "*",
+    "@typeberry/utils": "*"
   },
   "type": "module"
 }

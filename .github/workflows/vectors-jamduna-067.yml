@@ -5,6 +5,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   TEST_VECTORS_REF: a0c8a6a66a7f5e9cc270755498e3b811ae38bf93
   GP_VERSION: 0.6.7
@@ -33,7 +37,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/test-runner
+      - run: npm start -w @typeberry/test-runner -- jamduna-067.ts
       - name: Display results
         if: always()
         run: cat ./dist/jamduna-067.txt

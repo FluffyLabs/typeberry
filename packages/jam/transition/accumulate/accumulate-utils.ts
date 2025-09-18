@@ -1,9 +1,10 @@
 import { type EntropyHash, type ServiceId, type TimeSlot, tryAsServiceId } from "@typeberry/block";
-import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report.js";
-import { Encoder, codec } from "@typeberry/codec";
+import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
+import type { WorkReport } from "@typeberry/block/work-report.js";
+import { codec, Encoder } from "@typeberry/codec";
 import { HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { HASH_SIZE, blake2b } from "@typeberry/hash";
+import { blake2b, HASH_SIZE } from "@typeberry/hash";
 import { leBytesAsU32 } from "@typeberry/numbers";
 
 /**
@@ -39,9 +40,9 @@ type NextServiceIdInput = {
 };
 
 const NEXT_ID_CODEC = codec.object({
-  serviceId: codec.u32.asOpaque<ServiceId>(),
+  serviceId: codec.varU32.asOpaque<ServiceId>(),
   entropy: codec.bytes(HASH_SIZE).asOpaque<EntropyHash>(),
-  timeslot: codec.u32.asOpaque<TimeSlot>(),
+  timeslot: codec.varU32.asOpaque<TimeSlot>(),
 });
 
 /**

@@ -1,5 +1,5 @@
 import { Bytes } from "@typeberry/bytes";
-import { Decoder, Encoder, codec, tryAsExactBytes } from "@typeberry/codec";
+import { codec, Decoder, Encoder, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,
@@ -12,7 +12,7 @@ import {
 import { type GasCounter, Registers, tryAsBigGas, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { Compatibility, GpVersion, check, resultToString } from "@typeberry/utils";
+import { check, resultToString } from "@typeberry/utils";
 import { type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -32,14 +32,7 @@ const GAS_REGISTERS_SIZE = tryAsExactBytes(gasAndRegistersCodec.sizeHint);
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/354301354301?v=0.6.7
  */
 export class Invoke implements HostCallHandler {
-  index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual({
-      fallback: 25,
-      versions: {
-        [GpVersion.V0_6_7]: 12,
-      },
-    }),
-  );
+  index = tryAsHostCallIndex(12);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(IN_OUT_REG_1, IN_OUT_REG_2);
@@ -60,6 +53,7 @@ export class Invoke implements HostCallHandler {
     const initialData = Bytes.zero(GAS_REGISTERS_SIZE);
     const readResult = memory.loadInto(initialData.raw, destinationStart);
     if (readResult.isError) {
+      logger.trace(`INVOKE(${machineIndex}) <- PANIC (read)`);
       return PvmExecution.Panic;
     }
 
@@ -68,6 +62,7 @@ export class Invoke implements HostCallHandler {
     // the weird `isWriteable` method.
     const writeResult = memory.storeFrom(destinationStart, initialData.raw);
     if (writeResult.isError) {
+      logger.trace(`INVOKE(${machineIndex}) <- PANIC (write)`);
       return PvmExecution.Panic;
     }
 

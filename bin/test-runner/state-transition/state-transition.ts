@@ -3,18 +3,19 @@ import fs from "node:fs";
 import path from "node:path";
 import { Block, Header } from "@typeberry/block";
 import { blockFromJson, headerFromJson } from "@typeberry/block-json";
-import { Decoder, Encoder, codec } from "@typeberry/codec";
-import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
+import { codec, Decoder, Encoder } from "@typeberry/codec";
+import { ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
-import { SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
+import { keccak, SimpleAllocator, WithHash } from "@typeberry/hash";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { emptyBlock } from "@typeberry/node";
+import { tryAsU32 } from "@typeberry/numbers";
 import { serializeStateUpdate } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
-import { TestState, loadState } from "./state-loader.js";
+import { loadState, TestState } from "./state-loader.js";
 
 export class StateTransitionGenesis {
   static fromJson: FromJson<StateTransitionGenesis> = {
@@ -66,13 +67,17 @@ function loadBlocks(testPath: string) {
     }
     const data = fs.readFileSync(path.join(dir, file), "utf8");
     const parsed = JSON.parse(data);
-    if (file.endsWith("genesis.json")) {
-      const content = parseFromJson(parsed, StateTransitionGenesis.fromJson);
-      const genesisBlock = Block.create({ header: content.header, extrinsic: emptyBlock().extrinsic });
-      blocks.push(genesisBlock);
-    } else {
-      const content = parseFromJson(parsed, StateTransition.fromJson);
-      blocks.push(content.block);
+    try {
+      if (file.endsWith("genesis.json")) {
+        const content = parseFromJson(parsed, StateTransitionGenesis.fromJson);
+        const genesisBlock = Block.create({ header: content.header, extrinsic: emptyBlock().extrinsic });
+        blocks.push(genesisBlock);
+      } else {
+        const content = parseFromJson(parsed, StateTransition.fromJson);
+        blocks.push(content.block);
+      }
+    } catch {
+      // some blocks might be invalid, but that's fine. We just ignore them.
     }
   }
 
@@ -87,8 +92,20 @@ function blockAsView(spec: ChainSpec, block: Block) {
   return blockView;
 }
 
+// A special chain spec, just for some conformance 0.7.0 tests
+// that were run pre-V1 fuzzer version.
+const jamConformance070V0Spec = new ChainSpec({
+  ...tinyChainSpec,
+  maxLookupAnchorAge: tryAsU32(14_400),
+});
+
 export async function runStateTransition(testContent: StateTransition, testPath: string) {
-  const spec = tinyChainSpec;
+  // a bit of a hack, but the new value for `maxLookupAnchorAge` was proposed with V1
+  // version of the fuzzer, yet these tests were still depending on the older value.
+  // To simplify the chain spec, we just special case this one vector here.
+  const spec = testPath.includes("fuzz-reports/0.7.0/traces/1756548916/00000082.json")
+    ? jamConformance070V0Spec
+    : tinyChainSpec;
   const preState = loadState(spec, testContent.pre_state.keyvals);
   const postState = loadState(spec, testContent.post_state.keyvals);
 
@@ -118,6 +135,8 @@ export async function runStateTransition(testContent: StateTransition, testPath:
   assert.deepStrictEqual(testContent.pre_state.state_root.toString(), preStateRoot.toString());
   assert.deepStrictEqual(testContent.post_state.state_root.toString(), postStateRoot.toString());
 
+  const shouldBlockBeRejected = testContent.pre_state.state_root.isEqualTo(testContent.post_state.state_root);
+
   const verifier = new BlockVerifier(stf.hasher, blocksDb);
   // NOTE [ToDr] we skip full verification here, since we can run tests in isolation
   // (i.e. no block history)
@@ -125,6 +144,15 @@ export async function runStateTransition(testContent: StateTransition, testPath:
 
   // now perform the state transition
   const stfResult = await stf.transition(blockView, headerHash.hash);
+  if (shouldBlockBeRejected) {
+    assert.strictEqual(stfResult.isOk, false, "The block should be rejected, yet we imported it.");
+    // there should be no changes.
+    const root = preState.backend.getRootHash();
+    deepEqual(preState, postState);
+    assert.deepStrictEqual(root.toString(), postStateRoot.toString());
+    return;
+  }
+
   if (stfResult.isError) {
     assert.fail(`Expected the transition to go smoothly, got error: ${resultToString(stfResult)}`);
   }

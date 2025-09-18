@@ -1,23 +1,40 @@
 import type { StateRootHash } from "@typeberry/block";
-import { Encoder } from "@typeberry/codec";
-import { SortedSet } from "@typeberry/collections";
-import { TruncatedHashDictionary } from "@typeberry/collections";
+import type { BytesBlob } from "@typeberry/bytes";
+import { codec, Encoder } from "@typeberry/codec";
+import { SortedSet, TruncatedHashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import type { TruncatedHash } from "@typeberry/hash";
+import { HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
 import type { InMemoryState } from "@typeberry/state";
-import { type BytesBlob, InMemoryTrie, type LeafNode, leafComparator } from "@typeberry/trie";
+import { InMemoryTrie, type LeafNode, leafComparator } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
-import { Compatibility, GpVersion, TEST_COMPARE_USING, assertNever } from "@typeberry/utils";
+import { assertNever, TEST_COMPARE_USING } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
-import { type StateEntryUpdate, StateEntryUpdateAction } from "./serialize-state-update.js";
 import { type StateCodec, serialize } from "./serialize.js";
+import { type StateEntryUpdate, StateEntryUpdateAction } from "./serialize-state-update.js";
 
+const TYPICAL_STATE_ITEMS = 50;
+const TYPICAL_STATE_ITEM_LEN = 50;
+
+const stateEntriesSequenceCodec = codec.sequenceVarLen(codec.pair(codec.bytes(TRUNCATED_HASH_SIZE), codec.blob));
 /**
  * Full, in-memory state represented as serialized entries dictionary.
  *
  * State entries may be wrapped into `SerializedState` to access the contained values.
  */
 export class StateEntries {
+  static Codec = codec.custom<StateEntries>(
+    {
+      name: "StateEntries",
+      sizeHint: {
+        isExact: false,
+        bytes: TYPICAL_STATE_ITEMS * (HASH_SIZE + TYPICAL_STATE_ITEM_LEN),
+      },
+    },
+    (e, v) => stateEntriesSequenceCodec.encode(e, Array.from(v.entries)),
+    (d) => StateEntries.fromEntriesUnsafe(stateEntriesSequenceCodec.decode(d)),
+    (s) => stateEntriesSequenceCodec.skip(s),
+  );
+
   /** Turn in-memory state into it's serialized form. */
   static serializeInMemory(spec: ChainSpec, state: InMemoryState) {
     return new StateEntries(convertInMemoryStateToDictionary(spec, state));
@@ -39,7 +56,9 @@ export class StateEntries {
    * NOTE: There is no verification happening, so the state may be
    * incomplete. Use only if you are sure this is all the entries needed.
    */
-  static fromEntriesUnsafe(entries: Iterable<[StateKey | TruncatedHash, BytesBlob]>) {
+  static fromEntriesUnsafe(
+    entries: Iterable<[StateKey | TruncatedHash, BytesBlob] | readonly [StateKey | TruncatedHash, BytesBlob]>,
+  ) {
     return new StateEntries(TruncatedHashDictionary.fromEntries(entries));
   }
 
@@ -47,7 +66,7 @@ export class StateEntries {
 
   /** When comparing, we can safely ignore `trieCache` and just use entries. */
   [TEST_COMPARE_USING]() {
-    return this.entries;
+    return Object.fromEntries(this.entries);
   }
 
   [Symbol.iterator]() {
@@ -108,9 +127,7 @@ function convertInMemoryStateToDictionary(
   doSerialize(serialize.statistics); // C(13)
   doSerialize(serialize.accumulationQueue); // C(14)
   doSerialize(serialize.recentlyAccumulated); // C(15)
-  if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-    doSerialize(serialize.accumulationOutputLog); // C(16)
-  }
+  doSerialize(serialize.accumulationOutputLog); // C(16)
 
   // services
   for (const [serviceId, service] of state.services.entries()) {

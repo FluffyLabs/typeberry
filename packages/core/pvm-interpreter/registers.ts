@@ -1,4 +1,4 @@
-import { type Opaque, check, ensure } from "@typeberry/utils";
+import { check, ensure, type Opaque } from "@typeberry/utils";
 
 export const NO_OF_REGISTERS = 13;
 const REGISTER_SIZE_SHIFT = 3;

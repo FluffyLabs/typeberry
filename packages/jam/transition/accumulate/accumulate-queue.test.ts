@@ -1,12 +1,12 @@
 import { describe, it } from "node:test";
 import { tryAsCoreIndex, tryAsPerEpochBlock, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
-import { RefineContext } from "@typeberry/block/refine-context.js";
+import { RefineContext, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
-import { type WorkPackageHash, WorkPackageInfo, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
+import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { FixedSizeArray, HashSet, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, FixedSizeArray, HashSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";

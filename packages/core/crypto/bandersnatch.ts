@@ -1,6 +1,6 @@
-import { derive_public_key } from "@fluffylabs/bandersnatch";
 import { Bytes } from "@typeberry/bytes";
-import { type Opaque, check } from "@typeberry/utils";
+import { bandersnatch } from "@typeberry/native";
+import { check, type Opaque } from "@typeberry/utils";
 
 /** Bandersnatch public key size. */
 export const BANDERSNATCH_KEY_BYTES = 32;
@@ -59,7 +59,7 @@ export type BlsKey = Opaque<Bytes<BLS_KEY_BYTES>, "BlsKey">;
 
 /** Derive a Bandersnatch public key from a seed. */
 export function publicKey(seed: Uint8Array): BandersnatchKey {
-  const key = derive_public_key(seed);
+  const key = bandersnatch.derive_public_key(seed);
 
   check(key[0] === 0, "Invalid Bandersnatch public key derived from seed");
 

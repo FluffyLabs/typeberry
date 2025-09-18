@@ -4,6 +4,8 @@ const childProcess = require("node:child_process");
 const packageToBuild = process.env.PACKAGE_NAME;
 let outDir = process.env.PACKAGE_OUT;
 
+const isRelease = process.env.IS_RELEASE !== undefined;
+
 if (!packageToBuild) {
   throw new Error(`Missing 'PACKAGE_NAME' environment variable.`);
 }
@@ -24,10 +26,19 @@ const originalPackageJson = require(`${packageToBuild}/package.json`);
 const packageJson = JSON.stringify(
   {
     name: packageToBuild,
-    version: `${originalPackageJson.version}-${commitHashResult.toString("utf8").trim()}`,
+    version: isRelease
+      ? originalPackageJson.version
+      : `${originalPackageJson.version}-${commitHashResult.toString("utf8").trim()}`,
     main: "index.js",
     author: originalPackageJson.author,
     license: originalPackageJson.license,
+    sideEffects: false,
+    exports: {
+      ".": {
+        import: "./index.js",
+        require: "./index.cjs",
+      },
+    },
   },
   null,
   2,
@@ -43,6 +54,7 @@ packages/**
 );
 
 module.exports = {
-  outFile: `${DIST}/index.js`,
+  esmOutFile: `${DIST}/index.js`,
+  cjsOutFile: `${DIST}/index.cjs`,
   typesInput: `${DIST}/tools/builder/pkg.d.ts`,
 };

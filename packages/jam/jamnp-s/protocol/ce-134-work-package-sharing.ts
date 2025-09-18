@@ -1,7 +1,7 @@
 import type { CoreIndex, WorkReportHash } from "@typeberry/block";
-import { WorkPackageInfo } from "@typeberry/block/work-report.js";
+import { WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
+import { type CodecRecord, codec, Decoder, Encoder } from "@typeberry/codec";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";

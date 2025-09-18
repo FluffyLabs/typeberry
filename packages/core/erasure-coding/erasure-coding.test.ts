@@ -1,20 +1,23 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { type PerValidator, tryAsPerValidator } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
+// NOTE: we can't initialize `wasm` from `@typeberry/crypto`, because
+// for some reason this dependency is not not de-duplicated.
+import { init } from "@typeberry/native";
 import { deepEqual } from "@typeberry/utils";
 import { SEGMENT_FULL, SEGMENT_TINY, TEST_DATA, WORKPACKAGE_FULL, WORKPACKAGE_TINY } from "./ec-test-data.js";
 import {
-  N_CHUNKS_REQUIRED,
-  POINT_LENGTH,
   chunksToShards,
   decodeData,
   decodePiece,
   encodePoints,
   join,
   lace,
+  N_CHUNKS_REQUIRED,
+  POINT_LENGTH,
   padAndEncodeData,
   shardsToChunks,
   split,
@@ -44,7 +47,9 @@ function getRandomItems<T, N extends number>(arr: [number, T][], n: N): FixedSiz
   return FixedSizeArray.new(result, n);
 }
 
-describe("erasure coding: general", () => {
+before(async () => await init.reedSolomon());
+
+describe("erasure coding: general", async () => {
   const data = TEST_DATA.data as string;
   const segmentEc = TEST_DATA.segment.segments[0].segment_ec;
 
@@ -70,7 +75,7 @@ describe("erasure coding: general", () => {
   });
 });
 
-describe("erasure coding: full", () => {
+describe("erasure coding: full", async () => {
   const wp_data = WORKPACKAGE_FULL.data as string;
   const wp_shards = WORKPACKAGE_FULL.shards;
   const seg_data = SEGMENT_FULL.data as string;
@@ -129,7 +134,7 @@ describe("erasure coding: full", () => {
   });
 });
 
-describe("erasure coding: tiny", () => {
+describe("erasure coding: tiny", async () => {
   const wp_data = WORKPACKAGE_TINY.data as string;
   const wp_shards = WORKPACKAGE_TINY.shards;
   const seg_data = SEGMENT_TINY.data as string;
@@ -209,7 +214,7 @@ describe("erasure coding: tiny", () => {
   });
 });
 
-describe("erasure coding: split", () => {
+describe("erasure coding: split", async () => {
   it("should split data", () => {
     const test = [
       {
@@ -252,7 +257,7 @@ describe("erasure coding: split", () => {
   });
 });
 
-describe("erasure coding: join", () => {
+describe("erasure coding: join", async () => {
   it("should join data", () => {
     const test = [
       {
@@ -315,7 +320,7 @@ describe("erasure coding: join", () => {
   });
 });
 
-describe("erasure coding: unzip", () => {
+describe("erasure coding: unzip", async () => {
   it("should unzip data", () => {
     const test = [
       {
@@ -363,7 +368,7 @@ describe("erasure coding: unzip", () => {
   });
 });
 
-describe("erasure coding: lace", () => {
+describe("erasure coding: lace", async () => {
   it("should lace data", () => {
     const test = [
       {

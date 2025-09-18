@@ -1,6 +1,6 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { type Opaque, check } from "@typeberry/utils";
+import { check, type Opaque } from "@typeberry/utils";
 import { FIRST_BIT_SET, FIRST_BIT_SET_NEG, FIRST_TWO_BITS_SET, FIRST_TWO_BITS_SET_NEG } from "./masks.js";
 
 export type StateKey = Opaque<OpaqueHash, "trieStateKey">;

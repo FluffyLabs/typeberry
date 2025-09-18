@@ -2,22 +2,20 @@ import type { ServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { type Encode, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { blake2b } from "@typeberry/hash";
-import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
+import { tryAsU32 } from "@typeberry/numbers";
 import {
   SafroleData,
   type ServicesUpdate,
   type State,
-  type StorageKey,
+  tryAsLookupHistorySlots,
   type UpdatePreimage,
   UpdatePreimageKind,
   type UpdateService,
   UpdateServiceKind,
   type UpdateStorage,
   UpdateStorageKind,
-  tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { Compatibility, GpVersion, asOpaqueType, assertNever } from "@typeberry/utils";
+import { assertNever } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
 import { type StateCodec, serialize } from "./serialize.js";
 
@@ -58,27 +56,17 @@ function* serializeRemovedServices(servicesRemoved: ServiceId[] | undefined): Ge
   }
 }
 
-function getLegacyKey(serviceId: ServiceId, rawKey: StorageKey): StorageKey {
-  const SERVICE_ID_BYTES = 4;
-  const serviceIdAndKey = new Uint8Array(SERVICE_ID_BYTES + rawKey.length);
-  serviceIdAndKey.set(u32AsLeBytes(serviceId));
-  serviceIdAndKey.set(rawKey.raw, SERVICE_ID_BYTES);
-  return asOpaqueType(BytesBlob.blobFrom(blake2b.hashBytes(serviceIdAndKey).raw));
-}
-
 function* serializeStorage(storage: UpdateStorage[] | undefined): Generator<StateEntryUpdate> {
   for (const { action, serviceId } of storage ?? []) {
     switch (action.kind) {
       case UpdateStorageKind.Set: {
-        const key = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-          ? action.storage.key
-          : getLegacyKey(serviceId, action.storage.key);
+        const key = action.storage.key;
         const codec = serialize.serviceStorage(serviceId, key);
         yield [StateEntryUpdateAction.Insert, codec.key, action.storage.value];
         break;
       }
       case UpdateStorageKind.Remove: {
-        const key = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? action.key : getLegacyKey(serviceId, action.key);
+        const key = action.key;
         const codec = serialize.serviceStorage(serviceId, key);
         yield [StateEntryUpdateAction.Remove, codec.key, EMPTY_BLOB];
         break;
@@ -216,6 +204,10 @@ function* serializeBasicKeys(spec: ChainSpec, update: Partial<State>) {
 
   if (update.recentlyAccumulated !== undefined) {
     yield doSerialize(update.recentlyAccumulated, serialize.recentlyAccumulated); // C(15)
+  }
+
+  if (update.accumulationOutputLog !== undefined) {
+    yield doSerialize(update.accumulationOutputLog, serialize.accumulationOutputLog); // C(16)
   }
 }
 

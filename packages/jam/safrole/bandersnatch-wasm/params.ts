@@ -1,5 +1,16 @@
-import type { TransferListItem } from "node:worker_threads";
+import type { Transferable } from "node:worker_threads";
 import type { WithTransferList } from "@typeberry/concurrent/messages.js";
+
+/**
+ * Opaque number assigned to a verifier.
+ *
+ * Since the verifier is not "returned" from the worker, we just
+ * need some identifier that will be passed to other methods
+ * to choose which verifier should be used.
+ *
+ * NOTE: Semantically it's most sensible for this index to be just epoch number.
+ */
+export type VerifierIndex = number;
 
 export enum Method {
   RingCommitment = 0,
@@ -10,8 +21,8 @@ export enum Method {
 export class Response implements WithTransferList {
   constructor(public readonly data: Uint8Array) {}
 
-  getTransferList(): TransferListItem[] {
-    return [];
+  getTransferList(): Transferable[] {
+    return [this.data.buffer as ArrayBuffer];
   }
 }
 
@@ -22,14 +33,14 @@ export type RawParams =
     }
   | {
       method: Method.BatchVerifyTickets;
-      keys: Uint8Array;
+      ringSize: number;
+      commitment: Uint8Array;
       ticketsData: Uint8Array;
       contextLength: number;
     }
   | {
       method: Method.VerifySeal;
-      keys: Uint8Array;
-      authorIndex: number;
+      authorKey: Uint8Array;
       signature: Uint8Array;
       payload: Uint8Array;
       auxData: Uint8Array;
@@ -38,7 +49,7 @@ export type RawParams =
 export class Params implements WithTransferList {
   constructor(public readonly params: RawParams) {}
 
-  getTransferList(): TransferListItem[] {
+  getTransferList(): Transferable[] {
     return [];
   }
 }

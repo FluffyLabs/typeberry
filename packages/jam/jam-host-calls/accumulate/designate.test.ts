@@ -4,8 +4,7 @@ import { tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
-import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES } from "@typeberry/crypto";
-import { ED25519_KEY_BYTES } from "@typeberry/crypto";
+import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
@@ -14,9 +13,9 @@ import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
-import { Compatibility, GpVersion, Result } from "@typeberry/utils";
-import { PartialStateMock } from "../externalities/partial-state-mock.js";
+import { Result } from "@typeberry/utils";
 import { UnprivilegedError } from "../externalities/partial-state.js";
+import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
 import { Designate } from "./designate.js";
 
@@ -144,11 +143,7 @@ describe("HostCalls: Designate", () => {
     await designate.execute(gas, registers, memory);
 
     // then
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
-    } else {
-      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
-    }
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
     assert.deepStrictEqual(accumulate.validatorsData.length, 0);
   });
 });

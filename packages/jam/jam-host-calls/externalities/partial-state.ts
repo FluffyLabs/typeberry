@@ -5,8 +5,7 @@ import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
-import type { LookupHistorySlots, PerCore } from "@typeberry/state";
-import type { ValidatorData } from "@typeberry/state";
+import type { LookupHistorySlots, PerCore, ValidatorData } from "@typeberry/state";
 import type { OK, Result } from "@typeberry/utils";
 
 /** Size of the transfer memo. */

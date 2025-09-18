@@ -9,11 +9,11 @@ import {
 } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, Descriptor, type SizeHint, codec } from "@typeberry/codec";
-import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { type CodecRecord, codec, Descriptor, type SizeHint } from "@typeberry/codec";
+import { asKnownSize, type KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
-import { Compatibility, GpVersion, type Opaque, WithDebug, asOpaqueType, check } from "@typeberry/utils";
+import { tryAsU64, type U32, type U64 } from "@typeberry/numbers";
+import { asOpaqueType, type Opaque, WithDebug } from "@typeberry/utils";
 
 /**
  * `B_S`: The basic minimum balance which all services require.
@@ -55,31 +55,18 @@ export const ignoreValueWithDefault = <T>(defaultValue: T) =>
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/108301108301?v=0.6.7
  */
 export class ServiceAccountInfo extends WithDebug {
-  static Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-    ? codec.Class(ServiceAccountInfo, {
-        codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
-        balance: codec.u64,
-        accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
-        onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
-        storageUtilisationBytes: codec.u64,
-        gratisStorage: codec.u64,
-        storageUtilisationCount: codec.u32,
-        created: codec.u32.convert((x) => x, tryAsTimeSlot),
-        lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
-        parentService: codec.u32.convert((x) => x, tryAsServiceId),
-      })
-    : codec.Class(ServiceAccountInfo, {
-        codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
-        balance: codec.u64,
-        accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
-        onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
-        storageUtilisationBytes: codec.u64,
-        storageUtilisationCount: codec.u32,
-        gratisStorage: ignoreValueWithDefault(tryAsU64(0)),
-        created: ignoreValueWithDefault(tryAsTimeSlot(0)),
-        lastAccumulation: ignoreValueWithDefault(tryAsTimeSlot(0)),
-        parentService: ignoreValueWithDefault(tryAsServiceId(0)),
-      });
+  static Codec = codec.Class(ServiceAccountInfo, {
+    codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
+    balance: codec.u64,
+    accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
+    onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
+    storageUtilisationBytes: codec.u64,
+    gratisStorage: codec.u64,
+    storageUtilisationCount: codec.u32,
+    created: codec.u32.convert((x) => x, tryAsTimeSlot),
+    lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
+    parentService: codec.u32.convert((x) => x, tryAsServiceId),
+  });
 
   static create(a: CodecRecord<ServiceAccountInfo>) {
     return new ServiceAccountInfo(
@@ -101,11 +88,6 @@ export class ServiceAccountInfo extends WithDebug {
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/119e01119e01?v=0.6.7
    */
   static calculateThresholdBalance(items: U32, bytes: U64, gratisStorage: U64): U64 {
-    check(
-      gratisStorage === tryAsU64(0) || Compatibility.isGreaterOrEqual(GpVersion.V0_6_7),
-      "Gratis storage cannot be non-zero before 0.6.7",
-    );
-
     const storageCost =
       BASE_SERVICE_BALANCE + ELECTIVE_ITEM_BALANCE * BigInt(items) + ELECTIVE_BYTE_BALANCE * bytes - gratisStorage;
 

@@ -1,9 +1,8 @@
 import { isMainThread, parentPort } from "node:worker_threads";
 
 import { parseBootnode } from "@typeberry/config-node";
-import { ed25519 } from "@typeberry/crypto";
-import { LmdbBlocks } from "@typeberry/database-lmdb";
-import { LmdbRoot } from "@typeberry/database-lmdb";
+import { ed25519, initWasm } from "@typeberry/crypto";
+import { LmdbBlocks, LmdbRoot } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { setup } from "@typeberry/jamnp-s";
 import { Level, Logger } from "@typeberry/logger";
@@ -33,9 +32,14 @@ if (!isMainThread) {
  * stream handlers.
  */
 export async function main(channel: MessageChannelStateMachine<NetworkInit, NetworkStates>) {
+  await initWasm();
   logger.trace(`🛜 Network starting ${channel.currentState()}`);
   // Await the configuration object
-  const ready = await channel.waitForState<NetworkReady>("ready(network)");
+  // TODO [ToDr] The whole state machine needs to die.
+  const ready: MessageChannelStateMachine<NetworkReady, NetworkStates> =
+    (channel.currentState().stateName as string) !== "ready(network)"
+      ? await channel.waitForState<NetworkReady>("ready(network)")
+      : (channel as unknown as MessageChannelStateMachine<NetworkReady, NetworkStates>);
 
   const finished = await ready.doUntil<Finished>("finished", async (worker, port) => {
     const config = worker.getConfig();
@@ -75,6 +79,8 @@ export async function main(channel: MessageChannelStateMachine<NetworkInit, Netw
   finished.currentState().close(channel);
 }
 
+const workerFile = new URL("./bootstrap-network.mjs", import.meta.url);
+
 export async function spawnWorker() {
-  return spawnWorkerGeneric(new URL("./bootstrap.mjs", import.meta.url), logger, "ready(main)", new MainReady());
+  return spawnWorkerGeneric(workerFile, logger, "ready(main)", new MainReady());
 }

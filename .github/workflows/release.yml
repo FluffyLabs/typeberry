@@ -1,0 +1,144 @@
+name: Release
+
+permissions:
+  contents: write    # update release notes
+  packages: write    # push to ghcr.io
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  publish-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract version from package.json
+      id: version
+      run: |
+        VERSION=$(node -p "require('./package.json').version")
+        IS_RELEASE=${{ github.event_name == 'release' }}
+        if [ "$IS_RELEASE" != "true" ]; then
+          GIT_HASH=$(git rev-parse --short HEAD)
+          VERSION="${VERSION}-${GIT_HASH}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          ghcr.io/${{ github.repository_owner }}/typeberry
+        tags: |
+          type=semver,pattern={{version}},value=${{ steps.version.outputs.version }}
+          type=raw,value=latest,enable=${{ github.event_name == 'release' && !github.event.release.prerelease }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64
+
+  publish-npm-lib:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+        cache: 'npm'
+        registry-url: 'https://registry.npmjs.org'
+
+    - run: npm ci
+    - run: npm run build -w @typeberry/lib
+
+    - name: Build @typeberry/lib (release)
+      if: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
+      run: IS_RELEASE=1 npm run build -w @typeberry/lib
+
+    - name: Publish library to npm
+      working-directory: ./dist/lib
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      run: npm publish --access public
+
+  publish-npm-jam:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+        cache: 'npm'
+        registry-url: 'https://registry.npmjs.org'
+
+    - run: npm ci
+    - run: npm run build -w @typeberry/jam
+
+    - name: Build @typeberry/jam (release)
+      if: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
+      run: IS_RELEASE=1 npm run build -w @typeberry/jam
+
+    - name: Publish @typeberry/jam to npm
+      working-directory: ./dist/jam
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      run: npm publish --access public
+
+  create-github-release-assets:
+    if: ${{ github.event_name == 'release' }}
+    runs-on: ubuntu-latest
+    needs: [publish-docker, publish-npm-lib, publish-npm-jam]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Compute release version (strip leading v)
+      id: ver
+      run: |
+        RAW="${{ github.event.release.tag_name }}"
+        echo "version=${RAW#v}" >> "$GITHUB_OUTPUT"
+
+    - name: Update Release Notes
+      uses: softprops/action-gh-release@v1
+      with:
+        body: |
+          ## 🐳 Docker Images
+
+          ```bash
+          # GitHub Container Registry
+          docker pull ghcr.io/${{ github.repository_owner }}/typeberry:${{ steps.ver.outputs.version }}
+          ```
+
+          ## 📦 NPM Packages
+
+          ```bash
+          npm install @typeberry/lib@${{ steps.ver.outputs.version }}
+          npm install @typeberry/jam@${{ steps.ver.outputs.version }}
+          ```
+
+          ---
+          ${{ github.event.release.body }}
+        append_body: true

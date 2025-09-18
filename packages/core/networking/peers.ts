@@ -1,15 +1,10 @@
 import type { ReadableWritablePair } from "node:stream/web";
+import type { PeerAddress, PeerId } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { Logger } from "@typeberry/logger";
-import type { OK, Opaque } from "@typeberry/utils";
+import type { OK } from "@typeberry/utils";
 
-/** Peer connection details. */
-export type PeerAddress = {
-  /** IPV4 peer address */
-  host: string;
-  /** port number */
-  port: number;
-};
+export type { PeerAddress, PeerId } from "@typeberry/config";
 
 /**
  * Error callback maybe be triggered multiple times.
@@ -46,9 +41,6 @@ export interface Stream extends ReadableWritablePair<Uint8Array, Uint8Array> {
   /** Destroy the stream. */
   destroy(): Promise<void>;
 }
-
-/** Peer id. */
-export type PeerId = Opaque<string, "peerId">;
 
 /** Peer interface. */
 export interface Peer {

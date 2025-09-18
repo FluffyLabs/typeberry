@@ -1,12 +1,12 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsCoreIndex } from "@typeberry/block";
-import { WorkPackageInfo } from "@typeberry/block/work-report.js";
+import { WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { OK } from "@typeberry/utils";
-import { ClientHandler, STREAM_KIND, ServerHandler } from "./ce-134-work-package-sharing.js";
+import { ClientHandler, ServerHandler, STREAM_KIND } from "./ce-134-work-package-sharing.js";
 import { testClientServer } from "./test-utils.js";
 
 const MOCK_CORE_INDEX = tryAsCoreIndex(1);

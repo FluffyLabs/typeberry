@@ -1,7 +1,13 @@
-import { type TimeSlot, type ValidatorIndex, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
+import {
+  type HeaderHash,
+  type TimeSlot,
+  tryAsTimeSlot,
+  tryAsValidatorIndex,
+  type ValidatorIndex,
+} from "@typeberry/block";
+import type { Bootnode } from "@typeberry/config";
 import type { NodeConfiguration } from "@typeberry/config-node";
 import type { Ed25519SecretSeed, KeySeed } from "@typeberry/crypto/key-derivation.js";
-import type { Bootnode } from "@typeberry/jamnp-s";
 
 export const DEFAULT_DEV_CONFIG = {
   genesisPath: "",
@@ -15,60 +21,37 @@ export const DEFAULT_DEV_CONFIG = {
 export class JamConfig {
   static new({
     isAuthoring,
-    blocksToImport,
     nodeName,
     nodeConfig,
-    devConfig,
-    seedConfig,
-    networkConfig,
+    devConfig = null,
+    networkConfig = null,
+    ancestry = [],
   }: {
     isAuthoring?: boolean;
-    blocksToImport?: string[] | null;
     nodeName: string;
     nodeConfig: NodeConfiguration;
-    devConfig?: DevConfig;
-    seedConfig?: SeedDevConfig;
-    networkConfig?: NetworkConfig;
+    devConfig?: DevConfig | null;
+    networkConfig?: NetworkConfig | null;
+    ancestry?: [HeaderHash, TimeSlot][];
   }) {
-    let fullConfig: FullDevConfig = devConfig ?? { ...DEFAULT_DEV_CONFIG };
-
-    if (seedConfig !== undefined) {
-      fullConfig = { ...fullConfig, ...seedConfig };
-    }
-
-    return new JamConfig(
-      isAuthoring ?? false,
-      blocksToImport ?? null,
-      nodeName,
-      nodeConfig,
-      fullConfig,
-      networkConfig ?? null,
-    );
+    return new JamConfig(isAuthoring ?? false, nodeName, nodeConfig, devConfig, networkConfig, ancestry);
   }
 
   private constructor(
     /** Whether we should be authoring blocks. */
     public readonly isAuthoring: boolean,
-    /** Paths to JSON or binary blocks to import (ordered). */
-    public readonly blocksToImport: string[] | null,
     /** Node name. */
     public readonly nodeName: string,
     /** Node starting configuration. */
     public readonly node: NodeConfiguration,
     /** Developer specific configuration. */
-    public readonly dev: FullDevConfig,
+    public readonly dev: DevConfig | null,
     /** Networking options. */
     public readonly network: NetworkConfig | null,
+    /** Optional pre-genesis ancestry information. */
+    public readonly ancestry: [HeaderHash, TimeSlot][],
   ) {}
 }
-
-/**
- * Configuration object for developers.
- * Allow to specify parameters in more detail.
- *
- * NOTE: Mostly required for TestNet
- */
-export type FullDevConfig = DevConfig | (DevConfig & SeedDevConfig);
 
 /** Validator key seeds in developer mode. */
 export type SeedDevConfig = {
@@ -82,12 +65,16 @@ export type SeedDevConfig = {
 
 /** Developer mode configuration. */
 export type DevConfig = {
+  // TODO [ToDr] This should be removed. genesis should be loaded into JIP4 ChainSpec in TCI
+  // and passed as `NodeConfiguration`.
   /** Path to genesis state JSON description file. */
   genesisPath: string;
   /** Genesis time slot. */
   timeSlot: TimeSlot;
   /** Validator index for current node. */
   validatorIndex: ValidatorIndex;
+  /** Validator seeds in development mode. */
+  seed?: SeedDevConfig;
 };
 
 /** Networking configuration. */

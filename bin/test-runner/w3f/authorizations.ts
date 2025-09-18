@@ -1,6 +1,6 @@
 import type { CoreIndex, TimeSlot } from "@typeberry/block";
+import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { fromJson } from "@typeberry/block-json";
-import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import { type FromJson, json } from "@typeberry/json-parser";
 import {

@@ -1,13 +1,13 @@
 {
   "name": "@typeberry/shuffling",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "The Fisher-Yates shuffle function based on GP",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.1",
-    "@typeberry/hash": "0.0.1",
-    "@typeberry/numbers": "0.0.1",
-    "@typeberry/utils": "0.0.1"
+    "@typeberry/bytes": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/convert",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "Convert JAM-related types between different formats.",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",
@@ -12,22 +12,26 @@
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
-    "@typeberry/block": "0.0.1",
-    "@typeberry/block-json": "0.0.1",
-    "@typeberry/bytes": "0.0.1",
-    "@typeberry/codec": "0.0.1",
-    "@typeberry/collections": "0.0.1",
-    "@typeberry/config": "0.0.1",
-    "@typeberry/database": "0.0.1",
-    "@typeberry/hash": "0.0.1",
-    "@typeberry/json-parser": "0.0.1",
-    "@typeberry/logger": "0.0.1",
-    "@typeberry/pvm-spi-decoder": "0.0.1",
-    "@typeberry/state": "0.0.1",
-    "@typeberry/state-json": "0.0.1",
-    "@typeberry/state-merkleization": "0.0.1",
-    "@typeberry/utils": "0.0.1",
-    "json-bigint-patch": "^0.0.8",
-    "minimist": "^1.2.8"
+    "@typeberry/block": "*",
+    "@typeberry/block-json": "*",
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/collections": "*",
+    "@typeberry/config": "*",
+    "@typeberry/config-node": "*",
+    "@typeberry/database": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/json-parser": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/pvm-spi-decoder": "*",
+    "@typeberry/state": "*",
+    "@typeberry/state-json": "*",
+    "@typeberry/state-merkleization": "*",
+    "@typeberry/utils": "*",
+    "json-bigint-patch": "0.0.8",
+    "minimist": "1.2.8"
+  },
+  "devDependencies": {
+    "@types/minimist": "1.2.5"
   }
 }

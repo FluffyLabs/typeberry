@@ -5,10 +5,11 @@ import { fromJson } from "@typeberry/block-json";
 import type { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import {
-  N_CHUNKS_REQUIRED,
-  N_CHUNKS_TOTAL,
   chunksToShards,
   decodeDataAndTrim,
+  initEc,
+  N_CHUNKS_REQUIRED,
+  N_CHUNKS_TOTAL,
   padAndEncodeData,
   shardsToChunks,
 } from "@typeberry/erasure-coding";
@@ -28,6 +29,8 @@ export class EcTest {
 
 export async function runEcTest(test: EcTest, path: string) {
   const spec = getChainSpec(path);
+
+  await initEc();
 
   it("should encode data & decode it back", () => {
     const shards = padAndEncodeData(test.data);

@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/json-parser",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "Strict JSON parser with complex type support.",
   "main": "index.ts",
   "scripts": {

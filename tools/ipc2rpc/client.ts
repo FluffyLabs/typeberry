@@ -3,7 +3,7 @@ import { Socket } from "node:net";
 import type { ChainSpec } from "@typeberry/config";
 import { JamnpIpcHandler } from "@typeberry/ext-ipc/jamnp/handler.js";
 import { IpcSender } from "@typeberry/ext-ipc/server.js";
-import { type StreamId, ce129, up0 } from "@typeberry/jamnp-s";
+import { ce129, type StreamId, up0 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
 import { handleMessageFragmentation } from "@typeberry/networking";
 
@@ -34,12 +34,18 @@ export function startClient(
     client.on(
       "data",
       handleMessageFragmentation(
-        (data) => {
+        async (data) => {
           try {
-            messageHandler.onSocketMessage(data);
+            // to avoid buffering too much data in our memory, we pause
+            // reading more data from the socket and only resume when the message
+            // is processed.
+            client.pause();
+            await messageHandler.onSocketMessage(data);
           } catch (e) {
             logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
             client.end();
+          } finally {
+            client.resume();
           }
         },
         () => {

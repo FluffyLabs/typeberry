@@ -1,4 +1,5 @@
-import { type U32, tryAsU32 } from "@typeberry/numbers";
+import { Logger } from "@typeberry/logger";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { ArgsDecoder } from "./args-decoder/args-decoder.js";
 import { createResults } from "./args-decoder/args-decoding-results.js";
 import { ArgumentType } from "./args-decoder/argument-type.js";
@@ -6,28 +7,13 @@ import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-
 import { assemblify } from "./assemblify.js";
 import { BasicBlocks } from "./basic-blocks/index.js";
 import { type Gas, type GasCounter, gasCounter, tryAsBigGas, tryAsGas } from "./gas.js";
+import { Instruction } from "./instruction.js";
 import { instructionGasMap } from "./instruction-gas-map.js";
 import { InstructionResult } from "./instruction-result.js";
-import { Instruction } from "./instruction.js";
 import { Memory } from "./memory/index.js";
 import { PAGE_SIZE } from "./memory/memory-consts.js";
 import { alignToPageSize } from "./memory/memory-utils.js";
 import { tryAsPageNumber } from "./memory/pages/page-utils.js";
-import {
-  NoArgsDispatcher,
-  OneImmDispatcher,
-  OneOffsetDispatcher,
-  OneRegOneExtImmDispatcher,
-  OneRegOneImmDispatcher,
-  OneRegOneImmOneOffsetDispatcher,
-  OneRegTwoImmsDispatcher,
-  ThreeRegsDispatcher,
-  TwoImmsDispatcher,
-  TwoRegsDispatcher,
-  TwoRegsOneImmDispatcher,
-  TwoRegsOneOffsetDispatcher,
-  TwoRegsTwoImmsDispatcher,
-} from "./ops-dispatchers/index.js";
 import {
   BitOps,
   BitRotationOps,
@@ -43,6 +29,21 @@ import {
   ShiftOps,
   StoreOps,
 } from "./ops/index.js";
+import {
+  NoArgsDispatcher,
+  OneImmDispatcher,
+  OneOffsetDispatcher,
+  OneRegOneExtImmDispatcher,
+  OneRegOneImmDispatcher,
+  OneRegOneImmOneOffsetDispatcher,
+  OneRegTwoImmsDispatcher,
+  ThreeRegsDispatcher,
+  TwoImmsDispatcher,
+  TwoRegsDispatcher,
+  TwoRegsOneImmDispatcher,
+  TwoRegsOneOffsetDispatcher,
+  TwoRegsTwoImmsDispatcher,
+} from "./ops-dispatchers/index.js";
 import { JumpTable } from "./program-decoder/jump-table.js";
 import { Mask } from "./program-decoder/mask.js";
 import { ProgramDecoder } from "./program-decoder/program-decoder.js";
@@ -52,12 +53,12 @@ import { Status } from "./status.js";
 
 type InterpreterOptions = {
   useSbrkGas?: boolean;
-  ignoreInstructionGas?: boolean;
 };
+
+const logger = Logger.new(import.meta.filename, "pvm");
 
 export class Interpreter {
   private readonly useSbrkGas: boolean;
-  private readonly ignoreInstructionGas: boolean;
   private registers = new Registers();
   private code: Uint8Array = new Uint8Array();
   private mask = Mask.empty();
@@ -85,9 +86,8 @@ export class Interpreter {
   private basicBlocks: BasicBlocks;
   private jumpTable = JumpTable.empty();
 
-  constructor({ useSbrkGas = false, ignoreInstructionGas = false }: InterpreterOptions = {}) {
+  constructor({ useSbrkGas = false }: InterpreterOptions = {}) {
     this.useSbrkGas = useSbrkGas;
-    this.ignoreInstructionGas = ignoreInstructionGas;
     this.argsDecoder = new ArgsDecoder();
     this.basicBlocks = new BasicBlocks();
     const mathOps = new MathOps(this.registers);
@@ -157,6 +157,7 @@ export class Interpreter {
 
   printProgram() {
     const p = assemblify(this.code, this.mask);
+    // biome-ignore lint/suspicious/noConsole: We do want to print that.
     console.table(p);
     return p;
   }
@@ -183,7 +184,7 @@ export class Interpreter {
     const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
     const isValidInstruction = Instruction[currentInstruction] !== undefined;
     const gasCost = instructionGasMap[currentInstruction] ?? instructionGasMap[Instruction.TRAP];
-    const underflow = this.ignoreInstructionGas ? false : this.gas.sub(gasCost);
+    const underflow = this.gas.sub(gasCost);
     if (underflow) {
       this.status = Status.OOG;
       return this.status;
@@ -191,6 +192,8 @@ export class Interpreter {
     const argsType = instructionArgumentTypeMap[currentInstruction] ?? ArgumentType.NO_ARGUMENTS;
     const argsResult = this.argsDecodingResults[argsType];
     this.argsDecoder.fillArgs(this.pc, argsResult);
+
+    logger.insane(`[PC: ${this.pc}] ${Instruction[currentInstruction]}`);
 
     if (!isValidInstruction) {
       this.instructionResult.status = Result.PANIC;
@@ -252,12 +255,6 @@ export class Interpreter {
     }
 
     if (this.instructionResult.status !== null) {
-      // All abnormal terminations should be interpreted as TRAP and we should subtract the gas. In case of FAULT we have to do it manually at the very end.
-      if (this.instructionResult.status === Result.FAULT || this.instructionResult.status === Result.FAULT_ACCESS) {
-        // TODO [ToDr] underflow?
-        this.gas.sub(instructionGasMap[Instruction.TRAP]);
-      }
-
       switch (this.instructionResult.status) {
         case Result.FAULT:
           this.status = Status.FAULT;
@@ -273,6 +270,7 @@ export class Interpreter {
           this.status = Status.HOST;
           break;
       }
+      logger.insane(`[PC: ${this.pc}] Status: ${Result[this.instructionResult.status]}`);
       return this.status;
     }
 

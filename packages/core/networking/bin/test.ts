@@ -95,6 +95,6 @@ const parsePort = (v: string | undefined) => {
 };
 
 main(parsePort(args[0]), parsePort(args[1])).catch((e) => {
-  console.error(e);
+  logger.error(e);
   process.exit(-1);
 });

@@ -5,6 +5,7 @@ import * as fs from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import util from "node:util";
+import { initWasm } from "@typeberry/crypto";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
 
@@ -37,6 +38,7 @@ export async function main(
     ignored?: string[];
   } = {},
 ) {
+  await initWasm();
   const relPath = `${import.meta.dirname}/../..`;
   const tests: TestAndRunner[] = [];
   const ignoredPatterns = ignored ?? [];
@@ -141,7 +143,6 @@ function prepareTest(runners: Runner<unknown>[], testContent: unknown, file: str
 
     try {
       const parsedTest = parseFromJson(testContent, fromJson);
-
       return {
         shouldSkip: false,
         runner: name,

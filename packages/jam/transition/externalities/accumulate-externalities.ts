@@ -11,29 +11,29 @@ import {
 } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import type { AuthorizerHash } from "@typeberry/block/work-report.js";
+import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
+import { blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import {
   AccumulationStateUpdate,
+  clampU64ToU32,
   EjectError,
   ForgetPreimageError,
   NewServiceError,
-  type PartialState,
   type PartiallyUpdatedState,
+  type PartialState,
   PendingTransfer,
   type PreimageStatus,
   PreimageStatusKind,
   ProvidePreimageError,
   RequestPreimageError,
+  slotsToPreimageStatus,
   type TRANSFER_MEMO_BYTES,
   TransferError,
   UnprivilegedError,
   UpdatePrivilegesError,
-  clampU64ToU32,
-  slotsToPreimageStatus,
   writeServiceIdAsLeBytes,
 } from "@typeberry/jam-host-calls";
 import type { AccountsInfo } from "@typeberry/jam-host-calls/info.js";
@@ -41,7 +41,7 @@ import type { AccountsLookup } from "@typeberry/jam-host-calls/lookup.js";
 import type { AccountsRead } from "@typeberry/jam-host-calls/read.js";
 import type { AccountsWrite } from "@typeberry/jam-host-calls/write.js";
 import { Logger } from "@typeberry/logger";
-import { type U64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { maxU64, sumU64, tryAsU32, tryAsU64, type U64 } from "@typeberry/numbers";
 import {
   AutoAccumulate,
   LookupHistoryItem,
@@ -50,12 +50,12 @@ import {
   PrivilegedServices,
   ServiceAccountInfo,
   type StorageKey,
+  tryAsLookupHistorySlots,
   UpdatePreimage,
   UpdateService,
   type ValidatorData,
-  tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { Compatibility, GpVersion, OK, Result, assertNever, check } from "@typeberry/utils";
+import { assertNever, Compatibility, check, GpVersion, OK, Result } from "@typeberry/utils";
 
 /**
  * Number of storage items required for ejection of the service.
@@ -70,7 +70,7 @@ const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 /** https://graypaper.fluffylabs.dev/#/7e6ff6a/117101117101?v=0.6.7 */
 const LOOKUP_HISTORY_ENTRY_BYTES = tryAsU64(81);
 /** https://graypaper.fluffylabs.dev/#/7e6ff6a/117a01117a01?v=0.6.7 */
-const BASE_STORAGE_BYTES = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsU64(34) : tryAsU64(32);
+const BASE_STORAGE_BYTES = tryAsU64(34);
 
 const logger = Logger.new(import.meta.filename, "externalities");
 
@@ -475,15 +475,13 @@ export class AccumulateExternalities
 
   updateValidatorsData(validatorsData: PerValidator<ValidatorData>): Result<OK, UnprivilegedError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/362802362d02?v=0.6.7 */
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      const validatorsManager = this.updatedState.getPrivilegedServices().validatorsManager;
+    const validatorsManager = this.updatedState.getPrivilegedServices().validatorsManager;
 
-      if (validatorsManager !== this.currentServiceId) {
-        logger.trace(
-          `Current service id (${this.currentServiceId}) is not a validators manager. (expected: ${validatorsManager}) and cannot update validators data. Ignoring`,
-        );
-        return Result.error(UnprivilegedError);
-      }
+    if (validatorsManager !== this.currentServiceId) {
+      logger.trace(
+        `Current service id (${this.currentServiceId}) is not a validators manager. (expected: ${validatorsManager}) and cannot update validators data. Ignoring`,
+      );
+      return Result.error(UnprivilegedError);
     }
 
     this.updatedState.stateUpdate.validatorsData = validatorsData;
@@ -528,14 +526,11 @@ export class AccumulateExternalities
     validatorsManager: ServiceId | null,
     autoAccumulate: [ServiceId, ServiceGas][],
   ): Result<OK, UpdatePrivilegesError> {
-    // NOTE [ToDr] I guess we should not fail if the services don't exist. */
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-      /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
-      const currentManager = this.updatedState.getPrivilegedServices().manager;
+    /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
+    const currentManager = this.updatedState.getPrivilegedServices().manager;
 
-      if (currentManager !== this.currentServiceId) {
-        return Result.error(UpdatePrivilegesError.UnprivilegedService);
-      }
+    if (currentManager !== this.currentServiceId) {
+      return Result.error(UpdatePrivilegesError.UnprivilegedService);
     }
 
     if (manager === null || validatorsManager === null) {
@@ -601,6 +596,7 @@ export class AccumulateExternalities
 
   eject(destination: ServiceId | null, previousCodeHash: PreimageHash): Result<OK, EjectError> {
     const service = this.getServiceInfo(destination);
+
     if (service === null || destination === null) {
       return Result.error(EjectError.InvalidService, "Service missing");
     }
@@ -647,6 +643,14 @@ export class AccumulateExternalities
     );
     // and finally add an ejected service.
     this.updatedState.stateUpdate.services.servicesRemoved.push(destination);
+
+    // take care of the code preimage and its lookup history
+    // Safe, because we know the preimage is valid, and it's the code of the service, which is bounded by maximal service code size anyway (much smaller than 2**32 bytes).
+    const preimageLength = tryAsU32(Number(l));
+    this.updatedState.stateUpdate.services.preimages.push(
+      UpdatePreimage.remove({ serviceId: destination, hash: previousCodeHash, length: preimageLength }),
+    );
+
     return Result.ok(OK);
   }
 
@@ -665,13 +669,10 @@ export class AccumulateExternalities
     const countDiff = isAddingNew ? 1 : isRemoving ? -1 : 0;
     const lenDiff = (data?.length ?? 0) - (current?.length ?? 0);
     const baseStorageDiff = isAddingNew ? BASE_STORAGE_BYTES : isRemoving ? -BASE_STORAGE_BYTES : 0n;
-    const rawKeyDiff = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? isAddingNew
-        ? rawKeyBytes
-        : isRemoving
-          ? -rawKeyBytes
-          : 0n
-      : 0n;
+    const keyDiffRemoving = isRemoving ? -rawKeyBytes : 0n;
+    const keyDiffAdding = isAddingNew ? rawKeyBytes : 0n;
+    const rawKeyDiff = keyDiffRemoving + keyDiffAdding;
+
     const serviceInfo = this.getCurrentServiceInfo();
     const items = serviceInfo.storageUtilisationCount + countDiff;
     const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + baseStorageDiff + rawKeyDiff;

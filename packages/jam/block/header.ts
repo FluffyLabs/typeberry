@@ -1,21 +1,20 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
-import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
-import { BANDERSNATCH_KEY_BYTES, type BandersnatchKey } from "@typeberry/crypto";
+import { type CodecRecord, codec, type DescribedBy } from "@typeberry/codec";
+import { BANDERSNATCH_KEY_BYTES, type BandersnatchKey, ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { BANDERSNATCH_VRF_SIGNATURE_BYTES, type BandersnatchVrfSignature } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE, WithHash } from "@typeberry/hash";
 import { Compatibility, GpVersion, WithDebug } from "@typeberry/utils";
 import {
+  codecPerEpochBlock,
+  codecPerValidator,
   type EntropyHash,
   type PerEpochBlock,
   type PerValidator,
   type StateRootHash,
   type TimeSlot,
-  type ValidatorIndex,
-  codecPerEpochBlock,
-  codecPerValidator,
   tryAsTimeSlot,
   tryAsValidatorIndex,
+  type ValidatorIndex,
 } from "./common.js";
 import type { ExtrinsicHash, HeaderHash } from "./hash.js";
 import { Ticket } from "./tickets.js";
@@ -43,6 +42,22 @@ export class ValidatorKeys extends WithDebug {
     super();
   }
 }
+
+export class TicketsMarker extends WithDebug {
+  static Codec = codec.Class(TicketsMarker, {
+    tickets: codecPerEpochBlock(Ticket.Codec),
+  });
+
+  static create({ tickets }: CodecRecord<TicketsMarker>) {
+    return new TicketsMarker(tickets);
+  }
+
+  private constructor(public readonly tickets: PerEpochBlock<Ticket>) {
+    super();
+  }
+}
+
+export type TicketsMarkerView = DescribedBy<typeof TicketsMarker.Codec.View>;
 
 /**
  * For the first block in a new epoch, the epoch marker is set
@@ -74,6 +89,8 @@ export class EpochMarker extends WithDebug {
   }
 }
 
+export type EpochMarkerView = DescribedBy<typeof EpochMarker.Codec.View>;
+
 /**
  * Return an encoded header without the seal components.
  *
@@ -96,7 +113,7 @@ const legacyDescriptor = {
   extrinsicHash: codec.bytes(HASH_SIZE).asOpaque<ExtrinsicHash>(),
   timeSlotIndex: codec.u32.asOpaque<TimeSlot>(),
   epochMarker: codec.optional(EpochMarker.Codec),
-  ticketsMarker: codec.optional(codecPerEpochBlock(Ticket.Codec)),
+  ticketsMarker: codec.optional(TicketsMarker.Codec),
   offendersMarker: codec.sequenceVarLen(codec.bytes(ED25519_KEY_BYTES).asOpaque<Ed25519Key>()),
   bandersnatchBlockAuthorIndex: codec.u16.asOpaque<ValidatorIndex>(),
   entropySource: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque<BandersnatchVrfSignature>(),
@@ -119,7 +136,7 @@ export class Header extends WithDebug {
           extrinsicHash: codec.bytes(HASH_SIZE).asOpaque<ExtrinsicHash>(),
           timeSlotIndex: codec.u32.asOpaque<TimeSlot>(),
           epochMarker: codec.optional(EpochMarker.Codec),
-          ticketsMarker: codec.optional(codecPerEpochBlock(Ticket.Codec)),
+          ticketsMarker: codec.optional(TicketsMarker.Codec),
           bandersnatchBlockAuthorIndex: codec.u16.asOpaque<ValidatorIndex>(),
           entropySource: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque<BandersnatchVrfSignature>(),
           offendersMarker: codec.sequenceVarLen(codec.bytes(ED25519_KEY_BYTES).asOpaque<Ed25519Key>()),
@@ -152,7 +169,7 @@ export class Header extends WithDebug {
    * `H_w`: Winning tickets provides the series of 600 slot sealing "tickets"
    *        for the next epoch.
    */
-  public ticketsMarker: PerEpochBlock<Ticket> | null = null;
+  public ticketsMarker: TicketsMarker | null = null;
   /** `H_i`: Block author's index in the current validator set. */
   public bandersnatchBlockAuthorIndex: ValidatorIndex = tryAsValidatorIndex(0);
   /** `H_v`: Entropy-yielding VRF signature. */

@@ -1,8 +1,8 @@
 export { add, complete, cycle, suite } from "benny";
-import { configure as rawConfigure, save as rawSave } from "benny";
-import type { Config } from "benny/lib/internal/common-types.js";
 
 import * as path from "node:path";
+import { configure as rawConfigure, save as rawSave } from "benny";
+import type { Config } from "benny/lib/internal/common-types.js";
 
 export const DIST_DIR = path.resolve(`${import.meta.dirname}/../../dist`);
 export const BENCHMARKS_DIR = path.resolve(`${import.meta.dirname}/../../benchmarks`);

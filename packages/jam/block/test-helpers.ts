@@ -3,10 +3,10 @@ import { Decoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import { Block } from "./block.js";
-import testBlockData_0_6_5 from "./test-block-0-6-5.js";
 import testBlockData from "./test-block.js";
-import testWorkReportData_0_6_5 from "./test-work-report-0-6-5.js";
+import testBlockData_0_6_5 from "./test-block-0-6-5.js";
 import testWorkReportData from "./test-work-report.js";
+import testWorkReportData_0_6_5 from "./test-work-report-0-6-5.js";
 
 export function testBlockHex() {
   if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)) {

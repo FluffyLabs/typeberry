@@ -46,6 +46,10 @@ export class JumpTable {
     return new JumpTable(0, new Uint8Array());
   }
 
+  getSize() {
+    return this.indices.length;
+  }
+
   copyFrom(jt: JumpTable) {
     this.indices = jt.indices;
   }

@@ -1,9 +1,7 @@
 import type { EntropyHash } from "@typeberry/block";
 import {
   G_I,
-  K,
   MAX_REPORT_DEPENDENCIES,
-  N,
   O,
   Q,
   T,
@@ -17,21 +15,20 @@ import {
 } from "@typeberry/block/gp-constants.js";
 import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { Encoder, codec } from "@typeberry/codec";
+import { codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import type { IFetchExternalities } from "@typeberry/jam-host-calls/fetch.js";
-import { type U64, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU16, tryAsU32, tryAsU64, type U64 } from "@typeberry/numbers";
 import {
   BASE_SERVICE_BALANCE,
   ELECTIVE_BYTE_BALANCE,
   ELECTIVE_ITEM_BALANCE,
   MAX_RECENT_HISTORY,
 } from "@typeberry/state";
-import { GAS_TO_INVOKE_WORK_REPORT } from "../accumulate/accumulate.js";
+import { GAS_TO_INVOKE_WORK_REPORT } from "../accumulate/accumulate-state.js";
 import { Operand } from "../accumulate/operand.js";
 import { REPORT_TIMEOUT_GRACE_PERIOD } from "../assurances.js";
-import { L } from "../reports/verify-contextual.js";
 
 // https://github.com/gavofyork/graypaper/pull/414
 // 0.7.0 encoding is used for prior versions as well.
@@ -93,9 +90,9 @@ function getEncodedConstants(chainSpec: ChainSpec) {
     H: tryAsU16(MAX_RECENT_HISTORY),
     I: tryAsU16(MAX_NUMBER_OF_WORK_ITEMS),
     J: tryAsU16(MAX_REPORT_DEPENDENCIES),
-    K: tryAsU16(K),
-    L: tryAsU32(L),
-    N: tryAsU16(N),
+    K: tryAsU16(chainSpec.maxTicketsPerExtrinsic),
+    L: tryAsU32(chainSpec.maxLookupAnchorAge),
+    N: tryAsU16(chainSpec.ticketsPerValidator),
     O: tryAsU16(O),
     P: tryAsU16(chainSpec.slotDuration),
     Q: tryAsU16(Q),

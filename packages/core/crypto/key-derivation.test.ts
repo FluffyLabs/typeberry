@@ -1,21 +1,24 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { SimpleAllocator } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import type { BandersnatchKey } from "./bandersnatch.js";
 import type { Ed25519Key } from "./ed25519.js";
+import { initWasm } from "./index.js";
 import {
   type BandersnatchSecretSeed,
-  type Ed25519SecretSeed,
-  type KeySeed,
-  SEED_SIZE,
   deriveBandersnatchPublicKey,
   deriveBandersnatchSecretKey,
   deriveEd25519PublicKey,
   deriveEd25519SecretKey,
+  type Ed25519SecretSeed,
+  type KeySeed,
+  SEED_SIZE,
   trivialSeed,
 } from "./key-derivation.js";
+
+before(initWasm);
 
 describe("Key Derivation: trivial seed", () => {
   it("should derive a valid seed: 0", () => {

@@ -4,24 +4,25 @@ import {
   type EntropyHash,
   type ServiceId,
   type TimeSlot,
-  type WorkReportHash,
   tryAsCoreIndex,
   tryAsPerEpochBlock,
   tryAsServiceGas,
   tryAsServiceId,
   tryAsTimeSlot,
+  type WorkReportHash,
 } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import { RefineContext } from "@typeberry/block/refine-context.js";
+import { RefineContext, type WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
-import { type WorkPackageHash, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
+import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
+  type AccumulationOutput,
   InMemoryService,
   InMemoryState,
   PreimageItem,
@@ -30,8 +31,9 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
-import { Compatibility, GpVersion, deepEqual, resultToString } from "@typeberry/utils";
-import { Accumulate, type AccumulateInput, type AccumulateState } from "./accumulate.js";
+import { deepEqual, resultToString } from "@typeberry/utils";
+import { Accumulate } from "./accumulate.js";
+import type { AccumulateInput, AccumulateState } from "./accumulate-state.js";
 
 type TestServiceInfo = {
   lastAccumulation?: TimeSlot;
@@ -144,7 +146,7 @@ describe("accumulate", () => {
         tryAsServiceId(1729),
         hashFromString("0x3ecc56accce719e5214e8dbb034f49d5cf0c6942da3e5f3f047d1693cc60c74a"),
         preimageBlob,
-        { lastAccumulation: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? tryAsTimeSlot(47) : undefined },
+        { lastAccumulation: tryAsTimeSlot(47) },
       ],
     ]);
     const expectedState: AccumulateState = InMemoryState.partial(tinyChainSpec, {
@@ -179,7 +181,7 @@ describe("accumulate", () => {
       ),
       accumulationQueue: tryAsPerEpochBlock([[], [], [], [], [], [], [], [], [], [], [], []], tinyChainSpec),
     });
-    const expectedOutput = Bytes.zero(HASH_SIZE);
+    const expectedOutput: AccumulationOutput[] = [];
     const accumulate = new Accumulate(tinyChainSpec, state);
 
     // when
@@ -190,7 +192,7 @@ describe("accumulate", () => {
     state.applyUpdate(output.ok.stateUpdate);
 
     // then
-    deepEqual(output.ok.root, expectedOutput);
+    deepEqual(output.ok.accumulationOutputLog.array, expectedOutput);
     deepEqual(state, expectedState);
   });
 });

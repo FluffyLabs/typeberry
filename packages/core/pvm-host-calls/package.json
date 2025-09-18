@@ -1,0 +1,21 @@
+{
+  "name": "@typeberry/pvm-host-calls",
+  "version": "0.0.5",
+  "description": "PVM host calls",
+  "main": "index.ts",
+  "dependencies": {
+    "@typeberry/logger": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/pvm-interpreter": "*",
+    "@typeberry/pvm-program": "*",
+    "@typeberry/pvm-spi-decoder": "*",
+    "@typeberry/utils": "*"
+  },
+  "scripts": {
+    "start": "tsx ./bin.ts",
+    "test": "tsx --test $(find . -type f -name '*.test.ts'     | tr '\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0",
+  "type": "module"
+}

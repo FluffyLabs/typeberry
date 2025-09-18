@@ -23,17 +23,11 @@
  *     - `SerializedState<StateEntries>`: serialized state represented as a simple in-memory
  *        hashmap of `key -> value` entries.
  */
+
+export * from "./binary-merkleization.js";
+export * from "./keys.js";
+export * from "./loader.js";
+export * from "./serialize.js";
 export * from "./serialize-state-update.js";
 export * from "./serialized-state.js";
 export * from "./state-entries.js";
-export * from "./serialize.js";
-export * from "./keys.js";
-export * from "./binary-merkleization.js";
-export * from "./loader.js";
-
-// Re-export from dependent packages.
-export * as bytes from "@typeberry/bytes";
-export * as config from "@typeberry/config";
-export * as state from "@typeberry/state";
-export * as trie from "@typeberry/trie";
-export * as utils from "@typeberry/utils";

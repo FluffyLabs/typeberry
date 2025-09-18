@@ -1,22 +1,21 @@
 {
   "name": "@typeberry/safrole",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "Safrole implementation based on the Gray Paper.",
   "main": "index.ts",
   "dependencies": {
-    "@fluffylabs/bandersnatch": "^0.1.0-c67985f",
-    "@typeberry/block": "0.0.1",
-    "@typeberry/bytes": "0.0.1",
-    "@typeberry/codec": "0.0.1",
-    "@typeberry/collections": "0.0.1",
-    "@typeberry/concurrent": "0.0.1",
-    "@typeberry/config": "0.0.1",
-    "@typeberry/crypto": "0.0.1",
-    "@typeberry/hash": "0.0.1",
-    "@typeberry/numbers": "0.0.1",
-    "@typeberry/ordering": "0.0.1",
-    "@typeberry/state": "0.0.1",
-    "@typeberry/utils": "0.0.1"
+    "@typeberry/block": "*",
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/collections": "*",
+    "@typeberry/concurrent": "*",
+    "@typeberry/config": "*",
+    "@typeberry/crypto": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/ordering": "*",
+    "@typeberry/state": "*",
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

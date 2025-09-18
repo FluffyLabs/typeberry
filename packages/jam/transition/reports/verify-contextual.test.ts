@@ -1,9 +1,9 @@
 import { describe, it } from "node:test";
 import { tryAsTimeSlot } from "@typeberry/block";
 import { ReportGuarantee } from "@typeberry/block/guarantees.js";
-import { WorkPackageInfo } from "@typeberry/block/work-report.js";
+import { WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { Bytes } from "@typeberry/bytes";
-import { HashDictionary, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import { tinyChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
@@ -205,7 +205,7 @@ describe("Reports.verifyContextualValidity", () => {
       isOk: false,
       isError: true,
       error: ReportsError.SegmentRootLookupInvalid,
-      details: "Lookup anchor slot's too old. Got: 1, minimal: 5600",
+      details: "Lookup anchor slot's too old. Got: 1, minimal: 19976",
     });
   });
 

@@ -5,7 +5,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import type { StorageKey } from "@typeberry/state";
-import { Compatibility, GpVersion, type Result, asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType, type Result, resultToString } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { clampU64ToU32 } from "./utils.js";
@@ -32,14 +32,7 @@ const IN_OUT_REG = 7;
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/334901334901?v=0.6.7
  */
 export class Write implements HostCallHandler {
-  index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual({
-      fallback: 3,
-      versions: {
-        [GpVersion.V0_6_7]: 4,
-      },
-    }),
-  );
+  index = tryAsHostCallIndex(4);
   gasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10);
 
@@ -67,6 +60,7 @@ export class Write implements HostCallHandler {
     const rawStorageKey = new Uint8Array(storageKeyLengthClamped);
     const keyLoadingResult = memory.loadInto(rawStorageKey, storageKeyStartAddress);
     if (keyLoadingResult.isError) {
+      logger.trace("WRITE() <- PANIC");
       return PvmExecution.Panic;
     }
 
@@ -78,6 +72,7 @@ export class Write implements HostCallHandler {
     const valueLoadingResult = memory.loadInto(value, valueStart);
     // Note [MaSo] this is ok to return bcs if valueLength is 0, then this panic won't happen
     if (valueLoadingResult.isError) {
+      logger.trace(`WRITE(${storageKey})}) <- PANIC`);
       return PvmExecution.Panic;
     }
 
@@ -86,7 +81,8 @@ export class Write implements HostCallHandler {
 
     // a
     const result = this.account.write(storageKey, maybeValue);
-    logger.trace(`WRITE(${storageKey}, ${maybeValue?.toStringTruncated()}) <- ${result}`);
+    logger.trace(`WRITE(${storageKey}, ${maybeValue?.toStringTruncated()}) <- ${resultToString(result)}`);
+
     if (result.isError) {
       regs.set(IN_OUT_REG, HostCallResult.FULL);
       return;

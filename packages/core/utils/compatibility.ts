@@ -1,32 +1,22 @@
 export enum GpVersion {
-  V0_6_5 = "0.6.5",
-  V0_6_6 = "0.6.6",
   V0_6_7 = "0.6.7",
-  V0_7_0 = "0.7.0-preview",
+  V0_7_0 = "0.7.0",
   V0_7_1 = "0.7.1-preview",
 }
 
 export enum TestSuite {
   W3F_DAVXY = "w3f-davxy",
-  W3F = "w3f",
   JAMDUNA = "jamduna",
-  JAVAJAM = "javajam",
 }
 
-export const DEFAULT_SUITE = TestSuite.W3F;
+export const DEFAULT_SUITE = TestSuite.W3F_DAVXY;
 
-const ALL_VERSIONS_IN_ORDER = [
-  GpVersion.V0_6_5,
-  GpVersion.V0_6_6,
-  GpVersion.V0_6_7,
-  GpVersion.V0_7_0,
-  GpVersion.V0_7_1,
-];
+const ALL_VERSIONS_IN_ORDER = [GpVersion.V0_6_7, GpVersion.V0_7_0, GpVersion.V0_7_1];
 
 const env = typeof process === "undefined" ? {} : process.env;
-export const DEFAULT_VERSION = GpVersion.V0_6_7;
-export let CURRENT_VERSION = parseCurrentVersion(env.GP_VERSION);
-export let CURRENT_SUITE = (env.TEST_SUITE as TestSuite) ?? DEFAULT_SUITE;
+export const DEFAULT_VERSION = GpVersion.V0_7_0;
+export let CURRENT_VERSION = parseCurrentVersion(env.GP_VERSION) ?? DEFAULT_VERSION;
+export let CURRENT_SUITE = parseCurrentSuite(env.TEST_SUITE) ?? DEFAULT_SUITE;
 
 function parseCurrentVersion(env?: string): GpVersion | undefined {
   if (env === undefined) {
@@ -41,9 +31,20 @@ function parseCurrentVersion(env?: string): GpVersion | undefined {
   return version;
 }
 
+function parseCurrentSuite(env?: string): TestSuite | undefined {
+  if (env === undefined) return undefined;
+  const val = env as TestSuite;
+  if (!Object.values(TestSuite).includes(val)) {
+    throw new Error(
+      `Configured environment variable TEST_SUITE is unknown: '${env}'. Use one of: ${Object.values(TestSuite)}`,
+    );
+  }
+  return val;
+}
+
 export class Compatibility {
   static override(version?: GpVersion) {
-    CURRENT_VERSION = version;
+    CURRENT_VERSION = version ?? DEFAULT_VERSION;
   }
 
   static overrideSuite(suite: TestSuite) {
@@ -88,7 +89,10 @@ export class Compatibility {
   static selectIfGreaterOrEqual<T>({
     fallback,
     versions,
-  }: { fallback: T; versions: Partial<Record<GpVersion, T>> }): T {
+  }: {
+    fallback: T;
+    versions: Partial<Record<GpVersion, T>>;
+  }): T {
     for (const version of ALL_VERSIONS_IN_ORDER.toReversed()) {
       const value = versions[version];
       if (value !== undefined && Compatibility.isGreaterOrEqual(version)) {

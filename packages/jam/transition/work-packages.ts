@@ -1,13 +1,15 @@
 import { type CodeHash, type HeaderHash, type ServiceId, tryAsCoreIndex, tryAsServiceGas } from "@typeberry/block";
-import { type WorkPackage, tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
+import { tryAsWorkItemsCount, type WorkPackage } from "@typeberry/block/work-package.js";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
-import { HASH_SIZE, blake2b } from "@typeberry/hash";
+import { blake2b, HASH_SIZE } from "@typeberry/hash";
+import { Missing } from "@typeberry/jam-host-calls/missing.js";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
+import { PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
+import { HostCallsManager } from "@typeberry/pvm-host-calls/host-calls-manager.js";
 import { type Gas, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { Program } from "@typeberry/pvm-program";
 import { Result } from "@typeberry/utils";
@@ -143,7 +145,7 @@ export class WorkPackageExecutor {
 
 class PvmExecutor {
   private readonly pvm: PvmHostCallExtension;
-  private hostCalls = new HostCalls();
+  private hostCalls = new HostCallsManager({ missing: new Missing() });
   private pvmInstanceManager = new PvmInstanceManager(4);
 
   constructor(private serviceCode: BytesBlob) {

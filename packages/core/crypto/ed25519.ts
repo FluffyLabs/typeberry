@@ -1,7 +1,7 @@
 import * as ed from "@noble/ed25519";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { type Opaque, check } from "@typeberry/utils";
-import { verify_ed25519, verify_ed25519_batch } from "ed25519-wasm/pkg/ed25519_wasm.js";
+import { ed25519 } from "@typeberry/native";
+import { check, type Opaque } from "@typeberry/utils";
 
 /** ED25519 private key size. */
 export const ED25519_PRIV_KEY_BYTES = 32;
@@ -95,7 +95,7 @@ export async function verify<T extends BytesBlob>(input: Input<T>[]): Promise<bo
     offset += messageLength;
   }
 
-  const result = Array.from(verify_ed25519(data)).map((x) => x === 1);
+  const result = Array.from(ed25519.verify_ed25519(data)).map((x) => x === 1);
   return Promise.resolve(result);
 }
 
@@ -117,5 +117,5 @@ export async function verifyBatch<T extends BytesBlob>(input: Input<T>[]): Promi
 
   const data = BytesBlob.blobFromParts(first, ...rest).raw;
 
-  return Promise.resolve(verify_ed25519_batch(data));
+  return Promise.resolve(ed25519.verify_ed25519_batch(data));
 }

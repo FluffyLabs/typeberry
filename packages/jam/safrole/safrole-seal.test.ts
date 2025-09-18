@@ -2,11 +2,11 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import {
   Header,
-  ValidatorKeys,
   tryAsPerEpochBlock,
   tryAsPerValidator,
   tryAsTimeSlot,
   tryAsValidatorIndex,
+  ValidatorKeys,
 } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
@@ -20,6 +20,7 @@ import { SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 import { SafroleSeal } from "./safrole-seal.js";
+
 const bandersnatch = BandernsatchWasm.new({ synchronous: true });
 
 if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)) {

@@ -3,9 +3,9 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U8, tryAsU8 } from "@typeberry/numbers";
-import { type Opaque, WithDebug, asOpaqueType } from "@typeberry/utils";
-import { codecKnownSizeArray } from "./codec.js";
+import { tryAsU8, type U8 } from "@typeberry/numbers";
+import { asOpaqueType, type Opaque, WithDebug } from "@typeberry/utils";
+import { codecKnownSizeArray, codecWithContext } from "./codec.js";
 
 /**
  * The index of a ticket entry per validator.
@@ -66,11 +66,6 @@ export class Ticket extends WithDebug {
   }
 }
 
-/** `K`: Max number of tickets which may be submitted in a single extrinsic. */
-export const MAX_NUMBER_OF_TICKETS = 16;
-export type MAX_NUMBER_OF_TICKETS = typeof MAX_NUMBER_OF_TICKETS;
-
-const TicketsExtrinsicBounds = `Size: [0..${MAX_NUMBER_OF_TICKETS})`;
 /**
  * A sequence of proofs of valid tickets.
  *
@@ -79,14 +74,17 @@ const TicketsExtrinsicBounds = `Size: [0..${MAX_NUMBER_OF_TICKETS})`;
  * Constrained by `K = 16`:
  * https://graypaper.fluffylabs.dev/#/579bd12/416c00416e00
  */
+const TicketsExtrinsicBounds = "Size: [0..chainSpec.maxTicketsPerExtrinsic)";
 export type TicketsExtrinsic = KnownSizeArray<SignedTicket, typeof TicketsExtrinsicBounds>;
 
-export const ticketsExtrinsicCodec = codecKnownSizeArray(
-  SignedTicket.Codec,
-  {
-    minLength: 0,
-    maxLength: MAX_NUMBER_OF_TICKETS,
-    typicalLength: MAX_NUMBER_OF_TICKETS,
-  },
-  TicketsExtrinsicBounds,
-);
+export const ticketsExtrinsicCodec = codecWithContext((context) => {
+  return codecKnownSizeArray(
+    SignedTicket.Codec,
+    {
+      minLength: 0,
+      maxLength: context.maxTicketsPerExtrinsic,
+      typicalLength: context.maxTicketsPerExtrinsic,
+    },
+    TicketsExtrinsicBounds,
+  );
+});

@@ -1,16 +1,15 @@
 {
   "name": "@typeberry/codec",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "Serialization and deserialization codec for JAM.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.1",
-    "@typeberry/logger": "0.0.1",
-    "@typeberry/numbers": "0.0.1",
-    "@typeberry/utils": "0.0.1"
+    "@typeberry/bytes": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*"
   },
   "scripts": {
-    "build": "npm run build -w @typeberry/builder -- --environment PACKAGE_NAME:@typeberry/codec",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",

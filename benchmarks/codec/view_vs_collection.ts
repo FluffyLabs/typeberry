@@ -2,8 +2,8 @@ import assert from "node:assert";
 import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { Bytes } from "@typeberry/bytes";
-import { type CodecRecord, Decoder, type DescribedBy, Encoder, type SequenceView, codec } from "@typeberry/codec";
-import { type U64, tryAsU64 } from "@typeberry/numbers";
+import { type CodecRecord, codec, Decoder, type DescribedBy, Encoder, type SequenceView } from "@typeberry/codec";
+import { tryAsU64, type U64 } from "@typeberry/numbers";
 
 class TestHeader {
   static Codec = codec.Class(TestHeader, {

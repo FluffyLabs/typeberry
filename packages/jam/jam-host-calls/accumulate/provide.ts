@@ -9,8 +9,7 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { Compatibility, GpVersion, resultToString } from "@typeberry/utils";
-import { assertNever } from "@typeberry/utils";
+import { assertNever, resultToString } from "@typeberry/utils";
 import { type PartialState, ProvidePreimageError } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -24,14 +23,7 @@ const IN_OUT_REG = 7;
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/388e02388e02?v=0.6.7
  */
 export class Provide implements HostCallHandler {
-  index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual({
-      fallback: 27,
-      versions: {
-        [GpVersion.V0_6_7]: 26,
-      },
-    }),
-  );
+  index = tryAsHostCallIndex(26);
   gasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9);
 
@@ -55,6 +47,7 @@ export class Provide implements HostCallHandler {
     const preimage = BytesBlob.blobFrom(new Uint8Array(length));
     const memoryReadResult = memory.loadInto(preimage.raw, preimageStart);
     if (memoryReadResult.isError) {
+      logger.trace(`PROVIDE(${serviceId}, ${preimage.toStringTruncated()}) <- PANIC`);
       return PvmExecution.Panic;
     }
 

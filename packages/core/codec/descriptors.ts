@@ -1,8 +1,16 @@
 import { type BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
-import { type U8, type U16, type U32, type U64, tryAsU32 } from "@typeberry/numbers";
-import { type Opaque, type TokenOf, asOpaqueType, check, seeThrough } from "@typeberry/utils";
-import type { Decode, Decoder } from "./decoder.js";
-import { type Encode, type Encoder, type SizeHint, addSizeHints } from "./encoder.js";
+import { tryAsU32, type U8, type U16, type U32, type U64 } from "@typeberry/numbers";
+import { check } from "@typeberry/utils";
+import type { Decoder } from "./decoder.js";
+import {
+  type ClassConstructor,
+  type CodecRecord,
+  Descriptor,
+  type DescriptorRecord,
+  type OptionalRecord,
+  type SimpleDescriptorRecord,
+} from "./descriptor.js";
+import { addSizeHints, type Encoder, type SizeHint } from "./encoder.js";
 import { type Skip, Skipper } from "./skip.js";
 import { type LengthRange, validateLength } from "./validation.js";
 import { ObjectView, SequenceView, type ViewField, type ViewOf } from "./view.js";
@@ -17,98 +25,6 @@ const TYPICAL_SEQUENCE_LENGTH = 64;
  * TODO [ToDr] [opti] This value should be updated when we run some real-data bechmarks.
  */
 export const TYPICAL_DICTIONARY_LENGTH = 32;
-
-/**
- * A full codec type, i.e. the `Encode` and `Decode`.
- */
-export type Codec<T> = Encode<T> & Decode<T>;
-
-/**
- * Type descriptor definition.
- *
- * The type descriptor can encode & decode given type `T`, but
- * also have a `name` and a byte-size hint.
- *
- * Descriptors can be composed to form more complex typings.
- */
-export class Descriptor<T, V = T> implements Codec<T>, Skip {
-  /** A "lightweight" version of the object. */
-  public readonly View: Descriptor<V>;
-
-  /** New descriptor with specialized `View`. */
-  public static withView<T, V>(
-    name: string,
-    sizeHint: SizeHint,
-    encode: Descriptor<T, V>["encode"],
-    decode: Descriptor<T, V>["decode"],
-    skip: Descriptor<T, V>["skip"],
-    view: Descriptor<V>,
-  ) {
-    return new Descriptor(name, sizeHint, encode, decode, skip, view);
-  }
-
-  /** Create a new descriptor without a specialized `View`. */
-  public static new<T>(
-    name: string,
-    sizeHint: SizeHint,
-    encode: Descriptor<T>["encode"],
-    decode: Descriptor<T>["decode"],
-    skip: Descriptor<T>["skip"],
-  ) {
-    return new Descriptor(name, sizeHint, encode, decode, skip, null);
-  }
-
-  private constructor(
-    /** Descriptive name of the coded data. */
-    public readonly name: string,
-    /** A byte size hint for encoded data. */
-    public readonly sizeHint: SizeHint,
-    /** Encoding function. */
-    public readonly encode: (e: Encoder, elem: T) => void,
-    /** Decoding function. */
-    public readonly decode: (d: Decoder) => T,
-    /** Skipping function. */
-    public readonly skip: (s: Skipper) => void,
-    /** view object. It can be `null` iff T===V. */
-    view: Descriptor<V> | null,
-  ) {
-    // We cast here to make sure that the field is always set.
-    this.View = view ?? (this as unknown as Descriptor<V>);
-  }
-
-  /**
-   * Extract an encoded version of this type from the decoder.
-   *
-   * This function skips the object instead of decoding it,
-   * allowing to retrieve the encoded portion of the object from `Decoder`.
-   */
-  public skipEncoded(decoder: Decoder) {
-    const initBytes = decoder.bytesRead();
-    this.skip(new Skipper(decoder));
-    const endBytes = decoder.bytesRead();
-    return BytesBlob.blobFrom(decoder.source.subarray(initBytes, endBytes));
-  }
-
-  /** Return a new descriptor that converts data into some other type. */
-  public convert<F>(input: (i: F) => T, output: (i: T) => F): Descriptor<F, V> {
-    return new Descriptor(
-      this.name,
-      this.sizeHint,
-      (e: Encoder, elem: F) => this.encode(e, input(elem)),
-      (d: Decoder) => output(this.decode(d)),
-      this.skip,
-      this.View,
-    );
-  }
-
-  /** Safely cast the descriptor value to a opaque type. */
-  public asOpaque<R>(): Descriptor<Opaque<T, TokenOf<R, T>>, V> {
-    return this.convert(
-      (i) => seeThrough(i),
-      (o) => asOpaqueType<T, TokenOf<R, T>>(o),
-    );
-  }
-}
 
 /**
  * Convert a descriptor for regular array into readonly one.
@@ -129,49 +45,6 @@ export function readonlyArray<T, V>(desc: Descriptor<T[], V>): Descriptor<readon
     (x) => x,
   );
 }
-
-/** Infer the type that is described by given descriptor `T` */
-export type DescribedBy<T> = T extends Descriptor<infer V> ? V : never;
-
-/**
- * Converts a class `T` into an object with the same fields as the class.
- */
-export type CodecRecord<T> = {
-  [K in PropertyKeys<T>]: T[K];
-};
-
-/**
- * Same as `CodecRecord<T>`, but the fields are all optional.
- */
-type OptionalRecord<T> = {
-  [K in PropertyKeys<T>]?: T[K];
-};
-
-/**
- * `Descriptor` of a complex type of some class with a bunch of public fields.
- */
-export type DescriptorRecord<T> = {
-  [K in PropertyKeys<T>]: Descriptor<T[K], unknown>;
-};
-
-/**
- * Simplified `DescriptorRecord`, where all keys must be used as descriptor keys.
- */
-type SimpleDescriptorRecord<T> = {
-  [K in keyof T]: Descriptor<T[K], unknown>;
-};
-
-/** Only keys that contain properties, not methods. */
-export type PropertyKeys<T> = {
-  // biome-ignore lint/complexity/noBannedTypes: We want to skip any function-like types here.
-  [K in Extract<keyof T, string>]: T[K] extends Function ? never : K;
-}[Extract<keyof T, string>];
-
-/** A constructor of basic data object that takes a `Record<T>`. */
-export type ClassConstructor<T> = {
-  name: string;
-  create: (o: CodecRecord<T>) => T;
-};
 
 function exactHint(bytes: number): SizeHint {
   return {
@@ -507,6 +380,42 @@ export namespace codec {
     return self;
   };
 
+  /** Encoding of pair of two values. */
+  export const pair = <A, AView, B, BView>(
+    a: Descriptor<A, AView>,
+    b: Descriptor<B, BView>,
+  ): Descriptor<[A, B], [AView, BView]> => {
+    const self = Descriptor.new<[A, B]>(
+      `Pair<${a.name}, ${b.name}>`,
+      addSizeHints(a.sizeHint, b.sizeHint),
+      (e, elem) => {
+        a.encode(e, elem[0]);
+        b.encode(e, elem[1]);
+      },
+      (d) => {
+        const aValue = a.decode(d);
+        const bValue = b.decode(d);
+        return [aValue, bValue];
+      },
+      (s) => {
+        a.skip(s);
+        b.skip(s);
+      },
+    );
+
+    if (hasUniqueView(a) && hasUniqueView(b)) {
+      return Descriptor.withView(
+        self.name,
+        self.sizeHint,
+        self.encode,
+        self.decode,
+        self.skip,
+        codec.pair(a.View, b.View),
+      );
+    }
+    return self;
+  };
+
   /** Custom encoding / decoding logic. */
   export const custom = <T>(
     {
@@ -619,7 +528,11 @@ export function forEachDescriptor<T>(
   for (const key in descriptors) {
     if (typeof key === "string" && key in descriptors) {
       const k = key as keyof DescriptorRecord<T>;
-      f(k, descriptors[k]);
+      try {
+        f(k, descriptors[k]);
+      } catch (e) {
+        throw new Error(`${key}: ${e}`);
+      }
     }
   }
 }

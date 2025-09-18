@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 import { NODE_DEFAULTS } from "@typeberry/config-node";
 import { tryAsU16 } from "@typeberry/numbers";
 import { deepEqual } from "@typeberry/utils";
-import { Command, type SharedOptions, parseArgs } from "./args.js";
+import { Command, parseArgs, type SharedOptions } from "./args.js";
 
 describe("CLI", () => {
   const parse = (args: string[]) => parseArgs(args, (v) => `../${v}`);
@@ -77,6 +77,7 @@ describe("CLI", () => {
       command: Command.Dev,
       args: {
         ...defaultOptions,
+        configPath: "dev",
         index: tryAsU16(10),
       },
     });

@@ -1,5 +1,5 @@
 import * as fs from "node:fs";
-import { type Socket, createServer } from "node:net";
+import { createServer, type Socket } from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
 
@@ -10,7 +10,7 @@ import { encodeMessageLength, handleMessageFragmentation } from "@typeberry/netw
 /** A per-client handler of incoming socket messages. */
 export interface IpcHandler {
   /** New data on the socket received. */
-  onSocketMessage(msg: Uint8Array): void;
+  onSocketMessage(msg: Uint8Array): Promise<void>;
 
   /** Socket closed or errored. */
   onClose(reason: { error?: Error }): void;
@@ -34,7 +34,8 @@ export class IpcSender {
 export function startIpcServer(name: string, newMessageHandler: (socket: IpcSender) => IpcHandler) {
   // Define the path for the socket or named pipe
   const isWindows = os.platform() === "win32";
-  const socketPath = isWindows ? `\\\\.\\pipe\\${name}` : path.join(os.tmpdir(), `${name}.ipc`);
+  const linuxPath = name.startsWith("/") ? name : path.join(os.tmpdir(), `${name}`);
+  const socketPath = isWindows ? `\\\\.\\pipe\\${name}` : linuxPath;
 
   const logger = Logger.new(import.meta.filename, "ext-ipc");
 
@@ -47,12 +48,18 @@ export function startIpcServer(name: string, newMessageHandler: (socket: IpcSend
     socket.on(
       "data",
       handleMessageFragmentation(
-        (data: Uint8Array) => {
+        async (data: Uint8Array) => {
           try {
-            messageHandler.onSocketMessage(data);
+            // to avoid buffering too much data in our memory, we pause
+            // reading more data from the socket and only resume when the message
+            // is processed.
+            socket.pause();
+            await messageHandler.onSocketMessage(data);
           } catch (e) {
             logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
             socket.end();
+          } finally {
+            socket.resume();
           }
         },
         () => {

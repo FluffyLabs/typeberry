@@ -5,10 +5,13 @@ on:
   pull_request:
     branches: [ "main" ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
   GP_VERSION: 0.6.7
-  TEST_SUITE: javajam
 
 jobs:
   state_transition:
@@ -35,7 +38,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/test-runner
+      - run: npm start -w @typeberry/test-runner -- javajam.ts
       - name: Display results
         if: always()
         run: cat ./dist/javajam.txt

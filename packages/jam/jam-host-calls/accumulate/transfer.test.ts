@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { type U64, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU64, type U64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
@@ -11,8 +11,8 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { Result } from "@typeberry/utils";
-import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { TRANSFER_MEMO_BYTES, TransferError } from "../externalities/partial-state.js";
+import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
 import { Transfer } from "./transfer.js";
 

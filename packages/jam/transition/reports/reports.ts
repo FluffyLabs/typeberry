@@ -1,66 +1,22 @@
-import { type PerValidator, type TimeSlot, type WorkReportHash, tryAsTimeSlot } from "@typeberry/block";
+import { type PerValidator, type TimeSlot, tryAsTimeSlot, type WorkReportHash } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
-import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
+import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { type BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
-import { type HashDictionary, type HashSet, type KnownSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
+import { asKnownSize, type HashDictionary, type HashSet, type KnownSizeArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type Ed25519Key, ed25519 } from "@typeberry/crypto";
-import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
-import type { MmrHasher } from "@typeberry/mmr";
+import { blake2b, WithHash } from "@typeberry/hash";
 import type { SafroleStateUpdate } from "@typeberry/safrole";
 import { AvailabilityAssignment, type State, tryAsPerCore } from "@typeberry/state";
-import { OK, Result, asOpaqueType } from "@typeberry/utils";
-import type { AssurancesStateUpdate } from "../assurances.js";
-import type { RecentHistoryStateUpdate } from "../recent-history.js";
+import { asOpaqueType, OK, Result } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment.js";
+import type { ReportsInput } from "./input.js";
 import { verifyReportsBasic } from "./verify-basic.js";
 import { type HeaderChain, verifyContextualValidity } from "./verify-contextual.js";
 import { type GuarantorAssignment, verifyCredentials } from "./verify-credentials.js";
 import { verifyReportsOrder } from "./verify-order.js";
 import { verifyPostSignatureChecks } from "./verify-post-signature.js";
-
-/**
- * Work Report is presented on-chain within `GuaranteesExtrinsic`
- * and then it's being erasure-codec and assured (i.e. voted available
- * by validators).
- *
- * After enough assurances the work-report is considered available,
- * and the work outputs transform the state of their associated
- * service by virtue of accumulation, covered in section 12.
- * The report may also be timed-out, implying it may be replaced
- * by another report without accumulation.
- *
- * https://graypaper.fluffylabs.dev/#/5f542d7/133d00134200
- */
-export type ReportsInput = {
-  /**
-   * A work-package, is transformed by validators acting as
-   * guarantors into its corresponding work-report, which
-   * similarly comprises several work outputs and then
-   * presented on-chain within the guarantees extrinsic.
-   *
-   * https://graypaper.fluffylabs.dev/#/5f542d7/133500133900
-   */
-  guarantees: GuaranteesExtrinsicView;
-  /** Current time slot, excerpted from block header. */
-  slot: TimeSlot;
-  /** `eta_prime`: New entropy, after potential epoch transition. */
-  newEntropy: SafroleStateUpdate["entropy"];
-  /** Partial update of recent blocks. (β†, https://graypaper.fluffylabs.dev/#/9a08063/0fd8010fdb01?v=0.6.6) */
-  recentBlocksPartialUpdate: RecentHistoryStateUpdate["recentBlocks"];
-  /**
-   * ρ‡ - Availability assignment resulting from assurances transition
-   * https://graypaper.fluffylabs.dev/#/1c979cb/141302144402?v=0.7.1
-   */
-  assurancesAvailAssignment: AssurancesStateUpdate["availabilityAssignment"];
-  /**
-   * ψ′O - Ed25519 keys of validators that were proven to judge incorrectly.
-   *
-   * https://graypaper.fluffylabs.dev/#/1c979cb/134201134201?v=0.7.1
-   */
-  offenders: HashSet<Ed25519Key>;
-};
 
 export type ReportsState = Pick<
   State,
@@ -101,7 +57,6 @@ export class Reports {
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly state: ReportsState,
-    public readonly mmrHasher: MmrHasher<KeccakHash>,
     public readonly headerChain: HeaderChain,
   ) {}
 
@@ -213,7 +168,7 @@ export class Reports {
   }
 
   verifyContextualValidity(input: ReportsInput) {
-    return verifyContextualValidity(input, this.state, this.mmrHasher, this.headerChain);
+    return verifyContextualValidity(input, this.state, this.headerChain, this.chainSpec.maxLookupAnchorAge);
   }
 
   checkSignatures(

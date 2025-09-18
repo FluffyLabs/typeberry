@@ -1,11 +1,9 @@
 import type { ServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import { minU64 } from "@typeberry/numbers";
-import { tryAsU64 } from "@typeberry/numbers";
+import { minU64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { clampU64ToU32, getServiceIdOrCurrent } from "./utils.js";
@@ -24,14 +22,7 @@ const IN_OUT_REG = 7;
  * https://graypaper.fluffylabs.dev/#/1c979cb/325301325301?v=0.7.1
  */
 export class Read implements HostCallHandler {
-  index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual({
-      fallback: 2,
-      versions: {
-        [GpVersion.V0_6_7]: 3,
-      },
-    }),
-  );
+  index = tryAsHostCallIndex(3);
   gasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10, 11, 12);
 
@@ -61,13 +52,12 @@ export class Read implements HostCallHandler {
 
     const memoryReadResult = memory.loadInto(rawKey.raw, storageKeyStartAddress);
     if (memoryReadResult.isError) {
+      logger.trace(`READ(${serviceId}, ${rawKey}) <- PANIC`);
       return PvmExecution.Panic;
     }
 
     // v
     const value = this.account.read(serviceId, rawKey);
-
-    logger.trace(`READ(${serviceId}, ${rawKey}) <- ${value?.toStringTruncated()}`);
 
     const valueLength = value === null ? tryAsU64(0) : tryAsU64(value.raw.length);
     const valueBlobOffset = regs.get(11);
@@ -84,14 +74,17 @@ export class Read implements HostCallHandler {
     const chunk = value === null ? new Uint8Array(0) : value.raw.subarray(Number(offset), Number(offset + blobLength));
     const memoryWriteResult = memory.storeFrom(destinationAddress, chunk);
     if (memoryWriteResult.isError) {
+      logger.trace(`READ(${serviceId}, ${rawKey}) <- PANIC`);
       return PvmExecution.Panic;
     }
 
     if (value === null) {
+      logger.trace(`READ(${serviceId}, ${rawKey}) <- NONE`);
       regs.set(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
+    logger.trace(`READ(${serviceId}, ${rawKey}) <- ${BytesBlob.blobFrom(chunk).toStringTruncated()}`);
     regs.set(IN_OUT_REG, valueLength);
   }
 }

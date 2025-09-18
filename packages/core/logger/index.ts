@@ -1,5 +1,6 @@
 import { ConsoleTransport } from "./console.js";
-import { Level, type Options, findLevel, parseLoggerOptions } from "./options.js";
+import { findLevel, Level, type Options, parseLoggerOptions } from "./options.js";
+
 export { Level, parseLoggerOptions } from "./options.js";
 
 const DEFAULT_OPTIONS = {
@@ -28,7 +29,8 @@ export class Logger {
    */
   static new(fileName?: string, moduleName?: string) {
     const fName = fileName ?? "unknown";
-    return new Logger(moduleName ?? fName, fName, GLOBAL_CONFIG);
+    const module = moduleName ?? fName;
+    return new Logger(module.padStart(8, " "), GLOBAL_CONFIG);
   }
 
   /**
@@ -71,34 +73,38 @@ export class Logger {
     Logger.configureAllFromOptions(options);
   }
 
-  constructor(
+  private constructor(
     private readonly moduleName: string,
-    private readonly fileName: string,
     private readonly config: typeof GLOBAL_CONFIG,
   ) {}
 
+  /** Log a message with `INSANE` level. */
+  insane(val: string) {
+    this.config.transport.insane(this.moduleName, val);
+  }
+
   /** Log a message with `TRACE` level. */
   trace(val: string) {
-    this.config.transport.trace(this.moduleName, this.fileName, val);
+    this.config.transport.trace(this.moduleName, val);
   }
 
   /** Log a message with `DEBUG`/`LOG` level. */
   log(val: string) {
-    this.config.transport.log(this.moduleName, this.fileName, val);
+    this.config.transport.log(this.moduleName, val);
   }
 
   /** Log a message with `INFO` level. */
   info(val: string) {
-    this.config.transport.info(this.moduleName, this.fileName, val);
+    this.config.transport.info(this.moduleName, val);
   }
 
   /** Log a message with `WARN` level. */
   warn(val: string) {
-    this.config.transport.warn(this.moduleName, this.fileName, val);
+    this.config.transport.warn(this.moduleName, val);
   }
 
   /** Log a message with `ERROR` level. */
   error(val: string) {
-    this.config.transport.error(this.moduleName, this.fileName, val);
+    this.config.transport.error(this.moduleName, val);
   }
 }

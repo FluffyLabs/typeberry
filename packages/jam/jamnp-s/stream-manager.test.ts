@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import type { BytesBlob } from "@typeberry/bytes";
-import { TestManualStream, createDisconnectedPeer } from "@typeberry/networking/testing.js";
+import { createDisconnectedPeer, TestManualStream } from "@typeberry/networking/testing.js";
 import { OK } from "@typeberry/utils";
 import type { StreamHandler, StreamId, StreamKind, StreamMessageSender } from "./protocol/stream.js";
 import { StreamManager } from "./stream-manager.js";

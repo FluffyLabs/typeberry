@@ -2,21 +2,18 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { type U16, type U32, isU16, tryAsU32 } from "@typeberry/numbers";
-import { type Opaque, TestSuite, WithDebug } from "@typeberry/utils";
-import { Compatibility, GpVersion } from "@typeberry/utils";
+import { isU16, tryAsU32, type U16, type U32 } from "@typeberry/numbers";
+import { Compatibility, GpVersion, WithDebug } from "@typeberry/utils";
 import { type CoreIndex, type ServiceGas, tryAsCoreIndex } from "./common.js";
-import { RefineContext } from "./refine-context.js";
-import { type WorkItemsCount, tryAsWorkItemsCount } from "./work-package.js";
+import {
+  type AuthorizerHash,
+  type ExportsRootHash,
+  RefineContext,
+  type WorkPackageHash,
+  WorkPackageInfo,
+} from "./refine-context.js";
+import { tryAsWorkItemsCount, type WorkItemsCount } from "./work-package.js";
 import { WorkResult } from "./work-result.js";
-
-/** Authorizer hash. */
-export type AuthorizerHash = Opaque<OpaqueHash, "AuthorizerHash">;
-
-/** Blake2B hash of a work package. */
-export type WorkPackageHash = Opaque<OpaqueHash, "WorkPackageHash">;
-/** Work package exported segments merkle root hash. */
-export type ExportsRootHash = Opaque<OpaqueHash, "ExportsRootHash">;
 
 /**
  * Details about the work package being reported on.
@@ -53,38 +50,11 @@ export class WorkPackageSpec extends WithDebug {
 }
 
 /**
- * Mapping between work package hash and root hash of it's exports.
- *
- * Used to construct a dictionary.
- */
-export class WorkPackageInfo extends WithDebug {
-  static Codec = codec.Class(WorkPackageInfo, {
-    workPackageHash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
-    segmentTreeRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
-  });
-
-  private constructor(
-    /** Hash of the described work package. */
-    readonly workPackageHash: WorkPackageHash,
-    /** Exports root hash. */
-    readonly segmentTreeRoot: ExportsRootHash,
-  ) {
-    super();
-  }
-
-  static create({ workPackageHash, segmentTreeRoot }: CodecRecord<WorkPackageInfo>) {
-    return new WorkPackageInfo(workPackageHash, segmentTreeRoot);
-  }
-}
-
-/**
  * A report of execution of some work package.
  *
  * https://graypaper.fluffylabs.dev/#/cc517d7/131c01132401?v=0.6.5
  */
-export class WorkReport extends WithDebug {
-  static Codec: typeof WorkReportCodec;
-
+export class WorkReportNoCodec extends WithDebug {
   static create({
     workPackageSpec,
     context,
@@ -94,8 +64,8 @@ export class WorkReport extends WithDebug {
     segmentRootLookup,
     results,
     authorizationGasUsed,
-  }: CodecRecord<WorkReport>) {
-    return new WorkReport(
+  }: CodecRecord<WorkReportNoCodec>) {
+    return new WorkReportNoCodec(
       workPackageSpec,
       context,
       coreIndex,
@@ -107,7 +77,7 @@ export class WorkReport extends WithDebug {
     );
   }
 
-  private constructor(
+  protected constructor(
     /** `s`: Work package specification. */
     public readonly workPackageSpec: WorkPackageSpec,
     /** `x`: Refinement context. */
@@ -132,7 +102,7 @@ export class WorkReport extends WithDebug {
   }
 }
 
-const WorkReportCodec = codec.Class(WorkReport, {
+const WorkReportCodec = codec.Class(WorkReportNoCodec, {
   workPackageSpec: WorkPackageSpec.Codec,
   context: RefineContext.Codec,
   coreIndex: codec.varU32.convert(
@@ -154,21 +124,18 @@ const WorkReportCodec = codec.Class(WorkReport, {
   ),
 });
 
-const WorkReportCodecPre070 = codec.Class(WorkReport, {
+const WorkReportCodecPre070 = codec.Class(WorkReportNoCodec, {
   workPackageSpec: WorkPackageSpec.Codec,
   context: RefineContext.Codec,
-  coreIndex:
-    Compatibility.isGreaterOrEqual(GpVersion.V0_6_5) && !Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5)
-      ? codec.varU32.convert(
-          (o) => tryAsU32(o),
-          (i) => {
-            if (!isU16(i)) {
-              throw new Error(`Core index exceeds U16: ${i}`);
-            }
-            return tryAsCoreIndex(i);
-          },
-        )
-      : codec.u16.asOpaque<CoreIndex>(),
+  coreIndex: codec.varU32.convert(
+    (o) => tryAsU32(o),
+    (i) => {
+      if (!isU16(i)) {
+        throw new Error(`Core index exceeds U16: ${i}`);
+      }
+      return tryAsCoreIndex(i);
+    },
+  ),
   authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
   authorizationOutput: codec.blob,
   segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
@@ -179,4 +146,8 @@ const WorkReportCodecPre070 = codec.Class(WorkReport, {
   authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
 });
 
-WorkReport.Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0) ? WorkReportCodec : WorkReportCodecPre070;
+export class WorkReport extends WorkReportNoCodec {
+  static Codec: typeof WorkReportCodec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
+    ? WorkReportCodec
+    : WorkReportCodecPre070;
+}

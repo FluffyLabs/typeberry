@@ -1,10 +1,8 @@
 import type { ServiceId } from "@typeberry/block";
 import { tryAsU64 } from "@typeberry/numbers";
-import type { HostCallHandler } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import type { IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
 import { logger } from "./logger.js";
 
 /**
@@ -22,8 +20,7 @@ export class GasHostCall implements HostCallHandler {
   constructor(public readonly currentServiceId: ServiceId) {}
 
   execute(gas: GasCounter, regs: IHostCallRegisters): Promise<undefined | PvmExecution> {
-    // TODO [MaSi]: it looks like a problem in test vectors...
-    const gasValue = Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_5) ? BigInt(gas.get()) - 10n : gas.get();
+    const gasValue = gas.get();
     logger.trace(`GAS <- ${gasValue}`);
     regs.set(7, tryAsU64(gasValue));
     return Promise.resolve(undefined);

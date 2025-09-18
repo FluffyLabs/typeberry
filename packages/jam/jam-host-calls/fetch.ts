@@ -1,10 +1,9 @@
 import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type U32, type U64, minU64, tryAsU64 } from "@typeberry/numbers";
+import { minU64, tryAsU64, type U32, type U64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { clampU64ToU32 } from "./utils.js";
@@ -214,14 +213,7 @@ const IN_OUT_REG = 7;
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/324000324000?v=0.6.7
  */
 export class Fetch implements HostCallHandler {
-  index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual({
-      fallback: 18,
-      versions: {
-        [GpVersion.V0_6_7]: 1,
-      },
-    }),
-  );
+  index = tryAsHostCallIndex(1);
   gasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10, 11, 12);
 
@@ -238,7 +230,6 @@ export class Fetch implements HostCallHandler {
     const fetchKindU64 = regs.get(10);
     const kind = clampU64ToU32(fetchKindU64);
     const value = this.getValue(kind, regs);
-    logger.trace(`FETCH(${kind}) <- ${value?.toStringTruncated()}`);
     // o
     const output = regs.get(IN_OUT_REG);
 
@@ -253,8 +244,11 @@ export class Fetch implements HostCallHandler {
     const chunk = value === null ? new Uint8Array() : value.raw.subarray(Number(offset), Number(offset + length));
     const storeResult = memory.storeFrom(output, chunk);
     if (storeResult.isError) {
+      logger.trace(`FETCH(${kind}) <- PANIC`);
       return PvmExecution.Panic;
     }
+
+    logger.trace(`FETCH(${kind}) <- ${value?.toStringTruncated()}`);
 
     // write result
     regs.set(IN_OUT_REG, value === null ? HostCallResult.NONE : valueLength);

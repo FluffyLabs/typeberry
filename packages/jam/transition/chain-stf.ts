@@ -1,7 +1,7 @@
 import type { BlockView, CoreIndex, EntropyHash, HeaderHash, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
-import type { AuthorizerHash } from "@typeberry/block/work-report.js";
-import { HashSet, asKnownSize } from "@typeberry/collections";
+import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
+import { asKnownSize, HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import type { BlocksDb } from "@typeberry/database";
@@ -11,13 +11,18 @@ import { blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
-import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
+import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
 import type { State } from "@typeberry/state";
-import { type ErrorResult, OK, Result, type TaggedError, assertEmpty, measure } from "@typeberry/utils";
-import type { ACCUMULATION_ERROR, AccumulateStateUpdate } from "./accumulate/accumulate.js";
-import { DeferredTransfers, type DeferredTransfersErrorCode } from "./accumulate/deferred-transfers.js";
-import { Accumulate } from "./accumulate/index.js";
+import { assertEmpty, type ErrorResult, measure, OK, Result, type TaggedError } from "@typeberry/utils";
+import { AccumulateOutput } from "./accumulate/accumulate-output.js";
+import {
+  type ACCUMULATION_ERROR,
+  Accumulate,
+  type AccumulateStateUpdate,
+  DeferredTransfers,
+  type DeferredTransfersErrorCode,
+} from "./accumulate/index.js";
 import { Assurances, type AssurancesError, type AssurancesStateUpdate } from "./assurances.js";
 import { Authorization, type AuthorizationStateUpdate } from "./authorization.js";
 import type { TransitionHasher } from "./hasher.js";
@@ -30,7 +35,10 @@ import { Statistics, type StatisticsStateUpdate } from "./statistics.js";
 class DbHeaderChain implements HeaderChain {
   constructor(private readonly blocks: BlocksDb) {}
 
-  isInChain(header: HeaderHash): boolean {
+  isAncestor(header: HeaderHash): boolean {
+    // TODO [ToDr] This works only for simple forks scenario. We rather
+    // should make sure that the `header` we are checking is a descendant
+    // of the current header (i.e. there is a direct path when going by parent).
     return this.blocks.getHeader(header) !== null;
   }
 }
@@ -91,6 +99,7 @@ export class OnChain {
   private readonly assurances: Assurances;
   // chapter 12: https://graypaper.fluffylabs.dev/#/68eaa1f/159f02159f02?v=0.6.4
   private readonly accumulate: Accumulate;
+  private readonly accumulateOutput: AccumulateOutput;
   // chapter 12.3: https://graypaper.fluffylabs.dev/#/68eaa1f/178203178203?v=0.6.4
   private readonly deferredTransfers: DeferredTransfers;
   // chapter 12.4: https://graypaper.fluffylabs.dev/#/68eaa1f/18cc0018cc00?v=0.6.4
@@ -120,9 +129,10 @@ export class OnChain {
 
     this.disputes = new Disputes(chainSpec, state);
 
-    this.reports = new Reports(chainSpec, state, hasher, new DbHeaderChain(blocks));
+    this.reports = new Reports(chainSpec, state, new DbHeaderChain(blocks));
     this.assurances = new Assurances(chainSpec, state);
     this.accumulate = new Accumulate(chainSpec, state);
+    this.accumulateOutput = new AccumulateOutput();
     this.deferredTransfers = new DeferredTransfers(chainSpec, state);
     this.preimages = new Preimages(state);
 
@@ -140,6 +150,7 @@ export class OnChain {
     preverifiedSeal: EntropyHash | null = null,
     omitSealVerification = false,
   ): Promise<Result<Ok, StfError>> {
+    const headerView = block.header.view();
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
 
@@ -179,8 +190,9 @@ export class OnChain {
       entropy: newEntropyHash,
       extrinsic: block.extrinsic.view().tickets.materialize(),
       punishSet: disputesRecords.punishSet,
+      epochMarker: headerView.epochMarker.view(),
+      ticketsMarker: headerView.ticketsMarker.view(),
     });
-    // TODO [ToDr] shall we verify the ticket mark & epoch mark as well?
     if (safroleResult.isError) {
       return stfError(StfErrorKind.Safrole, safroleResult);
     }
@@ -262,10 +274,10 @@ export class OnChain {
       return stfError(StfErrorKind.Accumulate, accumulateResult);
     }
     const {
-      root: accumulateRoot,
       stateUpdate: accumulateUpdate,
       accumulationStatistics,
       pendingTransfers,
+      accumulationOutputLog,
       ...accumulateRest
     } = accumulateResult.ok;
     assertEmpty(accumulateRest);
@@ -274,7 +286,6 @@ export class OnChain {
       privilegedServices: maybePrivilegedServices,
       authQueues: maybeAuthorizationQueues,
       designatedValidatorData: maybeDesignatedValidatorData,
-      timeslot: accumulateTimeSlot,
       preimages: accumulatePreimages,
       accumulationQueue,
       recentlyAccumulated,
@@ -299,8 +310,9 @@ export class OnChain {
     } = deferredTransfersResult.ok;
     assertEmpty(deferredTransfersRest);
 
+    const accumulateRoot = await this.accumulateOutput.transition({ accumulationOutputLog });
     // recent history
-    const recentHistoryUpdate = this.recentHistory.transition({
+    const recentHistoryUpdate = await this.recentHistory.transition({
       partial: recentHistoryPartialUpdate,
       headerHash,
       accumulateRoot,
@@ -349,6 +361,7 @@ export class OnChain {
       ticketsAccumulator,
       accumulationQueue,
       recentlyAccumulated,
+      accumulationOutputLog,
       ...newServicesUpdate,
       preimages: preimages.concat(accumulatePreimages),
     });

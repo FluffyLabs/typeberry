@@ -2,19 +2,19 @@ import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { LeafDb, StateUpdateError, type StatesDb } from "@typeberry/database";
+import { LeafDb, type StatesDb, StateUpdateError } from "@typeberry/database";
 import type { TruncatedHash } from "@typeberry/hash";
+import { Logger } from "@typeberry/logger";
 import type { ServicesUpdate, State } from "@typeberry/state";
-import { SerializedState, serializeStateUpdate } from "@typeberry/state-merkleization";
-import type { StateKey } from "@typeberry/state-merkleization";
-import type { StateEntries } from "@typeberry/state-merkleization";
-import { StateEntryUpdateAction } from "@typeberry/state-merkleization";
-import { InMemoryTrie, leafComparator } from "@typeberry/trie";
+import type { StateEntries, StateKey } from "@typeberry/state-merkleization";
+import { SerializedState, StateEntryUpdateAction, serializeStateUpdate } from "@typeberry/state-merkleization";
 import type { LeafNode, ValueHash } from "@typeberry/trie";
+import { InMemoryTrie, leafComparator } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
-import { OK, Result, assertNever, resultToString } from "@typeberry/utils";
+import { assertNever, OK, Result, resultToString } from "@typeberry/utils";
 import type { LmdbRoot, SubDb } from "./root.js";
 
+const logger = Logger.new(import.meta.filename, "db");
 /**
  * LMDB-backed state storage.
  *
@@ -125,7 +125,7 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     try {
       await Promise.all([valuesWrite, statesWrite]);
     } catch (e) {
-      console.error(e);
+      logger.error(`${e}`);
       return Result.error(StateUpdateError.Commit);
     }
     return Result.ok(OK);

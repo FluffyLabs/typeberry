@@ -1,0 +1,31 @@
+name: Publish @typeberry/lib to NPM
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  publish-libs:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22.x]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        registry-url: 'https://registry.npmjs.org'
+    - name: Install dependencies
+      run: npm ci
+    - name: Build Typeberry library
+      run: npm run build -w @typeberry/lib
+    - name: Publish package
+      working-directory: ./dist/lib
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      run: npm publish --access public

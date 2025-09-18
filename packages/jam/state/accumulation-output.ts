@@ -1,6 +1,7 @@
 import type { ServiceId } from "@typeberry/block";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";
+import { Ordering } from "@typeberry/ordering";
 
 /**
  * Single service-indexed commitment to accumulation output
@@ -21,4 +22,18 @@ export class AccumulationOutput {
     readonly serviceId: ServiceId,
     readonly output: KeccakHash,
   ) {}
+}
+
+export function accumulationOutputComparator(a: AccumulationOutput, b: AccumulationOutput) {
+  const result = a.serviceId - b.serviceId;
+
+  if (result < 0) {
+    return Ordering.Less;
+  }
+
+  if (result > 0) {
+    return Ordering.Greater;
+  }
+
+  return Ordering.Equal;
 }

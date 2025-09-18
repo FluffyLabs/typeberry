@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { type CoreIndex, tryAsCoreIndex, tryAsServiceId } from "@typeberry/block";
 import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import { Bytes } from "@typeberry/bytes";
-import { Encoder, codec } from "@typeberry/codec";
+import { codec, Encoder } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
@@ -14,9 +14,9 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
-import { Compatibility, GpVersion, Result } from "@typeberry/utils";
-import { PartialStateMock } from "../externalities/partial-state-mock.js";
+import { Result } from "@typeberry/utils";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
+import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
 import { Assign } from "./assign.js";
 
@@ -134,37 +134,35 @@ describe("HostCalls: Assign", () => {
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
 
-  if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
-    it("should return an error when current service is unprivileged", async () => {
-      const accumulate = new PartialStateMock();
-      accumulate.authQueueResponse = Result.error(UpdatePrivilegesError.UnprivilegedService);
-      const serviceId = tryAsServiceId(10_000);
-      const assign = new Assign(serviceId, accumulate, tinyChainSpec);
-      const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { authManager: 0 });
+  it("should return an error when current service is unprivileged", async () => {
+    const accumulate = new PartialStateMock();
+    accumulate.authQueueResponse = Result.error(UpdatePrivilegesError.UnprivilegedService);
+    const serviceId = tryAsServiceId(10_000);
+    const assign = new Assign(serviceId, accumulate, tinyChainSpec);
+    const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { authManager: 0 });
 
-      // when
-      const result = await assign.execute(gas, registers, memory);
+    // when
+    const result = await assign.execute(gas, registers, memory);
 
-      // then
-      assert.deepStrictEqual(result, undefined);
-      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
-      assert.deepStrictEqual(accumulate.authQueue.length, 0);
-    });
+    // then
+    assert.deepStrictEqual(result, undefined);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
+    assert.deepStrictEqual(accumulate.authQueue.length, 0);
+  });
 
-    it("should return an error when auth manager is invalid", async () => {
-      const accumulate = new PartialStateMock();
-      accumulate.authQueueResponse = Result.error(UpdatePrivilegesError.InvalidServiceId);
-      const serviceId = tryAsServiceId(10_000);
-      const assign = new Assign(serviceId, accumulate, tinyChainSpec);
-      const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { authManager: null });
+  it("should return an error when auth manager is invalid", async () => {
+    const accumulate = new PartialStateMock();
+    accumulate.authQueueResponse = Result.error(UpdatePrivilegesError.InvalidServiceId);
+    const serviceId = tryAsServiceId(10_000);
+    const assign = new Assign(serviceId, accumulate, tinyChainSpec);
+    const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { authManager: null });
 
-      // when
-      const result = await assign.execute(gas, registers, memory);
+    // when
+    const result = await assign.execute(gas, registers, memory);
 
-      // then
-      assert.deepStrictEqual(result, undefined);
-      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
-      assert.deepStrictEqual(accumulate.authQueue.length, 0);
-    });
-  }
+    // then
+    assert.deepStrictEqual(result, undefined);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
+    assert.deepStrictEqual(accumulate.authQueue.length, 0);
+  });
 });

@@ -6,7 +6,7 @@ import { HASH_SIZE, type OpaqueHash, TRUNCATED_HASH_SIZE } from "@typeberry/hash
 import { deepEqual } from "@typeberry/utils";
 import { blake2bTrieHasher } from "./hasher.js";
 import { type InputKey, LeafNode, parseInputKey } from "./nodes.js";
-import { InMemoryTrie, findSharedPrefix, leafComparator } from "./trie.js";
+import { findSharedPrefix, InMemoryTrie, leafComparator } from "./trie.js";
 
 describe("Root hash", () => {
   it("should compute state root hash that is equal to the trie one (complex)", () => {
@@ -389,10 +389,7 @@ describe("Trie", () => {
     runTestVector(vector);
   });
 
-  function runTestVector(vector: {
-    input: { [key: string]: string };
-    output: string;
-  }) {
+  function runTestVector(vector: { input: { [key: string]: string }; output: string }) {
     const trie = InMemoryTrie.empty(blake2bTrieHasher);
 
     for (const [key, val] of Object.entries(vector.input)) {

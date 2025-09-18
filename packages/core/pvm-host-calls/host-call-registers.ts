@@ -1,0 +1,19 @@
+import { tryAsU64, type U64 } from "@typeberry/numbers";
+import type { Registers } from "@typeberry/pvm-interpreter";
+
+export interface IHostCallRegisters {
+  get(registerIndex: number): U64;
+  set(registerIndex: number, value: U64): void;
+}
+
+export class HostCallRegisters implements IHostCallRegisters {
+  constructor(private readonly registers: Registers) {}
+
+  get(registerIndex: number): U64 {
+    return tryAsU64(this.registers.getU64(registerIndex));
+  }
+
+  set(registerIndex: number, value: U64) {
+    this.registers.setU64(registerIndex, value);
+  }
+}

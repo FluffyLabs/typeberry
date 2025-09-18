@@ -1,19 +1,18 @@
 {
   "name": "@typeberry/pvm-interpreter",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "A PVM implementation based on the Gray Paper.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/bytes": "0.0.1",
-    "@typeberry/codec": "0.0.1",
-    "@typeberry/logger": "0.0.1",
-    "@typeberry/numbers": "0.0.1",
-    "@typeberry/utils": "0.0.1"
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "start": "tsx ./bin.ts",
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
-    "build": "npm run build -w @typeberry/builder -- --environment PACKAGE_NAME:@typeberry/pvm-debugger-adapter,PACKAGE_OUT:pvm"
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
