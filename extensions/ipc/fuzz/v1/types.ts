@@ -1,4 +1,4 @@
-import { Block, BlockView, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
+import { Block, type BlockView, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U8, U32 } from "@typeberry/numbers";

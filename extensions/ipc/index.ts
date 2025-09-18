@@ -1,6 +1,5 @@
 import {
-  type Block,
-  BlockView,
+  type BlockView,
   type Header,
   type HeaderHash,
   type HeaderView,

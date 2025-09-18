@@ -1,4 +1,4 @@
-import type { Block, BlockView, HeaderHash, StateRootHash } from "@typeberry/block";
+import type { BlockView, HeaderHash, StateRootHash } from "@typeberry/block";
 import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";

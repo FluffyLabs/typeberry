@@ -1,5 +1,5 @@
 import { isMainThread, parentPort } from "node:worker_threads";
-
+import type { WorkerConfig } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import type { Finished } from "@typeberry/generic-worker";
@@ -11,7 +11,6 @@ import { measure, resultToString } from "@typeberry/utils";
 import { ImportQueue } from "./import-queue.js";
 import { Importer } from "./importer.js";
 import { type ImporterInit, type ImporterReady, type ImporterStates, importerStateMachine } from "./state-machine.js";
-import {WorkerConfig} from "@typeberry/config";
 
 const logger = Logger.new(import.meta.filename, "importer");
 
@@ -31,7 +30,7 @@ export async function createImporter(config: WorkerConfig) {
   const importer = new Importer(config.chainSpec, hasher, logger, blocks, states);
   return {
     blocks,
-    importer
+    importer,
   };
 }
 
@@ -49,7 +48,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
 
   const finished = await ready.doUntil<Finished>("finished", async (worker, port) => {
     const config = worker.getConfig();
-    const {blocks, importer }= await createImporter(config);
+    const { blocks, importer } = await createImporter(config);
     // TODO [ToDr] this is shit, since we have circular dependency.
     worker.setImporter(importer);
     logger.info("📥 Importer waiting for blocks.");

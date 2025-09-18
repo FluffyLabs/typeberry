@@ -272,11 +272,7 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   // blocks history.
   // NOTE: this is done internally by reports checking.
   const headerChain: HeaderChain = {
-    isAncestor(
-      _pastSlot: TimeSlot,
-      _pastHash: HeaderHash,
-      _currentHash: HeaderHash,
-    ) {
+    isAncestor(_pastSlot: TimeSlot, _pastHash: HeaderHash, _currentHash: HeaderHash) {
       return false;
     },
   };

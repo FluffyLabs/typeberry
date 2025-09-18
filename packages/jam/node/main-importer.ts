@@ -1,16 +1,16 @@
-import {initWasm} from "@typeberry/crypto";
-import {JamConfig} from "./jam-config.js";
-import {NodeApi} from "./main.js";
-import {getChainSpec, initializeDatabase, logger, openDatabase} from "./common.js";
+import type { BlockView, HeaderHash } from "@typeberry/block";
+import { Bytes } from "@typeberry/bytes";
+import { Decoder } from "@typeberry/codec";
+import { WorkerConfig } from "@typeberry/config";
+import { initWasm } from "@typeberry/crypto";
+import { HASH_SIZE } from "@typeberry/hash";
+import { createImporter } from "@typeberry/importer";
+import { ImporterReady, importBlockResultCodec } from "@typeberry/importer/state-machine.js";
+import { CURRENT_SUITE, CURRENT_VERSION, Result } from "@typeberry/utils";
+import { getChainSpec, initializeDatabase, logger, openDatabase } from "./common.js";
+import type { JamConfig } from "./jam-config.js";
+import type { NodeApi } from "./main.js";
 import packageJson from "./package.json" with { type: "json" };
-import {CURRENT_SUITE, CURRENT_VERSION, Result} from "@typeberry/utils";
-import {createImporter} from "@typeberry/importer";
-import {WorkerConfig} from "@typeberry/config";
-import {importBlockResultCodec, ImporterReady, MainReady} from "@typeberry/importer/state-machine.js";
-import {BlockView, HeaderHash} from "@typeberry/block";
-import {Decoder} from "@typeberry/codec";
-import {HASH_SIZE} from "@typeberry/hash";
-import {Bytes} from "@typeberry/bytes";
 
 const zeroHash = Bytes.zero(HASH_SIZE).asOpaque();
 
@@ -29,12 +29,8 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
   // Initialize the database with genesis state and block if there isn't one.
   await initializeDatabase(chainSpec, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
 
-  const workerConfig = new WorkerConfig(
-    chainSpec,
-    dbPath,
-    false,
-  );
-  const { importer }= await createImporter(workerConfig);
+  const workerConfig = new WorkerConfig(chainSpec, dbPath, false);
+  const { importer } = await createImporter(workerConfig);
   const importerReady = new ImporterReady();
   importerReady.setConfig(workerConfig);
   importerReady.setImporter(importer);
@@ -44,7 +40,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
     async importBlock(block: BlockView) {
       const res = (await importerReady.importBlock(block.encoded().raw)).response;
       if (res !== null && res !== undefined) {
-        return Decoder.decodeObject(importBlockResultCodec, res)
+        return Decoder.decodeObject(importBlockResultCodec, res);
       }
       return Result.error("");
     },

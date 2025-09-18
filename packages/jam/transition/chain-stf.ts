@@ -35,11 +35,7 @@ import { Statistics, type StatisticsStateUpdate } from "./statistics.js";
 class DbHeaderChain implements HeaderChain {
   constructor(private readonly blocks: BlocksDb) {}
 
-  isAncestor(
-    pastHeaderSlot: TimeSlot,
-    pastHeader: HeaderHash,
-    currentHeader: HeaderHash,
-  ): boolean {
+  isAncestor(pastHeaderSlot: TimeSlot, pastHeader: HeaderHash, currentHeader: HeaderHash): boolean {
     let currentHash = currentHeader;
     for (;;) {
       // success = we found the right header in the DB
@@ -47,7 +43,7 @@ class DbHeaderChain implements HeaderChain {
         return true;
       }
 
-      let current = this.blocks.getHeader(currentHash);
+      const current = this.blocks.getHeader(currentHash);
       // fail if we don't find a parent (unlikely?)
       if (current === null) {
         return false;

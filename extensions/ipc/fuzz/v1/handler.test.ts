@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { Socket } from "node:net";
 import { describe, it, type Mock, mock } from "node:test";
-import { BlockView, type HeaderHash, type StateRootHash, tryAsTimeSlot } from "@typeberry/block";
+import { type BlockView, type HeaderHash, type StateRootHash, tryAsTimeSlot } from "@typeberry/block";
 import { testBlockView } from "@typeberry/block/test-helpers.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";

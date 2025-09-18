@@ -1,5 +1,4 @@
 import {
-  type HeaderHash,
   type ServiceId,
   type TimeSlot,
   tryAsCoreIndex,

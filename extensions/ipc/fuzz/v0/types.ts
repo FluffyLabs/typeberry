@@ -1,4 +1,4 @@
-import { Block, BlockView, Header, type HeaderHash, type StateRootHash } from "@typeberry/block";
+import { Block, type BlockView, Header, type HeaderHash, type StateRootHash } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
