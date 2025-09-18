@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { Socket } from "node:net";
 import { describe, it, type Mock, mock } from "node:test";
-import type { Block, HeaderHash, StateRootHash } from "@typeberry/block";
+import type { BlockView, HeaderHash, StateRootHash } from "@typeberry/block";
 import { testBlockView } from "@typeberry/block/test-helpers.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
@@ -16,7 +16,7 @@ const spec = tinyChainSpec;
 class MockMessageHandler implements FuzzMessageHandler {
   getSerializedState: Mock<(value: HeaderHash) => Promise<KeyValue[]>> = mock.fn();
   resetState: Mock<(value: SetState) => Promise<StateRootHash>> = mock.fn();
-  importBlockV0: Mock<(value: Block) => Promise<StateRootHash>> = mock.fn();
+  importBlockV0: Mock<(value: BlockView) => Promise<StateRootHash>> = mock.fn();
   getPeerInfoV0: Mock<(value: PeerInfo) => Promise<PeerInfo>> = mock.fn();
 }
 
@@ -140,7 +140,7 @@ describe("FuzzTarget Handler", () => {
       const mockMessageHandler = new MockMessageHandler();
       const mockSender = new MockSender();
 
-      const testBlock = testBlockView().materialize();
+      const testBlock = testBlockView();
       const expectedStateRoot = Bytes.fill(32, 0xef).asOpaque<StateRootHash>();
 
       const incomingMessage: Message = {
@@ -162,7 +162,6 @@ describe("FuzzTarget Handler", () => {
       await fuzzTarget.onSocketMessage(testMessage.raw);
 
       assert.strictEqual(mockMessageHandler.importBlockV0.mock.callCount(), 1);
-      assert.deepStrictEqual(mockMessageHandler.importBlockV0.mock.calls[0].arguments, [testBlock]);
 
       assert.deepStrictEqual(mockSender._sentData, [Encoder.encodeObject(messageCodec, expectedResponse, spec)]);
       assert.strictEqual(mockSender._closeCalled, 0);

@@ -2,8 +2,9 @@ import assert from "node:assert";
 import { test } from "node:test";
 
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { SortedSet } from "@typeberry/collections";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { InMemoryTrie, type StateKey, type TrieNodeHash } from "@typeberry/trie";
+import { InMemoryTrie, leafComparator, type StateKey, type TrieNodeHash } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 
 export class TrieTest {
@@ -42,7 +43,16 @@ export async function runTrieTest(testContent: TrieTestSuite) {
       for (const [key, value] of testData.input.entries()) {
         trie.set(key, value);
       }
-      assert.deepStrictEqual(testData.output, trie.getRootHash());
+      assert.deepStrictEqual(trie.getRootHash(), testData.output);
+
+      const leaves = Array.from(testData.input.entries()).map(([key, value]) => {
+        return InMemoryTrie.constructLeaf(blake2bTrieHasher, key, value);
+      });
+      const quickStateRoot = InMemoryTrie.computeStateRoot(
+        blake2bTrieHasher,
+        SortedSet.fromArray(leafComparator, leaves),
+      );
+      assert.deepStrictEqual(quickStateRoot, testData.output);
     });
   }
 }
