@@ -1,9 +1,9 @@
-import { Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
+import { Block, BlockView, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U8, U32 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
-import { type ImportBlock, importBlockCodec, type KeyValue, stateCodec, Version } from "../v0/types.js";
+import { type KeyValue, stateCodec, Version } from "../v0/types.js";
 
 /**
  * Fuzzer Protocol V1
@@ -149,7 +149,7 @@ export type MessageData =
   | { type: MessageType.PeerInfo; value: PeerInfo }
   | { type: MessageType.Initialize; value: Initialize }
   | { type: MessageType.StateRoot; value: StateRoot }
-  | { type: MessageType.ImportBlock; value: ImportBlock }
+  | { type: MessageType.ImportBlock; value: BlockView }
   | { type: MessageType.GetState; value: GetState }
   | { type: MessageType.State; value: KeyValue[] }
   | { type: MessageType.Error; value: ErrorMessage };
@@ -183,7 +183,7 @@ export const messageCodec = codec.custom<MessageData>(
         stateRootCodec.encode(e, msg.value);
         break;
       case MessageType.ImportBlock:
-        importBlockCodec.encode(e, msg.value);
+        Block.Codec.View.encode(e, msg.value);
         break;
       case MessageType.GetState:
         getStateCodec.encode(e, msg.value);
@@ -208,7 +208,7 @@ export const messageCodec = codec.custom<MessageData>(
       case MessageType.StateRoot:
         return { type: MessageType.StateRoot, value: stateRootCodec.decode(d) };
       case MessageType.ImportBlock:
-        return { type: MessageType.ImportBlock, value: importBlockCodec.decode(d) };
+        return { type: MessageType.ImportBlock, value: Block.Codec.View.decode(d) };
       case MessageType.GetState:
         return { type: MessageType.GetState, value: getStateCodec.decode(d) };
       case MessageType.State:
@@ -232,7 +232,7 @@ export const messageCodec = codec.custom<MessageData>(
         stateRootCodec.View.skip(s);
         break;
       case MessageType.ImportBlock:
-        importBlockCodec.View.skip(s);
+        Block.Codec.View.skip(s);
         break;
       case MessageType.GetState:
         getStateCodec.View.skip(s);

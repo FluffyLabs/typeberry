@@ -38,7 +38,7 @@ export function importerStateMachine() {
 
 const logger = Logger.new(import.meta.filename, "importer");
 
-const importBlockCodec = codec.custom<Result<StateRootHash, string>>(
+export const importBlockResultCodec = codec.custom<Result<StateRootHash, string>>(
   {
     name: "Result<StateRootHash, string>",
     sizeHint: { bytes: 1, isExact: false },
@@ -116,7 +116,7 @@ export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
   async importBlock(port: TypedChannel, block: Uint8Array): Promise<Result<StateRootHash, string>> {
     const res: Uint8Array | null = await port.sendRequest("importBlock", block, [block.buffer as ArrayBuffer]);
     if (res instanceof Uint8Array) {
-      return Decoder.decodeObject(importBlockCodec, res);
+      return Decoder.decodeObject(importBlockResultCodec, res);
     }
     return Result.error("Invalid worker response.");
   }
@@ -186,7 +186,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
     sender.sendSignal("bestBlock", encoded, [encoded.buffer as ArrayBuffer]);
   }
 
-  private async getStateEntries(hash: unknown): Promise<RespondAndTransitionTo<unknown, Finished>> {
+  async getStateEntries(hash: unknown): Promise<RespondAndTransitionTo<unknown, Finished>> {
     if (this.importer === null) {
       logger.error(`${this.constructor.name} importer not initialized yet!`);
       await new Promise((resolve) => {
@@ -210,7 +210,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
     };
   }
 
-  private async getBestStateRootHash(): Promise<RespondAndTransitionTo<Uint8Array, Finished>> {
+  async getBestStateRootHash(): Promise<RespondAndTransitionTo<Uint8Array, Finished>> {
     // importer not ready yet, so wait for it.
     if (this.importer === null) {
       await new Promise((resolve) => {
@@ -226,7 +226,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
   }
 
   // NOTE [ToDr] This should rather be using the import queue, instead of going directly.
-  private async importBlock(block: unknown): Promise<RespondAndTransitionTo<Uint8Array | null, Finished>> {
+  async importBlock(block: unknown): Promise<RespondAndTransitionTo<Uint8Array | null, Finished>> {
     if (this.importer === null) {
       logger.error(`${this.constructor.name} importer not initialized yet!`);
       await new Promise((resolve) => {
@@ -255,7 +255,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
         logger.error(`${e instanceof Error ? e.stack : ""}`);
         response = Result.error(`${e}`);
       }
-      const encoded = Encoder.encodeObject(importBlockCodec, response);
+      const encoded = Encoder.encodeObject(importBlockResultCodec, response);
       return {
         response: encoded.raw,
       };

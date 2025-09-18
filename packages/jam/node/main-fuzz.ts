@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
-import { Block, BlockView, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
+import { BlockView, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Encoder } from "@typeberry/codec";
 import { type FuzzVersion, startFuzzTarget, Version } from "@typeberry/ext-ipc";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
@@ -9,8 +9,9 @@ import type { StateEntries } from "@typeberry/state-merkleization";
 import { CURRENT_VERSION, Result } from "@typeberry/utils";
 import { getChainSpec } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
-import { main, type NodeApi } from "./main.js";
+import { type NodeApi } from "./main.js";
 import packageJson from "./package.json" with { type: "json" };
+import {mainImporter} from "./main-importer.js";
 
 export type FuzzConfig = {
   version: FuzzVersion;
@@ -74,7 +75,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
       // remove the database
       await fs.rm(databaseBasePath, { recursive: true, force: true });
       // update the chainspec
-      const newNode = await main(
+      const newNode = await mainImporter(
         {
           ...config,
           node: {
