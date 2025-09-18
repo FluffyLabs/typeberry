@@ -8,8 +8,8 @@ import {
   type ValidatorIndex,
 } from "@typeberry/block";
 import type { Ticket } from "@typeberry/block/tickets.js";
-import { BytesBlob } from "@typeberry/bytes";
-import type { BandersnatchKey } from "@typeberry/crypto";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { BANDERSNATCH_KEY_BYTES, type BandersnatchKey } from "@typeberry/crypto";
 import type { State, ValidatorData } from "@typeberry/state";
 import { SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
 import { Result } from "@typeberry/utils";
@@ -29,6 +29,8 @@ export type SafroleSealState = Pick<State, "currentValidatorData" | "sealingKeyS
   currentEntropy: EntropyHash;
 };
 
+const BANDERSNATCH_ZERO_KEY = Bytes.zero(BANDERSNATCH_KEY_BYTES).asOpaque<BandersnatchKey>();
+
 export class SafroleSeal {
   constructor(private readonly bandersnatch: Promise<BandernsatchWasm> = BandernsatchWasm.new({ synchronous: true })) {}
   /**
@@ -46,10 +48,12 @@ export class SafroleSeal {
 
     // verify entropySource
     const payload = BytesBlob.blobFromParts(JAM_ENTROPY, sealResult.ok.raw);
+    const blockAuthorIndex = headerView.bandersnatchBlockAuthorIndex.materialize();
+    const blockAuthorKey = state.currentValidatorData.at(blockAuthorIndex)?.bandersnatch;
+
     const entropySourceResult = await bandersnatchVrf.verifySeal(
       await this.bandersnatch,
-      state.currentValidatorData.map((x) => x.bandersnatch),
-      headerView.bandersnatchBlockAuthorIndex.materialize(),
+      blockAuthorKey ?? BANDERSNATCH_ZERO_KEY,
       headerView.entropySource.materialize(),
       payload,
       BytesBlob.blobFromNumbers([]),
@@ -114,10 +118,10 @@ export class SafroleSeal {
     const { id, attempt } = tickets[index];
     const payload = BytesBlob.blobFromParts(JAM_TICKET_SEAL, entropy.raw, new Uint8Array([attempt]));
     // verify seal correctness
+    const authorKey = validators.at(validatorIndex)?.bandersnatch;
     const result = await bandersnatchVrf.verifySeal(
       await this.bandersnatch,
-      validators.map((x) => x.bandersnatch),
-      validatorIndex,
+      authorKey ?? BANDERSNATCH_ZERO_KEY,
       headerView.seal.materialize(),
       payload,
       encodeUnsealedHeader(headerView),
@@ -155,10 +159,10 @@ export class SafroleSeal {
 
     // verify seal correctness
     const payload = BytesBlob.blobFromParts(JAM_FALLBACK_SEAL, entropy.raw);
+    const blockAuthorKey = validators.at(validatorIndex)?.bandersnatch;
     const result = await bandersnatchVrf.verifySeal(
       await this.bandersnatch,
-      validators.map((x) => x.bandersnatch),
-      validatorIndex,
+      blockAuthorKey ?? BANDERSNATCH_ZERO_KEY,
       headerView.seal.materialize(),
       payload,
       encodeUnsealedHeader(headerView),
