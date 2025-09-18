@@ -16,7 +16,7 @@ const baseBuild = {
 };
 
 export default [
-  // ES Module build
+  // Common JS build
   {
     ...baseBuild,
     output: {
