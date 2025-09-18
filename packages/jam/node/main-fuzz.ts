@@ -71,8 +71,9 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
         runningNode = null;
         await finish;
       }
-      const databaseBasePath = `${config.node.databaseBasePath}/fuzz/${fuzzSeed}`;
+      const databaseBasePath = withRelPath(`${config.node.databaseBasePath}/fuzz/${fuzzSeed}`);
       // remove the database
+      console.log('Removing DB', databaseBasePath);
       await fs.rm(databaseBasePath, { recursive: true, force: true });
       // update the chainspec
       const newNode = await mainImporter(

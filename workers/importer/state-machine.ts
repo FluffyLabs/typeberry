@@ -172,6 +172,10 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
     this.onImporter.emit();
   }
 
+  setConfig(config: WorkerConfig) {
+    this.data = config;
+  }
+
   getConfig(): WorkerConfig {
     if (this.data === null) {
       throw new Error("Did not receive chain spec config!");

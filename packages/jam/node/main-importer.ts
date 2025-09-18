@@ -29,12 +29,14 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
   // Initialize the database with genesis state and block if there isn't one.
   await initializeDatabase(chainSpec, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
 
-  const { importer }= await createImporter(new WorkerConfig(
+  const workerConfig = new WorkerConfig(
     chainSpec,
     dbPath,
     false,
-  ));
+  );
+  const { importer }= await createImporter(workerConfig);
   const importerReady = new ImporterReady();
+  importerReady.setConfig(workerConfig);
   importerReady.setImporter(importer);
 
   const api: NodeApi = {
