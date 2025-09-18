@@ -22,6 +22,7 @@ if (!isMainThread) {
 }
 
 const keccakHasher = keccak.KeccakHasher.create();
+
 export async function createImporter(config: WorkerConfig) {
   const lmdb = new LmdbRoot(config.dbPath);
   const blocks = new LmdbBlocks(config.chainSpec, lmdb);
@@ -29,6 +30,7 @@ export async function createImporter(config: WorkerConfig) {
   const hasher = new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator());
   const importer = new Importer(config.chainSpec, hasher, logger, blocks, states);
   return {
+    lmdb,
     blocks,
     importer,
   };

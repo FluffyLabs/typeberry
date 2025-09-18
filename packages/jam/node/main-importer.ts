@@ -28,9 +28,10 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
 
   // Initialize the database with genesis state and block if there isn't one.
   await initializeDatabase(chainSpec, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
+  await rootDb.close();
 
   const workerConfig = new WorkerConfig(chainSpec, dbPath, false);
-  const { importer } = await createImporter(workerConfig);
+  const { lmdb, importer } = await createImporter(workerConfig);
   const importerReady = new ImporterReady();
   importerReady.setConfig(workerConfig);
   importerReady.setImporter(importer);
@@ -52,7 +53,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
     },
     async close() {
       logger.log("[main] 🛢️ Closing the database");
-      await rootDb.close();
+      await lmdb.close();
       logger.info("[main] ✅ Done.");
     },
   };
