@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/ordering",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "description": "Ordering utilities for typeberry.",
   "main": "index.ts",
   "scripts": {

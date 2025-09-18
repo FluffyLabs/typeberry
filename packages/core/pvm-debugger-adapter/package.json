@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/pvm-debugger-adapter",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "description": "A package that adjust PVM interface to be consumed by PVM debugger",
   "main": "index.ts",
   "dependencies": {

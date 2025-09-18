@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/configs",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "description": "A set of pre-defined JSON config files.",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",
