@@ -63,6 +63,9 @@ async function getRingCommitment(
   return Result.ok(Bytes.fromBlob(commitmentResult.subarray(1), BANDERSNATCH_RING_ROOT_BYTES).asOpaque());
 }
 
+// One byte for result discriminator (`ResultValues`) and the rest is entropy hash.
+const TICKET_RESULT_LENGTH = 1 + HASH_SIZE;
+
 async function verifyTickets(
   bandersnatch: BandernsatchWasm,
   numberOfValidators: number,
@@ -86,8 +89,8 @@ async function verifyTickets(
     ticketsData,
     contextLength,
   );
-  return Array.from(BytesBlob.blobFrom(verificationResult).chunks(33)).map((result) => ({
+  return Array.from(BytesBlob.blobFrom(verificationResult).chunks(TICKET_RESULT_LENGTH)).map((result) => ({
     isValid: result.raw[RESULT_INDEX] === ResultValues.Ok,
-    entropyHash: Bytes.fromBlob(result.raw.subarray(1, 33), HASH_SIZE).asOpaque(),
+    entropyHash: Bytes.fromBlob(result.raw.subarray(1, TICKET_RESULT_LENGTH), HASH_SIZE).asOpaque(),
   }));
 }
