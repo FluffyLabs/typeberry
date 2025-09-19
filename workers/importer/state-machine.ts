@@ -10,7 +10,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { codec, Decoder, Encoder } from "@typeberry/codec";
 import { WorkerConfig } from "@typeberry/config";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
-import { HASH_SIZE, ZERO_HASH, type WithHash } from "@typeberry/hash";
+import { HASH_SIZE, type WithHash, ZERO_HASH } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { tryAsU32 } from "@typeberry/numbers";
 import {
@@ -23,7 +23,7 @@ import {
 } from "@typeberry/state-machine";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { Result, resultToString } from "@typeberry/utils";
-import { type Importer } from "./importer.js";
+import type { Importer } from "./importer.js";
 
 export type ImporterInit = WorkerInit<ImporterReady>;
 export type ImporterStates = ImporterInit | ImporterReady | Finished;

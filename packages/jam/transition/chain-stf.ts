@@ -1,4 +1,4 @@
-import type { BlockView, CoreIndex, HeaderHash, TimeSlot } from "@typeberry/block";
+import type { BlockView, CoreIndex, EntropyHash, HeaderHash, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { asKnownSize, HashSet } from "@typeberry/collections";
@@ -170,11 +170,10 @@ export class OnChain {
     const timeSlot = header.timeSlotIndex;
 
     // safrole seal
-    let newEntropyHash = null;
+    let newEntropyHash: EntropyHash;
     if (omitSealVerification) {
       newEntropyHash = blake2b.hashBytes(header.seal).asOpaque();
-    }
-    if (newEntropyHash === null) {
+    } else {
       const sealResult = await this.verifySeal(timeSlot, block);
       if (sealResult.isError) {
         return stfError(StfErrorKind.SafroleSeal, sealResult);

@@ -1,13 +1,13 @@
-import { TimeSlot, tryAsTimeSlot, type BlockView, type HeaderHash, type HeaderView} from "@typeberry/block";
+import { type BlockView, type HeaderHash, type HeaderView, tryAsTimeSlot } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, LeafDb, StatesDb, StateUpdateError } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
-import { Logger } from "@typeberry/logger";
+import type { Logger } from "@typeberry/logger";
 import type { SerializedState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, BlockVerifierError } from "@typeberry/transition/block-verifier.js";
 import { OnChain, type StfError } from "@typeberry/transition/chain-stf.js";
-import { type ErrorResult, measure, OK, Result, resultToString, type TaggedError } from "@typeberry/utils";
+import { type ErrorResult, measure, Result, resultToString, type TaggedError } from "@typeberry/utils";
 
 export enum ImporterErrorKind {
   Verifier = 0,
@@ -61,10 +61,7 @@ export class Importer {
   ): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
     const timer = measure("importBlock");
     const timeSlot = extractTimeSlot(block);
-    const maybeBestHeader = await this.importBlockInternal(
-      block,
-      omitSealVerification
-    );
+    const maybeBestHeader = await this.importBlockInternal(block, omitSealVerification);
     if (maybeBestHeader.isOk) {
       const bestHeader = maybeBestHeader.ok;
       this.logger.info(`🧊 Best block: #${timeSlot} (${bestHeader.hash})`);
@@ -82,7 +79,7 @@ export class Importer {
     omitSealVerification = false,
   ): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
     const logger = this.logger;
-    logger.log(`🧱 Attempting to import a new block`);
+    logger.log("🧱 Attempting to import a new block");
 
     const timerVerify = measure("import:verify");
     const hash = await this.verifier.verifyBlock(block);
@@ -178,6 +175,6 @@ function extractTimeSlot(block: BlockView) {
   try {
     return block.header.view().timeSlotIndex.materialize();
   } catch {
-    return tryAsTimeSlot(2**32 - 1);
+    return tryAsTimeSlot(2 ** 32 - 1);
   }
 }

@@ -1,4 +1,4 @@
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { WithDebug } from "@typeberry/utils";
 
 /**
