@@ -44,7 +44,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
   logger.info(`📥 Importer starting ${channel.currentState()}`);
   // Await the configuration object
   const ready = await channel.waitForState<ImporterReady>("ready(importer)");
-  let closeDb = () => {};
+  let closeDb = async () => {};
 
   const finished = await ready.doUntil<Finished>("finished", async (worker, port) => {
     const config = worker.getConfig();
@@ -68,7 +68,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
 
   logger.info("📥 Importer finished. Closing channel.");
   // close the database
-  closeDb();
+  await closeDb();
   // Close the comms to gracefuly close the app.
   finished.currentState().close(channel);
 }
