@@ -32,7 +32,7 @@ export function getServiceId(serviceId: U64): ServiceId | null {
 }
 
 export function writeServiceIdAsLeBytes(serviceId: ServiceId, destination: Uint8Array) {
-  check(destination.length >= SERVICE_ID_BYTES, "Not enough space in the destination.");
+  check`${destination.length >= SERVICE_ID_BYTES} Not enough space in the destination.`;
   destination.set(u32AsLeBytes(serviceId));
 }
 

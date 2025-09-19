@@ -28,7 +28,7 @@ export class FixedSizeArray<T, N extends number> extends Array<T> {
   }
 
   static new<T, N extends number>(data: readonly T[], len: N): FixedSizeArray<T, N> {
-    check(data.length === len, `Expected an array of size: ${len}, got: ${data.length}`);
+    check`${data.length === len} Expected an array of size: ${len}, got: ${data.length}`;
 
     const arr = new FixedSizeArray<T, N>(len);
 

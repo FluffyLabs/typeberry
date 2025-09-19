@@ -2,8 +2,8 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec, type DescribedBy } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { U8 } from "@typeberry/numbers";
-import { Compatibility, ensure, GpVersion, WithDebug } from "@typeberry/utils";
+import { tryAsU8, type U8 } from "@typeberry/numbers";
+import { Compatibility, check, GpVersion, WithDebug } from "@typeberry/utils";
 import type { ServiceId } from "./common.js";
 import type { CodeHash } from "./hash.js";
 import { RefineContext } from "./refine-context.js";
@@ -15,11 +15,11 @@ export type WorkItemsCount = U8;
 
 /** Verify the value is within the `WorkItemsCount` bounds. */
 export function tryAsWorkItemsCount(len: number): WorkItemsCount {
-  return ensure<number, WorkItemsCount>(
-    len,
-    len >= MIN_NUMBER_OF_WORK_ITEMS && len <= MAX_NUMBER_OF_WORK_ITEMS,
-    `WorkItemsCount: Expected '${MIN_NUMBER_OF_WORK_ITEMS} <= count <= ${MAX_NUMBER_OF_WORK_ITEMS}' got ${len}`,
-  );
+  check`
+    ${len >= MIN_NUMBER_OF_WORK_ITEMS && len <= MAX_NUMBER_OF_WORK_ITEMS}
+    WorkItemsCount: Expected '${MIN_NUMBER_OF_WORK_ITEMS} <= count <= ${MAX_NUMBER_OF_WORK_ITEMS}' got ${len}
+  `;
+  return tryAsU8(len);
 }
 
 /** Minimal number of work items in the work package or results in work report. */

@@ -8,32 +8,21 @@ export function isBrowser() {
  * We avoid using `node:assert` to keep compatibility with a browser environment.
  * Note the checks should not have any side effects, since we might decide
  * to remove all of them in a post-processing step.
- */
-export function check(condition: boolean, message?: string): asserts condition is true {
-  if (!condition) {
-    throw new Error(`Assertion failure: ${message ?? ""}`);
-  }
-}
-
-function cast<T, U extends T>(_a: T, condition: boolean): _a is U {
-  return condition;
-}
-
-/**
- * Yet another function to perform runtime assertions.
- * This function returns a new type to mark in the code that this value was checked and you don't have to do it again.
  *
- * In the post-processing step all usages of this functions should be replaced with simple casting. An example:
- * const x = checkAndType<number, CheckedNumber>(y);
- * should be replaced with:
- * const x = y as CheckedNumber;
+ * NOTE the function is intended to be used as tagged template string for the performance
+ * reasons.
  */
-export function ensure<T, U extends T>(a: T, condition: boolean, message?: string): U {
-  if (cast<T, U>(a, condition)) {
-    return a;
+export function check(
+  strings: TemplateStringsArray,
+  condition: boolean,
+  ...data: unknown[]
+): asserts condition is true {
+  if (!condition) {
+    // add an empty value so that `data.length === strings.length`
+    data.unshift("");
+    const message = strings.map((v, index) => `${v}${data[index] ?? ""}`);
+    throw new Error(`Assertion failure: ${message.join("")}`);
   }
-
-  throw new Error(`Assertion failure: ${message ?? ""}`);
 }
 
 /**

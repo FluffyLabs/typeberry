@@ -280,7 +280,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
 
   private removeServices(servicesRemoved: ServiceId[] | undefined) {
     for (const serviceId of servicesRemoved ?? []) {
-      check(this.services.has(serviceId), `Attempting to remove non-existing service: ${serviceId}`);
+      check`${this.services.has(serviceId)} Attempting to remove non-existing service: ${serviceId}`;
       this.services.delete(serviceId);
     }
   }
@@ -301,10 +301,10 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
         service.data.storage.set(key.toString(), StorageItem.create({ key, value }));
       } else if (kind === UpdateStorageKind.Remove) {
         const { key } = action;
-        check(
-          service.data.storage.has(key.toString()),
-          `Attempting to remove non-existing storage item at ${serviceId}: ${action.key}`,
-        );
+        check`
+          ${service.data.storage.has(key.toString())}
+          Attempting to remove non-existing storage item at ${serviceId}: ${action.key}
+        `;
         service.data.storage.delete(key.toString());
       } else {
         assertNever(kind);

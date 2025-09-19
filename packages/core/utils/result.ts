@@ -81,7 +81,7 @@ export function resultToString<Ok, Error>(res: Result<Ok, Error>) {
 export const Result = {
   /** Create new [`Result`] with `Ok` status. */
   ok: <Ok, Error>(ok: Ok): Result<Ok, Error> => {
-    check(ok !== undefined, "`Ok` type cannot be undefined.");
+    check`${ok !== undefined} 'ok' type cannot be undefined.`;
     return {
       isOk: true,
       isError: false,
@@ -91,7 +91,7 @@ export const Result = {
 
   /** Create new [`Result`] with `Error` status. */
   error: <Ok, Error>(error: Error, details = ""): Result<Ok, Error> => {
-    check(error !== undefined, "`Error` type cannot be undefined.");
+    check`${error !== undefined} 'Error' type cannot be undefined.`;
     return {
       isOk: false,
       isError: true,
