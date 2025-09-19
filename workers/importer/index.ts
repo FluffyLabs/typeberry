@@ -1,5 +1,5 @@
 import { isMainThread, parentPort } from "node:worker_threads";
-
+import type { WorkerConfig } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import type { Finished } from "@typeberry/generic-worker";
@@ -23,6 +23,19 @@ if (!isMainThread) {
 
 const keccakHasher = keccak.KeccakHasher.create();
 
+export async function createImporter(config: WorkerConfig) {
+  const lmdb = new LmdbRoot(config.dbPath);
+  const blocks = new LmdbBlocks(config.chainSpec, lmdb);
+  const states = new LmdbStates(config.chainSpec, lmdb);
+  const hasher = new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator());
+  const importer = new Importer(config.chainSpec, hasher, logger, blocks, states);
+  return {
+    lmdb,
+    blocks,
+    importer,
+  };
+}
+
 /**
  * The `BlockImporter` listens to `block` signals, where it expects
  * RAW undecoded block objects (typically coming from the network).
@@ -37,11 +50,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
 
   const finished = await ready.doUntil<Finished>("finished", async (worker, port) => {
     const config = worker.getConfig();
-    const lmdb = new LmdbRoot(config.dbPath);
-    const blocks = new LmdbBlocks(config.chainSpec, lmdb);
-    const states = new LmdbStates(config.chainSpec, lmdb);
-    const hasher = new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator());
-    const importer = new Importer(config.chainSpec, hasher, logger, blocks, states);
+    const { blocks, importer } = await createImporter(config);
     // TODO [ToDr] this is shit, since we have circular dependency.
     worker.setImporter(importer);
     logger.info("📥 Importer waiting for blocks.");

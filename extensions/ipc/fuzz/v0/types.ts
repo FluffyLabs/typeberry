@@ -1,4 +1,4 @@
-import { Block, Header, type HeaderHash, type StateRootHash } from "@typeberry/block";
+import { Block, type BlockView, Header, type HeaderHash, type StateRootHash } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
@@ -105,10 +105,6 @@ export class KeyValue extends WithDebug {
 /** State ::= SEQUENCE OF KeyValue */
 export const stateCodec = codec.sequenceVarLen(KeyValue.Codec);
 
-/** ImportBlock ::= Block */
-export const importBlockCodec = Block.Codec;
-export type ImportBlock = Block;
-
 /**
  * SetState ::= SEQUENCE {
  *     header  Header,
@@ -153,7 +149,7 @@ export enum MessageType {
 /** Message data union */
 export type MessageData =
   | { type: MessageType.PeerInfo; value: PeerInfo }
-  | { type: MessageType.ImportBlock; value: Block }
+  | { type: MessageType.ImportBlock; value: BlockView }
   | { type: MessageType.SetState; value: SetState }
   | { type: MessageType.GetState; value: GetState }
   | { type: MessageType.State; value: KeyValue[] }
@@ -181,7 +177,7 @@ export const messageCodec = codec.custom<MessageData>(
         PeerInfo.Codec.encode(e, msg.value);
         break;
       case MessageType.ImportBlock:
-        importBlockCodec.encode(e, msg.value);
+        Block.Codec.View.encode(e, msg.value);
         break;
       case MessageType.SetState:
         SetState.Codec.encode(e, msg.value);
@@ -205,7 +201,7 @@ export const messageCodec = codec.custom<MessageData>(
       case MessageType.PeerInfo:
         return { type: MessageType.PeerInfo, value: PeerInfo.Codec.decode(d) };
       case MessageType.ImportBlock:
-        return { type: MessageType.ImportBlock, value: importBlockCodec.decode(d) };
+        return { type: MessageType.ImportBlock, value: Block.Codec.View.decode(d) };
       case MessageType.SetState:
         return { type: MessageType.SetState, value: SetState.Codec.decode(d) };
       case MessageType.GetState:
@@ -225,7 +221,7 @@ export const messageCodec = codec.custom<MessageData>(
         PeerInfo.Codec.View.skip(s);
         break;
       case MessageType.ImportBlock:
-        importBlockCodec.View.skip(s);
+        Block.Codec.View.skip(s);
         break;
       case MessageType.SetState:
         SetState.Codec.View.skip(s);
