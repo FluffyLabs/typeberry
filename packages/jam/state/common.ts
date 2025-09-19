@@ -8,10 +8,10 @@ import { asOpaqueType, check } from "@typeberry/utils";
 export type PerCore<T> = KnownSizeArray<T, "number of cores">;
 /** Check if given array has correct length before casting to the opaque type. */
 export function tryAsPerCore<T>(array: T[], spec: ChainSpec): PerCore<T> {
-  check(
-    array.length === spec.coresCount,
-    `Invalid per-core array length. Expected ${spec.coresCount}, got: ${array.length}`,
-  );
+  check`
+    ${array.length === spec.coresCount}
+    Invalid per-core array length. Expected ${spec.coresCount}, got: ${array.length}
+  `;
   return asOpaqueType(array);
 }
 export const codecPerCore = <T, V>(val: Descriptor<T, V>): Descriptor<PerCore<T>, SequenceView<T, V>> =>

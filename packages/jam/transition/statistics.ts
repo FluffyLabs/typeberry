@@ -210,7 +210,7 @@ export class Statistics {
     /** get statistics for the current epoch */
     const statistics = this.getStatistics(slot);
     const { current, cores, services } = statistics;
-    check(current[authorIndex] !== undefined, "authorIndex is out of bounds");
+    check`${current[authorIndex] !== undefined} authorIndex is out of bounds`;
 
     /** One validator can produce maximal one block per timeslot */
     const newBlocksCount = current[authorIndex].blocks + 1;

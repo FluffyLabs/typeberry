@@ -164,7 +164,7 @@ export class SortedArray<V> implements ImmutableSortedArray<V> {
 
   /** Create a new SortedSet from two sorted collections. */
   static fromTwoSortedCollections<V>(first: ImmutableSortedArray<V>, second: ImmutableSortedArray<V>) {
-    check(first.comparator === second.comparator, "Cannot merge arrays if they do not use the same comparator");
+    check`${first.comparator === second.comparator} Cannot merge arrays if they do not use the same comparator`;
     const comparator = first.comparator;
     const arr1 = first.array;
     const arr1Length = arr1.length;

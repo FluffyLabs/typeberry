@@ -85,10 +85,10 @@ export function mulU64(a: bigint, b: bigint) {
 
 /**
  * Multiply two unsigned 64-bit numbers and take the upper 64-bits of the result.
- *  
+ *
  * The result of multiplication is a 64-bits number and we are only interested in the part that lands in the upper 32-bits.
  * For example if we multiply `0xffffffff * 0xffffffff`, we get:
- 
+
  * |       64-bits      |       64-bits      |
  * +--------------------+--------------------+
  * |        upper       |        lower       |
@@ -131,7 +131,7 @@ export function mulUpperSS(a: bigint, b: bigint) {
 }
 
 export function unsignedRightShiftBigInt(value: bigint, shift: bigint): bigint {
-  check(shift >= 0, "Shift count must be non-negative");
+  check`${shift >= 0} Shift count must be non-negative`;
 
   const fillBit = value < 0 ? "1" : "0";
   // Convert the BigInt to its binary representation

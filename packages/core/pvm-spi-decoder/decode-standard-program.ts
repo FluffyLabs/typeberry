@@ -1,23 +1,16 @@
 import { Decoder } from "@typeberry/codec";
-import { ensure, type Opaque, WithDebug } from "@typeberry/utils";
-import { ARGS_SEGMENT, DATA_LEGNTH, LAST_PAGE, PAGE_SIZE, SEGMENT_SIZE, STACK_SEGMENT } from "./memory-conts.js";
+import { check, WithDebug } from "@typeberry/utils";
+import {
+  ARGS_SEGMENT,
+  DATA_LEGNTH as DATA_LENGTH,
+  LAST_PAGE,
+  PAGE_SIZE,
+  SEGMENT_SIZE,
+  STACK_SEGMENT,
+} from "./memory-conts.js";
 import { alignToPageSize, alignToSegmentSize } from "./memory-utils.js";
 
 const NO_OF_REGISTERS = 13;
-
-/**
- * program = E_3(|o|) ++ E_3(|w|) ++ E_2(z) ++ E_3(s) ++ o ++ w ++ E_4(|c|) ++ c
- *
- * E_n - little endian encoding, n - length
- * o - initial read only data
- * w - initial heap
- * z - heap pages filled with zeros
- * s - stack size
- * c - program code
- *
- * https://graypaper.fluffylabs.dev/#/579bd12/2b92022b9202
- */
-type InputLength = Opaque<number, "Number that is lower than 2 ** 24 (Z_I from GP)">;
 
 export class MemorySegment extends WithDebug {
   static from({ start, end, data }: Omit<MemorySegment, never>) {
@@ -53,17 +46,27 @@ export class SpiProgram extends WithDebug {
   }
 }
 
+/**
+ * program = E_3(|o|) ++ E_3(|w|) ++ E_2(z) ++ E_3(s) ++ o ++ w ++ E_4(|c|) ++ c
+ *
+ * E_n - little endian encoding, n - length
+ * o - initial read only data
+ * w - initial heap
+ * z - heap pages filled with zeros
+ * s - stack size
+ * c - program code
+ *
+ * https://graypaper.fluffylabs.dev/#/579bd12/2b92022b9202
+ */
 export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
   const decoder = Decoder.fromBlob(program);
   const oLength = decoder.u24();
   const wLength = decoder.u24();
-  const argsLength = ensure<number, InputLength>(args.length, args.length <= DATA_LEGNTH, "Incorrect arguments length");
-  const readOnlyLength = ensure<number, InputLength>(
-    oLength,
-    oLength <= DATA_LEGNTH,
-    "Incorrect readonly segment length",
-  );
-  const heapLength = ensure<number, InputLength>(wLength, wLength <= DATA_LEGNTH, "Incorrect heap segment length");
+  check`${args.length <= DATA_LENGTH} Incorrect arguments length`;
+  check`${oLength <= DATA_LENGTH} Incorrect readonly segment length`;
+  const readOnlyLength = oLength;
+  check`${wLength <= DATA_LENGTH} Incorrect heap segment length`;
+  const heapLength = wLength;
   const noOfHeapZerosPages = decoder.u16();
   const stackSize = decoder.u24();
   const readOnlyMemory = decoder.bytes(readOnlyLength).raw;
@@ -80,8 +83,8 @@ export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
   const stackStart = STACK_SEGMENT - alignToPageSize(stackSize);
   const stackEnd = STACK_SEGMENT;
   const argsStart = ARGS_SEGMENT;
-  const argsEnd = argsStart + alignToPageSize(argsLength);
-  const argsZerosEnd = argsEnd + alignToPageSize(argsLength);
+  const argsEnd = argsStart + alignToPageSize(args.length);
+  const argsZerosEnd = argsEnd + alignToPageSize(args.length);
 
   function nonEmpty(s: MemorySegment | false): s is MemorySegment {
     return s !== false;
@@ -89,7 +92,7 @@ export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
 
   const readableMemory = [
     readOnlyLength > 0 && getMemorySegment(readonlyDataStart, readonlyDataEnd, readOnlyMemory),
-    argsLength > 0 && getMemorySegment(argsStart, argsEnd, args),
+    args.length > 0 && getMemorySegment(argsStart, argsEnd, args),
     argsEnd < argsZerosEnd && getMemorySegment(argsEnd, argsZerosEnd),
   ].filter(nonEmpty);
   const writeableMemory = [

@@ -349,7 +349,7 @@ function createSubtreeForBothLeaves(
  * Return a single bit from `key` located at `bitIndex`.
  */
 function getBit(key: TruncatedStateKey, bitIndex: number): boolean {
-  check(bitIndex < TRUNCATED_KEY_BITS);
+  check`${bitIndex < TRUNCATED_KEY_BITS} invalid bit index passed ${bitIndex}`;
   const byte = bitIndex >>> 3;
   const bit = bitIndex - (byte << 3);
   const mask = 0b10_00_00_00 >>> bit;

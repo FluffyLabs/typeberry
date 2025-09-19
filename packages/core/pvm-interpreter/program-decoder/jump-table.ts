@@ -4,10 +4,10 @@ export class JumpTable {
   private indices: Uint32Array;
 
   constructor(itemByteLength: number, bytes: Uint8Array) {
-    check(
-      itemByteLength === 0 || bytes.length % itemByteLength === 0,
-      `Length of jump table (${bytes.length}) should be a multiple of item lenght (${itemByteLength})!`,
-    );
+    check`
+      ${itemByteLength === 0 || bytes.length % itemByteLength === 0}
+      Length of jump table (${bytes.length}) should be a multiple of item lenght (${itemByteLength})!
+    `;
 
     const length = itemByteLength === 0 ? 0 : bytes.length / itemByteLength;
 

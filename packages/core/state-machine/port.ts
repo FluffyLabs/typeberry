@@ -94,7 +94,7 @@ export class TypedPort {
    * Send a response given the worker that has previously requested something.
    */
   respond(localState: string, request: Message, data: unknown, transferList?: Transferable[]) {
-    check(request.kind === "request");
+    check`${request.kind === "request"}`;
     this.postMessage(
       {
         kind: "response",
@@ -131,10 +131,11 @@ export class TypedPort {
     }
 
     switch (msg.kind) {
-      case "response":
-        check(this.responseListeners.eventNames().indexOf(reqEvent(msg.id)) !== -1);
+      case "response": {
+        check`${this.responseListeners.eventNames().indexOf(reqEvent(msg.id)) !== -1}`;
         this.responseListeners.emit(reqEvent(msg.id), null, msg.data, msg.name, msg.localState, msg);
         break;
+      }
       case "signal":
         this.listeners.emit("signal", msg.name, msg.data, msg.localState, msg);
         break;

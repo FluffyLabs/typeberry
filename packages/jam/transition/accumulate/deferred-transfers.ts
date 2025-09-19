@@ -122,7 +122,7 @@ export class DeferredTransfers {
       transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(consumedGas) });
       const [updatedState, checkpointedState] = partialState.getStateUpdates();
       currentStateUpdate = updatedState;
-      check(checkpointedState === null, "On transfer cannot invoke checkpoint.");
+      check`${checkpointedState === null} On transfer cannot invoke checkpoint.`;
     }
 
     return Result.ok({

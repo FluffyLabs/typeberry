@@ -29,8 +29,8 @@ export class MultiMap<TKeys extends readonly unknown[], TValue> {
    * if needed.
    */
   constructor(keysLength: TKeys["length"], keyMappers?: KeyMappers<TKeys>) {
-    check(keysLength > 0, "Keys cannot be empty.");
-    check(keyMappers === undefined || keyMappers.length === keysLength, "Incorrect number of key mappers given!");
+    check`${keysLength > 0} Keys cannot be empty.`;
+    check`${keyMappers === undefined || keyMappers.length === keysLength} Incorrect number of key mappers given!`;
     this.data = new Map() as NestedMaps<TKeys, TValue>;
     this.keyMappers = keyMappers === undefined ? (Array(keysLength).fill(null) as KeyMappers<TKeys>) : keyMappers;
   }

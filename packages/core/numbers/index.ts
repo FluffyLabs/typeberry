@@ -1,4 +1,4 @@
-import { check, ensure } from "@typeberry/utils";
+import { check } from "@typeberry/utils";
 
 /**
  * TODO [ToDr] This should be `unique symbol`, but for some reason
@@ -9,7 +9,7 @@ declare const __REPRESENTATION_BYTES__: "REPRESENTATION_BYTES";
 type WithBytesRepresentation<Bytes extends number> = {
   readonly [__REPRESENTATION_BYTES__]: Bytes;
 };
-const asWithBytesRepresentation = <T, N extends number>(v: T): T & WithBytesRepresentation<N> =>
+const asTypedNumber = <T, N extends number>(v: T): T & WithBytesRepresentation<N> =>
   v as T & WithBytesRepresentation<N>;
 
 export type FixedSizeNumber<Bytes extends number> = number & WithBytesRepresentation<Bytes>;
@@ -28,20 +28,27 @@ export type U64 = bigint & WithBytesRepresentation<8>;
 const MAX_VALUE_U64 = 0xffff_ffff_ffff_ffffn;
 
 /** Attempt to cast an input number into U8. */
-export const tryAsU8 = (v: number): U8 =>
-  ensure<number, U8>(v, isU8(v), `input must have one-byte representation, got ${v}`);
+export const tryAsU8 = (v: number): U8 => {
+  check`${isU8(v)} input must have one-byte representation, got ${v}`;
+  return asTypedNumber(v);
+};
 /** Check if given number is a valid U8 number. */
 export const isU8 = (v: number): v is U8 => (v & MAX_VALUE_U8) === v;
 
 /** Attempt to cast an input number into U16. */
-export const tryAsU16 = (v: number): U16 =>
-  ensure<number, U16>(v, isU16(v), `input must have two-byte representation, got ${v}`);
+export const tryAsU16 = (v: number): U16 => {
+  check`${isU16(v)} input must have two-byte representation, got ${v}`;
+  return asTypedNumber(v);
+};
+
 /** Check if given number is a valid U16 number. */
 export const isU16 = (v: number): v is U16 => (v & MAX_VALUE_U16) === v;
 
 /** Attempt to cast an input number into U32. */
-export const tryAsU32 = (v: number): U32 =>
-  ensure<number, U32>(v, isU32(v), `input must have four-byte representation, got ${v}`);
+export const tryAsU32 = (v: number): U32 => {
+  check`${isU32(v)} input must have four-byte representation, got ${v}`;
+  return asTypedNumber(v);
+};
 
 /** Check if given number is a valid U32 number. */
 export const isU32 = (v: number): v is U32 => (v & MAX_VALUE_U32) >>> 0 === v;
@@ -49,15 +56,17 @@ export const isU32 = (v: number): v is U32 => (v & MAX_VALUE_U32) >>> 0 === v;
 /** Attempt to cast an input number into U64. */
 export const tryAsU64 = (x: number | bigint): U64 => {
   const v = BigInt(x);
-  return ensure<bigint, U64>(v, isU64(v), `input must have eight-byte representation, got ${x}`);
+  check`${isU64(v)} input must have eight-byte representation, got ${x}`;
+  return asTypedNumber(v);
 };
+
 /** Check if given number is a valid U64 number. */
 export const isU64 = (v: bigint): v is U64 => (v & MAX_VALUE_U64) === v;
 
 /** Collate two U32 parts into one U64. */
 export const u64FromParts = ({ lower, upper }: { lower: U32; upper: U32 }): U64 => {
   const val = (BigInt(upper) << 32n) + BigInt(lower);
-  return asWithBytesRepresentation(val);
+  return asTypedNumber(val);
 };
 
 /** Split U64 into lower & upper parts. */
@@ -66,8 +75,8 @@ export const u64IntoParts = (v: U64): { lower: U32; upper: U32 } => {
   const upper = v >> 32n;
 
   return {
-    lower: asWithBytesRepresentation(Number(lower)),
-    upper: asWithBytesRepresentation(Number(upper)),
+    lower: asTypedNumber(Number(lower)),
+    upper: asTypedNumber(Number(upper)),
   };
 };
 
@@ -124,10 +133,8 @@ export function u32AsLeBytes(value: U32): Uint8Array {
  * Interpret 4-byte `Uint8Array` as U32 written as little endian.
  */
 export function leBytesAsU32(uint8Array: Uint8Array): U32 {
-  check(uint8Array.length === 4, "Input must be a Uint8Array of length 4");
-  return asWithBytesRepresentation(
-    uint8Array[0] | (uint8Array[1] << 8) | (uint8Array[2] << 16) | (uint8Array[3] << 24),
-  );
+  check`${uint8Array.length === 4} Input must be a Uint8Array of length 4`;
+  return asTypedNumber(uint8Array[0] | (uint8Array[1] << 8) | (uint8Array[2] << 16) | (uint8Array[3] << 24));
 }
 
 /** Get the smallest value between U64 a and values given as input parameters. */

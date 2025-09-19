@@ -22,7 +22,7 @@ export class PageAllocator implements HashAllocator {
 
   // TODO [ToDr] Benchmark the performance!
   constructor(private readonly hashesPerPage: number) {
-    check(hashesPerPage > 0 && hashesPerPage >>> 0 === hashesPerPage, "Expected a non-zero integer.");
+    check`${hashesPerPage > 0 && hashesPerPage >>> 0 === hashesPerPage} Expected a non-zero integer.`;
     this.resetPage();
   }
 

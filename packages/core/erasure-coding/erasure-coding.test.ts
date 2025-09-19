@@ -10,6 +10,7 @@ import { init } from "@typeberry/native";
 import { deepEqual } from "@typeberry/utils";
 import { SEGMENT_FULL, SEGMENT_TINY, TEST_DATA, WORKPACKAGE_FULL, WORKPACKAGE_TINY } from "./ec-test-data.js";
 import {
+  checkConsistency,
   chunksToShards,
   decodeData,
   decodePiece,
@@ -54,6 +55,10 @@ describe("erasure coding: general", async () => {
   const segmentEc = TEST_DATA.segment.segments[0].segment_ec;
 
   seed = Math.floor(1000 * Math.random());
+
+  it("should check consistency", () => {
+    checkConsistency();
+  });
 
   it("should encode data", () => {
     const encoded = encodePoints(Bytes.parseBytesNoPrefix(data, 684));

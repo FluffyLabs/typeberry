@@ -337,7 +337,7 @@ export class Decoder {
     if (this.offset < newOffset) {
       this.skip(newOffset - this.offset);
     } else {
-      check(newOffset >= 0, "The offset has to be positive");
+      check`${newOffset >= 0} The offset has to be positive`;
       this.offset = newOffset;
     }
   }
@@ -369,7 +369,7 @@ export class Decoder {
   }
 
   private ensureHasBytes(bytes: number) {
-    check(bytes >= 0, "Negative number of bytes given.");
+    check`${bytes >= 0} Negative number of bytes given.`;
     if (this.offset + bytes > this.source.length) {
       throw new Error(
         `Attempting to decode more data than there is left. Need ${bytes}, left: ${this.source.length - this.offset}.`,
@@ -380,7 +380,7 @@ export class Decoder {
 
 const MASKS = [0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe0, 0xc0, 0x80];
 export function decodeVariableLengthExtraBytes(firstByte: number) {
-  check(firstByte >= 0 && firstByte < 256, `Incorrect byte value: ${firstByte}`);
+  check`${firstByte >= 0 && firstByte < 256} Incorrect byte value: ${firstByte}`;
   for (let i = 0; i < MASKS.length; i++) {
     if (firstByte >= MASKS[i]) {
       return 8 - i;

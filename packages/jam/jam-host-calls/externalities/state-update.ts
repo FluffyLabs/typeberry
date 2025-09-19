@@ -292,8 +292,8 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     bytes: bigint,
     serviceInfo: ServiceAccountInfo,
   ): Result<OK, InsufficientFundsError> {
-    check(items >= 0, `storageUtilisationCount has to be a positive number, got: ${items}`);
-    check(bytes >= 0, `storageUtilisationBytes has to be a positive number, got: ${bytes}`);
+    check`${items >= 0} storageUtilisationCount has to be a positive number, got: ${items}`;
+    check`${bytes >= 0} storageUtilisationBytes has to be a positive number, got: ${bytes}`;
 
     const overflowItems = !isU32(items);
     const overflowBytes = !isU64(bytes);

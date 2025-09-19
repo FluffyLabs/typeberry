@@ -34,7 +34,7 @@ export class Mask {
   }
 
   getNoOfBytesToNextInstruction(index: number) {
-    check(index >= 0, `index (${index}) cannot be a negative number`);
+    check`${index >= 0} index (${index}) cannot be a negative number`;
     return Math.min(this.lookupTableForward[index] ?? 0, MAX_INSTRUCTION_DISTANCE);
   }
 

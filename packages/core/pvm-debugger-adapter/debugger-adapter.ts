@@ -61,7 +61,7 @@ export class DebuggerAdapter {
   }
 
   nSteps(steps: number): boolean {
-    check(steps >>> 0 > 0, `Expected a positive integer got ${steps}`);
+    check`${steps >>> 0 > 0} Expected a positive integer got ${steps}`;
     for (let i = 0; i < steps; i++) {
       const isOk = this.nextStep();
       if (!isOk) {

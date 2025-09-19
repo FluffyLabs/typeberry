@@ -37,10 +37,10 @@ export class MemoryBuilder {
    */
   setReadablePages(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
     this.ensureNotFinalized();
-    check(start < end, "end has to be bigger than start");
-    check(start % PAGE_SIZE === 0, `start needs to be a multiple of page size (${PAGE_SIZE})`);
-    check(end % PAGE_SIZE === 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
-    check(data.length <= end - start, "the initial data is longer than address range");
+    check`${start < end} end has to be bigger than start`;
+    check`${start % PAGE_SIZE === 0} start needs to be a multiple of page size (${PAGE_SIZE})`;
+    check`${end % PAGE_SIZE === 0} end needs to be a multiple of page size (${PAGE_SIZE})`;
+    check`${data.length <= end - start} the initial data is longer than address range`;
 
     const length = end - start;
     const range = MemoryRange.fromStartAndLength(start, length);
@@ -71,10 +71,10 @@ export class MemoryBuilder {
    */
   setWriteablePages(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
     this.ensureNotFinalized();
-    check(start < end, "end has to be bigger than start");
-    check(start % PAGE_SIZE === 0, `start needs to be a multiple of page size (${PAGE_SIZE})`);
-    check(end % PAGE_SIZE === 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
-    check(data.length <= end - start, "the initial data is longer than address range");
+    check`${start < end} end has to be bigger than start`;
+    check`${start % PAGE_SIZE === 0} start needs to be a multiple of page size (${PAGE_SIZE})`;
+    check`${end % PAGE_SIZE === 0} end needs to be a multiple of page size (${PAGE_SIZE})`;
+    check`${data.length <= end - start} the initial data is longer than address range`;
 
     const length = end - start;
     const range = MemoryRange.fromStartAndLength(start, length);
@@ -102,7 +102,7 @@ export class MemoryBuilder {
     this.ensureNotFinalized();
     const pageOffset = start % PAGE_SIZE;
     const remainingSpaceOnPage = PAGE_SIZE - pageOffset;
-    check(data.length <= remainingSpaceOnPage, "The data has to fit into a single page.");
+    check`${data.length <= remainingSpaceOnPage} The data has to fit into a single page.`;
 
     const length = data.length;
     const range = MemoryRange.fromStartAndLength(start, length);
@@ -123,10 +123,10 @@ export class MemoryBuilder {
   }
 
   finalize(startHeapIndex: MemoryIndex, endHeapIndex: SbrkIndex): Memory {
-    check(
-      startHeapIndex <= endHeapIndex,
-      `startHeapIndex (${startHeapIndex}) has to be less than or equal to endHeapIndex (${endHeapIndex})`,
-    );
+    check`
+      ${startHeapIndex <= endHeapIndex}
+      startHeapIndex (${startHeapIndex}) has to be less than or equal to endHeapIndex (${endHeapIndex})
+    `;
     this.ensureNotFinalized();
 
     const range = MemoryRange.fromStartAndLength(startHeapIndex, endHeapIndex - startHeapIndex);

@@ -88,7 +88,7 @@ export async function verify<T extends BytesBlob>(input: Input<T>[]): Promise<bo
     data.set(signature.raw, offset);
     offset += ED25519_SIGNATURE_BYTES;
     const messageLength = message.length;
-    check(messageLength < 256, `Message needs to be shorter than 256 bytes. Got: ${messageLength}`);
+    check`${messageLength < 256} Message needs to be shorter than 256 bytes. Got: ${messageLength}`;
     data[offset] = messageLength;
     offset += 1;
     data.set(message.raw, offset);

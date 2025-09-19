@@ -90,13 +90,13 @@ export class TrieNode {
 
   /** View this node as a branch node */
   asBranchNode(): BranchNode {
-    check(this.getNodeType() === NodeType.Branch);
+    check`${this.getNodeType() === NodeType.Branch} not a branch!`;
     return new BranchNode(this);
   }
 
   /** View this node as a leaf node */
   asLeafNode(): LeafNode {
-    check(this.getNodeType() !== NodeType.Branch);
+    check`${this.getNodeType() !== NodeType.Branch} not a leaf!`;
     return new LeafNode(this);
   }
 

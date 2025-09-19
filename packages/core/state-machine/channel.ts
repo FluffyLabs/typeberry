@@ -251,9 +251,9 @@ export class MessageChannelStateMachine<
     const promise = new Promise<TypedPort>((resolve, reject) => {
       parentPort.once("message", (value: Message) => {
         try {
-          check(value.kind === "request", "The initial message should be a request with channel.");
-          check(value.name === CHANNEL_MESSAGE);
-          check(value.data instanceof MessagePort);
+          check`${value.kind === "request"} The initial message should be a request with channel.`;
+          check`${value.name === CHANNEL_MESSAGE}`;
+          check`${value.data instanceof MessagePort}`;
           const port = new TypedPort(value.data as MessagePort);
           port.respond(machine.currentState().stateName, value, Ok);
           resolve(port);
