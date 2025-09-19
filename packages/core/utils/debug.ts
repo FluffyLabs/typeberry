@@ -21,7 +21,7 @@ export function check(
     // add an empty value so that `data.length === strings.length`
     data.unshift("");
     const message = strings.map((v, index) => `${v}${data[index] ?? ""}`);
-    throw new Error(`Assertion failure: ${message.join("")}`);
+    throw new Error(`Assertion failure:${message.join("")}`);
   }
 }
 

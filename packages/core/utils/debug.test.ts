@@ -11,6 +11,6 @@ describe("utils::check", () => {
     const num = 10;
     assert.throws(() => {
       check`${false} Oopsie ${4}, ${"!"} ${num}`;
-    }, new Error("Assertion failure:  Oopsie 4, ! 10"));
+    }, new Error("Assertion failure: Oopsie 4, ! 10"));
   });
 });
