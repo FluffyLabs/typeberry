@@ -1,4 +1,4 @@
-import type { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { WithDebug } from "@typeberry/utils";
 
 /**
@@ -25,6 +25,8 @@ export type KeccakHash = Bytes<HASH_SIZE>;
 
 /** Truncated hash. */
 export type TruncatedHash = Bytes<TRUNCATED_HASH_SIZE>;
+
+export const ZERO_HASH = Bytes.zero(HASH_SIZE);
 
 /**
  * Container for some object with a hash that is related to this object.

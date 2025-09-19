@@ -9,7 +9,7 @@ import {
 } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Result } from "@typeberry/utils";
-import type { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import type { BandernsatchWasm } from "./bandersnatch-wasm.js";
 import { JAM_TICKET_SEAL } from "./constants.js";
 
 const RESULT_INDEX = 0 as const;

@@ -67,7 +67,7 @@
     "qa": "biome ci && eslint .",
     "qa-fix": "npm run format; npm run lint",
     "format": "biome format --write",
-    "lint": "biome check --write && biome lint --write",
+    "lint": "biome check --write --unsafe && biome lint --write",
     "start": "npm start -w @typeberry/jam --",
     "test": "tsx --test $(find . -type d -name node_modules -prune -type f -o -name '*.test.ts' | tr '\\n' ' ')",
     "test-only": "node --test-only --import tsx $(find . -type d -name node_modules -prune -type f -o -name '*.test.ts' | tr '\\n' ' ')",

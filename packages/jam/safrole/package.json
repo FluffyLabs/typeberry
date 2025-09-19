@@ -8,7 +8,6 @@
     "@typeberry/bytes": "*",
     "@typeberry/codec": "*",
     "@typeberry/collections": "*",
-    "@typeberry/concurrent": "*",
     "@typeberry/config": "*",
     "@typeberry/crypto": "*",
     "@typeberry/hash": "*",

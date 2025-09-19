@@ -1,4 +1,4 @@
-import type { BlockView, EntropyHash, HeaderHash, HeaderView, TimeSlot } from "@typeberry/block";
+import { type BlockView, type HeaderHash, type HeaderView, tryAsTimeSlot } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, LeafDb, StatesDb, StateUpdateError } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
@@ -48,35 +48,38 @@ export class Importer {
     }
 
     this.verifier = new BlockVerifier(hasher, blocks);
-    this.stf = new OnChain(spec, state, blocks, hasher, { enableParallelSealVerification: true });
+    this.stf = new OnChain(spec, state, blocks, hasher);
     this.state = state;
     this.currentHash = currentBestHeaderHash;
 
     logger.info(`😎 Best time slot: ${state.timeslot} (header hash: ${currentBestHeaderHash})`);
   }
 
-  /** Attempt to pre-verify the seal to speed up importing. */
-  async preverifySeal(timeSlot: TimeSlot, block: BlockView): Promise<EntropyHash | null> {
-    try {
-      const res = await this.stf.verifySeal(timeSlot, block);
-      if (res.isOk) {
-        return res.ok;
-      }
-      this.logger.warn(`Unable to pre-verify the seal: ${resultToString(res)}`);
-      return null;
-    } catch (e) {
-      this.logger.warn(`Error while trying to pre-verify the seal: ${e}`);
-      return null;
+  public async importBlock(
+    block: BlockView,
+    omitSealVerification: boolean,
+  ): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
+    const timer = measure("importBlock");
+    const timeSlot = extractTimeSlot(block);
+    const maybeBestHeader = await this.importBlockInternal(block, omitSealVerification);
+    if (maybeBestHeader.isOk) {
+      const bestHeader = maybeBestHeader.ok;
+      this.logger.info(`🧊 Best block: #${timeSlot} (${bestHeader.hash})`);
+      this.logger.log(timer());
+      return maybeBestHeader;
     }
+
+    this.logger.log(`❌ Rejected block #${timeSlot}: ${resultToString(maybeBestHeader)}`);
+    this.logger.log(timer());
+    return maybeBestHeader;
   }
 
-  async importBlock(
+  private async importBlockInternal(
     block: BlockView,
-    preverifiedSeal: EntropyHash | null,
     omitSealVerification = false,
   ): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
     const logger = this.logger;
-    logger.log(`🧱 Attempting to import a new block ${preverifiedSeal !== null ? "(seal preverified)" : ""}`);
+    logger.log("🧱 Attempting to import a new block");
 
     const timerVerify = measure("import:verify");
     const hash = await this.verifier.verifyBlock(block);
@@ -104,7 +107,7 @@ export class Importer {
     const headerHash = hash.ok;
     logger.log(`🧱 Verified block: Got hash ${headerHash} for block at slot ${timeSlot}.`);
     const timerStf = measure("import:stf");
-    const res = await this.stf.transition(block, headerHash, preverifiedSeal, omitSealVerification);
+    const res = await this.stf.transition(block, headerHash, omitSealVerification);
     logger.log(timerStf());
     if (res.isError) {
       return importerError(ImporterErrorKind.Stf, res);
@@ -160,5 +163,18 @@ export class Importer {
     const state = this.states.getState(headerHash);
     const stateEntries = state?.backend.intoStateEntries();
     return stateEntries ?? null;
+  }
+}
+
+/**
+ * Attempt to safely extract timeslot of a block.
+ *
+ * NOTE: it may fail if encoding is invalid.
+ */
+function extractTimeSlot(block: BlockView) {
+  try {
+    return block.header.view().timeSlotIndex.materialize();
+  } catch {
+    return tryAsTimeSlot(2 ** 32 - 1);
   }
 }
