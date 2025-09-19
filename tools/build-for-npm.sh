@@ -30,11 +30,8 @@ cd -
 
 # Build all workers separately and then the main binary
 $BUILD ./workers/importer/index.ts -o $DIST_FOLDER/importer
-cd $DIST_FOLDER/importer && rm bootstrap-bandersnatch.mjs && ln -s ../bandersnatch/index.js bootstrap-bandersnatch.mjs && cd -
-
 $BUILD ./workers/jam-network/index.ts -o $DIST_FOLDER/jam-network
 $BUILD ./workers/block-generator/index.ts -o $DIST_FOLDER/block-generator
-$BUILD ./packages/jam/safrole/bandersnatch-wasm/bootstrap-bandersnatch.ts -o $DIST_FOLDER/bandersnatch
 
 # copy worker wasm files
 cp $DIST_FOLDER/**/*.wasm $DIST_FOLDER/ || true # ignore overwrite errors
