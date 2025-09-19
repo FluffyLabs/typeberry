@@ -14,7 +14,7 @@ import type { State, ValidatorData } from "@typeberry/state";
 import { SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
 import { Result } from "@typeberry/utils";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
-import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import { BandernsatchWasm } from "./bandersnatch-wasm.js";
 import { JAM_ENTROPY, JAM_FALLBACK_SEAL, JAM_TICKET_SEAL } from "./constants.js";
 
 export enum SafroleSealError {
@@ -32,7 +32,7 @@ export type SafroleSealState = Pick<State, "currentValidatorData" | "sealingKeyS
 const BANDERSNATCH_ZERO_KEY = Bytes.zero(BANDERSNATCH_KEY_BYTES).asOpaque<BandersnatchKey>();
 
 export class SafroleSeal {
-  constructor(private readonly bandersnatch: Promise<BandernsatchWasm> = BandernsatchWasm.new({ synchronous: true })) {}
+  constructor(private readonly bandersnatch: Promise<BandernsatchWasm> = BandernsatchWasm.new()) {}
   /**
    * Note the verification needs to be done AFTER the state transition,
    * hence the state is passed as an argument for more control.

@@ -14,9 +14,9 @@ import {
 } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
-import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import { BandernsatchWasm } from "./bandersnatch-wasm.js";
 
-const bandersnatchWasm = BandernsatchWasm.new({ synchronous: true });
+const bandersnatchWasm = BandernsatchWasm.new();
 
 const attempt = (v: number) => tryAsTicketAttempt(v);
 

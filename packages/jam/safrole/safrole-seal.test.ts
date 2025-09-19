@@ -18,10 +18,10 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
 import { Compatibility, GpVersion } from "@typeberry/utils";
-import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import { BandernsatchWasm } from "./bandersnatch-wasm.js";
 import { SafroleSeal } from "./safrole-seal.js";
 
-const bandersnatch = BandernsatchWasm.new({ synchronous: true });
+const bandersnatch = BandernsatchWasm.new();
 
 if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)) {
   describe("Safrole Seal verification", () => {

@@ -22,10 +22,10 @@ import { hashComparator, VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
 import { deepEqual, Result } from "@typeberry/utils";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
-import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import { BandernsatchWasm } from "./bandersnatch-wasm.js";
 import { type Input, Safrole, SafroleErrorCode, type SafroleState, type SafroleStateUpdate } from "./safrole.js";
 
-const bwasm = BandernsatchWasm.new({ synchronous: true });
+const bwasm = BandernsatchWasm.new();
 
 const validators: PerValidator<ValidatorData> = asKnownSize(
   [
