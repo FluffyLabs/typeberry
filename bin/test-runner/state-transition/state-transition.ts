@@ -129,7 +129,7 @@ export async function runStateTransition(testContent: StateTransition, testPath:
     }),
   );
 
-  const stf = new OnChain(spec, preState, blocksDb, hasher, { enableParallelSealVerification: false });
+  const stf = new OnChain(spec, preState, blocksDb, hasher);
 
   // verify that we compute the state root exactly the same.
   assert.deepStrictEqual(testContent.pre_state.state_root.toString(), preStateRoot.toString());

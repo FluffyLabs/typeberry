@@ -10,7 +10,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { codec, Decoder, Encoder } from "@typeberry/codec";
 import { WorkerConfig } from "@typeberry/config";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
-import { HASH_SIZE, type WithHash } from "@typeberry/hash";
+import { HASH_SIZE, ZERO_HASH, type WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { tryAsU32 } from "@typeberry/numbers";
 import {
@@ -23,7 +23,7 @@ import {
 } from "@typeberry/state-machine";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { Result, resultToString } from "@typeberry/utils";
-import type { Importer } from "./importer.js";
+import { type Importer } from "./importer.js";
 
 export type ImporterInit = WorkerInit<ImporterReady>;
 export type ImporterStates = ImporterInit | ImporterReady | Finished;
@@ -229,7 +229,6 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
     };
   }
 
-  // NOTE [ToDr] This should rather be using the import queue, instead of going directly.
   async importBlock(block: unknown): Promise<RespondAndTransitionTo<Uint8Array | null, Finished>> {
     if (this.importer === null) {
       logger.error(`${this.constructor.name} importer not initialized yet!`);
@@ -242,16 +241,12 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
     if (block instanceof Uint8Array) {
       const config = this.getConfig();
       const blockView = Decoder.decodeObject(Block.Codec.View, block, config.chainSpec);
-      const headerView = blockView.header.view();
-      const timeSlot = headerView.timeSlotIndex.materialize();
       let response: Result<StateRootHash, string>;
       try {
-        const res = await this.importer.importBlock(blockView, null, config.omitSealVerification);
+        const res = await this.importer.importBlock(blockView, config.omitSealVerification);
         if (res.isOk) {
-          logger.info(`🧊 Best block: #${timeSlot} (${res.ok.hash})`);
-          response = Result.ok(this.importer.getBestStateRootHash() ?? Bytes.zero(HASH_SIZE).asOpaque());
+          response = Result.ok(this.importer.getBestStateRootHash() ?? ZERO_HASH.asOpaque());
         } else {
-          logger.log(`❌ Rejected block #${timeSlot}: ${resultToString(res)}`);
           response = Result.error(resultToString(res));
         }
       } catch (e) {

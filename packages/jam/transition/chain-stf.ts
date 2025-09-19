@@ -1,4 +1,4 @@
-import type { BlockView, CoreIndex, EntropyHash, HeaderHash, TimeSlot } from "@typeberry/block";
+import type { BlockView, CoreIndex, HeaderHash, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { asKnownSize, HashSet } from "@typeberry/collections";
@@ -10,7 +10,7 @@ import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code.
 import { blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { Safrole } from "@typeberry/safrole";
-import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
+import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
 import type { State } from "@typeberry/state";
@@ -134,9 +134,8 @@ export class OnChain {
     public readonly state: State,
     blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
-    { enableParallelSealVerification }: { enableParallelSealVerification: boolean },
   ) {
-    const bandersnatch = BandernsatchWasm.new({ synchronous: !enableParallelSealVerification });
+    const bandersnatch = BandernsatchWasm.new();
     this.statistics = new Statistics(chainSpec, state);
 
     this.safrole = new Safrole(chainSpec, state, bandersnatch);
@@ -164,7 +163,6 @@ export class OnChain {
   async transition(
     block: BlockView,
     headerHash: HeaderHash,
-    preverifiedSeal: EntropyHash | null = null,
     omitSealVerification = false,
   ): Promise<Result<Ok, StfError>> {
     const headerView = block.header.view();
@@ -172,7 +170,7 @@ export class OnChain {
     const timeSlot = header.timeSlotIndex;
 
     // safrole seal
-    let newEntropyHash = preverifiedSeal;
+    let newEntropyHash = null;
     if (omitSealVerification) {
       newEntropyHash = blake2b.hashBytes(header.seal).asOpaque();
     }
@@ -329,7 +327,7 @@ export class OnChain {
 
     const accumulateRoot = await this.accumulateOutput.transition({ accumulationOutputLog });
     // recent history
-    const recentHistoryUpdate = await this.recentHistory.transition({
+    const recentHistoryUpdate = this.recentHistory.transition({
       partial: recentHistoryPartialUpdate,
       headerHash,
       accumulateRoot,

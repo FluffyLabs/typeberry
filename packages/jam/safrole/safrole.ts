@@ -28,7 +28,7 @@ import { type State, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
 import { asOpaqueType, OK, Result } from "@typeberry/utils";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
-import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import { BandernsatchWasm } from "./bandersnatch-wasm.js";
 import type { SafroleSealState } from "./safrole-seal.js";
 
 export const VALIDATOR_META_BYTES = 128;
@@ -111,7 +111,7 @@ export class Safrole {
   constructor(
     private chainSpec: ChainSpec,
     public state: SafroleState,
-    private readonly bandersnatch: Promise<BandernsatchWasm> = BandernsatchWasm.new({ synchronous: true }),
+    private readonly bandersnatch: Promise<BandernsatchWasm> = BandernsatchWasm.new(),
   ) {}
 
   /** `e' > e` */
