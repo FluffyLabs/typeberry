@@ -102,7 +102,7 @@ export class Assurances {
       }
       prevValidatorIndex = assurance.validatorIndex;
 
-      check(bitfield.bitLength === coresCount, `Invalid bitfield length of ${bitfield.bitLength}`);
+      check`${bitfield.bitLength === coresCount} Invalid bitfield length of ${bitfield.bitLength}`;
       const setBits = bitfield.indicesOfSetBits();
       for (const idx of setBits) {
         perCoreAssurances[idx] += 1;

@@ -7,7 +7,7 @@ export const PAGE_SIZE_SHIFT = 12;
 export const PAGE_SIZE = 1 << PAGE_SIZE_SHIFT;
 const MIN_ALLOCATION_SHIFT = (() => {
   const MIN_ALLOCATION_SHIFT = 7;
-  check(MIN_ALLOCATION_SHIFT >= 0 && MIN_ALLOCATION_SHIFT < PAGE_SIZE_SHIFT, "incorrect minimal allocation shift");
+  check`${MIN_ALLOCATION_SHIFT >= 0 && MIN_ALLOCATION_SHIFT < PAGE_SIZE_SHIFT} incorrect minimal allocation shift`;
   return MIN_ALLOCATION_SHIFT;
 })();
 

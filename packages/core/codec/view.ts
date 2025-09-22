@@ -1,5 +1,5 @@
 import { BytesBlob } from "@typeberry/bytes";
-import { check, ensure } from "@typeberry/utils";
+import { check } from "@typeberry/utils";
 import type { Decoder } from "./decoder.js";
 import type { ClassConstructor, CodecRecord, Descriptor, DescriptorRecord } from "./descriptor.js";
 import { Skipper } from "./skip.js";
@@ -110,13 +110,12 @@ export abstract class ObjectView<T> {
   private decodeUpTo<K extends keyof T>(field: K): ViewField<T[K], unknown> {
     const index = this.descriptorsKeys.indexOf(field);
     const lastField = this.descriptorsKeys[this.lastDecodedFieldIdx];
-    check(
-      this.lastDecodedFieldIdx < index,
-      `Unjustified call to 'decodeUpTo' -
+    check`
+      ${this.lastDecodedFieldIdx < index}
+      Unjustified call to 'decodeUpTo' -
        the index ($Blobindex}, ${String(field)})
        is already decoded (${this.lastDecodedFieldIdx}, ${String(lastField)}).
-      `,
-    );
+    `;
 
     let lastItem = this.cache.get(lastField);
     const skipper = new Skipper(this.decoder);
@@ -139,12 +138,11 @@ export abstract class ObjectView<T> {
       this.lastDecodedFieldIdx = i;
     }
 
-    const last: ViewField<T[K], unknown> = ensure(
-      lastItem,
-      lastItem !== undefined,
-      "Last item must be set, since the loop turns at least once.",
-    );
-    return last;
+    if (lastItem === undefined) {
+      throw new Error("Last item must be set, since the loop turns at least once.");
+    }
+
+    return lastItem as ViewField<T[K], unknown>;
   }
 }
 
@@ -180,12 +178,10 @@ export class SequenceView<T, V = T> {
   *[Symbol.iterator]() {
     for (let i = 0; i < this.length; i++) {
       const val = this.get(i);
-      const v: ViewField<T, V> = ensure(
-        val,
-        val !== undefined,
-        "We are within 0..this.length so all items are defined.",
-      );
-      yield v;
+      if (val === undefined) {
+        throw new Error("We are within 0..this.length so all items are defined.");
+      }
+      yield val;
     }
   }
 
@@ -235,10 +231,10 @@ export class SequenceView<T, V = T> {
   }
 
   private decodeUpTo(index: number): ViewField<T, V> {
-    check(
-      this.lastDecodedIdx < index,
-      `Unjustified call to 'decodeUpTo' - the index (${index}) is already decoded (${this.lastDecodedIdx}).`,
-    );
+    check`
+      ${this.lastDecodedIdx < index}
+      Unjustified call to 'decodeUpTo' - the index (${index}) is already decoded (${this.lastDecodedIdx}).
+    `;
     let lastItem = this.cache.get(this.lastDecodedIdx);
     const skipper = new Skipper(this.decoder);
 
@@ -259,11 +255,9 @@ export class SequenceView<T, V = T> {
       this.lastDecodedIdx = i;
     }
 
-    const last: ViewField<T, V> = ensure(
-      lastItem,
-      lastItem !== undefined,
-      "Last item must be set, since the loop turns at least once.",
-    );
-    return last;
+    if (lastItem === undefined) {
+      throw new Error("Last item must be set, since the loop turns at least once.");
+    }
+    return lastItem;
   }
 }

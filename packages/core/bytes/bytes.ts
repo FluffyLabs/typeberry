@@ -122,7 +122,7 @@ export class BytesBlob {
 
   /** Create a new [`BytesBlob`] from an array of bytes. */
   static blobFromNumbers(v: number[]): BytesBlob {
-    check(v.find((x) => (x & 0xff) !== x) === undefined, "BytesBlob.blobFromNumbers used with non-byte number array.");
+    check`${v.find((x) => (x & 0xff) !== x) === undefined} BytesBlob.blobFromNumbers used with non-byte number array.`;
     const arr = new Uint8Array(v);
     return new BytesBlob(arr);
   }
@@ -172,7 +172,7 @@ export class Bytes<T extends number> extends BytesBlob {
 
   private constructor(raw: Uint8Array, len: T) {
     super(raw);
-    check(raw.byteLength === len, `Given buffer has incorrect size ${raw.byteLength} vs expected ${len}`);
+    check`${raw.byteLength === len} Given buffer has incorrect size ${raw.byteLength} vs expected ${len}`;
     this.length = len;
   }
 
@@ -183,7 +183,7 @@ export class Bytes<T extends number> extends BytesBlob {
 
   /** Create new [`Bytes<X>`] given an array of bytes and it's length. */
   static fromNumbers<X extends number>(v: number[], len: X): Bytes<X> {
-    check(v.find((x) => (x & 0xff) !== x) === undefined, "Bytes.fromNumbers used with non-byte number array.");
+    check`${v.find((x) => (x & 0xff) !== x) === undefined} Bytes.fromNumbers used with non-byte number array.`;
     const x = new Uint8Array(v);
     return new Bytes(x, len);
   }
@@ -196,7 +196,7 @@ export class Bytes<T extends number> extends BytesBlob {
   // TODO [ToDr] `fill` should have the argments swapped to align with the rest.
   /** Create a [`Bytes<X>`] with all bytes filled with given input number. */
   static fill<X extends number>(len: X, input: number): Bytes<X> {
-    check((input & 0xff) === input, "Input has to be a byte.");
+    check`${(input & 0xff) === input} Input has to be a byte.`;
     const bytes = Bytes.zero(len);
     bytes.raw.fill(input, 0, len);
     return bytes;
@@ -224,7 +224,7 @@ export class Bytes<T extends number> extends BytesBlob {
 
   /** Compare the sequence to another one. */
   isEqualTo(other: Bytes<T>): boolean {
-    check(this.length === other.length, "Comparing incorrectly typed bytes!");
+    check`${this.length === other.length} Comparing incorrectly typed bytes!`;
     return u8ArraySameLengthEqual(this.raw, other.raw);
   }
 
@@ -235,7 +235,7 @@ export class Bytes<T extends number> extends BytesBlob {
 }
 
 function byteFromString(s: string): number {
-  check(s.length === 2, "Two-character string expected");
+  check`${s.length === 2} Two-character string expected`;
   const a = numberFromCharCode(s.charCodeAt(0));
   const b = numberFromCharCode(s.charCodeAt(1));
   return (a << 4) | b;

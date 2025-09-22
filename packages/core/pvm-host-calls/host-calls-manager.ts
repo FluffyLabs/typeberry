@@ -27,7 +27,7 @@ export class HostCallsManager {
     this.missing = missing;
 
     for (const handler of handlers) {
-      check(this.hostCalls.get(handler.index) === undefined, `Overwriting host call handler at index ${handler.index}`);
+      check`${this.hostCalls.get(handler.index) === undefined} Overwriting host call handler at index ${handler.index}`;
       this.hostCalls.set(handler.index, handler);
     }
   }

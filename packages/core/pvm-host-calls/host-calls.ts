@@ -16,10 +16,10 @@ class ReturnValue {
     public status: Status | null,
     public memorySlice: Uint8Array | null,
   ) {
-    check(
-      (status === null && memorySlice !== null) || (status !== null && memorySlice === null),
-      "`status` and `memorySlice` must not both be null or both be non-null — exactly one must be provided",
-    );
+    check`
+      ${(status === null && memorySlice !== null) || (status !== null && memorySlice === null)}
+      'status' and 'memorySlice' must not both be null or both be non-null — exactly one must be provided
+    `;
   }
 
   static fromStatus(consumedGas: Gas, status: Status) {
@@ -77,10 +77,10 @@ export class HostCalls {
       if (status !== Status.HOST) {
         return this.getReturnValue(status, pvmInstance);
       }
-      check(
-        pvmInstance.getExitParam() !== null,
-        "We know that the exit param is not null, because the status is `Status.HOST`",
-      );
+      check`
+        ${pvmInstance.getExitParam() !== null}
+        "We know that the exit param is not null, because the status is 'Status.HOST'
+      `;
       const hostCallIndex = pvmInstance.getExitParam() ?? -1;
       const gas = pvmInstance.getGasCounter();
       const regs = new HostCallRegisters(pvmInstance.getRegisters());

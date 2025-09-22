@@ -23,7 +23,8 @@ const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then
 });
 
 const asRecentHistory = (arr: BlocksState, accumulationLog?: MmrPeaks<KeccakHash>): RecentHistoryState => {
-  check(arr.length <= MAX_RECENT_HISTORY, "Invalid size of the state input.");
+  check`${arr.length <= MAX_RECENT_HISTORY} Invalid size of the state input.`;
+
   return {
     recentBlocks: RecentBlocksHistory.create(
       RecentBlocks.create({
