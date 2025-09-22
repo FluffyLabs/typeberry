@@ -55,8 +55,8 @@ export const PIECE_SIZE = 684;
 export type PIECE_SIZE = typeof PIECE_SIZE;
 
 export function checkConsistency() {
-  check`${N_CHUNKS_TOTAL === N_CHUNKS_REQUIRED + N_CHUNKS_REDUNDANCY}`;
-  check`${PIECE_SIZE === N_CHUNKS_REQUIRED * POINT_LENGTH}`;
+  check`${N_CHUNKS_TOTAL === N_CHUNKS_REQUIRED + N_CHUNKS_REDUNDANCY} no of required and redundancy chunks need to match ${N_CHUNKS_TOTAL}`;
+  check`${PIECE_SIZE === N_CHUNKS_REQUIRED * POINT_LENGTH} piece size needs to match ${N_CHUNKS_REQUIRED} * ${POINT_LENGTH}`;
 }
 
 /**
