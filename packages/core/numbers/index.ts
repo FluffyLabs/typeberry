@@ -71,12 +71,13 @@ export const u64FromParts = ({ lower, upper }: { lower: U32; upper: U32 }): U64 
 
 /** Split U64 into lower & upper parts. */
 export const u64IntoParts = (v: U64): { lower: U32; upper: U32 } => {
-  const lower = v & (2n ** 32n - 1n);
-  const upper = v >> 32n;
+  // Number(...) safe: both parts are <= 0xffffffff
+  const lower = Number(v & (2n ** 32n - 1n));
+  const upper = Number(v >> 32n);
 
   return {
-    lower: asTypedNumber(Number(lower)),
-    upper: asTypedNumber(Number(upper)),
+    lower: asTypedNumber(lower),
+    upper: asTypedNumber(upper),
   };
 };
 

@@ -60,7 +60,7 @@ export class BitVec {
    * Set the bit at index `idx` to value `val`.
    */
   setBit(idx: number, val: boolean) {
-    check`${idx < this.bitLength} Index out of bounds. Need ${idx} has ${this.bitLength}.`;
+    check`${idx >= 0 && idx < this.bitLength} Index out of bounds. Need ${idx} has ${this.bitLength}.`;
 
     const byteIndex = Math.floor(idx / 8);
     const bitIndexInByte = idx % 8;
@@ -76,7 +76,7 @@ export class BitVec {
    * Return `true` if the bit at index `idx` is set.
    */
   isSet(idx: number): boolean {
-    check`${idx < this.bitLength} Index out of bounds. Need ${idx} has ${this.bitLength}.`;
+    check`${idx >= 0 && idx < this.bitLength} Index out of bounds. Need ${idx} has ${this.bitLength}.`;
     const byteIndex = Math.floor(idx / 8);
     const bitIndexInByte = idx % 8;
     const mask = 1 << bitIndexInByte;

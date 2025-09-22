@@ -6,7 +6,7 @@ const REGISTER_SIZE_SHIFT = 3;
 export type RegisterIndex = Opaque<number, "register index">;
 
 export const tryAsRegisterIndex = (index: number): RegisterIndex => {
-  check`${index >= 0 && index <= NO_OF_REGISTERS} Incorrect register index: ${index}!`;
+  check`${index >= 0 && index < NO_OF_REGISTERS} Incorrect register index: ${index}!`;
   return asOpaqueType(index);
 };
 
