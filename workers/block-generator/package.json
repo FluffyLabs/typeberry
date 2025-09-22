@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/block-generator",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A test block generator simulating blocks received over the network.",
   "main": "index.ts",
   "dependencies": {

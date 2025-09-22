@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/shuffling",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The Fisher-Yates shuffle function based on GP",
   "main": "index.ts",
   "dependencies": {
