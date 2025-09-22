@@ -61,7 +61,7 @@ export type BlsKey = Opaque<Bytes<BLS_KEY_BYTES>, "BlsKey">;
 export function publicKey(seed: Uint8Array): BandersnatchKey {
   const key = bandersnatch.derive_public_key(seed);
 
-  check(key[0] === 0, "Invalid Bandersnatch public key derived from seed");
+  check`${key[0] === 0} Invalid Bandersnatch public key derived from seed`;
 
   return Bytes.fromBlob(key.subarray(1), BANDERSNATCH_KEY_BYTES).asOpaque();
 }

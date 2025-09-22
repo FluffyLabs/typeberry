@@ -1,25 +1,27 @@
-import { check, ensure, type Opaque } from "@typeberry/utils";
+import { asOpaqueType, check, type Opaque } from "@typeberry/utils";
 
 export const NO_OF_REGISTERS = 13;
 const REGISTER_SIZE_SHIFT = 3;
 
 export type RegisterIndex = Opaque<number, "register index">;
 
-export const tryAsRegisterIndex = (index: number): RegisterIndex =>
-  ensure(index, index >= 0 && index <= NO_OF_REGISTERS, `Incorrect register index: ${index}!`);
+export const tryAsRegisterIndex = (index: number): RegisterIndex => {
+  check`${index >= 0 && index < NO_OF_REGISTERS} Incorrect register index: ${index}!`;
+  return asOpaqueType(index);
+};
 
 export class Registers {
   private asSigned: BigInt64Array;
   private asUnsigned: BigUint64Array;
 
   constructor(private readonly bytes = new Uint8Array(NO_OF_REGISTERS << REGISTER_SIZE_SHIFT)) {
-    check(bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT, "Invalid size of registers array.");
+    check`${bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT} Invalid size of registers array.`;
     this.asSigned = new BigInt64Array(bytes.buffer, bytes.byteOffset);
     this.asUnsigned = new BigUint64Array(bytes.buffer, bytes.byteOffset);
   }
 
   static fromBytes(bytes: Uint8Array) {
-    check(bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT, "Invalid size of registers array.");
+    check`${bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT} Invalid size of registers array.`;
     return new Registers(bytes);
   }
 

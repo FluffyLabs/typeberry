@@ -201,7 +201,7 @@ export class AccumulateExternalities
 
       // TODO [ToDr] Not sure if we should update the service info in that case,
       // but for now we let that case fall-through.
-      check(len === PreimageStatusKind.Unavailable);
+      check`${len === PreimageStatusKind.Unavailable} preimage is not unavailable`;
     }
 
     // make sure we have enough balance for this update

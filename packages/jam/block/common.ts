@@ -54,10 +54,10 @@ export const tryAsEpoch = (v: number): Epoch => asOpaqueType(tryAsU32(v));
 /** One entry of `T` per one validator. */
 export type PerValidator<T> = KnownSizeArray<T, "ValidatorsCount">;
 export function tryAsPerValidator<T>(array: T[], spec: ChainSpec): PerValidator<T> {
-  check(
-    array.length === spec.validatorsCount,
-    `Invalid per-validator array length. Expected ${spec.validatorsCount}, got: ${array.length}`,
-  );
+  check`
+    ${array.length === spec.validatorsCount}
+    Invalid per-validator array length. Expected ${spec.validatorsCount}, got: ${array.length}
+  `;
   return asKnownSize(array);
 }
 export const codecPerValidator = <T, V>(val: Descriptor<T, V>): Descriptor<PerValidator<T>, SequenceView<T, V>> =>
@@ -70,10 +70,10 @@ export const codecPerValidator = <T, V>(val: Descriptor<T, V>): Descriptor<PerVa
 /** One entry of `T` per one block in epoch. */
 export type PerEpochBlock<T> = KnownSizeArray<T, "EpochLength">;
 export function tryAsPerEpochBlock<T>(array: T[], spec: ChainSpec): PerEpochBlock<T> {
-  check(
-    array.length === spec.epochLength,
-    `Invalid per-epoch-block array length. Expected ${spec.epochLength}, got: ${array.length}`,
-  );
+  check`
+    ${array.length === spec.epochLength}
+    Invalid per-epoch-block array length. Expected ${spec.epochLength}, got: ${array.length}
+  `;
   return asKnownSize(array);
 }
 export const codecPerEpochBlock = <T, V>(val: Descriptor<T, V>): Descriptor<PerEpochBlock<T>, SequenceView<T, V>> =>

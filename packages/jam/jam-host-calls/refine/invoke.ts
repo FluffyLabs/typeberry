@@ -92,7 +92,7 @@ export class Invoke implements HostCallHandler {
     // this fault does not need to be handled, because we've ensured it's
     // already writeable earlier.
     const storeResult = memory.storeFrom(destinationStart, resultData.raw);
-    check(storeResult.isOk, "Memory writeability has been checked already.");
+    check`${storeResult.isOk} Memory writeability has been checked already.`;
 
     const returnState = machineState.result;
 

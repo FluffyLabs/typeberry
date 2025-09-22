@@ -38,7 +38,7 @@ export async function runEcTest(test: EcTest, path: string) {
     const shardsBack = shardsToChunks(spec, segments);
 
     const allShards = shardsBack.flat();
-    check(allShards.length >= N_CHUNKS_TOTAL, "since we have data from all validators, we must have them all");
+    check`${allShards.length >= N_CHUNKS_TOTAL} since we have data from all validators, we must have them all`;
     const start = N_CHUNKS_REQUIRED / 2;
     // get a bunch of shards to recover from
     const selectedShards = FixedSizeArray.new(allShards.slice(start, start + N_CHUNKS_REQUIRED), N_CHUNKS_REQUIRED);
