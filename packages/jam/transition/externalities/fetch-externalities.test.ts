@@ -52,7 +52,7 @@ describe("fetch-externalities", () => {
     return transfers;
   };
 
-  const prepareAccumulateData = ({
+  const prepareLegacyAccumulateData = ({
     chainSpec,
     operands,
     entropy,
@@ -69,7 +69,7 @@ describe("fetch-externalities", () => {
       entropy: entropy ?? defaultEntropy,
       operands: operands ?? defaultOperands,
     };
-    return FetchExternalities.createForAccumulate(fetchData, chainSpec ?? defaultChainSpec);
+    return FetchExternalities.createForLegacyAccumulate(fetchData, chainSpec ?? defaultChainSpec);
   };
 
   const prepareOnTransferData = ({
@@ -96,8 +96,8 @@ describe("fetch-externalities", () => {
   };
 
   it("should return different constants for different chain specs (Accumulate)", () => {
-    const tinyFetchExternalities = prepareAccumulateData({ chainSpec: tinyChainSpec });
-    const fullFetchExternalities = prepareAccumulateData({ chainSpec: fullChainSpec });
+    const tinyFetchExternalities = prepareLegacyAccumulateData({ chainSpec: tinyChainSpec });
+    const fullFetchExternalities = prepareLegacyAccumulateData({ chainSpec: fullChainSpec });
 
     const tinyContants = tinyFetchExternalities.constants();
     const fullContants = fullFetchExternalities.constants();
@@ -121,7 +121,7 @@ describe("fetch-externalities", () => {
 
   it("should return entropy hash (Accumulate)", () => {
     const expectedEntropy: EntropyHash = Bytes.fill(HASH_SIZE, 5).asOpaque();
-    const fetchExternalities = prepareAccumulateData({ entropy: expectedEntropy });
+    const fetchExternalities = prepareLegacyAccumulateData({ entropy: expectedEntropy });
 
     const entropy = fetchExternalities.entropy();
 
@@ -142,7 +142,7 @@ describe("fetch-externalities", () => {
     const chainSpec = tinyChainSpec;
     const encodedOperands = Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), expectedOperands, chainSpec);
 
-    const fetchExternalities = prepareAccumulateData({ operands: expectedOperands, chainSpec });
+    const fetchExternalities = prepareLegacyAccumulateData({ operands: expectedOperands, chainSpec });
 
     const operands = fetchExternalities.allOperands();
 
@@ -155,7 +155,7 @@ describe("fetch-externalities", () => {
     const expectedOperandIndex = 2 ** 32 + 3;
     const expectedOperand: Operand | null = null;
 
-    const fetchExternalities = prepareAccumulateData({ operands, chainSpec });
+    const fetchExternalities = prepareLegacyAccumulateData({ operands, chainSpec });
 
     const operand = fetchExternalities.oneOperand(tryAsU64(expectedOperandIndex));
 
@@ -168,7 +168,7 @@ describe("fetch-externalities", () => {
     const expectedOperandIndex = 153;
     const expectedOperand: Operand | null = null;
 
-    const fetchExternalities = prepareAccumulateData({ operands, chainSpec });
+    const fetchExternalities = prepareLegacyAccumulateData({ operands, chainSpec });
 
     const operand = fetchExternalities.oneOperand(tryAsU64(expectedOperandIndex));
 
@@ -182,7 +182,7 @@ describe("fetch-externalities", () => {
     const expectedOperand = operands[expectedOperandIndex];
     const encodedOperand = Encoder.encodeObject(Operand.Codec, expectedOperand, chainSpec);
 
-    const fetchExternalities = prepareAccumulateData({ operands, chainSpec });
+    const fetchExternalities = prepareLegacyAccumulateData({ operands, chainSpec });
 
     const operand = fetchExternalities.oneOperand(tryAsU64(expectedOperandIndex));
 

@@ -1,5 +1,6 @@
 import { type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import type { WorkReport } from "@typeberry/block/work-report.js";
+import type { PendingTransfer } from "@typeberry/jam-host-calls";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
 import type { AutoAccumulate } from "@typeberry/state";
 import { Operand } from "./operand.js";
@@ -24,37 +25,61 @@ class AccumulateDataItem {
  */
 export class AccumulateData {
   private readonly reportsDataByServiceId: Map<ServiceId, AccumulateDataItem>;
+  private readonly transfersByServiceId: Map<ServiceId, PendingTransfer[]>;
   private readonly autoAccumulateServicesByServiceId: Map<ServiceId, AutoAccumulate>;
   private readonly serviceIds: ServiceId[];
 
-  constructor(reports: readonly WorkReport[], autoAccumulateServices: readonly AutoAccumulate[]) {
+  constructor(
+    reports: readonly WorkReport[],
+    transfers: PendingTransfer[],
+    autoAccumulateServices: readonly AutoAccumulate[],
+  ) {
     const { autoAccumulateServicesByServiceId, serviceIds: serviceIdsFromAutoAccumulate } =
       this.transformAutoAccumulateServices(autoAccumulateServices);
     this.autoAccumulateServicesByServiceId = autoAccumulateServicesByServiceId;
     const { reportsDataByServiceId, serviceIds: serviceIdsFromReports } = this.transformReports(reports);
     this.reportsDataByServiceId = reportsDataByServiceId;
 
+    const { transfersByServiceId, serviceIds: serviceIdsFromTransfers } = this.transformTransfers(transfers);
+    this.transfersByServiceId = transfersByServiceId;
     /**
-     * Merge service ids from reports and auto-accumulate services.
+     * Merge service ids from reports, auto-accumulate services and transfers.
      *
      * https://graypaper.fluffylabs.dev/#/68eaa1f/175f01175f01?v=0.6.4
      */
-    this.serviceIds = this.mergeServiceIds(serviceIdsFromReports, serviceIdsFromAutoAccumulate);
+    this.serviceIds = this.mergeServiceIds(
+      serviceIdsFromReports,
+      serviceIdsFromAutoAccumulate,
+      serviceIdsFromTransfers,
+    );
   }
 
   /** Merge two sets of service ids */
-  private mergeServiceIds(source1: Set<ServiceId>, source2: Set<ServiceId>) {
+  private mergeServiceIds(...sources: Set<ServiceId>[]) {
     const merged = new Set<ServiceId>();
 
-    for (const serviceId of source1) {
-      merged.add(serviceId);
-    }
-
-    for (const serviceId of source2) {
-      merged.add(serviceId);
+    for (const source of sources) {
+      for (const serviceId of source) {
+        merged.add(serviceId);
+      }
     }
 
     return Array.from(merged);
+  }
+
+  private transformTransfers(transfersToTransform: PendingTransfer[]) {
+    const transfersByServiceId = new Map<ServiceId, PendingTransfer[]>();
+    const serviceIds = new Set<ServiceId>();
+
+    for (const transfer of transfersToTransform) {
+      const serviceId = transfer.destination;
+      const transfers = transfersByServiceId.get(serviceId) ?? [];
+      transfers.push(transfer);
+      transfersByServiceId.set(serviceId, transfers);
+      serviceIds.add(serviceId);
+    }
+
+    return { transfersByServiceId, serviceIds };
   }
 
   /** Transform the list of auto-accumulate services into a map by service id. */
@@ -130,6 +155,13 @@ export class AccumulateData {
   /** Returns the list of operands for a given service id */
   getOperands(serviceId: ServiceId): Operand[] {
     return this.reportsDataByServiceId.get(serviceId)?.operands ?? [];
+  }
+
+  /** Returns the list of transfers and operands for a given service id */
+  getTransfersAndOperands(serviceId: ServiceId): (PendingTransfer | Operand)[] {
+    const operands = this.reportsDataByServiceId.get(serviceId)?.operands ?? [];
+    const transfers = this.transfersByServiceId.get(serviceId) ?? [];
+    return [...transfers, ...operands];
   }
 
   /** Returns the number of reports to acccumulate for a given service id */

@@ -377,7 +377,7 @@ describe("Fetch", () => {
     const fetchMock = new FetchMock();
     fetchMock.allOperandsResponse = blob;
 
-    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.AllOperands);
+    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.LegacyAllOperands);
 
     const fetch = new Fetch(currentServiceId, fetchMock);
     const result = await fetch.execute(gas, registers, memory);
@@ -394,7 +394,7 @@ describe("Fetch", () => {
     const index = tryAsU64(9);
     fetchMock.oneOperandResponses.set(index.toString(), blob);
 
-    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.OneOperand);
+    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.LegacyOneOperand);
 
     registers.set(11, index);
 
@@ -413,7 +413,7 @@ describe("Fetch", () => {
     const fetchMock = new FetchMock();
     fetchMock.allTransfersResponse = blob;
 
-    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.AllTransfers);
+    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.LegacyAllTransfers);
 
     const fetch = new Fetch(currentServiceId, fetchMock);
     const result = await fetch.execute(gas, registers, memory);
@@ -430,7 +430,7 @@ describe("Fetch", () => {
     const index = tryAsU64(2);
     fetchMock.oneTransferResponses.set(index.toString(), blob);
 
-    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.OneTransfer);
+    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.LegacyOneTransfer);
 
     registers.set(11, index);
 
@@ -497,7 +497,9 @@ class FetchMock implements IFetchExternalities {
   public oneOperandResponses: Map<string, BytesBlob | null> = new Map();
   public allTransfersResponse: BytesBlob | null = null;
   public oneTransferResponses: Map<string, BytesBlob | null> = new Map();
-
+  public allOperandsAndTransfersResponses: BytesBlob|null = null
+  public oneOperandOrTransferResponses: Map<string, BytesBlob|null> = new Map();
+  
   constants(): BytesBlob {
     if (this.constantsResponse === null) {
       throw new Error("Unexpected call to constants.");
@@ -593,5 +595,18 @@ class FetchMock implements IFetchExternalities {
       throw new Error(`Missing mock response for oneTransfer(${key})`);
     }
     return this.oneTransferResponses.get(key) ?? null;
+  }
+
+    allOperandsAndTransfers(): BytesBlob | null {
+    return this.allOperandsAndTransfersResponses;
+
+  }
+
+  oneOperandOrTransfer(index: U64): BytesBlob | null {
+    const key = index.toString();
+    if (!this.oneOperandOrTransferResponses.has(key)) {
+      throw new Error(`Missing mock response for oneOperandOrTransfer(${key})`);
+    }
+    return this.oneOperandOrTransferResponses.get(key) ?? null;
   }
 }
