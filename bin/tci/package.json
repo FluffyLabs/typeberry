@@ -19,6 +19,7 @@
     "@typeberry/crypto": "*",
     "@typeberry/logger": "*",
     "@typeberry/node": "*",
+    "@typeberry/utils": "*",
     "minimist": "1.2.8"
   },
   "devDependencies": {

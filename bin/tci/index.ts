@@ -5,10 +5,11 @@ import { tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import { loadConfig, NODE_DEFAULTS } from "@typeberry/config-node";
 import { Level, Logger } from "@typeberry/logger";
 import * as node from "@typeberry/node";
+import { workspacePathFix } from "@typeberry/utils";
 import { type CommonArguments, HELP, parseArgs, type RequiredFlag, requiredSeedFlags } from "./args.js";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
-const withRelPath = (v: string) => `../../${v}`;
+const withRelPath = workspacePathFix(`${import.meta.dirname}/../..`);
 
 /**
  * JAM Node entry w/ common command lines arguments
