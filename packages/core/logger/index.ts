@@ -67,14 +67,12 @@ export class Logger {
     Logger.configureAllFromOptions(options);
   }
 
-
   private cachedLevelAndName?: readonly [Level, string];
 
   private constructor(
     private readonly moduleName: string,
     private readonly config: typeof GLOBAL_CONFIG,
-  ) {
-  }
+  ) {}
 
   /** Return currently configured level for given module. */
   getLevel(): Level {
@@ -92,11 +90,7 @@ export class Logger {
 
   /** Log a message with `INSANE` level. */
   insane(strings: TemplateStringsArray, ...data: unknown[]) {
-    this.config.transport.insane(
-      this.getLevelAndName(),
-      strings,
-      data
-    );
+    this.config.transport.insane(this.getLevelAndName(), strings, data);
   }
 
   /** Log a message with `TRACE` level. */

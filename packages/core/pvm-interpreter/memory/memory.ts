@@ -1,3 +1,5 @@
+import { BytesBlob } from "@typeberry/bytes";
+import { Logger } from "@typeberry/logger";
 import { OK, Result } from "@typeberry/utils";
 import { OutOfMemory, PageFault } from "./errors.js";
 import { MAX_MEMORY_INDEX, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts.js";
@@ -8,8 +10,6 @@ import { PageRange } from "./page-range.js";
 import { WriteablePage } from "./pages/index.js";
 import type { MemoryPage } from "./pages/memory-page.js";
 import { type PageNumber, tryAsPageIndex } from "./pages/page-utils.js";
-import {BytesBlob} from "@typeberry/bytes";
-import {Logger} from "@typeberry/logger";
 
 type InitialMemoryState = {
   memory: Map<PageNumber, MemoryPage>;

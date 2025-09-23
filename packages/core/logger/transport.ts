@@ -1,4 +1,4 @@
-import {Level} from "./options.js";
+import type { Level } from "./options.js";
 
 /**
  * An interface for the logger `Transport`.
