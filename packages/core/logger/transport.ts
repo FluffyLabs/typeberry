@@ -1,17 +1,19 @@
+import {Level} from "./options.js";
+
 /**
  * An interface for the logger `Transport`.
  */
 export interface Transport {
   /** INSANE message */
-  insane(moduleName: string, fileName: string, val: string): void;
+  insane(levelAndName: readonly [Level, string], _strings: TemplateStringsArray, _data: unknown[]): void;
   /** TRACE message */
-  trace(moduleName: string, fileName: string, val: string): void;
+  trace(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]): void;
   /** DEBUG/LOG message */
-  log(moduleName: string, fileName: string, val: string): void;
+  log(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]): void;
   /** INFO message */
-  info(moduleName: string, fileName: string, val: string): void;
+  info(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]): void;
   /** WARN message */
-  warn(moduleName: string, fileName: string, val: string): void;
+  warn(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]): void;
   /** ERROR message */
-  error(moduleName: string, fileName: string, val: string): void;
+  error(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]): void;
 }

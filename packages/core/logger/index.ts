@@ -34,12 +34,6 @@ export class Logger {
   }
 
   /**
-   * Return currently configured level for given module. */
-  static getLevel(moduleName: string): Level {
-    return findLevel(GLOBAL_CONFIG.options, moduleName);
-  }
-
-  /**
    * Global configuration of all loggers.
    *
    * One can specify a default logging level (only logs with level >= default will be printed).
@@ -73,38 +67,60 @@ export class Logger {
     Logger.configureAllFromOptions(options);
   }
 
+
+  private cachedLevelAndName?: readonly [Level, string];
+
   private constructor(
     private readonly moduleName: string,
     private readonly config: typeof GLOBAL_CONFIG,
-  ) {}
+  ) {
+  }
+
+  /** Return currently configured level for given module. */
+  getLevel(): Level {
+    return this.getLevelAndName()[0];
+  }
+
+  private getLevelAndName(): readonly [Level, string] {
+    if (this.cachedLevelAndName === undefined) {
+      const level = findLevel(this.config.options, this.moduleName);
+      const shortName = this.moduleName.replace(this.config.options.workingDir, "");
+      this.cachedLevelAndName = [level, shortName];
+    }
+    return this.cachedLevelAndName;
+  }
 
   /** Log a message with `INSANE` level. */
-  insane(val: string) {
-    this.config.transport.insane(this.moduleName, val);
+  insane(strings: TemplateStringsArray, ...data: unknown[]) {
+    this.config.transport.insane(
+      this.getLevelAndName(),
+      strings,
+      data
+    );
   }
 
   /** Log a message with `TRACE` level. */
-  trace(val: string) {
-    this.config.transport.trace(this.moduleName, val);
+  trace(strings: TemplateStringsArray, ...data: unknown[]) {
+    this.config.transport.trace(this.getLevelAndName(), strings, data);
   }
 
   /** Log a message with `DEBUG`/`LOG` level. */
-  log(val: string) {
-    this.config.transport.log(this.moduleName, val);
+  log(strings: TemplateStringsArray, ...data: unknown[]) {
+    this.config.transport.log(this.getLevelAndName(), strings, data);
   }
 
   /** Log a message with `INFO` level. */
-  info(val: string) {
-    this.config.transport.info(this.moduleName, val);
+  info(strings: TemplateStringsArray, ...data: unknown[]) {
+    this.config.transport.info(this.getLevelAndName(), strings, data);
   }
 
   /** Log a message with `WARN` level. */
-  warn(val: string) {
-    this.config.transport.warn(this.moduleName, val);
+  warn(strings: TemplateStringsArray, ...data: unknown[]) {
+    this.config.transport.warn(this.getLevelAndName(), strings, data);
   }
 
   /** Log a message with `ERROR` level. */
-  error(val: string) {
-    this.config.transport.error(this.moduleName, val);
+  error(strings: TemplateStringsArray, ...data: unknown[]) {
+    this.config.transport.error(this.getLevelAndName(), strings, data);
   }
 }
