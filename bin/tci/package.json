@@ -5,7 +5,7 @@
   "main": "index.ts",
   "bin": "./index.ts",
   "scripts": {
-    "start": "tsx ./index.ts",
+    "start": "NODE_ENV=development tsx ./index.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",

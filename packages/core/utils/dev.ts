@@ -18,7 +18,7 @@ const env = typeof process === "undefined" ? {} : process.env;
  * we build a single library from our project, we no longer mangle the paths.
  */
 export const workspacePathFix =
-  env.NODE_ENV !== "development"
+  env.NODE_ENV === "development"
     ? (workspacePath: string) => (p: string) => {
         if (p.startsWith("/")) {
           return p;
