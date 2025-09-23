@@ -21,9 +21,9 @@ export interface AccountsInfo {
 const IN_OUT_REG = 7;
 
 const OFFSET_REG =
-  Compatibility.isSuite(TestSuite.W3F_DAVXY) || Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? 9 : 11;
+  Compatibility.isSuite(TestSuite.W3F_DAVXY) || Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) ? 9 : 11;
 export const LEN_REG =
-  Compatibility.isSuite(TestSuite.W3F_DAVXY) || Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? 10 : 12;
+  Compatibility.isSuite(TestSuite.W3F_DAVXY) || Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) ? 10 : 12;
 
 /**
  * Return info about some account.
