@@ -8,6 +8,8 @@ import { PageRange } from "./page-range.js";
 import { WriteablePage } from "./pages/index.js";
 import type { MemoryPage } from "./pages/memory-page.js";
 import { type PageNumber, tryAsPageIndex } from "./pages/page-utils.js";
+import {BytesBlob} from "@typeberry/bytes";
+import {Logger} from "@typeberry/logger";
 
 type InitialMemoryState = {
   memory: Map<PageNumber, MemoryPage>;
@@ -20,7 +22,7 @@ enum AccessType {
   WRITE = 1,
 }
 
-// const logger = Logger.new(import.meta.filename, "pvm:mem");
+const logger = Logger.new(import.meta.filename, "pvm:mem");
 
 export class Memory {
   static fromInitialMemory(initialMemoryState: InitialMemoryState) {
@@ -58,7 +60,7 @@ export class Memory {
       return Result.ok(OK);
     }
 
-    // logger.insane(`MEM[${address}] <- ${BytesBlob.blobFrom(bytes)}`);
+    logger.insane`MEM[${address}] <- ${BytesBlob.blobFrom(bytes)}`;
     const pagesResult = this.getPages(address, bytes.length, AccessType.WRITE);
 
     if (pagesResult.isError) {
@@ -147,7 +149,7 @@ export class Memory {
       bytesLeft -= bytesToRead;
     }
 
-    // logger.insane(`MEM[${startAddress}] => ${BytesBlob.blobFrom(result)}`);
+    logger.insane`MEM[${startAddress}] => ${BytesBlob.blobFrom(result)}`;
     return Result.ok(OK);
   }
 

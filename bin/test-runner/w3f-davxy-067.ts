@@ -302,8 +302,8 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_067", {
     "traces/preimages/00000099.json",
   ],
 })
-  .then((r) => logger.log(r))
+  .then((r) => logger.log`${r}`)
   .catch((e) => {
-    logger.error(`${e}`);
+    logger.error`${e}`;
     process.exit(-1);
   });

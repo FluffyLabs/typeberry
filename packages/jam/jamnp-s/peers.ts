@@ -135,7 +135,7 @@ export class Connections {
       if (meta.currentRetry >= meta.maxRetries) {
         // reached max retries for a peer, remove it from tracking.
         this.peerInfo.delete(id);
-        logger.log(`[${id}] max retries reached. Removing peer.`);
+        logger.log`[${id}] max retries reached. Removing peer.`;
         return;
       }
       // else attempt to connect to a node a bit later.
@@ -158,7 +158,7 @@ export class Connections {
 
       // attempt to connect to the peer
       try {
-        logger.trace(`[${id}] Attempting to connect to peer at ${meta.address.host}:${meta.address.port}.`);
+        logger.trace`[${id}] Attempting to connect to peer at ${meta.address.host}:${meta.address.port}.`;
         await this.network.dial(meta.address, { signal, verifyName: meta.peerId });
         return;
       } catch {
@@ -166,7 +166,7 @@ export class Connections {
           return;
         }
         // failing to connect, will retry.
-        logger.trace(`[${id}] attempt failed. Will retry (${meta.currentRetry}/${meta.maxRetries})`);
+        logger.trace`[${id}] attempt failed. Will retry (${meta.currentRetry}/${meta.maxRetries})`;
       }
     }
   }

@@ -101,7 +101,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
         ServerHandler.sendWorkReport(sender, workReportHash, signature);
       })
       .catch((error) => {
-        logger.error(`[${streamId}] Error processing work package: ${error}`);
+        logger.error`[${streamId}] Error processing work package: ${error}`;
         this.onClose(streamId);
       });
   }
@@ -128,7 +128,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     }
 
     const response = Decoder.decodeObject(WorkPackageSharingResponse.Codec, message);
-    logger.info(`[${sender.streamId}] Received work report hash and signature.`);
+    logger.info`[${sender.streamId}] Received work report hash and signature.`;
     pendingRequest.resolve({ workReportHash: response.workReportHash, signature: response.signature });
     sender.close();
   }
@@ -148,9 +148,9 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     workPackageBundle: WorkPackageBundle,
   ): Promise<{ workReportHash: WorkReportHash; signature: Ed25519Signature }> {
     const request = WorkPackageSharingRequest.create({ coreIndex, segmentsRootMappings });
-    logger.trace(`[${sender.streamId}] Sending core index and segments-root mappings.`);
+    logger.trace`[${sender.streamId}] Sending core index and segments-root mappings.`;
     sender.bufferAndSend(Encoder.encodeObject(WorkPackageSharingRequest.Codec, request));
-    logger.trace(`[${sender.streamId}] Sending work package bundle.`);
+    logger.trace`[${sender.streamId}] Sending work package bundle.`;
     sender.bufferAndSend(Encoder.encodeObject(WorkPackageBundleCodec, workPackageBundle));
 
     return new Promise((resolve, reject) => {

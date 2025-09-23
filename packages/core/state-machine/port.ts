@@ -32,7 +32,7 @@ export class TypedPort {
       try {
         this.dispatchPortMessage(msg);
       } catch (e) {
-        logger.error(`[${this.constructor.name}] Failed to dispatch a message: ${e}: ${JSON.stringify(msg)}`);
+        logger.error`[${this.constructor.name}] Failed to dispatch a message: ${e}: ${JSON.stringify(msg)}`;
         throw e;
       }
     });
@@ -120,7 +120,7 @@ export class TypedPort {
     try {
       this.port.postMessage(msg, transferList);
     } catch (e) {
-      logger.error(`[${this.constructor.name}] Failed to post a message: ${e}: ${JSON.stringify(msg)}`);
+      logger.error`[${this.constructor.name}] Failed to post a message: ${e}: ${JSON.stringify(msg)}`;
       throw e;
     }
   }

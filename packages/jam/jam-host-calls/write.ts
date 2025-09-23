@@ -60,7 +60,7 @@ export class Write implements HostCallHandler {
     const rawStorageKey = new Uint8Array(storageKeyLengthClamped);
     const keyLoadingResult = memory.loadInto(rawStorageKey, storageKeyStartAddress);
     if (keyLoadingResult.isError) {
-      logger.trace("WRITE() <- PANIC");
+      logger.trace`WRITE() <- PANIC`;
       return PvmExecution.Panic;
     }
 
@@ -72,7 +72,7 @@ export class Write implements HostCallHandler {
     const valueLoadingResult = memory.loadInto(value, valueStart);
     // Note [MaSo] this is ok to return bcs if valueLength is 0, then this panic won't happen
     if (valueLoadingResult.isError) {
-      logger.trace(`WRITE(${storageKey})}) <- PANIC`);
+      logger.trace`WRITE(${storageKey})}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
@@ -81,7 +81,7 @@ export class Write implements HostCallHandler {
 
     // a
     const result = this.account.write(storageKey, maybeValue);
-    logger.trace(`WRITE(${storageKey}, ${maybeValue?.toStringTruncated()}) <- ${resultToString(result)}`);
+    logger.trace`WRITE(${storageKey}, ${maybeValue?.toStringTruncated()}) <- ${resultToString(result)}`;
 
     if (result.isError) {
       regs.set(IN_OUT_REG, HostCallResult.FULL);

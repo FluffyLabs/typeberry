@@ -54,7 +54,7 @@ export class HostCallsManager {
         return `r${idx}=${value} (0x${value.toString(16)})`;
       })
       .join(", ");
-    logger.insane(`[${currentServiceId}] ${context} ${name}${requested}.  Gas: ${gas}. Regs: ${registerValues}.`);
+    logger.insane`[${currentServiceId}] ${context} ${name}${requested}.  Gas: ${gas}. Regs: ${registerValues}.`;
   }
 }
 

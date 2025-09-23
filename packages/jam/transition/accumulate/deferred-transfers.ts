@@ -101,11 +101,11 @@ export class DeferredTransfers {
       const isCodeCorrect = code !== null && code.length <= W_C;
       if (!hasTransfers || !isCodeCorrect) {
         if (code === null) {
-          logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId} because code is null`);
+          logger.trace`Skipping ON_TRANSFER execution for service ${serviceId} because code is null`;
         } else if (!hasTransfers) {
-          logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId} because there are no transfers`);
+          logger.trace`Skipping ON_TRANSFER execution for service ${serviceId} because there are no transfers`;
         } else {
-          logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId} because code is too long`);
+          logger.trace`Skipping ON_TRANSFER execution for service ${serviceId} because code is too long`;
         }
       } else {
         const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState, fetchExternalities });

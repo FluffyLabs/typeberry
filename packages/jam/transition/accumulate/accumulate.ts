@@ -122,7 +122,7 @@ export class Accumulate {
   ): Promise<Result<InvocationResult, PvmInvocationError>> {
     const service = this.state.getService(serviceId);
     if (service === null) {
-      logger.log(`Service with id ${serviceId} not found.`);
+      logger.log`Service with id ${serviceId} not found.`;
       return Result.error(PvmInvocationError.NoService);
     }
 
@@ -131,12 +131,12 @@ export class Accumulate {
     const code = service.getPreimage(codeHash.asOpaque());
 
     if (code === null) {
-      logger.log(`Code with hash ${codeHash} not found for service ${serviceId}.`);
+      logger.log`Code with hash ${codeHash} not found for service ${serviceId}.`;
       return Result.error(PvmInvocationError.NoPreimage);
     }
 
     if (code.length > W_C) {
-      logger.log(`Code with hash ${codeHash} is too long for service ${serviceId}.`);
+      logger.log`Code with hash ${codeHash} is too long for service ${serviceId}.`;
       return Result.error(PvmInvocationError.PreimageTooLong);
     }
 
@@ -168,11 +168,11 @@ export class Accumulate {
     if (result.hasStatus()) {
       const status = result.status;
       if (status === Status.OOG || status === Status.PANIC) {
-        logger.trace(`[${serviceId}] accumulate finished with ${Status[status]} reverting to checkpoint.`);
+        logger.trace`[${serviceId}] accumulate finished with ${Status[status]} reverting to checkpoint.`;
         return Result.ok({ stateUpdate: checkpoint, consumedGas: tryAsServiceGas(result.consumedGas) });
       }
 
-      logger.trace(`[${serviceId}] accumulate finished with ${Status[status]}`);
+      logger.trace`[${serviceId}] accumulate finished with ${Status[status]}`;
     }
 
     /**
@@ -207,17 +207,17 @@ export class Accumulate {
     entropy: EntropyHash,
     inputStateUpdate: AccumulationStateUpdate,
   ) {
-    logger.log(`Accumulating service ${serviceId}, items: ${operands.length} at slot: ${slot}.`);
+    logger.log`Accumulating service ${serviceId}, items: ${operands.length} at slot: ${slot}.`;
 
     const result = await this.pvmAccumulateInvocation(slot, serviceId, operands, gasCost, entropy, inputStateUpdate);
 
     if (result.isError) {
       // https://graypaper.fluffylabs.dev/#/7e6ff6a/2fb6012fb601?v=0.6.7
-      logger.log(`Accumulation failed for ${serviceId}.`);
+      logger.log`Accumulation failed for ${serviceId}.`;
       return { stateUpdate: null, consumedGas: 0n };
     }
 
-    logger.log(`Accumulation successful for ${serviceId}. Consumed: ${result.ok.consumedGas}`);
+    logger.log`Accumulation successful for ${serviceId}. Consumed: ${result.ok.consumedGas}`;
     return result.ok;
   }
 

@@ -125,7 +125,7 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     try {
       await Promise.all([valuesWrite, statesWrite]);
     } catch (e) {
-      logger.error(`${e}`);
+      logger.error`${e}`;
       return Result.error(StateUpdateError.Commit);
     }
     return Result.ok(OK);
