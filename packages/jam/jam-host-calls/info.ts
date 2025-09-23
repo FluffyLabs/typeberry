@@ -7,7 +7,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { Compatibility, TestSuite } from "@typeberry/utils";
+import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { getServiceIdOrCurrent } from "./utils.js";
@@ -20,8 +20,10 @@ export interface AccountsInfo {
 
 const IN_OUT_REG = 7;
 
-const OFFSET_REG = Compatibility.isSuite(TestSuite.W3F_DAVXY) ? 9 : 11;
-export const LEN_REG = Compatibility.isSuite(TestSuite.W3F_DAVXY) ? 10 : 12;
+const OFFSET_REG =
+  Compatibility.isSuite(TestSuite.W3F_DAVXY) || Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? 9 : 11;
+export const LEN_REG =
+  Compatibility.isSuite(TestSuite.W3F_DAVXY) || Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? 10 : 12;
 
 /**
  * Return info about some account.
