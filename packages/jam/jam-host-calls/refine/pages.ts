@@ -44,9 +44,7 @@ export class Pages implements HostCallHandler {
     const requestType = toMemoryOperation(regs.get(10));
 
     const pagesResult = await this.refine.machinePages(machineIndex, pageStart, pageCount, requestType);
-    logger.trace(
-      `PAGES(${machineIndex}, ${pageStart}, ${pageCount}, ${requestType}) <- ${resultToString(pagesResult)}`,
-    );
+    logger.trace`PAGES(${machineIndex}, ${pageStart}, ${pageCount}, ${requestType}) <- ${resultToString(pagesResult)}`;
 
     if (pagesResult.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);

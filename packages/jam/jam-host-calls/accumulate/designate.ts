@@ -40,7 +40,7 @@ export class Designate implements HostCallHandler {
     const memoryReadResult = memory.loadInto(res, validatorsStart);
     // error while reading the memory.
     if (memoryReadResult.isError) {
-      logger.trace("DESIGNATE() <- PANIC");
+      logger.trace`DESIGNATE() <- PANIC`;
       return PvmExecution.Panic;
     }
 
@@ -50,10 +50,10 @@ export class Designate implements HostCallHandler {
     const result = this.partialState.updateValidatorsData(tryAsPerValidator(validatorsData, this.chainSpec));
 
     if (result.isError) {
-      logger.trace(`DESIGNATE([${validatorsData[0]}, ${validatorsData[1]}, ...]) <- HUH`);
+      logger.trace`DESIGNATE([${validatorsData[0]}, ${validatorsData[1]}, ...]) <- HUH`;
       regs.set(IN_OUT_REG, HostCallResult.HUH);
     } else {
-      logger.trace(`DESIGNATE([${validatorsData[0]}, ${validatorsData[1]}, ...]) <- OK`);
+      logger.trace`DESIGNATE([${validatorsData[0]}, ${validatorsData[1]}, ...]) <- OK`;
       regs.set(IN_OUT_REG, HostCallResult.OK);
     }
   }

@@ -36,7 +36,10 @@
         "noStaticOnlyClass": "off"
       },
       "correctness": {
-        "noUnusedImports": "error",
+        "noUnusedImports": {
+          "level": "error",
+          "fix": "safe"
+        },
         "noUnusedVariables": "error",
         "noUnusedFunctionParameters": "error",
         "noUnusedPrivateClassMembers": "error"

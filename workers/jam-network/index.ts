@@ -21,7 +21,7 @@ if (!isMainThread) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
   const machine = networkStateMachine();
   const channel = MessageChannelStateMachine.receiveChannel(machine, parentPort);
-  channel.then((channel) => main(channel)).catch((e) => logger.error(e));
+  channel.then((channel) => main(channel)).catch((e) => logger.error`${e}`);
 }
 
 /**
@@ -33,7 +33,7 @@ if (!isMainThread) {
  */
 export async function main(channel: MessageChannelStateMachine<NetworkInit, NetworkStates>) {
   await initWasm();
-  logger.trace(`🛜 Network starting ${channel.currentState()}`);
+  logger.trace`🛜 Network starting ${channel.currentState()}`;
   // Await the configuration object
   // TODO [ToDr] The whole state machine needs to die.
   const ready: MessageChannelStateMachine<NetworkReady, NetworkStates> =
@@ -48,7 +48,7 @@ export async function main(channel: MessageChannelStateMachine<NetworkInit, Netw
     const lmdb = new LmdbRoot(config.genericConfig.dbPath);
     const blocks = new LmdbBlocks(config.genericConfig.chainSpec, lmdb);
 
-    logger.info(`🛜 Listening at ${config.host}:${config.port}`);
+    logger.info`🛜 Listening at ${config.host}:${config.port}`;
     const network = await setup(
       {
         host: config.host,
@@ -73,7 +73,7 @@ export async function main(channel: MessageChannelStateMachine<NetworkInit, Netw
     await network.network.start();
   });
 
-  logger.info("🛜 Network worker finished. Closing channel.");
+  logger.info`🛜 Network worker finished. Closing channel.`;
 
   // Close the comms to gracefuly close the app.
   finished.currentState().close(channel);

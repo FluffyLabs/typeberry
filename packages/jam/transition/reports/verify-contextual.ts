@@ -205,7 +205,7 @@ function verifyRefineContexts(
       headerChain.isAncestor(context.lookupAnchorSlot, context.lookupAnchor, context.anchor);
     if (!isInChain) {
       if (process.env.SKIP_LOOKUP_ANCHOR_CHECK !== undefined) {
-        logger.warn(`Lookup anchor check for ${context.lookupAnchor} would fail, but override is active.`);
+        logger.warn`Lookup anchor check for ${context.lookupAnchor} would fail, but override is active.`;
       } else {
         return Result.error(
           ReportsError.SegmentRootLookupInvalid,

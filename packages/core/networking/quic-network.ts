@@ -28,9 +28,9 @@ export class QuicNetwork implements Network<QuicPeer> {
 
     this.started = true;
     await this.socket.start({ host: this.listen.host, port: this.listen.port });
-    logger.info(`🛜  QUIC socket on ${this.socket.host}:${this.socket.port}`);
+    logger.info`🛜  QUIC socket on ${this.socket.host}:${this.socket.port}`;
     await this.server.start();
-    logger.log("🛜  QUIC server listening");
+    logger.log`🛜  QUIC server listening`;
   }
 
   async stop() {
@@ -38,11 +38,11 @@ export class QuicNetwork implements Network<QuicPeer> {
       throw new Error("Network not started yet!");
     }
 
-    logger.info("Stopping the networking.");
+    logger.info`Stopping the networking.`;
     await this.server.stop();
     await this.socket.stop();
     this.started = false;
-    logger.info("Networking stopped.");
+    logger.info`Networking stopped.`;
   }
 
   get peers(): Peers<QuicPeer> {

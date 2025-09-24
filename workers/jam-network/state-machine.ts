@@ -96,7 +96,7 @@ export class MainReady extends State<"ready(main)", Finished, NetworkWorkerConfi
       );
       this.onNewBlocks.emit(blocks);
     } else {
-      logger.error(`${this.constructor.name} got invalid signal type: ${JSON.stringify(block)}.`);
+      logger.error`${this.constructor.name} got invalid signal type: ${JSON.stringify(block)}.`;
     }
   }
 
@@ -140,7 +140,7 @@ export class NetworkReady extends State<"ready(network)", Finished, NetworkWorke
       const decoded = Decoder.decodeObject(headerViewWithHashCodec, header, config.genericConfig.chainSpec);
       this.onNewHeader.emit(decoded);
     } else {
-      logger.error(`${this.constructor.name} got invalid signal type: ${JSON.stringify(header)}.`);
+      logger.error`${this.constructor.name} got invalid signal type: ${JSON.stringify(header)}.`;
     }
   }
 

@@ -25,13 +25,13 @@ test("JAM Node Startup E2E", { timeout: TEST_TIMEOUT }, async () => {
 
       jamProcess?.stdout?.on("data", (data: Buffer) => {
         const output = data.toString();
-        logger.info(output);
+        logger.info`${output}`;
 
         const bestBlockPattern = /🧊 Best block:.+#(\d+)/;
         const match = bestBlockPattern.exec(output);
         if (match !== null) {
           const blockNum = Number.parseInt(match[1]);
-          logger.info(`Got block ${blockNum}`);
+          logger.info`Got block ${blockNum}`;
           if (blockNum >= TARGET_BLOCK) {
             resolve("Finished successfuly.");
           }
@@ -45,14 +45,14 @@ test("JAM Node Startup E2E", { timeout: TEST_TIMEOUT }, async () => {
 
 async function terminate(jamProcess: ChildProcess | null) {
   if (jamProcess !== null && !jamProcess.killed) {
-    logger.error("Terminating process.");
+    logger.error`Terminating process.`;
     const grace = promises.setTimeout(SHUTDOWN_GRACE_PERIOD);
     jamProcess.kill("SIGINT");
     jamProcess.stdin?.end();
     jamProcess.stdout?.destroy();
     jamProcess.stderr?.destroy();
     await grace;
-    logger.error("Process shutdown timing out. Killing");
+    logger.error`Process shutdown timing out. Killing`;
     jamProcess.kill("SIGKILL");
   }
 }
@@ -63,7 +63,7 @@ async function start() {
     shell: true,
   });
   const timeout = setTimeout(() => {
-    logger.error("Test timing out, terminating the process.");
+    logger.error`Test timing out, terminating the process.`;
     terminate(spawned);
   }, TEST_TIMEOUT);
   spawned.on("exit", () => {

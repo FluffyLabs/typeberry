@@ -283,7 +283,7 @@ export class OnChain {
       reports: availableReports,
       entropy: entropy[0],
     });
-    logger.log(timerAccumulate());
+    logger.log`${timerAccumulate()}`;
     if (accumulateResult.isError) {
       return stfError(StfErrorKind.Accumulate, accumulateResult);
     }

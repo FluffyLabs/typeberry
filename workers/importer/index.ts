@@ -16,7 +16,7 @@ if (!isMainThread) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
   const machine = importerStateMachine();
   const channel = MessageChannelStateMachine.receiveChannel(machine, parentPort);
-  channel.then((channel) => main(channel)).catch((e) => logger.error(e));
+  channel.then((channel) => main(channel)).catch((e) => logger.error`${e}`);
 }
 
 const keccakHasher = keccak.KeccakHasher.create();
@@ -41,7 +41,7 @@ export async function createImporter(config: WorkerConfig) {
  */
 export async function main(channel: MessageChannelStateMachine<ImporterInit, ImporterStates>) {
   const wasmPromise = initWasm();
-  logger.info(`📥 Importer starting ${channel.currentState()}`);
+  logger.info`📥 Importer starting ${channel.currentState()}`;
   // Await the configuration object
   const ready = await channel.waitForState<ImporterReady>("ready(importer)");
   let closeDb = async () => {};
@@ -54,7 +54,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
     };
     // TODO [ToDr] this is shit, since we have circular dependency.
     worker.setImporter(importer);
-    logger.info("📥 Importer waiting for blocks.");
+    logger.info`📥 Importer waiting for blocks.`;
 
     worker.onBlock.on(async (block) => {
       const res = await importer.importBlock(block, config.omitSealVerification);
@@ -66,7 +66,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
     await wasmPromise;
   });
 
-  logger.info("📥 Importer finished. Closing channel.");
+  logger.info`📥 Importer finished. Closing channel.`;
   // close the database
   await closeDb();
   // Close the comms to gracefuly close the app.

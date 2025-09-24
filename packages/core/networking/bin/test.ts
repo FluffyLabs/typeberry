@@ -20,25 +20,25 @@ async function main(clientPort: number, serverPort: number) {
   });
 
   network.peers.onPeerConnected((peer) => {
-    logger.log(`New peer: ${peer.id}`);
+    logger.log`New peer: ${peer.id}`;
     peer.addOnIncomingStream((stream) => {
       (async () => {
-        logger.info(`🚰  Stream with ${peer.id} opened`);
+        logger.info`🚰  Stream with ${peer.id} opened`;
         const { readable } = stream;
         const reader = readable.getReader();
         for (;;) {
           const data = await reader.read();
           if (data.value !== undefined) {
             const bytes = BytesBlob.blobFrom(data.value);
-            logger.info(`🚰 Peer ${peer.id} stream data: ${bytes}`);
+            logger.info`🚰 Peer ${peer.id} stream data: ${bytes}`;
           }
           if (data.done) {
-            logger.info(`🚰 Peer ${peer.id} stream done.`);
+            logger.info`🚰 Peer ${peer.id} stream done.`;
             return;
           }
         }
       })().catch((e) => {
-        logger.error(`Error handling stream: ${e}. Disconnecting.`);
+        logger.error`Error handling stream: ${e}. Disconnecting.`;
         peer.disconnect();
       });
 
@@ -50,7 +50,7 @@ async function main(clientPort: number, serverPort: number) {
   await network.start();
 
   if (clientPort === 0) {
-    logger.warn("No client port given. Finishing.");
+    logger.warn`No client port given. Finishing.`;
     return;
   }
 
@@ -61,7 +61,7 @@ async function main(clientPort: number, serverPort: number) {
         host: "127.0.0.1",
         port: clientPort,
       });
-      logger.log("Connected, opening streams...");
+      logger.log`Connected, opening streams...`;
       await setTimeout(2000);
       // open a bunch of streams
       for (let i = 0; i < 10; i++) {
@@ -69,15 +69,15 @@ async function main(clientPort: number, serverPort: number) {
         // After opening a stream, the stream initiator must send a single byte identifying the stream kind.
         await stream.writable.getWriter().write(Uint8Array.from([i]));
       }
-      logger.log("Streams done. Disconnecting.");
+      logger.log`Streams done. Disconnecting.`;
       await peer.disconnect();
       break;
     } catch (e) {
-      logger.warn(`Dial error: ${e}`);
+      logger.warn`Dial error: ${e}`;
     }
   }
 
-  logger.log("Closing networking...");
+  logger.log`Closing networking...`;
   await network.stop();
 }
 
@@ -95,6 +95,6 @@ const parsePort = (v: string | undefined) => {
 };
 
 main(parsePort(args[0]), parsePort(args[1])).catch((e) => {
-  logger.error(e);
+  logger.error`${e}`;
   process.exit(-1);
 });

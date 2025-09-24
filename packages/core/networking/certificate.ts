@@ -36,10 +36,10 @@ export type PeerInfo = {
 };
 
 export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<PeerInfo, VerifyCertError>> {
-  logger.log("Incoming peer. Verifying certificate");
+  logger.log`Incoming peer. Verifying certificate`;
   // Must present exactly one cert
   if (certs.length !== 1) {
-    logger.log("Rejecting peer with no certificates.");
+    logger.log`Rejecting peer: expected exactly one certificate, got: ${certs.length}`;
     return Result.error(VerifyCertError.NoCertificate);
   }
 
@@ -48,14 +48,14 @@ export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<Pee
 
   // Must be Ed25519 key
   if (xc.publicKey.asymmetricKeyType !== CURVE_NAME.toLowerCase()) {
-    logger.log(`Rejecting peer using non-ed25519 certificate: ${xc.publicKey.asymmetricKeyType}`);
+    logger.log`Rejecting peer using non-ed25519 certificate: ${xc.publicKey.asymmetricKeyType}`;
     return Result.error(VerifyCertError.NotEd25519);
   }
 
   // Extract raw public key via JWK export
   const jwk = xc.publicKey.export({ format: "jwk" });
   if (jwk.kty !== KEY_TYPE || jwk.crv !== CURVE_NAME) {
-    logger.log(`Public key type mismatch: ${jwk.kty}, ${jwk.crv}`);
+    logger.log`Public key type mismatch: ${jwk.kty}, ${jwk.crv}`;
     return Result.error(VerifyCertError.PublicKeyTypeMismatch);
   }
 
@@ -64,7 +64,7 @@ export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<Pee
   const sanField = xc.subjectAltName ?? "";
   const m = sanField.match(/DNS:([^,]+)/);
   if (m === null || m[1] !== expectedSan) {
-    logger.log(`AltName mismatch. Expected: '${expectedSan}', got: '${m?.[1]}'`);
+    logger.log`AltName mismatch. Expected: '${expectedSan}', got: '${m?.[1]}'`;
     return Result.error(VerifyCertError.AltNameMismatch);
   }
 

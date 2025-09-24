@@ -38,11 +38,11 @@ export class FuzzTarget implements IpcHandler {
   async onSocketMessage(msg: Uint8Array): Promise<void> {
     // attempt to decode the messsage
     const message = Decoder.decodeObject(messageCodec, msg, this.spec);
-    logger.log(`[${message.type}] incoming message`);
+    logger.log`[${message.type}] incoming message`;
 
     await processAndRespond(this.spec, message, this.msgHandler, this.sender).catch((e) => {
-      logger.error(`Error while processing fuzz v0 message: ${e}`);
-      logger.error(e);
+      logger.error`Error while processing fuzz v0 message: ${e}`;
+      logger.error`${e}`;
       this.sender.close();
     });
     return;
@@ -89,17 +89,17 @@ export class FuzzTarget implements IpcHandler {
           break;
         }
         case MessageType.State: {
-          logger.log(`--> Received unexpected 'State' message from the fuzzer. Closing.`);
+          logger.log`--> Received unexpected 'State' message from the fuzzer. Closing.`;
           sender.close();
           return;
         }
         case MessageType.StateRoot: {
-          logger.log(`--> Received unexpected 'StateRoot' message from the fuzzer. Closing.`);
+          logger.log`--> Received unexpected 'StateRoot' message from the fuzzer. Closing.`;
           sender.close();
           return;
         }
         default: {
-          logger.log(`--> Received unexpected message type ${JSON.stringify(message)} from the fuzzer. Closing.`);
+          logger.log`--> Received unexpected message type ${JSON.stringify(message)} from the fuzzer. Closing.`;
           sender.close();
           try {
             assertNever(message);
@@ -110,16 +110,16 @@ export class FuzzTarget implements IpcHandler {
       }
 
       if (response !== null) {
-        logger.trace(`<-- responding with: ${response.type}`);
+        logger.trace`<-- responding with: ${response.type}`;
         const encoded = Encoder.encodeObject(messageCodec, response, spec);
         sender.send(encoded);
       } else {
-        logger.warn(`<-- no response generated for: ${message.type}`);
+        logger.warn`<-- no response generated for: ${message.type}`;
       }
     }
   }
 
   onClose({ error }: { error?: Error }): void {
-    logger.log(`Closing the handler. Reason: ${error !== undefined ? error.message : "close"}.`);
+    logger.log`Closing the handler. Reason: ${error !== undefined ? error.message : "close"}.`;
   }
 }
