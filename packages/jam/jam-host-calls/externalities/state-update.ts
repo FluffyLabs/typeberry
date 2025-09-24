@@ -128,15 +128,10 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
    *
    * NOTE the info may be updated compared to what is in the state.
    *
-   * Takes into account newly created services as well.
+   * Takes into account ejected and newly created services as well.
    */
   getServiceInfo(destination: ServiceId | null): ServiceAccountInfo | null {
     if (destination === null) {
-      return null;
-    }
-
-    const isEjected = this.stateUpdate.services.servicesRemoved.some((x) => x === destination);
-    if (isEjected) {
       return null;
     }
 
