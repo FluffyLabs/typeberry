@@ -10,9 +10,9 @@ const commitHash = process.env.GITHUB_SHA;
 const logger = Logger.new(import.meta.filename, "benchmarks");
 
 runAllBenchmarks().catch((e: Error) => {
-  logger.error(e.message);
-  logger.error(`Cause: ${e.cause}`);
-  logger.error(`Stack: ${e.stack ?? ""}`);
+  logger.error`${e.message}`;
+  logger.error`Cause: ${e.cause}`;
+  logger.error`Stack: ${e.stack ?? ""}`;
   process.exit(-1);
 });
 
@@ -41,7 +41,7 @@ async function runAllBenchmarks() {
             }),
           );
         } else {
-          logger.warn(`Ignoring ${benchPath}/${file}`);
+          logger.warn`Ignoring ${benchPath}/${file}`;
         }
       }
     }
@@ -57,10 +57,10 @@ async function runAllBenchmarks() {
   fs.writeFileSync(`${distPath}/results.txt`, txt);
 
   // print summary
-  logger.log("Summary:");
+  logger.log`Summary:`;
   for (const [file, diffs] of results.entries()) {
     for (const [idx, diff] of diffs.diff.entries()) {
-      logger.log(`${file}[${idx}]: ${"err" in diff ? chalk.red.bold(diff.err) : chalk.green("OK")}`);
+      logger.log`${file}[${idx}]: ${"err" in diff ? chalk.red.bold(diff.err) : chalk.green("OK")}`;
     }
   }
 
@@ -82,11 +82,11 @@ async function runAllBenchmarks() {
 async function runBenchmark(benchPath: string, fileName: string): Promise<Result> {
   const filePath = `${benchPath}/${fileName}`;
   const fileNameNoExt = path.basename(fileName, path.extname(fileName));
-  logger.log(`Running ${filePath}`);
+  logger.log`Running ${filePath}`;
   const run = await import(path.resolve(filePath));
   await run.default();
 
-  logger.log("Compare with expected results.");
+  logger.log`Compare with expected results.`;
   const outputPath = `${benchPath}/${OUTPUT_DIR_NAME}/${fileNameNoExt}.json`;
   const expectedPath = `${benchPath}/${EXPECTED_DIR_NAME}/${fileNameNoExt}.json`;
 

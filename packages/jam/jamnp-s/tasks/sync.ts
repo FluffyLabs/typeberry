@@ -141,7 +141,7 @@ export class SyncTask {
   private onUp0Annoucement(peer: Peer, announcement: up0.Announcement) {
     const { hash, slot } = announcement.final;
     const bestHeader = hashHeader(announcement.header, this.spec);
-    logger.info(`[${peer.id}] --> Received new header #${announcement.header.timeSlotIndex}: ${bestHeader.hash}`);
+    logger.info`[${peer.id}] --> Received new header #${announcement.header.timeSlotIndex}: ${bestHeader.hash}`;
 
     // NOTE [ToDr] Instead of having `Connections` store aux data perhaps
     // we should maintain that directly? However that would require
@@ -223,7 +223,7 @@ export class SyncTask {
     const peers = this.connections.getConnectedPeers();
     for (const peerInfo of peers) {
       this.streamManager.withStreamOfKind<up0.Handler>(peerInfo.peerId, up0.STREAM_KIND, (handler, sender) => {
-        logger.log(`[${peerInfo.peerId}] <-- Broadcasting new header #${slot}: ${header.hash}`);
+        logger.log`[${peerInfo.peerId}] <-- Broadcasting new header #${slot}: ${header.hash}`;
         handler.sendAnnouncement(sender, annoucement);
         return OK;
       });
@@ -244,14 +244,14 @@ export class SyncTask {
 
     if (res.error === BlockSequenceError.BlockOnFork) {
       // seems that peer is requesting syncing a fork from us, let's bail.
-      logger.warn(`[${peer.id}] <-- Invalid block sequence request: ${startHash} is on a fork.`);
+      logger.warn`[${peer.id}] --> Invalid block sequence request: ${startHash} is on a fork.`;
       return [];
     }
 
     if (res.error === BlockSequenceError.NoStartBlock) {
       // we don't know about that block at all, so let's just bail.
       // we should probably penalize the peer for sending BS?
-      logger.warn(`[${peer.id}] <-- Invalid block sequence request: ${startHash} missing header or extrinsic.`);
+      logger.warn`[${peer.id}] --> Invalid block sequence request: ${startHash} missing header or extrinsic.`;
       return [];
     }
 
@@ -275,10 +275,10 @@ export class SyncTask {
     const othersBest = this.othersBest;
     const blocksToSync = othersBest.slot - ourBestSlot;
 
-    logger.trace(`Our best. ${ourBestSlot}. Best seen: ${othersBest.slot}`);
+    logger.trace`Our best. ${ourBestSlot}. Best seen: ${othersBest.slot}`;
     if (blocksToSync < 1) {
       this.connections.getPeerCount();
-      logger.trace(`No new blocks. ${peerCount} peers.`);
+      logger.trace`No new blocks. ${peerCount} peers.`;
       return {
         kind: SyncResult.NoNewBlocks,
         ours: ourBestSlot,
@@ -288,7 +288,7 @@ export class SyncTask {
 
     const requested: RequestedBlocks[] = [];
 
-    logger.log(`Sync ${blocksToSync} blocks from ${peerCount} peers.`);
+    logger.log`Sync ${blocksToSync} blocks from ${peerCount} peers.`;
     // NOTE [ToDr] We might be requesting the same blocks from many peers
     // which isn't very optimal, but for now: 🤷
     //
@@ -318,7 +318,7 @@ export class SyncTask {
       this.streamManager.withNewStream<ce128.ClientHandler>(peerInfo.peerRef, ce128.STREAM_KIND, (handler, sender) => {
         handleAsyncErrors(
           async () => {
-            logger.log(`Fetching blocks from ${peerInfo.peerId}.`);
+            logger.log`[${peerInfo.peerId}] <-- Fetching ${bestSlot - ourBestSlot} blocks (${bestHash})`;
             const blocks = await handler.requestBlockSequence(
               sender,
               bestHash,
@@ -329,7 +329,7 @@ export class SyncTask {
             this.onNewBlocks(blocks, peerInfo.peerId);
           },
           (e) => {
-            logger.warn(`[${peerInfo.peerId}] --> requesting blocks to import: ${e}`);
+            logger.warn`[${peerInfo.peerId}] <-- requesting blocks to import: ${e}`;
           },
         );
         return OK;

@@ -109,11 +109,11 @@ export class PeersManagement<T extends Peer> implements Peers<T> {
   private readonly peers: Map<PeerId, Peer> = new Map();
 
   peerConnected(peer: T) {
-    logger.info(`💡 Peer ${displayId(peer)} connected.`);
+    logger.info`💡 Peer ${displayId(peer)} connected.`;
     const oldPeerData = this.peers.get(peer.id);
     if (oldPeerData !== undefined) {
       // TODO [ToDr] replacing old connection?
-      logger.warn("Replacing older connection.");
+      logger.warn`Replacing older connection.`;
     }
     this.peers.set(peer.id, peer);
     for (const callback of this._onPeerConnected) {
@@ -122,7 +122,7 @@ export class PeersManagement<T extends Peer> implements Peers<T> {
   }
 
   peerDisconnected(peer: T) {
-    logger.info(`⚡︎Peer ${displayId(peer)} disconnected.`);
+    logger.info`⚡︎Peer ${displayId(peer)} disconnected.`;
     this.peers.delete(peer.id);
     for (const callback of this._onPeerDisconnected) {
       callback(peer);

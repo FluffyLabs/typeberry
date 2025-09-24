@@ -58,7 +58,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     const guaranteedWorkReport = Decoder.decodeObject(GuaranteedWorkReport.Codec, message, this.chainSpec);
-    logger.log(`[${sender.streamId}] Received guaranteed work report.`);
+    logger.log`[${sender.streamId}] Received guaranteed work report.`;
     this.onWorkReport(guaranteedWorkReport);
     sender.close();
   }
@@ -72,14 +72,14 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   constructor(private readonly chainSpec: ChainSpec) {}
 
   onStreamMessage(sender: StreamMessageSender): void {
-    logger.warn(`[${sender.streamId}] Got unexpected message on CE-135 stream. Closing.`);
+    logger.warn`[${sender.streamId}] Got unexpected message on CE-135 stream. Closing.`;
     sender.close();
   }
 
   onClose(): void {}
 
   sendWorkReport(sender: StreamMessageSender, workReport: GuaranteedWorkReport) {
-    logger.trace(`[${sender.streamId}] Sending guaranteed work report.`);
+    logger.trace`[${sender.streamId}] Sending guaranteed work report.`;
     sender.bufferAndSend(Encoder.encodeObject(GuaranteedWorkReport.Codec, workReport, this.chainSpec));
     sender.close();
   }

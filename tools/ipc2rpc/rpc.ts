@@ -99,7 +99,7 @@ export function startRpc(db: Database, client: JamnpIpcHandler) {
       port: 3000,
     },
     () => {
-      logger.info("Listening for RPC at :3000");
+      logger.info`Listening for RPC at :3000`;
     },
   );
 

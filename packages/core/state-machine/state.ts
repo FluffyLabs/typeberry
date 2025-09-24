@@ -130,7 +130,7 @@ export abstract class State<TName, TAllowedTransitions, TData = unknown> {
    * actions.
    */
   onActivation(data: TData) {
-    logger.trace(`[${this.constructor.name}] Changing state to: ${this}`);
+    logger.trace`[${this.constructor.name}] Changing state to: ${this}`;
     this.data = data;
   }
 

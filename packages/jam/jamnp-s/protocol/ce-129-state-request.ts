@@ -98,7 +98,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     if (this.isServer) {
-      logger.info(`[${sender.streamId}][server]: Received request.`);
+      logger.info`[${sender.streamId}][server]: Received request.`;
 
       if (this.getBoundaryNodes === undefined || this.getKeyValuePairs === undefined) return;
 
@@ -107,7 +107,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       const boundaryNodes = this.getBoundaryNodes(request.headerHash, request.startKey, request.endKey);
       const keyValuePairs = this.getKeyValuePairs(request.headerHash, request.startKey, request.endKey);
 
-      logger.info(`[${sender.streamId}][server]: <-- responding with boundary nodes and key value pairs.`);
+      logger.info`[${sender.streamId}][server]: <-- responding with boundary nodes and key value pairs.`;
       sender.bufferAndSend(Encoder.encodeObject(codec.sequenceVarLen(trieNodeCodec), boundaryNodes));
       sender.bufferAndSend(Encoder.encodeObject(StateResponse.Codec, StateResponse.create({ keyValuePairs })));
       sender.close();
@@ -117,12 +117,12 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
 
     if (!this.boundaryNodes.has(sender.streamId)) {
       this.boundaryNodes.set(sender.streamId, Decoder.decodeObject(codec.sequenceVarLen(trieNodeCodec), message));
-      logger.info(`[${sender.streamId}][client]: Received boundary nodes.`);
+      logger.info`[${sender.streamId}][client]: Received boundary nodes.`;
       return;
     }
 
     this.onResponse.get(sender.streamId)?.(Decoder.decodeObject(StateResponse.Codec, message));
-    logger.info(`[${sender.streamId}][client]: Received state values.`);
+    logger.info`[${sender.streamId}][client]: Received state values.`;
   }
 
   onClose(streamId: StreamId) {

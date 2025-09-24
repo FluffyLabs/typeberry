@@ -86,11 +86,11 @@ export class Info implements HostCallHandler {
 
     const writeResult = memory.storeFrom(outputStart, chunk);
     if (writeResult.isError) {
-      logger.trace(`INFO(${serviceId}) <- PANIC`);
+      logger.trace`INFO(${serviceId}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
-    logger.trace(`INFO(${serviceId}) <- ${BytesBlob.blobFrom(chunk)}`);
+    logger.trace`INFO(${serviceId}) <- ${BytesBlob.blobFrom(chunk)}`;
 
     if (accountInfo === null) {
       regs.set(IN_OUT_REG, HostCallResult.NONE);

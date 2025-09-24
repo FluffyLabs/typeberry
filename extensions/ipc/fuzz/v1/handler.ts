@@ -57,14 +57,14 @@ export class FuzzTarget implements IpcHandler {
     // attempt to decode the messsage
     try {
       const message = Decoder.decodeObject(messageCodec, msg, this.spec);
-      logger.log(`[${message.type}] incoming message`);
+      logger.log`[${message.type}] incoming message`;
 
       await this.processAndRespond(message);
     } catch (e) {
-      logger.error(`Error while processing fuzz v1 message: ${e}`);
-      logger.error(`${e}`);
+      logger.error`Error while processing fuzz v1 message: ${e}`;
+      logger.error`${e}`;
       if (e instanceof Error) {
-        logger.error(e.stack ?? "");
+        logger.error`${e.stack ?? ""}`;
       }
       this.sender.close();
     }
@@ -77,7 +77,7 @@ export class FuzzTarget implements IpcHandler {
       case MessageType.PeerInfo: {
         // only support V1
         if (message.value.fuzzVersion !== 1) {
-          logger.warn(`Unsupported fuzzer protocol version: ${message.value.fuzzVersion}. Closing`);
+          logger.warn`Unsupported fuzzer protocol version: ${message.value.fuzzVersion}. Closing`;
           this.sender.close();
           return;
         }
@@ -88,9 +88,9 @@ export class FuzzTarget implements IpcHandler {
         // Calculate session features (intersection of both peer features)
         this.sessionFeatures = message.value.features & ourPeerInfo.features;
 
-        logger.info(`Handshake completed. Shared features: 0b${this.sessionFeatures.toString(2)}`);
-        logger.log(`Feature ancestry: ${(this.sessionFeatures & Features.Ancestry) !== 0}`);
-        logger.log(`Feature fork: ${(this.sessionFeatures & Features.Fork) !== 0}`);
+        logger.info`Handshake completed. Shared features: 0b${this.sessionFeatures.toString(2)}`;
+        logger.log`Feature ancestry: ${(this.sessionFeatures & Features.Ancestry) !== 0}`;
+        logger.log`Feature fork: ${(this.sessionFeatures & Features.Fork) !== 0}`;
 
         response = {
           type: MessageType.PeerInfo,
@@ -135,25 +135,25 @@ export class FuzzTarget implements IpcHandler {
       }
 
       case MessageType.StateRoot: {
-        logger.log(`--> Received unexpected 'StateRoot' message from the fuzzer. Closing.`);
+        logger.log`--> Received unexpected 'StateRoot' message from the fuzzer. Closing.`;
         this.sender.close();
         return;
       }
 
       case MessageType.State: {
-        logger.log(`--> Received unexpected 'State' message from the fuzzer. Closing.`);
+        logger.log`--> Received unexpected 'State' message from the fuzzer. Closing.`;
         this.sender.close();
         return;
       }
 
       case MessageType.Error: {
-        logger.log(`--> Received unexpected 'Error' message from the fuzzer. Closing.`);
+        logger.log`--> Received unexpected 'Error' message from the fuzzer. Closing.`;
         this.sender.close();
         return;
       }
 
       default: {
-        logger.log(`--> Received unexpected message type ${JSON.stringify(message)} from the fuzzer. Closing.`);
+        logger.log`--> Received unexpected message type ${JSON.stringify(message)} from the fuzzer. Closing.`;
         this.sender.close();
         try {
           assertNever(message);
@@ -164,16 +164,16 @@ export class FuzzTarget implements IpcHandler {
     }
 
     if (response !== null) {
-      logger.trace(`<-- responding with: ${response.type}`);
+      logger.trace`<-- responding with: ${response.type}`;
       const encoded = Encoder.encodeObject(messageCodec, response, this.spec);
       this.sender.send(encoded);
     } else {
-      logger.warn(`<-- no response generated for: ${message.type}`);
+      logger.warn`<-- no response generated for: ${message.type}`;
     }
   }
 
   onClose({ error }: { error?: Error }): void {
-    logger.log(`Closing the v1 handler. Reason: ${error !== undefined ? error.message : "close"}.`);
+    logger.log`Closing the v1 handler. Reason: ${error !== undefined ? error.message : "close"}.`;
   }
 
   /** Check if a specific feature is enabled in the session */

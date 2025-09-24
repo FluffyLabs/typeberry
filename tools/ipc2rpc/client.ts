@@ -24,7 +24,7 @@ export function startClient(
     messageHandler.registerStreamHandlers(new ce129.Handler(false));
 
     client.connect(socketPath, () => {
-      logger.log("Connected to IPC server");
+      logger.log`Connected to IPC server`;
 
       resolve(messageHandler);
     });
@@ -42,14 +42,14 @@ export function startClient(
             client.pause();
             await messageHandler.onSocketMessage(data);
           } catch (e) {
-            logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
+            logger.error`Received invalid data on socket: ${e}. Closing connection.`;
             client.end();
           } finally {
             client.resume();
           }
         },
         () => {
-          logger.error("Message too big. Closing connection.");
+          logger.error`Message too big. Closing connection.`;
           client.end();
         },
       ),
@@ -61,7 +61,7 @@ export function startClient(
     });
 
     client.on("error", (error) => {
-      logger.error(`${error}`);
+      logger.error`${error}`;
       messageHandler.onClose({ error });
       client.end();
     });
