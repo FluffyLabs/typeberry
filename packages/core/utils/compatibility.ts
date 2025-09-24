@@ -2,6 +2,7 @@ export enum GpVersion {
   V0_6_7 = "0.6.7",
   V0_7_0 = "0.7.0",
   V0_7_1 = "0.7.1-preview",
+  V0_7_2 = "0.7.2-preview",
 }
 
 export enum TestSuite {
@@ -11,7 +12,7 @@ export enum TestSuite {
 
 export const DEFAULT_SUITE = TestSuite.W3F_DAVXY;
 
-const ALL_VERSIONS_IN_ORDER = [GpVersion.V0_6_7, GpVersion.V0_7_0, GpVersion.V0_7_1];
+const ALL_VERSIONS_IN_ORDER = [GpVersion.V0_6_7, GpVersion.V0_7_0, GpVersion.V0_7_1, GpVersion.V0_7_2];
 
 const env = typeof process === "undefined" ? {} : process.env;
 export const DEFAULT_VERSION = GpVersion.V0_7_0;
@@ -22,24 +23,30 @@ function parseCurrentVersion(env?: string): GpVersion | undefined {
   if (env === undefined) {
     return undefined;
   }
-  const version = env as GpVersion;
-  if (!Object.values(GpVersion).includes(version)) {
-    throw new Error(
-      `Configured environment variable GP_VERSION is unknown: '${env}'. Use one of: ${ALL_VERSIONS_IN_ORDER}`,
-    );
+  switch (env) {
+    case GpVersion.V0_6_7:
+    case GpVersion.V0_7_0:
+    case GpVersion.V0_7_1:
+    case GpVersion.V0_7_2:
+      return env;
+    default:
+      throw new Error(
+        `Configured environment variable GP_VERSION is unknown: '${env}'. Use one of: ${ALL_VERSIONS_IN_ORDER}`,
+      );
   }
-  return version;
 }
 
 function parseCurrentSuite(env?: string): TestSuite | undefined {
   if (env === undefined) return undefined;
-  const val = env as TestSuite;
-  if (!Object.values(TestSuite).includes(val)) {
-    throw new Error(
-      `Configured environment variable TEST_SUITE is unknown: '${env}'. Use one of: ${Object.values(TestSuite)}`,
-    );
+  switch (env) {
+    case TestSuite.W3F_DAVXY:
+    case TestSuite.JAMDUNA:
+      return env;
+    default:
+      throw new Error(
+        `Configured environment variable TEST_SUITE is unknown: '${env}'. Use one of: ${Object.values(TestSuite)}`,
+      );
   }
-  return val;
 }
 
 export class Compatibility {
