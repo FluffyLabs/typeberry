@@ -326,8 +326,7 @@ export class Accumulate {
       currentState = stateUpdate === null ? checkpoint : stateUpdate;
 
       if (
-        Compatibility.isLessThan(GpVersion.V0_7_1) &&
-        Compatibility.isGreaterOrEqual(GpVersion.V0_7_0) &&
+        Compatibility.is(GpVersion.V0_7_0) &&
         serviceId === currentManager
       ) {
         const newV = currentState.privilegedServices?.validatorsManager;
