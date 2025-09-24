@@ -38,6 +38,10 @@ cp $DIST_FOLDER/**/*.wasm $DIST_FOLDER/ || true # ignore overwrite errors
 cp ./LICENSE $DIST_FOLDER/
 cp ./README.md $DIST_FOLDER/
 
+# Make index.js executable and insert shebang
+echo '#!/usr/bin/env node' > $DIST_FOLDER/temp.js && cat $DIST_FOLDER/index.js >> $DIST_FOLDER/temp.js && mv $DIST_FOLDER/temp.js $DIST_FOLDER/index.js
+chmod +x $DIST_FOLDER/index.js
+
 VERSION=$(node -p "require('./package.json').version")
 if [ -z "$IS_RELEASE" ]; then
   SHA=$(git rev-parse --short HEAD)
@@ -45,17 +49,21 @@ if [ -z "$IS_RELEASE" ]; then
 fi
 
 # build package.json file
-echo "{
-  \"name\": \"@typeberry/jam\",
-  \"version\": \"$VERSION\",
-  \"description\": \"Typeberry - Typescript JAM implementation by Fluffy Labs team.\",
-  \"main\": \"./index.js\",
-  \"bin\": \"./index.js\",
-  \"dependencies\": {
-    \"lmdb\": \"3.1.3\"
+cat > $DIST_FOLDER/package.json << EOF
+{
+  "name": "@typeberry/jam",
+  "version": "$VERSION",
+  "description": "Typeberry - Typescript JAM implementation by Fluffy Labs team.",
+  "main": "./index.js",
+  "bin": {
+    "jam": "./index.js"
   },
-  \"homepage\": \"https://typeberry.dev\",
-  \"author\": \"Fluffy Labs <hello@fluffylabs.dev>\",
-  \"license\": \"MPL-2.0\",
-  \"type\": \"module\"
-}" > $DIST_FOLDER/package.json
+  "dependencies": {
+    "lmdb": "3.1.3"
+  },
+  "homepage": "https://typeberry.dev",
+  "author": "Fluffy Labs <hello@fluffylabs.dev>",
+  "license": "MPL-2.0",
+  "type": "module"
+}
+EOF
