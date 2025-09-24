@@ -110,7 +110,7 @@ export class Info implements HostCallHandler {
  *
  * Used exclusively by `info` host call.
  *
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/337602337602?v=0.6.7
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/33920033b500?v=0.7.2
  */
 export const codecServiceAccountInfoWithThresholdBalance = codec.object(
   {

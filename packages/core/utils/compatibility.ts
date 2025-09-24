@@ -1,8 +1,8 @@
 export enum GpVersion {
   V0_6_7 = "0.6.7",
   V0_7_0 = "0.7.0",
-  V0_7_1 = "0.7.1",
-  V0_7_2 = "0.7.2",
+  V0_7_1 = "0.7.1-preview",
+  V0_7_2 = "0.7.2-preview",
 }
 
 export enum TestSuite {
@@ -23,7 +23,7 @@ function parseCurrentVersion(env?: string): GpVersion | undefined {
   if (env === undefined) {
     return undefined;
   }
-  switch(env) {
+  switch (env) {
     case GpVersion.V0_6_7:
     case GpVersion.V0_7_0:
     case GpVersion.V0_7_1:
@@ -38,7 +38,7 @@ function parseCurrentVersion(env?: string): GpVersion | undefined {
 
 function parseCurrentSuite(env?: string): TestSuite | undefined {
   if (env === undefined) return undefined;
-  switch(env) {
+  switch (env) {
     case TestSuite.W3F_DAVXY:
     case TestSuite.JAMDUNA:
       return env;
