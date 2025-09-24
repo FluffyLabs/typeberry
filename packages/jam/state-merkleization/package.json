@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/state-merkleization",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Serialization and merkelization of the state.",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",
