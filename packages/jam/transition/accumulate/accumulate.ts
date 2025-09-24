@@ -332,7 +332,7 @@ export class Accumulate {
         const newV = currentState.privilegedServices?.validatorsManager;
         if (currentState.privilegedServices !== null && newV !== undefined && serviceIds.includes(newV)) {
           logger.info(
-            "Entering completly incorrect code that problably reverts validatorsManager change. This is valid in 0.7.0 only and incorrect in 0.7.1+",
+            "Entering completely incorrect code that probably reverts validatorsManager change. This is valid in 0.7.0 only and incorrect in 0.7.1+",
           );
           // Since serviceIds already contains newV, this service gets accumulated twice.
           // To avoid double-counting, we skip stats and gas cost tracking here.
