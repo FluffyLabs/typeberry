@@ -25,12 +25,13 @@ import {
   type AccumulationOutput,
   accumulationOutputComparator,
   hashComparator,
+  PrivilegedServices,
   ServiceAccountInfo,
   type ServicesUpdate,
   tryAsPerCore,
 } from "@typeberry/state";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
-import { assertEmpty, Result } from "@typeberry/utils";
+import { assertEmpty, Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/index.js";
 import type { CountAndGasUsed } from "../statistics.js";
@@ -300,8 +301,10 @@ export class Accumulate {
     inputStateUpdate: AccumulationStateUpdate,
   ): Promise<ParallelAccumulationResult> {
     const serviceIds = accumulateData.getServiceIds();
+
     let gasCost: ServiceGas = tryAsServiceGas(0);
     let currentState = inputStateUpdate;
+    const currentManager = (inputStateUpdate.privilegedServices ?? this.state.privilegedServices).manager;
 
     for (const serviceId of serviceIds) {
       const checkpoint = AccumulationStateUpdate.copyFrom(currentState);
@@ -321,6 +324,37 @@ export class Accumulate {
       serviceStatistics.gasUsed = tryAsServiceGas(serviceStatistics.gasUsed + consumedGas);
       statistics.set(serviceId, serviceStatistics);
       currentState = stateUpdate === null ? checkpoint : stateUpdate;
+
+      if (
+        Compatibility.isLessThan(GpVersion.V0_7_1) &&
+        Compatibility.isGreaterOrEqual(GpVersion.V0_7_0) &&
+        serviceId === currentManager
+      ) {
+        const newV = currentState.privilegedServices?.validatorsManager;
+        if (currentState.privilegedServices !== null && newV !== undefined && serviceIds.includes(newV)) {
+          logger.info(
+            "Entering completly incorrect code that problably reverts validatorsManager change. This is valid in 0.7.0 only and incorrect in 0.7.1+",
+          );
+          // Since serviceIds already contains newV, this service gets accumulated twice.
+          // To avoid double-counting, we skip stats and gas cost tracking here.
+          // We need this accumulation to get the correct `validatorsManager`
+          const { stateUpdate } = await this.accumulateSingleService(
+            newV,
+            accumulateData.getOperands(newV),
+            accumulateData.getGasCost(newV),
+            slot,
+            entropy,
+            checkpoint,
+          );
+
+          const correctV =
+            stateUpdate?.privilegedServices?.validatorsManager ?? this.state.privilegedServices.validatorsManager;
+          currentState.privilegedServices = PrivilegedServices.create({
+            ...currentState.privilegedServices,
+            validatorsManager: correctV,
+          });
+        }
+      }
     }
 
     return {
