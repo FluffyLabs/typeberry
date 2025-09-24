@@ -41,7 +41,7 @@ export const LEN_REG =
  * a = last accumulation timeslot
  * p = parent service
  *
- * https://graypaper.fluffylabs.dev/#/38c4e62/338302338302?v=0.7.0
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/333b00333b00?v=0.7.2
  */
 export class Info implements HostCallHandler {
   index = tryAsHostCallIndex(5);
@@ -84,6 +84,8 @@ export class Info implements HostCallHandler {
     // l
     const length = minU64(regs.get(LEN_REG), tryAsU64(valueLength - offset));
 
+    // NOTE: casting to `Number` is safe in both places, since we are always bounded
+    // by the actual `encodedInfo.length`, which is equal `96`.
     const chunk = encodedInfo.raw.subarray(Number(offset), Number(offset + length));
 
     const writeResult = memory.storeFrom(outputStart, chunk);
