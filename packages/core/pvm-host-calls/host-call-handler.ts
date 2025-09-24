@@ -1,4 +1,4 @@
-import { tryAsU32, type U32 } from "@typeberry/numbers";
+import { tryAsU32, type U32, type U64 } from "@typeberry/numbers";
 import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { type RegisterIndex, tryAsRegisterIndex } from "@typeberry/pvm-interpreter/registers.js";
 import { asOpaqueType, type Opaque } from "@typeberry/utils";
@@ -26,7 +26,7 @@ export interface HostCallHandler {
   readonly index: HostCallIndex;
 
   /** The gas cost of invocation of that host call. */
-  readonly gasCost: SmallGas | ((reg: IHostCallRegisters) => Gas);
+  readonly gasCost: SmallGas | ((cost: U64) => Gas);
 
   /** Currently executing service id. */
   readonly currentServiceId: U32;

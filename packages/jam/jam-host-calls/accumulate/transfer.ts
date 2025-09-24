@@ -1,5 +1,6 @@
 import { type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
+import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type Gas, type GasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
@@ -17,7 +18,7 @@ const MEMO_START_REG = 10; // `o`
 /**
  * Transfer balance from one service account to another.
  *
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/373b00373b00?v=0.6.7
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/373f00373f00?v=0.7.2
  */
 export class Transfer implements HostCallHandler {
   index = tryAsHostCallIndex(
@@ -29,8 +30,8 @@ export class Transfer implements HostCallHandler {
     }),
   );
   /**
-   * `g = 10 + ω9`
-   * https://graypaper.fluffylabs.dev/#/7e6ff6a/373d00373d00?v=0.6.7
+   * `g = 10 + t`
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/373f00373f00?v=0.7.2
    */
   gasCost = (regs: IHostCallRegisters): Gas => {
     const gas = 10n + regs.get(ON_TRANSFER_GAS_REG);
@@ -77,6 +78,8 @@ export class Transfer implements HostCallHandler {
     }
 
     const e = transferResult.error;
+    // sets `t`
+    regs.set(ON_TRANSFER_GAS_REG, tryAsU64(0));
 
     if (e === TransferError.DestinationNotFound) {
       regs.set(IN_OUT_REG, HostCallResult.WHO);
