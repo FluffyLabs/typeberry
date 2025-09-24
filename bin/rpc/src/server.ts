@@ -63,11 +63,11 @@ export class RpcServer {
 
   private setupWebSocket(): void {
     this.wss.on("error", (error) => {
-      this.logger.error(`Server error: ${error}`);
+      this.logger.error`Server error: ${error}`;
     });
 
     this.wss.on("listening", () => {
-      this.logger.info(`Server listening on port ${this.wss.options.port}`);
+      this.logger.info`Server listening on port ${this.wss.options.port}`;
     });
 
     this.wss.on("connection", (ws: WebSocket) => {
@@ -83,7 +83,7 @@ export class RpcServer {
         }
         isAlive = false;
         ws.ping();
-        this.logger.info("Pinging client");
+        this.logger.info`Pinging client`;
       }, PING_INTERVAL_MS);
 
       ws.on("close", () => {
@@ -148,7 +148,7 @@ export class RpcServer {
         await this.fulfillRequest(notificationParseResult.data, ws);
       } catch (error) {
         const msg = error instanceof Error ? error.message : "Unknown error";
-        this.logger.error(`Notification ${JSON.stringify(notificationParseResult.data)} caused an error: ${msg}`);
+        this.logger.error`Notification ${JSON.stringify(notificationParseResult.data)} caused an error: ${msg}`;
       }
 
       return null;
@@ -213,7 +213,7 @@ export class RpcServer {
   }
 
   async close(): Promise<void> {
-    this.logger.info("Cleaning up...");
+    this.logger.info`Cleaning up...`;
     await new Promise<void>((resolve) => {
       for (const ws of this.wss.clients) {
         ws.terminate();

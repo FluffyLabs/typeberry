@@ -135,7 +135,7 @@ export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
       return Bytes.fromBlob(res, HASH_SIZE).asOpaque();
     }
 
-    logger.error(`Invalid response for getBestStateRootHash. Expected Uint8Array, got: ${res}`);
+    logger.error`Invalid response for getBestStateRootHash. Expected Uint8Array, got: ${res}`;
     return Bytes.zero(HASH_SIZE).asOpaque();
   }
 
@@ -192,7 +192,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
 
   async getStateEntries(hash: unknown): Promise<RespondAndTransitionTo<unknown, Finished>> {
     if (this.importer === null) {
-      logger.error(`${this.constructor.name} importer not initialized yet!`);
+      logger.error`${this.constructor.name} importer not initialized yet!`;
       await new Promise((resolve) => {
         this.onImporter.once(resolve);
       });
@@ -208,7 +208,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
       };
     }
 
-    logger.error(`${this.constructor.name} got invalid request type: ${JSON.stringify(hash)}.`);
+    logger.error`${this.constructor.name} got invalid request type: ${JSON.stringify(hash)}.`;
     return {
       response: null,
     };
@@ -231,7 +231,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
 
   async importBlock(block: unknown): Promise<RespondAndTransitionTo<Uint8Array | null, Finished>> {
     if (this.importer === null) {
-      logger.error(`${this.constructor.name} importer not initialized yet!`);
+      logger.error`${this.constructor.name} importer not initialized yet!`;
       await new Promise((resolve) => {
         this.onImporter.once(resolve);
       });
@@ -250,8 +250,8 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
           response = Result.error(resultToString(res));
         }
       } catch (e) {
-        logger.error(`Failed to import block: ${e}`);
-        logger.error(`${e instanceof Error ? e.stack : ""}`);
+        logger.error`Failed to import block: ${e}`;
+        logger.error`${e instanceof Error ? e.stack : ""}`;
         response = Result.error(`${e}`);
       }
       const encoded = Encoder.encodeObject(importBlockResultCodec, response);
@@ -260,7 +260,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
       };
     }
 
-    logger.error(`${this.constructor.name} got invalid request type: ${JSON.stringify(block)}.`);
+    logger.error`${this.constructor.name} got invalid request type: ${JSON.stringify(block)}.`;
     return {
       response: null,
     };
@@ -272,7 +272,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
       const blockView = Decoder.decodeObject(Block.Codec.View, block, config.chainSpec);
       this.onBlock.emit(blockView);
     } else {
-      logger.error(`${this.constructor.name} got invalid signal type: ${JSON.stringify(block)}.`);
+      logger.error`${this.constructor.name} got invalid signal type: ${JSON.stringify(block)}.`;
     }
   }
 

@@ -52,7 +52,7 @@ export class Importer {
     this.state = state;
     this.currentHash = currentBestHeaderHash;
 
-    logger.info(`😎 Best time slot: ${state.timeslot} (header hash: ${currentBestHeaderHash})`);
+    logger.info`😎 Best time slot: ${state.timeslot} (header hash: ${currentBestHeaderHash})`;
   }
 
   public async importBlock(
@@ -64,13 +64,13 @@ export class Importer {
     const maybeBestHeader = await this.importBlockInternal(block, omitSealVerification);
     if (maybeBestHeader.isOk) {
       const bestHeader = maybeBestHeader.ok;
-      this.logger.info(`🧊 Best block: #${timeSlot} (${bestHeader.hash})`);
-      this.logger.log(timer());
+      this.logger.info`🧊 Best block: #${timeSlot} (${bestHeader.hash})`;
+      this.logger.log`${timer()}`;
       return maybeBestHeader;
     }
 
-    this.logger.log(`❌ Rejected block #${timeSlot}: ${resultToString(maybeBestHeader)}`);
-    this.logger.log(timer());
+    this.logger.log`❌ Rejected block #${timeSlot}: ${resultToString(maybeBestHeader)}`;
+    this.logger.log`${timer()}`;
     return maybeBestHeader;
   }
 
@@ -79,11 +79,11 @@ export class Importer {
     omitSealVerification = false,
   ): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
     const logger = this.logger;
-    logger.log("🧱 Attempting to import a new block");
+    logger.log`🧱 Attempting to import a new block`;
 
     const timerVerify = measure("import:verify");
     const hash = await this.verifier.verifyBlock(block);
-    logger.log(timerVerify());
+    logger.log`${timerVerify()}`;
     if (hash.isError) {
       return importerError(ImporterErrorKind.Verifier, hash);
     }
@@ -105,10 +105,10 @@ export class Importer {
 
     const timeSlot = block.header.view().timeSlotIndex.materialize();
     const headerHash = hash.ok;
-    logger.log(`🧱 Verified block: Got hash ${headerHash} for block at slot ${timeSlot}.`);
+    logger.log`🧱 Verified block: Got hash ${headerHash} for block at slot ${timeSlot}.`;
     const timerStf = measure("import:stf");
     const res = await this.stf.transition(block, headerHash, omitSealVerification);
-    logger.log(timerStf());
+    logger.log`${timerStf()}`;
     if (res.isError) {
       return importerError(ImporterErrorKind.Stf, res);
     }
@@ -117,7 +117,7 @@ export class Importer {
     const timerState = measure("import:state");
     const updateResult = await this.states.updateAndSetState(headerHash, this.state, update);
     if (updateResult.isError) {
-      logger.error(`🧱 Unable to update state: ${resultToString(updateResult)}`);
+      logger.error`🧱 Unable to update state: ${resultToString(updateResult)}`;
       return importerError(ImporterErrorKind.Update, updateResult);
     }
     const newState = this.states.getState(headerHash);
@@ -129,7 +129,7 @@ export class Importer {
     // the state of a parent block to support forks and create a fresh STF.
     this.state.updateBackend(newState.backend);
     this.currentHash = headerHash;
-    logger.log(timerState());
+    logger.log`${timerState()}`;
 
     // insert new state and the block to DB.
     const timerDb = measure("import:db");
@@ -138,11 +138,11 @@ export class Importer {
     // Computation of the state root may happen asynchronously,
     // but we still need to wait for it before next block can be imported
     const stateRoot = await this.states.getStateRoot(newState);
-    logger.log(`🧱 Storing post-state-root for ${headerHash}: ${stateRoot}.`);
+    logger.log`🧱 Storing post-state-root for ${headerHash}: ${stateRoot}.`;
     const writeStateRoot = this.blocks.setPostStateRoot(headerHash, stateRoot);
 
     await Promise.all([writeBlocks, writeStateRoot]);
-    logger.log(timerDb());
+    logger.log`${timerDb()}`;
     // finally update the best block
     await this.blocks.setBestHeaderHash(headerHash);
 

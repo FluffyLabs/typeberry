@@ -41,7 +41,7 @@ export function startIpcServer(name: string, newMessageHandler: (socket: IpcSend
 
   // Create the IPC server
   const server = createServer((socket: Socket) => {
-    logger.log("Client connected");
+    logger.log`Client connected`;
     const messageHandler = newMessageHandler(new IpcSender(socket));
 
     // Handle incoming data from the client
@@ -56,14 +56,14 @@ export function startIpcServer(name: string, newMessageHandler: (socket: IpcSend
             socket.pause();
             await messageHandler.onSocketMessage(data);
           } catch (e) {
-            logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
+            logger.error`Received invalid data on socket: ${e}. Closing connection.`;
             socket.end();
           } finally {
             socket.resume();
           }
         },
         () => {
-          logger.error("Received too much data on socket. Closing connection.");
+          logger.error`Received too much data on socket. Closing connection.`;
           socket.end();
         },
       ),
@@ -71,12 +71,12 @@ export function startIpcServer(name: string, newMessageHandler: (socket: IpcSend
 
     // Handle client disconnection
     socket.on("end", () => {
-      logger.log("Client disconnected");
+      logger.log`Client disconnected`;
       messageHandler.onClose({});
     });
 
     socket.on("error", (error) => {
-      logger.error(`Socket error: ${error}`);
+      logger.error`Socket error: ${error}`;
       messageHandler.onClose({ error });
       socket.end();
     });
@@ -94,7 +94,7 @@ export function startIpcServer(name: string, newMessageHandler: (socket: IpcSend
       signal: controller.signal,
     },
     () => {
-      logger.log(`IPC server is listening at ${socketPath}`);
+      logger.log`IPC server is listening at ${socketPath}`;
     },
   );
 
@@ -104,7 +104,7 @@ export function startIpcServer(name: string, newMessageHandler: (socket: IpcSend
   });
 
   return () => {
-    logger.info("Closing IPC server.");
+    logger.info`Closing IPC server.`;
     // stop accepting new connections
     server.close();
     // abort the server

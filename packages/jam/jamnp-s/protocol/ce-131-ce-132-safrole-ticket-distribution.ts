@@ -47,7 +47,7 @@ export class ServerHandler<T extends STREAM_KIND> implements StreamHandler<T> {
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     const ticketDistribution = Decoder.decodeObject(TicketDistributionRequest.Codec, message);
-    logger.log(`[${sender.streamId}][ce-${this.kind}] Received ticket for epoch ${ticketDistribution.epochIndex}`);
+    logger.log`[${sender.streamId}][ce-${this.kind}] Received ticket for epoch ${ticketDistribution.epochIndex}`;
     this.onTicketReceived(ticketDistribution.epochIndex, ticketDistribution.ticket);
     sender.close();
   }
@@ -59,7 +59,7 @@ export class ClientHandler<T extends STREAM_KIND> implements StreamHandler<T> {
   constructor(public readonly kind: T) {}
 
   onStreamMessage(sender: StreamMessageSender): void {
-    logger.warn(`[${sender.streamId}][ce-${this.kind}] Unexpected message received. Closing.`);
+    logger.warn`[${sender.streamId}][ce-${this.kind}] Unexpected message received. Closing.`;
     sender.close();
   }
 

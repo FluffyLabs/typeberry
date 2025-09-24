@@ -13,7 +13,7 @@ export function addEventListener<T extends Event>(
     try {
       await callback(ev);
     } catch (e) {
-      logger.error(`Unhandled exception in ${clazz.name} event handler: ${e}`);
+      logger.error`Unhandled exception in ${clazz.name} event handler: ${e}`;
     }
   });
 }

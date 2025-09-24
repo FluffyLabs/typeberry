@@ -49,9 +49,7 @@ export class Poke implements HostCallHandler {
       length,
       memory.getMemory(),
     );
-    logger.trace(
-      `POKE(${machineIndex}, ${sourceStart}, ${destinationStart}, ${length}) <- ${resultToString(pokeResult)}`,
-    );
+    logger.trace`POKE(${machineIndex}, ${sourceStart}, ${destinationStart}, ${length}) <- ${resultToString(pokeResult)}`;
 
     if (pokeResult.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);

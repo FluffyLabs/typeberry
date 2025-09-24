@@ -42,7 +42,7 @@ export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
     if (block instanceof Uint8Array) {
       this.onBlock.emit(block);
     } else {
-      logger.error(`${this.constructor.name} got invalid signal type: ${JSON.stringify(block)}.`);
+      logger.error`${this.constructor.name} got invalid signal type: ${JSON.stringify(block)}.`;
     }
   }
 

@@ -23,8 +23,8 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-fluffy", {
     "pvm/programs/inst_store_u8_trap_read_only.json",
   ],
 })
-  .then((r) => logger.log(r))
+  .then((r) => logger.log`${r}`)
   .catch((e) => {
-    logger.error(`${e}`);
+    logger.error`${e}`;
     process.exit(-1);
   });

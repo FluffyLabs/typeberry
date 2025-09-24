@@ -12,7 +12,7 @@ import { type Database, startRpc } from "./rpc.js";
 const logger = Logger.new(import.meta.filename, "ipc2rpc");
 
 main().catch((e) => {
-  logger.error(`Main error: ${e}`);
+  logger.error`Main error: ${e}`;
   process.exit(-1);
 });
 
@@ -44,9 +44,9 @@ async function main() {
     (_streamId, _handshake) => {},
   );
 
-  logger.info("Opening new UP0 stream.");
+  logger.info`Opening new UP0 stream.`;
   client.withNewStream(up0.STREAM_KIND, (handler: up0.Handler, sender) => {
-    logger.info("Sending handshake.");
+    logger.info`Sending handshake.`;
     handler.sendHandshake(sender);
   });
 
@@ -54,7 +54,7 @@ async function main() {
 
   // wait for the client to finish and then close the server.
   await client.waitForEnd();
-  logger.info("Client closed, terminating the RPC server.");
+  logger.info`Client closed, terminating the RPC server.`;
   rpcServer.close();
-  logger.info("Server RPC terminated.");
+  logger.info`Server RPC terminated.`;
 }

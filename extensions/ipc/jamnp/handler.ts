@@ -99,7 +99,7 @@ export class JamnpIpcHandler implements IpcHandler {
     // decode the message as `StreamEnvelope`
     const envelope = Decoder.decodeObject(StreamEnvelope.Codec, msg);
     const streamId = envelope.streamId;
-    logger.log(`[${streamId}] incoming message: ${envelope.type} ${envelope.data}`);
+    logger.log`[${streamId}] incoming message: ${envelope.type} ${envelope.data}`;
     // check if this is a already known stream id
     const streamHandler = this.streams.get(streamId);
     const streamSender = new EnvelopeSender(streamId, this.sender);
@@ -107,13 +107,13 @@ export class JamnpIpcHandler implements IpcHandler {
     if (streamHandler === undefined) {
       // closing or message of unknown stream - ignore.
       if (envelope.type !== StreamEnvelopeType.Open) {
-        logger.warn(`[${streamId}] (unknown) got invalid type ${envelope.type}.`);
+        logger.warn`[${streamId}] (unknown) got invalid type ${envelope.type}.`;
         return;
       }
       const newStream = Decoder.decodeObject(NewStream.Codec, envelope.data);
       const handler = this.streamHandlers.get(newStream.streamByte);
       if (handler !== undefined) {
-        logger.log(`[${streamId}] new stream for ${handler.kind}`);
+        logger.log`[${streamId}] new stream for ${handler.kind}`;
         // insert the stream
         this.streams.set(streamId, handler);
         // Just send back the same stream byte.
@@ -136,7 +136,7 @@ export class JamnpIpcHandler implements IpcHandler {
     if (envelope.type !== StreamEnvelopeType.Msg) {
       // display a warning but only if the stream was not pending for confirmation.
       if (!this.pendingStreams.delete(streamId)) {
-        logger.warn(`[${streamId}] got invalid type ${envelope.type}.`);
+        logger.warn`[${streamId}] got invalid type ${envelope.type}.`;
       }
       return;
     }
@@ -147,7 +147,7 @@ export class JamnpIpcHandler implements IpcHandler {
 
   /** Notify about termination of the underlying socket. */
   onClose({ error }: { error?: Error }) {
-    logger.log(`Closing the handler. Reason: ${error !== undefined ? error.message : "close"}.`);
+    logger.log`Closing the handler. Reason: ${error !== undefined ? error.message : "close"}.`;
     // Socket closed - we should probably clear everything.
     for (const [streamId, handler] of this.streams.entries()) {
       handler.onClose(streamId, error === undefined);
@@ -165,7 +165,7 @@ export class JamnpIpcHandler implements IpcHandler {
 
   /** Wait for the handler to be finished either via close or error. */
   waitForEnd(): Promise<void> {
-    logger.log("Waiting for the handler to be closed.");
+    logger.log`Waiting for the handler to be closed.`;
     return this.onEnd.listen;
   }
 }

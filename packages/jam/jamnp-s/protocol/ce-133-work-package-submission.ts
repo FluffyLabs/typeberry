@@ -69,7 +69,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
   onStreamMessage(sender: StreamMessageSender): void {
-    logger.warn(`[${sender.streamId}] Got unexpected message on CE-133 stream. Closing.`);
+    logger.warn`[${sender.streamId}] Got unexpected message on CE-133 stream. Closing.`;
     sender.close();
   }
 
@@ -82,9 +82,9 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     extrinsic: WorkItemExtrinsics,
   ) {
     const corePack = CoreWorkPackage.create({ coreIndex, workPackage });
-    logger.trace(`[${sender.streamId}] Sending work package: ${corePack}`);
+    logger.trace`[${sender.streamId}] Sending work package: ${corePack}`;
     sender.bufferAndSend(Encoder.encodeObject(CoreWorkPackage.Codec, corePack));
-    logger.trace(`[${sender.streamId}] Sending extrinsics: ${workPackage.items}`);
+    logger.trace`[${sender.streamId}] Sending extrinsics: ${workPackage.items}`;
     sender.bufferAndSend(Encoder.encodeObject(workItemExtrinsicsCodec(workPackage.items), extrinsic));
     // now close the connection
     sender.close();
