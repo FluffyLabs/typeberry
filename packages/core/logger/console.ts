@@ -1,7 +1,24 @@
 // biome-ignore-all lint/suspicious/noConsole: logger
 
-import { findLevel, Level, type Options } from "./options.js";
+import { Level, type Options } from "./options.js";
 import type { Transport } from "./transport.js";
+
+function print(level: Level, levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]) {
+  if (level < levelAndName[0]) {
+    return;
+  }
+
+  const lvlText = Level[level].padEnd(5);
+  const val = strings.map((v, idx) => `${v}${data[idx]}`);
+  const msg = `${lvlText} [${levelAndName[1]}] ${val}`;
+  if (level === Level.WARN) {
+    console.warn(msg);
+  } else if (level === Level.ERROR) {
+    console.error(msg);
+  } else {
+    console.info(msg);
+  }
+}
 
 /** An optimized logger that ignores `TRACE`, `DEBUG` and `LOG` messages.
  *
@@ -34,48 +51,30 @@ export class ConsoleTransport implements Transport {
     return new ConsoleTransport(options);
   }
 
-  protected constructor(private options: Options) {}
+  protected constructor(protected options: Options) {}
 
-  insane(_moduleName: string, _val: string) {
+  insane(_levelAndName: readonly [Level, string], _strings: TemplateStringsArray, _data: unknown[]) {
     /* no-op */
   }
 
-  trace(_moduleName: string, _val: string) {
+  trace(_levelAndName: readonly [Level, string], _strings: TemplateStringsArray, _data: unknown[]) {
     /* no-op */
   }
 
-  log(_moduleName: string, _val: string) {
+  log(_levelAndName: readonly [Level, string], _strings: TemplateStringsArray, _data: unknown[]) {
     /* no-op */
   }
 
-  info(_moduleName: string, _val: string) {
+  info(_levelAndName: readonly [Level, string], _strings: TemplateStringsArray, _data: unknown[]) {
     /* no-op */
   }
 
-  warn(moduleName: string, val: string) {
-    this.push(Level.WARN, moduleName, val);
+  warn(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]) {
+    print(Level.WARN, levelAndName, strings, data);
   }
 
-  error(moduleName: string, val: string) {
-    this.push(Level.ERROR, moduleName, val);
-  }
-
-  push(level: Level, moduleName: string, val: string) {
-    const shortModule = moduleName.replace(this.options.workingDir, "");
-    const configuredLevel = findLevel(this.options, moduleName);
-    const lvlText = Level[level].padEnd(5);
-    if (level < configuredLevel) {
-      return;
-    }
-
-    const msg = `${lvlText} [${shortModule}] ${val}`;
-    if (level === Level.WARN) {
-      console.warn(msg);
-    } else if (level === Level.ERROR) {
-      console.error(msg);
-    } else {
-      console.info(msg);
-    }
+  error(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]) {
+    print(Level.ERROR, levelAndName, strings, data);
   }
 }
 
@@ -83,20 +82,20 @@ export class ConsoleTransport implements Transport {
  * Insane version of console logger - supports insane level.
  */
 class InsaneConsoleLogger extends ConsoleTransport {
-  insane(moduleName: string, val: string) {
-    this.push(Level.INSANE, moduleName, val);
+  insane(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]) {
+    print(Level.INSANE, levelAndName, strings, data);
   }
 
-  trace(moduleName: string, val: string) {
-    this.push(Level.TRACE, moduleName, val);
+  trace(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]) {
+    print(Level.TRACE, levelAndName, strings, data);
   }
 
-  log(moduleName: string, val: string) {
-    this.push(Level.LOG, moduleName, val);
+  log(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]) {
+    print(Level.LOG, levelAndName, strings, data);
   }
 
-  info(moduleName: string, val: string) {
-    this.push(Level.INFO, moduleName, val);
+  info(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]) {
+    print(Level.INFO, levelAndName, strings, data);
   }
 }
 
@@ -104,20 +103,20 @@ class InsaneConsoleLogger extends ConsoleTransport {
  * A basic version of console logger - printing everything.
  */
 class TraceConsoleTransport extends ConsoleTransport {
-  insane(_moduleName: string, _val: string) {
+  insane(_levelAndName: readonly [Level, string], _strings: TemplateStringsArray, _data: unknown[]) {
     /* no-op */
   }
 
-  trace(moduleName: string, val: string) {
-    this.push(Level.TRACE, moduleName, val);
+  trace(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]) {
+    print(Level.TRACE, levelAndName, strings, data);
   }
 
-  log(moduleName: string, val: string) {
-    this.push(Level.LOG, moduleName, val);
+  log(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]) {
+    print(Level.LOG, levelAndName, strings, data);
   }
 
-  info(moduleName: string, val: string) {
-    this.push(Level.INFO, moduleName, val);
+  info(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]) {
+    print(Level.INFO, levelAndName, strings, data);
   }
 }
 
@@ -125,20 +124,20 @@ class TraceConsoleTransport extends ConsoleTransport {
  * An optimized version of the logger - completely ignores `TRACE` level calls.
  */
 class LogConsoleTransport extends ConsoleTransport {
-  insane(_moduleName: string, _val: string) {
+  insane(_levelAndName: readonly [Level, string], _strings: TemplateStringsArray, _data: unknown[]) {
     /* no-op */
   }
 
-  trace(_moduleName: string, _val: string) {
+  trace(_levelAndName: readonly [Level, string], _strings: TemplateStringsArray, _data: unknown[]) {
     /* no-op */
   }
 
-  log(moduleName: string, val: string) {
-    this.push(Level.LOG, moduleName, val);
+  log(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]) {
+    print(Level.LOG, levelAndName, strings, data);
   }
 
-  info(moduleName: string, val: string) {
-    this.push(Level.INFO, moduleName, val);
+  info(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]) {
+    print(Level.INFO, levelAndName, strings, data);
   }
 }
 
@@ -146,19 +145,19 @@ class LogConsoleTransport extends ConsoleTransport {
  * An optimized version of the logger - completely ignores `TRACE` & `DEBUG` level calls.
  */
 class InfoConsoleTransport extends ConsoleTransport {
-  insane(_moduleName: string, _val: string) {
+  insane(_levelAndName: readonly [Level, string], _strings: TemplateStringsArray, _data: unknown[]) {
     /* no-op */
   }
 
-  trace(_moduleName: string, _val: string) {
+  trace(_levelAndName: readonly [Level, string], _strings: TemplateStringsArray, _data: unknown[]) {
     /* no-op */
   }
 
-  log(_moduleName: string, _val: string) {
+  log(_levelAndName: readonly [Level, string], _strings: TemplateStringsArray, _data: unknown[]) {
     /* no-op */
   }
 
-  info(moduleName: string, val: string) {
-    this.push(Level.INFO, moduleName, val);
+  info(levelAndName: readonly [Level, string], strings: TemplateStringsArray, data: unknown[]) {
+    print(Level.INFO, levelAndName, strings, data);
   }
 }

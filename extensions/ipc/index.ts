@@ -112,7 +112,7 @@ class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
   async getSerializedState(value: HeaderHash): Promise<v0.KeyValue[]> {
     const state = await this.api.getPostSerializedState(value);
     if (state === null) {
-      logger.warn(`Fuzzer requested non-existing state for: ${value}`);
+      logger.warn`Fuzzer requested non-existing state for: ${value}`;
       return [];
     }
 
@@ -146,7 +146,7 @@ class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
     if (res.isOk) {
       return res;
     }
-    logger.log(`Rejecting block with error: ${res.error}. ${res.details}`);
+    logger.log`Rejecting block with error: ${res.error}. ${res.details}`;
     return Result.error(v1.ErrorMessage.create({ message: res.error }));
   }
 
@@ -156,12 +156,12 @@ class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
       return res.ok;
     }
 
-    logger.warn(`Fuzzer sent incorrect block with error ${res.error}. ${res.details}`);
+    logger.warn`Fuzzer sent incorrect block with error ${res.error}. ${res.details}`;
     return this.api.getBestStateRootHash();
   }
 
   async getPeerInfo(value: v1.PeerInfo): Promise<v1.PeerInfo> {
-    logger.info(`Fuzzer ${value} connected.`);
+    logger.info`Fuzzer ${value} connected.`;
 
     return v1.PeerInfo.create({
       name: this.api.nodeName,
@@ -174,7 +174,7 @@ class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
   }
 
   async getPeerInfoV0(value: v0.PeerInfo): Promise<v0.PeerInfo> {
-    logger.info(`Fuzzer ${value} connected.`);
+    logger.info`Fuzzer ${value} connected.`;
 
     return v0.PeerInfo.create({
       name: this.api.nodeName,

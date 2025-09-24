@@ -10,8 +10,8 @@ main(runners, process.argv.slice(2), "test-vectors/jam-conformance/fuzz-reports/
     "traces/1755252727/00000011.json",
   ],
 })
-  .then((r) => logger.log(r))
+  .then((r) => logger.log`${r}`)
   .catch((e) => {
-    logger.error(`${e}`);
+    logger.error`${e}`;
     process.exit(-1);
   });

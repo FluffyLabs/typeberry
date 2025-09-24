@@ -65,13 +65,13 @@ export class TestDuplexStream implements Stream {
 
     const { writable: w1, readable: r1 } = new TransformStream({
       transform(chunk, ctrl) {
-        logger.trace(`[${id}] <-- [${id2}] ${BytesBlob.blobFrom(chunk)}`);
+        logger.trace`[${id}] <-- [${id2}] ${BytesBlob.blobFrom(chunk)}`;
         ctrl.enqueue(chunk);
       },
     });
     const { writable: w2, readable: r2 } = new TransformStream({
       transform(chunk, ctrl) {
-        logger.trace(`[${id}] --> [${id2}] ${BytesBlob.blobFrom(chunk)}`);
+        logger.trace`[${id}] --> [${id2}] ${BytesBlob.blobFrom(chunk)}`;
         ctrl.enqueue(chunk);
       },
     });
@@ -121,7 +121,7 @@ export class TestPeer implements Peer {
     public readonly key: Ed25519Key,
   ) {
     this.addOnIncomingStream((stream) => {
-      logger.log(`[${this.id}] incoming stream: ${stream.streamId}: ${this._onIncomingStreams.length} listeners`);
+      logger.log`[${this.id}] incoming stream: ${stream.streamId}: ${this._onIncomingStreams.length} listeners`;
       return OK;
     });
   }
@@ -133,9 +133,7 @@ export class TestPeer implements Peer {
   openStream(): Stream {
     const streamId = this._streamId++;
     const [txStream, rxStream] = TestDuplexStream.pair(streamId);
-    logger.log(
-      `[peer:${this.id}] --> [peer:${this._otherPeer?.id}] opening streams ${txStream.streamId} -> ${rxStream.streamId}`,
-    );
+    logger.log`[peer:${this.id}] --> [peer:${this._otherPeer?.id}] opening streams ${txStream.streamId} -> ${rxStream.streamId}`;
     // Allow the "virtual" connection to be full estabilished,
     // before triggering the callbacks. We currently assume
     // this happens synchronously, but if that causes issues
@@ -218,11 +216,11 @@ export class MockNetwork implements Network<Peer> {
 
   constructor(public readonly name: string) {
     this.peers.onPeerConnected((peer) => {
-      logger.log(`(network: ${this.name}) New peer connected: ${peer.id}.`);
+      logger.log`(network: ${this.name}) New peer connected: ${peer.id}.`;
       return OK;
     });
     this.peers.onPeerDisconnected((peer) => {
-      logger.log(`(network: ${this.name}) Peer disconnected: ${peer.id}.`);
+      logger.log`(network: ${this.name}) Peer disconnected: ${peer.id}.`;
       return OK;
     });
   }

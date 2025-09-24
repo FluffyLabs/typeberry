@@ -114,7 +114,7 @@ export class StreamManager {
       // We expect a one-byte identifier first.
       const data = await reader.read();
       bytes = BytesBlob.blobFrom(data.value !== undefined ? data.value : new Uint8Array());
-      logger.trace(`🚰 --> [${peer.id}:${streamId}] Initial data: ${bytes}`);
+      logger.trace`🚰 --> [${peer.id}:${streamId}] Initial data: ${bytes}`;
     } finally {
       reader.releaseLock();
     }
@@ -130,7 +130,7 @@ export class StreamManager {
       throw new Error(`Unsupported stream kind: ${kind}`);
     }
 
-    logger.log(`🚰 --> [${peer.id}:${stream.streamId}] Stream identified as: ${kind}`);
+    logger.log`🚰 --> [${peer.id}:${stream.streamId}] Stream identified as: ${kind}`;
 
     this.registerStream(peer, handler, stream, BytesBlob.blobFrom(bytes.raw.subarray(1)));
   }
@@ -144,7 +144,7 @@ export class StreamManager {
       this.backgroundTasks.delete(streamId);
 
       if (kind === StreamErrorKind.Exception) {
-        logger.error(`🚰 --- [${peer.id}:${streamId}] Stream error: ${e}. Disconnecting peer.`);
+        logger.error`🚰 --- [${peer.id}:${streamId}] Stream error: ${e}. Disconnecting peer.`;
       }
 
       if (kind !== StreamErrorKind.LocalClose) {
@@ -195,11 +195,11 @@ async function readStreamForever(
   const callback = handleMessageFragmentation(
     (data) => {
       const bytes = BytesBlob.blobFrom(new Uint8Array(data));
-      logger.trace(`🚰 --> [${peer.id}:${quicStream.streamId}] ${bytes}`);
+      logger.trace`🚰 --> [${peer.id}:${quicStream.streamId}] ${bytes}`;
       handler.onStreamMessage(quicStream, bytes);
     },
     () => {
-      logger.error(`🚰 --> [${peer.id}:${quicStream.streamId}] got too much data. Disconnecting.`);
+      logger.error`🚰 --> [${peer.id}:${quicStream.streamId}] got too much data. Disconnecting.`;
       peer.disconnect();
     },
   );
@@ -211,7 +211,7 @@ async function readStreamForever(
     callback(bytes.raw);
 
     if (isDone) {
-      logger.log(`🚰 --> [${peer.id}:${quicStream.streamId}] remote finished.`);
+      logger.log`🚰 --> [${peer.id}:${quicStream.streamId}] remote finished.`;
       return;
     }
 
@@ -257,7 +257,7 @@ class QuicStreamSender implements StreamMessageSender {
               return;
             }
             const { data, addPrefix } = chunk;
-            logger.trace(`🚰 <-- [${this.streamId}] write: ${data}`);
+            logger.trace`🚰 <-- [${this.streamId}] write: ${data}`;
             if (addPrefix) {
               await writer.write(encodeMessageLength(data.raw));
             }
@@ -277,7 +277,7 @@ class QuicStreamSender implements StreamMessageSender {
   close(): void {
     handleAsyncErrors(
       async () => {
-        logger.trace(`🚰 <-- [${this.streamId}] closing`);
+        logger.trace`🚰 <-- [${this.streamId}] closing`;
         if (this.currentWriterPromise !== null) {
           await this.currentWriterPromise;
         }

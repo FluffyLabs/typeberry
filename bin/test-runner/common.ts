@@ -49,12 +49,12 @@ export async function main(
     testFiles = await scanDir(relPath, directoryToScan, ".json");
   }
 
-  logger.info(`Preparing tests for ${testFiles.length} files.`);
+  logger.info`Preparing tests for ${testFiles.length} files.`;
   for (const testFile of testFiles) {
     const absolutePath = path.resolve(`${relPath}/${testFile}`);
 
     if (ignoredPatterns.some((x) => absolutePath.includes(x))) {
-      logger.log(`Ignoring: ${absolutePath}`);
+      logger.log`Ignoring: ${absolutePath}`;
       continue;
     }
 
@@ -77,7 +77,7 @@ export async function main(
 
   const pathToReplace = new RegExp(`/.*${directoryToScan}/`);
 
-  logger.info(`Running ${tests.length} tests.`);
+  logger.info`Running ${tests.length} tests.`;
   // run in parallel and generate results.
   for (const [testGroupName, testRunners] of aggregated.entries()) {
     // split large suites into parts
@@ -88,7 +88,7 @@ export async function main(
       // separately (faster feedback in the console when running tests).
       setImmediate(() => {
         const testName = `${testGroupName} tests [${i + 1}/${totalBatches}]`;
-        logger.info(`Running ${testName}`);
+        logger.info`Running ${testName}`;
         const timeout = 5 * 60 * 1000;
         test.describe(
           testName,
@@ -148,8 +148,8 @@ function prepareTest(runners: Runner<unknown>[], testContent: unknown, file: str
         runner: name,
         file,
         test: () => {
-          logger.log(`[${name}] running test from ${file}`);
-          logger.trace(` ${util.inspect(parsedTest)}`);
+          logger.log`[${name}] running test from ${file}`;
+          logger.trace` ${util.inspect(parsedTest)}`;
           return run(parsedTest, path);
         },
       };
@@ -164,7 +164,7 @@ function prepareTest(runners: Runner<unknown>[], testContent: unknown, file: str
     file,
     test: () => {
       for (const [runner, error] of errors) {
-        logger.error(`[${runner}] Parsing error: ${error}`);
+        logger.error`[${runner}] Parsing error: ${error}`;
       }
 
       fail(`Unrecognized test case in ${file}`);

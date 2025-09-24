@@ -102,7 +102,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       this.handshakes.set(streamId, handshake);
       // we didn't initiate this handshake, so let's respond
       if (!this.pendingHandshakes.delete(streamId)) {
-        logger.log(`[${streamId}] <-- responding with a handshake.`);
+        logger.log`[${streamId}] <-- responding with a handshake.`;
         sender.bufferAndSend(Encoder.encodeObject(Handshake.Codec, this.getHandshake()));
       }
       this.onHandshake(streamId, handshake);
@@ -111,7 +111,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
 
     // it's just an announcement
     const annoucement = Decoder.decodeObject(Announcement.Codec, message, this.spec);
-    logger.log(`[${streamId}] --> got blocks announcement: ${annoucement.final}`);
+    logger.log`[${streamId}] --> got blocks announcement: ${annoucement.final}`;
     this.onAnnouncement(streamId, annoucement);
   }
 
@@ -126,7 +126,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       return;
     }
     const handshake = this.getHandshake();
-    logger.trace(`[${streamId}] <-- sending handshake`);
+    logger.trace`[${streamId}] <-- sending handshake`;
     this.pendingHandshakes.set(sender.streamId, true);
     sender.bufferAndSend(Encoder.encodeObject(Handshake.Codec, handshake));
   }
@@ -135,10 +135,10 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     const { streamId } = sender;
     // only send announcement if we've handshaken
     if (this.handshakes.has(streamId)) {
-      logger.trace(`[${streamId}] <-- sending block announcement: ${annoucement.final}`);
+      logger.trace`[${streamId}] <-- sending block announcement: ${annoucement.final}`;
       sender.bufferAndSend(Encoder.encodeObject(Announcement.Codec, annoucement, this.spec));
     } else {
-      logger.warn(`[${streamId}] <-- no handshake yet, skipping announcement.`);
+      logger.warn`[${streamId}] <-- no handshake yet, skipping announcement.`;
     }
   }
 }
