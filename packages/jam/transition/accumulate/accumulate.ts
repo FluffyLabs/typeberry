@@ -325,10 +325,7 @@ export class Accumulate {
       statistics.set(serviceId, serviceStatistics);
       currentState = stateUpdate === null ? checkpoint : stateUpdate;
 
-      if (
-        Compatibility.is(GpVersion.V0_7_0) &&
-        serviceId === currentManager
-      ) {
+      if (Compatibility.is(GpVersion.V0_7_0) && serviceId === currentManager) {
         const newV = currentState.privilegedServices?.validatorsManager;
         if (currentState.privilegedServices !== null && newV !== undefined && serviceIds.includes(newV)) {
           logger.info(
