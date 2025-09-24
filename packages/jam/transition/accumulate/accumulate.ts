@@ -328,9 +328,7 @@ export class Accumulate {
       if (Compatibility.is(GpVersion.V0_7_0) && serviceId === currentManager) {
         const newV = currentState.privilegedServices?.validatorsManager;
         if (currentState.privilegedServices !== null && newV !== undefined && serviceIds.includes(newV)) {
-          logger.info(
-            "Entering completely incorrect code that probably reverts validatorsManager change. This is valid in 0.7.0 only and incorrect in 0.7.1+",
-          );
+          logger.info`Entering completely incorrect code that probably reverts validatorsManager change. This is valid in 0.7.0 only and incorrect in 0.7.1+`;
           // Since serviceIds already contains newV, this service gets accumulated twice.
           // To avoid double-counting, we skip stats and gas cost tracking here.
           // We need this accumulation to get the correct `validatorsManager`
