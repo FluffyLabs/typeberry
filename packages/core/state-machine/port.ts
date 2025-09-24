@@ -32,7 +32,7 @@ export class TypedPort {
       try {
         this.dispatchPortMessage(msg);
       } catch (e) {
-        logger.error`[${this.constructor.name}] Failed to dispatch a message: ${e}: ${JSON.stringify(msg)}`;
+        logger.error`[${this.constructor.name}] Failed to dispatch a message: ${e}: ${msg}`;
         throw e;
       }
     });
@@ -120,7 +120,7 @@ export class TypedPort {
     try {
       this.port.postMessage(msg, transferList);
     } catch (e) {
-      logger.error`[${this.constructor.name}] Failed to post a message: ${e}: ${JSON.stringify(msg)}`;
+      logger.error`[${this.constructor.name}] Failed to post a message: ${e}: ${msg}`;
       throw e;
     }
   }
@@ -154,7 +154,7 @@ export class TypedPort {
   private cleanup(reason: string) {
     // resolve all pending requests with an error.
     const responseListeners = this.responseListeners.eventNames();
-    for (const ev in responseListeners) {
+    for (const ev of responseListeners) {
       this.responseListeners.emit(ev, new Error(`port is ${reason}`));
     }
   }

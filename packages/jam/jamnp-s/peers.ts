@@ -132,7 +132,7 @@ export class Connections {
     for (;;) {
       // increase the reconnection counter
       meta.currentRetry += 1;
-      if (meta.currentRetry >= meta.maxRetries) {
+      if (meta.currentRetry > meta.maxRetries) {
         // reached max retries for a peer, remove it from tracking.
         this.peerInfo.delete(id);
         logger.log`[${id}] max retries reached. Removing peer.`;

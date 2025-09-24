@@ -27,7 +27,7 @@ export class Executor<TParams extends WithTransferList, TResult> implements IExe
     options: ExecutorOptions,
   ): Promise<Executor<XParams, XResult>> {
     check`${options.maxWorkers > 0} Max workers has to be positive.`;
-    check`${options.minWorkers <= options.maxWorkers} Min workers has to be lower or equal ${options} to max workers.`;
+    check`${options.minWorkers <= options.maxWorkers} Min workers must be less than or equal to max workers (min=${options.minWorkers}, max=${options.maxWorkers}).`;
 
     const workers: WorkerChannel<XParams, XResult>[] = [];
     for (let i = 0; i < options.minWorkers; i++) {

@@ -39,7 +39,7 @@ export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<Pee
   logger.log`Incoming peer. Verifying certificate`;
   // Must present exactly one cert
   if (certs.length !== 1) {
-    logger.log`Rejecting peer with no certificates.`;
+    logger.log`Rejecting peer: expected exactly one certificate, got: ${certs.length}`;
     return Result.error(VerifyCertError.NoCertificate);
   }
 

@@ -72,7 +72,7 @@ export class Write implements HostCallHandler {
     const valueLoadingResult = memory.loadInto(value, valueStart);
     // Note [MaSo] this is ok to return bcs if valueLength is 0, then this panic won't happen
     if (valueLoadingResult.isError) {
-      logger.trace`WRITE(${storageKey})}) <- PANIC`;
+      logger.trace`WRITE(${storageKey}) <- PANIC`;
       return PvmExecution.Panic;
     }
 

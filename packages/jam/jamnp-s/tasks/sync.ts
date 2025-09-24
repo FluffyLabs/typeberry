@@ -244,14 +244,14 @@ export class SyncTask {
 
     if (res.error === BlockSequenceError.BlockOnFork) {
       // seems that peer is requesting syncing a fork from us, let's bail.
-      logger.warn`[${peer.id}] <-- Invalid block sequence request: ${startHash} is on a fork.`;
+      logger.warn`[${peer.id}] --> Invalid block sequence request: ${startHash} is on a fork.`;
       return [];
     }
 
     if (res.error === BlockSequenceError.NoStartBlock) {
       // we don't know about that block at all, so let's just bail.
       // we should probably penalize the peer for sending BS?
-      logger.warn`[${peer.id}] <-- Invalid block sequence request: ${startHash} missing header or extrinsic.`;
+      logger.warn`[${peer.id}] --> Invalid block sequence request: ${startHash} missing header or extrinsic.`;
       return [];
     }
 
@@ -318,7 +318,7 @@ export class SyncTask {
       this.streamManager.withNewStream<ce128.ClientHandler>(peerInfo.peerRef, ce128.STREAM_KIND, (handler, sender) => {
         handleAsyncErrors(
           async () => {
-            logger.log`Fetching blocks from ${peerInfo.peerId}.`;
+            logger.log`[${peerInfo.peerId}] <-- Fetching ${bestSlot - ourBestSlot} blocks (${bestHash})`;
             const blocks = await handler.requestBlockSequence(
               sender,
               bestHash,
@@ -329,7 +329,7 @@ export class SyncTask {
             this.onNewBlocks(blocks, peerInfo.peerId);
           },
           (e) => {
-            logger.warn`[${peerInfo.peerId}] --> requesting blocks to import: ${e}`;
+            logger.warn`[${peerInfo.peerId}] <-- requesting blocks to import: ${e}`;
           },
         );
         return OK;
