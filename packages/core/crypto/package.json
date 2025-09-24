@@ -1,7 +1,7 @@
 {
   "name": "@typeberry/crypto",
   "version": "0.1.2",
-  "description": "JAM crypto-related utilites.",
+  "description": "JAM crypto-related utilities.",
   "main": "index.ts",
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
