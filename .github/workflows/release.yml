@@ -80,7 +80,7 @@ jobs:
       working-directory: ./dist/lib
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      run: npm publish --access public
+      run: npm publish --access=public --tag $([ "$IS_RELEASE" = "true" ] && echo "latest" || echo "next")
 
   publish-npm-jam:
     runs-on: ubuntu-latest
@@ -105,7 +105,7 @@ jobs:
       working-directory: ./dist/jam
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      run: npm publish --access public
+      run: npm publish --access=public --tag $([ "$IS_RELEASE" = "true" ] && echo "latest" || echo "next")
 
   create-github-release-assets:
     if: ${{ github.event_name == 'release' }}
