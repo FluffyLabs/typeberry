@@ -9,6 +9,7 @@
   "bin": "./index.js",
   "scripts": {
     "start": "NODE_ENV=development tsx ./index.ts",
+    "build": "npm run build -w @typeberry/builder -- --environment PACKAGE_NAME:@typeberry/convert",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
