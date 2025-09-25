@@ -17,7 +17,6 @@
     "@typeberry/hash": "*",
     "@typeberry/json-parser": "*",
     "@typeberry/logger": "*",
-    "@typeberry/node": "*",
     "@typeberry/numbers": "*",
     "@typeberry/pvm-interpreter": "*",
     "@typeberry/safrole": "*",

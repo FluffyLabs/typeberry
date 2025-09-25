@@ -1,7 +1,7 @@
 {
   "name": "@typeberry/jam",
   "version": "0.1.2",
-  "description": "Typeberry-JAM CLI.",
+  "description": "Typeberry - Typescript JAM implementation by Fluffy Labs team.",
   "main": "index.ts",
   "bin": "./index.ts",
   "dependencies": {

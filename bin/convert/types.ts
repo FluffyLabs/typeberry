@@ -14,11 +14,11 @@ import type { InMemoryState } from "@typeberry/state";
 import { fullStateDumpFromJson } from "@typeberry/state-json";
 import { SerializedState, StateEntries } from "@typeberry/state-merkleization";
 import { inMemoryStateCodec } from "@typeberry/state-merkleization/in-memory-state-codec.js";
-import type { TestState } from "../test-runner/state-transition/state-loader.js";
-import { StateTransition, StateTransitionGenesis } from "../test-runner/state-transition/state-transition.js";
-import { workItemFromJson } from "../test-runner/w3f/codec/work-item.js";
-import { workPackageFromJson } from "../test-runner/w3f/codec/work-package.js";
-import { PvmTest } from "../test-runner/w3f/pvm.js";
+import type { TestState } from "@typeberry/test-runner/state-transition/state-loader.js";
+import { StateTransition, StateTransitionGenesis } from "@typeberry/test-runner/state-transition/state-transition.js";
+import { workItemFromJson } from "@typeberry/test-runner/w3f/codec/work-item.js";
+import { workPackageFromJson } from "@typeberry/test-runner/w3f/codec/work-package.js";
+import { PvmTest } from "@typeberry/test-runner/w3f/pvm.js";
 
 export type SupportedType = {
   name: string;

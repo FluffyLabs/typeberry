@@ -2,21 +2,22 @@
 set -ex
 
 # This script compiles the project into "single" JS file (it's actually one per worker thread)
-# using @vercel/ncc. The result is in `./dist
+# using @vercel/ncc. The result is in `./dist/jam`
+
+VERSION=$(node -p "require('./package.json').version")
+DESCRIPTION=$(node -p "require('./package.json').description")
 
 # Start from the top-level project directory
 cd ../..
 
-ROOT=./
-DIST_FOLDER=$ROOT/dist/jam
+DIST_FOLDER=./dist/jam
 
 # clean dist file
 mkdir $DIST_FOLDER || true
 rm -rf $DIST_FOLDER/*
 
-BUILD="npx @vercel/ncc build -a -s -e lmdb -e tsx/esm/api"
-
 # Build the main binary
+BUILD="npx @vercel/ncc build -a -s -e lmdb -e tsx/esm/api"
 $BUILD ./bin/jam/index.ts -o $DIST_FOLDER
 
 # Fix un-compiled worker files to point to the ones we will compile manually.
@@ -32,9 +33,9 @@ rm ./bootstrap-generator.mjs && ln -s ./block-generator/index.js bootstrap-gener
 cd -
 
 # Build all workers separately and then the main binary
-$BUILD $ROOT/packages/workers/importer/index.ts -o $DIST_FOLDER/importer
-$BUILD $ROOT/packages/workers/jam-network/index.ts -o $DIST_FOLDER/jam-network
-$BUILD $ROOT/packages/workers/block-generator/index.ts -o $DIST_FOLDER/block-generator
+$BUILD ./packages/workers/importer/index.ts -o $DIST_FOLDER/importer
+$BUILD ./packages/workers/jam-network/index.ts -o $DIST_FOLDER/jam-network
+$BUILD ./packages/workers/block-generator/index.ts -o $DIST_FOLDER/block-generator
 
 # copy worker wasm files
 cp $DIST_FOLDER/**/*.wasm $DIST_FOLDER/ || true # ignore overwrite errors
@@ -45,7 +46,6 @@ cp ./README.md $DIST_FOLDER/
 echo '#!/usr/bin/env node' > $DIST_FOLDER/temp.js && cat $DIST_FOLDER/index.js >> $DIST_FOLDER/temp.js && mv $DIST_FOLDER/temp.js $DIST_FOLDER/index.js
 chmod +x $DIST_FOLDER/index.js
 
-VERSION=$(node -p "require('./package.json').version")
 if [ -z "$IS_RELEASE" ]; then
   SHA=$(git rev-parse --short HEAD)
   VERSION="$VERSION-$SHA"
@@ -56,7 +56,7 @@ cat > $DIST_FOLDER/package.json << EOF
 {
   "name": "@typeberry/jam",
   "version": "$VERSION",
-  "description": "Typeberry - Typescript JAM implementation by Fluffy Labs team.",
+  "description": "$DESCRIPTION",
   "main": "./index.js",
   "bin": {
     "jam": "./index.js"

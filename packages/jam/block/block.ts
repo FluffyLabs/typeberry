@@ -6,6 +6,8 @@ import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "./guarantees
 import { Header } from "./header.js";
 import { type PreimagesExtrinsic, preimagesExtrinsicCodec } from "./preimage.js";
 import { type TicketsExtrinsic, ticketsExtrinsicCodec } from "./tickets.js";
+import {TimeSlot, tryAsTimeSlot} from "./common.js";
+import {asKnownSize} from "@typeberry/collections";
 
 /**
  * Extrinsic part of the block - the input data being external to the system.
@@ -89,3 +91,22 @@ export class Block extends WithDebug {
 
 /** Undecoded View of a [`Block`]. */
 export type BlockView = DescribedBy<typeof Block.Codec.View>;
+
+export function emptyBlock(slot: TimeSlot = tryAsTimeSlot(0)) {
+  const header = Header.empty();
+  header.timeSlotIndex = slot;
+  return Block.create({
+    header,
+    extrinsic: Extrinsic.create({
+      tickets: asKnownSize([]),
+      preimages: [],
+      assurances: asKnownSize([]),
+      guarantees: asKnownSize([]),
+      disputes: {
+        verdicts: [],
+        culprits: [],
+        faults: [],
+      },
+    }),
+  });
+}

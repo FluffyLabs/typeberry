@@ -1,6 +1,7 @@
 import {
   Block,
   type BlockView,
+  emptyBlock,
   Extrinsic,
   Header,
   type HeaderHash,
@@ -122,23 +123,4 @@ function loadGenesisState(spec: ChainSpec, data: JipChainSpec["genesisState"]) {
 }
 function blockAsView(block: Block, spec: ChainSpec): BlockView {
   return Decoder.decodeObject(Block.Codec.View, Encoder.encodeObject(Block.Codec, block, spec), spec);
-}
-
-export function emptyBlock(slot: TimeSlot = tryAsTimeSlot(0)) {
-  const header = Header.empty();
-  header.timeSlotIndex = slot;
-  return Block.create({
-    header,
-    extrinsic: Extrinsic.create({
-      tickets: asKnownSize([]),
-      preimages: [],
-      assurances: asKnownSize([]),
-      guarantees: asKnownSize([]),
-      disputes: {
-        verdicts: [],
-        culprits: [],
-        faults: [],
-      },
-    }),
-  });
 }
