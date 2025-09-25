@@ -1,6 +1,5 @@
 // biome-ignore-all lint/suspicious/noConsole: bin file
 
-import { pathToFileURL } from "node:url";
 import { loadConfig } from "@typeberry/config-node";
 import { deriveEd25519SecretKey } from "@typeberry/crypto/key-derivation.js";
 import { blake2b } from "@typeberry/hash";
@@ -10,6 +9,31 @@ import { workspacePathFix } from "@typeberry/utils";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 
 export * from "./args.js";
+
+Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
+
+let args: Arguments;
+const withRelPath = workspacePathFix(`${import.meta.dirname}/../..`);
+
+try {
+  const parsed = parseArgs(process.argv.slice(2), withRelPath);
+  if (parsed === null) {
+    console.info(HELP);
+    process.exit(0);
+  }
+  args = parsed;
+} catch (e) {
+  console.error(`\n${e}\n`);
+  console.info(HELP);
+  process.exit(1);
+}
+
+const running = startNode(args, withRelPath);
+
+running.catch((e) => {
+  console.error(`${e}`);
+  process.exit(-1);
+});
 
 export const prepareConfigFile = (args: Arguments): JamConfig => {
   const nodeConfig = loadConfig(args.args.configPath);
@@ -37,33 +61,6 @@ export const prepareConfigFile = (args: Arguments): JamConfig => {
     },
   });
 };
-
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
-
-  let args: Arguments;
-  const withRelPath = workspacePathFix(`${import.meta.dirname}/../..`);
-
-  try {
-    const parsed = parseArgs(process.argv.slice(2), withRelPath);
-    if (parsed === null) {
-      console.info(HELP);
-      process.exit(0);
-    }
-    args = parsed;
-  } catch (e) {
-    console.error(`\n${e}\n`);
-    console.info(HELP);
-    process.exit(1);
-  }
-
-  const running = startNode(args, withRelPath);
-
-  running.catch((e) => {
-    console.error(`${e}`);
-    process.exit(-1);
-  });
-}
 
 async function startNode(args: Arguments, withRelPath: (p: string) => string) {
   const jamNodeConfig = prepareConfigFile(args);
