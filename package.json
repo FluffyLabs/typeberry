@@ -27,6 +27,7 @@
     "packages/core/numbers",
     "packages/core/ordering",
     "packages/core/pvm-debugger-adapter",
+    "packages/core/pvm-host-calls",
     "packages/core/pvm-interpreter",
     "packages/core/pvm-program",
     "packages/core/pvm-spi-decoder",
@@ -40,10 +41,10 @@
     "packages/jam/config-node",
     "packages/jam/database",
     "packages/jam/database-lmdb",
+    "packages/jam/fuzz-proto",
     "packages/jam/jam-host-calls",
     "packages/jam/jamnp-s",
     "packages/jam/node",
-    "packages/core/pvm-host-calls",
     "packages/jam/safrole",
     "packages/jam/state",
     "packages/jam/state-json",
@@ -56,8 +57,7 @@
     "workers/block-generator",
     "workers/generic",
     "workers/importer",
-    "workers/jam-network",
-    "packages/jam/fuzz-proto"
+    "workers/jam-network"
   ],
   "engines": {
     "node": ">=22",
