@@ -34,7 +34,7 @@ export class StateMachine<CurrentState extends TStates, TStates extends State<St
   /** Get state object by name. */
   getState<TState extends TStates>(name: StateNames<TState>): TState {
     const state = this.allStates.get(name);
-    check(state !== undefined, `Unable to retrieve state object for ${name}.`);
+    check`${state !== undefined} Unable to retrieve state object for ${name}.`;
     return state as TState;
   }
 

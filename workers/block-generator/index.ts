@@ -24,12 +24,12 @@ if (!isMainThread) {
   channel
     .then((channel) => main(channel))
     .catch((e) => {
-      logger.error(e);
+      logger.error`${e}`;
       if (e.stack !== undefined) {
-        logger.error(e.stack);
+        logger.error`${e.stack}`;
       }
       if (e.cause !== undefined) {
-        logger.error(e.cause);
+        logger.error`${e.cause}`;
       }
     });
 }
@@ -38,7 +38,7 @@ if (!isMainThread) {
  * The `BlockGenerator` should periodically create new blocks and send them as signals to the main thread.
  */
 export async function main(channel: MessageChannelStateMachine<GeneratorInit, GeneratorStates>) {
-  logger.info(`🎁 Block Generator running ${channel.currentState()}`);
+  logger.info`🎁 Block Generator running ${channel.currentState()}`;
   // Await the configuration object
   const ready = await channel.waitForState<GeneratorReady>("ready(generator)");
   const config = ready.currentState().getConfig();
@@ -54,12 +54,12 @@ export async function main(channel: MessageChannelStateMachine<GeneratorInit, Ge
       await setTimeout(config.chainSpec.slotDuration * 1000);
       counter += 1;
       const newBlock = await generator.nextEncodedBlock();
-      logger.trace(`Sending block ${counter}`);
+      logger.trace`Sending block ${counter}`;
       worker.sendBlock(port, newBlock);
     }
   });
 
-  logger.info("Block Generator finished. Closing channel.");
+  logger.info`Block Generator finished. Closing channel.`;
 
   // Close the comms to gracefully close the app.
   finished.currentState().close(channel);

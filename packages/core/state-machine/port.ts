@@ -32,7 +32,7 @@ export class TypedPort {
       try {
         this.dispatchPortMessage(msg);
       } catch (e) {
-        logger.error(`[${this.constructor.name}] Failed to dispatch a message: ${e}: ${JSON.stringify(msg)}`);
+        logger.error`[${this.constructor.name}] Failed to dispatch a message: ${e}: ${msg}`;
         throw e;
       }
     });
@@ -94,7 +94,7 @@ export class TypedPort {
    * Send a response given the worker that has previously requested something.
    */
   respond(localState: string, request: Message, data: unknown, transferList?: Transferable[]) {
-    check(request.kind === "request");
+    check`${request.kind === "request"}`;
     this.postMessage(
       {
         kind: "response",
@@ -120,7 +120,7 @@ export class TypedPort {
     try {
       this.port.postMessage(msg, transferList);
     } catch (e) {
-      logger.error(`[${this.constructor.name}] Failed to post a message: ${e}: ${JSON.stringify(msg)}`);
+      logger.error`[${this.constructor.name}] Failed to post a message: ${e}: ${msg}`;
       throw e;
     }
   }
@@ -131,10 +131,11 @@ export class TypedPort {
     }
 
     switch (msg.kind) {
-      case "response":
-        check(this.responseListeners.eventNames().indexOf(reqEvent(msg.id)) !== -1);
+      case "response": {
+        check`${this.responseListeners.eventNames().indexOf(reqEvent(msg.id)) !== -1}`;
         this.responseListeners.emit(reqEvent(msg.id), null, msg.data, msg.name, msg.localState, msg);
         break;
+      }
       case "signal":
         this.listeners.emit("signal", msg.name, msg.data, msg.localState, msg);
         break;
@@ -153,7 +154,7 @@ export class TypedPort {
   private cleanup(reason: string) {
     // resolve all pending requests with an error.
     const responseListeners = this.responseListeners.eventNames();
-    for (const ev in responseListeners) {
+    for (const ev of responseListeners) {
       this.responseListeners.emit(ev, new Error(`port is ${reason}`));
     }
   }

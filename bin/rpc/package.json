@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/rpc",
-  "version": "0.0.5",
+  "version": "0.1.2",
   "description": "A JSON RPC server for Typeberry. Spec: https://hackmd.io/@polkadot/jip2",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",
@@ -10,9 +10,9 @@
     "rpc": "index.ts"
   },
   "scripts": {
-    "start": "tsx ./index.ts",
+    "start": "NODE_ENV=development tsx ./index.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
-    "test:e2e-setup": "GP_VERSION=0.7.0 tsx ./test/e2e-setup.ts",
+    "test:e2e-setup": "NODE_ENV=development GP_VERSION=0.7.0 tsx ./test/e2e-setup.ts",
     "test:e2e": "npm run test:e2e-setup && GP_VERSION=0.7.0 tsx --test ./test/e2e.ts"
   },
   "dependencies": {
@@ -28,6 +28,7 @@
     "@typeberry/node": "*",
     "@typeberry/numbers": "*",
     "@typeberry/state": "*",
+    "@typeberry/utils": "*",
     "@types/ws": "8.18.1",
     "minimist": "1.2.8",
     "ws": "8.18.2",

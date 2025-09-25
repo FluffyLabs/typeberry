@@ -23,7 +23,7 @@ import {
 } from "@typeberry/crypto/bandersnatch.js";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
-import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
+import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import { type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole.js";
 import { ENTROPY_ENTRIES, hashComparator, type ValidatorData } from "@typeberry/state";
 import { TicketsOrKeys, ticketFromJson, validatorDataFromJson } from "@typeberry/state-json";
@@ -208,7 +208,7 @@ export class SafroleTest {
   post_state!: JsonState;
 }
 
-export const bwasm = BandernsatchWasm.new({ synchronous: false });
+export const bwasm = BandernsatchWasm.new();
 
 export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const chainSpec = getChainSpec(path);

@@ -64,9 +64,7 @@ export class MessageChannelStateMachine<
       try {
         this.dispatchSignal(name, data);
       } catch (e: unknown) {
-        logger.error(
-          `[${this.constructor.name}] Unable to dispatch signal (${name}): ${e}. ${this.stateInfo(remoteState)}`,
-        );
+        logger.error`[${this.constructor.name}] Unable to dispatch signal (${name}): ${e}. ${this.stateInfo(remoteState)}`;
         throw e;
       }
     });
@@ -75,9 +73,7 @@ export class MessageChannelStateMachine<
       try {
         await this.dispatchRequest(name, data, msg);
       } catch (e: unknown) {
-        logger.error(
-          `[${this.constructor.name}] Unable to dispatch request (${name}): ${e}. ${this.stateInfo(remoteState)}`,
-        );
+        logger.error`[${this.constructor.name}] Unable to dispatch request (${name}): ${e}. ${this.stateInfo(remoteState)}`;
         throw e;
       }
     });
@@ -183,7 +179,7 @@ export class MessageChannelStateMachine<
     }
 
     if (didStateChangeInMeantime) {
-      logger.warn(`Ignoring obsolete response for an old request: "${name}"`);
+      logger.warn`Ignoring obsolete response for an old request: "${name}"`;
       return;
     }
 
@@ -204,7 +200,7 @@ export class MessageChannelStateMachine<
   }
 
   private transitionTo<TNewState extends TStates>(): MessageChannelStateMachine<TNewState, TStates> {
-    logger.trace(`[${this.machine.name}] transitioned to ${this.currentState()}`);
+    logger.trace`[${this.machine.name}] transitioned to ${this.currentState()}`;
     return this as unknown as MessageChannelStateMachine<TNewState, TStates>;
   }
 
@@ -229,7 +225,7 @@ export class MessageChannelStateMachine<
     try {
       await promise;
     } catch (e) {
-      logger.error(JSON.stringify(e));
+      logger.error`${e}`;
     }
     return new MessageChannelStateMachine(machine, port);
   }
@@ -251,9 +247,9 @@ export class MessageChannelStateMachine<
     const promise = new Promise<TypedPort>((resolve, reject) => {
       parentPort.once("message", (value: Message) => {
         try {
-          check(value.kind === "request", "The initial message should be a request with channel.");
-          check(value.name === CHANNEL_MESSAGE);
-          check(value.data instanceof MessagePort);
+          check`${value.kind === "request"} The initial message should be a request with channel.`;
+          check`${value.name === CHANNEL_MESSAGE}`;
+          check`${value.data instanceof MessagePort}`;
           const port = new TypedPort(value.data as MessagePort);
           port.respond(machine.currentState().stateName, value, Ok);
           resolve(port);

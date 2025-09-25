@@ -36,7 +36,7 @@ export class RpcClient {
     this.ws = new WebSocket(url);
     this.connectionPromise = new Promise((resolve) => {
       this.ws.once("open", () => {
-        logger.info("Connected to server");
+        logger.info`Connected to server`;
         resolve();
       });
     });
@@ -83,11 +83,11 @@ export class RpcClient {
     });
 
     this.ws.on("error", (error) => {
-      logger.error(`WebSocket error: ${error}`);
+      logger.error`WebSocket error: ${error}`;
     });
 
     this.ws.on("close", () => {
-      logger.info("Disconnected from server");
+      logger.info`Disconnected from server`;
     });
   }
 

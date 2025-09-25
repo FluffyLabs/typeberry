@@ -128,15 +128,10 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
    *
    * NOTE the info may be updated compared to what is in the state.
    *
-   * Takes into account newly created services as well.
+   * Takes into account ejected and newly created services as well.
    */
   getServiceInfo(destination: ServiceId | null): ServiceAccountInfo | null {
     if (destination === null) {
-      return null;
-    }
-
-    const isEjected = this.stateUpdate.services.servicesRemoved.some((x) => x === destination);
-    if (isEjected) {
       return null;
     }
 
@@ -292,8 +287,8 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     bytes: bigint,
     serviceInfo: ServiceAccountInfo,
   ): Result<OK, InsufficientFundsError> {
-    check(items >= 0, `storageUtilisationCount has to be a positive number, got: ${items}`);
-    check(bytes >= 0, `storageUtilisationBytes has to be a positive number, got: ${bytes}`);
+    check`${items >= 0} storageUtilisationCount has to be a positive number, got: ${items}`;
+    check`${bytes >= 0} storageUtilisationBytes has to be a positive number, got: ${bytes}`;
 
     const overflowItems = !isU32(items);
     const overflowBytes = !isU64(bytes);

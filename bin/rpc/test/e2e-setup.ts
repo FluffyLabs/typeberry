@@ -3,12 +3,11 @@
 import { loadConfig, NODE_DEFAULTS } from "@typeberry/config-node";
 import { Level, Logger } from "@typeberry/logger";
 import { importBlocks, JamConfig, main as node } from "@typeberry/node";
+import { workspacePathFix } from "@typeberry/utils";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 
-const withRelPath = (path: string) => {
-  return `../../${path}`;
-};
+const withRelPath = workspacePathFix(`${import.meta.dirname}/../../..`);
 
 async function main() {
   const nodeConfig = loadConfig(`${import.meta.dirname}/e2e.config.json`);

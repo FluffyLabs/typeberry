@@ -21,7 +21,7 @@ export class QuicPeer implements Peer {
     public readonly conn: QUICConnection,
     peerInfo: PeerInfo,
   ) {
-    logger.log(`👥 [${peerInfo.id}] peer connected ${conn.remoteHost}:${conn.remotePort}`);
+    logger.log`👥 [${peerInfo.id}] peer connected ${conn.remoteHost}:${conn.remotePort}`;
 
     this.connectionId = conn.connectionIdShared.toString();
     this.address = {
@@ -33,12 +33,12 @@ export class QuicPeer implements Peer {
 
     addEventListener(conn, events.EventQUICConnectionStream, (ev) => {
       const stream = ev.detail;
-      logger.log(`🚰  [${this.id}] new stream: [${stream.streamId}]`);
+      logger.log`🚰  [${this.id}] new stream: [${stream.streamId}]`;
       this.streamEvents.emit("stream", new QuicStream(stream));
     });
 
     addEventListener(conn, events.EventQUICConnectionError, (err) => {
-      logger.error(`❌ [${this.id}] connection failed: ${err.detail}`);
+      logger.error`❌ [${this.id}] connection failed: ${err.detail}`;
     });
   }
 
@@ -48,12 +48,12 @@ export class QuicPeer implements Peer {
 
   openStream(): QuicStream {
     const stream = this.conn.newStream("bidi");
-    logger.log(`🚰 [${this.id}] opening stream: [${stream.streamId}]`);
+    logger.log`🚰 [${this.id}] opening stream: [${stream.streamId}]`;
     return new QuicStream(stream);
   }
 
   async disconnect() {
-    logger.log(`👋 [${this.id}] disconnecting`);
+    logger.log`👋 [${this.id}] disconnecting`;
     await this.conn.stop({ isApp: true });
   }
 }

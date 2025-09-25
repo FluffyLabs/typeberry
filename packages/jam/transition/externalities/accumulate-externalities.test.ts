@@ -40,7 +40,6 @@ import {
   type LookupHistorySlots,
   PreimageItem,
   PrivilegedServices,
-  type Service,
   ServiceAccountInfo,
   StorageItem,
   type StorageKey,
@@ -52,7 +51,7 @@ import {
   ValidatorData,
 } from "@typeberry/state";
 import { testState } from "@typeberry/state/test.utils.js";
-import { asOpaqueType, Compatibility, deepEqual, ensure, GpVersion, OK, Result } from "@typeberry/utils";
+import { asOpaqueType, Compatibility, deepEqual, GpVersion, OK, Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "./accumulate-externalities.js";
 
 function partiallyUpdatedState() {
@@ -117,7 +116,10 @@ describe("PartialState.requestPreimage", () => {
     const state = partiallyUpdatedState();
     const serviceId = tryAsServiceId(0);
     const maybeService = state.state.services.get(serviceId);
-    const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
+    if (maybeService === undefined) {
+      throw new Error("Invalid service!");
+    }
+    const service = maybeService;
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
@@ -153,7 +155,10 @@ describe("PartialState.requestPreimage", () => {
     const state = partiallyUpdatedState();
     const serviceId = tryAsServiceId(0);
     const maybeService = state.state.services.get(serviceId);
-    const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
+    if (maybeService === undefined) {
+      throw new Error("Invalid service!");
+    }
+    const service = maybeService;
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
@@ -557,7 +562,10 @@ describe("PartialState.newService", () => {
   it("should create a new service and update balance + next service ID", () => {
     const state = partiallyUpdatedState();
     const maybeService = state.state.services.get(tryAsServiceId(0));
-    const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
+    if (maybeService === undefined) {
+      throw new Error("Invalid service!");
+    }
+    const service = maybeService;
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
@@ -621,7 +629,10 @@ describe("PartialState.newService", () => {
   it("should return an error if there are insufficient funds", () => {
     const state = partiallyUpdatedState();
     const maybeService = state.state.services.get(tryAsServiceId(0));
-    const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
+    if (maybeService === undefined) {
+      throw new Error("Invalid service!");
+    }
+    const service = maybeService;
 
     const updatedService = new InMemoryService(service.serviceId, {
       ...service.data,
@@ -666,7 +677,10 @@ describe("PartialState.newService", () => {
       manager: tryAsServiceId(1),
     };
     const maybeService = state.state.services.get(tryAsServiceId(0));
-    const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
+    if (maybeService === undefined) {
+      throw new Error("Invalid service!");
+    }
+    const service = maybeService;
 
     const updatedService = new InMemoryService(service.serviceId, {
       ...service.data,
@@ -790,7 +804,10 @@ describe("PartialState.upgradeService", () => {
   it("should update the service with new code hash and gas limits", () => {
     const state = partiallyUpdatedState();
     const maybeService = state.state.services.get(tryAsServiceId(0));
-    const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
+    if (maybeService === undefined) {
+      throw new Error("Invalid service!");
+    }
+    const service = maybeService;
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
@@ -1108,7 +1125,11 @@ describe("PartialState.transfer", () => {
   const partiallyUpdatedStateWithSecondService = () => {
     const state = partiallyUpdatedState();
     const maybeService = state.state.services.get(tryAsServiceId(0));
-    const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
+    if (maybeService === undefined) {
+      throw new Error("Invalid service!");
+    }
+    const service = maybeService;
+
     state.state.services.set(
       tryAsServiceId(1),
       new InMemoryService(tryAsServiceId(1), {
@@ -1268,7 +1289,10 @@ describe("PartialState.providePreimage", () => {
   } = {}) => {
     const state = partiallyUpdatedState();
     const maybeService = state.state.services.get(tryAsServiceId(0));
-    const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
+    if (maybeService === undefined) {
+      throw new Error("Invalid service!");
+    }
+    const service = maybeService;
 
     const preimageBlob = BytesBlob.blobFromNumbers([0xaa, 0xbb, 0xcc, 0xdd]);
     const preimage = PreimageItem.create({

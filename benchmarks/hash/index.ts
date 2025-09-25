@@ -94,7 +94,7 @@ function generate<T>(name: string, f: () => T): T[] {
     result.push(f());
   }
   const end = process.memoryUsage();
-  logger.log(`[${name}] mem diff: ${Math.round(((start.heapUsed - end.heapUsed) / 1024 / 1024) * 100) / 100}MB`);
+  logger.log`[${name}] mem diff: ${Math.round(((start.heapUsed - end.heapUsed) / 1024 / 1024) * 100) / 100}MB`;
   return result;
 }
 

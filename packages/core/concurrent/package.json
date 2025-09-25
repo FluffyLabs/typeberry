@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/concurrent",
-  "version": "0.0.5",
+  "version": "0.1.2",
   "description": "Create a concurrent executor of some work.",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",

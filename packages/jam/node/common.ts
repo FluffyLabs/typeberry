@@ -42,7 +42,7 @@ export function openDatabase(
   const genesisHeaderHashNibbles = genesisHeaderHash.toString().substring(2, 10);
 
   const dbPath = `${databaseBasePath}/${nodeNameHash}/${genesisHeaderHashNibbles}`;
-  logger.info(`🛢️ Opening database at ${dbPath}`);
+  logger.info`🛢️ Opening database at ${dbPath}`;
   try {
     return {
       dbPath,
@@ -71,8 +71,8 @@ export async function initializeDatabase(
 
   const header = blocks.getBestHeaderHash();
   const state = blocks.getPostStateRoot(header);
-  logger.log(`🛢️ Best header hash: ${header}`);
-  logger.log(`🛢️ Best state root: ${state}`);
+  logger.log`🛢️ Best header hash: ${header}`;
+  logger.log`🛢️ Best state root: ${state}`;
 
   // DB seems already initialized, just go with what we have.
   const isDbInitialized =
@@ -83,13 +83,13 @@ export async function initializeDatabase(
     return;
   }
 
-  logger.log("🛢️ Database looks fresh. Initializing.");
+  logger.log`🛢️ Database looks fresh. Initializing.`;
   // looks like a fresh db, initialize the state.
   const genesisHeader = Decoder.decodeObject(Header.Codec, config.genesisHeader, spec);
   const genesisExtrinsic = emptyBlock().extrinsic;
   const genesisBlock = Block.create({ header: genesisHeader, extrinsic: genesisExtrinsic });
   const blockView = blockAsView(genesisBlock, spec);
-  logger.log(`🧬 Writing genesis block #${genesisHeader.timeSlotIndex}: ${genesisHeaderHash}`);
+  logger.log`🧬 Writing genesis block #${genesisHeader.timeSlotIndex}: ${genesisHeaderHash}`;
 
   const { genesisStateSerialized, genesisStateRootHash } = loadGenesisState(spec, config.genesisState);
 
@@ -112,7 +112,7 @@ function loadGenesisState(spec: ChainSpec, data: JipChainSpec["genesisState"]) {
   const state = SerializedState.fromStateEntries(spec, stateEntries);
 
   const genesisStateRootHash = stateEntries.getRootHash();
-  logger.info(`🧬 Genesis state root: ${genesisStateRootHash}`);
+  logger.info`🧬 Genesis state root: ${genesisStateRootHash}`;
 
   return {
     genesisState: state,

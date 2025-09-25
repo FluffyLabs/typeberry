@@ -67,7 +67,7 @@ export function setupPeerListeners(syncTask: SyncTask, network: Network<Peer>, s
       handleAsyncErrors(
         () => streamManager.onIncomingStream(peer, stream),
         (e) => {
-          logger.error(`[${peer.id}:${stream.streamId}]🚰  Stream error: ${e}. Disconnecting peer.`);
+          logger.error`[${peer.id}:${stream.streamId}]🚰  Stream error: ${e}. Disconnecting peer.`;
           peer.disconnect();
         },
       );

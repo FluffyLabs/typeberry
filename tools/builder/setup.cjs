@@ -32,6 +32,13 @@ const packageJson = JSON.stringify(
     main: "index.js",
     author: originalPackageJson.author,
     license: originalPackageJson.license,
+    sideEffects: false,
+    exports: {
+      ".": {
+        import: "./index.js",
+        require: "./index.cjs",
+      },
+    },
   },
   null,
   2,
@@ -47,6 +54,7 @@ packages/**
 );
 
 module.exports = {
-  outFile: `${DIST}/index.js`,
+  esmOutFile: `${DIST}/index.js`,
+  cjsOutFile: `${DIST}/index.cjs`,
   typesInput: `${DIST}/tools/builder/pkg.d.ts`,
 };

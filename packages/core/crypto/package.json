@@ -1,7 +1,7 @@
 {
   "name": "@typeberry/crypto",
-  "version": "0.0.5",
-  "description": "JAM crypto-related utilites.",
+  "version": "0.1.2",
+  "description": "JAM crypto-related utilities.",
   "main": "index.ts",
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
@@ -10,7 +10,7 @@
     "@noble/ed25519": "2.2.3",
     "@typeberry/bytes": "*",
     "@typeberry/hash": "*",
-    "@typeberry/native": "^0.0.1-43eee4f",
+    "@typeberry/native": "0.0.4-c369217",
     "@typeberry/numbers": "*",
     "@typeberry/utils": "*"
   },

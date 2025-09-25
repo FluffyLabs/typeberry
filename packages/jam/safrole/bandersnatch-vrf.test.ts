@@ -1,17 +1,22 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 
 import { tryAsValidatorIndex } from "@typeberry/block";
 import { type SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
 import { BANDERSNATCH_KEY_BYTES } from "@typeberry/crypto";
-import { BANDERSNATCH_PROOF_BYTES, BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";
+import {
+  BANDERSNATCH_PROOF_BYTES,
+  BANDERSNATCH_RING_ROOT_BYTES,
+  type BandersnatchKey,
+  type BandersnatchRingRoot,
+} from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
-import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import { BandernsatchWasm } from "./bandersnatch-wasm.js";
 
-const bandersnatchWasm = BandernsatchWasm.new({ synchronous: true });
+const bandersnatchWasm = BandernsatchWasm.new();
 
 const attempt = (v: number) => tryAsTicketAttempt(v);
 
@@ -41,16 +46,24 @@ describe("Bandersnatch verification", () => {
   });
 
   describe("verifyTickets", () => {
-    const bandersnatchKeys = asKnownSize(
-      [
-        "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
-        "0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0",
-        "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
-        "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
-        "0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3",
-        "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
-      ].map((x) => Bytes.parseBytes(x, BANDERSNATCH_KEY_BYTES).asOpaque()),
-    );
+    const bandersnatchKeys = [
+      "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
+      "0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0",
+      "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
+      "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
+      "0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3",
+      "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
+    ].map((x) => Bytes.parseBytes(x, BANDERSNATCH_KEY_BYTES).asOpaque<BandersnatchKey>());
+
+    let commitment: BandersnatchRingRoot;
+    before(async () => {
+      const res = await bandersnatchVrf.getRingCommitment(await bandersnatchWasm, bandersnatchKeys);
+      if (res.isOk) {
+        commitment = res.ok;
+      } else {
+        throw new Error("Unable to calculate ring commitment.");
+      }
+    });
 
     it("should confirm that all tickets are valid and return correct ids", async () => {
       const tickets: SignedTicket[] = [
@@ -87,7 +100,13 @@ describe("Bandersnatch verification", () => {
         "0x3a5d10abc80dda33fe3f40b3bb2e3eefd3e97dda3d617a860c9d94eb70b832ad",
       ].map((x) => Bytes.parseBytes(x, HASH_SIZE));
 
-      const result = await bandersnatchVrf.verifyTickets(await bandersnatchWasm, bandersnatchKeys, tickets, entropy);
+      const result = await bandersnatchVrf.verifyTickets(
+        await bandersnatchWasm,
+        bandersnatchKeys.length,
+        commitment,
+        tickets,
+        entropy,
+      );
 
       assert.strictEqual(
         result.every((x) => x.isValid),
@@ -134,7 +153,13 @@ describe("Bandersnatch verification", () => {
         "0x3a5d10abc80dda33fe3f40b3bb2e3eefd3e97dda3d617a860c9d94eb70b832ad",
       ].map((x) => Bytes.parseBytes(x, HASH_SIZE));
 
-      const result = await bandersnatchVrf.verifyTickets(await bandersnatchWasm, bandersnatchKeys, tickets, entropy);
+      const result = await bandersnatchVrf.verifyTickets(
+        await bandersnatchWasm,
+        bandersnatchKeys.length,
+        commitment,
+        tickets,
+        entropy,
+      );
 
       assert.deepStrictEqual(
         result.map((x) => x.isValid),
@@ -165,8 +190,7 @@ describe("Bandersnatch verification", () => {
       );
 
       const result = await (await bandersnatchWasm).verifySeal(
-        keys.raw,
-        authorIndex,
+        Array.from(keys.chunks(BANDERSNATCH_KEY_BYTES))[authorIndex].raw,
         signature.raw,
         payload.raw,
         auxData.raw,
@@ -188,8 +212,7 @@ describe("Bandersnatch verification", () => {
       const auxData = BytesBlob.parseBlob("0x");
 
       const result = await (await bandersnatchWasm).verifySeal(
-        keys.raw,
-        authorIndex,
+        Array.from(keys.chunks(BANDERSNATCH_KEY_BYTES))[authorIndex].raw,
         signature.raw,
         payload.raw,
         auxData.raw,

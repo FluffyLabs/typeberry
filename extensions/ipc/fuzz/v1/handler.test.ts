@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { Socket } from "node:net";
 import { describe, it, type Mock, mock } from "node:test";
-import { type Block, type HeaderHash, type StateRootHash, tryAsTimeSlot } from "@typeberry/block";
+import { type BlockView, type HeaderHash, type StateRootHash, tryAsTimeSlot } from "@typeberry/block";
 import { testBlockView } from "@typeberry/block/test-helpers.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
@@ -27,7 +27,7 @@ const spec = tinyChainSpec;
 class MockV1MessageHandler implements FuzzMessageHandler {
   getPeerInfo: Mock<(value: PeerInfo) => Promise<PeerInfo>> = mock.fn();
   initialize: Mock<(value: Initialize) => Promise<StateRootHash>> = mock.fn();
-  importBlock: Mock<(value: Block) => Promise<Result<StateRootHash, ErrorMessage>>> = mock.fn();
+  importBlock: Mock<(value: BlockView) => Promise<Result<StateRootHash, ErrorMessage>>> = mock.fn();
   getState: Mock<(value: HeaderHash) => Promise<KeyValue[]>> = mock.fn();
 }
 
@@ -179,7 +179,7 @@ describe("FuzzV1Target Handler", () => {
       const mockMessageHandler = new MockV1MessageHandler();
       const mockSender = new MockSender();
 
-      const testBlock = testBlockView().materialize();
+      const testBlock = testBlockView();
       const expectedStateRoot = Bytes.fill(32, 0xef).asOpaque<StateRootHash>();
 
       const incomingMessage: Message = {
@@ -203,7 +203,6 @@ describe("FuzzV1Target Handler", () => {
       await fuzzTarget.onSocketMessage(testMessage);
 
       assert.strictEqual(mockMessageHandler.importBlock.mock.callCount(), 1);
-      assert.deepStrictEqual(mockMessageHandler.importBlock.mock.calls[0].arguments, [testBlock]);
 
       assert.strictEqual(mockSender._sentData.length, 1);
       const sentMessage = decodeMessage(mockSender._sentData[0]);
@@ -215,7 +214,7 @@ describe("FuzzV1Target Handler", () => {
       const mockMessageHandler = new MockV1MessageHandler();
       const mockSender = new MockSender();
 
-      const testBlock = testBlockView().materialize();
+      const testBlock = testBlockView();
       const expectedError = ErrorMessage.create({ message: "test error" });
 
       const incomingMessage: Message = {

@@ -33,8 +33,8 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
 
   await initWasm();
 
-  logger.info(`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`);
-  logger.info(`🎸 Starting node: ${config.nodeName}.`);
+  logger.info`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
+  logger.info`🎸 Starting node: ${config.nodeName}.`;
   const chainSpec = getChainSpec(config.node.flavor);
   const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
     config.nodeName,
@@ -87,15 +87,15 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
         return importer.finish(port);
       });
       await importerFinished.currentState().waitForWorkerToFinish();
-      logger.log("[main] ☠️  Closing the extensions");
+      logger.log`[main] ☠️  Closing the extensions`;
       closeExtensions();
-      logger.log("[main] ☠️  Closing the authorship module");
+      logger.log`[main] ☠️  Closing the authorship module`;
       closeAuthorship();
-      logger.log("[main] ☠️  Closing the networking module");
+      logger.log`[main] ☠️  Closing the networking module`;
       closeNetwork();
-      logger.log("[main] 🛢️ Closing the database");
+      logger.log`[main] 🛢️ Closing the database`;
       await rootDb.close();
-      logger.info("[main] ✅ Done.");
+      logger.info`[main] ✅ Done.`;
     },
   };
 
@@ -106,16 +106,16 @@ type ImporterReady = MessageChannelStateMachine<MainReady, Finished | MainReady 
 
 const initAuthorship = async (importerReady: ImporterReady, isAuthoring: boolean, config: WorkerConfig) => {
   if (!isAuthoring) {
-    logger.log("✍️  Authorship off: disabled");
+    logger.log`✍️  Authorship off: disabled`;
     return () => Promise.resolve();
   }
 
-  logger.info("✍️  Starting block generator.");
+  logger.info`✍️  Starting block generator.`;
   const { generator, finish } = await startBlockGenerator(config);
   // relay blocks from generator to importer
   importerReady.doUntil<Finished>("finished", async (importer, port) => {
     generator.currentState().onBlock.on((b) => {
-      logger.log(`✍️  Produced block. Size: [${b.length}]`);
+      logger.log`✍️  Produced block. Size: [${b.length}]`;
       importer.sendBlock(port, b);
     });
   });
@@ -131,7 +131,7 @@ const initNetwork = async (
   bestHeader: Listener<WithHash<HeaderHash, HeaderView>>,
 ) => {
   if (networkConfig === null) {
-    logger.log("🛜 Networking off: no config");
+    logger.log`🛜 Networking off: no config`;
     return () => Promise.resolve();
   }
 

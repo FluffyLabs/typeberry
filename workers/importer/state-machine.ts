@@ -10,7 +10,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { codec, Decoder, Encoder } from "@typeberry/codec";
 import { WorkerConfig } from "@typeberry/config";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
-import { HASH_SIZE, type WithHash } from "@typeberry/hash";
+import { HASH_SIZE, type WithHash, ZERO_HASH } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { tryAsU32 } from "@typeberry/numbers";
 import {
@@ -38,7 +38,7 @@ export function importerStateMachine() {
 
 const logger = Logger.new(import.meta.filename, "importer");
 
-const importBlockCodec = codec.custom<Result<StateRootHash, string>>(
+export const importBlockResultCodec = codec.custom<Result<StateRootHash, string>>(
   {
     name: "Result<StateRootHash, string>",
     sizeHint: { bytes: 1, isExact: false },
@@ -116,7 +116,7 @@ export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
   async importBlock(port: TypedChannel, block: Uint8Array): Promise<Result<StateRootHash, string>> {
     const res: Uint8Array | null = await port.sendRequest("importBlock", block, [block.buffer as ArrayBuffer]);
     if (res instanceof Uint8Array) {
-      return Decoder.decodeObject(importBlockCodec, res);
+      return Decoder.decodeObject(importBlockResultCodec, res);
     }
     return Result.error("Invalid worker response.");
   }
@@ -135,7 +135,7 @@ export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
       return Bytes.fromBlob(res, HASH_SIZE).asOpaque();
     }
 
-    logger.error(`Invalid response for getBestStateRootHash. Expected Uint8Array, got: ${res}`);
+    logger.error`Invalid response for getBestStateRootHash. Expected Uint8Array, got: ${res}`;
     return Bytes.zero(HASH_SIZE).asOpaque();
   }
 
@@ -172,6 +172,10 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
     this.onImporter.emit();
   }
 
+  setConfig(config: WorkerConfig) {
+    this.data = config;
+  }
+
   getConfig(): WorkerConfig {
     if (this.data === null) {
       throw new Error("Did not receive chain spec config!");
@@ -186,9 +190,9 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
     sender.sendSignal("bestBlock", encoded, [encoded.buffer as ArrayBuffer]);
   }
 
-  private async getStateEntries(hash: unknown): Promise<RespondAndTransitionTo<unknown, Finished>> {
+  async getStateEntries(hash: unknown): Promise<RespondAndTransitionTo<unknown, Finished>> {
     if (this.importer === null) {
-      logger.error(`${this.constructor.name} importer not initialized yet!`);
+      logger.error`${this.constructor.name} importer not initialized yet!`;
       await new Promise((resolve) => {
         this.onImporter.once(resolve);
       });
@@ -204,13 +208,13 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
       };
     }
 
-    logger.error(`${this.constructor.name} got invalid request type: ${JSON.stringify(hash)}.`);
+    logger.error`${this.constructor.name} got invalid request type: ${JSON.stringify(hash)}.`;
     return {
       response: null,
     };
   }
 
-  private async getBestStateRootHash(): Promise<RespondAndTransitionTo<Uint8Array, Finished>> {
+  async getBestStateRootHash(): Promise<RespondAndTransitionTo<Uint8Array, Finished>> {
     // importer not ready yet, so wait for it.
     if (this.importer === null) {
       await new Promise((resolve) => {
@@ -225,10 +229,9 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
     };
   }
 
-  // NOTE [ToDr] This should rather be using the import queue, instead of going directly.
-  private async importBlock(block: unknown): Promise<RespondAndTransitionTo<Uint8Array | null, Finished>> {
+  async importBlock(block: unknown): Promise<RespondAndTransitionTo<Uint8Array | null, Finished>> {
     if (this.importer === null) {
-      logger.error(`${this.constructor.name} importer not initialized yet!`);
+      logger.error`${this.constructor.name} importer not initialized yet!`;
       await new Promise((resolve) => {
         this.onImporter.once(resolve);
       });
@@ -238,30 +241,26 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
     if (block instanceof Uint8Array) {
       const config = this.getConfig();
       const blockView = Decoder.decodeObject(Block.Codec.View, block, config.chainSpec);
-      const headerView = blockView.header.view();
-      const timeSlot = headerView.timeSlotIndex.materialize();
       let response: Result<StateRootHash, string>;
       try {
-        const res = await this.importer.importBlock(blockView, null, config.omitSealVerification);
+        const res = await this.importer.importBlock(blockView, config.omitSealVerification);
         if (res.isOk) {
-          logger.info(`🧊 Best block: #${timeSlot} (${res.ok.hash})`);
-          response = Result.ok(this.importer.getBestStateRootHash() ?? Bytes.zero(HASH_SIZE).asOpaque());
+          response = Result.ok(this.importer.getBestStateRootHash() ?? ZERO_HASH.asOpaque());
         } else {
-          logger.log(`❌ Rejected block #${timeSlot}: ${resultToString(res)}`);
           response = Result.error(resultToString(res));
         }
       } catch (e) {
-        logger.error(`Failed to import block: ${e}`);
-        logger.error(`${e instanceof Error ? e.stack : ""}`);
+        logger.error`Failed to import block: ${e}`;
+        logger.error`${e instanceof Error ? e.stack : ""}`;
         response = Result.error(`${e}`);
       }
-      const encoded = Encoder.encodeObject(importBlockCodec, response);
+      const encoded = Encoder.encodeObject(importBlockResultCodec, response);
       return {
         response: encoded.raw,
       };
     }
 
-    logger.error(`${this.constructor.name} got invalid request type: ${JSON.stringify(block)}.`);
+    logger.error`${this.constructor.name} got invalid request type: ${JSON.stringify(block)}.`;
     return {
       response: null,
     };
@@ -273,7 +272,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
       const blockView = Decoder.decodeObject(Block.Codec.View, block, config.chainSpec);
       this.onBlock.emit(blockView);
     } else {
-      logger.error(`${this.constructor.name} got invalid signal type: ${JSON.stringify(block)}.`);
+      logger.error`${this.constructor.name} got invalid signal type: ${JSON.stringify(block)}.`;
     }
   }
 

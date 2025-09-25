@@ -71,17 +71,17 @@ export class NodeConfiguration {
 
 export function loadConfig(configPath: string): NodeConfiguration {
   if (configPath === DEFAULT_CONFIG) {
-    logger.log("🔧 Loading DEFAULT config");
+    logger.log`🔧 Loading DEFAULT config`;
     return parseFromJson(configs.default, NodeConfiguration.fromJson);
   }
 
   if (configPath === DEV_CONFIG) {
-    logger.log("🔧 Loading DEV config");
+    logger.log`🔧 Loading DEV config`;
     return parseFromJson(configs.dev, NodeConfiguration.fromJson);
   }
 
   try {
-    logger.log(`🔧 Loading config from ${configPath}`);
+    logger.log`🔧 Loading config from ${configPath}`;
     const configFile = fs.readFileSync(configPath, "utf8");
     const parsed = JSON.parse(configFile);
     return parseFromJson(parsed, NodeConfiguration.fromJson);

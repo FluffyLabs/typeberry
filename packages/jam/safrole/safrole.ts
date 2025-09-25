@@ -17,6 +17,7 @@ import type { ChainSpec } from "@typeberry/config";
 import {
   BANDERSNATCH_KEY_BYTES,
   type BandersnatchKey,
+  type BandersnatchRingRoot,
   BLS_KEY_BYTES,
   ED25519_KEY_BYTES,
   type Ed25519Key,
@@ -27,7 +28,7 @@ import { type State, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
 import { asOpaqueType, OK, Result } from "@typeberry/utils";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
-import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import { BandernsatchWasm } from "./bandersnatch-wasm.js";
 import type { SafroleSealState } from "./safrole-seal.js";
 
 export const VALIDATOR_META_BYTES = 128;
@@ -110,7 +111,7 @@ export class Safrole {
   constructor(
     private chainSpec: ChainSpec,
     public state: SafroleState,
-    private readonly bandersnatch: Promise<BandernsatchWasm> = BandernsatchWasm.new({ synchronous: true }),
+    private readonly bandersnatch: Promise<BandernsatchWasm> = BandernsatchWasm.new(),
   ) {}
 
   /** `e' > e` */
@@ -352,6 +353,7 @@ export class Safrole {
     timeslot: TimeSlot,
     extrinsic: readonly SignedTicket[],
     validators: readonly ValidatorData[],
+    epochRoot: BandersnatchRingRoot,
     entropy: EntropyHash,
   ): Promise<Result<Ticket[], SafroleErrorCode>> {
     /**
@@ -365,7 +367,8 @@ export class Safrole {
         ? []
         : await bandersnatchVrf.verifyTickets(
             await this.bandersnatch,
-            validators.map((x) => x.bandersnatch),
+            validators.length,
+            epochRoot,
             extrinsic,
             entropy,
           );
@@ -506,6 +509,7 @@ export class Safrole {
       input.slot,
       input.extrinsic,
       this.state.nextValidatorData,
+      epochRoot,
       entropy[2],
     );
 

@@ -12,7 +12,7 @@ type ENTROPY_BYTES = typeof ENTROPY_BYTES;
  * https://graypaper.fluffylabs.dev/#/579bd12/3b9a013b9a01
  */
 export function fisherYatesShuffle<T>(arr: T[], entropy: Bytes<ENTROPY_BYTES>): T[] {
-  check(entropy.length === ENTROPY_BYTES, `Expected entropy of length ${ENTROPY_BYTES}, got ${entropy.length}`);
+  check`${entropy.length === ENTROPY_BYTES} Expected entropy of length ${ENTROPY_BYTES}, got ${entropy.length}`;
   const n = arr.length;
   const randomNumbers = hashToNumberSequence(entropy, arr.length);
   const result: T[] = new Array<T>(n);

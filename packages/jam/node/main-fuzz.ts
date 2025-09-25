@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
-import { Block, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
+import { type BlockView, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Encoder } from "@typeberry/codec";
 import { type FuzzVersion, startFuzzTarget, Version } from "@typeberry/ext-ipc";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
@@ -9,7 +9,8 @@ import type { StateEntries } from "@typeberry/state-merkleization";
 import { CURRENT_VERSION, Result } from "@typeberry/utils";
 import { getChainSpec } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
-import { main, type NodeApi } from "./main.js";
+import type { NodeApi } from "./main.js";
+import { mainImporter } from "./main-importer.js";
 import packageJson from "./package.json" with { type: "json" };
 
 export type FuzzConfig = {
@@ -29,7 +30,7 @@ export function getFuzzDetails() {
 }
 
 export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) => string) {
-  logger.info(`💨 Fuzzer V${fuzzConfig.version} starting up.`);
+  logger.info`💨 Fuzzer V${fuzzConfig.version} starting up.`;
 
   const { jamNodeConfig: config } = fuzzConfig;
 
@@ -41,12 +42,10 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
   const closeFuzzTarget = startFuzzTarget(fuzzConfig.version, fuzzConfig.socket, {
     ...getFuzzDetails(),
     chainSpec,
-    importBlock: async (block: Block): Promise<Result<StateRootHash, string>> => {
+    importBlock: async (blockView: BlockView): Promise<Result<StateRootHash, string>> => {
       if (runningNode === null) {
         return Result.error("node not running");
       }
-      const encoded = Encoder.encodeObject(Block.Codec, block, chainSpec);
-      const blockView = Decoder.decodeObject(Block.Codec.View, encoded, chainSpec);
       const importResult = await runningNode.importBlock(blockView);
       return importResult;
     },
@@ -72,11 +71,12 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
         runningNode = null;
         await finish;
       }
-      const databaseBasePath = `${config.node.databaseBasePath}/fuzz/${fuzzSeed}`;
+      const databaseBasePath = withRelPath(`${config.node.databaseBasePath}/fuzz/${fuzzSeed}`);
       // remove the database
+      console.log("Removing DB", databaseBasePath);
       await fs.rm(databaseBasePath, { recursive: true, force: true });
       // update the chainspec
-      const newNode = await main(
+      const newNode = await mainImporter(
         {
           ...config,
           node: {

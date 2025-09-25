@@ -10,7 +10,7 @@ import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code.
 import { blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { Safrole } from "@typeberry/safrole";
-import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
+import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
 import type { State } from "@typeberry/state";
@@ -35,11 +35,28 @@ import { Statistics, type StatisticsStateUpdate } from "./statistics.js";
 class DbHeaderChain implements HeaderChain {
   constructor(private readonly blocks: BlocksDb) {}
 
-  isAncestor(header: HeaderHash): boolean {
-    // TODO [ToDr] This works only for simple forks scenario. We rather
-    // should make sure that the `header` we are checking is a descendant
-    // of the current header (i.e. there is a direct path when going by parent).
-    return this.blocks.getHeader(header) !== null;
+  isAncestor(pastHeaderSlot: TimeSlot, pastHeader: HeaderHash, currentHeader: HeaderHash): boolean {
+    let currentHash = currentHeader;
+    for (;;) {
+      // success = we found the right header in the DB
+      if (currentHash.isEqualTo(pastHeader)) {
+        return true;
+      }
+
+      const current = this.blocks.getHeader(currentHash);
+      // fail if we don't find a parent (unlikely?)
+      if (current === null) {
+        return false;
+      }
+
+      // fail if we went pass that time slot index
+      if (current.timeSlotIndex.materialize() < pastHeaderSlot) {
+        return false;
+      }
+
+      // move one block up
+      currentHash = current.parentHeaderHash.materialize();
+    }
   }
 }
 
@@ -117,9 +134,8 @@ export class OnChain {
     public readonly state: State,
     blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
-    { enableParallelSealVerification }: { enableParallelSealVerification: boolean },
   ) {
-    const bandersnatch = BandernsatchWasm.new({ synchronous: !enableParallelSealVerification });
+    const bandersnatch = BandernsatchWasm.new();
     this.statistics = new Statistics(chainSpec, state);
 
     this.safrole = new Safrole(chainSpec, state, bandersnatch);
@@ -147,7 +163,6 @@ export class OnChain {
   async transition(
     block: BlockView,
     headerHash: HeaderHash,
-    preverifiedSeal: EntropyHash | null = null,
     omitSealVerification = false,
   ): Promise<Result<Ok, StfError>> {
     const headerView = block.header.view();
@@ -155,11 +170,10 @@ export class OnChain {
     const timeSlot = header.timeSlotIndex;
 
     // safrole seal
-    let newEntropyHash = preverifiedSeal;
+    let newEntropyHash: EntropyHash;
     if (omitSealVerification) {
       newEntropyHash = blake2b.hashBytes(header.seal).asOpaque();
-    }
-    if (newEntropyHash === null) {
+    } else {
       const sealResult = await this.verifySeal(timeSlot, block);
       if (sealResult.isError) {
         return stfError(StfErrorKind.SafroleSeal, sealResult);
@@ -269,7 +283,7 @@ export class OnChain {
       reports: availableReports,
       entropy: entropy[0],
     });
-    logger.log(timerAccumulate());
+    logger.log`${timerAccumulate()}`;
     if (accumulateResult.isError) {
       return stfError(StfErrorKind.Accumulate, accumulateResult);
     }
@@ -312,7 +326,7 @@ export class OnChain {
 
     const accumulateRoot = await this.accumulateOutput.transition({ accumulationOutputLog });
     // recent history
-    const recentHistoryUpdate = await this.recentHistory.transition({
+    const recentHistoryUpdate = this.recentHistory.transition({
       partial: recentHistoryPartialUpdate,
       headerHash,
       accumulateRoot,

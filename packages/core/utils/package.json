@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/utils",
-  "version": "0.0.5",
+  "version": "0.1.2",
   "description": "Utilities for typeberry implementation. Things don't go here lightly.",
   "main": "index.ts",
   "scripts": {

@@ -424,7 +424,7 @@ describe("Fuzzer V1 Data Structures", () => {
       assert.strictEqual(initializeEncoded.raw[0], 1);
 
       // Test ImportBlock message type tag
-      const block = testBlockView().materialize();
+      const block = testBlockView();
       const importBlockMessage: MessageData = {
         type: MessageType.ImportBlock,
         value: block,

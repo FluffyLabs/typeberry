@@ -95,6 +95,7 @@ jobs:
         draft: true
         branch: version/v${{ steps.version.outputs.version }}
         title: "Update Version v${{ steps.version.outputs.version }}"
+        commit-message: "Bump version to v${{ steps.version.outputs.version }}"
         body: |
           ## Update Version to v${{ steps.version.outputs.version }}
 

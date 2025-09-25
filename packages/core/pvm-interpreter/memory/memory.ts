@@ -60,7 +60,7 @@ export class Memory {
       return Result.ok(OK);
     }
 
-    logger.insane(`MEM[${address}] <- ${BytesBlob.blobFrom(bytes)}`);
+    logger.insane`MEM[${address}] <- ${BytesBlob.blobFrom(bytes)}`;
     const pagesResult = this.getPages(address, bytes.length, AccessType.WRITE);
 
     if (pagesResult.isError) {
@@ -149,7 +149,7 @@ export class Memory {
       bytesLeft -= bytesToRead;
     }
 
-    logger.insane(`MEM[${startAddress}] => ${BytesBlob.blobFrom(result)}`);
+    logger.insane`MEM[${startAddress}] => ${BytesBlob.blobFrom(result)}`;
     return Result.ok(OK);
   }
 

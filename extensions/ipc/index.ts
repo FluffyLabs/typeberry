@@ -1,5 +1,5 @@
 import {
-  type Block,
+  type BlockView,
   type Header,
   type HeaderHash,
   type HeaderView,
@@ -43,7 +43,7 @@ export interface FuzzTargetApi {
   nodeVersion: Version;
   gpVersion: Version;
   chainSpec: ChainSpec;
-  importBlock: (block: Block) => Promise<Result<StateRootHash, string>>;
+  importBlock: (block: BlockView) => Promise<Result<StateRootHash, string>>;
   resetState: (header: Header, state: StateEntries, ancestry: [HeaderHash, TimeSlot][]) => Promise<StateRootHash>;
   getPostSerializedState: (hash: HeaderHash) => Promise<StateEntries | null>;
   getBestStateRootHash(): Promise<StateRootHash>;
@@ -112,7 +112,7 @@ class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
   async getSerializedState(value: HeaderHash): Promise<v0.KeyValue[]> {
     const state = await this.api.getPostSerializedState(value);
     if (state === null) {
-      logger.warn(`Fuzzer requested non-existing state for: ${value}`);
+      logger.warn`Fuzzer requested non-existing state for: ${value}`;
       return [];
     }
 
@@ -141,27 +141,27 @@ class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
     return root;
   }
 
-  async importBlock(value: Block): Promise<Result<StateRootHash, v1.ErrorMessage>> {
+  async importBlock(value: BlockView): Promise<Result<StateRootHash, v1.ErrorMessage>> {
     const res = await this.api.importBlock(value);
     if (res.isOk) {
       return res;
     }
-    logger.log(`Rejecting block with error: ${res.error}. ${res.details}`);
+    logger.log`Rejecting block with error: ${res.error}. ${res.details}`;
     return Result.error(v1.ErrorMessage.create({ message: res.error }));
   }
 
-  async importBlockV0(value: Block): Promise<StateRootHash> {
+  async importBlockV0(value: BlockView): Promise<StateRootHash> {
     const res = await this.api.importBlock(value);
     if (res.isOk) {
       return res.ok;
     }
 
-    logger.warn(`Fuzzer sent incorrect block with error ${res.error}. ${res.details}`);
+    logger.warn`Fuzzer sent incorrect block with error ${res.error}. ${res.details}`;
     return this.api.getBestStateRootHash();
   }
 
   async getPeerInfo(value: v1.PeerInfo): Promise<v1.PeerInfo> {
-    logger.info(`Fuzzer ${value} connected.`);
+    logger.info`Fuzzer ${value} connected.`;
 
     return v1.PeerInfo.create({
       name: this.api.nodeName,
@@ -174,7 +174,7 @@ class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
   }
 
   async getPeerInfoV0(value: v0.PeerInfo): Promise<v0.PeerInfo> {
-    logger.info(`Fuzzer ${value} connected.`);
+    logger.info`Fuzzer ${value} connected.`;
 
     return v0.PeerInfo.create({
       name: this.api.nodeName,

@@ -30,16 +30,17 @@ cd -
 
 # Build all workers separately and then the main binary
 $BUILD ./workers/importer/index.ts -o $DIST_FOLDER/importer
-cd $DIST_FOLDER/importer && rm bootstrap-bandersnatch.mjs && ln -s ../bandersnatch/index.js bootstrap-bandersnatch.mjs && cd -
-
 $BUILD ./workers/jam-network/index.ts -o $DIST_FOLDER/jam-network
 $BUILD ./workers/block-generator/index.ts -o $DIST_FOLDER/block-generator
-$BUILD ./packages/jam/safrole/bandersnatch-wasm/bootstrap-bandersnatch.ts -o $DIST_FOLDER/bandersnatch
 
 # copy worker wasm files
 cp $DIST_FOLDER/**/*.wasm $DIST_FOLDER/ || true # ignore overwrite errors
 cp ./LICENSE $DIST_FOLDER/
 cp ./README.md $DIST_FOLDER/
+
+# Make index.js executable and insert shebang
+echo '#!/usr/bin/env node' > $DIST_FOLDER/temp.js && cat $DIST_FOLDER/index.js >> $DIST_FOLDER/temp.js && mv $DIST_FOLDER/temp.js $DIST_FOLDER/index.js
+chmod +x $DIST_FOLDER/index.js
 
 VERSION=$(node -p "require('./package.json').version")
 if [ -z "$IS_RELEASE" ]; then
@@ -48,17 +49,21 @@ if [ -z "$IS_RELEASE" ]; then
 fi
 
 # build package.json file
-echo "{
-  \"name\": \"@typeberry/jam\",
-  \"version\": \"$VERSION\",
-  \"description\": \"Typeberry - Typescript JAM implementation by Fluffy Labs team.\",
-  \"main\": \"./index.js\",
-  \"bin\": \"./index.js\",
-  \"dependencies\": {
-    \"lmdb\": \"3.1.3\"
+cat > $DIST_FOLDER/package.json << EOF
+{
+  "name": "@typeberry/jam",
+  "version": "$VERSION",
+  "description": "Typeberry - Typescript JAM implementation by Fluffy Labs team.",
+  "main": "./index.js",
+  "bin": {
+    "jam": "./index.js"
   },
-  \"homepage\": \"https://typeberry.dev\",
-  \"author\": \"Fluffy Labs <hello@fluffylabs.dev>\",
-  \"license\": \"MPL-2.0\",
-  \"type\": \"module\"
-}" > $DIST_FOLDER/package.json
+  "dependencies": {
+    "lmdb": "3.1.3"
+  },
+  "homepage": "https://typeberry.dev",
+  "author": "Fluffy Labs <hello@fluffylabs.dev>",
+  "license": "MPL-2.0",
+  "type": "module"
+}
+EOF

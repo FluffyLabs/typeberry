@@ -27,6 +27,7 @@ import {
   type AutoAccumulate,
   accumulationOutputComparator,
   hashComparator,
+  PrivilegedServices,
   ServiceAccountInfo,
   type ServicesUpdate,
   tryAsPerCore,
@@ -124,7 +125,7 @@ export class Accumulate {
   ): Promise<Result<InvocationResult, PvmInvocationError>> {
     const service = this.state.getService(serviceId);
     if (service === null) {
-      logger.log(`Service with id ${serviceId} not found.`);
+      logger.log`Service with id ${serviceId} not found.`;
       return Result.error(PvmInvocationError.NoService);
     }
 
@@ -133,12 +134,12 @@ export class Accumulate {
     const code = service.getPreimage(codeHash.asOpaque());
 
     if (code === null) {
-      logger.log(`Code with hash ${codeHash} not found for service ${serviceId}.`);
+      logger.log`Code with hash ${codeHash} not found for service ${serviceId}.`;
       return Result.error(PvmInvocationError.NoPreimage);
     }
 
     if (code.length > W_C) {
-      logger.log(`Code with hash ${codeHash} is too long for service ${serviceId}.`);
+      logger.log`Code with hash ${codeHash} is too long for service ${serviceId}.`;
       return Result.error(PvmInvocationError.PreimageTooLong);
     }
 
@@ -174,11 +175,11 @@ export class Accumulate {
     if (result.hasStatus()) {
       const status = result.status;
       if (status === Status.OOG || status === Status.PANIC) {
-        logger.trace(`[${serviceId}] accumulate finished with ${Status[status]} reverting to checkpoint.`);
+        logger.trace`[${serviceId}] accumulate finished with ${Status[status]} reverting to checkpoint.`;
         return Result.ok({ stateUpdate: checkpoint, consumedGas: tryAsServiceGas(result.consumedGas) });
       }
 
-      logger.trace(`[${serviceId}] accumulate finished with ${Status[status]}`);
+      logger.trace`[${serviceId}] accumulate finished with ${Status[status]}`;
     }
 
     /**
@@ -213,17 +214,17 @@ export class Accumulate {
     entropy: EntropyHash,
     inputStateUpdate: AccumulationStateUpdate,
   ) {
-    logger.log(`Accumulating service ${serviceId}, items: ${args.length} at slot: ${slot}.`);
+    logger.log`Accumulating service ${serviceId}, items: ${args.length} at slot: ${slot}.`;
 
     const result = await this.pvmAccumulateInvocation(slot, serviceId, args, gasCost, entropy, inputStateUpdate);
 
     if (result.isError) {
       // https://graypaper.fluffylabs.dev/#/7e6ff6a/2fb6012fb601?v=0.6.7
-      logger.log(`Accumulation failed for ${serviceId}.`);
+      logger.log`Accumulation failed for ${serviceId}.`;
       return { stateUpdate: null, consumedGas: 0n };
     }
 
-    logger.log(`Accumulation successful for ${serviceId}. Consumed: ${result.ok.consumedGas}`);
+    logger.log`Accumulation successful for ${serviceId}. Consumed: ${result.ok.consumedGas}`;
     return result.ok;
   }
 
@@ -374,8 +375,10 @@ export class Accumulate {
     inputStateUpdate: AccumulationStateUpdate,
   ): Promise<ParallelAccumulationResult> {
     const serviceIds = accumulateData.getServiceIds();
+
     let gasCost: ServiceGas = tryAsServiceGas(0);
     let currentState = inputStateUpdate;
+    const currentManager = (inputStateUpdate.privilegedServices ?? this.state.privilegedServices).manager;
 
     for (const serviceId of serviceIds) {
       const checkpoint = AccumulationStateUpdate.copyFrom(currentState);
@@ -395,6 +398,31 @@ export class Accumulate {
       serviceStatistics.gasUsed = tryAsServiceGas(serviceStatistics.gasUsed + consumedGas);
       statistics.set(serviceId, serviceStatistics);
       currentState = stateUpdate === null ? checkpoint : stateUpdate;
+
+      if (Compatibility.is(GpVersion.V0_7_0) && serviceId === currentManager) {
+        const newV = currentState.privilegedServices?.validatorsManager;
+        if (currentState.privilegedServices !== null && newV !== undefined && serviceIds.includes(newV)) {
+          logger.info`Entering completely incorrect code that probably reverts validatorsManager change. This is valid in 0.7.0 only and incorrect in 0.7.1+`;
+          // Since serviceIds already contains newV, this service gets accumulated twice.
+          // To avoid double-counting, we skip stats and gas cost tracking here.
+          // We need this accumulation to get the correct `validatorsManager`
+          const { stateUpdate } = await this.accumulateSingleService(
+            newV,
+            accumulateData.getOperands(newV),
+            accumulateData.getGasCost(newV),
+            slot,
+            entropy,
+            checkpoint,
+          );
+
+          const correctV =
+            stateUpdate?.privilegedServices?.validatorsManager ?? this.state.privilegedServices.validatorsManager;
+          currentState.privilegedServices = PrivilegedServices.create({
+            ...currentState.privilegedServices,
+            validatorsManager: correctV,
+          });
+        }
+      }
     }
 
     return {

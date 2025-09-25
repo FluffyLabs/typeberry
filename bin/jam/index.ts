@@ -6,6 +6,7 @@ import { deriveEd25519SecretKey } from "@typeberry/crypto/key-derivation.js";
 import { blake2b } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { importBlocks, JamConfig, main, mainFuzz } from "@typeberry/node";
+import { workspacePathFix } from "@typeberry/utils";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 
 export * from "./args.js";
@@ -39,15 +40,9 @@ export const prepareConfigFile = (args: Arguments): JamConfig => {
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
-  const relPath = `${import.meta.dirname}/../..`;
-  const withRelPath = (p: string) => {
-    if (p.startsWith("/")) {
-      return p;
-    }
-    return `${relPath}/${p}`;
-  };
 
   let args: Arguments;
+  const withRelPath = workspacePathFix(`${import.meta.dirname}/../..`);
 
   try {
     const parsed = parseArgs(process.argv.slice(2), withRelPath);

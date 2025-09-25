@@ -27,7 +27,7 @@ export class HostCallsManager {
     this.missing = missing;
 
     for (const handler of handlers) {
-      check(this.hostCalls.get(handler.index) === undefined, `Overwriting host call handler at index ${handler.index}`);
+      check`${this.hostCalls.get(handler.index) === undefined} Overwriting host call handler at index ${handler.index}`;
       this.hostCalls.set(handler.index, handler);
     }
   }
@@ -54,7 +54,7 @@ export class HostCallsManager {
         return `r${idx}=${value} (0x${value.toString(16)})`;
       })
       .join(", ");
-    logger.insane(`[${currentServiceId}] ${context} ${name}${requested}.  Gas: ${gas}. Regs: ${registerValues}.`);
+    logger.insane`[${currentServiceId}] ${context} ${name}${requested}.  Gas: ${gas}. Regs: ${registerValues}.`;
   }
 }
 

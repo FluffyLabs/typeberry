@@ -1,4 +1,4 @@
-import type { EntropyHash, ValidatorIndex } from "@typeberry/block";
+import type { EntropyHash } from "@typeberry/block";
 import type { SignedTicket } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { BandersnatchKey } from "@typeberry/crypto";
@@ -9,7 +9,7 @@ import {
 } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Result } from "@typeberry/utils";
-import type { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import type { BandernsatchWasm } from "./bandersnatch-wasm.js";
 import { JAM_TICKET_SEAL } from "./constants.js";
 
 const RESULT_INDEX = 0 as const;
@@ -30,16 +30,13 @@ export default {
 
 async function verifySeal(
   bandersnatch: BandernsatchWasm,
-  validators: BandersnatchKey[],
-  authorIndex: ValidatorIndex,
+  authorKey: BandersnatchKey,
   signature: BandersnatchVrfSignature,
   payload: BytesBlob,
   encodedUnsealedHeader: BytesBlob,
 ): Promise<Result<EntropyHash, null>> {
-  const keys = BytesBlob.blobFromParts(validators.map((x) => x.raw)).raw;
   const sealResult = await bandersnatch.verifySeal(
-    keys,
-    authorIndex,
+    authorKey.raw,
     signature.raw,
     payload.raw,
     encodedUnsealedHeader.raw,
@@ -66,9 +63,13 @@ async function getRingCommitment(
   return Result.ok(Bytes.fromBlob(commitmentResult.subarray(1), BANDERSNATCH_RING_ROOT_BYTES).asOpaque());
 }
 
+// One byte for result discriminator (`ResultValues`) and the rest is entropy hash.
+const TICKET_RESULT_LENGTH = 1 + HASH_SIZE;
+
 async function verifyTickets(
   bandersnatch: BandernsatchWasm,
-  validators: readonly BandersnatchKey[],
+  numberOfValidators: number,
+  epochRoot: BandersnatchRingRoot,
   tickets: readonly SignedTicket[],
   entropy: EntropyHash,
 ): Promise<{ isValid: boolean; entropyHash: EntropyHash }[]> {
@@ -82,23 +83,14 @@ async function verifyTickets(
     ),
   ).raw;
 
-  const keys = BytesBlob.blobFromParts(validators.map((x) => x.raw)).raw;
-  try {
-    const verificationResult = await bandersnatch.batchVerifyTicket(keys, ticketsData, contextLength);
-    return Array.from(BytesBlob.blobFrom(verificationResult).chunks(33)).map((result) => ({
-      isValid: result.raw[RESULT_INDEX] === ResultValues.Ok,
-      entropyHash: Bytes.fromBlob(result.raw.subarray(1, 33), HASH_SIZE).asOpaque(),
-    }));
-  } catch (e) {
-    // TODO [ToDr] Temporary workaround for failing verification.
-    // Instead we should handle that in the wasm library.
-    // See stateTransitionFuzzed tests for details.
-    if (`${e}` === "RuntimeError: unreachable") {
-      return Array.from({ length: tickets.length }, () => ({
-        isValid: false,
-        entropyHash: Bytes.zero(HASH_SIZE).asOpaque(),
-      }));
-    }
-    throw e;
-  }
+  const verificationResult = await bandersnatch.batchVerifyTicket(
+    numberOfValidators,
+    epochRoot.raw,
+    ticketsData,
+    contextLength,
+  );
+  return Array.from(BytesBlob.blobFrom(verificationResult).chunks(TICKET_RESULT_LENGTH)).map((result) => ({
+    isValid: result.raw[RESULT_INDEX] === ResultValues.Ok,
+    entropyHash: Bytes.fromBlob(result.raw.subarray(1, TICKET_RESULT_LENGTH), HASH_SIZE).asOpaque(),
+  }));
 }

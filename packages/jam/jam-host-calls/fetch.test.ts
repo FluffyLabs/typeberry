@@ -497,9 +497,9 @@ class FetchMock implements IFetchExternalities {
   public oneOperandResponses: Map<string, BytesBlob | null> = new Map();
   public allTransfersResponse: BytesBlob | null = null;
   public oneTransferResponses: Map<string, BytesBlob | null> = new Map();
-  public allOperandsAndTransfersResponses: BytesBlob|null = null
-  public oneOperandOrTransferResponses: Map<string, BytesBlob|null> = new Map();
-  
+  public allOperandsAndTransfersResponses: BytesBlob | null = null;
+  public oneOperandOrTransferResponses: Map<string, BytesBlob | null> = new Map();
+
   constants(): BytesBlob {
     if (this.constantsResponse === null) {
       throw new Error("Unexpected call to constants.");
@@ -597,9 +597,8 @@ class FetchMock implements IFetchExternalities {
     return this.oneTransferResponses.get(key) ?? null;
   }
 
-    allOperandsAndTransfers(): BytesBlob | null {
+  allOperandsAndTransfers(): BytesBlob | null {
     return this.allOperandsAndTransfersResponses;
-
   }
 
   oneOperandOrTransfer(index: U64): BytesBlob | null {

@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/convert",
-  "version": "0.0.5",
+  "version": "0.1.2",
   "description": "Convert JAM-related types between different formats.",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",
@@ -8,7 +8,7 @@
   "main": "index.js",
   "bin": "./index.js",
   "scripts": {
-    "start": "tsx ./index.ts",
+    "start": "NODE_ENV=development tsx ./index.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {

@@ -82,7 +82,6 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
    * Optionally passing service enumeration data.
    */
   async insertState(headerHash: HeaderHash, serializedState: StateEntries): Promise<Result<OK, StateUpdateError>> {
-    // we start with an empty trie, so that all value will be added.
     return await this.updateAndCommit(
       headerHash,
       SortedSet.fromArray<LeafNode>(leafComparator, []),
@@ -112,7 +111,8 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
         assertNever(action);
       }
     }
-    // TODO [ToDr] could be optimized to already have leaves written to one big chunk.
+    // TODO [ToDr] could be optimized to already have leaves written to one big chunk
+    // (we could pre-allocate one buffer for all the leafs)
     const stateLeafs = BytesBlob.blobFromParts(leafs.array.map((x) => x.node.raw));
     // now we have the leaves and the values, so let's write it down to the DB.
     const statesWrite = this.states.put(headerHash.raw, stateLeafs.raw);
@@ -125,7 +125,7 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     try {
       await Promise.all([valuesWrite, statesWrite]);
     } catch (e) {
-      logger.error(`${e}`);
+      logger.error`${e}`;
       return Result.error(StateUpdateError.Commit);
     }
     return Result.ok(OK);
@@ -136,13 +136,11 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     state: SerializedState<LeafDb>,
     update: Partial<State & ServicesUpdate>,
   ): Promise<Result<OK, StateUpdateError>> {
-    // get existing trie leafs
-    const leafs = SortedSet.fromSortedArray(leafComparator, state.backend.leaves);
     // TODO [ToDr] We should probably detect a conflicting state (i.e. two services
     // updated at once, etc), for now we're just ignoring it.
     const updatedValues = serializeStateUpdate(this.spec, update);
     // and finally we insert new values and store leaves in the DB.
-    return await this.updateAndCommit(headerHash, leafs, updatedValues);
+    return await this.updateAndCommit(headerHash, state.backend.leaves, updatedValues);
   }
 
   async getStateRoot(state: SerializedState<LeafDb>): Promise<StateRootHash> {

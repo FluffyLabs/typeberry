@@ -12,7 +12,7 @@ export type SizeHint = {
 };
 
 export function tryAsExactBytes(a: SizeHint): number {
-  check(a.isExact, "The value is not exact size estimation!");
+  check`${a.isExact} The value is not exact size estimation!`;
   return a.bytes;
 }
 
@@ -171,8 +171,8 @@ export class Encoder {
     // we still allow positive numbers from `[maxNum / 2, maxNum)`.
     // So it does not matter if the argument is a negative value,
     // OR if someone just gave us two-complement already.
-    check(num < maxNum, "Only for numbers up to 2**64 - 1");
-    check(-num <= maxNum / 2n, "Only for numbers down to -2**63");
+    check`${num < maxNum} Only for numbers up to 2**64 - 1`;
+    check`${-num <= maxNum / 2n} Only for numbers down to -2**63`;
     this.ensureBigEnough(8);
 
     this.dataView.setBigInt64(this.offset, num, true);
@@ -242,8 +242,8 @@ export class Encoder {
     // we still allow positive numbers from `[maxNum / 2, maxNum)`.
     // So it does not matter if the argument is a negative value,
     // OR if someone just gave us two-complement already.
-    check(num < maxNum, `Only for numbers up to 2**${BITS * bytesToEncode} - 1`);
-    check(-num <= maxNum / 2, `Only for numbers down to -2**${BITS * bytesToEncode - 1}`);
+    check`${num < maxNum} Only for numbers up to 2**${BITS * bytesToEncode} - 1`;
+    check`${-num <= maxNum / 2} Only for numbers down to -2**${BITS * bytesToEncode - 1}`;
 
     this.ensureBigEnough(bytesToEncode);
   }
@@ -256,8 +256,8 @@ export class Encoder {
    * https://graypaper.fluffylabs.dev/#/579bd12/365202365202
    */
   varU32(num: U32) {
-    check(num >= 0, "Only for natural numbers.");
-    check(num < 2 ** 32, "Only for numbers up to 2**32");
+    check`${num >= 0} Only for natural numbers.`;
+    check`${num < 2 ** 32} Only for numbers up to 2**32`;
     this.varU64(BigInt(num));
   }
 
@@ -425,7 +425,7 @@ export class Encoder {
    * https://graypaper.fluffylabs.dev/#/579bd12/374400374400
    */
   sequenceVarLen<T>(encode: Encode<T>, elements: readonly T[]) {
-    check(elements.length <= 2 ** 32, "Wow, that's a nice long sequence you've got here.");
+    check`${elements.length <= 2 ** 32} Wow, that's a nice long sequence you've got here.`;
     this.varU32(tryAsU32(elements.length));
     this.sequenceFixLen(encode, elements);
   }
@@ -448,7 +448,7 @@ export class Encoder {
    * anyway, so if we really should throw we will.
    */
   private ensureBigEnough(length: number, options: { silent: boolean } = { silent: false }) {
-    check(length >= 0, "Negative length given");
+    check`${length >= 0} Negative length given`;
 
     const newLength = this.offset + length;
     if (newLength > MAX_LENGTH) {

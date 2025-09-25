@@ -30,10 +30,10 @@ export class BitVec {
     private readonly data: Uint8Array,
     public readonly bitLength: number,
   ) {
-    check(
-      data.length * 8 >= bitLength,
-      `Not enough bytes in the data array. Need ${data.length * 8} has ${bitLength}.`,
-    );
+    check`
+      ${data.length * 8 >= bitLength}
+      Not enough bytes in the data array. Need ${data.length * 8} has ${bitLength}.
+    `;
 
     this.byteLength = Math.ceil(bitLength / 8);
   }
@@ -45,10 +45,10 @@ export class BitVec {
 
   /** Perform OR operation on all bits in place. */
   sumWith(other: BitVec) {
-    check(
-      other.bitLength === this.bitLength,
-      `Invalid bit length for sumWith: ${other.bitLength} vs ${this.bitLength}`,
-    );
+    check`
+      ${other.bitLength === this.bitLength}
+      Invalid bit length for sumWith: ${other.bitLength} vs ${this.bitLength}
+    `;
 
     const otherRaw = other.raw;
     for (let i = 0; i < this.byteLength; i++) {
@@ -60,7 +60,7 @@ export class BitVec {
    * Set the bit at index `idx` to value `val`.
    */
   setBit(idx: number, val: boolean) {
-    check(idx < this.bitLength, `Index out of bounds. Need ${idx} has ${this.bitLength}.`);
+    check`${idx >= 0 && idx < this.bitLength} Index out of bounds. Need ${idx} has ${this.bitLength}.`;
 
     const byteIndex = Math.floor(idx / 8);
     const bitIndexInByte = idx % 8;
@@ -76,7 +76,7 @@ export class BitVec {
    * Return `true` if the bit at index `idx` is set.
    */
   isSet(idx: number): boolean {
-    check(idx < this.bitLength, `Index out of bounds. Need ${idx} has ${this.bitLength}.`);
+    check`${idx >= 0 && idx < this.bitLength} Index out of bounds. Need ${idx} has ${this.bitLength}.`;
     const byteIndex = Math.floor(idx / 8);
     const bitIndexInByte = idx % 8;
     const mask = 1 << bitIndexInByte;

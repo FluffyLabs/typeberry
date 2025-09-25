@@ -201,7 +201,7 @@ export class AccumulateExternalities
 
       // TODO [ToDr] Not sure if we should update the service info in that case,
       // but for now we let that case fall-through.
-      check(len === PreimageStatusKind.Unavailable);
+      check`${len === PreimageStatusKind.Unavailable} preimage is not unavailable`;
     }
 
     // make sure we have enough balance for this update
@@ -478,9 +478,7 @@ export class AccumulateExternalities
     const validatorsManager = this.updatedState.getPrivilegedServices().validatorsManager;
 
     if (validatorsManager !== this.currentServiceId) {
-      logger.trace(
-        `Current service id (${this.currentServiceId}) is not a validators manager. (expected: ${validatorsManager}) and cannot update validators data. Ignoring`,
-      );
+      logger.trace`Current service id (${this.currentServiceId}) is not a validators manager. (expected: ${validatorsManager}) and cannot update validators data. Ignoring`;
       return Result.error(UnprivilegedError);
     }
 
@@ -504,15 +502,13 @@ export class AccumulateExternalities
     const currentAuthManager = this.updatedState.getPrivilegedServices().authManager[coreIndex];
 
     if (currentAuthManager !== this.currentServiceId) {
-      logger.trace(
-        `Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentAuthManager}) and cannot update authorization queue. Ignoring`,
-      );
+      logger.trace`Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentAuthManager}) and cannot update authorization queue. Ignoring`;
 
       return Result.error(UpdatePrivilegesError.UnprivilegedService);
     }
 
     if (authManager === null && Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      logger.trace("The new auth manager is not a valid service id. Ignoring");
+      logger.trace`The new auth manager is not a valid service id. Ignoring`;
       return Result.error(UpdatePrivilegesError.InvalidServiceId);
     }
 

@@ -62,13 +62,16 @@ export class DeferredTransfers {
   }: DeferredTransfersInput): Promise<Result<DeferredTransfersResult, DeferredTransfersErrorCode>> {
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/187a03187a03?v=0.6.7
     const transferStatistics = new Map<ServiceId, CountAndGasUsed>();
-    const services = uniquePreserveOrder(pendingTransfers.flatMap((x) => [x.source, x.destination]));
+    const services = uniquePreserveOrder(pendingTransfers.map((x) => x.destination));
 
     let currentStateUpdate = AccumulationStateUpdate.new(inputServicesUpdate);
 
     for (const serviceId of services) {
       const partiallyUpdatedState = new PartiallyUpdatedState(this.state, currentStateUpdate);
-      const transfers = pendingTransfers.filter((pendingTransfer) => pendingTransfer.destination === serviceId);
+      // https://graypaper.fluffylabs.dev/#/38c4e62/18750318ae03?v=0.7.0
+      const transfers = pendingTransfers
+        .filter((pendingTransfer) => pendingTransfer.destination === serviceId)
+        .toSorted((a, b) => a.source - b.source);
 
       const info = partiallyUpdatedState.getServiceInfo(serviceId);
       if (info === null) {
@@ -101,11 +104,11 @@ export class DeferredTransfers {
       const isCodeCorrect = code !== null && code.length <= W_C;
       if (!hasTransfers || !isCodeCorrect) {
         if (code === null) {
-          logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId} because code is null`);
+          logger.trace`Skipping ON_TRANSFER execution for service ${serviceId} because code is null`;
         } else if (!hasTransfers) {
-          logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId} because there are no transfers`);
+          logger.trace`Skipping ON_TRANSFER execution for service ${serviceId} because there are no transfers`;
         } else {
-          logger.trace(`Skipping ON_TRANSFER execution for service ${serviceId} because code is too long`);
+          logger.trace`Skipping ON_TRANSFER execution for service ${serviceId} because code is too long`;
         }
       } else {
         const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState, fetchExternalities });
@@ -122,7 +125,7 @@ export class DeferredTransfers {
       transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(consumedGas) });
       const [updatedState, checkpointedState] = partialState.getStateUpdates();
       currentStateUpdate = updatedState;
-      check(checkpointedState === null, "On transfer cannot invoke checkpoint.");
+      check`${checkpointedState === null} On transfer cannot invoke checkpoint.`;
     }
 
     return Result.ok({

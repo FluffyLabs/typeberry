@@ -1,11 +1,11 @@
 import type { StateRootHash } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
-import { TruncatedHashDictionary } from "@typeberry/collections";
+import { SortedSet, TruncatedHashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
 import type { InMemoryState } from "@typeberry/state";
-import { InMemoryTrie } from "@typeberry/trie";
+import { InMemoryTrie, type LeafNode, leafComparator } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { assertNever, TEST_COMPARE_USING } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
@@ -62,8 +62,6 @@ export class StateEntries {
     return new StateEntries(TruncatedHashDictionary.fromEntries(entries));
   }
 
-  private trieCache: InMemoryTrie | null = null;
-
   private constructor(private readonly entries: TruncatedHashDictionary<StateKey, BytesBlob>) {}
 
   /** When comparing, we can safely ignore `trieCache` and just use entries. */
@@ -75,18 +73,6 @@ export class StateEntries {
     return this.entries[Symbol.iterator]();
   }
 
-  /** Construct the trie from given set of state entries. */
-  public getTrie(): InMemoryTrie {
-    if (this.trieCache === null) {
-      const trie = InMemoryTrie.empty(blake2bTrieHasher);
-      for (const [key, value] of this.entries) {
-        trie.set(key.asOpaque(), value);
-      }
-      this.trieCache = trie;
-    }
-    return this.trieCache;
-  }
-
   /** Retrieve value of some serialized key (if present). */
   get(key: StateKey): BytesBlob | null {
     return this.entries.get(key) ?? null;
@@ -94,8 +80,6 @@ export class StateEntries {
 
   /** Modify underlying entries dictionary with given update. */
   applyUpdate(stateEntriesUpdate: Iterable<StateEntryUpdate>) {
-    // NOTE since we are altering the structure, we need to reset the cache.
-    this.trieCache = null;
     for (const [action, key, value] of stateEntriesUpdate) {
       if (action === StateEntryUpdateAction.Insert) {
         this.entries.set(key, value);
@@ -109,10 +93,12 @@ export class StateEntries {
 
   /** https://graypaper.fluffylabs.dev/#/68eaa1f/391600391600?v=0.6.4 */
   getRootHash(): StateRootHash {
-    // TODO [ToDr] it should be possible to do this more efficiently
-    // by converting the state entries into leaf nodes and constructing
-    // the trie from the trie nodes.
-    return this.getTrie().getRootHash().asOpaque();
+    const leaves: SortedSet<LeafNode> = SortedSet.fromArray(leafComparator);
+    for (const [key, value] of this) {
+      leaves.insert(InMemoryTrie.constructLeaf(blake2bTrieHasher, key.asOpaque(), value));
+    }
+
+    return InMemoryTrie.computeStateRoot(blake2bTrieHasher, leaves).asOpaque();
   }
 }
 
