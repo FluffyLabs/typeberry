@@ -4,13 +4,16 @@ set -ex
 # This script compiles the project into "single" JS file (it's actually one per worker thread)
 # using @vercel/ncc. The result is in `./dist
 
-DIST_FOLDER=./dist/jam
+# Start from the top-level project directory
+cd ../..
+
+ROOT=./
+DIST_FOLDER=$ROOT/dist/jam
 
 # clean dist file
 mkdir $DIST_FOLDER || true
 rm -rf $DIST_FOLDER/*
 
-export RUNTIME=bundle
 BUILD="npx @vercel/ncc build -a -s -e lmdb -e tsx/esm/api"
 
 # Build the main binary
@@ -29,9 +32,9 @@ rm ./bootstrap-generator.mjs && ln -s ./block-generator/index.js bootstrap-gener
 cd -
 
 # Build all workers separately and then the main binary
-$BUILD ./workers/importer/index.ts -o $DIST_FOLDER/importer
-$BUILD ./workers/jam-network/index.ts -o $DIST_FOLDER/jam-network
-$BUILD ./workers/block-generator/index.ts -o $DIST_FOLDER/block-generator
+$BUILD $ROOT/packages/workers/importer/index.ts -o $DIST_FOLDER/importer
+$BUILD $ROOT/packages/workers/jam-network/index.ts -o $DIST_FOLDER/jam-network
+$BUILD $ROOT/packages/workers/block-generator/index.ts -o $DIST_FOLDER/block-generator
 
 # copy worker wasm files
 cp $DIST_FOLDER/**/*.wasm $DIST_FOLDER/ || true # ignore overwrite errors
