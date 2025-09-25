@@ -88,7 +88,7 @@ function dumpOutput(
   const { destination } = args;
   const dump =
     destination !== null
-      ? (v: string | Uint8Array) => fs.writeFileSync(destination, v)
+      ? (v: string | Uint8Array) => fs.writeFileSync(withRelPath(destination), v)
       : (v: string | Uint8Array) => console.info(v);
 
   switch (outputFormat) {
@@ -219,13 +219,14 @@ function processOutput(
   if (type.process === undefined || !type.process.options.includes(process)) {
     throw new Error(`Unsupported processing: '${process}' for '${type.name}'`);
   }
-
+  const processed = type.process.run(spec, data, process);
   return {
-    processed: type.process.run(spec, data, process),
+    processed: processed.value,
     type: {
       ...type,
-      // disable encoding, since it won't match
-      encode: undefined,
+      name: `${type.name}(${process})`,
+      // use encoding from processed type
+      encode: processed.encode,
     },
   };
 }
