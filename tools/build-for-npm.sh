@@ -11,7 +11,7 @@ mkdir $DIST_FOLDER || true
 rm -rf $DIST_FOLDER/*
 
 export RUNTIME=bundle
-BUILD="npx @vercel/ncc build -a -s -e lmdb -e tsx/esm/api"
+BUILD="npx @vercel/ncc build -a -s -e lmdb -e @matrixai/quic -e tsx/esm/api"
 
 # Build the main binary
 $BUILD ./bin/jam/index.ts -o $DIST_FOLDER
@@ -59,7 +59,8 @@ cat > $DIST_FOLDER/package.json << EOF
     "jam": "./index.js"
   },
   "dependencies": {
-    "lmdb": "3.1.3"
+    "lmdb": "3.1.3",
+    "@matrixai/quic": "2.0.9"
   },
   "homepage": "https://typeberry.dev",
   "author": "Fluffy Labs <hello@fluffylabs.dev>",
