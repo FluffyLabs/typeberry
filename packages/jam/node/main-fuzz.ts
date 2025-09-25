@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import { type BlockView, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
-import { type FuzzVersion, startFuzzTarget, Version } from "@typeberry/ext-ipc";
+import { type FuzzVersion, startFuzzTarget, fuzzV1 } from "@typeberry/ext-ipc";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { StateEntries } from "@typeberry/state-merkleization";
@@ -24,8 +24,8 @@ const logger = Logger.new(import.meta.filename, "fuzztarget");
 export function getFuzzDetails() {
   return {
     nodeName: "@typeberry/jam",
-    nodeVersion: Version.tryFromString(packageJson.version),
-    gpVersion: Version.tryFromString(CURRENT_VERSION.split("-")[0]),
+    nodeVersion: fuzzV1.Version.tryFromString(packageJson.version),
+    gpVersion: fuzzV1.Version.tryFromString(CURRENT_VERSION.split("-")[0]),
   };
 }
 

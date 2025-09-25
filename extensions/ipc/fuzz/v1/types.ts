@@ -1,9 +1,51 @@
 import { Block, type BlockView, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
+import {BytesBlob} from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { HASH_SIZE } from "@typeberry/hash";
-import type { U8, U32 } from "@typeberry/numbers";
+import { HASH_SIZE, TRUNCATED_HASH_SIZE, TruncatedHash } from "@typeberry/hash";
+import { type U8, type U32, tryAsU8 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
-import { type KeyValue, stateCodec, Version } from "../v0/types.js";
+
+/**
+ * Version ::= SEQUENCE {
+ *     major INTEGER (0..255),
+ *     minor INTEGER (0..255),
+ *     patch INTEGER (0..255)
+ * }
+ */
+export class Version extends WithDebug {
+  static Codec = codec.Class(Version, {
+    major: codec.u8,
+    minor: codec.u8,
+    patch: codec.u8,
+  });
+
+  static tryFromString(str: string): Version {
+    const parse = (v: string) => tryAsU8(Number(v));
+    try {
+      const [major, minor, patch] = str.trim().split(".").map(parse);
+
+      return Version.create({
+        major,
+        minor,
+        patch,
+      });
+    } catch (e) {
+      throw new Error(`Unable to parse ${str} as Version: ${e}`);
+    }
+  }
+
+  static create({ major, minor, patch }: CodecRecord<Version>) {
+    return new Version(major, minor, patch);
+  }
+
+  private constructor(
+    public readonly major: U8,
+    public readonly minor: U8,
+    public readonly patch: U8,
+  ) {
+    super();
+  }
+}
 
 /**
  * Fuzzer Protocol V1
@@ -72,6 +114,33 @@ export class AncestryItem extends WithDebug {
     super();
   }
 }
+
+/**
+ * KeyValue ::= SEQUENCE {
+ *     key     TrieKey,
+ *     value   OCTET STRING
+ * }
+ */
+export class KeyValue extends WithDebug {
+  static Codec = codec.Class(KeyValue, {
+    key: codec.bytes(TRUNCATED_HASH_SIZE),
+    value: codec.blob,
+  });
+
+  static create({ key, value }: CodecRecord<KeyValue>) {
+    return new KeyValue(key, value);
+  }
+
+  private constructor(
+    public readonly key: TruncatedHash,
+    public readonly value: BytesBlob,
+  ) {
+    super();
+  }
+}
+
+/** State ::= SEQUENCE OF KeyValue */
+export const stateCodec = codec.sequenceVarLen(KeyValue.Codec);
 
 /**
  * Ancestry ::= SEQUENCE (SIZE(0..24)) OF AncestryItem

@@ -7,7 +7,6 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU8, tryAsU32 } from "@typeberry/numbers";
-import { KeyValue, stateCodec, Version } from "../v0/types.js";
 import {
   AncestryItem,
   ancestryCodec,
@@ -18,6 +17,9 @@ import {
   MessageType,
   messageCodec,
   PeerInfo,
+  Version,
+  KeyValue,
+  stateCodec,
 } from "./types.js";
 
 const spec = tinyChainSpec;

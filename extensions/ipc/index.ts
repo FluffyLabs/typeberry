@@ -16,13 +16,11 @@ import { tryAsU32 } from "@typeberry/numbers";
 import { Listener } from "@typeberry/state-machine";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { assertNever, Result } from "@typeberry/utils";
-import * as v0 from "./fuzz/v0/index.js";
-import type { Version } from "./fuzz/v0/types.js";
 import * as v1 from "./fuzz/v1/index.js";
 import { startJamnpIpcServer } from "./jamnp/server.js";
 import { startIpcServer } from "./server.js";
 
-export { Version } from "./fuzz/v0/types.js";
+export * as fuzzV1 from "./fuzz/v1/index.js";
 
 export interface ExtensionApi {
   chainSpec: ChainSpec;
@@ -34,14 +32,13 @@ export function startExtension(api: ExtensionApi) {
 }
 
 export enum FuzzVersion {
-  V0 = 0,
   V1 = 1,
 }
 
 export interface FuzzTargetApi {
   nodeName: string;
-  nodeVersion: Version;
-  gpVersion: Version;
+  nodeVersion: v1.Version;
+  gpVersion: v1.Version;
   chainSpec: ChainSpec;
   importBlock: (block: BlockView) => Promise<Result<StateRootHash, string>>;
   resetState: (header: Header, state: StateEntries, ancestry: [HeaderHash, TimeSlot][]) => Promise<StateRootHash>;
@@ -51,9 +48,6 @@ export interface FuzzTargetApi {
 
 export function startFuzzTarget(version: FuzzVersion, socket: string | null, api: FuzzTargetApi) {
   const socketName = socket ?? "jam_target.sock";
-  if (version === FuzzVersion.V0) {
-    return startIpcServer(socketName, (sender) => new v0.FuzzTarget(new FuzzHandler(api), sender, api.chainSpec));
-  }
 
   if (version === FuzzVersion.V1) {
     return startIpcServer(socketName, (sender) => new v1.FuzzTarget(new FuzzHandler(api), sender, api.chainSpec));
@@ -102,14 +96,10 @@ function startJamnpExtension(api: ExtensionApi) {
 
 const logger = Logger.new(import.meta.filename, "ext-ipc");
 
-class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
+class FuzzHandler implements v1.FuzzMessageHandler {
   constructor(public readonly api: FuzzTargetApi) {}
 
-  async getState(value: HeaderHash): Promise<v0.KeyValue[]> {
-    return this.getSerializedState(value);
-  }
-
-  async getSerializedState(value: HeaderHash): Promise<v0.KeyValue[]> {
+  async getSerializedState(value: HeaderHash): Promise<v1.KeyValue[]> {
     const state = await this.api.getPostSerializedState(value);
     if (state === null) {
       logger.warn`Fuzzer requested non-existing state for: ${value}`;
@@ -135,12 +125,6 @@ class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
     return root;
   }
 
-  async resetState(value: v0.SetState): Promise<StateRootHash> {
-    const entries = StateEntries.fromEntriesUnsafe(value.state.map(({ key, value }) => [key.asOpaque(), value]));
-    const root = this.api.resetState(value.header, entries, []);
-    return root;
-  }
-
   async importBlock(value: BlockView): Promise<Result<StateRootHash, v1.ErrorMessage>> {
     const res = await this.api.importBlock(value);
     if (res.isOk) {
@@ -148,16 +132,6 @@ class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
     }
     logger.log`Rejecting block with error: ${res.error}. ${res.details}`;
     return Result.error(v1.ErrorMessage.create({ message: res.error }));
-  }
-
-  async importBlockV0(value: BlockView): Promise<StateRootHash> {
-    const res = await this.api.importBlock(value);
-    if (res.isOk) {
-      return res.ok;
-    }
-
-    logger.warn`Fuzzer sent incorrect block with error ${res.error}. ${res.details}`;
-    return this.api.getBestStateRootHash();
   }
 
   async getPeerInfo(value: v1.PeerInfo): Promise<v1.PeerInfo> {
@@ -173,13 +147,4 @@ class FuzzHandler implements v0.FuzzMessageHandler, v1.FuzzMessageHandler {
     });
   }
 
-  async getPeerInfoV0(value: v0.PeerInfo): Promise<v0.PeerInfo> {
-    logger.info`Fuzzer ${value} connected.`;
-
-    return v0.PeerInfo.create({
-      name: this.api.nodeName,
-      appVersion: this.api.nodeVersion,
-      jamVersion: this.api.gpVersion,
-    });
-  }
 }

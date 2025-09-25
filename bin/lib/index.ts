@@ -27,3 +27,4 @@ export * as state_merkleization from "@typeberry/state-merkleization";
 export * as transition from "@typeberry/transition";
 export * as trie from "@typeberry/trie";
 export * as utils from "@typeberry/utils";
+import * as fuzzV1 from "@typeberry/ext-ipc/fuzz/v1/types.js";
