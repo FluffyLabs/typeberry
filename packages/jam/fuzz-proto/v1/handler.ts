@@ -3,17 +3,17 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";
 import { assertNever, type Result } from "@typeberry/utils";
-import type { IpcHandler, IpcSender } from "../../server.js";
+import type { IpcHandler, IpcSender } from "../server.js";
 import {
   type ErrorMessage,
   Features,
   type Initialize,
+  type KeyValue,
   type Message,
   type MessageData,
   MessageType,
   messageCodec,
   type PeerInfo,
-  KeyValue,
 } from "./types.js";
 
 const logger = Logger.new(import.meta.filename, "ext-ipc-fuzz-v1");

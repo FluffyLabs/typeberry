@@ -1,8 +1,8 @@
 import { Block, type BlockView, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
-import {BytesBlob} from "@typeberry/bytes";
+import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { HASH_SIZE, TRUNCATED_HASH_SIZE, TruncatedHash } from "@typeberry/hash";
-import { type U8, type U32, tryAsU8 } from "@typeberry/numbers";
+import { HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
+import { tryAsU8, type U8, type U32 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
 
 /**

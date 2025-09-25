@@ -56,7 +56,8 @@
     "workers/block-generator",
     "workers/generic",
     "workers/importer",
-    "workers/jam-network"
+    "workers/jam-network",
+    "packages/jam/fuzz-proto"
   ],
   "engines": {
     "node": ">=22",

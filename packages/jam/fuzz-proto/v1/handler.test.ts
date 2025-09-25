@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import { Socket } from "node:net";
 import { describe, it, type Mock, mock } from "node:test";
 import { type BlockView, type HeaderHash, type StateRootHash, tryAsTimeSlot } from "@typeberry/block";
 import { testBlockView } from "@typeberry/block/test-helpers.js";
@@ -8,18 +7,18 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { tryAsU8, tryAsU32 } from "@typeberry/numbers";
 import { Result } from "@typeberry/utils";
-import { IpcSender } from "../../server.js";
+import type { IpcSender } from "../server.js";
 import { type FuzzMessageHandler, FuzzTarget } from "./handler.js";
 import {
   AncestryItem,
   ErrorMessage,
   Features,
   Initialize,
+  KeyValue,
   type Message,
   MessageType,
   messageCodec,
   PeerInfo,
-  KeyValue,
   Version,
 } from "./types.js";
 
@@ -32,13 +31,9 @@ class MockV1MessageHandler implements FuzzMessageHandler {
   getSerializedState: Mock<(value: HeaderHash) => Promise<KeyValue[]>> = mock.fn();
 }
 
-class MockSender extends IpcSender {
+class MockSender implements IpcSender {
   _sentData: BytesBlob[] = [];
   _closeCalled = 0;
-
-  constructor() {
-    super(new Socket());
-  }
 
   send(data: BytesBlob): void {
     this._sentData.push(data);

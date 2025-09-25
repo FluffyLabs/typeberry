@@ -9,6 +9,7 @@ import {
 } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
+import { v1 } from "@typeberry/fuzz-proto";
 import { blake2b, HASH_SIZE, TRUNCATED_HASH_SIZE, type WithHash } from "@typeberry/hash";
 import { ce129, up0 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
@@ -16,11 +17,8 @@ import { tryAsU32 } from "@typeberry/numbers";
 import { Listener } from "@typeberry/state-machine";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { assertNever, Result } from "@typeberry/utils";
-import * as v1 from "./fuzz/v1/index.js";
 import { startJamnpIpcServer } from "./jamnp/server.js";
 import { startIpcServer } from "./server.js";
-
-export * as fuzzV1 from "./fuzz/v1/index.js";
 
 export interface ExtensionApi {
   chainSpec: ChainSpec;
@@ -146,5 +144,4 @@ class FuzzHandler implements v1.FuzzMessageHandler {
       features: tryAsU32(v1.Features.Ancestry | v1.Features.Fork),
     });
   }
-
 }

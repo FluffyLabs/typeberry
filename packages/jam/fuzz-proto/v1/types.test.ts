@@ -13,13 +13,13 @@ import {
   ErrorMessage,
   Features,
   Initialize,
+  KeyValue,
   type MessageData,
   MessageType,
   messageCodec,
   PeerInfo,
-  Version,
-  KeyValue,
   stateCodec,
+  Version,
 } from "./types.js";
 
 const spec = tinyChainSpec;

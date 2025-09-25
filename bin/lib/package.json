@@ -14,7 +14,7 @@
     "@typeberry/crypto": "*",
     "@typeberry/database": "*",
     "@typeberry/erasure-coding": "*",
-    "@typeberry/ext-ipc": "*",
+    "@typeberry/fuzz-proto": "*",
     "@typeberry/hash": "*",
     "@typeberry/jam-host-calls": "*",
     "@typeberry/json-parser": "*",

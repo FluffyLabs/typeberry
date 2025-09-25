@@ -16,6 +16,7 @@
     "@typeberry/crypto": "*",
     "@typeberry/database-lmdb": "*",
     "@typeberry/ext-ipc": "*",
+    "@typeberry/fuzz-proto": "*",
     "@typeberry/hash": "*",
     "@typeberry/importer": "*",
     "@typeberry/jam-network": "*",

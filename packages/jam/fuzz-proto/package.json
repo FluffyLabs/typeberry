@@ -1,0 +1,12 @@
+{
+  "name": "@typeberry/fuzz-proto",
+  "version": "0.1.2",
+  "description": "Fuzzer protocol types.",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0"
+}
