@@ -12,10 +12,9 @@ cd ../..
 
 DIST_FOLDER=./dist/convert
 
-# clean dist file
-mkdir $DIST_FOLDER || true
-rm -rf $DIST_FOLDER/*
-
+# clean dist dir
+mkdir -p "${DIST_FOLDER}"
+rm -rf "${DIST_FOLDER:?}"/*
 # Build the main binary
 BUILD="npx @vercel/ncc build -s -d"
 $BUILD ./bin/convert/index.ts -o $DIST_FOLDER
