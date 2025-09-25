@@ -35,7 +35,7 @@ running.catch((e) => {
   process.exit(-1);
 });
 
-export const prepareConfigFile = (args: Arguments): JamConfig => {
+function prepareConfigFile(args: Arguments): JamConfig {
   const nodeConfig = loadConfig(args.args.configPath);
   const nodeName = args.command === Command.Dev ? `${args.args.nodeName}-${args.args.index}` : args.args.nodeName;
 
@@ -60,7 +60,7 @@ export const prepareConfigFile = (args: Arguments): JamConfig => {
       bootnodes: nodeConfig.chainSpec.bootnodes ?? [],
     },
   });
-};
+}
 
 async function startNode(args: Arguments, withRelPath: (p: string) => string) {
   const jamNodeConfig = prepareConfigFile(args);
