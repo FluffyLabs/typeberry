@@ -36,9 +36,6 @@ $BUILD ./packages/workers/block-generator/index.ts -o $DIST_FOLDER/block-generat
 cp ./LICENSE $DIST_FOLDER/
 cp ./README.md $DIST_FOLDER/
 
-<<<<<<< HEAD:tools/build-for-npm.sh
-VERSION=$(node -p "require('./package.json').version")
-
 # Flatten the workers structure
 cd $DIST_FOLDER
 
@@ -65,11 +62,6 @@ cp **/*.wasm ./ || true # ignore overwrite errors
 # Make index.js executable and insert shebang
 echo '#!/usr/bin/env node' > ./temp.js && cat ./index.js >> ./temp.js && mv ./temp.js ./index.js
 chmod +x ./index.js
-=======
-# Make index.js executable and insert shebang
-echo '#!/usr/bin/env node' > $DIST_FOLDER/temp.js && cat $DIST_FOLDER/index.js >> $DIST_FOLDER/temp.js && mv $DIST_FOLDER/temp.js $DIST_FOLDER/index.js
-chmod +x $DIST_FOLDER/index.js
->>>>>>> main:bin/jam/build-for-npm.sh
 
 if [ -z "$IS_RELEASE" ]; then
   SHA=$(git rev-parse --short HEAD)
