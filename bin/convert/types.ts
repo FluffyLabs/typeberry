@@ -3,11 +3,12 @@ import { WorkItem } from "@typeberry/block/work-item.js";
 import { WorkPackage } from "@typeberry/block/work-package.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
 import { blockFromJson, headerFromJson, workReportFromJson } from "@typeberry/block-json";
-import { type Decode, type Encode, Encoder } from "@typeberry/codec";
+import { codec, type Decode, Decoder, type Encode, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { JipChainSpec } from "@typeberry/config-node";
-import { messageCodec } from "@typeberry/ext-ipc/fuzz/v1/types.js";
-import { blake2b } from "@typeberry/hash";
+import type { MessageData } from "@typeberry/ext-ipc/fuzz/v1/index.js";
+import { Initialize, MessageType, messageCodec } from "@typeberry/ext-ipc/fuzz/v1/types.js";
+import { blake2b, HASH_SIZE } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
 import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
 import type { InMemoryState } from "@typeberry/state";
@@ -20,6 +21,18 @@ import { workItemFromJson } from "@typeberry/test-runner/w3f/codec/work-item.js"
 import { workPackageFromJson } from "@typeberry/test-runner/w3f/codec/work-package.js";
 import { PvmTest } from "@typeberry/test-runner/w3f/pvm.js";
 
+export type ProcessOutput<T> = {
+  value: T;
+  encode?: Encode<T>;
+};
+
+function looseType<T>(output: ProcessOutput<T>): ProcessOutput<unknown> {
+  return {
+    value: output.value,
+    encode: output.encode as Encode<unknown>,
+  };
+}
+
 export type SupportedType = {
   name: string;
   // biome-ignore lint/suspicious/noExplicitAny: We need to handle any possible output
@@ -30,7 +43,7 @@ export type SupportedType = {
   json?: (spec: ChainSpec) => FromJson<any>;
   process?: {
     options: readonly string[];
-    run: (spec: ChainSpec, data: unknown, option: string) => unknown;
+    run: (spec: ChainSpec, data: unknown, option: string) => ProcessOutput<unknown>;
   };
 };
 
@@ -51,8 +64,13 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
       run(spec, data, option) {
         const header = data as Header;
         if (option === "as-hash") {
-          return blake2b.hashBytes(Encoder.encodeObject(Header.Codec, header, spec));
+          return looseType({
+            value: blake2b.hashBytes(Encoder.encodeObject(Header.Codec, header, spec)),
+            encode: codec.bytes(HASH_SIZE),
+          });
         }
+
+        throw new Error(`Invalid processing option: ${option}`);
       },
     },
   },
@@ -96,12 +114,19 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
       run(spec: ChainSpec, data: unknown, option: string) {
         const state = data as InMemoryState;
         if (option === "as-entries") {
-          return Object.fromEntries(StateEntries.serializeInMemory(spec, state));
+          return looseType({
+            value: Object.fromEntries(StateEntries.serializeInMemory(spec, state)),
+          });
         }
 
         if (option === "as-root-hash") {
-          return StateEntries.serializeInMemory(spec, state).getRootHash();
+          return looseType({
+            value: StateEntries.serializeInMemory(spec, state).getRootHash(),
+            encode: codec.bytes(HASH_SIZE),
+          });
         }
+
+        throw new Error(`Invalid processing option: ${option}`);
       },
     },
   },
@@ -111,19 +136,42 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     decode: StateTransitionGenesis.Codec,
     json: () => StateTransitionGenesis.fromJson,
     process: {
-      options: ["as-state", "as-jip4"],
+      options: ["as-state", "as-jip4", "as-fuzz-message"],
       run(spec: ChainSpec, data: unknown, option: string) {
         const test = data as StateTransitionGenesis;
         if (option === "as-state") {
-          return stateFromKeyvals(spec, test.state);
-        }
-        if (option === "as-jip4") {
-          const genesisState = new Map(test.state.keyvals.map((x) => [x.key, x.value]));
-          return JipChainSpec.create({
-            genesisHeader: Encoder.encodeObject(Header.Codec, test.header, spec),
-            genesisState,
+          return looseType({
+            value: stateFromKeyvals(spec, test.state),
           });
         }
+
+        if (option === "as-jip4") {
+          const genesisState = new Map(test.state.keyvals.map((x) => [x.key, x.value]));
+          return looseType({
+            value: JipChainSpec.create({
+              genesisHeader: Encoder.encodeObject(Header.Codec, test.header, spec),
+              genesisState,
+            }),
+          });
+        }
+
+        if (option === "as-fuzz-message") {
+          const init = Initialize.create({
+            header: test.header,
+            keyvals: test.state.keyvals,
+            ancestry: [],
+          });
+          const msg: MessageData = {
+            type: MessageType.Initialize,
+            value: init,
+          };
+          return looseType({
+            value: msg,
+            encode: messageCodec,
+          });
+        }
+
+        throw new Error(`Invalid processing option: ${option}`);
       },
     },
   },
@@ -133,16 +181,35 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     decode: StateTransition.Codec,
     json: () => StateTransition.fromJson,
     process: {
-      options: ["as-pre-state", "as-post-state"],
+      options: ["as-pre-state", "as-post-state", "as-fuzz-message"],
       run(spec: ChainSpec, data: unknown, option: string) {
         const test = data as StateTransition;
         if (option === "as-pre-state") {
-          return stateFromKeyvals(spec, test.pre_state);
+          return looseType({
+            value: stateFromKeyvals(spec, test.pre_state),
+          });
         }
 
         if (option === "as-post-state") {
-          return stateFromKeyvals(spec, test.post_state);
+          return looseType({
+            value: stateFromKeyvals(spec, test.post_state),
+          });
         }
+
+        if (option === "as-fuzz-message") {
+          const encoded = Encoder.encodeObject(Block.Codec, test.block, spec);
+          const blockView = Decoder.decodeObject(Block.Codec.View, encoded, spec);
+          const msg: MessageData = {
+            type: MessageType.ImportBlock,
+            value: blockView,
+          };
+          return looseType({
+            value: msg,
+            encode: messageCodec,
+          });
+        }
+
+        throw new Error(`Invalid processing option: ${option}`);
       },
     },
   },
