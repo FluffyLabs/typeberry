@@ -1,14 +1,13 @@
 import assert from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
-import { Block, Header } from "@typeberry/block";
+import { Block, emptyBlock, Header } from "@typeberry/block";
 import { blockFromJson, headerFromJson } from "@typeberry/block-json";
 import { codec, Decoder, Encoder } from "@typeberry/codec";
 import { ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { keccak, SimpleAllocator, WithHash } from "@typeberry/hash";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
-import { emptyBlock } from "@typeberry/node";
 import { tryAsU32 } from "@typeberry/numbers";
 import { serializeStateUpdate } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
