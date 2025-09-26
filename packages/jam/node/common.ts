@@ -1,15 +1,6 @@
-import {
-  Block,
-  type BlockView,
-  Extrinsic,
-  Header,
-  type HeaderHash,
-  type TimeSlot,
-  tryAsTimeSlot,
-} from "@typeberry/block";
+import { Block, type BlockView, emptyBlock, Header, type HeaderHash, type TimeSlot } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type JipChainSpec, KnownChainSpec } from "@typeberry/config-node";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
@@ -122,23 +113,4 @@ function loadGenesisState(spec: ChainSpec, data: JipChainSpec["genesisState"]) {
 }
 function blockAsView(block: Block, spec: ChainSpec): BlockView {
   return Decoder.decodeObject(Block.Codec.View, Encoder.encodeObject(Block.Codec, block, spec), spec);
-}
-
-export function emptyBlock(slot: TimeSlot = tryAsTimeSlot(0)) {
-  const header = Header.empty();
-  header.timeSlotIndex = slot;
-  return Block.create({
-    header,
-    extrinsic: Extrinsic.create({
-      tickets: asKnownSize([]),
-      preimages: [],
-      assurances: asKnownSize([]),
-      guarantees: asKnownSize([]),
-      disputes: {
-        verdicts: [],
-        culprits: [],
-        faults: [],
-      },
-    }),
-  });
 }

@@ -10,7 +10,7 @@ export default tseslint.config(
   { plugins: baseImport.plugins },
   {
     files: ["**/*.ts"],
-    ignores: ["dist/*", "dist/**", "tools/builder/pkg.ts"],
+    ignores: ["dist/*", "dist/**", "packages/misc/builder/pkg.ts"],
     languageOptions: {
       parserOptions: {
         projectService: true,

@@ -63,7 +63,7 @@
       "!**/dist/**/*",
       "!**/benchmarks/**/output/**/*",
       "!**/test-vectors/**/*",
-      "!**/tools/builder/pkg.ts"
+      "!**/packages/misc/builder/pkg.ts"
     ]
   }
 }
