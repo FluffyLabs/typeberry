@@ -12,7 +12,6 @@
     "@typeberry/bytes": "*",
     "@typeberry/config": "*",
     "@typeberry/configs": "*",
-    "@typeberry/jamnp-s": "*",
     "@typeberry/json-parser": "*",
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",

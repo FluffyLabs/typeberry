@@ -57,8 +57,12 @@ jobs:
         cache-to: type=gha,mode=max
         platforms: linux/amd64
 
-  publish-npm-lib:
+  publish-npm:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22.x]
+        project: [lib, jam, convert]
 
     steps:
     - uses: actions/checkout@v4
@@ -70,39 +74,14 @@ jobs:
         registry-url: 'https://registry.npmjs.org'
 
     - run: npm ci
-    - run: npm run build -w @typeberry/lib
+    - run: npm run build -w @typeberry/${{ matrix.project }}
 
-    - name: Build @typeberry/lib (release)
+    - name: Build @typeberry/${{ matrix.project }} (release)
       if: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
-      run: IS_RELEASE=1 npm run build -w @typeberry/lib
+      run: IS_RELEASE=1 npm run build -w @typeberry/${{ matrix.project }}
 
-    - name: Publish library to npm
-      working-directory: ./dist/lib
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      run: npm publish --access public
-
-  publish-npm-jam:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22.x
-        cache: 'npm'
-        registry-url: 'https://registry.npmjs.org'
-
-    - run: npm ci
-    - run: npm run build -w @typeberry/jam
-
-    - name: Build @typeberry/jam (release)
-      if: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
-      run: IS_RELEASE=1 npm run build -w @typeberry/jam
-
-    - name: Publish @typeberry/jam to npm
-      working-directory: ./dist/jam
+    - name: Publish @typeberry/${{ matrix.project }} to npm
+      working-directory: ./dist/${{ matrix.project }}
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       run: npm publish --access public

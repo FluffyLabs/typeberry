@@ -15,10 +15,11 @@ if (!outDir) {
   outDir = parts[parts.length - 1];
 }
 
-const data = `export * from "${packageToBuild}";`;
-fs.writeFileSync(`${__dirname}/pkg.ts`, data);
+const DIST = `${__dirname}/../../../dist/${outDir}`;
+const inputFile = `${__dirname}/pkg.ts`;
 
-const DIST = `${__dirname}/../../dist/${outDir}`;
+const data = `export * from "${packageToBuild}";`;
+fs.writeFileSync(inputFile, data);
 
 const commitHashResult = childProcess.execSync("git rev-parse --short HEAD");
 const originalPackageJson = require(`${packageToBuild}/package.json`);
@@ -48,13 +49,15 @@ fs.writeFileSync(`${DIST}/package.json`, packageJson);
 
 fs.writeFileSync(
   `${DIST}/.npmignore`,
-  `tools/**
+  `
+bin/**
 packages/**
 `,
 );
 
 module.exports = {
+  inputFile,
   esmOutFile: `${DIST}/index.js`,
   cjsOutFile: `${DIST}/index.cjs`,
-  typesInput: `${DIST}/tools/builder/pkg.d.ts`,
+  typesInput: `${DIST}/packages/misc/builder/pkg.d.ts`,
 };

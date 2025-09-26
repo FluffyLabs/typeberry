@@ -7,7 +7,7 @@ import typescript from "rollup-plugin-typescript2";
 import setup from "./setup.cjs";
 
 const baseBuild = {
-  input: "./pkg.ts",
+  input: setup.inputFile,
   plugins: [resolve(), commonjs() /* only for blake2b? */, typescript(), json()],
   treeshake: {
     moduleSideEffects: false,

@@ -1,6 +1,8 @@
 import { type CodecRecord, codec, type DescribedBy } from "@typeberry/codec";
+import { asKnownSize } from "@typeberry/collections";
 import { WithDebug } from "@typeberry/utils";
 import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "./assurances.js";
+import { type TimeSlot, tryAsTimeSlot } from "./common.js";
 import { DisputesExtrinsic } from "./disputes.js";
 import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "./guarantees.js";
 import { Header } from "./header.js";
@@ -89,3 +91,22 @@ export class Block extends WithDebug {
 
 /** Undecoded View of a [`Block`]. */
 export type BlockView = DescribedBy<typeof Block.Codec.View>;
+
+export function emptyBlock(slot: TimeSlot = tryAsTimeSlot(0)) {
+  const header = Header.empty();
+  header.timeSlotIndex = slot;
+  return Block.create({
+    header,
+    extrinsic: Extrinsic.create({
+      tickets: asKnownSize([]),
+      preimages: [],
+      assurances: asKnownSize([]),
+      guarantees: asKnownSize([]),
+      disputes: {
+        verdicts: [],
+        culprits: [],
+        faults: [],
+      },
+    }),
+  });
+}
