@@ -155,7 +155,7 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
         }
 
         if (option === "as-fuzz-message") {
-          const init = Initialize.create({
+          const init = v1.Initialize.create({
             header: test.header,
             keyvals: test.state.keyvals,
             ancestry: [],
