@@ -1,4 +1,4 @@
-name: javajam test vectors
+name: VECTORS - javajam
 
 on:
   workflow_dispatch:

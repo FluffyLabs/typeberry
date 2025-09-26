@@ -1,4 +1,4 @@
-name: Bump Version
+name: RELEASE - Bump Version
 
 permissions:
   contents: write       # push branch, create release

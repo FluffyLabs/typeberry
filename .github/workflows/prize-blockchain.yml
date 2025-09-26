@@ -1,7 +1,7 @@
 # This workflow will upload the hash of every commit merged to the main branch to a public blockchain
 # WARNING: This workflow does not work in the context of the typeberry repo, but rather FluffyLabs/publish-commit
 
-name: Publish Commits
+name: Prize - Commits to Kusama AH
 
 on:
   push:
