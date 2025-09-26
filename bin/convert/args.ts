@@ -6,7 +6,7 @@ export const HELP = `
 @typeberry/convert ${packageJson.version} by Fluffy Labs.
 
 Usage:
-  @typeberry/convert [options] <bin-hex-or-json-input-file> <type> [process] [output-format]
+  @typeberry/convert [options] <bin-hex-or-json-input-file> <type> [process] [output-format] [output-file]
 
 Attempts to read provided input file as 'type' and output in requested 'output-format'.
 For some 'type's it's additionally possible to process the data before outputting it.
@@ -15,6 +15,7 @@ The input type is detected from file extension ('.bin', '.hex' or '.json').
 Example usage:
   @typeberry/convert ./genesis-header.json header to-hex
   @typeberry/convert ./state-snapshot.json state-dump as-entries to-json
+  @typeberry/convert ./state-snapshot.json stf-vector as-fuzz-message to-bin msg0.bin
 
 Options:
   --flavor    - chain spec flavor, either 'full' or 'tiny'.
@@ -24,6 +25,7 @@ Output formats:
   to-print       - Print the object to the console
   to-json        - JSON format (when supported)
   to-hex         - JAM-codec hex-encoded string (when supported)
+  to-bin         - JAM-codec binary data (when supported)
   to-repl        - Start a JavaScript REPL with the data loaded into a variable
 
 Input types:
@@ -50,12 +52,14 @@ export type Arguments = {
   type: SupportedType;
   inputPath: string;
   outputFormat: OutputFormat;
+  destination: string | null;
 };
 
 export enum OutputFormat {
   Print = "to-print",
   Json = "to-json",
   Hex = "to-hex",
+  Bin = "to-bin",
   Repl = "to-repl",
 }
 
@@ -83,10 +87,16 @@ export function parseArgs(cliInput: string[], withRelPath: (v: string) => string
   const type = parseType(args._.shift());
   const maybeProcess = args._.shift();
   const maybeOutputFormat = args._.shift();
+  const maybeDestination = args._.shift();
 
   assertNoMoreArgs(args);
 
-  const { process, format } = getProcessAndOutput(type, maybeProcess, maybeOutputFormat);
+  const { process, format, destination } = getProcessFormatAndDestination(
+    type,
+    maybeProcess,
+    maybeOutputFormat,
+    maybeDestination,
+  );
 
   return {
     flavor: chainSpec.flavor,
@@ -94,6 +104,7 @@ export function parseArgs(cliInput: string[], withRelPath: (v: string) => string
     process,
     inputPath: withRelPath(input),
     outputFormat: format,
+    destination,
   };
 }
 
@@ -123,9 +134,23 @@ function parseOutputFormat(output?: string): OutputFormat {
       return OutputFormat.Json;
     case OutputFormat.Repl:
       return OutputFormat.Repl;
+    case OutputFormat.Bin:
+      return OutputFormat.Bin;
     default:
       throw new Error(`Invalid output format: '${output}'.`);
   }
+}
+
+function parseProcess(processOptions: readonly string[], maybeProcess?: string): string | null {
+  if (maybeProcess === undefined) {
+    return null;
+  }
+
+  if (!processOptions.includes(maybeProcess)) {
+    throw new Error(`Incorrect processing option: ${maybeProcess}. Expected one of: ${processOptions}.`);
+  }
+
+  return maybeProcess;
 }
 
 // TODO [ToDr] Consider sharing that?
@@ -174,36 +199,71 @@ function assertNoMoreArgs(args: minimist.ParsedArgs) {
   }
 }
 
-function getProcessAndOutput(
+function getProcessFormatAndDestination(
   type: SupportedType,
   maybeProcess: string | undefined,
   maybeOutputFormat: string | undefined,
+  maybeDestination: string | undefined,
 ) {
+  const defaultProcess = "";
   const defaultFormat = parseOutputFormat(undefined);
-  const options = type.process?.options ?? [];
-  // we have both options, so we expect them in the right order.
-  if (maybeProcess !== undefined && maybeOutputFormat !== undefined) {
+  const processOptions = type.process?.options ?? [];
+  // we have all three so it must be in order
+  if (maybeProcess !== undefined && maybeOutputFormat !== undefined && maybeDestination !== undefined) {
     const format = parseOutputFormat(maybeOutputFormat);
+    const process = parseProcess(processOptions, maybeProcess) ?? defaultProcess;
+    const destination = maybeDestination;
+    throwIfDumpNotSupported(format, destination);
 
-    if (!options.includes(maybeProcess)) {
-      throw new Error(`Incorrect processing option: ${maybeProcess}. Expected one of: ${options}.`);
-    }
-    return { process: maybeProcess, format };
+    return { process, format, destination };
   }
+
+  // we have either:
+  // 1. process + format
+  // 2. format + destination
+  if (maybeProcess !== undefined && maybeOutputFormat !== undefined) {
+    // we've got processing first, so easy-peasy
+    if (processOptions.includes(maybeProcess)) {
+      const format = parseOutputFormat(maybeOutputFormat);
+      throwIfDumpNotSupported(format, null);
+      return { process: maybeProcess, format, destination: null };
+    }
+    // first one has to be format then.
+    const format = parseOutputFormat(maybeProcess);
+    const destination = maybeOutputFormat;
+    throwIfDumpNotSupported(format, destination);
+
+    return { process: defaultProcess, format, destination };
+  }
+
   // only one parameter, but it can be either output or processing.
+  const destination: string | null = null;
   if (maybeProcess !== undefined) {
-    if (options.includes(maybeProcess)) {
-      return { process: maybeProcess, format: defaultFormat };
+    if (processOptions.includes(maybeProcess)) {
+      return { process: maybeProcess, format: defaultFormat, destination };
     }
     // now it should be output format, but we want to give a better error message,
     // if user mispelled processing.
     try {
       const format = parseOutputFormat(maybeProcess);
-      return { process: "", format };
+      throwIfDumpNotSupported(format, destination);
+      return { process: defaultProcess, format, destination };
     } catch {
       throw new Error(`'${maybeProcess}' is neither output format nor processing parameter.`);
     }
   }
 
-  return { process: "", format: defaultFormat };
+  return { process: defaultProcess, format: defaultFormat, destination };
+}
+
+function throwIfDumpNotSupported(format: OutputFormat, destination: string | null) {
+  if (destination !== null) {
+    if (format === OutputFormat.Print || format === OutputFormat.Repl) {
+      throw new Error(`Dumping to file is not supported for ${format}`);
+    }
+  } else {
+    if (format === OutputFormat.Bin) {
+      throw new Error(`${format} requires destination file`);
+    }
+  }
 }

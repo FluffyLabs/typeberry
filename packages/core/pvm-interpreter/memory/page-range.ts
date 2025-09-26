@@ -56,6 +56,20 @@ export class PageRange {
     return new PageRange(start, length);
   }
 
+  /** Returns true if the page range is wrapped (`start` >= `end`) and is not empty */
+  isWrapped() {
+    return this.start >= this.end && !this.isEmpty();
+  }
+
+  /** Checks if given page number is within the range */
+  isInRange(page: PageNumber) {
+    if (this.isWrapped()) {
+      return page >= this.start || page < this.end;
+    }
+
+    return page >= this.start && page < this.end;
+  }
+
   /** Checks if a range is empty (`length === 0`) */
   isEmpty() {
     return this.length === 0;
