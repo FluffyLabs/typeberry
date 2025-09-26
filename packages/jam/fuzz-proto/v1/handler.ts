@@ -3,12 +3,12 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";
 import { assertNever, type Result } from "@typeberry/utils";
-import type { IpcHandler, IpcSender } from "../../server.js";
-import type { KeyValue } from "../v0/types.js";
+import type { IpcHandler, IpcSender } from "../server.js";
 import {
   type ErrorMessage,
   Features,
   type Initialize,
+  type KeyValue,
   type Message,
   type MessageData,
   MessageType,
@@ -40,8 +40,9 @@ export interface FuzzMessageHandler {
    * May return an Error if the block import fails.
    */
   importBlock(value: BlockView): Promise<Result<StateRootHash, ErrorMessage>>;
+
   /** Retrieve posterior state associated to given header hash. */
-  getState(value: HeaderHash): Promise<KeyValue[]>;
+  getSerializedState(value: HeaderHash): Promise<KeyValue[]>;
 }
 
 export class FuzzTarget implements IpcHandler {
@@ -126,7 +127,7 @@ export class FuzzTarget implements IpcHandler {
       }
 
       case MessageType.GetState: {
-        const state = await this.msgHandler.getState(message.value);
+        const state = await this.msgHandler.getSerializedState(message.value);
         response = {
           type: MessageType.State,
           value: state,

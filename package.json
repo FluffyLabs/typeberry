@@ -42,6 +42,7 @@
     "packages/jam/config-node",
     "packages/jam/database",
     "packages/jam/database-lmdb",
+    "packages/jam/fuzz-proto",
     "packages/jam/jam-host-calls",
     "packages/jam/jamnp-s",
     "packages/jam/node",

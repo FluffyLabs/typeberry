@@ -1,8 +1,9 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
+import type { IpcHandler } from "@typeberry/fuzz-proto";
 import type { StreamHandler, StreamId, StreamKind, StreamKindOf, StreamMessageSender } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
-import type { IpcHandler, IpcSender } from "../server.js";
+import type { IpcSender } from "../server.js";
 import { NewStream, StreamEnvelope, StreamEnvelopeType } from "./stream.js";
 
 export type ResponseHandler = (err: Error | null, response?: BytesBlob) => void;

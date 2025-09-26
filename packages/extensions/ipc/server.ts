@@ -4,17 +4,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 import type { BytesBlob } from "@typeberry/bytes";
+import type { IpcHandler } from "@typeberry/fuzz-proto";
 import { Logger } from "@typeberry/logger";
 import { encodeMessageLength, handleMessageFragmentation } from "@typeberry/networking";
-
-/** A per-client handler of incoming socket messages. */
-export interface IpcHandler {
-  /** New data on the socket received. */
-  onSocketMessage(msg: Uint8Array): Promise<void>;
-
-  /** Socket closed or errored. */
-  onClose(reason: { error?: Error }): void;
-}
 
 /** Sending data abstraction on a socket. */
 export class IpcSender {

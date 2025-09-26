@@ -21,6 +21,7 @@
     "@typeberry/config": "*",
     "@typeberry/config-node": "*",
     "@typeberry/database": "*",
+    "@typeberry/fuzz-proto": "*",
     "@typeberry/hash": "*",
     "@typeberry/json-parser": "*",
     "@typeberry/logger": "*",
