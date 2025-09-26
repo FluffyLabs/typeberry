@@ -27,6 +27,9 @@ reviews:
   labeling_instructions: []
   path_filters: []
   path_instructions:
+    - path: 'packages/**/*.package.json'
+      instructions: |
+        Whenever a new package is added, the `packages/README.md` should be updated accordingly.
     - path: 'packages/core/**/*.ts'
       instructions: |
         Core packages must not import any JAM-related packages
