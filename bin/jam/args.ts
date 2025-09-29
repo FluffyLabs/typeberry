@@ -42,7 +42,7 @@ export type Arguments =
       Command.FuzzTarget,
       SharedOptions & {
         socket: string | null;
-        version: 0 | 1;
+        version: 1;
       }
     >
   | CommandArgs<
@@ -200,14 +200,14 @@ type CommandArgs<T extends Command, Args> = {
   args: Args;
 };
 
-function parseFuzzVersion(v: string | number): 0 | 1 | null {
+function parseFuzzVersion(v: string | number): 1 | null {
   if (v === "") {
     return null;
   }
 
   const parsed = Number(v);
-  if (parsed === 0 || parsed === 1) {
+  if (parsed === 1) {
     return parsed;
   }
-  throw new Error(`Invalid fuzzer version: ${v}. Must be either 0 or 1`);
+  throw new Error(`Invalid fuzzer version: ${v}. Must be 1`);
 }

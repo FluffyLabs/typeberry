@@ -1,13 +1,9 @@
-import { Block, type BlockView, Header, type HeaderHash, type StateRootHash } from "@typeberry/block";
+import { Block, type BlockView, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
-import { tryAsU8, type U8 } from "@typeberry/numbers";
+import { tryAsU8, type U8, type U32 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
-
-/**
- * Reference: https://github.com/davxy/jam-conformance/blob/7c6a371a966c6446564f91676e7a2afdec5fa3da/fuzz-proto/fuzz.asn
- */
 
 /**
  * Version ::= SEQUENCE {
@@ -52,27 +48,68 @@ export class Version extends WithDebug {
 }
 
 /**
+ * Fuzzer Protocol V1
+ * Reference: https://github.com/davxy/jam-conformance/blob/main/fuzz-proto/fuzz.asn
+ */
+// Feature bit constants
+export enum Features {
+  Ancestry = 1, // 2^0
+  Fork = 2, // 2^1
+  Reserved = 2147483648, // 2^31
+}
+
+/**
  * PeerInfo ::= SEQUENCE {
- *     name         UTF8String,
+ *     fuzz-version U8,
+ *     features     Features,
+ *     jam-version  Version,
  *     app-version  Version,
- *     jam-version  Version
+ *     name         UTF8String
  * }
  */
 export class PeerInfo extends WithDebug {
   static Codec = codec.Class(PeerInfo, {
-    name: codec.string,
-    appVersion: Version.Codec,
+    fuzzVersion: codec.u8,
+    features: codec.u32,
     jamVersion: Version.Codec,
+    appVersion: Version.Codec,
+    name: codec.string,
   });
 
-  static create({ name, appVersion, jamVersion }: CodecRecord<PeerInfo>) {
-    return new PeerInfo(name, appVersion, jamVersion);
+  static create({ fuzzVersion, features, appVersion, jamVersion, name }: CodecRecord<PeerInfo>) {
+    return new PeerInfo(fuzzVersion, features, jamVersion, appVersion, name);
   }
 
   private constructor(
-    public readonly name: string,
-    public readonly appVersion: Version,
+    public readonly fuzzVersion: U8,
+    public readonly features: U32,
     public readonly jamVersion: Version,
+    public readonly appVersion: Version,
+    public readonly name: string,
+  ) {
+    super();
+  }
+}
+
+/**
+ * AncestryItem ::= SEQUENCE {
+ *     slot TimeSlot,
+ *     header-hash HeaderHash
+ * }
+ */
+export class AncestryItem extends WithDebug {
+  static Codec = codec.Class(AncestryItem, {
+    slot: codec.u32.asOpaque<TimeSlot>(),
+    headerHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
+  });
+
+  static create({ slot, headerHash }: CodecRecord<AncestryItem>) {
+    return new AncestryItem(slot, headerHash);
+  }
+
+  private constructor(
+    public readonly slot: TimeSlot,
+    public readonly headerHash: HeaderHash,
   ) {
     super();
   }
@@ -106,24 +143,37 @@ export class KeyValue extends WithDebug {
 export const stateCodec = codec.sequenceVarLen(KeyValue.Codec);
 
 /**
- * SetState ::= SEQUENCE {
- *     header  Header,
- *     state   State
+ * Ancestry ::= SEQUENCE (SIZE(0..24)) OF AncestryItem
+ * Empty when `feature-ancestry` is not supported by both parties
+ */
+export const ancestryCodec = codec.sequenceVarLen(AncestryItem.Codec, {
+  minLength: 0,
+  maxLength: 24,
+});
+export type Ancestry = AncestryItem[];
+
+/**
+ * Initialize ::= SEQUENCE {
+ *     header Header,
+ *     keyvals State,
+ *     ancestry Ancestry
  * }
  */
-export class SetState extends WithDebug {
-  static Codec = codec.Class(SetState, {
+export class Initialize extends WithDebug {
+  static Codec = codec.Class(Initialize, {
     header: Header.Codec,
-    state: codec.sequenceVarLen(KeyValue.Codec),
+    keyvals: stateCodec,
+    ancestry: ancestryCodec,
   });
 
-  static create({ header, state }: CodecRecord<SetState>) {
-    return new SetState(header, state);
+  static create({ header, keyvals, ancestry }: CodecRecord<Initialize>) {
+    return new Initialize(header, keyvals, ancestry);
   }
 
   private constructor(
     public readonly header: Header,
-    public readonly state: KeyValue[],
+    public readonly keyvals: KeyValue[],
+    public readonly ancestry: Ancestry,
   ) {
     super();
   }
@@ -137,32 +187,51 @@ export type GetState = HeaderHash;
 export const stateRootCodec = codec.bytes(HASH_SIZE).asOpaque<StateRootHash>();
 export type StateRoot = StateRootHash;
 
+/** Error ::= UTF8String */
+export class ErrorMessage extends WithDebug {
+  static Codec = codec.Class(ErrorMessage, {
+    message: codec.string,
+  });
+
+  static create({ message }: CodecRecord<ErrorMessage>): ErrorMessage {
+    return new ErrorMessage(message);
+  }
+
+  private constructor(public readonly message: string) {
+    super();
+  }
+}
+
 /** Message choice type tags */
 export enum MessageType {
   PeerInfo = 0,
-  ImportBlock = 1,
-  SetState = 2,
-  GetState = 3,
-  State = 4,
-  StateRoot = 5,
+  Initialize = 1,
+  StateRoot = 2,
+  ImportBlock = 3,
+  GetState = 4,
+  State = 5,
+  Error = 255,
 }
+
 /** Message data union */
 export type MessageData =
   | { type: MessageType.PeerInfo; value: PeerInfo }
+  | { type: MessageType.Initialize; value: Initialize }
+  | { type: MessageType.StateRoot; value: StateRoot }
   | { type: MessageType.ImportBlock; value: BlockView }
-  | { type: MessageType.SetState; value: SetState }
   | { type: MessageType.GetState; value: GetState }
   | { type: MessageType.State; value: KeyValue[] }
-  | { type: MessageType.StateRoot; value: StateRoot };
+  | { type: MessageType.Error; value: ErrorMessage };
 
 /**
  * Message ::= CHOICE {
- *     peer-info    [0] PeerInfo,
- *     import-block [1] ImportBlock,
- *     set-state    [2] SetState,
- *     get-state    [3] GetState,
- *     state        [4] State,
- *     state-root   [5] StateRoot
+ *     peer-info     [0] PeerInfo,
+ *     initialize    [1] Initialize,
+ *     state-root    [2] StateRoot,
+ *     import-block  [3] ImportBlock,
+ *     get-state     [4] GetState,
+ *     state         [5] State,
+ *     error         [255] Error
  * }
  */
 export const messageCodec = codec.custom<MessageData>(
@@ -176,11 +245,14 @@ export const messageCodec = codec.custom<MessageData>(
       case MessageType.PeerInfo:
         PeerInfo.Codec.encode(e, msg.value);
         break;
+      case MessageType.Initialize:
+        Initialize.Codec.encode(e, msg.value);
+        break;
+      case MessageType.StateRoot:
+        stateRootCodec.encode(e, msg.value);
+        break;
       case MessageType.ImportBlock:
         Block.Codec.View.encode(e, msg.value);
-        break;
-      case MessageType.SetState:
-        SetState.Codec.encode(e, msg.value);
         break;
       case MessageType.GetState:
         getStateCodec.encode(e, msg.value);
@@ -188,8 +260,8 @@ export const messageCodec = codec.custom<MessageData>(
       case MessageType.State:
         stateCodec.encode(e, msg.value);
         break;
-      case MessageType.StateRoot:
-        stateRootCodec.encode(e, msg.value);
+      case MessageType.Error:
+        ErrorMessage.Codec.encode(e, msg.value);
         break;
       default:
         throw new Error(`Unknown message type: ${msg}`);
@@ -200,16 +272,18 @@ export const messageCodec = codec.custom<MessageData>(
     switch (type) {
       case MessageType.PeerInfo:
         return { type: MessageType.PeerInfo, value: PeerInfo.Codec.decode(d) };
+      case MessageType.Initialize:
+        return { type: MessageType.Initialize, value: Initialize.Codec.decode(d) };
+      case MessageType.StateRoot:
+        return { type: MessageType.StateRoot, value: stateRootCodec.decode(d) };
       case MessageType.ImportBlock:
         return { type: MessageType.ImportBlock, value: Block.Codec.View.decode(d) };
-      case MessageType.SetState:
-        return { type: MessageType.SetState, value: SetState.Codec.decode(d) };
       case MessageType.GetState:
         return { type: MessageType.GetState, value: getStateCodec.decode(d) };
       case MessageType.State:
         return { type: MessageType.State, value: stateCodec.decode(d) };
-      case MessageType.StateRoot:
-        return { type: MessageType.StateRoot, value: stateRootCodec.decode(d) };
+      case MessageType.Error:
+        return { type: MessageType.Error, value: ErrorMessage.Codec.decode(d) };
       default:
         throw new Error(`Unknown message type: ${type}`);
     }
@@ -220,11 +294,14 @@ export const messageCodec = codec.custom<MessageData>(
       case MessageType.PeerInfo:
         PeerInfo.Codec.View.skip(s);
         break;
+      case MessageType.Initialize:
+        Initialize.Codec.View.skip(s);
+        break;
+      case MessageType.StateRoot:
+        stateRootCodec.View.skip(s);
+        break;
       case MessageType.ImportBlock:
         Block.Codec.View.skip(s);
-        break;
-      case MessageType.SetState:
-        SetState.Codec.View.skip(s);
         break;
       case MessageType.GetState:
         getStateCodec.View.skip(s);
@@ -232,8 +309,8 @@ export const messageCodec = codec.custom<MessageData>(
       case MessageType.State:
         stateCodec.View.skip(s);
         break;
-      case MessageType.StateRoot:
-        stateRootCodec.View.skip(s);
+      case MessageType.Error:
+        ErrorMessage.Codec.View.skip(s);
         break;
       default:
         throw new Error(`Unknown message type: ${type}`);
