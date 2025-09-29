@@ -42,19 +42,19 @@ export class Eject implements HostCallHandler {
     const previousCodeHash = Bytes.zero(HASH_SIZE).asOpaque<PreimageHash>();
     const memoryReadResult = memory.loadInto(previousCodeHash.raw, preimageHashStart);
     if (memoryReadResult.isError) {
-      logger.trace(`EJECT(${serviceId}) <- PANIC`);
+      logger.trace`EJECT(${serviceId}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
     // cannot eject self
     if (serviceId === this.currentServiceId) {
       regs.set(IN_OUT_REG, HostCallResult.WHO);
-      logger.trace(`EJECT(${serviceId}, ${previousCodeHash}) <- WHO`);
+      logger.trace`EJECT(${serviceId}, ${previousCodeHash}) <- WHO`;
       return;
     }
 
     const result = this.partialState.eject(serviceId, previousCodeHash);
-    logger.trace(`EJECT(${serviceId}, ${previousCodeHash}) <- ${resultToString(result)}`);
+    logger.trace`EJECT(${serviceId}, ${previousCodeHash}) <- ${resultToString(result)}`;
 
     // All good!
     if (result.isOk) {

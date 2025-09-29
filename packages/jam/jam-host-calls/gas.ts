@@ -21,7 +21,7 @@ export class GasHostCall implements HostCallHandler {
 
   execute(gas: GasCounter, regs: IHostCallRegisters): Promise<undefined | PvmExecution> {
     const gasValue = gas.get();
-    logger.trace(`GAS <- ${gasValue}`);
+    logger.trace`GAS <- ${gasValue}`;
     regs.set(7, tryAsU64(gasValue));
     return Promise.resolve(undefined);
   }

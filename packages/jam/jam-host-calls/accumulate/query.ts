@@ -48,12 +48,12 @@ export class Query implements HostCallHandler {
     const memoryReadResult = memory.loadInto(hash.raw, hashStart);
     // error while reading the memory.
     if (memoryReadResult.isError) {
-      logger.trace(`QUERY(${hash}, ${length}) <- PANIC`);
+      logger.trace`QUERY(${hash}, ${length}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
     const result = this.partialState.checkPreimageStatus(hash.asOpaque(), length);
-    logger.trace(`QUERY(${hash}, ${length}) <- ${result}`);
+    logger.trace`QUERY(${hash}, ${length}) <- ${result}`;
 
     const zero = tryAsU64(0n);
 

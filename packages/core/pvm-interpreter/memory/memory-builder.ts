@@ -129,11 +129,12 @@ export class MemoryBuilder {
     `;
     this.ensureNotFinalized();
 
-    const range = MemoryRange.fromStartAndLength(startHeapIndex, endHeapIndex - startHeapIndex);
-    const pages = PageRange.fromMemoryRange(range);
+    const heapRange = MemoryRange.fromStartAndLength(startHeapIndex, endHeapIndex - startHeapIndex);
+    const heapPagesRange = PageRange.fromMemoryRange(heapRange);
+    const initializedPageNumbers = Array.from(this.initialMemory.keys());
 
-    for (const pageNumber of pages) {
-      if (this.initialMemory.has(pageNumber)) {
+    for (const pageNumber of initializedPageNumbers) {
+      if (heapPagesRange.isInRange(pageNumber)) {
         throw new IncorrectSbrkIndex();
       }
     }

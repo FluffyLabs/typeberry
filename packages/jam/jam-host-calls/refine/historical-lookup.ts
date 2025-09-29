@@ -46,12 +46,12 @@ export class HistoricalLookup implements HostCallHandler {
     const hashLoadingResult = memory.loadInto(hash.raw, hashStart);
     // we return Panic in case the key can't be loaded.
     if (hashLoadingResult.isError) {
-      logger.trace(`HISTORICAL_LOOKUP(${serviceId}, ${hash}) <- PANIC`);
+      logger.trace`HISTORICAL_LOOKUP(${serviceId}, ${hash}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
     const value = await this.refine.historicalLookup(serviceId, hash);
-    logger.trace(`HISTORICAL_LOOKUP(${serviceId}, ${hash}) <- ${value}`);
+    logger.trace`HISTORICAL_LOOKUP(${serviceId}, ${hash}) <- ${value}`;
 
     const length = tryAsU64(value === null ? 0 : value.raw.length);
     // f

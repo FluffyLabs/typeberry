@@ -32,7 +32,7 @@ export class Expunge implements HostCallHandler {
     const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG));
 
     const expungeResult = await this.refine.machineExpunge(machineIndex);
-    logger.trace(`EXPUNGE(${machineIndex}) <- ${resultToString(expungeResult)}`);
+    logger.trace`EXPUNGE(${machineIndex}) <- ${resultToString(expungeResult)}`;
 
     if (expungeResult.isOk) {
       regs.set(IN_OUT_REG, expungeResult.ok);

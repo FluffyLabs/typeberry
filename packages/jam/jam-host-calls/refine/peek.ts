@@ -49,9 +49,7 @@ export class Peek implements HostCallHandler {
       length,
       memory.getMemory(),
     );
-    logger.trace(
-      `PEEK(${machineIndex}, ${destinationStart}, ${sourceStart}, ${length}) <- ${resultToString(peekResult)}`,
-    );
+    logger.trace`PEEK(${machineIndex}, ${destinationStart}, ${sourceStart}, ${length}) <- ${resultToString(peekResult)}`;
 
     if (peekResult.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);

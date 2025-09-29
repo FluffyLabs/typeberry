@@ -47,7 +47,7 @@ export class Assign implements HostCallHandler {
     const memoryReadResult = memory.loadInto(res, authorizationQueueStart);
     // error while reading the memory.
     if (memoryReadResult.isError) {
-      logger.trace("ASSIGN() <- PANIC");
+      logger.trace`ASSIGN() <- PANIC`;
       return PvmExecution.Panic;
     }
 
@@ -65,7 +65,7 @@ export class Assign implements HostCallHandler {
     const result = this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, authManager);
     if (result.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);
-      logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue}) <- OK`);
+      logger.trace`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue}) <- OK`;
       return;
     }
 
@@ -73,13 +73,13 @@ export class Assign implements HostCallHandler {
 
     if (e === UpdatePrivilegesError.UnprivilegedService) {
       regs.set(IN_OUT_REG, HostCallResult.HUH);
-      logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue}) <- HUH`);
+      logger.trace`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue}) <- HUH`;
       return;
     }
 
     if (e === UpdatePrivilegesError.InvalidServiceId) {
       regs.set(IN_OUT_REG, HostCallResult.WHO);
-      logger.trace(`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue}) <- HUH`);
+      logger.trace`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue}) <- HUH`;
       return;
     }
 

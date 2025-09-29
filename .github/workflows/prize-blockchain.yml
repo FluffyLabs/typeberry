@@ -1,0 +1,51 @@
+# This workflow will upload the hash of every commit merged to the main branch to a public blockchain
+# WARNING: This workflow does not work in the context of the typeberry repo, but rather FluffyLabs/publish-commit
+
+name: Prize - Commits to Kusama AH
+
+on:
+  push:
+    branches: ["main"]
+
+env:
+  LOG_FILENAME: ${{ github.workspace }}/blockchain-git-log.json
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  blockchain-git-log:
+    runs-on: self-hosted
+    timeout-minutes: 10
+
+    strategy:
+      matrix:
+        node-version: [22.x]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: 'FluffyLabs/publish-commit'
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm ci
+      - name: Download previous transaction log
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          name: log
+          search_artifacts: true
+          branch: ${{ github.ref_name }}
+        continue-on-error: true
+      - run: npm start
+        env:
+          COMMIT_KEY_SECRET: ${{ secrets.COMMIT_KEY_SECRET }}
+        continue-on-error: true
+      - name: Upload new transaction log
+        uses: actions/upload-artifact@v4
+        with:
+          path: ${{ env.LOG_FILENAME }}
+          name: log

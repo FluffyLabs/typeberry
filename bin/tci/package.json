@@ -1,11 +1,11 @@
 {
   "name": "@typeberry/tci",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Typeberry Common Interface - Compatibility wrapper binary with flags understood by all JAM nodes",
   "main": "index.ts",
   "bin": "./index.ts",
   "scripts": {
-    "start": "tsx ./index.ts",
+    "start": "NODE_ENV=development tsx ./index.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
@@ -19,6 +19,7 @@
     "@typeberry/crypto": "*",
     "@typeberry/logger": "*",
     "@typeberry/node": "*",
+    "@typeberry/utils": "*",
     "minimist": "1.2.8"
   },
   "devDependencies": {

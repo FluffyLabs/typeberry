@@ -71,7 +71,7 @@ export class Bless implements HostCallHandler {
       decoder.resetTo(0);
       const memoryReadResult = memory.loadInto(result, memIndex);
       if (memoryReadResult.isError) {
-        logger.trace(`BLESS(${manager}, ${validator}) <- PANIC`);
+        logger.trace`BLESS(${manager}, ${validator}) <- PANIC`;
         return PvmExecution.Panic;
       }
 
@@ -85,7 +85,7 @@ export class Bless implements HostCallHandler {
     const authorizersDecoder = Decoder.fromBlob(res);
     const memoryReadResult = memory.loadInto(res, authorization);
     if (memoryReadResult.isError) {
-      logger.trace(`BLESS(${manager}, ${validator}, ${autoAccumulateEntries}) <- PANIC`);
+      logger.trace`BLESS(${manager}, ${validator}, ${autoAccumulateEntries}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
@@ -102,7 +102,7 @@ export class Bless implements HostCallHandler {
     );
 
     if (updateResult.isOk) {
-      logger.trace(`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries}) <- OK`);
+      logger.trace`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries}) <- OK`;
       regs.set(IN_OUT_REG, HostCallResult.OK);
       return;
     }
@@ -110,13 +110,13 @@ export class Bless implements HostCallHandler {
     const e = updateResult.error;
 
     if (e === UpdatePrivilegesError.UnprivilegedService) {
-      logger.trace(`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries}) <- HUH`);
+      logger.trace`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries}) <- HUH`;
       regs.set(IN_OUT_REG, HostCallResult.HUH);
       return;
     }
 
     if (e === UpdatePrivilegesError.InvalidServiceId) {
-      logger.trace(`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries}) <- WHO`);
+      logger.trace`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries}) <- WHO`;
       regs.set(IN_OUT_REG, HostCallResult.WHO);
       return;
     }

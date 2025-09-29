@@ -42,12 +42,12 @@ export class Yield implements HostCallHandler {
     const hash = Bytes.zero(HASH_SIZE);
     const memoryReadResult = memory.loadInto(hash.raw, hashStart);
     if (memoryReadResult.isError) {
-      logger.trace("YIELD() <- PANIC");
+      logger.trace`YIELD() <- PANIC`;
       return PvmExecution.Panic;
     }
 
     this.partialState.yield(hash);
-    logger.trace(`YIELD(${hash})`);
+    logger.trace`YIELD(${hash})`;
 
     regs.set(IN_OUT_REG, HostCallResult.OK);
   }

@@ -1,0 +1,118 @@
+name: RELEASE - Bump Version
+
+permissions:
+  contents: write       # push branch, create release
+  pull-requests: write  # open PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Bump version (e.g., 0.1.0) - only required in custom'
+        required: false
+        type: string
+      release_type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - custom
+        default: patch
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Validate inputs
+      if: ${{ inputs.release_type == 'custom' && (inputs.version == '' || inputs.version == null) }}
+      run: |
+        echo "Error: 'version' is required when release_type=custom" >&2
+        exit 1
+
+    - name: Determine version
+      id: version
+      run: |
+        if [ "${{ inputs.release_type }}" = "custom" ]; then
+          VERSION="${{ inputs.version }}"
+        else
+          # Get current version from root package.json
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          # Use npm version to calculate new version
+          VERSION=$(npm version ${{ inputs.release_type }} --no-git-tag-version --no-commit-hooks | sed 's/^v//')
+          # Reset the change since we'll do it properly later
+          git checkout -- package.json package-lock.json
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Release version will be: $VERSION"
+
+    - name: Update root package version
+      run: |
+        npm version ${{ steps.version.outputs.version }} --no-git-tag-version --no-commit-hooks
+
+    - name: Update workspace packages versions
+      run: |
+        VERSION=${{ steps.version.outputs.version }}
+        # Update all workspace package.json files
+        for pkg in $(find . -name "package.json" -not -path "./node_modules/*" -not -path "./dist/*" -not -path "./test-vectors/*" -not -path "./package.json"); do
+          echo "Updating $pkg"
+          # Update version
+          node -e "const fs = require('fs'); const p = require('$pkg'); p.version = '$VERSION'; fs.writeFileSync('$pkg', JSON.stringify(p, null, 2) + '\n');"
+        done
+
+    - name: Update lock file
+      run: |
+        npm install --package-lock-only
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v5
+      id: pr
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        base: 'main'
+        draft: true
+        branch: version/v${{ steps.version.outputs.version }}
+        title: "Update Version v${{ steps.version.outputs.version }}"
+        commit-message: "Bump version to v${{ steps.version.outputs.version }}"
+        body: |
+          ## Update Version to v${{ steps.version.outputs.version }}
+
+          **NOTE: This is an automated pull request and it will not trigger any Github Actions.
+            Close this pull request and reopen one yourself to properly continue the version update
+            process.**
+
+    - name: Create Draft Release
+      uses: softprops/action-gh-release@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag_name: v${{ steps.version.outputs.version }}
+        name: Release v${{ steps.version.outputs.version }}
+        body: |
+          🐲 DRAFT RELEASE, please auto-generate release notes on github.
+
+          ---
+          ⚠️ **This is a draft release. It should be published after the version bump PR is merged.**
+        draft: true
+        prerelease: false

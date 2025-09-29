@@ -81,7 +81,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     const request = Decoder.decodeObject(BlockRequest.Codec, message);
-    logger.log(`[${sender.streamId}] Client has requested: ${request}`);
+    logger.log`[${sender.streamId}] Client has requested: ${request}`;
 
     const blocks = this.getBlockSequence(sender.streamId, request.headerHash, request.direction, request.maxBlocks);
 
@@ -107,7 +107,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
       throw new Error("Received an unexpected message from the server.");
     }
     const blocks = Decoder.decodeSequence(Block.Codec.View, message, this.chainSpec);
-    logger.log(`[${sender.streamId}] Server returned ${blocks.length} blocks in ${message.length} bytes of data.`);
+    logger.log`[${sender.streamId}] Server returned ${blocks.length} blocks in ${message.length} bytes of data.`;
     this.promiseResolvers.get(sender.streamId)?.(blocks);
     this.promiseResolvers.delete(sender.streamId);
   }

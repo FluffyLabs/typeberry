@@ -1,15 +1,6 @@
-import {
-  Block,
-  type BlockView,
-  Extrinsic,
-  Header,
-  type HeaderHash,
-  type TimeSlot,
-  tryAsTimeSlot,
-} from "@typeberry/block";
+import { Block, type BlockView, emptyBlock, Header, type HeaderHash, type TimeSlot } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type JipChainSpec, KnownChainSpec } from "@typeberry/config-node";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
@@ -42,7 +33,7 @@ export function openDatabase(
   const genesisHeaderHashNibbles = genesisHeaderHash.toString().substring(2, 10);
 
   const dbPath = `${databaseBasePath}/${nodeNameHash}/${genesisHeaderHashNibbles}`;
-  logger.info(`🛢️ Opening database at ${dbPath}`);
+  logger.info`🛢️ Opening database at ${dbPath}`;
   try {
     return {
       dbPath,
@@ -71,8 +62,8 @@ export async function initializeDatabase(
 
   const header = blocks.getBestHeaderHash();
   const state = blocks.getPostStateRoot(header);
-  logger.log(`🛢️ Best header hash: ${header}`);
-  logger.log(`🛢️ Best state root: ${state}`);
+  logger.log`🛢️ Best header hash: ${header}`;
+  logger.log`🛢️ Best state root: ${state}`;
 
   // DB seems already initialized, just go with what we have.
   const isDbInitialized =
@@ -83,13 +74,13 @@ export async function initializeDatabase(
     return;
   }
 
-  logger.log("🛢️ Database looks fresh. Initializing.");
+  logger.log`🛢️ Database looks fresh. Initializing.`;
   // looks like a fresh db, initialize the state.
   const genesisHeader = Decoder.decodeObject(Header.Codec, config.genesisHeader, spec);
   const genesisExtrinsic = emptyBlock().extrinsic;
   const genesisBlock = Block.create({ header: genesisHeader, extrinsic: genesisExtrinsic });
   const blockView = blockAsView(genesisBlock, spec);
-  logger.log(`🧬 Writing genesis block #${genesisHeader.timeSlotIndex}: ${genesisHeaderHash}`);
+  logger.log`🧬 Writing genesis block #${genesisHeader.timeSlotIndex}: ${genesisHeaderHash}`;
 
   const { genesisStateSerialized, genesisStateRootHash } = loadGenesisState(spec, config.genesisState);
 
@@ -112,7 +103,7 @@ function loadGenesisState(spec: ChainSpec, data: JipChainSpec["genesisState"]) {
   const state = SerializedState.fromStateEntries(spec, stateEntries);
 
   const genesisStateRootHash = stateEntries.getRootHash();
-  logger.info(`🧬 Genesis state root: ${genesisStateRootHash}`);
+  logger.info`🧬 Genesis state root: ${genesisStateRootHash}`;
 
   return {
     genesisState: state,
@@ -122,23 +113,4 @@ function loadGenesisState(spec: ChainSpec, data: JipChainSpec["genesisState"]) {
 }
 function blockAsView(block: Block, spec: ChainSpec): BlockView {
   return Decoder.decodeObject(Block.Codec.View, Encoder.encodeObject(Block.Codec, block, spec), spec);
-}
-
-export function emptyBlock(slot: TimeSlot = tryAsTimeSlot(0)) {
-  const header = Header.empty();
-  header.timeSlotIndex = slot;
-  return Block.create({
-    header,
-    extrinsic: Extrinsic.create({
-      tickets: asKnownSize([]),
-      preimages: [],
-      assurances: asKnownSize([]),
-      guarantees: asKnownSize([]),
-      disputes: {
-        verdicts: [],
-        culprits: [],
-        faults: [],
-      },
-    }),
-  });
 }

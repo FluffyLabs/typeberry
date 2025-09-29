@@ -1,0 +1,15 @@
+{
+  "name": "@typeberry/generic-worker",
+  "version": "0.1.2",
+  "description": "Generic stuff for the workers.",
+  "main": "index.ts",
+  "dependencies": {
+    "@typeberry/state-machine": "*"
+  },
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0",
+  "type": "module"
+}

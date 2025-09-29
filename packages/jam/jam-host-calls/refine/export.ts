@@ -46,13 +46,13 @@ export class Export implements HostCallHandler {
     const segment: Segment = Bytes.zero(SEGMENT_BYTES);
     const segmentReadResult = memory.loadInto(segment.raw.subarray(0, segmentLength), segmentStart);
     if (segmentReadResult.isError) {
-      logger.trace(`EXPORT(${segment.toStringTruncated()}) <- PANIC`);
+      logger.trace`EXPORT(${segment.toStringTruncated()}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
     // attempt to export a segment and fail if it's above the maximum.
     const segmentExported = this.refine.exportSegment(segment);
-    logger.trace(`EXPORT(${segment.toStringTruncated()}) <- ${resultToString(segmentExported)}`);
+    logger.trace`EXPORT(${segment.toStringTruncated()}) <- ${resultToString(segmentExported)}`;
 
     if (segmentExported.isOk) {
       regs.set(IN_OUT_REG, tryAsU64(segmentExported.ok));

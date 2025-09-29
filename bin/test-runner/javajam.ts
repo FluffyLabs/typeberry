@@ -7,8 +7,8 @@ main(runners, process.argv.slice(2), "test-vectors/javajam", {
   accepted: ["stf/state_transitions/"],
   ignored: ["testnetKeys.json", "stf/blocks/", "erasure_coding/"],
 })
-  .then((r) => logger.log(r))
+  .then((r) => logger.log`${r}`)
   .catch((e) => {
-    logger.error(`${e}`);
+    logger.error`${e}`;
     process.exit(-1);
   });

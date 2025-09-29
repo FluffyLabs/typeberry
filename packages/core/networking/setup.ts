@@ -36,7 +36,7 @@ export type Options = {
 export class Quic {
   /** Setup QUIC socket and start listening for connections. */
   static async setup({ host, port, protocols, key }: Options): Promise<QuicNetwork> {
-    const quicLoggerLvl = Logger.getLevel("net") > Level.TRACE ? LogLevel.WARN : LogLevel.DEBUG;
+    const quicLoggerLvl = logger.getLevel() > Level.TRACE ? LogLevel.WARN : LogLevel.DEBUG;
     const quicLogger = new QuicLogger("quic", quicLoggerLvl, [
       new StreamHandler(formatting.format`${formatting.level}:${formatting.keys}:${formatting.msg}`),
     ]);
@@ -63,7 +63,7 @@ export class Quic {
       verifyCallback: lastConnectedPeer.verifyCallback,
     };
 
-    logger.info(`🆔 Peer id: ** ${altNameRaw(key.pubKey)}@${host}:${port} ** (pubkey: ${key.pubKey})`);
+    logger.info`🆔 Peer id: ** ${altNameRaw(key.pubKey)}@${host}:${port} ** (pubkey: ${key.pubKey})`;
     // Shared injected UDP socket
     const socket = new QUICSocket({
       logger: quicLogger.getChild("socket"),
@@ -81,8 +81,8 @@ export class Quic {
     const peers = new PeersManagement<QuicPeer>();
 
     // basic error handling
-    addEventListener(server, events.EventQUICServerError, (error) => logger.error(`🛜  Server error: ${error}`));
-    addEventListener(server, events.EventQUICServerClose, (ev) => logger.error(`🛜  Server stopped: ${ev}`));
+    addEventListener(server, events.EventQUICServerError, (error) => logger.error`🛜  Server error: ${error}`);
+    addEventListener(server, events.EventQUICServerClose, (ev) => logger.error`🛜  Server stopped: ${ev}`);
 
     // handling incoming session
     addEventListener(server, events.EventQUICServerConnection, async (ev) => {
@@ -93,20 +93,18 @@ export class Quic {
       }
 
       if (lastConnectedPeer.info.key.isEqualTo(key.pubKey)) {
-        logger.log(`🛜 Rejecting connection from ourself from ${conn.remoteHost}:${conn.remotePort}`);
+        logger.log`🛜 Rejecting connection from ourself from ${conn.remoteHost}:${conn.remotePort}`;
         await conn.stop();
         return;
       }
 
       if (peers.isConnected(lastConnectedPeer.info.id)) {
-        logger.log(
-          `🛜 Rejecting duplicate connection with peer ${lastConnectedPeer.info.id} from ${conn.remoteHost}:${conn.remotePort}`,
-        );
+        logger.log`🛜 Rejecting duplicate connection with peer ${lastConnectedPeer.info.id} from ${conn.remoteHost}:${conn.remotePort}`;
         await conn.stop();
         return;
       }
 
-      logger.log(`🛜 Server handshake with ${conn.remoteHost}:${conn.remotePort}`);
+      logger.log`🛜 Server handshake with ${conn.remoteHost}:${conn.remotePort}`;
       newPeer(conn, lastConnectedPeer.info);
       lastConnectedPeer.info = null;
       await conn.start();
@@ -134,11 +132,11 @@ export class Quic {
       const client = await clientLater;
 
       addEventListener(client, events.EventQUICClientClose, () => {
-        logger.log("⚰️ Client connection closed.");
+        logger.log`⚰️ Client connection closed.`;
       });
 
       addEventListener(client, events.EventQUICClientError, (error) => {
-        logger.error(`🔴 Client error: ${error.detail}`);
+        logger.error`🔴 Client error: ${error.detail}`;
       });
 
       if (peerDetails.info === null) {
@@ -151,7 +149,7 @@ export class Quic {
         );
       }
 
-      logger.log(`🤝 Client handshake with: ${peer.host}:${peer.port}`);
+      logger.log`🤝 Client handshake with: ${peer.host}:${peer.port}`;
       return newPeer(client.connection, peerDetails.info);
     }
 

@@ -7,7 +7,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { Compatibility, TestSuite } from "@typeberry/utils";
+import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { getServiceIdOrCurrent } from "./utils.js";
@@ -20,8 +20,10 @@ export interface AccountsInfo {
 
 const IN_OUT_REG = 7;
 
-const OFFSET_REG = Compatibility.isSuite(TestSuite.W3F_DAVXY) ? 9 : 11;
-export const LEN_REG = Compatibility.isSuite(TestSuite.W3F_DAVXY) ? 10 : 12;
+const OFFSET_REG =
+  Compatibility.isSuite(TestSuite.W3F_DAVXY) || Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) ? 9 : 11;
+export const LEN_REG =
+  Compatibility.isSuite(TestSuite.W3F_DAVXY) || Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) ? 10 : 12;
 
 /**
  * Return info about some account.
@@ -39,7 +41,7 @@ export const LEN_REG = Compatibility.isSuite(TestSuite.W3F_DAVXY) ? 10 : 12;
  * a = last accumulation timeslot
  * p = parent service
  *
- * https://graypaper.fluffylabs.dev/#/38c4e62/338302338302?v=0.7.0
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/333b00333b00?v=0.7.2
  */
 export class Info implements HostCallHandler {
   index = tryAsHostCallIndex(5);
@@ -82,15 +84,17 @@ export class Info implements HostCallHandler {
     // l
     const length = minU64(regs.get(LEN_REG), tryAsU64(valueLength - offset));
 
+    // NOTE: casting to `Number` is safe in both places, since we are always bounded
+    // by the actual `encodedInfo.length`, which is equal `96`.
     const chunk = encodedInfo.raw.subarray(Number(offset), Number(offset + length));
 
     const writeResult = memory.storeFrom(outputStart, chunk);
     if (writeResult.isError) {
-      logger.trace(`INFO(${serviceId}) <- PANIC`);
+      logger.trace`INFO(${serviceId}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
-    logger.trace(`INFO(${serviceId}) <- ${BytesBlob.blobFrom(chunk)}`);
+    logger.trace`INFO(${serviceId}) <- ${BytesBlob.blobFrom(chunk)}`;
 
     if (accountInfo === null) {
       regs.set(IN_OUT_REG, HostCallResult.NONE);
@@ -106,7 +110,7 @@ export class Info implements HostCallHandler {
  *
  * Used exclusively by `info` host call.
  *
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/337602337602?v=0.6.7
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/33920033b500?v=0.7.2
  */
 export const codecServiceAccountInfoWithThresholdBalance = codec.object(
   {

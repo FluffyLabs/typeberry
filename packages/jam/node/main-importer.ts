@@ -17,8 +17,8 @@ const zeroHash = Bytes.zero(HASH_SIZE).asOpaque();
 export async function mainImporter(config: JamConfig, withRelPath: (v: string) => string): Promise<NodeApi> {
   await initWasm();
 
-  logger.info(`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`);
-  logger.info(`🎸 Starting importer: ${config.nodeName}.`);
+  logger.info`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
+  logger.info`🎸 Starting importer: ${config.nodeName}.`;
   const chainSpec = getChainSpec(config.node.flavor);
   const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
     config.nodeName,
@@ -52,9 +52,9 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
       return importer.getBestStateRootHash() ?? zeroHash;
     },
     async close() {
-      logger.log("[main] 🛢️ Closing the database");
+      logger.log`[main] 🛢️ Closing the database`;
       await lmdb.close();
-      logger.info("[main] ✅ Done.");
+      logger.info`[main] ✅ Done.`;
     },
   };
 

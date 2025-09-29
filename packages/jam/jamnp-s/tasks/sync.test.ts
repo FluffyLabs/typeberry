@@ -76,7 +76,7 @@ describe("SyncTask", () => {
   }
 
   async function tick() {
-    logger.log("tick");
+    logger.log`tick`;
     // TODO [ToDr] This is pretty imperfect. We basically need some way,
     // to let the background reading tasks to process incoming data.
     // Might be good enough? 🤷

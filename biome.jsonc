@@ -36,7 +36,10 @@
         "noStaticOnlyClass": "off"
       },
       "correctness": {
-        "noUnusedImports": "error",
+        "noUnusedImports": {
+          "level": "error",
+          "fix": "safe"
+        },
         "noUnusedVariables": "error",
         "noUnusedFunctionParameters": "error",
         "noUnusedPrivateClassMembers": "error"
@@ -60,7 +63,7 @@
       "!**/dist/**/*",
       "!**/benchmarks/**/output/**/*",
       "!**/test-vectors/**/*",
-      "!**/tools/builder/pkg.ts"
+      "!**/packages/misc/builder/pkg.ts"
     ]
   }
 }

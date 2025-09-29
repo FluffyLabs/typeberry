@@ -244,11 +244,11 @@ export class Fetch implements HostCallHandler {
     const chunk = value === null ? new Uint8Array() : value.raw.subarray(Number(offset), Number(offset + length));
     const storeResult = memory.storeFrom(output, chunk);
     if (storeResult.isError) {
-      logger.trace(`FETCH(${kind}) <- PANIC`);
+      logger.trace`FETCH(${kind}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
-    logger.trace(`FETCH(${kind}) <- ${value?.toStringTruncated()}`);
+    logger.trace`FETCH(${kind}) <- ${value?.toStringTruncated()}`;
 
     // write result
     regs.set(IN_OUT_REG, value === null ? HostCallResult.NONE : valueLength);

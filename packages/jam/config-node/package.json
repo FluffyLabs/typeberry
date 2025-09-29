@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/config-node",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Config for typeberry node.",
   "main": "index.ts",
   "type": "module",
@@ -12,7 +12,6 @@
     "@typeberry/bytes": "*",
     "@typeberry/config": "*",
     "@typeberry/configs": "*",
-    "@typeberry/jamnp-s": "*",
     "@typeberry/json-parser": "*",
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",

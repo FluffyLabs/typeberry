@@ -4,7 +4,7 @@ import "json-bigint-patch";
 import fs from "node:fs";
 import { start as startRepl } from "node:repl";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Decoder, Encoder, ObjectView } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { parseFromJson } from "@typeberry/json-parser";
@@ -85,9 +85,15 @@ function dumpOutput(
   args: Arguments,
   withRelPath: (path: string) => string,
 ) {
+  const { destination } = args;
+  const dump =
+    destination !== null
+      ? (v: string | Uint8Array) => fs.writeFileSync(withRelPath(destination), v)
+      : (v: string | Uint8Array) => console.info(v);
+
   switch (outputFormat) {
     case OutputFormat.Print: {
-      console.info(`${inspect(data)}`);
+      dump(`${inspect(data)}`);
       return;
     }
     case OutputFormat.Hex: {
@@ -95,13 +101,24 @@ function dumpOutput(
         throw new Error(`${type.name} does not support encoding to JAM codec.`);
       }
       const encoded = Encoder.encodeObject(type.encode, data, spec);
-      console.info(`${encoded}`);
+      dump(`${encoded}`);
+      return;
+    }
+    case OutputFormat.Bin: {
+      if (type.encode === undefined) {
+        throw new Error(`${type.name} does not support encoding to JAM codec.`);
+      }
+      if (destination === null) {
+        throw new Error(`${OutputFormat.Bin} requires destination file.`);
+      }
+      const encoded = Encoder.encodeObject(type.encode, data, spec);
+      dump(encoded.raw);
       return;
     }
     case OutputFormat.Json: {
       // TODO [ToDr] this will probably not work for all cases,
       // but for now may be good enough.
-      console.info(toJson(data));
+      dump(toJson(data));
       return;
     }
     case OutputFormat.Repl: {
@@ -180,6 +197,10 @@ function toJson(data: unknown) {
         return Object.fromEntries(value.entries());
       }
 
+      if (value instanceof ObjectView) {
+        return value.materialize();
+      }
+
       return value;
     },
     2,
@@ -202,13 +223,14 @@ function processOutput(
   if (type.process === undefined || !type.process.options.includes(process)) {
     throw new Error(`Unsupported processing: '${process}' for '${type.name}'`);
   }
-
+  const processed = type.process.run(spec, data, process);
   return {
-    processed: type.process.run(spec, data, process),
+    processed: processed.value,
     type: {
       ...type,
-      // disable encoding, since it won't match
-      encode: undefined,
+      name: `${type.name}(${process})`,
+      // use encoding from processed type
+      encode: processed.encode,
     },
   };
 }

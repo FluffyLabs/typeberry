@@ -193,7 +193,7 @@ export class Interpreter {
     const argsResult = this.argsDecodingResults[argsType];
     this.argsDecoder.fillArgs(this.pc, argsResult);
 
-    logger.insane(`[PC: ${this.pc}] ${Instruction[currentInstruction]}`);
+    logger.insane`[PC: ${this.pc}] ${Instruction[currentInstruction]}`;
 
     if (!isValidInstruction) {
       this.instructionResult.status = Result.PANIC;
@@ -270,7 +270,7 @@ export class Interpreter {
           this.status = Status.HOST;
           break;
       }
-      logger.insane(`[PC: ${this.pc}] Status: ${Result[this.instructionResult.status]}`);
+      logger.insane`[PC: ${this.pc}] Status: ${Result[this.instructionResult.status]}`;
       return this.status;
     }
 

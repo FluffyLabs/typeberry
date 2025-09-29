@@ -52,7 +52,7 @@ export class Read implements HostCallHandler {
 
     const memoryReadResult = memory.loadInto(rawKey.raw, storageKeyStartAddress);
     if (memoryReadResult.isError) {
-      logger.trace(`READ(${serviceId}, ${rawKey}) <- PANIC`);
+      logger.trace`READ(${serviceId}, ${rawKey}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
@@ -74,17 +74,17 @@ export class Read implements HostCallHandler {
     const chunk = value === null ? new Uint8Array(0) : value.raw.subarray(Number(offset), Number(offset + blobLength));
     const memoryWriteResult = memory.storeFrom(destinationAddress, chunk);
     if (memoryWriteResult.isError) {
-      logger.trace(`READ(${serviceId}, ${rawKey}) <- PANIC`);
+      logger.trace`READ(${serviceId}, ${rawKey}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
     if (value === null) {
-      logger.trace(`READ(${serviceId}, ${rawKey}) <- NONE`);
+      logger.trace`READ(${serviceId}, ${rawKey}) <- NONE`;
       regs.set(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
-    logger.trace(`READ(${serviceId}, ${rawKey}) <- ${BytesBlob.blobFrom(chunk).toStringTruncated()}`);
+    logger.trace`READ(${serviceId}, ${rawKey}) <- ${BytesBlob.blobFrom(chunk).toStringTruncated()}`;
     regs.set(IN_OUT_REG, valueLength);
   }
 }

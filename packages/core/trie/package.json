@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/trie",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Trie implementation for Typeberry JAM.",
   "main": "index.ts",
   "scripts": {

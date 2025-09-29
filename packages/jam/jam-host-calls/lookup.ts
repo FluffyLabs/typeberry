@@ -49,14 +49,14 @@ export class Lookup implements HostCallHandler {
     const preImageHash = Bytes.zero(HASH_SIZE);
     const memoryReadResult = memory.loadInto(preImageHash.raw, hashAddress);
     if (memoryReadResult.isError) {
-      logger.trace(`LOOKUP(${serviceId}, ${preImageHash}) <- PANIC`);
+      logger.trace`LOOKUP(${serviceId}, ${preImageHash}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
     // v
     const preImage = this.account.lookup(serviceId, preImageHash);
 
-    logger.trace(`LOOKUP(${serviceId}, ${preImageHash}) <- ${preImage?.toStringTruncated()}...`);
+    logger.trace`LOOKUP(${serviceId}, ${preImageHash}) <- ${preImage?.toStringTruncated()}...`;
 
     const preImageLength = preImage === null ? tryAsU64(0) : tryAsU64(preImage.raw.length);
     const preimageBlobOffset = regs.get(10);
