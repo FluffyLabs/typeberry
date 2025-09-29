@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import { Socket } from "node:net";
 import { describe, it, type Mock, mock } from "node:test";
 import { type BlockView, type HeaderHash, type StateRootHash, tryAsTimeSlot } from "@typeberry/block";
 import { testBlockView } from "@typeberry/block/test-helpers.js";
@@ -8,18 +7,19 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { tryAsU8, tryAsU32 } from "@typeberry/numbers";
 import { Result } from "@typeberry/utils";
-import { IpcSender } from "../../server.js";
-import { KeyValue, Version } from "../v0/types.js";
+import type { IpcSender } from "../server.js";
 import { type FuzzMessageHandler, FuzzTarget } from "./handler.js";
 import {
   AncestryItem,
   ErrorMessage,
   Features,
   Initialize,
+  KeyValue,
   type Message,
   MessageType,
   messageCodec,
   PeerInfo,
+  Version,
 } from "./types.js";
 
 const spec = tinyChainSpec;
@@ -28,16 +28,12 @@ class MockV1MessageHandler implements FuzzMessageHandler {
   getPeerInfo: Mock<(value: PeerInfo) => Promise<PeerInfo>> = mock.fn();
   initialize: Mock<(value: Initialize) => Promise<StateRootHash>> = mock.fn();
   importBlock: Mock<(value: BlockView) => Promise<Result<StateRootHash, ErrorMessage>>> = mock.fn();
-  getState: Mock<(value: HeaderHash) => Promise<KeyValue[]>> = mock.fn();
+  getSerializedState: Mock<(value: HeaderHash) => Promise<KeyValue[]>> = mock.fn();
 }
 
-class MockSender extends IpcSender {
+class MockSender implements IpcSender {
   _sentData: BytesBlob[] = [];
   _closeCalled = 0;
-
-  constructor() {
-    super(new Socket());
-  }
 
   send(data: BytesBlob): void {
     this._sentData.push(data);
@@ -273,7 +269,7 @@ describe("FuzzV1Target Handler", () => {
         value: keyValues,
       };
 
-      mockMessageHandler.getState.mock.mockImplementation(async () => keyValues);
+      mockMessageHandler.getSerializedState.mock.mockImplementation(async () => keyValues);
 
       const fuzzTarget = new FuzzTarget(mockMessageHandler, mockSender, spec);
       await completeHandshake(mockMessageHandler, mockSender, fuzzTarget);
@@ -283,8 +279,8 @@ describe("FuzzV1Target Handler", () => {
 
       await fuzzTarget.onSocketMessage(testMessage);
 
-      assert.strictEqual(mockMessageHandler.getState.mock.callCount(), 1);
-      assert.deepStrictEqual(mockMessageHandler.getState.mock.calls[0].arguments, [headerHash]);
+      assert.strictEqual(mockMessageHandler.getSerializedState.mock.callCount(), 1);
+      assert.deepStrictEqual(mockMessageHandler.getSerializedState.mock.calls[0].arguments, [headerHash]);
 
       assert.strictEqual(mockSender._sentData.length, 1);
       const sentMessage = decodeMessage(mockSender._sentData[0]);
@@ -390,7 +386,7 @@ describe("FuzzV1Target Handler", () => {
       assert.strictEqual(mockMessageHandler.getPeerInfo.mock.callCount(), 0);
       assert.strictEqual(mockMessageHandler.initialize.mock.callCount(), 0);
       assert.strictEqual(mockMessageHandler.importBlock.mock.callCount(), 0);
-      assert.strictEqual(mockMessageHandler.getState.mock.callCount(), 0);
+      assert.strictEqual(mockMessageHandler.getSerializedState.mock.callCount(), 0);
     });
   });
 

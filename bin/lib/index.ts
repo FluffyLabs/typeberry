@@ -8,6 +8,7 @@ export * as config_node from "@typeberry/config-node";
 export * as crypto from "@typeberry/crypto";
 export * as database from "@typeberry/database";
 export * as erasure_coding from "@typeberry/erasure-coding";
+export * as fuzz_proto from "@typeberry/fuzz-proto";
 export * as hash from "@typeberry/hash";
 export * as jam_host_calls from "@typeberry/jam-host-calls";
 export * as json_parser from "@typeberry/json-parser";
