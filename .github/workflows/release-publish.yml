@@ -1,4 +1,4 @@
-name: Release
+name: RELEASE - Publish on release
 
 permissions:
   contents: write    # update release notes
@@ -89,7 +89,7 @@ jobs:
   create-github-release-assets:
     if: ${{ github.event_name == 'release' }}
     runs-on: ubuntu-latest
-    needs: [publish-docker, publish-npm-lib, publish-npm-jam]
+    needs: [publish-docker, publish-npm]
 
     steps:
     - uses: actions/checkout@v4

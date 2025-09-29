@@ -1,4 +1,4 @@
-name: json rpc e2e tests
+name: QA - @typeberry/rpc
 
 on:
   workflow_dispatch:

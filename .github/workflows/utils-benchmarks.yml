@@ -1,6 +1,6 @@
 # Run all benchmarks and compare the results.
 
-name: Benchmarks
+name: Utils - Benchmarks
 
 on:
   workflow_dispatch:

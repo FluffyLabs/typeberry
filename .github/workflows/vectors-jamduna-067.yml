@@ -1,4 +1,4 @@
-name: jamduna test vectors 0.6.7
+name: VECTORS - jamduna-0.6.7
 
 on:
   workflow_dispatch:

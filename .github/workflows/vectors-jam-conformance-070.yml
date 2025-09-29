@@ -1,4 +1,4 @@
-name: davxy jam conformance vectors 0.7.0
+name: VECTORS - conformance-0.7.0
 
 on:
   workflow_dispatch:
