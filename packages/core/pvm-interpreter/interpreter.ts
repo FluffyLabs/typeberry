@@ -183,8 +183,8 @@ export class Interpreter {
      */
     const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
     const isValidInstruction = Instruction[currentInstruction] !== undefined;
-    const basicGasCost = instructionGasMap[currentInstruction] ?? instructionGasMap[Instruction.TRAP];
-    const underflow = this.gas.sub(basicGasCost);
+    const gasCost = instructionGasMap[currentInstruction] ?? instructionGasMap[Instruction.TRAP];
+    const underflow = this.gas.sub(gasCost);
     if (underflow) {
       this.status = Status.OOG;
       return this.status;
