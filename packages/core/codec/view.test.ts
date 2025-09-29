@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import {CodecRecord} from "./descriptor.js";
-import {codec} from "./descriptors.js";
-import {tryAsU32, U32} from "@typeberry/numbers";
-import {Encoder} from "./encoder.js";
-import {Decoder} from "./decoder.js";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
+import { Decoder } from "./decoder.js";
+import type { CodecRecord } from "./descriptor.js";
+import { codec } from "./descriptors.js";
+import { Encoder } from "./encoder.js";
 
 describe("Codec view", () => {
   class MyClass {
@@ -27,9 +27,9 @@ describe("Codec view", () => {
 
   function testData() {
     const data = MyClass.create({
-      name: 'test',
+      name: "test",
       sequence: [1, 2, 3].map(tryAsU32),
-      num: tryAsU32(2**32 - 1),
+      num: tryAsU32(2 ** 32 - 1),
     });
     const encoded = Encoder.encodeObject(MyClass.Codec, data);
     const view = Decoder.decodeObject(MyClass.Codec.View, encoded);
@@ -44,12 +44,11 @@ describe("Codec view", () => {
   it("should have nice toString", () => {
     const { view } = testData();
 
-    assert.strictEqual(`${view}`, 'View<MyClass>(cache: 0)');
-    assert.strictEqual(`${view.sequence}`, 'ViewField<View<MyClass>(cache: 1).sequence>');
-    assert.strictEqual(`${view.sequence.view()}`, 'SequenceView<u32>(cache: 0)');
-    assert.strictEqual(`${view.sequence.view().get(0)}`, 'ViewField<SequenceView<u32>(cache: 0)[0]>');
-    assert.strictEqual(`${view.sequence.view().get(0)?.view()}`, '0x01000000');
-    assert.strictEqual(`${view.num.view()}`, '4294967295');
+    assert.strictEqual(`${view}`, "View<MyClass>(cache: 0)");
+    assert.strictEqual(`${view.sequence}`, "ViewField<View<MyClass>(cache: 1).sequence>");
+    assert.strictEqual(`${view.sequence.view()}`, "SequenceView<u32>(cache: 0)");
+    assert.strictEqual(`${view.sequence.view().get(0)}`, "ViewField<SequenceView<u32>(cache: 0)[0]>");
+    assert.strictEqual(`${view.sequence.view().get(0)?.view()}`, "0x01000000");
+    assert.strictEqual(`${view.num.view()}`, "4294967295");
   });
 });
-

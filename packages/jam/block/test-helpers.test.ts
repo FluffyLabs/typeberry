@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import {testBlockView} from "./test-helpers.js";
-import {inspect} from "@typeberry/utils";
+import { inspect } from "@typeberry/utils";
+import { testBlockView } from "./test-helpers.js";
 
 describe("test helpers", () => {
   it("block view should proper toString", () => {
@@ -14,4 +14,3 @@ describe("test helpers", () => {
     assert.strictEqual(`${inspect(blockView)}`, "View<Block>(cache: 0)");
   });
 });
-
