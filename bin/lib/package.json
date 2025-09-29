@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/lib",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Typeberry Library",
   "main": "index.ts",
   "dependencies": {
