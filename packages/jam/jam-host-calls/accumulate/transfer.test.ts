@@ -48,8 +48,6 @@ function prepareRegsAndMemory(
   };
 }
 
-const gas = gasCounter(tryAsGas(10_000));
-
 describe("HostCalls: Transfer", () => {
   it("should perform a transfer to self?", async () => {
     const accumulate = new PartialStateMock();
@@ -63,7 +61,10 @@ describe("HostCalls: Transfer", () => {
       Bytes.fill(TRANSFER_MEMO_BYTES, 33),
     );
 
+    const gas = gasCounter(tryAsGas(10_000));
+
     // when
+    gas.sub(transfer.basicGasCost);
     await transfer.execute(gas, registers, memory);
 
     // then
@@ -71,6 +72,7 @@ describe("HostCalls: Transfer", () => {
     assert.deepStrictEqual(accumulate.transferData, [
       [transfer.currentServiceId, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)],
     ]);
+    assert.deepStrictEqual(gas.get(), 8_990n);
   });
 
   it("should perform a transfer to different account", async () => {
@@ -85,12 +87,16 @@ describe("HostCalls: Transfer", () => {
       Bytes.fill(TRANSFER_MEMO_BYTES, 33),
     );
 
+    const gas = gasCounter(tryAsGas(10_000));
+
     // when
+    gas.sub(transfer.basicGasCost);
     await transfer.execute(gas, registers, memory);
 
     // then
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
+    assert.deepStrictEqual(gas.get(), 8_990n);
   });
 
   it("should fail if there is no memory for memo", async () => {
@@ -106,12 +112,16 @@ describe("HostCalls: Transfer", () => {
       { skipMemo: true },
     );
 
+    const gas = gasCounter(tryAsGas(10_000));
+
     // when
+    gas.sub(transfer.basicGasCost);
     const result = await transfer.execute(gas, registers, memory);
 
     // then
     assert.deepStrictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accumulate.transferData, []);
+    assert.deepStrictEqual(gas.get(), 9_990n);
   });
 
   it("should fail if gas is too low", async () => {
@@ -126,13 +136,17 @@ describe("HostCalls: Transfer", () => {
       Bytes.fill(TRANSFER_MEMO_BYTES, 33),
     );
 
+    const gas = gasCounter(tryAsGas(10_000));
+
     // when
+    gas.sub(transfer.basicGasCost);
     accumulate.transferReturnValue = Result.error(TransferError.GasTooLow);
     await transfer.execute(gas, registers, memory);
 
     // then
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.LOW);
-    assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
+    assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 0n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
+    assert.deepStrictEqual(gas.get(), 9_990n);
   });
 
   it("should fail if amount is too big", async () => {
@@ -147,13 +161,17 @@ describe("HostCalls: Transfer", () => {
       Bytes.fill(TRANSFER_MEMO_BYTES, 33),
     );
 
+    const gas = gasCounter(tryAsGas(10_000));
+
     // when
+    gas.sub(transfer.basicGasCost);
     accumulate.transferReturnValue = Result.error(TransferError.BalanceBelowThreshold);
     await transfer.execute(gas, registers, memory);
 
     // then
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.CASH);
-    assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
+    assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 0n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
+    assert.deepStrictEqual(gas.get(), 9_990n);
   });
 
   it("should fail if destination does not exist", async () => {
@@ -168,12 +186,16 @@ describe("HostCalls: Transfer", () => {
       Bytes.fill(TRANSFER_MEMO_BYTES, 33),
     );
 
+    const gas = gasCounter(tryAsGas(10_000));
+
     // when
+    gas.sub(transfer.basicGasCost);
     accumulate.transferReturnValue = Result.error(TransferError.DestinationNotFound);
     await transfer.execute(gas, registers, memory);
 
     // then
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
-    assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
+    assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 0n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
+    assert.deepStrictEqual(gas.get(), 9_990n);
   });
 });

@@ -4,6 +4,7 @@ import {
   type PerValidator,
   type ServiceGas,
   type ServiceId,
+  tryAsServiceGas,
   tryAsServiceId,
 } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
@@ -83,7 +84,11 @@ export class PartialStateMock implements PartialState {
     if (destination === null) {
       return Result.error(TransferError.DestinationNotFound);
     }
-    this.transferData.push([destination, amount, suppliedGas, memo]);
+    if (this.transferReturnValue.isOk) {
+      this.transferData.push([destination, amount, suppliedGas, memo]);
+    } else {
+      this.transferData.push([destination, amount, tryAsServiceGas(0), memo]);
+    }
     return this.transferReturnValue;
   }
 
