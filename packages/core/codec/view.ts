@@ -16,6 +16,7 @@ export class ViewField<T, V> implements ViewField<T, V> {
   private cachedBlob: BytesBlob | undefined;
 
   constructor(
+    private readonly name: string,
     private readonly getView: () => V,
     private readonly getValue: () => T,
     private readonly getEncoded: () => BytesBlob,
@@ -43,6 +44,10 @@ export class ViewField<T, V> implements ViewField<T, V> {
       this.cachedBlob = this.getEncoded();
     }
     return this.cachedBlob;
+  }
+
+  toString() {
+    return `ViewField<${this.name}>`;
   }
 }
 
@@ -127,6 +132,7 @@ export abstract class ObjectView<T> {
       const field = this.descriptorsKeys[i];
       const type = this.descriptors[field as keyof DescriptorRecord<T>];
       lastItem = new ViewField(
+        `${this.toString()}.${String(field)}`,
         () => type.View.decode(fieldDecoder.clone()),
         () => type.decode(fieldDecoder.clone()),
         () => type.skipEncoded(fieldDecoder.clone()),
@@ -143,6 +149,10 @@ export abstract class ObjectView<T> {
     }
 
     return lastItem as ViewField<T[K], unknown>;
+  }
+
+  toString() {
+    return `View<${this.materializedConstructor.name}>(cache: ${this.cache.size})`;
   }
 }
 
@@ -244,6 +254,7 @@ export class SequenceView<T, V = T> {
       const fieldDecoder = skipper.decoder.clone();
       const type = this.descriptor;
       lastItem = new ViewField(
+        `${this.toString()}[${index}]`,
         () => type.View.decode(fieldDecoder.clone()),
         () => type.decode(fieldDecoder.clone()),
         () => type.skipEncoded(fieldDecoder.clone()),
@@ -259,5 +270,9 @@ export class SequenceView<T, V = T> {
       throw new Error("Last item must be set, since the loop turns at least once.");
     }
     return lastItem;
+  }
+
+  toString() {
+    return `SequenceView<${this.descriptor.name}>(cache: ${this.cache.size})`;
   }
 }
