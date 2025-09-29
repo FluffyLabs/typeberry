@@ -1,4 +1,4 @@
-name: Create & deploy stats page
+name: Publish - GH pages
 
 on:
   workflow_dispatch:

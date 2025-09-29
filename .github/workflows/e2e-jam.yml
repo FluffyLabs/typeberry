@@ -1,4 +1,4 @@
-name: JAM Node E2E Tests
+name: E2E - @typeberry/jam
 
 on:
   push:
