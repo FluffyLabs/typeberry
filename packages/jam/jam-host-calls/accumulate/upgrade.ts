@@ -19,7 +19,7 @@ const ALLOWANCE_REG = 9; // `m`
  */
 export class Upgrade implements HostCallHandler {
   index = tryAsHostCallIndex(19);
-  gasCost = tryAsSmallGas(10);
+  basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, GAS_REG, ALLOWANCE_REG);
 
   constructor(

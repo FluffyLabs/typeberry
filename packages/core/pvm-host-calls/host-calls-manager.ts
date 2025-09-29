@@ -60,7 +60,7 @@ export class HostCallsManager {
 
 export class NoopMissing implements HostCallHandler {
   index = tryAsHostCallIndex(2 ** 32 - 1);
-  gasCost = tryAsSmallGas(0);
+  basicGasCost = tryAsSmallGas(0);
   currentServiceId = tryAsU32(0);
   tracedRegisters = [];
 

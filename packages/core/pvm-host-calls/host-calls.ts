@@ -89,8 +89,8 @@ export class HostCalls {
 
       const hostCall = this.hostCalls.get(index);
       const gasBefore = gas.get();
-      const gasCost = typeof hostCall.gasCost === "number" ? hostCall.gasCost : hostCall.gasCost(regs);
-      const underflow = gas.sub(gasCost);
+      const basicGasCost = hostCall.basicGasCost;
+      const underflow = gas.sub(basicGasCost);
 
       const pcLog = `[PC: ${pvmInstance.getPC()}]`;
       if (underflow) {

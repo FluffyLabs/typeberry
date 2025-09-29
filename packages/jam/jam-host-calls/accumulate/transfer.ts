@@ -1,9 +1,8 @@
 import { type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { type Gas, type GasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
+import { type GasCounter, tryAsGas, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { assertNever, Compatibility, GpVersion, resultToString } from "@typeberry/utils";
 import { type PartialState, TRANSFER_MEMO_BYTES, TransferError } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
@@ -31,12 +30,13 @@ export class Transfer implements HostCallHandler {
   );
   /**
    * `g = 10 + t`
+   *
+   * `t` has positive value, only when status of a transfer is `OK`
+   * `0` otherwise
+   *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/373f00373f00?v=0.7.2
    */
-  gasCost = (regs: IHostCallRegisters): Gas => {
-    const gas = 10n + regs.get(ON_TRANSFER_GAS_REG);
-    return tryAsGas(gas);
-  };
+  basicGasCost = tryAsSmallGas(10);
 
   tracedRegisters = traceRegisters(IN_OUT_REG, AMOUNT_REG, ON_TRANSFER_GAS_REG, MEMO_START_REG);
 
@@ -45,11 +45,7 @@ export class Transfer implements HostCallHandler {
     private readonly partialState: PartialState,
   ) {}
 
-  async execute(
-    _gas: GasCounter,
-    regs: IHostCallRegisters,
-    memory: IHostCallMemory,
-  ): Promise<undefined | PvmExecution> {
+  async execute(gas: GasCounter, regs: IHostCallRegisters, memory: IHostCallMemory): Promise<undefined | PvmExecution> {
     // `d`: destination
     const destination = getServiceId(regs.get(IN_OUT_REG));
     // `a`: amount
@@ -73,13 +69,13 @@ export class Transfer implements HostCallHandler {
 
     // All good!
     if (transferResult.isOk) {
+      // substracting value `t`
+      gas.sub(tryAsGas(onTransferGas));
       regs.set(IN_OUT_REG, HostCallResult.OK);
       return;
     }
 
     const e = transferResult.error;
-    // sets `t`
-    regs.set(ON_TRANSFER_GAS_REG, tryAsU64(0));
 
     if (e === TransferError.DestinationNotFound) {
       regs.set(IN_OUT_REG, HostCallResult.WHO);

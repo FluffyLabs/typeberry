@@ -14,7 +14,7 @@ import { logger } from "./logger.js";
  */
 export class GasHostCall implements HostCallHandler {
   index = tryAsHostCallIndex(0);
-  gasCost = tryAsSmallGas(10);
+  basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(7);
 
   constructor(public readonly currentServiceId: ServiceId) {}

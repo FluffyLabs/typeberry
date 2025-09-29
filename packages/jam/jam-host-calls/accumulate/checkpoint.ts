@@ -14,7 +14,7 @@ import { logger } from "../logger.js";
  */
 export class Checkpoint implements HostCallHandler {
   index = tryAsHostCallIndex(17);
-  gasCost = tryAsSmallGas(10);
+  basicGasCost = tryAsSmallGas(10);
   tracedRegisters: RegisterIndex[];
 
   private readonly gasHostCall: GasHostCall;

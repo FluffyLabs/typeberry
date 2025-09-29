@@ -93,25 +93,6 @@ describe("HostCalls: Transfer", () => {
     assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
   });
 
-  it("should calculate gas cost", () => {
-    const accumulate = new PartialStateMock();
-    const currentServiceId = tryAsServiceId(10_000);
-    const transfer = new Transfer(currentServiceId, accumulate);
-
-    const { registers } = prepareRegsAndMemory(
-      tryAsServiceId(15_000),
-      tryAsU64(2n ** 45n),
-      tryAsU64(1_000),
-      Bytes.fill(TRANSFER_MEMO_BYTES, 33),
-    );
-
-    // when
-    const cost = transfer.gasCost(registers);
-
-    // then
-    assert.deepStrictEqual(cost, 10n + 1_000n);
-  });
-
   it("should fail if there is no memory for memo", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);

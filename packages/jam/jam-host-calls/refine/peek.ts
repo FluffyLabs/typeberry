@@ -22,7 +22,7 @@ const IN_OUT_REG = 7;
  */
 export class Peek implements HostCallHandler {
   index = tryAsHostCallIndex(9);
-  gasCost = tryAsSmallGas(10);
+  basicGasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10);
 
