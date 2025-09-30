@@ -10,13 +10,14 @@ import { dumpCodec, serialize } from "./serialize.js";
 
 type TestCase = [string, { key: StateKey }, string];
 
-let blake2b: Blake2b;
-
-before(async () => {
-  blake2b = await Blake2b.createHasher();
-});
 
 describe("Serialization keys", () => {
+  let blake2b: Blake2b;
+
+  before(async () => {
+    blake2b = await Blake2b.createHasher();
+  });
+
   const cases: TestCase[] = [
     ["C(1)", serialize.authPools, "0x0100000000000000000000000000000000000000000000000000000000000000"],
     ["C(2)", serialize.authQueues, "0x0200000000000000000000000000000000000000000000000000000000000000"],
