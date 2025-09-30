@@ -34,9 +34,13 @@ export class Transfer implements HostCallHandler {
    * `t` has positive value, only when status of a transfer is `OK`
    * `0` otherwise
    *
+   * Pre0.7.2: `g = 10 + ω9`
+   *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/373f00373f00?v=0.7.2
    */
-  basicGasCost = tryAsSmallGas(10);
+  basicGasCost = Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
+    ? tryAsSmallGas(10)
+    : (regs: IHostCallRegisters) => tryAsGas(10n + regs.get(ON_TRANSFER_GAS_REG));
 
   tracedRegisters = traceRegisters(IN_OUT_REG, AMOUNT_REG, ON_TRANSFER_GAS_REG, MEMO_START_REG);
 
@@ -69,10 +73,12 @@ export class Transfer implements HostCallHandler {
 
     // All good!
     if (transferResult.isOk) {
-      // substracting value `t`
-      const underflow = gas.sub(tryAsGas(onTransferGas));
-      if (underflow) {
-        return PvmExecution.OOG;
+      if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)) {
+        // substracting value `t`
+        const underflow = gas.sub(tryAsGas(onTransferGas));
+        if (underflow) {
+          return PvmExecution.OOG;
+        }
       }
       regs.set(IN_OUT_REG, HostCallResult.OK);
       return;

@@ -1,5 +1,5 @@
 import { tryAsU32, type U32 } from "@typeberry/numbers";
-import type { GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { type RegisterIndex, tryAsRegisterIndex } from "@typeberry/pvm-interpreter/registers.js";
 import { asOpaqueType, type Opaque } from "@typeberry/utils";
 import type { IHostCallMemory } from "./host-call-memory.js";
@@ -31,8 +31,12 @@ export interface HostCallHandler {
   /** Index of that host call (i.e. what PVM invokes via `ecalli`) */
   readonly index: HostCallIndex;
 
-  /** The gas cost of invocation of that host call. */
-  readonly basicGasCost: SmallGas;
+  /**
+   * The gas cost of invocation of that host call.
+   *
+   * NOTE: `((reg: IHostCallRegisters) => Gas)` function is for compatibility reasons: pre GP 0.7.2
+   */
+  readonly basicGasCost: SmallGas | ((reg: IHostCallRegisters) => Gas);
 
   /** Currently executing service id. */
   readonly currentServiceId: U32;
