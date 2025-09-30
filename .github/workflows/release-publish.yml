@@ -83,7 +83,7 @@ jobs:
     - name: Publish @typeberry/${{ matrix.project }} to npm
       working-directory: ./dist/${{ matrix.project }}
       env:
-        IS_RELEASE: ${{ github.event_name == 'release' }}
+        IS_RELEASE: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       run: npm publish --access=public --tag $([ "$IS_RELEASE" = "true" ] && echo "latest" || echo "next")
 
