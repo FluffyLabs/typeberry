@@ -1,5 +1,6 @@
 import { type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import type { WorkReport } from "@typeberry/block/work-report.js";
+import type { ArrayView } from "@typeberry/collections";
 import type { PendingTransfer } from "@typeberry/jam-host-calls";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
 import type { AutoAccumulate } from "@typeberry/state";
@@ -30,7 +31,7 @@ export class AccumulateData {
   private readonly serviceIds: ServiceId[];
 
   constructor(
-    reports: readonly WorkReport[],
+    reports: ArrayView<WorkReport>,
     transfers: PendingTransfer[],
     autoAccumulateServices: readonly AutoAccumulate[],
   ) {
@@ -96,7 +97,7 @@ export class AccumulateData {
   /**
    * A function that transform reports into a list of operands and data needed for statistics (gas cost and reports length).
    */
-  private transformReports(reports: readonly WorkReport[]) {
+  private transformReports(reports: ArrayView<WorkReport>) {
     const reportsDataByServiceId = new Map<ServiceId, AccumulateDataItem>();
     const serviceIds = new Set<ServiceId>();
 

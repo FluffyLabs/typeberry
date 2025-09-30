@@ -10,7 +10,7 @@ import { W_C } from "@typeberry/block/gp-constants.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
-import { HashSet, SortedArray } from "@typeberry/collections";
+import { ArrayView, HashSet, SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { PendingTransfer } from "@typeberry/jam-host-calls";
@@ -92,12 +92,12 @@ export class Accumulate {
    *
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/170a01170a01?v=0.6.7
    */
-  private findReportCutoffIndex(gasLimit: ServiceGas, reports: WorkReport[]) {
+  private findReportCutoffIndex(gasLimit: ServiceGas, reports: ArrayView<WorkReport>) {
     const reportsLength = reports.length;
     let currentGas = 0n;
 
     for (let i = 0; i < reportsLength; i++) {
-      const report = reports[i];
+      const report = reports.get(i);
       const resultsGas = report.results.map((result) => result.gas).reduce((a, b) => a + b, 0n);
 
       if (currentGas + resultsGas > gasLimit) {
@@ -238,7 +238,7 @@ export class Accumulate {
    */
   private async accumulateSequentiallyLegacy(
     gasLimit: ServiceGas,
-    reports: WorkReport[],
+    reports: ArrayView<WorkReport>,
     slot: TimeSlot,
     entropy: EntropyHash,
     statistics: Map<ServiceId, CountAndGasUsed>,
@@ -255,9 +255,9 @@ export class Accumulate {
       };
     }
 
-    const reportsToAccumulateInParallel = reports.slice(0, i);
+    const reportsToAccumulateInParallel = reports.subview(0, i);
     const accumulateData = new AccumulateData(reportsToAccumulateInParallel, [], autoAccumulateServices);
-    const reportsToAccumulateSequentially = reports.slice(i);
+    const reportsToAccumulateSequentially = reports.subview(i);
 
     const {
       gasCost,
@@ -300,7 +300,7 @@ export class Accumulate {
    */
   private async accumulateSequentially(
     gasLimit: ServiceGas,
-    reports: WorkReport[],
+    reports: ArrayView<WorkReport>,
     transfers: PendingTransfer[],
     slot: TimeSlot,
     entropy: EntropyHash,
@@ -320,9 +320,9 @@ export class Accumulate {
       };
     }
 
-    const reportsToAccumulateInParallel = reports.slice(0, i);
+    const reportsToAccumulateInParallel = reports.subview(0, i);
     const accumulateData = new AccumulateData(reportsToAccumulateInParallel, transfers, autoAccumulateServices);
-    const reportsToAccumulateSequentially = reports.slice(i);
+    const reportsToAccumulateSequentially = reports.subview(i);
 
     const {
       gasCost,
@@ -487,7 +487,7 @@ export class Accumulate {
    *
    * Please note it cannot overflow because we use `BigInt`, and the final result is clamped to `maxBlockGas` (W_G).
    *
-   * https://graypaper.fluffylabs.dev/#/7e6ff6a/18f40118f401?v=0.6.7
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/183402184502?v=0.7.2
    */
   private getGasLimit() {
     const calculatedGasLimit =
@@ -512,7 +512,7 @@ export class Accumulate {
       getWorkPackageHashes(toAccumulateImmediately),
     );
     const queue = accumulateQueue.enqueueReports(toEnqueue);
-    const accumulatableReports = toAccumulateImmediately.concat(queue);
+    const accumulatableReports = ArrayView.from(toAccumulateImmediately.concat(queue));
 
     const gasLimit = this.getGasLimit();
     const autoAccumulateServices = this.state.privilegedServices.autoAccumulateServices;
@@ -541,7 +541,7 @@ export class Accumulate {
     const _gasCost = gasCost;
     assertEmpty(rest);
 
-    const accumulated = accumulatableReports.slice(0, accumulatedReports);
+    const accumulated = accumulatableReports.subview(0, accumulatedReports);
     const {
       services,
       yieldedRoots,
@@ -554,7 +554,7 @@ export class Accumulate {
     assertEmpty(stateUpdateRest);
 
     const accStateUpdate = this.getAccumulationStateUpdate(
-      accumulated,
+      accumulated.toArray(),
       toAccumulateLater,
       slot,
       Array.from(statistics.keys()),
