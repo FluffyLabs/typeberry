@@ -35,7 +35,7 @@ enum TransferOperandKind {
   TRANSFER = 1,
 }
 
-type TransferOrOperand =
+export type TransferOrOperand =
   | {
       kind: TransferOperandKind.OPERAND;
       value: Operand;
@@ -197,7 +197,8 @@ type LegacyOnTransferFetchData = {
 type AccumulateFetchData = {
   context: FetchContext.Accumulate;
   entropy: EntropyHash;
-  transfersAndOperands: (PendingTransfer | Operand)[];
+  transfers: PendingTransfer[];
+  operands: Operand[];
 };
 
 type FetchData = LegacyAccumulateFetchData | LegacyOnTransferFetchData | AccumulateFetchData;
@@ -343,17 +344,12 @@ export class FetchExternalities implements IFetchExternalities {
 
   allOperandsAndTransfers(): BytesBlob | null {
     if (this.fetchData.context === FetchContext.Accumulate) {
-      const { operandsAndTransfers } = this.fetchData;
-      const [operands, tranfsers] = operandsAndTransfers;
+      const { transfers, operands } = this.fetchData;
+      const transfersAndOperands: TransferOrOperand[] = transfers
+        .map((transfer): TransferOrOperand => ({ kind: TransferOperandKind.TRANSFER, value: transfer }))
+        .concat(operands.map((operand): TransferOrOperand => ({ kind: TransferOperandKind.OPERAND, value: operand })));
 
-      return Encoder.encodeObject(
-        TRANSFERS_AND_OPERANDS,
-        {
-          operands: [tryAsU32(0), tranfsers],
-          transfers: [tryAsU32(1), operands],
-        },
-        this.chainSpec,
-      );
+      return Encoder.encodeObject(TRANSFERS_AND_OPERANDS, transfersAndOperands, this.chainSpec);
     }
 
     return null;
@@ -361,10 +357,9 @@ export class FetchExternalities implements IFetchExternalities {
 
   oneOperandOrTransfer(index: U64): BytesBlob | null {
     if (this.fetchData.context === FetchContext.Accumulate) {
-      const { operandsAndTransfers } = this.fetchData;
-      const [operands, tranfsers] = operandsAndTransfers;
+      const { operands, transfers } = this.fetchData;
 
-      if (index >= operands.length + tranfsers.length || index >= 2n ** 32n) {
+      if (index >= operands.length + transfers.length || index >= 2n ** 32n) {
         return null;
       }
 
@@ -380,7 +375,7 @@ export class FetchExternalities implements IFetchExternalities {
 
       const transferIndex = Number(index) - operands.length;
 
-      const transfer = tranfsers[transferIndex];
+      const transfer = transfers[transferIndex];
 
       if (transfer === undefined) {
         return null;

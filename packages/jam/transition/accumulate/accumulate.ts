@@ -118,7 +118,8 @@ export class Accumulate {
   private async pvmAccumulateInvocation(
     slot: TimeSlot,
     serviceId: ServiceId,
-    transfersAndOperands: (PendingTransfer | Operand)[],
+    transfers: PendingTransfer[],
+    operands: Operand[],
     gas: ServiceGas,
     entropy: EntropyHash,
     inputStateUpdate: AccumulationStateUpdate,
@@ -153,11 +154,8 @@ export class Accumulate {
     );
 
     const fetchExternalities = Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
-      ? FetchExternalities.createForAccumulate({ entropy, transfersAndOperands }, this.chainSpec)
-      : FetchExternalities.createForLegacyAccumulate(
-          { entropy, operands: transfersAndOperands as Operand[] },
-          this.chainSpec,
-        );
+      ? FetchExternalities.createForAccumulate({ entropy, transfers, operands }, this.chainSpec)
+      : FetchExternalities.createForLegacyAccumulate({ entropy, operands }, this.chainSpec);
 
     const externalities = {
       partialState,
@@ -169,7 +167,7 @@ export class Accumulate {
     const invocationArgs = Encoder.encodeObject(ARGS_CODEC, {
       slot,
       serviceId,
-      argsLength: tryAsU32(transfersAndOperands.length),
+      argsLength: tryAsU32(transfers.length + operands.length),
     });
     const result = await executor.run(invocationArgs, tryAsGas(gas));
     const [newState, checkpoint] = partialState.getStateUpdates();
@@ -215,15 +213,24 @@ export class Accumulate {
    */
   private async accumulateSingleService(
     serviceId: ServiceId,
-    args: (PendingTransfer | Operand)[],
+    transfers: PendingTransfer[],
+    operands: Operand[],
     gasCost: ServiceGas,
     slot: TimeSlot,
     entropy: EntropyHash,
     inputStateUpdate: AccumulationStateUpdate,
   ) {
-    logger.log`Accumulating service ${serviceId}, items: ${args.length} at slot: ${slot}.`;
+    logger.log`Accumulating service ${serviceId}, transfers: ${transfers.length} operands: ${operands.length} at slot: ${slot}.`;
 
-    const result = await this.pvmAccumulateInvocation(slot, serviceId, args, gasCost, entropy, inputStateUpdate);
+    const result = await this.pvmAccumulateInvocation(
+      slot,
+      serviceId,
+      transfers,
+      operands,
+      gasCost,
+      entropy,
+      inputStateUpdate,
+    );
 
     if (result.isError) {
       // https://graypaper.fluffylabs.dev/#/7e6ff6a/2fb6012fb601?v=0.6.7
@@ -391,7 +398,8 @@ export class Accumulate {
       const checkpoint = AccumulationStateUpdate.copyFrom(currentState);
       const { consumedGas, stateUpdate } = await this.accumulateSingleService(
         serviceId,
-        accumulateData.getTransfersAndOperands(serviceId),
+        accumulateData.getTransfers(serviceId),
+        accumulateData.getOperands(serviceId),
         accumulateData.getGasCost(serviceId),
         slot,
         entropy,
@@ -415,6 +423,7 @@ export class Accumulate {
           // We need this accumulation to get the correct `validatorsManager`
           const { stateUpdate } = await this.accumulateSingleService(
             newV,
+            [],
             accumulateData.getOperands(newV),
             accumulateData.getGasCost(newV),
             slot,

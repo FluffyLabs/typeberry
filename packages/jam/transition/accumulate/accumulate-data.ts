@@ -158,6 +158,11 @@ export class AccumulateData {
     return this.reportsDataByServiceId.get(serviceId)?.operands ?? [];
   }
 
+  /** Returns the list of transfers for a given service id */
+  getTransfers(serviceId: ServiceId): PendingTransfer[] {
+    return this.transfersByServiceId.get(serviceId) ?? [];
+  }
+
   /** Returns the list of transfers and operands for a given service id */
   getTransfersAndOperands(serviceId: ServiceId): (PendingTransfer | Operand)[] {
     const operands = this.reportsDataByServiceId.get(serviceId)?.operands ?? [];
