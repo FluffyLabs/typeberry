@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/state-machine",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Utilities to help manage state-machine-like services and communication. ",
   "main": "index.ts",
   "dependencies": {

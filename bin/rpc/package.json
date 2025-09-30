@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/rpc",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A JSON RPC server for Typeberry. Spec: https://hackmd.io/@polkadot/jip2",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",

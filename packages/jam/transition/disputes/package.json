@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/disputes",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Disputes implementation based on the Gray Paper.",
   "main": "index.ts",
   "scripts": {
