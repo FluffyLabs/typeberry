@@ -152,10 +152,17 @@ export class Accumulate {
       slot,
     );
 
+    const fetchExternalities = Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
+      ? FetchExternalities.createForAccumulate({ entropy, transfersAndOperands }, this.chainSpec)
+      : FetchExternalities.createForLegacyAccumulate(
+          { entropy, operands: transfersAndOperands as Operand[] },
+          this.chainSpec,
+        );
+
     const externalities = {
       partialState,
       serviceExternalities: partialState,
-      fetchExternalities: FetchExternalities.createForAccumulate({ entropy, transfersAndOperands }, this.chainSpec),
+      fetchExternalities,
     };
 
     const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);
