@@ -1,11 +1,6 @@
 import type { WorkReportHash } from "@typeberry/block";
 import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
-import {
-  HashDictionary,
-  type ImmutableHashDictionary,
-  type ImmutableSortedSet,
-  SortedSet,
-} from "@typeberry/collections";
+import { HashSet, type ImmutableHashSet, type ImmutableSortedSet, SortedSet } from "@typeberry/collections";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 
@@ -36,10 +31,10 @@ export class DisputesRecords {
     return new DisputesRecords(goodSet, badSet, wonkySet, punishSet);
   }
 
-  private readonly goodSetDict: ImmutableHashDictionary<WorkReportHash, true>;
-  private readonly badSetDict: ImmutableHashDictionary<WorkReportHash, true>;
-  private readonly wonkySetDict: ImmutableHashDictionary<WorkReportHash, true>;
-  private readonly punishSetDict: ImmutableHashDictionary<Ed25519Key, true>;
+  private readonly goodSetDict: ImmutableHashSet<WorkReportHash>;
+  private readonly badSetDict: ImmutableHashSet<WorkReportHash>;
+  private readonly wonkySetDict: ImmutableHashSet<WorkReportHash>;
+  private readonly punishSetDict: ImmutableHashSet<Ed25519Key>;
 
   private constructor(
     /** `goodSet`: all work-reports hashes which were judged to be correct */
@@ -51,10 +46,10 @@ export class DisputesRecords {
     /** `punishSet`: set of Ed25519 keys representing validators which were found to have misjudged a work-report */
     public readonly punishSet: ImmutableSortedSet<Ed25519Key>,
   ) {
-    this.goodSetDict = HashDictionary.fromEntries(goodSet.array.map((x) => [x, true]));
-    this.badSetDict = HashDictionary.fromEntries(badSet.array.map((x) => [x, true]));
-    this.wonkySetDict = HashDictionary.fromEntries(wonkySet.array.map((x) => [x, true]));
-    this.punishSetDict = HashDictionary.fromEntries(punishSet.array.map((x) => [x, true]));
+    this.goodSetDict = HashSet.from(goodSet.array);
+    this.badSetDict = HashSet.from(badSet.array);
+    this.wonkySetDict = HashSet.from(wonkySet.array);
+    this.punishSetDict = HashSet.from(punishSet.array);
   }
 
   public asDictionaries() {
