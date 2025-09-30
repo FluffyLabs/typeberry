@@ -33,7 +33,7 @@ import {
   ED25519_SIGNATURE_BYTES,
   type Ed25519Signature,
 } from "@typeberry/crypto";
-import { blake2b, HASH_SIZE, type OpaqueHash, WithHash } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE, type OpaqueHash, WithHash } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AvailabilityAssignment,
@@ -150,7 +150,8 @@ export function guaranteesAsView(
 }
 
 export async function newReports(options: Parameters<typeof newReportsState>[0] = {}) {
-  const state = newReportsState(options);
+  const blake2b = await Blake2b.createHasher();
+  const state = newReportsState(options, blake2b);
   const headerChain: HeaderChain = {
     isAncestor() {
       return false;
@@ -183,9 +184,9 @@ function newReportsState({
   recentlyAccumulated = HashSet.new(),
   reportedInRecentBlocks = HashDictionary.new(),
   clearAvailabilityOnZero = false,
-}: ReportStateOptions = {}): ReportsState {
+}: ReportStateOptions = {}, blake2b: Blake2b): ReportsState {
   const spec = tinyChainSpec;
-  const coreAssignment = withCoreAssignment ? initialAssignment() : [null, null];
+  const coreAssignment = withCoreAssignment ? initialAssignment(blake2b) : [null, null];
   if (clearAvailabilityOnZero) {
     coreAssignment[0] = null;
   }
@@ -280,7 +281,7 @@ function getEntropy(e0: number, e1: number, e2: number, e3: number): ReportsStat
   );
 }
 
-function newAvailabilityAssignment({ core, timeout }: { core: number; timeout: number }): AvailabilityAssignment {
+function newAvailabilityAssignment({ core, timeout }: { core: number; timeout: number }, blake2b: Blake2b): AvailabilityAssignment {
   const workReport = newWorkReport({ core });
   const encoded = Encoder.encodeObject(WorkReport.Codec, workReport, tinyChainSpec);
   const hash = blake2b.hashBytes(encoded).asOpaque();
@@ -298,9 +299,9 @@ function intoValidatorData({ bandersnatch, ed25519 }: { bandersnatch: string; ed
   });
 }
 
-export const initialAssignment = (): AvailabilityAssignment[] => [
-  newAvailabilityAssignment({ core: 0, timeout: 11 }),
-  newAvailabilityAssignment({ core: 1, timeout: 11 }),
+export const initialAssignment = (blake2b: Blake2b): AvailabilityAssignment[] => [
+  newAvailabilityAssignment({ core: 0, timeout: 11 }, blake2b),
+  newAvailabilityAssignment({ core: 1, timeout: 11 }, blake2b),
 ];
 
 export const initialValidators = (): ValidatorData[] =>

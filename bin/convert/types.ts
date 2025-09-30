@@ -7,7 +7,7 @@ import { codec, type Decode, Decoder, type Encode, Encoder } from "@typeberry/co
 import type { ChainSpec } from "@typeberry/config";
 import { JipChainSpec } from "@typeberry/config-node";
 import { v1 } from "@typeberry/fuzz-proto";
-import { blake2b, HASH_SIZE } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
 import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
 import type { InMemoryState } from "@typeberry/state";

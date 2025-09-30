@@ -10,6 +10,7 @@ import { type Bootnode, Connections } from "./peers.js";
 import { StreamManager } from "./stream-manager.js";
 import { SyncTask } from "./tasks/sync.js";
 import { handleAsyncErrors } from "./utils.js";
+import {Blake2b} from "@typeberry/hash";
 
 const logger = Logger.new(import.meta.filename, "jamnps");
 
@@ -22,6 +23,7 @@ export async function setup(
   blocks: BlocksDb,
   onNewBlocks: (blocks: BlockView[]) => void,
 ) {
+  const blake2b = await Blake2b.createHasher();
   const genesisFirstBytes = genesisHash.toString().substring(2, 10);
   const network = await Quic.setup({
     host: bind.host,
@@ -36,7 +38,7 @@ export async function setup(
   const streamManager = new StreamManager();
 
   // start the networking tasks
-  const syncTask = SyncTask.start(spec, streamManager, connections, blocks, onNewBlocks);
+  const syncTask = SyncTask.start(spec, blake2b, streamManager, connections, blocks, onNewBlocks);
 
   setImmediate(async () => {
     while (network.isRunning) {

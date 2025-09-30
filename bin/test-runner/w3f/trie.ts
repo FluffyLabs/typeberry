@@ -5,7 +5,8 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { SortedSet } from "@typeberry/collections";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { InMemoryTrie, leafComparator, type StateKey, type TrieNodeHash } from "@typeberry/trie";
-import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
+import { getBlake2bTrieHasher } from "@typeberry/trie/hasher.js";
+import {Blake2b} from "@typeberry/hash";
 
 export class TrieTest {
   static fromJson: FromJson<TrieTest> = {
@@ -36,6 +37,7 @@ export type TrieTestSuite = [TrieTest];
 export const trieTestSuiteFromJson: FromJson<TrieTestSuite> = ["array", TrieTest.fromJson];
 
 export async function runTrieTest(testContent: TrieTestSuite) {
+  const blake2bTrieHasher = getBlake2bTrieHasher(await Blake2b.createHasher());
   for (const [id, testData] of testContent.entries()) {
     await test(`Trie test ${id}`, () => {
       const trie = InMemoryTrie.empty(blake2bTrieHasher);

@@ -17,6 +17,7 @@ import { FetchExternalities } from "../externalities/fetch-externalities.js";
 import type { CountAndGasUsed } from "../statistics.js";
 import { uniquePreserveOrder } from "./accumulate-utils.js";
 import { PvmExecutor } from "./pvm-executor.js";
+import {Blake2b} from "@typeberry/hash";
 
 type DeferredTransfersInput = {
   pendingTransfers: PendingTransfer[];
@@ -51,6 +52,7 @@ const logger = Logger.new(import.meta.filename, "deferred-transfers");
 export class DeferredTransfers {
   constructor(
     public readonly chainSpec: ChainSpec,
+    public readonly blake2b: Blake2b,
     private readonly state: DeferredTransfersState,
   ) {}
 
@@ -91,6 +93,7 @@ export class DeferredTransfers {
 
       const partialState = new AccumulateExternalities(
         this.chainSpec,
+        this.blake2b,
         partiallyUpdatedState,
         serviceId,
         serviceId,

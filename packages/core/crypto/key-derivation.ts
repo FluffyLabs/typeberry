@@ -1,5 +1,5 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { blake2b, SimpleAllocator } from "@typeberry/hash";
+import { Blake2b } from "@typeberry/hash";
 import { type U32, u32AsLeBytes } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
 import { type BandersnatchKey, publicKey } from "./bandersnatch.js";
@@ -38,9 +38,9 @@ export function trivialSeed(s: U32): KeySeed {
  */
 export function deriveEd25519SecretKey(
   seed: KeySeed,
-  allocator: SimpleAllocator = new SimpleAllocator(),
+  blake2b: Blake2b,
 ): Ed25519SecretSeed {
-  return blake2b.hashBytes(BytesBlob.blobFromParts([ED25519_SECRET_KEY.raw, seed.raw]), allocator).asOpaque();
+  return blake2b.hashBytes(BytesBlob.blobFromParts([ED25519_SECRET_KEY.raw, seed.raw])).asOpaque();
 }
 
 /**
@@ -49,9 +49,9 @@ export function deriveEd25519SecretKey(
  */
 export function deriveBandersnatchSecretKey(
   seed: KeySeed,
-  allocator: SimpleAllocator = new SimpleAllocator(),
+  blake2b: Blake2b,
 ): BandersnatchSecretSeed {
-  return blake2b.hashBytes(BytesBlob.blobFromParts([BANDERSNATCH_SECRET_KEY.raw, seed.raw]), allocator).asOpaque();
+  return blake2b.hashBytes(BytesBlob.blobFromParts([BANDERSNATCH_SECRET_KEY.raw, seed.raw])).asOpaque();
 }
 
 /**

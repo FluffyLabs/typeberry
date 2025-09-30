@@ -6,7 +6,7 @@ import { blockFromJson, headerFromJson } from "@typeberry/block-json";
 import { codec, Decoder, Encoder } from "@typeberry/codec";
 import { ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
-import { keccak, SimpleAllocator, WithHash } from "@typeberry/hash";
+import { Blake2b, keccak, WithHash } from "@typeberry/hash";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { tryAsU32 } from "@typeberry/numbers";
 import { serializeStateUpdate } from "@typeberry/state-merkleization";
@@ -50,6 +50,7 @@ export class StateTransition {
 }
 
 const keccakHasher = keccak.KeccakHasher.create();
+const blake2b = Blake2b.createHasher();
 
 const cachedBlocks = new Map<string, Block[]>();
 function loadBlocks(testPath: string) {
@@ -118,7 +119,7 @@ export async function runStateTransition(testContent: StateTransition, testPath:
   );
   const previousBlocks = allBlocks.slice(0, myBlockIndex);
 
-  const hasher = new TransitionHasher(spec, await keccakHasher, new SimpleAllocator());
+  const hasher = new TransitionHasher(spec, await keccakHasher, await blake2b);
 
   const blocksDb = InMemoryBlocks.fromBlocks(
     previousBlocks.map((block) => {

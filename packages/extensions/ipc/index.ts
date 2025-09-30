@@ -10,7 +10,7 @@ import {
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
 import { v1 } from "@typeberry/fuzz-proto";
-import { blake2b, HASH_SIZE, TRUNCATED_HASH_SIZE, type WithHash } from "@typeberry/hash";
+import { HASH_SIZE, type WithHash } from "@typeberry/hash";
 import { ce129, up0 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
 import { tryAsU32 } from "@typeberry/numbers";
@@ -78,14 +78,6 @@ function startJamnpExtension(api: ExtensionApi) {
 
   const getKeyValuePairs = (_hash: HeaderHash, startKey: ce129.Key) => {
     let value = BytesBlob.blobFromNumbers([255, 255, 0, 0]);
-    if (
-      Bytes.fromBlob(
-        blake2b.hashString("0x83bd3bde264a79a2e67c487696c1d7f0b549da89").raw.subarray(0, TRUNCATED_HASH_SIZE),
-        TRUNCATED_HASH_SIZE,
-      ).isEqualTo(startKey)
-    ) {
-      value = BytesBlob.blobFromNumbers([255, 255, 255, 0]);
-    }
     return [new ce129.KeyValuePair(startKey, value)];
   };
 

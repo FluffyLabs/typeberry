@@ -16,6 +16,9 @@ import {
 } from "@typeberry/transition/assurances.js";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { deepEqual, Result } from "@typeberry/utils";
+import {Blake2b} from "@typeberry/hash";
+
+const blake2b = Blake2b.createHasher();
 
 class Input {
   assurances!: AssurancesExtrinsic;
@@ -169,7 +172,7 @@ async function runAssurancesTest(
   input: AssurancesInput,
   expectedResult: Result<WorkReport[], AssurancesError>,
 ) {
-  const assurances = new Assurances(spec, preState);
+  const assurances = new Assurances(spec, preState, await blake2b);
   const res = await assurances.transition(input);
 
   // validators are in incorrect order as well so it depends which error is checked first

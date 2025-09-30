@@ -15,7 +15,7 @@ import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import {
   AccumulationStateUpdate,
   clampU64ToU32,
@@ -83,6 +83,7 @@ export class AccumulateExternalities
 
   constructor(
     private readonly chainSpec: ChainSpec,
+    private readonly blake2b: Blake2b,
     private readonly updatedState: PartiallyUpdatedState,
     /** `x_s` */
     private readonly currentServiceId: ServiceId,
@@ -556,7 +557,7 @@ export class AccumulateExternalities
     }
 
     // calculating the hash
-    const preimageHash = blake2b.hashBytes(preimage).asOpaque<PreimageHash>();
+    const preimageHash = this.blake2b.hashBytes(preimage).asOpaque<PreimageHash>();
 
     // checking service internal lookup
     const stateLookup = this.updatedState.getLookupHistory(

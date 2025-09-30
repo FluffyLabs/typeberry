@@ -4,7 +4,7 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type JipChainSpec, KnownChainSpec } from "@typeberry/config-node";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
-import { blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { SerializedState, StateEntries } from "@typeberry/state-merkleization";
 
@@ -23,6 +23,7 @@ export function getChainSpec(name: KnownChainSpec) {
 }
 
 export function openDatabase(
+  blake2b: Blake2b,
   nodeName: string,
   genesisHeader: BytesBlob,
   databaseBasePath: string,

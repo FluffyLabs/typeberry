@@ -1,7 +1,8 @@
 import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { BytesBlob } from "@typeberry/bytes";
-import { blake2b, PageAllocator, SimpleAllocator } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE } from "@typeberry/hash";
+import blake2b from "blake2b";
 
 const BLOB_SIZE = 1 * 1024 * 1024;
 const NUMBER_OF_HASHES = 512;
@@ -19,24 +20,24 @@ export default function run() {
   return suite(
     "Creating many hashes",
 
-    add("hasher with simple allocator", () => {
+    add("our hasher", async () => {
       const blob = generateBlob();
-      const allocator = new SimpleAllocator();
+      const blake2b = await Blake2b.createHasher();
 
       return () => {
         for (let i = 0; i < NUMBER_OF_HASHES; i += 1) {
-          blake2b.hashBytes(blob, allocator);
+          blake2b.hashBytes(blob);
         }
       };
     }),
 
-    add("hasher with page allocator", () => {
+    add("blake2b js", async () => {
       const blob = generateBlob();
-      const allocator = new PageAllocator(128);
 
       return () => {
         for (let i = 0; i < NUMBER_OF_HASHES; i += 1) {
-          blake2b.hashBytes(blob, allocator);
+          const hasher = blake2b(HASH_SIZE);
+          hasher.update(blob.raw).digest("binary");
         }
       };
     }),

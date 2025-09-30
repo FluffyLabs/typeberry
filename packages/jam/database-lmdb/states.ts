@@ -3,16 +3,16 @@ import { BytesBlob } from "@typeberry/bytes";
 import { SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { LeafDb, type StatesDb, StateUpdateError } from "@typeberry/database";
-import type { TruncatedHash } from "@typeberry/hash";
+import { Blake2b, type TruncatedHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { ServicesUpdate, State } from "@typeberry/state";
 import type { StateEntries, StateKey } from "@typeberry/state-merkleization";
 import { SerializedState, StateEntryUpdateAction, serializeStateUpdate } from "@typeberry/state-merkleization";
 import type { LeafNode, ValueHash } from "@typeberry/trie";
 import { InMemoryTrie, leafComparator } from "@typeberry/trie";
-import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { assertNever, OK, Result, resultToString } from "@typeberry/utils";
 import type { LmdbRoot, SubDb } from "./root.js";
+import {getBlake2bTrieHasher} from "@typeberry/trie/hasher.js";
 
 const logger = Logger.new(import.meta.filename, "db");
 /**
@@ -94,6 +94,7 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     leafs: SortedSet<LeafNode>,
     data: Iterable<[StateEntryUpdateAction, StateKey | TruncatedHash, BytesBlob]>,
   ): Promise<Result<OK, StateUpdateError>> {
+    const blake2bTrieHasher = getBlake2bTrieHasher(await Blake2b.createHasher());
     // We will collect all values that don't fit directly into leaf nodes.
     const values: [ValueHash, BytesBlob][] = [];
     for (const [action, key, value] of data) {

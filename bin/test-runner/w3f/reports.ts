@@ -42,6 +42,7 @@ import { guaranteesAsView } from "@typeberry/transition/reports/test.utils.js";
 import type { HeaderChain } from "@typeberry/transition/reports/verify-contextual.js";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { deepEqual, Result } from "@typeberry/utils";
+import {Blake2b} from "@typeberry/hash";
 
 type TestReportsOutput = Omit<ReportsOutput, "stateUpdate">;
 
@@ -277,7 +278,7 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
     },
   };
 
-  const reports = new Reports(spec, preState.state, headerChain);
+  const reports = new Reports(spec, preState.state, headerChain, await Blake2b.createHasher());
 
   const output = await reports.transition(input);
   let state = reports.state;

@@ -19,6 +19,7 @@ import {
 } from "@typeberry/block";
 import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import {Blake2b} from "@typeberry/hash";
 import { fisherYatesShuffle } from "@typeberry/shuffling";
 import { asOpaqueType, type Opaque } from "@typeberry/utils";
 
@@ -32,12 +33,13 @@ export type RotationIndex = Opaque<number, "RotationIndex">;
  */
 export function generateCoreAssignment(
   spec: ChainSpec,
+  blake2b: Blake2b,
   /** https://graypaper.fluffylabs.dev/#/5f542d7/149601149601 */
   eta2entropy: EntropyHash,
   /** timeslot */
   slot: TimeSlot,
 ): PerValidator<CoreIndex> {
-  return permute(eta2entropy, slot, spec);
+  return permute(blake2b, eta2entropy, slot, spec);
 }
 
 /** Calculate rotation index for given time slot. */
@@ -47,6 +49,7 @@ export function rotationIndex(slot: TimeSlot, rotationPeriod: number): RotationI
 
 /** https://graypaper.fluffylabs.dev/#/5f542d7/14c00114c001 */
 function permute(
+  blake2b: Blake2b,
   entropy: EntropyHash,
   slot: TimeSlot,
   spec: Pick<ChainSpec, "epochLength" | "rotationPeriod" | "coresCount" | "validatorsCount">,
@@ -59,7 +62,7 @@ function permute(
       // get a valid `coreIndex` after multiplying by `noOfCores`.
       return tryAsCoreIndex(Math.floor((i * spec.coresCount) / spec.validatorsCount));
     });
-  const shuffledAssignment = fisherYatesShuffle(initialAssignment, entropy);
+  const shuffledAssignment = fisherYatesShuffle(blake2b, initialAssignment, entropy);
   const coreAssignment = rotate(shuffledAssignment, shift, spec.coresCount);
 
   // we are sure this is PerValidator, since that's the array we create earlier.

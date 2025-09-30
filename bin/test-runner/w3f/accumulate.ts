@@ -21,6 +21,7 @@ import { AccumulateOutput } from "@typeberry/transition/accumulate/accumulate-ou
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
 import { deepEqual, Result } from "@typeberry/utils";
 import { getChainSpec } from "./spec.js";
+import {Blake2b} from "@typeberry/hash";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -140,7 +141,7 @@ export async function runAccumulateTest(test: AccumulateTest, path: string) {
   const entropy = test.pre_state.entropy;
 
   const state = TestState.toAccumulateState(test.pre_state as TestState, chainSpec);
-  const accumulate = new Accumulate(chainSpec, state);
+  const accumulate = new Accumulate(chainSpec, await Blake2b.createHasher(), state);
   const accumulateOutput = new AccumulateOutput();
   const result = await accumulate.transition({ ...test.input, entropy });
 

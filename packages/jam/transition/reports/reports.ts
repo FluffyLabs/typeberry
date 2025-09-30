@@ -5,7 +5,7 @@ import { type BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
 import { asKnownSize, type HashDictionary, type HashSet, type KnownSizeArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type Ed25519Key, ed25519 } from "@typeberry/crypto";
-import { blake2b, WithHash } from "@typeberry/hash";
+import { Blake2b, WithHash } from "@typeberry/hash";
 import type { SafroleStateUpdate } from "@typeberry/safrole";
 import { AvailabilityAssignment, type State, tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType, OK, Result } from "@typeberry/utils";
@@ -58,6 +58,7 @@ export class Reports {
     public readonly chainSpec: ChainSpec,
     public readonly state: ReportsState,
     public readonly headerChain: HeaderChain,
+    public readonly blake2b: Blake2b,
   ) {}
 
   async transition(input: ReportsInput): Promise<Result<ReportsOutput, ReportsError>> {
@@ -74,7 +75,7 @@ export class Reports {
     }
 
     // calculate hashes of all work reports in the guarantees extrinsic (one per guarantee)
-    const workReportHashes = this.workReportHashes(input.guarantees);
+    const workReportHashes = this.workReportHashes(input.guarantees, this.blake2b);
 
     // verifying credentials for all the work reports
     // but also slot & core assignment.
@@ -144,7 +145,7 @@ export class Reports {
     });
   }
 
-  workReportHashes(input: GuaranteesExtrinsicView): KnownSizeArray<WorkReportHash, "Guarantees"> {
+  workReportHashes(input: GuaranteesExtrinsicView, blake2b: Blake2b): KnownSizeArray<WorkReportHash, "Guarantees"> {
     const workReportHashes: WorkReportHash[] = [];
     for (const guarantee of input) {
       workReportHashes.push(asOpaqueType(blake2b.hashBytes(guarantee.view().report.encoded())));
@@ -250,7 +251,7 @@ export class Reports {
 
     // we know which entropy, timeSlot and validatorData should be used,
     // so we can compute `G` or `G*` here.
-    const coreAssignment = generateCoreAssignment(this.chainSpec, entropy, timeSlot);
+    const coreAssignment = generateCoreAssignment(this.chainSpec, this.blake2b, entropy, timeSlot);
     return Result.ok(
       zip(coreAssignment, validatorData, (core, validator) => ({
         core,

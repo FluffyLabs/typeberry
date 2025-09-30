@@ -1,6 +1,6 @@
 import type { TimeSlot } from "@typeberry/block";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage.js";
-import { blake2b } from "@typeberry/hash";
+import { Blake2b } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import { LookupHistoryItem, PreimageItem, type ServicesUpdate, type State, UpdatePreimage } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
@@ -22,7 +22,10 @@ export enum PreimagesErrorCode {
 
 // TODO [SeKo] consider whether this module is the right place to remove expired preimages
 export class Preimages {
-  constructor(public readonly state: PreimagesState) {}
+  constructor(
+    public readonly state: PreimagesState,
+    public readonly blake2b: Blake2b,
+  ) {}
 
   integrate(input: PreimagesInput): Result<PreimagesStateUpdate, PreimagesErrorCode> {
     // make sure lookup extrinsics are sorted and unique
@@ -51,7 +54,7 @@ export class Preimages {
     // select preimages for integration
     for (const preimage of preimages) {
       const { requester, blob } = preimage;
-      const hash: PreimageHash = blake2b.hashBytes(blob).asOpaque();
+      const hash: PreimageHash = this.blake2b.hashBytes(blob).asOpaque();
 
       const service = this.state.getService(requester);
       if (service === null) {

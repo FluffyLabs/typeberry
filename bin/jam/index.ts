@@ -2,7 +2,7 @@
 
 import { loadConfig } from "@typeberry/config-node";
 import { deriveEd25519SecretKey } from "@typeberry/crypto/key-derivation.js";
-import { blake2b } from "@typeberry/hash";
+import { Blake2b } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { importBlocks, JamConfig, main, mainFuzz } from "@typeberry/node";
 import { workspacePathFix } from "@typeberry/utils";
@@ -35,7 +35,7 @@ running.catch((e) => {
   process.exit(-1);
 });
 
-function prepareConfigFile(args: Arguments): JamConfig {
+function prepareConfigFile(args: Arguments, blake2b: Blake2b): JamConfig {
   const nodeConfig = loadConfig(args.args.configPath);
   const nodeName = args.command === Command.Dev ? `${args.args.nodeName}-${args.args.index}` : args.args.nodeName;
 
@@ -45,7 +45,7 @@ function prepareConfigFile(args: Arguments): JamConfig {
     // from some file or a database, since we want it to be consistent between runs.
     // For now, for easier testability, we use a deterministic seed.
     const seed = blake2b.hashString(nodeName);
-    const key = deriveEd25519SecretKey(seed.asOpaque());
+    const key = deriveEd25519SecretKey(seed.asOpaque(), blake2b);
     return key;
   })();
 
@@ -63,7 +63,8 @@ function prepareConfigFile(args: Arguments): JamConfig {
 }
 
 async function startNode(args: Arguments, withRelPath: (p: string) => string) {
-  const jamNodeConfig = prepareConfigFile(args);
+  const blake2b = await Blake2b.createHasher();
+  const jamNodeConfig = prepareConfigFile(args, blake2b);
   // Start fuzz-target
   if (args.command === Command.FuzzTarget) {
     const version = args.args.version;

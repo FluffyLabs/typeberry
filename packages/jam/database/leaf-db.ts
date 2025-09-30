@@ -1,9 +1,10 @@
 import type { StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { SortedSet, TruncatedHashDictionary } from "@typeberry/collections";
+import {Blake2b} from "@typeberry/hash";
 import { type SerializedStateBackend, StateEntries, type StateKey } from "@typeberry/state-merkleization";
-import { InMemoryTrie, type LeafNode, leafComparator, NodeType, TRIE_NODE_BYTES, TrieNode } from "@typeberry/trie";
-import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
+import { InMemoryTrie, type LeafNode, leafComparator, NodeType, TRIE_NODE_BYTES, TrieNode, TrieHasher } from "@typeberry/trie";
+import {getBlake2bTrieHasher} from "@typeberry/trie/hasher.js";
 import { assertNever, Result } from "@typeberry/utils";
 
 /** Error during `LeafDb` creation. */
@@ -32,7 +33,7 @@ export class LeafDb implements SerializedStateBackend {
   /**
    * Parse given blob containing concatenated leaf nodes into leaf db.
    */
-  static fromLeavesBlob(blob: BytesBlob, db: ValuesDb): Result<LeafDb, LeafDbError> {
+  static fromLeavesBlob(blake2b: Blake2b, blob: BytesBlob, db: ValuesDb): Result<LeafDb, LeafDbError> {
     if (blob.length % TRIE_NODE_BYTES !== 0) {
       return Result.error(
         LeafDbError.InvalidLeafData,
@@ -49,7 +50,7 @@ export class LeafDb implements SerializedStateBackend {
       leaves.insert(node.asLeafNode());
     }
 
-    return Result.ok(new LeafDb(leaves, db));
+    return Result.ok(new LeafDb(leaves, db, getBlake2bTrieHasher(blake2b)));
   }
 
   /** A mapping between an embedded value or db lookup key. */
@@ -58,6 +59,7 @@ export class LeafDb implements SerializedStateBackend {
   private constructor(
     public readonly leaves: SortedSet<LeafNode>,
     public readonly db: ValuesDb,
+    public readonly blake2bTrieHasher: TrieHasher,
   ) {
     this.lookup = TruncatedHashDictionary.fromEntries(
       leaves.array.map((leaf) => {
@@ -94,7 +96,7 @@ export class LeafDb implements SerializedStateBackend {
   }
 
   getStateRoot(): StateRootHash {
-    return InMemoryTrie.computeStateRoot(blake2bTrieHasher, this.leaves).asOpaque();
+    return InMemoryTrie.computeStateRoot(this.blake2bTrieHasher, this.leaves).asOpaque();
   }
 
   intoStateEntries(): StateEntries {

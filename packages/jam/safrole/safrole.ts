@@ -22,7 +22,6 @@ import {
   ED25519_KEY_BYTES,
   type Ed25519Key,
 } from "@typeberry/crypto";
-import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
@@ -30,6 +29,7 @@ import { asOpaqueType, OK, Result } from "@typeberry/utils";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm.js";
 import type { SafroleSealState } from "./safrole-seal.js";
+import {Blake2b} from "@typeberry/hash";
 
 export const VALIDATOR_META_BYTES = 128;
 export type VALIDATOR_META_BYTES = typeof VALIDATOR_META_BYTES;
@@ -109,8 +109,9 @@ type EpochValidators = Pick<
 
 export class Safrole {
   constructor(
-    private chainSpec: ChainSpec,
-    public state: SafroleState,
+    private readonly chainSpec: ChainSpec,
+    private readonly blake2b: Blake2b,
+    public readonly state: SafroleState,
     private readonly bandersnatch: Promise<BandernsatchWasm> = BandernsatchWasm.new(),
   ) {}
 
@@ -152,7 +153,7 @@ export class Safrole {
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/0e17020e1702
      */
-    const newRandomnessAcc = blake2b.hashBlobs([randomnessAcc.raw, entropyHash]).asOpaque();
+    const newRandomnessAcc = this.blake2b.hashBlobs([randomnessAcc.raw, entropyHash]).asOpaque();
 
     /**
      * Randomness history is shifted when epoch is changed
@@ -262,7 +263,7 @@ export class Safrole {
     const validatorsCount = newValidators.length;
     for (let i = tryAsU32(0); i < epochLength; i++) {
       const iAsBytes = u32AsLeBytes(i);
-      const bytes = blake2b.hashBlobs([entropy.raw, iAsBytes]).raw;
+      const bytes = this.blake2b.hashBlobs([entropy.raw, iAsBytes]).raw;
       const decoder = Decoder.fromBlob(bytes);
       const validatorIndex = decoder.u32() % validatorsCount;
       result.push(newValidators[validatorIndex].bandersnatch);

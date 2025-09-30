@@ -3,7 +3,6 @@ import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { type Decode, Decoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { blake2b } from "@typeberry/hash";
 import { type U32, u32AsLeBytes } from "@typeberry/numbers";
 import {
   type EnumerableState,
@@ -18,6 +17,7 @@ import { asOpaqueType, Compatibility, GpVersion, TEST_COMPARE_USING } from "@typ
 import type { StateKey } from "./keys.js";
 import { serialize } from "./serialize.js";
 import type { StateEntries } from "./state-entries.js";
+import {Blake2b} from "@typeberry/hash";
 
 /**
  * Abstraction over some backend containing serialized state entries.
@@ -41,21 +41,23 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
   implements State, EnumerableState
 {
   /** Create a state-like object from collection of serialized entries. */
-  static fromStateEntries(spec: ChainSpec, state: StateEntries, recentServices: ServiceId[] = []) {
-    return new SerializedState(spec, state, recentServices);
+  static fromStateEntries(spec: ChainSpec, blake2b: Blake2b, state: StateEntries, recentServices: ServiceId[] = []) {
+    return new SerializedState(spec, blake2b, state, recentServices);
   }
 
   /** Create a state-like object backed by some DB. */
   static new<T extends SerializedStateBackend>(
     spec: ChainSpec,
+    blake2b: Blake2b,
     db: T,
     recentServices: ServiceId[] = [],
   ): SerializedState<T> {
-    return new SerializedState(spec, db, recentServices);
+    return new SerializedState(spec, blake2b, db, recentServices);
   }
 
   private constructor(
     private readonly spec: ChainSpec,
+    private readonly blake2b: Blake2b,
     public backend: T,
     /** Best-effort list of recently active services. */
     private readonly _recentServiceIds: ServiceId[],
@@ -86,7 +88,7 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
       this._recentServiceIds.push(id);
     }
 
-    return new SerializedService(id, serviceData, (key) => this.retrieveOptional(key));
+    return new SerializedService(this.blake2b, id, serviceData, (key) => this.retrieveOptional(key));
   }
 
   private retrieve<T>({ key, Codec }: KeyAndCodec<T>, description: string): T {
@@ -185,6 +187,7 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
 /** Service data representation on a serialized state. */
 export class SerializedService implements Service {
   constructor(
+    public readonly blake2b: Blake2b,
     /** Service id */
     public readonly serviceId: ServiceId,
     private readonly accountInfo: ServiceAccountInfo,
@@ -203,11 +206,11 @@ export class SerializedService implements Service {
       const serviceIdAndKey = new Uint8Array(SERVICE_ID_BYTES + rawKey.length);
       serviceIdAndKey.set(u32AsLeBytes(this.serviceId));
       serviceIdAndKey.set(rawKey.raw, SERVICE_ID_BYTES);
-      const key: StorageKey = asOpaqueType(BytesBlob.blobFrom(blake2b.hashBytes(serviceIdAndKey).raw));
-      return this.retrieveOptional(serialize.serviceStorage(this.serviceId, key)) ?? null;
+      const key: StorageKey = asOpaqueType(BytesBlob.blobFrom(this.blake2b.hashBytes(serviceIdAndKey).raw));
+      return this.retrieveOptional(serialize.serviceStorage(this.blake2b, this.serviceId, key)) ?? null;
     }
 
-    return this.retrieveOptional(serialize.serviceStorage(this.serviceId, rawKey)) ?? null;
+    return this.retrieveOptional(serialize.serviceStorage(this.blake2b, this.serviceId, rawKey)) ?? null;
   }
 
   /**
@@ -217,17 +220,17 @@ export class SerializedService implements Service {
    */
   hasPreimage(hash: PreimageHash): boolean {
     // TODO [ToDr] consider optimizing to avoid fetching the whole data.
-    return this.retrieveOptional(serialize.servicePreimages(this.serviceId, hash)) !== undefined;
+    return this.retrieveOptional(serialize.servicePreimages(this.blake2b, this.serviceId, hash)) !== undefined;
   }
 
   /** Retrieve preimage from the DB. */
   getPreimage(hash: PreimageHash): BytesBlob | null {
-    return this.retrieveOptional(serialize.servicePreimages(this.serviceId, hash)) ?? null;
+    return this.retrieveOptional(serialize.servicePreimages(this.blake2b, this.serviceId, hash)) ?? null;
   }
 
   /** Retrieve preimage lookup history. */
   getLookupHistory(hash: PreimageHash, len: U32): LookupHistorySlots | null {
-    const rawSlots = this.retrieveOptional(serialize.serviceLookupHistory(this.serviceId, hash, len));
+    const rawSlots = this.retrieveOptional(serialize.serviceLookupHistory(this.blake2b, this.serviceId, hash, len));
     if (rawSlots === undefined) {
       return null;
     }
