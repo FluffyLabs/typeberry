@@ -59,7 +59,7 @@ describe("HostCalls: Transfer", () => {
     const { registers, memory } = prepareRegsAndMemory(
       transfer.currentServiceId,
       tryAsU64(2n ** 45n),
-      tryAsU64(1_000),
+      tryAsU64(1_000n),
       Bytes.fill(TRANSFER_MEMO_BYTES, 33),
     );
 
@@ -88,7 +88,7 @@ describe("HostCalls: Transfer", () => {
     const { registers, memory } = prepareRegsAndMemory(
       tryAsServiceId(15_000),
       tryAsU64(2n ** 45n),
-      tryAsU64(1_000),
+      tryAsU64(1_000n),
       Bytes.fill(TRANSFER_MEMO_BYTES, 33),
     );
 
@@ -142,7 +142,7 @@ describe("HostCalls: Transfer", () => {
     const { registers, memory } = prepareRegsAndMemory(
       tryAsServiceId(15_000),
       tryAsU64(2n ** 45n),
-      tryAsU64(1_000),
+      tryAsU64(1_000n),
       Bytes.fill(TRANSFER_MEMO_BYTES, 33),
       { skipMemo: true },
     );
