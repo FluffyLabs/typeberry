@@ -163,13 +163,6 @@ export class AccumulateData {
     return this.transfersByServiceId.get(serviceId) ?? [];
   }
 
-  /** Returns the list of transfers and operands for a given service id */
-  getTransfersAndOperands(serviceId: ServiceId): (PendingTransfer | Operand)[] {
-    const operands = this.reportsDataByServiceId.get(serviceId)?.operands ?? [];
-    const transfers = this.transfersByServiceId.get(serviceId) ?? [];
-    return [...transfers, ...operands];
-  }
-
   /** Returns the number of reports to acccumulate for a given service id */
   getReportsLength(serviceId: ServiceId): U32 {
     return this.reportsDataByServiceId.get(serviceId)?.reportsLength ?? tryAsU32(0);

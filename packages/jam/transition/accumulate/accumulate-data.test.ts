@@ -151,7 +151,20 @@ describe("AccumulateData", () => {
     });
   });
 
-  describe("getTransfersAndOperands", () => {
+  describe("getTransfers", () => {
+    it("should return transfers for a service id", () => {
+      const serviceId = tryAsServiceId(129);
+      const transfer = getTransfer(serviceId);
+      const transfers = [transfer];
+      const accumulateData = new AccumulateData(ArrayView.from([]), transfers, []);
+
+      const result = accumulateData.getTransfers(serviceId);
+
+      deepEqual(result, transfers);
+    });
+  });
+
+  describe("getOperands", () => {
     it("should return operands for a service id", () => {
       const serviceId = tryAsServiceId(129);
       const report = getWorkReport();
@@ -159,35 +172,9 @@ describe("AccumulateData", () => {
       const accumulateData = new AccumulateData(reports, [], []);
       const expectedOperands = transformReportToOperands(report);
 
-      const result = accumulateData.getTransfersAndOperands(serviceId);
+      const result = accumulateData.getOperands(serviceId);
 
       deepEqual(result, expectedOperands);
-    });
-
-    it("should return transfers for a service id", () => {
-      const serviceId = tryAsServiceId(129);
-      const transfer = getTransfer(serviceId);
-      const transfers = [transfer];
-      const accumulateData = new AccumulateData(ArrayView.from([]), transfers, []);
-
-      const result = accumulateData.getTransfersAndOperands(serviceId);
-
-      deepEqual(result, transfers);
-    });
-
-    it("should return transfers and operands for a service id", () => {
-      const serviceId = tryAsServiceId(129);
-      const report = getWorkReport();
-      const reports = ArrayView.from([report]);
-      const transfer = getTransfer(serviceId);
-      const transfers = [transfer];
-      const accumulateData = new AccumulateData(reports, transfers, []);
-      const expectedOperands = transformReportToOperands(report);
-      const expectedResult = [...transfers, ...expectedOperands];
-
-      const result = accumulateData.getTransfersAndOperands(serviceId);
-
-      deepEqual(result, expectedResult);
     });
   });
 });
