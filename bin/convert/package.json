@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/convert",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Convert JAM-related types between different formats.",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",
@@ -9,6 +9,7 @@
   "bin": "./index.js",
   "scripts": {
     "start": "NODE_ENV=development tsx ./index.ts",
+    "build": "./build-for-npm.sh",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
@@ -20,6 +21,7 @@
     "@typeberry/config": "*",
     "@typeberry/config-node": "*",
     "@typeberry/database": "*",
+    "@typeberry/fuzz-proto": "*",
     "@typeberry/hash": "*",
     "@typeberry/json-parser": "*",
     "@typeberry/logger": "*",
@@ -27,6 +29,7 @@
     "@typeberry/state": "*",
     "@typeberry/state-json": "*",
     "@typeberry/state-merkleization": "*",
+    "@typeberry/test-runner": "*",
     "@typeberry/utils": "*",
     "json-bigint-patch": "0.0.8",
     "minimist": "1.2.8"

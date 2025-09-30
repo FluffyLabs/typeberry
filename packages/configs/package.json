@@ -1,0 +1,12 @@
+{
+  "name": "@typeberry/configs",
+  "version": "0.1.3",
+  "description": "A set of pre-defined JSON config files.",
+  "license": "MPL-2.0",
+  "author": "Fluffy Labs",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  }
+}

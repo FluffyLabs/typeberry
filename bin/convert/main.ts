@@ -4,7 +4,7 @@ import "json-bigint-patch";
 import fs from "node:fs";
 import { start as startRepl } from "node:repl";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Decoder, Encoder, ObjectView } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { parseFromJson } from "@typeberry/json-parser";
@@ -195,6 +195,10 @@ function toJson(data: unknown) {
 
       if (value instanceof Map) {
         return Object.fromEntries(value.entries());
+      }
+
+      if (value instanceof ObjectView) {
+        return value.materialize();
       }
 
       return value;

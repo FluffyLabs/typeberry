@@ -11,11 +11,8 @@ COPY tsconfig.json ./
 COPY start.sh ./
 
 COPY bin/ ./bin/
-COPY configs/ ./configs/
-COPY extensions/ ./extensions/
-COPY workers/ ./workers/
-
 COPY packages/ ./packages/
+
 RUN chown -R typeberry /app
 
 USER typeberry

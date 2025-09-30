@@ -1,0 +1,22 @@
+{
+  "name": "@typeberry/fuzz-proto",
+  "version": "0.1.3",
+  "description": "Fuzzer protocol types.",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "dependencies": {
+    "@typeberry/block": "*",
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/config": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0"
+}

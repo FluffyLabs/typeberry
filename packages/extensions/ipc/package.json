@@ -1,0 +1,28 @@
+{
+  "name": "@typeberry/ext-ipc",
+  "version": "0.1.3",
+  "description": "An IPC extension to inspect the node state.",
+  "main": "index.ts",
+  "dependencies": {
+    "@typeberry/block": "*",
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/collections": "*",
+    "@typeberry/config": "*",
+    "@typeberry/fuzz-proto": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/jamnp-s": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/networking": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/state-machine": "*",
+    "@typeberry/state-merkleization": "*",
+    "@typeberry/utils": "*"
+  },
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0",
+  "type": "module"
+}

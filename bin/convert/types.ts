@@ -6,8 +6,7 @@ import { blockFromJson, headerFromJson, workReportFromJson } from "@typeberry/bl
 import { codec, type Decode, Decoder, type Encode, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { JipChainSpec } from "@typeberry/config-node";
-import type { MessageData } from "@typeberry/ext-ipc/fuzz/v1/index.js";
-import { Initialize, MessageType, messageCodec } from "@typeberry/ext-ipc/fuzz/v1/types.js";
+import { v1 } from "@typeberry/fuzz-proto";
 import { blake2b, HASH_SIZE } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
 import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
@@ -15,11 +14,11 @@ import type { InMemoryState } from "@typeberry/state";
 import { fullStateDumpFromJson } from "@typeberry/state-json";
 import { SerializedState, StateEntries } from "@typeberry/state-merkleization";
 import { inMemoryStateCodec } from "@typeberry/state-merkleization/in-memory-state-codec.js";
-import type { TestState } from "../test-runner/state-transition/state-loader.js";
-import { StateTransition, StateTransitionGenesis } from "../test-runner/state-transition/state-transition.js";
-import { workItemFromJson } from "../test-runner/w3f/codec/work-item.js";
-import { workPackageFromJson } from "../test-runner/w3f/codec/work-package.js";
-import { PvmTest } from "../test-runner/w3f/pvm.js";
+import type { TestState } from "@typeberry/test-runner/state-transition/state-loader.js";
+import { StateTransition, StateTransitionGenesis } from "@typeberry/test-runner/state-transition/state-transition.js";
+import { workItemFromJson } from "@typeberry/test-runner/w3f/codec/work-item.js";
+import { workPackageFromJson } from "@typeberry/test-runner/w3f/codec/work-package.js";
+import { PvmTest } from "@typeberry/test-runner/w3f/pvm.js";
 
 export type ProcessOutput<T> = {
   value: T;
@@ -156,18 +155,18 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
         }
 
         if (option === "as-fuzz-message") {
-          const init = Initialize.create({
+          const init = v1.Initialize.create({
             header: test.header,
             keyvals: test.state.keyvals,
             ancestry: [],
           });
-          const msg: MessageData = {
-            type: MessageType.Initialize,
+          const msg: v1.MessageData = {
+            type: v1.MessageType.Initialize,
             value: init,
           };
           return looseType({
             value: msg,
-            encode: messageCodec,
+            encode: v1.messageCodec,
           });
         }
 
@@ -199,13 +198,13 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
         if (option === "as-fuzz-message") {
           const encoded = Encoder.encodeObject(Block.Codec, test.block, spec);
           const blockView = Decoder.decodeObject(Block.Codec.View, encoded, spec);
-          const msg: MessageData = {
-            type: MessageType.ImportBlock,
+          const msg: v1.MessageData = {
+            type: v1.MessageType.ImportBlock,
             value: blockView,
           };
           return looseType({
             value: msg,
-            encode: messageCodec,
+            encode: v1.messageCodec,
           });
         }
 
@@ -215,8 +214,8 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
   },
   {
     name: "fuzz-message",
-    encode: messageCodec,
-    decode: messageCodec,
+    encode: v1.messageCodec,
+    decode: v1.messageCodec,
   },
 ];
 
