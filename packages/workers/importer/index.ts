@@ -25,7 +25,7 @@ const blake2b = Blake2b.createHasher();
 export async function createImporter(config: WorkerConfig) {
   const lmdb = new LmdbRoot(config.dbPath);
   const blocks = new LmdbBlocks(config.chainSpec, lmdb);
-  const states = new LmdbStates(config.chainSpec, lmdb);
+  const states = new LmdbStates(config.chainSpec, await blake2b, lmdb);
   const hasher = new TransitionHasher(config.chainSpec, await keccakHasher, await blake2b);
   const importer = new Importer(config.chainSpec, hasher, logger, blocks, states);
   return {

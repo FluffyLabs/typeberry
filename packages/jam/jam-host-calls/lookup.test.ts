@@ -1,8 +1,8 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { type Blake2bHash, blake2b } from "@typeberry/hash";
+import { Blake2b, type Blake2bHash } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
@@ -14,6 +14,14 @@ import { TestAccounts } from "./externalities/test-accounts.js";
 import { Lookup } from "./lookup.js";
 import { HostCallResult } from "./results.js";
 
+let blake2b: Blake2b;
+let HASH: Blake2bHash;
+
+before(async () => {
+  blake2b = await Blake2b.createHasher();
+  HASH = blake2b.hashBytes(BytesBlob.blobFromString("hello world"));
+});
+
 const gas = gasCounter(tryAsGas(0));
 
 const SERVICE_ID_REG = 7;
@@ -24,7 +32,6 @@ const PREIMAGE_OFFSET_REG = 10;
 const PREIMAGE_LENGTH_TO_WRITE_REG = 11;
 
 const PREIMAGE_BLOB = BytesBlob.blobFromString("hello world");
-const HASH = blake2b.hashBytes(PREIMAGE_BLOB);
 const DESTINATION_MEM_ADDRESS = 2 ** 22;
 const PREIMAGE_HASH_ADDRESS = 2 ** 16;
 

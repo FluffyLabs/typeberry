@@ -7,13 +7,14 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder, ObjectView } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import { Blake2b } from "@typeberry/hash";
 import { parseFromJson } from "@typeberry/json-parser";
 import { assertNever, inspect } from "@typeberry/utils";
 import { type Arguments, KnownChainSpec, OutputFormat } from "./args.js";
 import type { SupportedType } from "./types.js";
 
-export function main(args: Arguments, withRelPath: (v: string) => string) {
-  const { processed, type, spec } = loadAndProcessDataFile(
+export async function main(args: Arguments, withRelPath: (v: string) => string) {
+  const { processed, type, spec } = await loadAndProcessDataFile(
     args.inputPath,
     withRelPath,
     args.flavor,
@@ -135,7 +136,7 @@ function dumpOutput(
 
       replServer.defineCommand("load", {
         help: "Reload the input file and updata data: .load <file> [process]",
-        action(input: string) {
+        async action(input: string) {
           const [file, process] = input.trim().split(/\s+/);
           const processOption = process ?? args.process;
           if (file === "") {
@@ -144,7 +145,13 @@ function dumpOutput(
             return;
           }
           try {
-            const { processed } = loadAndProcessDataFile(file, withRelPath, args.flavor, args.type, processOption);
+            const { processed } = await loadAndProcessDataFile(
+              file,
+              withRelPath,
+              args.flavor,
+              args.type,
+              processOption,
+            );
             replServer.context.data = processed;
             console.info("✅ File reloaded successfully!");
             console.info("📁 Current file:", file);
@@ -209,6 +216,7 @@ function toJson(data: unknown) {
 
 function processOutput(
   spec: ChainSpec,
+  blake2b: Blake2b,
   data: unknown,
   type: SupportedType,
   process: string,
@@ -223,7 +231,7 @@ function processOutput(
   if (type.process === undefined || !type.process.options.includes(process)) {
     throw new Error(`Unsupported processing: '${process}' for '${type.name}'`);
   }
-  const processed = type.process.run(spec, data, process);
+  const processed = type.process.run(spec, data, process, blake2b);
   return {
     processed: processed.value,
     type: {
@@ -235,13 +243,14 @@ function processOutput(
   };
 }
 
-function loadAndProcessDataFile(
+async function loadAndProcessDataFile(
   file: string | undefined,
   withRelPath: (v: string) => string,
   flavor: KnownChainSpec,
   decodeType: SupportedType,
   process: string,
 ) {
+  const blake2b = Blake2b.createHasher();
   const input = loadInputFile(file, withRelPath);
   const spec = getChainSpec(flavor);
 
@@ -261,7 +270,7 @@ function loadAndProcessDataFile(
     assertNever(input);
   }
 
-  const { processed, type } = processOutput(spec, data, decodeType, process);
+  const { processed, type } = processOutput(spec, await blake2b, data, decodeType, process);
 
   return {
     processed,

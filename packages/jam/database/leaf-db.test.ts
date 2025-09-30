@@ -1,11 +1,20 @@
 import assert, { deepEqual } from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { HASH_SIZE, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
 import { InMemoryTrie, type InputKey } from "@typeberry/trie";
-import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
+import { getBlake2bTrieHasher } from "@typeberry/trie/hasher.js";
+import type { TrieHasher } from "@typeberry/trie/nodesDb.js";
 import { type Result, resultToString } from "@typeberry/utils";
 import { LeafDb, type LeafDbError, type ValuesDb } from "./leaf-db.js";
+
+let blake2bTrieHasher: TrieHasher;
+let blake2b: Blake2b;
+
+before(async () => {
+  blake2b = await Blake2b.createHasher();
+  blake2bTrieHasher = getBlake2bTrieHasher(blake2b);
+});
 
 describe("LeafDb", () => {
   it("should construct a LeafDb", () => {

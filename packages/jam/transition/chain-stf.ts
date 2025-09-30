@@ -137,18 +137,18 @@ export class OnChain {
     const bandersnatch = BandernsatchWasm.new();
     this.statistics = new Statistics(chainSpec, state);
 
-    this.safrole = new Safrole(chainSpec, state, bandersnatch);
+    this.safrole = new Safrole(chainSpec, hasher.blake2b, state, bandersnatch);
     this.safroleSeal = new SafroleSeal(bandersnatch);
 
     this.recentHistory = new RecentHistory(hasher, state);
 
-    this.disputes = new Disputes(chainSpec, state);
+    this.disputes = new Disputes(chainSpec, hasher.blake2b, state);
 
-    this.reports = new Reports(chainSpec, state, new DbHeaderChain(blocks), hasher.blake2b);
+    this.reports = new Reports(chainSpec, hasher.blake2b, state, new DbHeaderChain(blocks));
     this.assurances = new Assurances(chainSpec, state, hasher.blake2b);
-    this.accumulate = new Accumulate(chainSpec, state);
+    this.accumulate = new Accumulate(chainSpec, hasher.blake2b, state);
     this.accumulateOutput = new AccumulateOutput();
-    this.deferredTransfers = new DeferredTransfers(chainSpec, state);
+    this.deferredTransfers = new DeferredTransfers(chainSpec, hasher.blake2b, state);
     this.preimages = new Preimages(state, hasher.blake2b);
 
     this.authorization = new Authorization(chainSpec, state);

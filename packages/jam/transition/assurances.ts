@@ -6,7 +6,7 @@ import { asKnownSize, FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
 import type { DisputesStateUpdate } from "@typeberry/disputes";
-import { Blake2b } from "@typeberry/hash";
+import type { Blake2b } from "@typeberry/hash";
 import type { State } from "@typeberry/state";
 import { check, OK, Result } from "@typeberry/utils";
 
@@ -137,7 +137,7 @@ export class Assurances {
           coresToClear.push(c);
         }
         if (noOfAssurances >= validatorsSuperMajority) {
-          availableReports.push(workReport.workReport.data);
+          availableReports.push(workReport.workReport);
           coresToClear.push(c);
         }
       }

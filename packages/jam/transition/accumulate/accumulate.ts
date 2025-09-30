@@ -12,7 +12,7 @@ import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import { HashSet, SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { Blake2b, HASH_SIZE } from "@typeberry/hash";
+import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
 import {
   AccumulationStateUpdate,
   PartiallyUpdatedState,
@@ -142,7 +142,7 @@ export class Accumulate {
       return Result.error(PvmInvocationError.PreimageTooLong);
     }
 
-    const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec);
+    const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec, this.blake2b);
     const partialState = new AccumulateExternalities(
       this.chainSpec,
       this.blake2b,

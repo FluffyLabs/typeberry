@@ -14,7 +14,7 @@ import {
   type Ed25519Key,
   initWasm,
 } from "@typeberry/crypto";
-import { HASH_SIZE, WithHash } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import {
   AvailabilityAssignment,
   DisputesRecords,
@@ -85,6 +85,11 @@ before(async () => {
 });
 
 describe("Disputes", () => {
+  let blake2b: Blake2b;
+  before(async () => {
+    blake2b = await Blake2b.createHasher();
+  });
+
   const currentValidatorData = tryAsPerValidator(
     [
       {
@@ -298,7 +303,7 @@ describe("Disputes", () => {
   };
 
   it("should perform correct state transition and return offenders", async () => {
-    const disputes = new Disputes(tinyChainSpec, preState);
+    const disputes = new Disputes(tinyChainSpec, blake2b, preState);
     const disputesExtrinsic = DisputesExtrinsic.create({ verdicts, culprits, faults });
     const offenders = [
       "0x22351e22105a19aabb42589162ad7f1ea0df1c25cebf0e4a9fcd261301274862",
@@ -315,7 +320,7 @@ describe("Disputes", () => {
   });
 
   it("should return incorrect validator index error", async () => {
-    const disputes = new Disputes(tinyChainSpec, preState);
+    const disputes = new Disputes(tinyChainSpec, blake2b, preState);
     const disputesExtrinsic = DisputesExtrinsic.create({
       verdicts: verdictsWithIncorrectValidatorIndex,
       culprits,
@@ -334,21 +339,12 @@ describe("Disputes", () => {
     const workReport1 = newWorkReport({ core: 0 });
     const workReport2 = newWorkReport({ core: 1 });
 
-    const workReportWithHash1 = new WithHash(
-      Bytes.parseBytes("0x11da6d1f761ddf9bdb4c9d6e5303ebd41f61858d0a5647a1a7bfe089bf921be9", HASH_SIZE).asOpaque(),
-      workReport1,
-    );
-    const workReportWithHash2 = new WithHash(
-      Bytes.parseBytes("0x7b0aa1735e5ba58d3236316c671fe4f00ed366ee72417c9ed02a53a8019e85b8", HASH_SIZE).asOpaque(),
-      workReport2,
-    );
-
     const availabilityAssignment1 = AvailabilityAssignment.create({
-      workReport: workReportWithHash1,
+      workReport: workReport1,
       timeout: tryAsTimeSlot(10),
     });
     const availabilityAssignment2 = AvailabilityAssignment.create({
-      workReport: workReportWithHash2,
+      workReport: workReport2,
       timeout: tryAsTimeSlot(10),
     });
 
@@ -365,7 +361,7 @@ describe("Disputes", () => {
       previousValidatorData,
     };
 
-    const disputes = new Disputes(tinyChainSpec, preStateWithWorkReports);
+    const disputes = new Disputes(tinyChainSpec, blake2b, preStateWithWorkReports);
     const disputesExtrinsic = DisputesExtrinsic.create({
       verdicts,
       culprits,

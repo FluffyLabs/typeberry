@@ -1,5 +1,5 @@
 import type { Bytes } from "@typeberry/bytes";
-import { Blake2b } from "@typeberry/hash";
+import type { Blake2b } from "@typeberry/hash";
 import { leBytesAsU32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 

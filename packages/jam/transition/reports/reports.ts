@@ -5,7 +5,7 @@ import { type BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
 import { asKnownSize, type HashDictionary, type HashSet, type KnownSizeArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type Ed25519Key, ed25519 } from "@typeberry/crypto";
-import { Blake2b, WithHash } from "@typeberry/hash";
+import type { Blake2b } from "@typeberry/hash";
 import type { SafroleStateUpdate } from "@typeberry/safrole";
 import { AvailabilityAssignment, type State, tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType, OK, Result } from "@typeberry/utils";
@@ -56,9 +56,9 @@ export type ReportsOutput = {
 export class Reports {
   constructor(
     public readonly chainSpec: ChainSpec,
+    public readonly blake2b: Blake2b,
     public readonly state: ReportsState,
     public readonly headerChain: HeaderChain,
-    public readonly blake2b: Blake2b,
   ) {}
 
   async transition(input: ReportsInput): Promise<Result<ReportsOutput, ReportsError>> {
@@ -114,17 +114,14 @@ export class Reports {
      * time has elapsed.
      * https://graypaper.fluffylabs.dev/#/1c979cb/161e00165900?v=0.7.1
      */
-    let index = 0;
     const availabilityAssignment = input.assurancesAvailAssignment.slice();
 
     for (const guarantee of input.guarantees) {
-      const report = guarantee.view().report.materialize();
-      const workPackageHash = workReportHashes[index];
-      availabilityAssignment[report.coreIndex] = AvailabilityAssignment.create({
-        workReport: new WithHash(workPackageHash, report),
+      const workReport = guarantee.view().report.materialize();
+      availabilityAssignment[workReport.coreIndex] = AvailabilityAssignment.create({
+        workReport,
         timeout: input.slot,
       });
-      index += 1;
     }
 
     const reporters = SortedSet.fromArray(

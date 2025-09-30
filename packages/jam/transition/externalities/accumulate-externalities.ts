@@ -15,7 +15,7 @@ import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import { type Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import {
   AccumulationStateUpdate,
   clampU64ToU32,

@@ -1,8 +1,11 @@
 import type { WorkReportHash } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes.js";
+import { WorkReport } from "@typeberry/block/work-report.js";
+import { Encoder } from "@typeberry/codec";
 import { HashDictionary, HashSet, SortedArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
+import type { Blake2b } from "@typeberry/hash";
 import {
   type AvailabilityAssignment,
   DisputesRecords,
@@ -35,6 +38,7 @@ type Ok = null;
 export class Disputes {
   constructor(
     private readonly chainSpec: ChainSpec,
+    private readonly blake2b: Blake2b,
     public readonly state: DisputesState,
   ) {}
 
@@ -290,7 +294,9 @@ export class Disputes {
     for (let c = 0; c < availabilityAssignment.length; c++) {
       const assignment = availabilityAssignment[c];
       if (assignment !== null) {
-        const sum = v.get(assignment.workReport.hash);
+        const encoded = Encoder.encodeObject(WorkReport.Codec, assignment.workReport, this.chainSpec);
+        const hash: WorkReportHash = this.blake2b.hashBytes(encoded).asOpaque();
+        const sum = v.get(hash);
         if (sum !== undefined && sum < this.chainSpec.validatorsSuperMajority) {
           availabilityAssignment[c] = null;
         }

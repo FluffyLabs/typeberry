@@ -77,7 +77,7 @@ function startJamnpExtension(api: ExtensionApi) {
   };
 
   const getKeyValuePairs = (_hash: HeaderHash, startKey: ce129.Key) => {
-    let value = BytesBlob.blobFromNumbers([255, 255, 0, 0]);
+    const value = BytesBlob.blobFromNumbers([255, 255, 0, 0]);
     return [new ce129.KeyValuePair(startKey, value)];
   };
 

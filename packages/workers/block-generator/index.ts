@@ -38,13 +38,14 @@ if (!isMainThread) {
  * The `BlockGenerator` should periodically create new blocks and send them as signals to the main thread.
  */
 export async function main(channel: MessageChannelStateMachine<GeneratorInit, GeneratorStates>) {
+  const blake2b = Blake2b.createHasher();
   logger.info`🎁 Block Generator running ${channel.currentState()}`;
   // Await the configuration object
   const ready = await channel.waitForState<GeneratorReady>("ready(generator)");
   const config = ready.currentState().getConfig();
   const lmdb = new LmdbRoot(config.dbPath);
   const blocks = new LmdbBlocks(config.chainSpec, lmdb);
-  const states = new LmdbStates(config.chainSpec, lmdb);
+  const states = new LmdbStates(config.chainSpec, await blake2b, lmdb);
 
   // Generate blocks until the close signal is received.
   const finished = await ready.doUntil<Finished>("finished", async (worker, port, isFinished) => {
@@ -53,7 +54,9 @@ export async function main(channel: MessageChannelStateMachine<GeneratorInit, Ge
       config.chainSpec,
       await keccak.KeccakHasher.create(),
       await Blake2b.createHasher(),
-      blocks, states);
+      blocks,
+      states,
+    );
     while (!isFinished()) {
       await setTimeout(config.chainSpec.slotDuration * 1000);
       counter += 1;

@@ -19,7 +19,7 @@ import {
 } from "@typeberry/block";
 import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import {Blake2b} from "@typeberry/hash";
+import type { Blake2b } from "@typeberry/hash";
 import { fisherYatesShuffle } from "@typeberry/shuffling";
 import { asOpaqueType, type Opaque } from "@typeberry/utils";
 

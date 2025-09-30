@@ -1,6 +1,6 @@
 import type { TimeSlot } from "@typeberry/block";
 import { WorkReport } from "@typeberry/block/work-report.js";
-import { type CodecRecord, codec } from "@typeberry/codec" ;
+import { type CodecRecord, codec } from "@typeberry/codec";
 import { WithDebug } from "@typeberry/utils";
 
 /**

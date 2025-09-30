@@ -7,7 +7,7 @@ import { codec, type Decode, Decoder, type Encode, Encoder } from "@typeberry/co
 import type { ChainSpec } from "@typeberry/config";
 import { JipChainSpec } from "@typeberry/config-node";
 import { v1 } from "@typeberry/fuzz-proto";
-import { Blake2b, HASH_SIZE } from "@typeberry/hash";
+import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
 import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
 import type { InMemoryState } from "@typeberry/state";
@@ -42,7 +42,7 @@ export type SupportedType = {
   json?: (spec: ChainSpec) => FromJson<any>;
   process?: {
     options: readonly string[];
-    run: (spec: ChainSpec, data: unknown, option: string) => ProcessOutput<unknown>;
+    run: (spec: ChainSpec, data: unknown, option: string, blake2b: Blake2b) => ProcessOutput<unknown>;
   };
 };
 
@@ -60,7 +60,7 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     json: (_spec: ChainSpec) => headerFromJson,
     process: {
       options: ["as-hash"],
-      run(spec, data, option) {
+      run(spec, data, option, blake2b) {
         const header = data as Header;
         if (option === "as-hash") {
           return looseType({
@@ -110,17 +110,17 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     json: fullStateDumpFromJson,
     process: {
       options: ["as-root-hash", "as-entries"],
-      run(spec: ChainSpec, data: unknown, option: string) {
+      run(spec: ChainSpec, data: unknown, option: string, blake2b: Blake2b) {
         const state = data as InMemoryState;
         if (option === "as-entries") {
           return looseType({
-            value: Object.fromEntries(StateEntries.serializeInMemory(spec, state)),
+            value: Object.fromEntries(StateEntries.serializeInMemory(spec, blake2b, state)),
           });
         }
 
         if (option === "as-root-hash") {
           return looseType({
-            value: StateEntries.serializeInMemory(spec, state).getRootHash(),
+            value: StateEntries.serializeInMemory(spec, blake2b, state).getRootHash(blake2b),
             encode: codec.bytes(HASH_SIZE),
           });
         }
@@ -136,11 +136,11 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     json: () => StateTransitionGenesis.fromJson,
     process: {
       options: ["as-state", "as-jip4", "as-fuzz-message"],
-      run(spec: ChainSpec, data: unknown, option: string) {
+      run(spec: ChainSpec, data: unknown, option: string, blake2b) {
         const test = data as StateTransitionGenesis;
         if (option === "as-state") {
           return looseType({
-            value: stateFromKeyvals(spec, test.state),
+            value: stateFromKeyvals(spec, blake2b, test.state),
           });
         }
 
@@ -181,17 +181,17 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     json: () => StateTransition.fromJson,
     process: {
       options: ["as-pre-state", "as-post-state", "as-fuzz-message"],
-      run(spec: ChainSpec, data: unknown, option: string) {
+      run(spec: ChainSpec, data: unknown, option: string, blake2b) {
         const test = data as StateTransition;
         if (option === "as-pre-state") {
           return looseType({
-            value: stateFromKeyvals(spec, test.pre_state),
+            value: stateFromKeyvals(spec, blake2b, test.pre_state),
           });
         }
 
         if (option === "as-post-state") {
           return looseType({
-            value: stateFromKeyvals(spec, test.post_state),
+            value: stateFromKeyvals(spec, blake2b, test.post_state),
           });
         }
 
@@ -219,7 +219,7 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
   },
 ];
 
-const stateFromKeyvals = (spec: ChainSpec, state: TestState) => {
+const stateFromKeyvals = (spec: ChainSpec, blake2b: Blake2b, state: TestState) => {
   const entries = StateEntries.fromEntriesUnsafe(state.keyvals.map((x) => [x.key, x.value]));
-  return SerializedState.fromStateEntries(spec, entries);
+  return SerializedState.fromStateEntries(spec, blake2b, entries);
 };

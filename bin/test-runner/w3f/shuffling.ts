@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
+import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { fisherYatesShuffle } from "@typeberry/shuffling";
-import {Blake2b} from "@typeberry/hash";
 
 const bytes32NoPrefix = <T extends Bytes<32>>() =>
   json.fromString<T>((v) => Bytes.parseBytesNoPrefix(v, 32).asOpaque());

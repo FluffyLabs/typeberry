@@ -1,14 +1,20 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { HASH_SIZE } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import type { StateKey } from "./keys.js";
 import { dumpCodec, serialize } from "./serialize.js";
 
 type TestCase = [string, { key: StateKey }, string];
+
+let blake2b: Blake2b;
+
+before(async () => {
+  blake2b = await Blake2b.createHasher();
+});
 
 describe("Serialization keys", () => {
   const cases: TestCase[] = [
@@ -34,17 +40,22 @@ describe("Serialization keys", () => {
     ],
     [
       "state",
-      serialize.serviceStorage(tryAsServiceId(0xeeee), Bytes.fill(HASH_SIZE, 15).asOpaque()),
+      serialize.serviceStorage(blake2b, tryAsServiceId(0xeeee), Bytes.fill(HASH_SIZE, 15).asOpaque()),
       "0xee4bee970050003626c718ce62e1bcfb11cc7efb46f27111c166d8b5bb04fa21",
     ],
     [
       "preimage",
-      serialize.servicePreimages(tryAsServiceId(0xeeee), Bytes.fill(HASH_SIZE, 15).asOpaque()),
+      serialize.servicePreimages(blake2b, tryAsServiceId(0xeeee), Bytes.fill(HASH_SIZE, 15).asOpaque()),
       "0xeec4eef300fd00b4a04dd8ad011395b20fd8e65fc577abbf17103e293fec9a54",
     ],
     [
       "lookup history",
-      serialize.serviceLookupHistory(tryAsServiceId(0xeeee), Bytes.fill(HASH_SIZE, 15).asOpaque(), tryAsU32(0xdddd)),
+      serialize.serviceLookupHistory(
+        blake2b,
+        tryAsServiceId(0xeeee),
+        Bytes.fill(HASH_SIZE, 15).asOpaque(),
+        tryAsU32(0xdddd),
+      ),
       "0xee4aee230054008acdb8294830cc22f321d57276978d0955a8bc33ffdd964cfb",
     ],
   ];

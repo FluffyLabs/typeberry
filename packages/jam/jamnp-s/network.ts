@@ -3,6 +3,7 @@ import type { BlockView, HeaderHash } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import type { ed25519 } from "@typeberry/crypto";
 import type { BlocksDb } from "@typeberry/database";
+import { Blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { type Network, type Peer, Quic } from "@typeberry/networking";
 import { OK } from "@typeberry/utils";
@@ -10,7 +11,6 @@ import { type Bootnode, Connections } from "./peers.js";
 import { StreamManager } from "./stream-manager.js";
 import { SyncTask } from "./tasks/sync.js";
 import { handleAsyncErrors } from "./utils.js";
-import {Blake2b} from "@typeberry/hash";
 
 const logger = Logger.new(import.meta.filename, "jamnps");
 

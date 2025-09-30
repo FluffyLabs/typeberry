@@ -6,7 +6,7 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_VRF_SIGNATURE_BYTES } from "@typeberry/crypto";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
-import {Blake2b} from "@typeberry/hash";
+import type { Blake2b } from "@typeberry/hash";
 import type { KeccakHasher } from "@typeberry/hash/keccak.js";
 import type { State } from "@typeberry/state";
 import { TransitionHasher } from "@typeberry/transition";

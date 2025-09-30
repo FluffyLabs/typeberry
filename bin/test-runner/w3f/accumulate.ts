@@ -12,6 +12,7 @@ import type { WorkReport } from "@typeberry/block/work-report.js";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import { asKnownSize, HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { InMemoryService } from "@typeberry/state";
 import { AutoAccumulate, InMemoryState, PrivilegedServices, tryAsPerCore } from "@typeberry/state";
@@ -21,7 +22,6 @@ import { AccumulateOutput } from "@typeberry/transition/accumulate/accumulate-ou
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
 import { deepEqual, Result } from "@typeberry/utils";
 import { getChainSpec } from "./spec.js";
-import {Blake2b} from "@typeberry/hash";
 
 class Input {
   static fromJson: FromJson<Input> = {

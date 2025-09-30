@@ -50,7 +50,6 @@ export class StateTransition {
 }
 
 const keccakHasher = keccak.KeccakHasher.create();
-const blake2b = Blake2b.createHasher();
 
 const cachedBlocks = new Map<string, Block[]>();
 function loadBlocks(testPath: string) {
@@ -100,17 +99,18 @@ const jamConformance070V0Spec = new ChainSpec({
 });
 
 export async function runStateTransition(testContent: StateTransition, testPath: string) {
+  const blake2b = await Blake2b.createHasher();
   // a bit of a hack, but the new value for `maxLookupAnchorAge` was proposed with V1
   // version of the fuzzer, yet these tests were still depending on the older value.
   // To simplify the chain spec, we just special case this one vector here.
   const spec = testPath.includes("fuzz-reports/0.7.0/traces/1756548916/00000082.json")
     ? jamConformance070V0Spec
     : tinyChainSpec;
-  const preState = loadState(spec, testContent.pre_state.keyvals);
-  const postState = loadState(spec, testContent.post_state.keyvals);
+  const preState = loadState(spec, blake2b, testContent.pre_state.keyvals);
+  const postState = loadState(spec, blake2b, testContent.post_state.keyvals);
 
-  const preStateRoot = preState.backend.getRootHash();
-  const postStateRoot = postState.backend.getRootHash();
+  const preStateRoot = preState.backend.getRootHash(blake2b);
+  const postStateRoot = postState.backend.getRootHash(blake2b);
 
   const blockView = blockAsView(spec, testContent.block);
   const allBlocks = loadBlocks(testPath);
@@ -119,7 +119,7 @@ export async function runStateTransition(testContent: StateTransition, testPath:
   );
   const previousBlocks = allBlocks.slice(0, myBlockIndex);
 
-  const hasher = new TransitionHasher(spec, await keccakHasher, await blake2b);
+  const hasher = new TransitionHasher(spec, await keccakHasher, blake2b);
 
   const blocksDb = InMemoryBlocks.fromBlocks(
     previousBlocks.map((block) => {
@@ -147,7 +147,7 @@ export async function runStateTransition(testContent: StateTransition, testPath:
   if (shouldBlockBeRejected) {
     assert.strictEqual(stfResult.isOk, false, "The block should be rejected, yet we imported it.");
     // there should be no changes.
-    const root = preState.backend.getRootHash();
+    const root = preState.backend.getRootHash(blake2b);
     deepEqual(preState, postState);
     assert.deepStrictEqual(root.toString(), postStateRoot.toString());
     return;
@@ -157,10 +157,10 @@ export async function runStateTransition(testContent: StateTransition, testPath:
     assert.fail(`Expected the transition to go smoothly, got error: ${resultToString(stfResult)}`);
   }
 
-  preState.backend.applyUpdate(serializeStateUpdate(spec, stfResult.ok));
+  preState.backend.applyUpdate(serializeStateUpdate(spec, blake2b, stfResult.ok));
 
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
-  const root = preState.backend.getRootHash();
+  const root = preState.backend.getRootHash(blake2b);
   deepEqual(preState, postState);
   assert.deepStrictEqual(root.toString(), postStateRoot.toString());
 }

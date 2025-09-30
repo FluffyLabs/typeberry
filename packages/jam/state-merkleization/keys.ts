@@ -1,7 +1,7 @@
 import type { ServiceId } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import { type Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU32, type U32, u32AsLeBytes } from "@typeberry/numbers";
 import type { StorageKey } from "@typeberry/state";
 import { Compatibility, GpVersion, type Opaque } from "@typeberry/utils";
@@ -94,7 +94,12 @@ export namespace stateKeys {
   }
 
   /** https://graypaper.fluffylabs.dev/#/1c979cb/3b0a043b0a04?v=0.7.1 */
-  export function serviceLookupHistory(blake2b: Blake2b, serviceId: ServiceId, hash: PreimageHash, preimageLength: U32): StateKey {
+  export function serviceLookupHistory(
+    blake2b: Blake2b,
+    serviceId: ServiceId,
+    hash: PreimageHash,
+    preimageLength: U32,
+  ): StateKey {
     if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
       const doubleHash = blake2b.hashBytes(hash);
       const out = Bytes.zero(HASH_SIZE);

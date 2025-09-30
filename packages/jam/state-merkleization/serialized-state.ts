@@ -3,6 +3,7 @@ import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { type Decode, Decoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
+import type { Blake2b } from "@typeberry/hash";
 import { type U32, u32AsLeBytes } from "@typeberry/numbers";
 import {
   type EnumerableState,
@@ -17,7 +18,6 @@ import { asOpaqueType, Compatibility, GpVersion, TEST_COMPARE_USING } from "@typ
 import type { StateKey } from "./keys.js";
 import { serialize } from "./serialize.js";
 import type { StateEntries } from "./state-entries.js";
-import {Blake2b} from "@typeberry/hash";
 
 /**
  * Abstraction over some backend containing serialized state entries.

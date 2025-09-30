@@ -1,5 +1,5 @@
 import { BytesBlob } from "@typeberry/bytes";
-import { Blake2b } from "@typeberry/hash";
+import type { Blake2b } from "@typeberry/hash";
 import { hashBlobs, type KeccakHasher } from "@typeberry/hash/keccak.js";
 import type { TrieNodeHash } from "./nodes.js";
 import type { TrieHasher } from "./nodesDb.js";

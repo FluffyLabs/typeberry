@@ -12,7 +12,7 @@ import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-co
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { codec, Descriptor, readonlyArray } from "@typeberry/codec";
 import { HashSet, SortedArray } from "@typeberry/collections";
-import { Blake2b, HASH_SIZE } from "@typeberry/hash";
+import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import {
   AvailabilityAssignment,

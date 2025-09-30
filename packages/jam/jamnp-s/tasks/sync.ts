@@ -9,7 +9,7 @@ import {
 import { Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
-import { Blake2b, WithHash } from "@typeberry/hash";
+import { type Blake2b, WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { Peer, PeerId } from "@typeberry/networking";
 import { tryAsU32, type U32 } from "@typeberry/numbers";

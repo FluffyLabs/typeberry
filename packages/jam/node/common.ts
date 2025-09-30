@@ -4,7 +4,7 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type JipChainSpec, KnownChainSpec } from "@typeberry/config-node";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
-import { Blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
+import { type Blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { SerializedState, StateEntries } from "@typeberry/state-merkleization";
 
@@ -53,13 +53,14 @@ export function openDatabase(
  */
 export async function initializeDatabase(
   spec: ChainSpec,
+  blake2b: Blake2b,
   genesisHeaderHash: HeaderHash,
   rootDb: LmdbRoot,
   config: JipChainSpec,
   ancestry: [HeaderHash, TimeSlot][],
 ): Promise<void> {
   const blocks = new LmdbBlocks(spec, rootDb);
-  const states = new LmdbStates(spec, rootDb);
+  const states = new LmdbStates(spec, blake2b, rootDb);
 
   const header = blocks.getBestHeaderHash();
   const state = blocks.getPostStateRoot(header);
@@ -83,7 +84,7 @@ export async function initializeDatabase(
   const blockView = blockAsView(genesisBlock, spec);
   logger.log`🧬 Writing genesis block #${genesisHeader.timeSlotIndex}: ${genesisHeaderHash}`;
 
-  const { genesisStateSerialized, genesisStateRootHash } = loadGenesisState(spec, config.genesisState);
+  const { genesisStateSerialized, genesisStateRootHash } = loadGenesisState(spec, blake2b, config.genesisState);
 
   // write to db
   await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(genesisHeaderHash, blockView));
@@ -99,11 +100,11 @@ export async function initializeDatabase(
   await rootDb.db.close();
 }
 
-function loadGenesisState(spec: ChainSpec, data: JipChainSpec["genesisState"]) {
+function loadGenesisState(spec: ChainSpec, blake2b: Blake2b, data: JipChainSpec["genesisState"]) {
   const stateEntries = StateEntries.fromEntriesUnsafe(data.entries());
-  const state = SerializedState.fromStateEntries(spec, stateEntries);
+  const state = SerializedState.fromStateEntries(spec, blake2b, stateEntries);
 
-  const genesisStateRootHash = stateEntries.getRootHash();
+  const genesisStateRootHash = stateEntries.getRootHash(blake2b);
   logger.info`🧬 Genesis state root: ${genesisStateRootHash}`;
 
   return {

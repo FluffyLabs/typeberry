@@ -10,9 +10,9 @@ import type { StateEntries, StateKey } from "@typeberry/state-merkleization";
 import { SerializedState, StateEntryUpdateAction, serializeStateUpdate } from "@typeberry/state-merkleization";
 import type { LeafNode, ValueHash } from "@typeberry/trie";
 import { InMemoryTrie, leafComparator } from "@typeberry/trie";
+import { getBlake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { assertNever, OK, Result, resultToString } from "@typeberry/utils";
 import type { LmdbRoot, SubDb } from "./root.js";
-import {getBlake2bTrieHasher} from "@typeberry/trie/hasher.js";
 
 const logger = Logger.new(import.meta.filename, "db");
 /**
@@ -70,6 +70,7 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
 
   constructor(
     private readonly spec: ChainSpec,
+    private readonly blake2b: Blake2b,
     private readonly root: LmdbRoot,
   ) {
     this.states = this.root.subDb("states");
@@ -139,13 +140,13 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
   ): Promise<Result<OK, StateUpdateError>> {
     // TODO [ToDr] We should probably detect a conflicting state (i.e. two services
     // updated at once, etc), for now we're just ignoring it.
-    const updatedValues = serializeStateUpdate(this.spec, update);
+    const updatedValues = serializeStateUpdate(this.spec, this.blake2b, update);
     // and finally we insert new values and store leaves in the DB.
     return await this.updateAndCommit(headerHash, state.backend.leaves, updatedValues);
   }
 
   async getStateRoot(state: SerializedState<LeafDb>): Promise<StateRootHash> {
-    return state.backend.getStateRoot();
+    return state.backend.getStateRoot(this.blake2b);
   }
 
   getState(root: HeaderHash): SerializedState<LeafDb> | null {
@@ -167,6 +168,6 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     if (leafDbResult.isError) {
       throw new Error(`Inconsistent DB. Invalid leaf nodes for ${root}: ${resultToString(leafDbResult)}`);
     }
-    return SerializedState.new(this.spec, leafDbResult.ok);
+    return SerializedState.new(this.spec, this.blake2b, leafDbResult.ok);
   }
 }
