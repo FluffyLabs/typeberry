@@ -13,10 +13,8 @@
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
     "@typeberry/ordering": "*",
-    "blake2b": "2.1.3"
-  },
-  "devDependencies": {
-    "@types/blake2b": "2.1.3"
+    "@types/blake2b": "2.1.3",
+    "blake2b": "2.1.4"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
