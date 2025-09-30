@@ -110,9 +110,7 @@ export class Importer {
         return importerError(ImporterErrorKind.Verifier, e);
       }
       this.state.updateBackend(state?.backend);
-      this.stf.prepareForNextEpoch().catch((e) => {
-        logger.error`Error caching values for the next epoch: ${e}`;
-      });
+      this.prepareForNextEpoch();
       this.currentHash = parentHash;
     }
 
@@ -141,9 +139,7 @@ export class Importer {
     // TODO [ToDr] This is a temporary measure. We should rather read
     // the state of a parent block to support forks and create a fresh STF.
     this.state.updateBackend(newState.backend);
-    this.stf.prepareForNextEpoch().catch((e) => {
-      logger.error`Error caching values for the next epoch: ${e}`;
-    });
+    this.prepareForNextEpoch();
     this.currentHash = headerHash;
     logger.log`${timerState()}`;
 
