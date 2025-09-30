@@ -116,6 +116,11 @@ export class HostCalls {
         return this.getReturnValue(status, pvmInstance);
       }
 
+      if (result === PvmExecution.OOG) {
+        status = Status.OOG;
+        return this.getReturnValue(status, pvmInstance);
+      }
+
       if (result === undefined) {
         pvmInstance.runProgram();
         status = pvmInstance.getStatus();

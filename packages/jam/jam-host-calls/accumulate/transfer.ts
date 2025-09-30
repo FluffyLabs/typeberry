@@ -70,7 +70,10 @@ export class Transfer implements HostCallHandler {
     // All good!
     if (transferResult.isOk) {
       // substracting value `t`
-      gas.sub(tryAsGas(onTransferGas));
+      const underflow = gas.sub(tryAsGas(onTransferGas));
+      if (underflow) {
+        return PvmExecution.OOG;
+      }
       regs.set(IN_OUT_REG, HostCallResult.OK);
       return;
     }
