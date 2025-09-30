@@ -186,7 +186,12 @@ describe("HostCalls: Transfer", () => {
 
     // then
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.LOW);
-    assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 0n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
+    assert.deepStrictEqual(
+      accumulate.transferData,
+      Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
+        ? [[15_000, 2n ** 45n, 0n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]
+        : [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]],
+    );
     assert.deepStrictEqual(gas.get(), expectedGas);
   });
 
@@ -214,7 +219,12 @@ describe("HostCalls: Transfer", () => {
 
     // then
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.CASH);
-    assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 0n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
+    assert.deepStrictEqual(
+      accumulate.transferData,
+      Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
+        ? [[15_000, 2n ** 45n, 0n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]
+        : [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]],
+    );
     assert.deepStrictEqual(gas.get(), expectedGas);
   });
 
@@ -242,7 +252,13 @@ describe("HostCalls: Transfer", () => {
 
     // then
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
-    assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 0n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
+    assert.deepStrictEqual(
+      accumulate.transferData,
+      Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
+        ? [[15_000, 2n ** 45n, 0n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]
+        : [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]],
+    );
+
     assert.deepStrictEqual(gas.get(), expectedGas);
   });
 });
