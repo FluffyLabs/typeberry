@@ -11,7 +11,7 @@ import { getServiceId } from "../utils.js";
 
 const IN_OUT_REG = 7; // `d`
 const AMOUNT_REG = 8; // `a`
-const ON_TRANSFER_GAS_REG = 9; // `l`
+const TRANSFER_GAS_FEE_REG = 9; // `l`
 const MEMO_START_REG = 10; // `o`
 
 /**
@@ -40,9 +40,9 @@ export class Transfer implements HostCallHandler {
    */
   basicGasCost = Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
     ? tryAsSmallGas(10)
-    : (regs: IHostCallRegisters) => tryAsGas(10n + regs.get(ON_TRANSFER_GAS_REG));
+    : (regs: IHostCallRegisters) => tryAsGas(10n + regs.get(TRANSFER_GAS_FEE_REG));
 
-  tracedRegisters = traceRegisters(IN_OUT_REG, AMOUNT_REG, ON_TRANSFER_GAS_REG, MEMO_START_REG);
+  tracedRegisters = traceRegisters(IN_OUT_REG, AMOUNT_REG, TRANSFER_GAS_FEE_REG, MEMO_START_REG);
 
   constructor(
     public readonly currentServiceId: ServiceId,
@@ -55,7 +55,7 @@ export class Transfer implements HostCallHandler {
     // `a`: amount
     const amount = regs.get(AMOUNT_REG);
     // `l`: gas
-    const onTransferGas = tryAsServiceGas(regs.get(ON_TRANSFER_GAS_REG));
+    const transferGasFee = tryAsServiceGas(regs.get(TRANSFER_GAS_FEE_REG));
     // `o`: transfer memo
     const memoStart = regs.get(MEMO_START_REG);
 
@@ -64,18 +64,18 @@ export class Transfer implements HostCallHandler {
 
     // page fault while reading the memory.
     if (memoryReadResult.isError) {
-      logger.trace`TRANSFER(${destination}, ${amount}, ${onTransferGas}, ${memo}) <- PANIC`;
+      logger.trace`TRANSFER(${destination}, ${amount}, ${transferGasFee}, ${memo}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
-    const transferResult = this.partialState.transfer(destination, amount, onTransferGas, memo);
-    logger.trace`TRANSFER(${destination}, ${amount}, ${onTransferGas}, ${memo}) <- ${resultToString(transferResult)}`;
+    const transferResult = this.partialState.transfer(destination, amount, transferGasFee, memo);
+    logger.trace`TRANSFER(${destination}, ${amount}, ${transferGasFee}, ${memo}) <- ${resultToString(transferResult)}`;
 
     // All good!
     if (transferResult.isOk) {
       if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)) {
         // substracting value `t`
-        const underflow = gas.sub(tryAsGas(onTransferGas));
+        const underflow = gas.sub(tryAsGas(transferGasFee));
         if (underflow) {
           return PvmExecution.OOG;
         }
