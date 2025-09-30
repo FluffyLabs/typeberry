@@ -29,6 +29,9 @@ type NewDisputesRecordsItems = {
   toAddToGoodSet: SortedSet<WorkReportHash>;
   toAddToBadSet: SortedSet<WorkReportHash>;
   toAddToWonkySet: SortedSet<WorkReportHash>;
+  toAddToGoodSetDict: HashDictionary<WorkReportHash, true>;
+  toAddToBadSetDict: HashDictionary<WorkReportHash, true>;
+  toAddToWonkySetDict: HashDictionary<WorkReportHash, true>;
 };
 
 type Ok = null;
@@ -55,7 +58,7 @@ export class Disputes {
       const { key, workReportHash } = disputes.culprits[i];
       // check if some offenders weren't reported earlier
       // https://graypaper.fluffylabs.dev/#/579bd12/125501125501
-      const isInPunishSet = this.state.disputesRecords.punishSet.findExact(key) !== undefined;
+      const isInPunishSet = this.state.disputesRecords.asDictionaries().punishSet.get(key) !== undefined;
       if (isInPunishSet) {
         return Result.error(DisputesErrorCode.OffenderAlreadyReported);
       }
@@ -68,7 +71,7 @@ export class Disputes {
 
       // verify if the culprit will be in new bad set
       // https://graypaper.fluffylabs.dev/#/579bd12/124601124601
-      const isInNewBadSet = newItems.toAddToBadSet.findExact(workReportHash);
+      const isInNewBadSet = newItems.toAddToBadSetDict.get(workReportHash);
       if (isInNewBadSet === undefined) {
         return Result.error(DisputesErrorCode.CulpritsVerdictNotBad);
       }
@@ -101,7 +104,7 @@ export class Disputes {
       const { key, workReportHash, wasConsideredValid } = disputes.faults[i];
       // check if some offenders weren't reported earlier
       // https://graypaper.fluffylabs.dev/#/579bd12/12a20112a201
-      const isInPunishSet = this.state.disputesRecords.punishSet.findExact(key) !== undefined;
+      const isInPunishSet = this.state.disputesRecords.asDictionaries().punishSet.get(key) !== undefined;
 
       if (isInPunishSet) {
         return Result.error(DisputesErrorCode.OffenderAlreadyReported);
@@ -119,8 +122,8 @@ export class Disputes {
       // but it does not pass the tests
       // https://graypaper.fluffylabs.dev/#/579bd12/128a01129601
       if (wasConsideredValid) {
-        const isInNewGoodSet = newItems.toAddToGoodSet.findExact(workReportHash);
-        const isInNewBadSet = newItems.toAddToBadSet.findExact(workReportHash);
+        const isInNewGoodSet = newItems.toAddToGoodSetDict.get(workReportHash);
+        const isInNewBadSet = newItems.toAddToBadSetDict.get(workReportHash);
 
         if (isInNewGoodSet !== undefined || isInNewBadSet === undefined) {
           return Result.error(DisputesErrorCode.FaultVerdictWrong);
@@ -188,9 +191,9 @@ export class Disputes {
     for (const verdict of disputes.verdicts) {
       // current verdicts should not be reported earlier
       // https://graypaper.fluffylabs.dev/#/579bd12/122202122202
-      const isInGoodSet = this.state.disputesRecords.goodSet.findExact(verdict.workReportHash);
-      const isInBadSet = this.state.disputesRecords.badSet.findExact(verdict.workReportHash);
-      const isInWonkySet = this.state.disputesRecords.wonkySet.findExact(verdict.workReportHash);
+      const isInGoodSet = this.state.disputesRecords.asDictionaries().goodSet.get(verdict.workReportHash);
+      const isInBadSet = this.state.disputesRecords.asDictionaries().badSet.get(verdict.workReportHash);
+      const isInWonkySet = this.state.disputesRecords.asDictionaries().wonkySet.get(verdict.workReportHash);
 
       if (isInGoodSet !== undefined || isInBadSet !== undefined || isInWonkySet !== undefined) {
         return Result.error(DisputesErrorCode.AlreadyJudged);
@@ -277,6 +280,9 @@ export class Disputes {
       toAddToGoodSet: SortedSet.fromArrayUnique(hashComparator, toAddToGoodSet),
       toAddToBadSet: SortedSet.fromArrayUnique(hashComparator, toAddToBadSet),
       toAddToWonkySet: SortedSet.fromArrayUnique(hashComparator, toAddToWonkySet),
+      toAddToGoodSetDict: HashDictionary.fromEntries<WorkReportHash, true>(toAddToGoodSet.map((r) => [r, true])),
+      toAddToBadSetDict: HashDictionary.fromEntries<WorkReportHash, true>(toAddToBadSet.map((r) => [r, true])),
+      toAddToWonkySetDict: HashDictionary.fromEntries<WorkReportHash, true>(toAddToWonkySet.map((r) => [r, true])),
     };
   }
 
