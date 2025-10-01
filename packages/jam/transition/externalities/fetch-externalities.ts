@@ -364,6 +364,7 @@ export class FetchExternalities implements IFetchExternalities {
       }
 
       if (index < operands.length) {
+        // Safe: operandIndex < 2^32 (checked above) and bounded by operands.length.
         const operand = operands[Number(index)];
 
         if (operand === undefined) {
