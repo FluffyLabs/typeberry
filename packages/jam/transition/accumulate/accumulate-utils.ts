@@ -48,7 +48,7 @@ const NEXT_ID_CODEC = codec.object({
 /**
  * Generate a next service id.
  *
- * Please not that it does not call `check` function!
+ * NOTE: It does not call `check` function!
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/2f4c022f4c02?v=0.6.7
  */

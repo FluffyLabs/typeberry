@@ -1,4 +1,5 @@
 import {
+  type CodeHash,
   type EntropyHash,
   type ServiceGas,
   type ServiceId,
@@ -426,6 +427,32 @@ export class Accumulate {
     return tryAsServiceGas(gasLimit);
   }
 
+  /**
+   * A method to check if block contains same `ServiceId` for two different `Services`.
+   *
+   * NOTE: I assume that two DIFFERENT `Services` with SAME `ServiceId`, have DIFFERENT `CodeHash`.
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/30f20330f303?v=0.7.2
+   */
+  private hasDifferentServicesWithSameId(reports: WorkReport[]): boolean {
+    const serviceCodeHash = new Map<ServiceId, CodeHash>();
+
+    for (const report of reports) {
+      for (const result of report.results) {
+        const serviceId = result.serviceId;
+        const codeHash = result.codeHash;
+
+        const existingCodeHash = serviceCodeHash.get(serviceId);
+        if (existingCodeHash !== undefined && !existingCodeHash.isEqualTo(codeHash)) {
+          logger.log`Service ID: ${serviceId} found with different code hashes: ${existingCodeHash} and ${codeHash}. Block is invalid.`;
+          return true;
+        }
+        serviceCodeHash.set(serviceId, codeHash);
+      }
+    }
+    return false;
+  }
+
   async transition({ reports, slot, entropy }: AccumulateInput): Promise<Result<AccumulateResult, ACCUMULATION_ERROR>> {
     const statistics = new Map();
     const accumulateQueue = new AccumulateQueue(this.chainSpec, this.state);
@@ -439,6 +466,10 @@ export class Accumulate {
     );
     const queue = accumulateQueue.enqueueReports(toEnqueue);
     const accumulatableReports = toAccumulateImmediately.concat(queue);
+
+    if (this.hasDifferentServicesWithSameId(accumulatableReports)) {
+      return Result.error(ACCUMULATION_ERROR);
+    }
 
     const gasLimit = this.getGasLimit();
 
