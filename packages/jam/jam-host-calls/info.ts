@@ -45,7 +45,7 @@ export const LEN_REG =
  */
 export class Info implements HostCallHandler {
   index = tryAsHostCallIndex(5);
-  gasCost = tryAsSmallGas(10);
+  basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, OFFSET_REG, LEN_REG);
 
   constructor(
