@@ -26,7 +26,7 @@ const UPPER_BITS_SHIFT = 32n;
  */
 export class Query implements HostCallHandler {
   index = tryAsHostCallIndex(22);
-  gasCost = tryAsSmallGas(10);
+  basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG_1, IN_OUT_REG_2);
 
   constructor(

@@ -19,7 +19,7 @@ export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint
  */
 export class Designate implements HostCallHandler {
   index = tryAsHostCallIndex(16);
-  gasCost = tryAsSmallGas(10);
+  basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG);
 
   constructor(

@@ -25,7 +25,7 @@ const IN_OUT_REG = 7;
  */
 export class Export implements HostCallHandler {
   index = tryAsHostCallIndex(7);
-  gasCost = tryAsSmallGas(10);
+  basicGasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(IN_OUT_REG, 8);
 
