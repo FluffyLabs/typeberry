@@ -64,13 +64,13 @@ const TRANSFER_OR_OPERAND = codec.custom<TransferOrOperand>(
     const kind = d.varU32();
     if (kind === TransferOperandKind.OPERAND) {
       return {
-        kind,
+        kind: TransferOperandKind.OPERAND,
         value: d.object(Operand.Codec),
       };
     }
 
     if (kind === TransferOperandKind.TRANSFER) {
-      return { kind, value: d.object(PendingTransfer.Codec) };
+      return { kind: TransferOperandKind.TRANSFER, value: d.object(PendingTransfer.Codec) };
     }
 
     throw new Error("it should not happen");
@@ -374,6 +374,7 @@ export class FetchExternalities implements IFetchExternalities {
         return Encoder.encodeObject(Operand.Codec, operand, this.chainSpec);
       }
 
+      // Safe: index < 2^32 and index > operands.length (checked above)
       const transferIndex = Number(index) - operands.length;
 
       const transfer = transfers[transferIndex];
