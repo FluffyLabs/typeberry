@@ -14,7 +14,7 @@ const decoder = new TextDecoder("utf8");
  */
 export class LogHostCall implements HostCallHandler {
   index = tryAsHostCallIndex(100);
-  gasCost = tryAsSmallGas(0);
+  basicGasCost = tryAsSmallGas(0);
   // intentionally not tracing anything here, since the message will be printed anyway.
   tracedRegisters = traceRegisters();
 

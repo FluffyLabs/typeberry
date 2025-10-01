@@ -12,7 +12,7 @@ import { CURRENT_SERVICE_ID } from "./utils.js";
 
 export class Missing implements HostCallHandler {
   index = tryAsHostCallIndex(2 ** 32 - 1);
-  gasCost = tryAsSmallGas(10);
+  basicGasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(7);
 

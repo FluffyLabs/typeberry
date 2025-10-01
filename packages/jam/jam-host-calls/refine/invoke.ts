@@ -33,7 +33,7 @@ const GAS_REGISTERS_SIZE = tryAsExactBytes(gasAndRegistersCodec.sizeHint);
  */
 export class Invoke implements HostCallHandler {
   index = tryAsHostCallIndex(12);
-  gasCost = tryAsSmallGas(10);
+  basicGasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(IN_OUT_REG_1, IN_OUT_REG_2);
 
