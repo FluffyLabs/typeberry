@@ -23,7 +23,7 @@ const IN_OUT_REG = 7;
  */
 export class Yield implements HostCallHandler {
   index = tryAsHostCallIndex(25);
-  gasCost = tryAsSmallGas(10);
+  basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG);
 
   constructor(
