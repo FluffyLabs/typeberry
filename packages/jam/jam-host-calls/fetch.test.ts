@@ -451,11 +451,11 @@ describe("Fetch", () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([101, 102, 103]);
     const fetchMock = new FetchMock();
-    fetchMock.allOperandsAndTransfersResponses = blob;
+    fetchMock.allTransfersAndOperandsResponses = blob;
 
     const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(
       blob,
-      FetchKind.AllOperandsAndTransfers,
+      FetchKind.AllTransfersAndOperands,
     );
 
     const fetch = new Fetch(currentServiceId, fetchMock);
@@ -471,9 +471,9 @@ describe("Fetch", () => {
     const blob = BytesBlob.blobFromNumbers([115, 116, 117]);
     const fetchMock = new FetchMock();
     const index = tryAsU64(9);
-    fetchMock.oneOperandOrTransferResponses.set(index.toString(), blob);
+    fetchMock.oneTransferOrOperandResponses.set(index.toString(), blob);
 
-    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.OneOperandOrTransfer);
+    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.OneTransferOrOperand);
 
     registers.set(11, index);
 
@@ -483,7 +483,7 @@ describe("Fetch", () => {
     assert.strictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(IN_OUT_REG), expectedLength);
     assert.deepStrictEqual(readBack(), blob.raw);
-    assert.deepStrictEqual(fetchMock.oneOperandOrTransferData, [[index]]);
+    assert.deepStrictEqual(fetchMock.oneTransferOrOperandData, [[index]]);
   });
 
   function prepareRegsAndMemory(blob: BytesBlob, fetchKind: FetchKind, offset = 0, length: number = blob.length) {
@@ -523,7 +523,7 @@ class FetchMock implements IFetchExternalities {
   public readonly workItemPayloadData: Parameters<FetchMock["workItemPayload"]>[] = [];
   public readonly oneOperandData: Parameters<FetchMock["oneOperand"]>[] = [];
   public readonly oneTransferData: Parameters<FetchMock["oneTransfer"]>[] = [];
-  public readonly oneOperandOrTransferData: Parameters<FetchMock["oneOperandOrTransfer"]>[] = [];
+  public readonly oneTransferOrOperandData: Parameters<FetchMock["oneTransferOrOperand"]>[] = [];
 
   public constantsResponse: BytesBlob | null = null;
   public entropyResponse: BytesBlob | null = null;
@@ -541,8 +541,8 @@ class FetchMock implements IFetchExternalities {
   public oneOperandResponses: Map<string, BytesBlob | null> = new Map();
   public allTransfersResponse: BytesBlob | null = null;
   public oneTransferResponses: Map<string, BytesBlob | null> = new Map();
-  public allOperandsAndTransfersResponses: BytesBlob | null = null;
-  public oneOperandOrTransferResponses: Map<string, BytesBlob | null> = new Map();
+  public allTransfersAndOperandsResponses: BytesBlob | null = null;
+  public oneTransferOrOperandResponses: Map<string, BytesBlob | null> = new Map();
 
   constants(): BytesBlob {
     if (this.constantsResponse === null) {
@@ -641,16 +641,16 @@ class FetchMock implements IFetchExternalities {
     return this.oneTransferResponses.get(key) ?? null;
   }
 
-  allOperandsAndTransfers(): BytesBlob | null {
-    return this.allOperandsAndTransfersResponses;
+  allTransfersAndOperands(): BytesBlob | null {
+    return this.allTransfersAndOperandsResponses;
   }
 
-  oneOperandOrTransfer(index: U64): BytesBlob | null {
-    this.oneOperandOrTransferData.push([index]);
+  oneTransferOrOperand(index: U64): BytesBlob | null {
+    this.oneTransferOrOperandData.push([index]);
     const key = index.toString();
-    if (!this.oneOperandOrTransferResponses.has(key)) {
-      throw new Error(`Missing mock response for oneOperandOrTransfer(${key})`);
+    if (!this.oneTransferOrOperandResponses.has(key)) {
+      throw new Error(`Missing mock response for oneTransferOrOperand(${key})`);
     }
-    return this.oneOperandOrTransferResponses.get(key) ?? null;
+    return this.oneTransferOrOperandResponses.get(key) ?? null;
   }
 }

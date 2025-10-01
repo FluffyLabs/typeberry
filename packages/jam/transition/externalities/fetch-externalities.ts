@@ -342,7 +342,7 @@ export class FetchExternalities implements IFetchExternalities {
     return null;
   }
 
-  allOperandsAndTransfers(): BytesBlob | null {
+  allTransfersAndOperands(): BytesBlob | null {
     if (this.fetchData.context === FetchContext.Accumulate) {
       const { transfers, operands } = this.fetchData;
       const transfersAndOperands: TransferOrOperand[] = transfers
@@ -355,7 +355,7 @@ export class FetchExternalities implements IFetchExternalities {
     return null;
   }
 
-  oneOperandOrTransfer(index: U64): BytesBlob | null {
+  oneTransferOrOperand(index: U64): BytesBlob | null {
     if (this.fetchData.context === FetchContext.Accumulate) {
       const { operands, transfers } = this.fetchData;
 

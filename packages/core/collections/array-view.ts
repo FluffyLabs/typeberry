@@ -9,7 +9,7 @@ export class ArrayView<T> implements Iterable<T> {
 
   static from<T>(source: T[], start = 0, end = source.length): ArrayView<T> {
     check`
-      ${start >= 0 && end <= source.length && start <= end /* TODO [MaSi]: start < end or start <= end */} 
+      ${start >= 0 && end <= source.length && start <= end} 
       Invalid start/end for ArrayView.
     `;
     return new ArrayView(source, start, end);

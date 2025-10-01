@@ -180,7 +180,7 @@ export interface IFetchExternalities {
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/314c03314c03?v=0.7.2
    */
-  allOperandsAndTransfers(): BytesBlob | null;
+  allTransfersAndOperands(): BytesBlob | null;
 
   /**
    * Get one selected accumulation operand.
@@ -203,7 +203,7 @@ export interface IFetchExternalities {
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/315503315503?v=0.7.2
    */
-  oneOperandOrTransfer(index: U64): BytesBlob | null;
+  oneTransferOrOperand(index: U64): BytesBlob | null;
 
   /**
    * Inspect all incoming transfers.
@@ -343,13 +343,13 @@ export class Fetch implements HostCallHandler {
     }
 
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      if (kind === FetchKind.AllOperandsAndTransfers) {
-        return this.fetch.allOperandsAndTransfers();
+      if (kind === FetchKind.AllTransfersAndOperands) {
+        return this.fetch.allTransfersAndOperands();
       }
 
-      if (kind === FetchKind.OneOperandOrTransfer) {
+      if (kind === FetchKind.OneTransferOrOperand) {
         const index = regs.get(11);
-        return this.fetch.oneOperandOrTransfer(index);
+        return this.fetch.oneTransferOrOperand(index);
       }
     } else {
       if (kind === FetchKind.LegacyAllOperands) {
@@ -391,9 +391,9 @@ export enum FetchKind {
   OneWorkItem = 12,
   WorkItemPayload = 13,
   LegacyAllOperands = 14,
-  AllOperandsAndTransfers = 14,
+  AllTransfersAndOperands = 14,
   LegacyOneOperand = 15,
-  OneOperandOrTransfer = 15,
+  OneTransferOrOperand = 15,
   LegacyAllTransfers = 16,
   LegacyOneTransfer = 17,
 }
