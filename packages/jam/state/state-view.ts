@@ -1,55 +1,26 @@
 import type { EntropyHash, PerEpochBlock, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
-import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
-import type { BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray, ImmutableHashSet, KnownSizeArray, SortedArray } from "@typeberry/collections";
-import type { U32 } from "@typeberry/numbers";
 import type { AccumulationOutput } from "./accumulation-output.js";
-import type { AvailabilityAssignment } from "./assurances.js";
+import type { AvailabilityAssignment, StateAvailabilityAssignmentView } from "./assurances.js";
 import type { PerCore } from "./common.js";
 import type { DisputesRecords } from "./disputes.js";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
 import type { PrivilegedServices } from "./privileged-services.js";
 import type { RecentBlocksHistory } from "./recent-blocks.js";
 import type { SafroleData } from "./safrole-data.js";
-import type { LookupHistorySlots, ServiceAccountInfo, StorageKey } from "./service.js";
+import type { ServiceAccountInfo } from "./service.js";
 import type { StatisticsData } from "./statistics.js";
 import type { ValidatorData } from "./validator-data.js";
+import {DescribedBy} from "@typeberry/codec";
 
 /**
- * In addition to the entropy accumulator η_0, we retain
- * three additional historical values of the accumulator at
- * the point of each of the three most recently ended epochs,
- * η_1, η_2 and η_3. The second-oldest of these η2 is utilized to
- * help ensure future entropy is unbiased (see equation 6.29)
- * and seed the fallback seal-key generation function with
- * randomness (see equation 6.24). The oldest is used to re-
- * generate this randomness when verifying the seal above
- * (see equations 6.16 and 6.15).
- *
- * https://graypaper.fluffylabs.dev/#/579bd12/0ef5010ef501
- */
-export const ENTROPY_ENTRIES = 4;
-export type ENTROPY_ENTRIES = typeof ENTROPY_ENTRIES;
-
-/** State with some entries being possible to enumerate. */
-export type EnumerableState = {
-  /**
-   * Returns recently active `ServiceId`s.
-   *
-   * NOTE we don't define exactly what 'recent' means on purpose.
-   * This method only exists to satisfy requirements of RPC services method.
-   */
-  recentServiceIds(): readonly ServiceId[];
-};
-
-/**
- * Complete state tuple with all entries.
+ * A non-decoding version of the `State`.
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/08f10008f100
  */
-export type State = {
+export type StateView = {
   /**
 
    * `ρ rho`: work-reports which have been reported but are not yet known to be
@@ -58,7 +29,7 @@ export type State = {
    *
    *  https://graypaper.fluffylabs.dev/#/579bd12/135800135800
    */
-  readonly availabilityAssignment: PerCore<AvailabilityAssignment | null>;
+  readonly availabilityAssignment: StateAvailabilityAssignmentView;
 
   /**
    * `ι iota`: The validator keys and metadata to be drawn from next.
@@ -203,29 +174,6 @@ export type State = {
    */
   readonly accumulationOutputLog: SortedArray<AccumulationOutput>;
 
-  /**
-   * Retrieve details about single service.
-   */
-  getService(id: ServiceId): Service | null;
+  /** Retrieve details about single service. */
+  getServiceInfoView(id: ServiceId): DescribedBy<typeof ServiceAccountInfo.Codec.View> | null;
 };
-
-/** Service details. */
-export interface Service {
-  /** Service id. */
-  readonly serviceId: ServiceId;
-
-  /** Retrieve service account info. */
-  getInfo(): ServiceAccountInfo;
-
-  /** Read one particular storage item. */
-  getStorage(storage: StorageKey): BytesBlob | null;
-
-  /** Check if preimage is present without retrieving the blob. */
-  hasPreimage(hash: PreimageHash): boolean;
-
-  /** Retrieve a preimage. */
-  getPreimage(hash: PreimageHash): BytesBlob | null;
-
-  /** Retrieve lookup history of a preimage. */
-  getLookupHistory(hash: PreimageHash, len: U32): LookupHistorySlots | null;
-}

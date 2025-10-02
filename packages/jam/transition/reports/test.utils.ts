@@ -1,4 +1,5 @@
 import {
+  reencodeAsView,
   type ServiceId,
   type TimeSlot,
   tryAsCoreIndex,
@@ -141,12 +142,10 @@ export function guaranteesAsView(
         GuaranteesExtrinsicBounds,
       ),
     );
-    const encoded = Encoder.encodeObject(fakeCodec, asOpaqueType(guarantees), spec);
-    return Decoder.decodeObject(fakeCodec.View, encoded, spec);
+    return reencodeAsView(fakeCodec, asOpaqueType(guarantees), spec);
   }
 
-  const encoded = Encoder.encodeObject(guaranteesExtrinsicCodec, asOpaqueType(guarantees), spec);
-  return Decoder.decodeObject(guaranteesExtrinsicCodec.View, encoded, spec);
+  return reencodeAsView(guaranteesExtrinsicCodec, asOpaqueType(guarantees), spec);
 }
 
 export async function newReports(options: Parameters<typeof newReportsState>[0] = {}) {

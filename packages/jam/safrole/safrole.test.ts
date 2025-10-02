@@ -5,6 +5,7 @@ import {
   EpochMarker,
   type PerEpochBlock,
   type PerValidator,
+  reencodeAsView,
   TicketsMarker,
   tryAsPerEpochBlock,
   tryAsTimeSlot,
@@ -484,7 +485,11 @@ describe("Safrole", () => {
       extrinsic,
       punishSet,
       epochMarker: null,
-      ticketsMarker: ticketsMarkerAsView(tickets),
+      ticketsMarker: reencodeAsView(
+        TicketsMarker.Codec,
+        TicketsMarker.create( {tickets}),
+        tinyChainSpec,
+      ),
     };
 
     const result = await safrole.transition(input);
@@ -874,7 +879,11 @@ describe("Safrole", () => {
       extrinsic,
       punishSet,
       epochMarker: null,
-      ticketsMarker: ticketsMarkerAsView(tickets),
+      ticketsMarker: reencodeAsView(
+        TicketsMarker.Codec,
+        TicketsMarker.create( {tickets}),
+        tinyChainSpec
+      ),
     };
 
     const result = await safrole.transition(input);
@@ -885,11 +894,3 @@ describe("Safrole", () => {
     }
   });
 });
-
-function ticketsMarkerAsView(tickets: PerEpochBlock<Ticket>) {
-  return Decoder.decodeObject(
-    TicketsMarker.Codec.View,
-    Encoder.encodeObject(TicketsMarker.Codec, TicketsMarker.create({ tickets }), tinyChainSpec),
-    tinyChainSpec,
-  );
-}

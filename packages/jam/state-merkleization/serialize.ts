@@ -15,7 +15,7 @@ import { HashSet, SortedArray } from "@typeberry/collections";
 import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import {
-  AvailabilityAssignment,
+  availabilityAssignmentsCodec,
   codecPerCore,
   DisputesRecords,
   ENTROPY_ENTRIES,
@@ -123,7 +123,7 @@ export namespace serialize {
   /** C(10): https://graypaper.fluffylabs.dev/#/7e6ff6a/3b27023b2702?v=0.6.7 */
   export const availabilityAssignment: StateCodec<State["availabilityAssignment"]> = {
     key: stateKeys.index(StateKeyIdx.Rho),
-    Codec: codecPerCore(codec.optional(AvailabilityAssignment.Codec)),
+    Codec: availabilityAssignmentsCodec,
     extract: (s) => s.availabilityAssignment,
   };
 

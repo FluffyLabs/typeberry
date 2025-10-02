@@ -1,7 +1,8 @@
 import type { TimeSlot } from "@typeberry/block";
 import { WorkReport } from "@typeberry/block/work-report.js";
-import { type CodecRecord, codec } from "@typeberry/codec";
+import { type CodecRecord, codec, DescribedBy } from "@typeberry/codec";
 import { WithDebug } from "@typeberry/utils";
+import {codecPerCore} from "./common.js";
 
 /**
  * Assignment of particular work report to a core.
@@ -30,3 +31,7 @@ export class AvailabilityAssignment extends WithDebug {
     super();
   }
 }
+
+export const availabilityAssignmentsCodec = codecPerCore(codec.optional(AvailabilityAssignment.Codec));
+
+export type AvailabilityAssignmentsView = DescribedBy<typeof availabilityAssignmentsCodec.View>;

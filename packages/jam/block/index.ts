@@ -14,3 +14,4 @@ export * from "./work-item-segment.js";
 export * as workPackage from "./work-package.js";
 export * as workReport from "./work-report.js";
 export * as workResult from "./work-result.js";
+export * from "./utils.js";
