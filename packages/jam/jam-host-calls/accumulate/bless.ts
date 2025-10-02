@@ -6,7 +6,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { tryAsPerCore } from "@typeberry/state";
-import { asOpaqueType, assertNever } from "@typeberry/utils";
+import { asOpaqueType, assertNever, safeAllocUint8Array } from "@typeberry/utils";
 import { type PartialState, UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -63,7 +63,7 @@ export class Bless implements HostCallHandler {
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/368100368100?v=0.6.7
      */
     const autoAccumulateEntries: [ServiceId, ServiceGas][] = [];
-    const result = new Uint8Array(tryAsExactBytes(serviceIdAndGasCodec.sizeHint));
+    const result = safeAllocUint8Array(tryAsExactBytes(serviceIdAndGasCodec.sizeHint));
     const decoder = Decoder.fromBlob(result);
     let memIndex = sourceStart;
     for (let i = 0n; i < numberOfItems; i += 1n) {
@@ -81,7 +81,7 @@ export class Bless implements HostCallHandler {
       memIndex = tryAsU64(memIndex + tryAsU64(decoder.bytesRead()));
     }
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/367200367200?v=0.6.7
-    const res = new Uint8Array(tryAsExactBytes(codec.u32.sizeHint) * this.chainSpec.coresCount);
+    const res = safeAllocUint8Array(tryAsExactBytes(codec.u32.sizeHint) * this.chainSpec.coresCount);
     const authorizersDecoder = Decoder.fromBlob(res);
     const memoryReadResult = memory.loadInto(res, authorization);
     if (memoryReadResult.isError) {

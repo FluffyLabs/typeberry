@@ -1,5 +1,12 @@
 import { type Comparator, Ordering } from "@typeberry/ordering";
-import { asOpaqueType, check, type Opaque, TEST_COMPARE_USING, type TokenOf } from "@typeberry/utils";
+import {
+  asOpaqueType,
+  check,
+  type Opaque,
+  safeAllocUint8Array,
+  TEST_COMPARE_USING,
+  type TokenOf,
+} from "@typeberry/utils";
 
 // TODO: [MaSo] Update BytesBlob and Bytes, so they return Result (not throw error)
 /**
@@ -107,7 +114,7 @@ export class BytesBlob {
   static blobFromParts(v: Uint8Array | Uint8Array[], ...rest: Uint8Array[]) {
     const vArr = v instanceof Uint8Array ? [v] : v;
     const totalLength = vArr.reduce((a, v) => a + v.length, 0) + rest.reduce((a, v) => a + v.length, 0);
-    const buffer = new Uint8Array(totalLength);
+    const buffer = safeAllocUint8Array(totalLength);
     let offset = 0;
     for (const r of vArr) {
       buffer.set(r, offset);
@@ -190,7 +197,7 @@ export class Bytes<T extends number> extends BytesBlob {
 
   /** Create an empty [`Bytes<X>`] of given length. */
   static zero<X extends number>(len: X): Bytes<X> {
-    return new Bytes(new Uint8Array(len), len);
+    return new Bytes(safeAllocUint8Array(len), len);
   }
 
   // TODO [ToDr] `fill` should have the argments swapped to align with the rest.

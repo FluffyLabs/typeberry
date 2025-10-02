@@ -5,6 +5,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { ValidatorData } from "@typeberry/state";
+import { safeAllocUint8Array } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -36,7 +37,7 @@ export class Designate implements HostCallHandler {
     // `o`
     const validatorsStart = regs.get(IN_OUT_REG);
 
-    const res = new Uint8Array(VALIDATOR_DATA_BYTES * this.chainSpec.validatorsCount);
+    const res = safeAllocUint8Array(VALIDATOR_DATA_BYTES * this.chainSpec.validatorsCount);
     const memoryReadResult = memory.loadInto(res, validatorsStart);
     // error while reading the memory.
     if (memoryReadResult.isError) {
