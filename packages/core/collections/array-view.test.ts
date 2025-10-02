@@ -13,9 +13,9 @@ describe("ArrayView", () => {
   });
 
   it("throws on invalid range", () => {
-    assert.throws(() => ArrayView.from(arr, -1, 3), /Invalid start\/end for ArrayView/);
-    assert.throws(() => ArrayView.from(arr, 2, 10), /Invalid start\/end for ArrayView/);
-    assert.throws(() => ArrayView.from(arr, 4, 1), /Invalid start\/end for ArrayView/);
+    assert.throws(() => ArrayView.from(arr, -1, 3), /Invalid start \(-1\)\/end \(3\) for ArrayView/);
+    assert.throws(() => ArrayView.from(arr, 2, 10), /Invalid start \(2\)\/end \(10\) for ArrayView/);
+    assert.throws(() => ArrayView.from(arr, 4, 1), /Invalid start \(4\)\/end \(1\) for ArrayView/);
   });
 
   it("supports get()", () => {
