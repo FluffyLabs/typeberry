@@ -10,7 +10,6 @@ import { dumpCodec, serialize } from "./serialize.js";
 
 type TestCase = [string, { key: StateKey }, string];
 
-
 describe("Serialization keys", () => {
   let blake2b: Blake2b;
 

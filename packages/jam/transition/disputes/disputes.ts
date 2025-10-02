@@ -54,8 +54,8 @@ export class Disputes {
       return Result.error(DisputesErrorCode.CulpritsNotSortedUnique);
     }
 
-    const culprintsLength = disputes.culprits.length;
-    for (let i = 0; i < culprintsLength; i++) {
+    const culpritsLength = disputes.culprits.length;
+    for (let i = 0; i < culpritsLength; i++) {
       const { key, workReportHash } = disputes.culprits[i];
       // check if some offenders weren't reported earlier
       // https://graypaper.fluffylabs.dev/#/579bd12/125501125501
@@ -81,7 +81,7 @@ export class Disputes {
       // https://graypaper.fluffylabs.dev/#/579bd12/125c01125c01
       const result = verificationResult.culprits[i];
       if (!result?.isValid) {
-        return Result.error(DisputesErrorCode.BadSignature);
+        return Result.error(DisputesErrorCode.BadSignature, `Invalid signature for culprit: ${i}`);
       }
     }
 
@@ -135,7 +135,7 @@ export class Disputes {
       // https://graypaper.fluffylabs.dev/#/579bd12/12a90112a901
       const result = verificationResult.faults[i];
       if (!result.isValid) {
-        return Result.error(DisputesErrorCode.BadSignature);
+        return Result.error(DisputesErrorCode.BadSignature, `Invalid signature for fault: ${i}`);
       }
     }
 
@@ -179,7 +179,7 @@ export class Disputes {
         // https://graypaper.fluffylabs.dev/#/579bd12/12cd0012cd00
         const result = verificationResult.judgements[voteSignatureIndex];
         if (!result.isValid) {
-          return Result.error(DisputesErrorCode.BadSignature);
+          return Result.error(DisputesErrorCode.BadSignature, `Invalid signature for judgement: ${voteSignatureIndex}`);
         }
         voteSignatureIndex += 1;
       }
@@ -284,21 +284,28 @@ export class Disputes {
     };
   }
 
+  /**
+   * ρ†
+   * We clear any work-reports which we judged as uncertain or invalid from their core.
+   * https://graypaper.fluffylabs.dev/#/1c979cb/136900139e00?v=0.7.1
+   */
   private getClearedCoreAssignment(v: VotesForWorkReports): PerCore<AvailabilityAssignment | null> {
-    /**
-     * ρ†
-     * We clear any work-reports which we judged as uncertain or invalid from their core.
-     * https://graypaper.fluffylabs.dev/#/1c979cb/136900139e00?v=0.7.1
-     */
+    // count how many votes we have left to process
+    let votesLeft = v.size;
+    // go through each core and check for results, but early exit if
+    // there is no more votes to process
     const availabilityAssignment = this.state.availabilityAssignment.slice();
-    for (let c = 0; c < availabilityAssignment.length; c++) {
+    for (let c = 0; c < availabilityAssignment.length && votesLeft > 0; c++) {
       const assignment = availabilityAssignment[c];
       if (assignment !== null) {
         const encoded = Encoder.encodeObject(WorkReport.Codec, assignment.workReport, this.chainSpec);
         const hash: WorkReportHash = this.blake2b.hashBytes(encoded).asOpaque();
         const sum = v.get(hash);
-        if (sum !== undefined && sum < this.chainSpec.validatorsSuperMajority) {
-          availabilityAssignment[c] = null;
+        if (sum !== undefined) {
+          votesLeft--;
+          if (sum < this.chainSpec.validatorsSuperMajority) {
+            availabilityAssignment[c] = null;
+          }
         }
       }
     }
@@ -392,7 +399,7 @@ export class Disputes {
   > {
     const signaturesToVerifyResult = this.prepareSignaturesToVerification(disputes);
     if (signaturesToVerifyResult.isError) {
-      return Result.error(signaturesToVerifyResult.error);
+      return signaturesToVerifyResult;
     }
 
     const signaturesToVerify = signaturesToVerifyResult.ok;
@@ -413,7 +420,7 @@ export class Disputes {
     ].find((result) => result.isError);
 
     if (inputError?.isError) {
-      return Result.error(inputError.error);
+      return inputError;
     }
 
     // GP: https://graypaper.fluffylabs.dev/#/579bd12/131300133000
