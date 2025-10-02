@@ -89,8 +89,10 @@ export class HostCalls {
 
       const hostCall = this.hostCalls.get(index);
       const gasBefore = gas.get();
-      const gasCost = typeof hostCall.gasCost === "number" ? hostCall.gasCost : hostCall.gasCost(regs);
-      const underflow = gas.sub(gasCost);
+      // NOTE: `basicGasCost(regs)` function is for compatibility reasons: pre GP 0.7.2
+      const basicGasCost =
+        typeof hostCall.basicGasCost === "number" ? hostCall.basicGasCost : hostCall.basicGasCost(regs);
+      const underflow = gas.sub(basicGasCost);
 
       const pcLog = `[PC: ${pvmInstance.getPC()}]`;
       if (underflow) {
@@ -114,6 +116,11 @@ export class HostCalls {
 
       if (result === PvmExecution.Panic) {
         status = Status.PANIC;
+        return this.getReturnValue(status, pvmInstance);
+      }
+
+      if (result === PvmExecution.OOG) {
+        status = Status.OOG;
         return this.getReturnValue(status, pvmInstance);
       }
 

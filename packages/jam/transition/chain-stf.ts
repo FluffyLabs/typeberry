@@ -128,6 +128,8 @@ export class OnChain {
   // chapter 13: https://graypaper.fluffylabs.dev/#/68eaa1f/18b60118b601?v=0.6.4
   private readonly statistics: Statistics;
 
+  private isReadyForNextEpoch: Promise<boolean> = Promise.resolve(false);
+
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly state: State,
@@ -154,7 +156,16 @@ export class OnChain {
     this.authorization = new Authorization(chainSpec, state);
   }
 
-  async verifySeal(timeSlot: TimeSlot, block: BlockView) {
+  /** Pre-populate things worth caching for the next epoch. */
+  async prepareForNextEpoch() {
+    if (await this.isReadyForNextEpoch) {
+      return;
+    }
+    const ready = this.safrole.prepareValidatorKeysForNextEpoch(this.state.disputesRecords.punishSet);
+    this.isReadyForNextEpoch = ready.then((_) => true);
+  }
+
+  private async verifySeal(timeSlot: TimeSlot, block: BlockView) {
     const sealState = this.safrole.getSafroleSealState(timeSlot);
     return await this.safroleSeal.verifyHeaderSeal(block.header.view(), sealState);
   }
@@ -167,6 +178,11 @@ export class OnChain {
     const headerView = block.header.view();
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
+
+    // reset the epoch cache state
+    if (headerView.epochMarker.view() !== null) {
+      this.isReadyForNextEpoch = Promise.resolve(false);
+    }
 
     // safrole seal
     let newEntropyHash: EntropyHash;

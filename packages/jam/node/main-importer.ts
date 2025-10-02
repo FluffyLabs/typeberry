@@ -37,6 +37,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
   const importerReady = new ImporterReady();
   importerReady.setConfig(workerConfig);
   importerReady.setImporter(importer);
+  await importer.prepareForNextEpoch();
 
   const api: NodeApi = {
     chainSpec,

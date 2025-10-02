@@ -51,8 +51,18 @@ export class Importer {
     this.stf = new OnChain(spec, state, blocks, hasher);
     this.state = state;
     this.currentHash = currentBestHeaderHash;
+    this.prepareForNextEpoch();
 
     logger.info`😎 Best time slot: ${state.timeslot} (header hash: ${currentBestHeaderHash})`;
+  }
+
+  /** Do some extra work for preparation for the next epoch. */
+  public async prepareForNextEpoch() {
+    try {
+      await this.stf.prepareForNextEpoch();
+    } catch (e) {
+      this.logger.error`Unable to prepare for next epoch: ${e}`;
+    }
   }
 
   public async importBlock(
@@ -100,6 +110,7 @@ export class Importer {
         return importerError(ImporterErrorKind.Verifier, e);
       }
       this.state.updateBackend(state?.backend);
+      this.prepareForNextEpoch();
       this.currentHash = parentHash;
     }
 
@@ -128,6 +139,7 @@ export class Importer {
     // TODO [ToDr] This is a temporary measure. We should rather read
     // the state of a parent block to support forks and create a fresh STF.
     this.state.updateBackend(newState.backend);
+    this.prepareForNextEpoch();
     this.currentHash = headerHash;
     logger.log`${timerState()}`;
 
