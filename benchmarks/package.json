@@ -13,7 +13,7 @@
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
     "@typeberry/ordering": "*",
-    "@types/blake2b": "2.1.3",
+    "@types/blake2b": "^2.1.3",
     "blake2b": "2.1.4"
   },
   "author": "Fluffy Labs",

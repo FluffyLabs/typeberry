@@ -1,9 +1,12 @@
 import { loadConfig, NODE_DEFAULTS } from "@typeberry/config-node";
 import { Blake2b } from "@typeberry/hash";
 import { getChainSpec, openDatabase } from "@typeberry/node";
+import { workspacePathFix } from "@typeberry/utils";
 import minimist from "minimist";
 import { methods } from "./src/method-loader.js";
 import { RpcServer } from "./src/server.js";
+
+const withRelPath = workspacePathFix("../../");
 
 export async function main(args: string[]) {
   const argv = minimist(args, {
@@ -23,7 +26,7 @@ export async function main(args: string[]) {
     blake2b,
     argv.nodeName,
     config.chainSpec.genesisHeader,
-    `../../${config.databaseBasePath}`,
+    withRelPath(`${config.databaseBasePath}`),
     {
       readOnly: true,
     },

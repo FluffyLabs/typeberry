@@ -3,7 +3,7 @@ import { BytesBlob } from "@typeberry/bytes";
 import { SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { LeafDb, type StatesDb, StateUpdateError } from "@typeberry/database";
-import { Blake2b, type TruncatedHash } from "@typeberry/hash";
+import type { Blake2b, TruncatedHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { ServicesUpdate, State } from "@typeberry/state";
 import type { StateEntries, StateKey } from "@typeberry/state-merkleization";
@@ -95,7 +95,7 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     leafs: SortedSet<LeafNode>,
     data: Iterable<[StateEntryUpdateAction, StateKey | TruncatedHash, BytesBlob]>,
   ): Promise<Result<OK, StateUpdateError>> {
-    const blake2bTrieHasher = getBlake2bTrieHasher(await Blake2b.createHasher());
+    const blake2bTrieHasher = getBlake2bTrieHasher(this.blake2b);
     // We will collect all values that don't fit directly into leaf nodes.
     const values: [ValueHash, BytesBlob][] = [];
     for (const [action, key, value] of data) {

@@ -26,7 +26,7 @@ export class Blake2b {
     for (const v of r) {
       hasher.update(v instanceof BytesBlob ? v.raw : v);
     }
-    return Bytes.fromBlob(hasher?.digest("binary"), HASH_SIZE).asOpaque();
+    return Bytes.fromBlob(hasher.digest("binary"), HASH_SIZE).asOpaque();
   }
 
   /** Hash given blob of bytes. */
@@ -34,7 +34,7 @@ export class Blake2b {
     const hasher = this.hasher.init();
     const bytes = blob instanceof BytesBlob ? blob.raw : blob;
     hasher.update(bytes);
-    return Bytes.fromBlob(hasher?.digest("binary"), HASH_SIZE).asOpaque();
+    return Bytes.fromBlob(hasher.digest("binary"), HASH_SIZE).asOpaque();
   }
 
   /** Convert given string into bytes and hash it. */

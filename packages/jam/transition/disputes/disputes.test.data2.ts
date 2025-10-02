@@ -201,7 +201,7 @@ export function workReport(packageHash: WorkPackageHash, coreIndex: number) {
           codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
           payloadHash: Bytes.zero(HASH_SIZE).asOpaque(),
           gas: tryAsServiceGas(42),
-          result: new WorkExecResult(WorkExecResultKind.ok, Bytes.parseBlob("0x010203")),
+          result: new WorkExecResult(WorkExecResultKind.ok, BytesBlob.parseBlob("0x010203")),
           load: WorkRefineLoad.create({
             gasUsed: tryAsServiceGas(0),
             importedSegments: tryAsU32(0),
