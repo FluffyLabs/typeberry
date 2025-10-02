@@ -42,7 +42,7 @@ export class UpdatePreimage {
   ) {}
 
   /** A preimage is provided. We should update the lookuphistory and add the preimage to db. */
-  static provide({ preimage, slot }: { serviceId: ServiceId; preimage: PreimageItem; slot: TimeSlot | null }) {
+  static provide({ preimage, slot }: { preimage: PreimageItem; slot: TimeSlot | null }) {
     return new UpdatePreimage({
       kind: UpdatePreimageKind.Provide,
       preimage,
@@ -190,7 +190,7 @@ export type ServicesUpdate = {
   /** Service ids to remove from state alongside all their data. */
   servicesRemoved: Set<ServiceId>;
   /** Services to update or create anew. */
-  servicesUpdates: Map<ServiceId, UpdateService[]>;
+  servicesUpdates: Map<ServiceId, UpdateService>;
   /** Service preimages to update and potentially lookup history */
   preimages: Map<ServiceId, UpdatePreimage[]>;
   /** Service storage to update. */
