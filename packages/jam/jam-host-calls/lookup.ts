@@ -5,6 +5,7 @@ import { minU64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { safeAllocUint8Array } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { getServiceIdOrCurrent } from "./utils.js";
@@ -71,7 +72,7 @@ export class Lookup implements HostCallHandler {
     // valueLength in both cases and valueLength is WC (4,000,000,000) + metadata
     // which is less than 2^32
     const chunk =
-      preImage === null ? new Uint8Array(0) : preImage.raw.subarray(Number(offset), Number(offset + length));
+      preImage === null ? safeAllocUint8Array(0) : preImage.raw.subarray(Number(offset), Number(offset + length));
     const memoryWriteResult = memory.storeFrom(destinationAddress, chunk);
     if (memoryWriteResult.isError) {
       return PvmExecution.Panic;

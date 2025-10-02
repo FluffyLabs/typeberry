@@ -1,4 +1,4 @@
-import { asOpaqueType, check, type Opaque } from "@typeberry/utils";
+import { asOpaqueType, check, type Opaque, safeAllocUint8Array } from "@typeberry/utils";
 
 export const NO_OF_REGISTERS = 13;
 const REGISTER_SIZE_SHIFT = 3;
@@ -14,7 +14,7 @@ export class Registers {
   private asSigned: BigInt64Array;
   private asUnsigned: BigUint64Array;
 
-  constructor(private readonly bytes = new Uint8Array(NO_OF_REGISTERS << REGISTER_SIZE_SHIFT)) {
+  constructor(private readonly bytes = safeAllocUint8Array(NO_OF_REGISTERS << REGISTER_SIZE_SHIFT)) {
     check`${bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT} Invalid size of registers array.`;
     this.asSigned = new BigInt64Array(bytes.buffer, bytes.byteOffset);
     this.asUnsigned = new BigUint64Array(bytes.buffer, bytes.byteOffset);

@@ -1,7 +1,7 @@
 import type { Bytes } from "@typeberry/bytes";
 import { blake2b } from "@typeberry/hash";
 import { leBytesAsU32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
-import { check } from "@typeberry/utils";
+import { check, safeAllocUint8Array } from "@typeberry/utils";
 
 const ENTROPY_BYTES = 32;
 type ENTROPY_BYTES = typeof ENTROPY_BYTES;
@@ -32,7 +32,7 @@ export function fisherYatesShuffle<T>(arr: T[], entropy: Bytes<ENTROPY_BYTES>): 
 
 function hashToNumberSequence(entropy: Bytes<ENTROPY_BYTES>, length: number) {
   const result: number[] = new Array(length);
-  const randomBytes = new Uint8Array(ENTROPY_BYTES + 4);
+  const randomBytes = safeAllocUint8Array(ENTROPY_BYTES + 4);
   randomBytes.set(entropy.raw);
 
   for (let i = 0; i < length; i++) {

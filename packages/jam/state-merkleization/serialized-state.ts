@@ -14,7 +14,7 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { asOpaqueType, Compatibility, GpVersion, TEST_COMPARE_USING } from "@typeberry/utils";
+import { asOpaqueType, Compatibility, GpVersion, safeAllocUint8Array, TEST_COMPARE_USING } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
 import { serialize } from "./serialize.js";
 import type { StateEntries } from "./state-entries.js";
@@ -200,7 +200,7 @@ export class SerializedService implements Service {
   getStorage(rawKey: StorageKey): BytesBlob | null {
     if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
       const SERVICE_ID_BYTES = 4;
-      const serviceIdAndKey = new Uint8Array(SERVICE_ID_BYTES + rawKey.length);
+      const serviceIdAndKey = safeAllocUint8Array(SERVICE_ID_BYTES + rawKey.length);
       serviceIdAndKey.set(u32AsLeBytes(this.serviceId));
       serviceIdAndKey.set(rawKey.raw, SERVICE_ID_BYTES);
       const key: StorageKey = asOpaqueType(BytesBlob.blobFrom(blake2b.hashBytes(serviceIdAndKey).raw));
