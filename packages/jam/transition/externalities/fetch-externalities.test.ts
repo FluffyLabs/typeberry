@@ -69,7 +69,7 @@ describe("fetch-externalities", () => {
       entropy: entropy ?? defaultEntropy,
       operands: operands ?? defaultOperands,
     };
-    return FetchExternalities.createForLegacyAccumulate(fetchData, chainSpec ?? defaultChainSpec);
+    return FetchExternalities.createForPre071Accumulate(fetchData, chainSpec ?? defaultChainSpec);
   };
 
   const prepareOnTransferData = ({

@@ -167,6 +167,8 @@ export interface IFetchExternalities {
    * Accumulate: `E(↕o)`
    * On Transfer: <empty>
    *
+   * @deprecated 0.7.1
+   *
    * https://graypaper.fluffylabs.dev/#/9a08063/32fb0132fb01?v=0.6.6
    */
   allOperands(): BytesBlob | null;
@@ -189,6 +191,8 @@ export interface IFetchExternalities {
    * Refine: <empty>
    * Accumulate: `E(o[omega_11])`
    * On Transfer: <empty>
+   *
+   * @deprecated 0.7.1
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/320202320202?v=0.6.6
    */
@@ -213,6 +217,8 @@ export interface IFetchExternalities {
    * Accumulate: <empty>
    * On Transfer: `E(↕t)`
    *
+   * @deprecated 0.7.1
+   *
    * https://graypaper.fluffylabs.dev/#/9a08063/320c02320c02?v=0.6.6
    */
   allTransfers(): BytesBlob | null;
@@ -224,6 +230,8 @@ export interface IFetchExternalities {
    * Refine: <empty>
    * Accumulate: <empty>
    * On Transfer: `E(t[omega_11])`
+   *
+   * @deprecated 0.7.1
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/321302321302?v=0.6.6
    */

@@ -155,7 +155,7 @@ export class Accumulate {
 
     const fetchExternalities = Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
       ? FetchExternalities.createForAccumulate({ entropy, transfers, operands }, this.chainSpec)
-      : FetchExternalities.createForLegacyAccumulate({ entropy, operands }, this.chainSpec);
+      : FetchExternalities.createForPre071Accumulate({ entropy, operands }, this.chainSpec);
 
     const externalities = {
       partialState,

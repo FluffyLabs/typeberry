@@ -208,7 +208,7 @@ export class FetchExternalities implements IFetchExternalities {
     private fetchData: FetchData,
     private chainSpec: ChainSpec,
   ) {}
-  static createForLegacyAccumulate(
+  static createForPre071Accumulate(
     fetchData: Omit<LegacyAccumulateFetchData, "context">,
     chainSpec: ChainSpec,
   ): FetchExternalities {

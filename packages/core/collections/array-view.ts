@@ -1,11 +1,18 @@
 import { check } from "@typeberry/utils";
 
+/**
+ * A utility class providing a readonly view over a portion of an array without copying it.
+ */
 export class ArrayView<T> implements Iterable<T> {
+  private readonly source: T[];
+
   private constructor(
-    private readonly source: readonly T[],
+    source: T[],
     private readonly start: number,
     private readonly end: number,
-  ) {}
+  ) {
+    this.source = source;
+  }
 
   static from<T>(source: T[], start = 0, end = source.length): ArrayView<T> {
     check`
