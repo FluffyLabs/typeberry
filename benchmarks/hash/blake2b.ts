@@ -2,12 +2,13 @@ import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { blake2b, PageAllocator, SimpleAllocator } from "@typeberry/hash";
+import { safeAllocUint8Array } from "@typeberry/utils";
 
 const BLOB_SIZE = 1 * 1024 * 1024;
 const NUMBER_OF_HASHES = 512;
 
 function generateBlob(): BytesBlob {
-  const result = new Uint8Array(BLOB_SIZE);
+  const result = safeAllocUint8Array(BLOB_SIZE);
   for (let i = 0; i < BLOB_SIZE; i += 1) {
     const val = Math.floor(Math.random() * 255);
     result[i] = val;

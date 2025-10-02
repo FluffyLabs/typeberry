@@ -16,4 +16,5 @@ export * from "./debug.js";
 export * from "./dev.js";
 export * from "./opaque.js";
 export * from "./result.js";
+export * from "./safe-alloc-uint8array.js";
 export * from "./test.js";

@@ -1,6 +1,6 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { check, type Opaque } from "@typeberry/utils";
+import { check, type Opaque, safeAllocUint8Array } from "@typeberry/utils";
 import { FIRST_BIT_SET, FIRST_BIT_SET_NEG, FIRST_TWO_BITS_SET, FIRST_TWO_BITS_SET_NEG } from "./masks.js";
 
 export type StateKey = Opaque<OpaqueHash, "trieStateKey">;
@@ -72,7 +72,7 @@ export enum NodeType {
 export class TrieNode {
   constructor(
     /** Exactly 512 bits / 64 bytes */
-    public readonly raw: Uint8Array = new Uint8Array(TRIE_NODE_BYTES),
+    public readonly raw: Uint8Array = safeAllocUint8Array(TRIE_NODE_BYTES),
   ) {}
 
   /** Returns the type of the node */

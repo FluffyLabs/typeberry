@@ -1,6 +1,7 @@
 import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { Logger } from "@typeberry/logger";
+import { safeAllocUint8Array } from "@typeberry/utils";
 
 const HASH_LENGTH: number = 32;
 const logger = Logger.new(import.meta.filename, "hash");
@@ -39,7 +40,7 @@ function generateByteHash(): ByteHash {
 }
 
 function generateUintHash(): Uint8Array {
-  const hash = new Uint8Array(HASH_LENGTH);
+  const hash = safeAllocUint8Array(HASH_LENGTH);
   for (let i = 0; i < HASH_LENGTH; i += 1) {
     const val = Math.floor(Math.random() * 255);
     hash[i] = val;

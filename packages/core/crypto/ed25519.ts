@@ -1,7 +1,7 @@
 import * as ed from "@noble/ed25519";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ed25519 } from "@typeberry/native";
-import { check, type Opaque } from "@typeberry/utils";
+import { check, type Opaque, safeAllocUint8Array } from "@typeberry/utils";
 
 /** ED25519 private key size. */
 export const ED25519_PRIV_KEY_BYTES = 32;
@@ -78,7 +78,7 @@ export async function verify<T extends BytesBlob>(input: Input<T>[]): Promise<bo
     (acc, { message, key, signature }) => acc + key.length + signature.length + message.length + 1,
     0,
   );
-  const data = new Uint8Array(dataLength);
+  const data = safeAllocUint8Array(dataLength);
 
   let offset = 0;
 

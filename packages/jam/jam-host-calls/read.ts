@@ -4,6 +4,7 @@ import { minU64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { safeAllocUint8Array } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { clampU64ToU32, getServiceIdOrCurrent } from "./utils.js";
@@ -48,7 +49,7 @@ export class Read implements HostCallHandler {
 
     const storageKeyLengthClamped = clampU64ToU32(storageKeyLength);
     // k
-    const rawKey = BytesBlob.blobFrom(new Uint8Array(storageKeyLengthClamped));
+    const rawKey = BytesBlob.blobFrom(safeAllocUint8Array(storageKeyLengthClamped));
 
     const memoryReadResult = memory.loadInto(rawKey.raw, storageKeyStartAddress);
     if (memoryReadResult.isError) {
@@ -71,7 +72,8 @@ export class Read implements HostCallHandler {
     // NOTE [MaSo] this is ok to cast to number, because we are bounded by the
     // valueLength in both cases and valueLength is WC (4,000,000,000) + metadata
     // which is less than 2^32
-    const chunk = value === null ? new Uint8Array(0) : value.raw.subarray(Number(offset), Number(offset + blobLength));
+    const chunk =
+      value === null ? safeAllocUint8Array(0) : value.raw.subarray(Number(offset), Number(offset + blobLength));
     const memoryWriteResult = memory.storeFrom(destinationAddress, chunk);
     if (memoryWriteResult.isError) {
       logger.trace`READ(${serviceId}, ${rawKey}) <- PANIC`;

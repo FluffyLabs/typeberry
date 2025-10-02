@@ -3,7 +3,7 @@ import type { Gas } from "@typeberry/pvm-interpreter/gas.js";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import type { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { assertNever, check } from "@typeberry/utils";
+import { assertNever, check, safeAllocUint8Array } from "@typeberry/utils";
 import { PvmExecution, tryAsHostCallIndex } from "./host-call-handler.js";
 import { HostCallMemory } from "./host-call-memory.js";
 import { HostCallRegisters } from "./host-call-registers.js";
@@ -56,7 +56,7 @@ export class HostCalls {
       const maybeAddress = regs.getLowerU32(7);
       const maybeLength = regs.getLowerU32(8);
 
-      const result = new Uint8Array(maybeLength);
+      const result = safeAllocUint8Array(maybeLength);
       const startAddress = tryAsMemoryIndex(maybeAddress);
       const loadResult = memory.loadInto(result, startAddress);
 
