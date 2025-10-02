@@ -1,4 +1,4 @@
-import { check } from "@typeberry/utils";
+import { check, safeAllocUint8Array } from "@typeberry/utils";
 import type { Bytes } from "./bytes.js";
 
 /**
@@ -20,7 +20,7 @@ export class BitVec {
    * Create new [`BitVec`] with all values set to `false`.
    */
   static empty(bitLength: number) {
-    const data = new Uint8Array(Math.ceil(bitLength / 8));
+    const data = safeAllocUint8Array(Math.ceil(bitLength / 8));
     return new BitVec(data, bitLength);
   }
 

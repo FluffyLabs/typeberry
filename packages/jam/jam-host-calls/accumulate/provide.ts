@@ -9,7 +9,7 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { assertNever, resultToString } from "@typeberry/utils";
+import { assertNever, resultToString, safeAllocUint8Array } from "@typeberry/utils";
 import { type PartialState, ProvidePreimageError } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -44,7 +44,7 @@ export class Provide implements HostCallHandler {
     const length = clampU64ToU32(preimageLength);
 
     // `i`
-    const preimage = BytesBlob.blobFrom(new Uint8Array(length));
+    const preimage = BytesBlob.blobFrom(safeAllocUint8Array(length));
     const memoryReadResult = memory.loadInto(preimage.raw, preimageStart);
     if (memoryReadResult.isError) {
       logger.trace`PROVIDE(${serviceId}, ${preimage.toStringTruncated()}) <- PANIC`;
