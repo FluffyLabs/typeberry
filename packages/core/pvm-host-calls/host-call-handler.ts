@@ -10,9 +10,15 @@ export type HostCallIndex = Opaque<U32, "HostCallIndex[U32]">;
 /** Attempt to convert a number into `HostCallIndex`. */
 export const tryAsHostCallIndex = (v: number): HostCallIndex => asOpaqueType(tryAsU32(v));
 
+/**
+ * Host-call exit reason.
+ *
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/24a30124a501?v=0.7.2
+ */
 export enum PvmExecution {
   Halt = 0,
   Panic = 1,
+  OOG = 2, // out-of-gas
 }
 
 /** A utility function to easily trace a bunch of registers. */
@@ -25,8 +31,12 @@ export interface HostCallHandler {
   /** Index of that host call (i.e. what PVM invokes via `ecalli`) */
   readonly index: HostCallIndex;
 
-  /** The gas cost of invocation of that host call. */
-  readonly gasCost: SmallGas | ((reg: IHostCallRegisters) => Gas);
+  /**
+   * The gas cost of invocation of that host call.
+   *
+   * NOTE: `((reg: IHostCallRegisters) => Gas)` function is for compatibility reasons: pre GP 0.7.2
+   */
+  readonly basicGasCost: SmallGas | ((reg: IHostCallRegisters) => Gas);
 
   /** Currently executing service id. */
   readonly currentServiceId: U32;

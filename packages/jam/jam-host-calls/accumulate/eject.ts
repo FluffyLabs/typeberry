@@ -20,7 +20,7 @@ const IN_OUT_REG = 7;
  */
 export class Eject implements HostCallHandler {
   index = tryAsHostCallIndex(21);
-  gasCost = tryAsSmallGas(10);
+  basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8);
 
   constructor(

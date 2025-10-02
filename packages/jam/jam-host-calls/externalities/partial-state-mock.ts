@@ -4,6 +4,7 @@ import {
   type PerValidator,
   type ServiceGas,
   type ServiceId,
+  tryAsServiceGas,
   tryAsServiceId,
 } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
@@ -13,7 +14,7 @@ import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
 import type { PerCore, ValidatorData } from "@typeberry/state";
-import { OK, Result } from "@typeberry/utils";
+import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
 import {
   type EjectError,
   type ForgetPreimageError,
@@ -83,7 +84,11 @@ export class PartialStateMock implements PartialState {
     if (destination === null) {
       return Result.error(TransferError.DestinationNotFound);
     }
-    this.transferData.push([destination, amount, suppliedGas, memo]);
+    if (!Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) || this.transferReturnValue.isOk) {
+      this.transferData.push([destination, amount, suppliedGas, memo]);
+    } else {
+      this.transferData.push([destination, amount, tryAsServiceGas(0), memo]);
+    }
     return this.transferReturnValue;
   }
 

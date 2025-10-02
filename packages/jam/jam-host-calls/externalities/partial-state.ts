@@ -206,13 +206,12 @@ export interface PartialState {
 
   /**
    * Transfer given `amount` of funds to the `destination`,
-   * passing `suppliedGas` to invoke `OnTransfer` entry point
-   * and given `memo`.
+   * passing `gas` fee for transfer and given `memo`.
    */
   transfer(
     destination: ServiceId | null,
     amount: U64,
-    suppliedGas: ServiceGas,
+    gas: ServiceGas,
     memo: Bytes<TRANSFER_MEMO_BYTES>,
   ): Result<OK, TransferError>;
 
