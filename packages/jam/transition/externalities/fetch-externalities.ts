@@ -73,7 +73,7 @@ const TRANSFER_OR_OPERAND = codec.custom<TransferOrOperand>(
       return { kind: TransferOperandKind.TRANSFER, value: d.object(PendingTransfer.Codec) };
     }
 
-    throw new Error("it should not happen");
+    throw new Error(`Unable to decode TransferOrOperand. Invalid kind: ${kind}.`);
   },
   (s) => {
     const kind = s.decoder.varU32();
@@ -359,7 +359,7 @@ export class FetchExternalities implements IFetchExternalities {
     if (this.fetchData.context === FetchContext.Accumulate) {
       const { operands, transfers } = this.fetchData;
 
-      if (index >= operands.length + transfers.length || index >= 2n ** 32n) {
+      if (index >= operands.length + transfers.length) {
         return null;
       }
 

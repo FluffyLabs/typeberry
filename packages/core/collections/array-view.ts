@@ -2,7 +2,7 @@ import { check } from "@typeberry/utils";
 
 export class ArrayView<T> implements Iterable<T> {
   private constructor(
-    private readonly source: T[],
+    private readonly source: readonly T[],
     private readonly start: number,
     private readonly end: number,
   ) {}
@@ -10,7 +10,7 @@ export class ArrayView<T> implements Iterable<T> {
   static from<T>(source: T[], start = 0, end = source.length): ArrayView<T> {
     check`
       ${start >= 0 && end <= source.length && start <= end} 
-      Invalid start/end for ArrayView.
+      Invalid start (${start})/end (${end}) for ArrayView 
     `;
     return new ArrayView(source, start, end);
   }
@@ -22,7 +22,7 @@ export class ArrayView<T> implements Iterable<T> {
   get(i: number): T {
     check`
       ${i >= 0 && i < this.length}
-      Index out of bounds.
+      Index out of bounds: ${i} < ${this.length}
     `;
     return this.source[this.start + i];
   }
