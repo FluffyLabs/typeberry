@@ -8,8 +8,5 @@
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
-  "type": "module",
-  "dependencies": {
-    "@typeberry/logger": "*"
-  }
+  "type": "module"
 }
