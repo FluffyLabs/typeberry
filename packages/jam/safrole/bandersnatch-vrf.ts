@@ -19,6 +19,20 @@ enum ResultValues {
   Error = 1,
 }
 
+/**
+ * Getting a ring commitment is pretty expensive (hundreds of ms),
+ * yet the validators do not always change.
+ * For current benchmarks, we get a huge hit every epoch, hence
+ * to overcome that we cache the results of getting ring commitment.
+ * Note we can also tentatively populate this cache, before we even
+ * reach the epoch change block.
+ */
+const ringCommitmentCache: CacheEntry[] = [];
+type CacheEntry = {
+  keys: BytesBlob;
+  value: Promise<Result<BandersnatchRingRoot, null>>;
+};
+
 // TODO [ToDr] We export the entire object to allow mocking in tests.
 // Ideally we would just export functions and figure out how to mock
 // properly in ESM.
@@ -49,12 +63,35 @@ async function verifySeal(
   return Result.ok(Bytes.fromBlob(sealResult.subarray(1), HASH_SIZE).asOpaque());
 }
 
-async function getRingCommitment(
+function getRingCommitment(
   bandersnatch: BandernsatchWasm,
   validators: BandersnatchKey[],
 ): Promise<Result<BandersnatchRingRoot, null>> {
-  const keys = BytesBlob.blobFromParts(validators.map((x) => x.raw)).raw;
-  const commitmentResult = await bandersnatch.getRingCommitment(keys);
+  const keys = BytesBlob.blobFromParts(validators.map((x) => x.raw));
+  // We currently compare the large bytes blob, but the number of entries in the cache
+  // must be low. If the cache ever grows larger, we should rather consider hashing the keys.
+  const MAX_CACHE_ENTRIES = 3;
+  const cacheEntry = ringCommitmentCache.find((v) => v.keys.isEqualTo(keys));
+  if (cacheEntry !== undefined) {
+    return cacheEntry.value;
+  }
+
+  const value = getRingCommitmentNoCache(bandersnatch, keys);
+  ringCommitmentCache.push({
+    keys,
+    value,
+  });
+  if (ringCommitmentCache.length > MAX_CACHE_ENTRIES) {
+    ringCommitmentCache.shift();
+  }
+  return value;
+}
+
+async function getRingCommitmentNoCache(
+  bandersnatch: BandernsatchWasm,
+  keys: BytesBlob,
+): Promise<Result<BandersnatchRingRoot, null>> {
+  const commitmentResult = await bandersnatch.getRingCommitment(keys.raw);
 
   if (commitmentResult[RESULT_INDEX] === ResultValues.Error) {
     return Result.error(null);

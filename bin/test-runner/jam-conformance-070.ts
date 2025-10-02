@@ -5,6 +5,10 @@ main(runners, process.argv.slice(2), "test-vectors/jam-conformance/fuzz-reports/
   ignored: [
     // CORRECT: note [seko] test rejected at block parsing stage, which is considered valid behavior
     "traces/1757063641/00000180.json",
+    // empty post-state, see https://github.com/davxy/jam-conformance/discussions/99
+    "traces/_new/1758819527/00000598.json",
+    // empty post-state, see https://github.com/davxy/jam-conformance/discussions/99
+    "traces/_new/1758708840/00000958.json",
     // genesis file is unparsable
     "genesis.json",
   ],

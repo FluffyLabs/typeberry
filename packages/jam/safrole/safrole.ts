@@ -7,6 +7,7 @@ import {
   type TicketsMarkerView,
   type TimeSlot,
   tryAsPerEpochBlock,
+  tryAsTimeSlot,
   ValidatorKeys,
 } from "@typeberry/block";
 import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets.js";
@@ -165,6 +166,19 @@ export class Safrole {
     }
 
     return FixedSizeArray.new([newRandomnessAcc, ...rest], 4);
+  }
+
+  /**
+   * Pre-populate cache for validator keys, and especially the ring commitment.
+   *
+   * NOTE the function is still doing quite some work, so it should only be used
+   *  once per epoch. The optimisation relies on the fact that the `bandersnatch.getRingCommitment`
+   * call will be cached.
+   */
+  public async prepareValidatorKeysForNextEpoch(postOffenders: ImmutableSortedSet<Ed25519Key>) {
+    const stateEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
+    const nextEpochStart = (stateEpoch + 1) * this.chainSpec.epochLength;
+    return await this.getValidatorKeys(tryAsTimeSlot(nextEpochStart), postOffenders);
   }
 
   private async getValidatorKeys(
