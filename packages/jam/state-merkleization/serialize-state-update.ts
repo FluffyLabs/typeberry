@@ -42,6 +42,10 @@ export function* serializeStateUpdate(
   const encode = <T>(codec: Encode<T>, val: T) => Encoder.encodeObject(codec, val, spec);
 
   // then let's proceed with service updates
+  console.log`Services: ${update.servicesUpdates?.size}`;
+  console.log`Preimages: ${update.preimages?.size}`;
+  console.log`Storage: ${update.storage?.size}`;
+  console.log`Removed: ${update.servicesRemoved?.size}`;
   yield* serializeServiceUpdates(update.servicesUpdates, encode);
   yield* serializePreimages(update.preimages, encode);
   yield* serializeStorage(update.storage);
@@ -49,7 +53,8 @@ export function* serializeStateUpdate(
 }
 
 function* serializeRemovedServices(servicesRemoved: Set<ServiceId> | undefined): Generator<StateEntryUpdate> {
-  for (const serviceId of servicesRemoved ?? []) {
+  if (servicesRemoved === undefined) return;
+  for (const serviceId of servicesRemoved) {
     // TODO [ToDr] what about all data associated with a service?
     const codec = serialize.serviceData(serviceId);
     yield [StateEntryUpdateAction.Remove, codec.key, EMPTY_BLOB];
