@@ -6,7 +6,7 @@ import minimist from "minimist";
 import { methods } from "./src/method-loader.js";
 import { RpcServer } from "./src/server.js";
 
-const withRelPath = workspacePathFix("../../");
+const withRelPath = workspacePathFix(`${import.meta.dirname}/../..`);
 
 export async function main(args: string[]) {
   const argv = minimist(args, {
