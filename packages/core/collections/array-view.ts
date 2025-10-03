@@ -5,6 +5,7 @@ import { check } from "@typeberry/utils";
  */
 export class ArrayView<T> implements Iterable<T> {
   private readonly source: T[];
+  public readonly length: number;
 
   private constructor(
     source: T[],
@@ -12,6 +13,7 @@ export class ArrayView<T> implements Iterable<T> {
     private readonly end: number,
   ) {
     this.source = source;
+    this.length = end - start;
   }
 
   static from<T>(source: T[], start = 0, end = source.length): ArrayView<T> {
@@ -20,10 +22,6 @@ export class ArrayView<T> implements Iterable<T> {
       Invalid start (${start})/end (${end}) for ArrayView 
     `;
     return new ArrayView(source, start, end);
-  }
-
-  get length(): number {
-    return this.end - this.start;
   }
 
   get(i: number): T {
