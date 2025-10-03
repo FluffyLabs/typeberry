@@ -5,7 +5,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import type { StorageKey } from "@typeberry/state";
-import { asOpaqueType, type Result, resultToString } from "@typeberry/utils";
+import { asOpaqueType, type Result, resultToString, safeAllocUint8Array } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { clampU64ToU32 } from "./utils.js";
@@ -57,7 +57,7 @@ export class Write implements HostCallHandler {
 
     const storageKeyLengthClamped = clampU64ToU32(storageKeyLength);
 
-    const rawStorageKey = new Uint8Array(storageKeyLengthClamped);
+    const rawStorageKey = safeAllocUint8Array(storageKeyLengthClamped);
     const keyLoadingResult = memory.loadInto(rawStorageKey, storageKeyStartAddress);
     if (keyLoadingResult.isError) {
       logger.trace`WRITE() <- PANIC`;
@@ -68,7 +68,7 @@ export class Write implements HostCallHandler {
     const storageKey: StorageKey = asOpaqueType(BytesBlob.blobFrom(rawStorageKey));
 
     const valueLengthClamped = clampU64ToU32(valueLength);
-    const value = new Uint8Array(valueLengthClamped);
+    const value = safeAllocUint8Array(valueLengthClamped);
     const valueLoadingResult = memory.loadInto(value, valueStart);
     // Note [MaSo] this is ok to return bcs if valueLength is 0, then this panic won't happen
     if (valueLoadingResult.isError) {

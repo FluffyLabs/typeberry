@@ -3,7 +3,7 @@ import { tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import { check } from "@typeberry/utils";
+import { check, safeAllocUint8Array } from "@typeberry/utils";
 
 export class DebuggerAdapter {
   private readonly pvm: Interpreter;
@@ -30,7 +30,7 @@ export class DebuggerAdapter {
 
     if (page === null) {
       // page wasn't allocated so we return an empty page
-      return new Uint8Array(PAGE_SIZE);
+      return safeAllocUint8Array(PAGE_SIZE);
     }
 
     if (page.length === PAGE_SIZE) {
@@ -39,7 +39,7 @@ export class DebuggerAdapter {
     }
 
     // page was allocated but it is shorter than PAGE_SIZE so we have to extend it
-    const fullPage = new Uint8Array(PAGE_SIZE);
+    const fullPage = safeAllocUint8Array(PAGE_SIZE);
     fullPage.set(page);
     return fullPage;
   }

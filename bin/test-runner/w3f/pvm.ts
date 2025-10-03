@@ -9,6 +9,7 @@ import { getPageNumber } from "@typeberry/pvm-interpreter/memory/memory-utils.js
 import { type PageNumber, tryAsPageNumber } from "@typeberry/pvm-interpreter/memory/pages/page-utils.js";
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
+import { safeAllocUint8Array } from "@typeberry/utils";
 
 class MemoryChunkItem {
   static fromJson: FromJson<MemoryChunkItem> = {
@@ -72,9 +73,9 @@ export async function runPvmTest(testContent: PvmTest) {
     const isWriteable = page["is-writable"];
 
     if (isWriteable) {
-      memoryBuilder.setWriteablePages(startPageIndex, endPageIndex, new Uint8Array(page.length));
+      memoryBuilder.setWriteablePages(startPageIndex, endPageIndex, safeAllocUint8Array(page.length));
     } else {
-      memoryBuilder.setReadablePages(startPageIndex, endPageIndex, new Uint8Array(page.length));
+      memoryBuilder.setReadablePages(startPageIndex, endPageIndex, safeAllocUint8Array(page.length));
     }
   }
 
@@ -142,7 +143,7 @@ export async function runPvmTest(testContent: PvmTest) {
 
   for (const [pageNumberAsString, memoryChunks] of Object.entries(expectedMemoryByPageNumber)) {
     const pageNumber = tryAsPageNumber(Number(pageNumberAsString));
-    const expectedPage = new Uint8Array(PAGE_SIZE);
+    const expectedPage = safeAllocUint8Array(PAGE_SIZE);
     for (const memoryChunk of memoryChunks) {
       const pageIndex = memoryChunk.address % PAGE_SIZE;
       expectedPage.set(memoryChunk.contents, pageIndex);

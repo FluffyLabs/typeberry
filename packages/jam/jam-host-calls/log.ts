@@ -2,6 +2,7 @@ import type { ServiceId } from "@typeberry/block";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { safeAllocUint8Array } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { clampU64ToU32 } from "./utils.js";
 
@@ -27,8 +28,8 @@ export class LogHostCall implements HostCallHandler {
     const msgStart = regs.get(10);
     const msgLength = regs.get(11);
 
-    const target = new Uint8Array(clampU64ToU32(targetLength));
-    const message = new Uint8Array(clampU64ToU32(msgLength));
+    const target = safeAllocUint8Array(clampU64ToU32(targetLength));
+    const message = safeAllocUint8Array(clampU64ToU32(msgLength));
     if (targetStart !== 0n) {
       memory.loadInto(target, targetStart);
     }
