@@ -1,5 +1,5 @@
 import { Bytes } from "@typeberry/bytes";
-import { check } from "@typeberry/utils";
+import { check, safeAllocUint8Array } from "@typeberry/utils";
 import { HASH_SIZE, type OpaqueHash } from "./hash.js";
 
 /** Allocator interface - returns an empty bytes vector that can be filled with the hash. */
@@ -17,7 +17,7 @@ export class SimpleAllocator implements HashAllocator {
 
 /** An allocator that works by allocating larger (continuous) pages of memory. */
 export class PageAllocator implements HashAllocator {
-  private page: Uint8Array = new Uint8Array(0);
+  private page: Uint8Array = safeAllocUint8Array(0);
   private currentHash = 0;
 
   // TODO [ToDr] Benchmark the performance!
@@ -29,7 +29,7 @@ export class PageAllocator implements HashAllocator {
   private resetPage() {
     const pageSizeBytes = this.hashesPerPage * HASH_SIZE;
     this.currentHash = 0;
-    this.page = new Uint8Array(pageSizeBytes);
+    this.page = safeAllocUint8Array(pageSizeBytes);
   }
 
   emptyHash(): OpaqueHash {

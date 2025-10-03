@@ -8,7 +8,7 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { resultToString } from "@typeberry/utils";
+import { resultToString, safeAllocUint8Array } from "@typeberry/utils";
 import { type RefineExternalities, tryAsProgramCounter } from "../externalities/refine-externalities.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -42,7 +42,7 @@ export class Machine implements HostCallHandler {
     const entrypoint = tryAsProgramCounter(regs.get(9));
 
     const codeLengthClamped = clampU64ToU32(codeLength);
-    const code = BytesBlob.blobFrom(new Uint8Array(codeLengthClamped));
+    const code = BytesBlob.blobFrom(safeAllocUint8Array(codeLengthClamped));
     const codeLoadResult = memory.loadInto(code.raw, codeStart);
     if (codeLoadResult.isError) {
       logger.trace`MACHINE(${code.toStringTruncated()}, ${entrypoint}) <- PANIC`;
