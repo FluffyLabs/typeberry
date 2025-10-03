@@ -3,7 +3,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { reedSolomon } from "@typeberry/native";
-import { check } from "@typeberry/utils";
+import { check, safeAllocUint8Array } from "@typeberry/utils";
 
 /**
  * `point` - [Y_2]
@@ -69,7 +69,7 @@ export function padAndEncodeData(input: BytesBlob) {
   const paddedLength = Math.ceil(input.length / PIECE_SIZE) * PIECE_SIZE;
   let padded = input;
   if (input.length !== paddedLength) {
-    padded = BytesBlob.blobFrom(new Uint8Array(paddedLength));
+    padded = BytesBlob.blobFrom(safeAllocUint8Array(paddedLength));
     padded.raw.set(input.raw, 0);
   }
   return chunkingFunction(padded);
@@ -125,7 +125,7 @@ export function decodeData(input: FixedSizeArray<[number, BytesBlob], N_CHUNKS_R
  */
 export function encodePoints(input: Bytes<PIECE_SIZE>): FixedSizeArray<Bytes<POINT_LENGTH>, N_CHUNKS_TOTAL> {
   const result: Bytes<POINT_LENGTH>[] = [];
-  const data = new Uint8Array(POINT_ALIGNMENT * N_CHUNKS_REQUIRED);
+  const data = safeAllocUint8Array(POINT_ALIGNMENT * N_CHUNKS_REQUIRED);
 
   // add original shards to the result
   for (let i = 0; i < N_CHUNKS_REQUIRED; i++) {
@@ -145,7 +145,7 @@ export function encodePoints(input: Bytes<PIECE_SIZE>): FixedSizeArray<Bytes<POI
   for (let i = 0; i < N_CHUNKS_REDUNDANCY; i++) {
     const pointIndex = i * POINT_ALIGNMENT;
 
-    const redundancyPoint = new Uint8Array(POINT_LENGTH);
+    const redundancyPoint = safeAllocUint8Array(POINT_LENGTH);
     for (let j = 0; j < POINT_LENGTH; j++) {
       redundancyPoint[j] = encodedData[pointIndex + j * HALF_POINT_SIZE];
     }
@@ -165,7 +165,7 @@ export function decodePiece(
 ): Bytes<PIECE_SIZE> {
   const result = Bytes.zero(PIECE_SIZE);
 
-  const data = new Uint8Array(N_CHUNKS_REQUIRED * POINT_ALIGNMENT);
+  const data = safeAllocUint8Array(N_CHUNKS_REQUIRED * POINT_ALIGNMENT);
   const indices = new Uint16Array(input.length);
 
   for (let i = 0; i < N_CHUNKS_REQUIRED; i++) {
@@ -292,7 +292,7 @@ export function lace<N extends number, K extends number>(input: FixedSizeArray<B
     return BytesBlob.empty();
   }
   const n = input[0].length;
-  const result = BytesBlob.blobFrom(new Uint8Array(k * n));
+  const result = BytesBlob.blobFrom(safeAllocUint8Array(k * n));
   for (let i = 0; i < k; i++) {
     const entry = input[i].raw;
     for (let j = 0; j < n; j++) {

@@ -7,7 +7,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { assertNever } from "@typeberry/utils";
+import { assertNever, safeAllocUint8Array } from "@typeberry/utils";
 import { type PartialState, UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -43,7 +43,7 @@ export class Assign implements HostCallHandler {
     // a
     const authManager = getServiceId(regs.get(9));
 
-    const res = new Uint8Array(HASH_SIZE * AUTHORIZATION_QUEUE_SIZE);
+    const res = safeAllocUint8Array(HASH_SIZE * AUTHORIZATION_QUEUE_SIZE);
     const memoryReadResult = memory.loadInto(res, authorizationQueueStart);
     // error while reading the memory.
     if (memoryReadResult.isError) {

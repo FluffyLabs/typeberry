@@ -1,5 +1,5 @@
 import { BitVec } from "@typeberry/bytes";
-import { check } from "@typeberry/utils";
+import { check, safeAllocUint8Array } from "@typeberry/utils";
 
 /**
  * Upper bound of instruction distance - it is equal to max value of GP's skip function + 1
@@ -39,7 +39,7 @@ export class Mask {
   }
 
   private buildLookupTableForward(mask: BitVec) {
-    const table = new Uint8Array(mask.bitLength);
+    const table = safeAllocUint8Array(mask.bitLength);
     let lastInstructionOffset = 0;
     for (let i = mask.bitLength - 1; i >= 0; i--) {
       if (mask.isSet(i)) {
