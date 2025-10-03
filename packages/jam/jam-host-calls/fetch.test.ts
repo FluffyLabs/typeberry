@@ -22,8 +22,7 @@ describe("Fetch", () => {
   const IN_OUT_REG = 7;
   const gas = gasCounter(tryAsGas(0));
 
-  const itPre071 = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? it.skip : it;
-  const itPost071 = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? it : it.skip;
+  const [itPre071, itPost071] = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? [it.skip, it] : [it, it.skip];
 
   it("should return PvmExecution.Panic if memory write fails", async () => {
     const currentServiceId = tryAsServiceId(10_000);

@@ -178,7 +178,7 @@ export interface IFetchExternalities {
    *
    * Is Authorized: <empty>
    * Refine: <empty>
-   * Accumulate: `E(↕o)`
+   * Accumulate: `E(↕i)`
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/314c03314c03?v=0.7.2
    */
@@ -203,7 +203,7 @@ export interface IFetchExternalities {
    *
    * Is Authorized: <empty>
    * Refine: <empty>
-   * Accumulate: `E(o[omega_11])`
+   * Accumulate: `E(i[omega_11])`
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/315503315503?v=0.7.2
    */
