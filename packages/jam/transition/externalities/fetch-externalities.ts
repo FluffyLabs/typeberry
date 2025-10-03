@@ -363,27 +363,17 @@ export class FetchExternalities implements IFetchExternalities {
         return null;
       }
 
-      if (index < operands.length) {
-        // Safe: operandIndex < 2^32 (checked above) and bounded by operands.length.
-        const operand = operands[Number(index)];
+      const kind = index < operands.length ? TransferOperandKind.OPERAND : TransferOperandKind.TRANSFER;
+      const transferOrOperand =
+        kind === TransferOperandKind.OPERAND
+          ? ({ kind: TransferOperandKind.OPERAND, value: operands[Number(index)] } as const)
+          : ({ kind: TransferOperandKind.TRANSFER, value: transfers[Number(index) - operands.length] } as const);
 
-        if (operand === undefined) {
-          return null;
-        }
-
-        return Encoder.encodeObject(Operand.Codec, operand, this.chainSpec);
-      }
-
-      // Safe: index < 2^32 and index > operands.length (checked above)
-      const transferIndex = Number(index) - operands.length;
-
-      const transfer = transfers[transferIndex];
-
-      if (transfer === undefined) {
+      if (transferOrOperand.value === undefined) {
         return null;
       }
 
-      return Encoder.encodeObject(PendingTransfer.Codec, transfer, this.chainSpec);
+      return Encoder.encodeObject(TRANSFER_OR_OPERAND, transferOrOperand, this.chainSpec);
     }
 
     return null;
