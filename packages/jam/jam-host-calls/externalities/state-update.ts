@@ -210,7 +210,6 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     // TODO [ToDr] This is most likely wrong. We may have `provide` and `remove` within
     // the same state update. We should however switch to proper "updated state"
     // representation soon.
-    // TODO [MaSo] What is proper "updated state"? I think we can do it now.
     const updatedPreimage = preimages.findLast(
       (update) => update.hash.isEqualTo(hash) && BigInt(update.length) === length,
     );
@@ -263,9 +262,11 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
             storage: StorageItem.create({ key, value }),
           });
 
-    const storageUpdates = this.stateUpdate.services.storage.get(serviceId) ?? [];
-    storageUpdates.push(update);
-    this.stateUpdate.services.storage.set(serviceId, storageUpdates);
+    const storages = this.stateUpdate.services.storage.get(serviceId) ?? [];
+    const index = storages.findIndex((x) => x.key.isEqualTo(key));
+    const count = index === -1 ? 0 : 1;
+    storages.splice(index, count, update);
+    this.stateUpdate.services.storage.set(serviceId, storages);
   }
 
   /**
