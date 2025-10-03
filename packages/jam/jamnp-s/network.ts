@@ -3,6 +3,7 @@ import type { BlockView, HeaderHash } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import type { ed25519 } from "@typeberry/crypto";
 import type { BlocksDb } from "@typeberry/database";
+import { Blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { type Network, type Peer, Quic } from "@typeberry/networking";
 import { OK } from "@typeberry/utils";
@@ -22,6 +23,7 @@ export async function setup(
   blocks: BlocksDb,
   onNewBlocks: (blocks: BlockView[]) => void,
 ) {
+  const blake2b = await Blake2b.createHasher();
   const genesisFirstBytes = genesisHash.toString().substring(2, 10);
   const network = await Quic.setup({
     host: bind.host,
@@ -36,7 +38,7 @@ export async function setup(
   const streamManager = new StreamManager();
 
   // start the networking tasks
-  const syncTask = SyncTask.start(spec, streamManager, connections, blocks, onNewBlocks);
+  const syncTask = SyncTask.start(spec, blake2b, streamManager, connections, blocks, onNewBlocks);
 
   setImmediate(async () => {
     while (network.isRunning) {

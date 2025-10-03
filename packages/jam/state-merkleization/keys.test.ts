@@ -1,10 +1,16 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import { StateKeyIdx, stateKeys } from "./keys.js";
+
+let blake2b: Blake2b;
+
+before(async () => {
+  blake2b = await Blake2b.createHasher();
+});
 
 describe("State Serialization / keys", () => {
   it("should construct index key", () => {
@@ -30,19 +36,20 @@ describe("State Serialization / keys", () => {
   });
 
   it("should construct a key for service state", () => {
-    const a = stateKeys.serviceStorage(tryAsServiceId(0xbbbb_bbbb), EXAMPLE_HASH.asOpaque());
+    const a = stateKeys.serviceStorage(blake2b, tryAsServiceId(0xbbbb_bbbb), EXAMPLE_HASH.asOpaque());
     const expectedKey = "0xbb98bb4bbb5bbbf04624e8575cf0ddc40ad4d73ae8dcbd527b3143b76e6689f6";
     assert.strictEqual(`${a}`, expectedKey);
   });
 
   it("should construct a key for service preimage", () => {
-    const a = stateKeys.servicePreimage(tryAsServiceId(0xbbbb_bbbb), EXAMPLE_HASH.asOpaque());
+    const a = stateKeys.servicePreimage(blake2b, tryAsServiceId(0xbbbb_bbbb), EXAMPLE_HASH.asOpaque());
     const expectedKey = "0xbb9ebbb1bb8dbb02b980a74e4be74b55435d6030e74652c9cc6fe523b4c866f5";
     assert.strictEqual(`${a}`, expectedKey);
   });
 
   it("should construct a key for service lookup history", () => {
     const a = stateKeys.serviceLookupHistory(
+      blake2b,
       tryAsServiceId(0xbbbb_bbbb),
       EXAMPLE_HASH.asOpaque(),
       tryAsU32(0xdeadbeef),

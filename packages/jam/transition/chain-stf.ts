@@ -7,7 +7,6 @@ import type { Ed25519Key } from "@typeberry/crypto";
 import type { BlocksDb } from "@typeberry/database";
 import { Disputes, type DisputesStateUpdate } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code.js";
-import { blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
@@ -140,19 +139,19 @@ export class OnChain {
     const bandersnatch = BandernsatchWasm.new();
     this.statistics = new Statistics(chainSpec, state);
 
-    this.safrole = new Safrole(chainSpec, state, bandersnatch);
+    this.safrole = new Safrole(chainSpec, hasher.blake2b, state, bandersnatch);
     this.safroleSeal = new SafroleSeal(bandersnatch);
 
     this.recentHistory = new RecentHistory(hasher, state);
 
-    this.disputes = new Disputes(chainSpec, state);
+    this.disputes = new Disputes(chainSpec, hasher.blake2b, state);
 
-    this.reports = new Reports(chainSpec, state, new DbHeaderChain(blocks));
-    this.assurances = new Assurances(chainSpec, state);
-    this.accumulate = new Accumulate(chainSpec, state);
+    this.reports = new Reports(chainSpec, hasher.blake2b, state, new DbHeaderChain(blocks));
+    this.assurances = new Assurances(chainSpec, state, hasher.blake2b);
+    this.accumulate = new Accumulate(chainSpec, hasher.blake2b, state);
     this.accumulateOutput = new AccumulateOutput();
-    this.deferredTransfers = new DeferredTransfers(chainSpec, state);
-    this.preimages = new Preimages(state);
+    this.deferredTransfers = new DeferredTransfers(chainSpec, hasher.blake2b, state);
+    this.preimages = new Preimages(state, hasher.blake2b);
 
     this.authorization = new Authorization(chainSpec, state);
   }
@@ -188,7 +187,7 @@ export class OnChain {
     // safrole seal
     let newEntropyHash: EntropyHash;
     if (omitSealVerification) {
-      newEntropyHash = blake2b.hashBytes(header.seal).asOpaque();
+      newEntropyHash = this.hasher.blake2b.hashBytes(header.seal).asOpaque();
     } else {
       const sealResult = await this.verifySeal(timeSlot, block);
       if (sealResult.isError) {

@@ -306,7 +306,7 @@ function verifyWorkPackagesUniqueness(
   // finally all packages from reports with pending availability
   for (const pendingAvailability of state.availabilityAssignment) {
     if (pendingAvailability !== null) {
-      packagesInPipeline.insert(pendingAvailability.workReport.data.workPackageSpec.hash);
+      packagesInPipeline.insert(pendingAvailability.workReport.workPackageSpec.hash);
     }
   }
 

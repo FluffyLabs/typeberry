@@ -1,5 +1,5 @@
 import assert, { deepEqual } from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { setTimeout } from "node:timers/promises";
 import {
   Block,
@@ -16,7 +16,7 @@ import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
-import { blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { createTestPeerPair, MockNetwork } from "@typeberry/networking/testing.js";
 import { setupPeerListeners } from "../network.js";
@@ -27,6 +27,12 @@ import { SyncResult, SyncTask } from "./sync.js";
 const logger = Logger.new(import.meta.filename, "test:net");
 
 const spec = tinyChainSpec;
+
+let blake2b: Blake2b;
+
+before(async () => {
+  blake2b = await Blake2b.createHasher();
+});
 
 const toBlockView = (block: Block): BlockView => {
   const encodedBlock = Encoder.encodeObject(Block.Codec, block, spec);
@@ -51,7 +57,7 @@ describe("SyncTask", () => {
       receivedBlocks.push(blocks.map((view) => view.materialize()));
     };
 
-    const syncTask = SyncTask.start(spec, streamManager, connections, blocksDb, onNewBlocks);
+    const syncTask = SyncTask.start(spec, blake2b, streamManager, connections, blocksDb, onNewBlocks);
 
     setupPeerListeners(syncTask, network, streamManager);
 

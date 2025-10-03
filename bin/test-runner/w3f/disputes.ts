@@ -6,6 +6,7 @@ import type { ChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { Disputes, type DisputesState } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code.js";
+import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type AvailabilityAssignment, type DisputesRecords, tryAsPerCore, type ValidatorData } from "@typeberry/state";
 import { availabilityAssignmentFromJson, disputesRecordsFromJson, validatorDataFromJson } from "@typeberry/state-json";
@@ -91,7 +92,11 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
   const chainSpec = getChainSpec(path);
   const preState = testContent.pre_state;
 
-  const disputes = new Disputes(chainSpec, TestState.toDisputesState(preState, chainSpec));
+  const disputes = new Disputes(
+    chainSpec,
+    await Blake2b.createHasher(),
+    TestState.toDisputesState(preState, chainSpec),
+  );
 
   const result = await disputes.transition(testContent.input.disputes);
   const error = result.isError ? result.error : undefined;

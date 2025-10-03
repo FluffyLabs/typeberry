@@ -1,9 +1,16 @@
 import { strictEqual } from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { tinyChainSpec } from "@typeberry/config";
+import { Blake2b } from "@typeberry/hash";
 import { parseFromJson } from "@typeberry/json-parser";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { fullStateDumpFromJson } from "./dump.js";
+
+let blake2b: Blake2b;
+
+before(async () => {
+  blake2b = await Blake2b.createHasher();
+});
 
 describe("JSON state dump", () => {
   it("should load full JSON state dump", async () => {
@@ -13,7 +20,7 @@ describe("JSON state dump", () => {
     const fromJson = fullStateDumpFromJson(spec);
 
     const parsedState = parseFromJson(testState.default, fromJson);
-    const rootHash = StateEntries.serializeInMemory(spec, parsedState).getRootHash();
+    const rootHash = StateEntries.serializeInMemory(spec, blake2b, parsedState).getRootHash(blake2b);
     const expectedRoot = "0xf0c62b7961a17dba89a886c17dc881d7fb9e230f2cbf62316f2123a7fdbcfad5";
     strictEqual(rootHash.toString(), expectedRoot);
   });
