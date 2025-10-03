@@ -167,7 +167,7 @@ export interface IFetchExternalities {
    * Accumulate: `E(↕o)`
    * On Transfer: <empty>
    *
-   * @deprecated 0.7.1
+   * @deprecated since 0.7.1
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/32fb0132fb01?v=0.6.6
    */

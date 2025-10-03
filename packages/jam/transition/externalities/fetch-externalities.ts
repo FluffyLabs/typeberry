@@ -178,7 +178,9 @@ function getEncodedConstants(chainSpec: ChainSpec) {
 
 enum FetchContext {
   Accumulate = 0,
+  /** @deprecated since 0.7.1 */
   LegacyAccumulate = 1,
+  /** @deprecated since 0.7.1 */
   LegacyOnTransfer = 2,
 }
 
