@@ -49,6 +49,8 @@ export const ignoreValueWithDefault = <T>(defaultValue: T) =>
     (_s) => {},
   );
 
+export class ServiceAccountInfoWithMetadata extends WithDebug {}
+
 /**
  * Service account details.
  *
