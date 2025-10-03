@@ -341,6 +341,7 @@ export const initialServices = ({ withDummyCodeHash = false } = {}): Map<Service
       storage: new Map(),
       lookupHistory: HashDictionary.new(),
       info: ServiceAccountInfo.create({
+        version: tryAsU64(0),
         codeHash: withDummyCodeHash
           ? Bytes.fill(HASH_SIZE, 1).asOpaque()
           : Bytes.parseBytes(

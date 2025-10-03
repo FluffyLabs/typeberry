@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder, tryAsExactBytes } from "@typeberry/codec";
+import { Decoder } from "@typeberry/codec";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
@@ -11,6 +11,7 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { ServiceAccountInfo } from "@typeberry/state";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { TestAccounts } from "./externalities/test-accounts.js";
 import { codecServiceAccountInfoWithThresholdBalance, Info, LEN_REG } from "./info.js";
 import { HostCallResult } from "./results.js";
@@ -21,15 +22,19 @@ const DEST_START_REG = 8;
 
 const gas = gasCounter(tryAsGas(0));
 
-const serviceAccountInfoSize = tryAsExactBytes(codecServiceAccountInfoWithThresholdBalance.sizeHint);
+const serviceAccountInfoSize = codecServiceAccountInfoWithThresholdBalance.sizeHint.bytes;
 
-function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = serviceAccountInfoSize) {
+function prepareRegsAndMemory(
+  serviceId: ServiceId,
+  accountInfoLength = serviceAccountInfoSize,
+  serviceSize = serviceAccountInfoSize,
+) {
   const pageStart = 2 ** 16;
   const memStart = pageStart + PAGE_SIZE - accountInfoLength - 1;
   const registers = new HostCallRegisters(new Registers());
   registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
   registers.set(DEST_START_REG, tryAsU64(memStart));
-  registers.set(LEN_REG, tryAsU64(serviceAccountInfoSize));
+  registers.set(LEN_REG, tryAsU64(serviceSize));
 
   const builder = new MemoryBuilder();
   builder.setWriteablePages(tryAsMemoryIndex(pageStart), tryAsMemoryIndex(pageStart + PAGE_SIZE));
@@ -53,6 +58,7 @@ function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = serviceA
 
 describe("HostCalls: Info", () => {
   const serviceComp = {
+    version: tryAsU64(0),
     gratisStorage: tryAsU64(1024),
     created: tryAsTimeSlot(10),
     lastAccumulation: tryAsTimeSlot(15),
@@ -64,7 +70,11 @@ describe("HostCalls: Info", () => {
     const currentServiceId = serviceId;
     const accounts = new TestAccounts(currentServiceId);
     const info = new Info(currentServiceId, accounts);
-    const { registers, memory, readInfo } = prepareRegsAndMemory(serviceId);
+    // NOTE: GP ^0.7.1 `version` fields is 1 byte (in test) but hint points to 8 bytes
+    const serviceSize = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+      ? serviceAccountInfoSize - 7
+      : serviceAccountInfoSize;
+    const { registers, memory, readInfo } = prepareRegsAndMemory(serviceId, serviceSize, serviceSize);
     const storageUtilisationBytes = tryAsU64(10_000);
     const storageUtilisationCount = tryAsU32(1_000);
 
@@ -92,7 +102,7 @@ describe("HostCalls: Info", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.get(RESULT_REG), 96n);
+    assert.deepStrictEqual(registers.get(RESULT_REG), Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? 97n : 96n);
     assert.deepStrictEqual(readInfo(), {
       ...accounts.details.get(serviceId),
       thresholdBalance,
@@ -127,8 +137,11 @@ describe("HostCalls: Info", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.get(RESULT_REG), 96n);
-    assert.deepStrictEqual(readRaw().toString(), "0x05050505050505050505");
+    assert.deepStrictEqual(registers.get(RESULT_REG), Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? 97n : 96n);
+    assert.deepStrictEqual(
+      readRaw().toString(),
+      Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? "0x00050505050505050505" : "0x05050505050505050505",
+    );
   });
 
   it("should write none if account info is missing", async () => {
@@ -151,7 +164,8 @@ describe("HostCalls: Info", () => {
     const currentServiceId = serviceId;
     const accounts = new TestAccounts(currentServiceId);
     const info = new Info(serviceId, accounts);
-    const { registers, memory } = prepareRegsAndMemory(serviceId, 10);
+    const serviceSize = serviceAccountInfoSize - 7;
+    const { registers, memory } = prepareRegsAndMemory(serviceId, 10, serviceSize);
     const storageUtilisationBytes = tryAsU64(10_000);
     const storageUtilisationCount = tryAsU32(1_000);
     accounts.details.set(

@@ -24,6 +24,7 @@ describe("SerializedState", () => {
         UpdateService.create({
           serviceId: tryAsServiceId(10),
           serviceInfo: ServiceAccountInfo.create({
+            version: tryAsU64(0),
             codeHash: Bytes.fill(HASH_SIZE, 1).asOpaque(),
             balance: tryAsU64(10_000_000n),
             accumulateMinGas: tryAsServiceGas(100),

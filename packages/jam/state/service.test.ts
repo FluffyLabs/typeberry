@@ -5,11 +5,12 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { deepEqual } from "@typeberry/utils";
+import { Compatibility, deepEqual, GpVersion } from "@typeberry/utils";
 import { ServiceAccountInfo } from "./service.js";
 
-const encodedTestInfo =
-  "0x0101010101010101010101010101010101010101010101010101010101010101809698000000000064000000000000000a000000000000000a00000000000000050000000000000003000000060000000b0000000f000000";
+const encodedTestInfo = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+  ? "0x000101010101010101010101010101010101010101010101010101010101010101809698000000000064000000000000000a000000000000000a00000000000000050000000000000003000000060000000b0000000f000000"
+  : "0x0101010101010101010101010101010101010101010101010101010101010101809698000000000064000000000000000a000000000000000a00000000000000050000000000000003000000060000000b0000000f000000";
 const testInfo = ServiceAccountInfo.create({
   codeHash: Bytes.fill(HASH_SIZE, 1).asOpaque(),
   balance: tryAsU64(10_000_000n),
@@ -21,6 +22,7 @@ const testInfo = ServiceAccountInfo.create({
   created: tryAsTimeSlot(6),
   lastAccumulation: tryAsTimeSlot(11),
   parentService: tryAsServiceId(15),
+  version: tryAsU64(0),
 });
 
 describe("Service: Account Info", () => {

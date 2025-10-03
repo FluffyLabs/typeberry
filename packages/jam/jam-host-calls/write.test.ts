@@ -30,6 +30,7 @@ function prepareAccounts(
   accounts.details.set(
     serviceId,
     ServiceAccountInfo.create({
+      version: tryAsU64(0),
       codeHash: Bytes.fill(32, 5).asOpaque(),
       balance: tryAsU64(balance ?? 150_000),
       accumulateMinGas: tryAsServiceGas(0n),

@@ -27,6 +27,7 @@ import { asOpaqueType } from "@typeberry/utils";
 class JsonServiceInfo {
   static fromJson = json.object<JsonServiceInfo, ServiceAccountInfo>(
     {
+      version: json.optional(json.fromNumber((x) => tryAsU64(x))), // from Gp 0.7.2
       code_hash: fromJson.bytes32(),
       balance: json.fromNumber((x) => tryAsU64(x)),
       min_item_gas: json.fromNumber((x) => tryAsServiceGas(x)),
@@ -39,6 +40,7 @@ class JsonServiceInfo {
       parent_service: json.fromNumber((x) => tryAsServiceId(x)),
     },
     ({
+      version,
       code_hash,
       balance,
       min_item_gas,
@@ -51,6 +53,7 @@ class JsonServiceInfo {
       parent_service,
     }) => {
       return ServiceAccountInfo.create({
+        version: version !== undefined ? version : tryAsU64(0),
         codeHash: code_hash,
         balance,
         accumulateMinGas: min_item_gas,
@@ -65,6 +68,7 @@ class JsonServiceInfo {
     },
   );
 
+  version?: U64;
   code_hash!: CodeHash;
   balance!: U64;
   min_item_gas!: ServiceGas;

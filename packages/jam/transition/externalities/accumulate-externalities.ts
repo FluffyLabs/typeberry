@@ -428,6 +428,7 @@ export class AccumulateExternalities
       UpdateService.create({
         serviceId: newServiceId,
         serviceInfo: ServiceAccountInfo.create({
+          version: tryAsU64(0),
           codeHash,
           balance: thresholdForNew,
           accumulateMinGas,

@@ -13,7 +13,7 @@ import { type CodecRecord, codec, Descriptor, type SizeHint } from "@typeberry/c
 import { asKnownSize, type KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU64, type U32, type U64 } from "@typeberry/numbers";
-import { asOpaqueType, type Opaque, WithDebug } from "@typeberry/utils";
+import { asOpaqueType, Compatibility, GpVersion, type Opaque, WithDebug } from "@typeberry/utils";
 
 /**
  * `B_S`: The basic minimum balance which all services require.
@@ -49,24 +49,44 @@ export const ignoreValueWithDefault = <T>(defaultValue: T) =>
     (_s) => {},
   );
 
+export class ServiceAccountInfoWithMetadata extends WithDebug {}
+
 /**
  * Service account details.
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/108301108301?v=0.6.7
  */
 export class ServiceAccountInfo extends WithDebug {
-  static Codec = codec.Class(ServiceAccountInfo, {
-    codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
-    balance: codec.u64,
-    accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
-    onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
-    storageUtilisationBytes: codec.u64,
-    gratisStorage: codec.u64,
-    storageUtilisationCount: codec.u32,
-    created: codec.u32.convert((x) => x, tryAsTimeSlot),
-    lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
-    parentService: codec.u32.convert((x) => x, tryAsServiceId),
-  });
+  static Codec = codec.Class(
+    ServiceAccountInfo,
+    Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+      ? {
+          version: codec.varU64,
+          codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
+          balance: codec.u64,
+          accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
+          onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
+          storageUtilisationBytes: codec.u64,
+          gratisStorage: codec.u64,
+          storageUtilisationCount: codec.u32,
+          created: codec.u32.convert((x) => x, tryAsTimeSlot),
+          lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
+          parentService: codec.u32.convert((x) => x, tryAsServiceId),
+        }
+      : {
+          version: ignoreValueWithDefault(tryAsU64(0)),
+          codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
+          balance: codec.u64,
+          accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
+          onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
+          storageUtilisationBytes: codec.u64,
+          gratisStorage: codec.u64,
+          storageUtilisationCount: codec.u32,
+          created: codec.u32.convert((x) => x, tryAsTimeSlot),
+          lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
+          parentService: codec.u32.convert((x) => x, tryAsServiceId),
+        },
+  );
 
   static create(a: CodecRecord<ServiceAccountInfo>) {
     return new ServiceAccountInfo(
@@ -80,6 +100,7 @@ export class ServiceAccountInfo extends WithDebug {
       a.created,
       a.lastAccumulation,
       a.parentService,
+      a.version,
     );
   }
 
@@ -123,6 +144,8 @@ export class ServiceAccountInfo extends WithDebug {
     public readonly lastAccumulation: TimeSlot,
     /** `a_p`: Parent service ID. */
     public readonly parentService: ServiceId,
+    /** Metadata: version number of service object. */
+    public readonly version: U64,
   ) {
     super();
   }
