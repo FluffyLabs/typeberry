@@ -428,7 +428,7 @@ export class Accumulate {
     return tryAsServiceGas(gasLimit);
   }
 
-  private hasDuplicatedServices(updateServices: UpdateService[]): boolean {
+  private hasDuplicatedServicesCreated(updateServices: UpdateService[]): boolean {
     const createdServiceIds = new Set<ServiceId>();
     for (const update of updateServices) {
       if (update.action.kind === UpdateServiceKind.Create) {
@@ -483,7 +483,7 @@ export class Accumulate {
     } = state;
     assertEmpty(stateUpdateRest);
 
-    if (this.hasDuplicatedServices(services.servicesUpdates)) {
+    if (this.hasDuplicatedServicesCreated(services.servicesUpdates)) {
       return Result.error(ACCUMULATION_ERROR);
     }
 
