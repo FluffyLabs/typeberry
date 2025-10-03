@@ -6,7 +6,7 @@ import { minU64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { ignoreValueWithDefault, ServiceAccountInfo } from "@typeberry/state";
+import { ServiceAccountInfo } from "@typeberry/state";
 import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
@@ -114,7 +114,6 @@ export class Info implements HostCallHandler {
  */
 export const codecServiceAccountInfoWithThresholdBalance = codec.object(
   {
-    version: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? codec.varU64 : ignoreValueWithDefault(tryAsU64(0)),
     codeHash: codec.bytes(HASH_SIZE),
     balance: codec.u64,
     thresholdBalance: codec.u64,

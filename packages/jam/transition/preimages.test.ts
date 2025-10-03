@@ -36,7 +36,6 @@ function createAccount(
 
   return new InMemoryService(id, {
     info: ServiceAccountInfo.create({
-      version: tryAsU64(0),
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
       balance: tryAsU64(0),
       accumulateMinGas: tryAsServiceGas(0),

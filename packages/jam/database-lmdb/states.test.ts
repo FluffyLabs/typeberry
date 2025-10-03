@@ -88,7 +88,6 @@ describe("LMDB States database", () => {
         UpdateService.create({
           serviceId: tryAsServiceId(1),
           serviceInfo: ServiceAccountInfo.create({
-            version: tryAsU64(0),
             codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
             balance: tryAsU64(1_000_000),
             accumulateMinGas: tryAsServiceGas(10_000),

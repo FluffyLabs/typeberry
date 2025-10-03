@@ -21,7 +21,6 @@ import { UpdatePreimage, UpdateServiceKind, UpdateStorage } from "./state-update
 describe("InMemoryState", () => {
   // backward-compatable account fields
   const accountComp = {
-    version: tryAsU64(0),
     gratisStorage: tryAsU64(1024),
     created: tryAsTimeSlot(10),
     lastAccumulation: tryAsTimeSlot(15),

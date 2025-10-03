@@ -216,7 +216,6 @@ const createService = (serviceId: ServiceId, hash: OpaqueHash, blob: BytesBlob, 
   preimages.set(hash.asOpaque(), PreimageItem.create({ hash: hash.asOpaque(), blob }));
   return new InMemoryService(serviceId, {
     info: ServiceAccountInfo.create({
-      version: tryAsU64(0),
       accumulateMinGas: tryAsServiceGas(0n),
       codeHash: hash.asOpaque(),
       balance: tryAsU64(0),

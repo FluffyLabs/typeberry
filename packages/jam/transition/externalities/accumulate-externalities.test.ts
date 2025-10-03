@@ -607,7 +607,6 @@ describe("PartialState.newService", () => {
       UpdateService.create({
         serviceId: expectedServiceId,
         serviceInfo: ServiceAccountInfo.create({
-          version: tryAsU64(0),
           codeHash,
           balance: thresholdForNew,
           accumulateMinGas,
@@ -1927,7 +1926,6 @@ describe("AccumulateServiceExternalities", () => {
 
     return new InMemoryService(serviceId, {
       info: ServiceAccountInfo.create({
-        version: tryAsU64(0),
         balance: tryAsU64(2 ** 32),
         accumulateMinGas: tryAsServiceGas(1000),
         storageUtilisationBytes: tryAsU64(storageUtilisationBytes),
