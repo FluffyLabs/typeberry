@@ -10,9 +10,10 @@ import { W_C } from "@typeberry/block/gp-constants.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
-import { HashSet, SortedArray } from "@typeberry/collections";
+import { ArrayView, HashSet, SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
+import type { PendingTransfer } from "@typeberry/jam-host-calls";
 import {
   AccumulationStateUpdate,
   PartiallyUpdatedState,
@@ -23,6 +24,7 @@ import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
 import {
   type AccumulationOutput,
+  type AutoAccumulate,
   accumulationOutputComparator,
   hashComparator,
   PrivilegedServices,
@@ -76,7 +78,7 @@ const logger = Logger.new(import.meta.filename, "accumulate");
 const ARGS_CODEC = codec.object({
   slot: codec.varU32.asOpaque<TimeSlot>(),
   serviceId: codec.varU32.asOpaque<ServiceId>(),
-  operands: codec.varU32,
+  argsLength: codec.varU32,
 });
 
 export class Accumulate {
@@ -91,12 +93,12 @@ export class Accumulate {
    *
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/170a01170a01?v=0.6.7
    */
-  private findReportCutoffIndex(gasLimit: ServiceGas, reports: WorkReport[]) {
+  private findReportCutoffIndex(gasLimit: ServiceGas, reports: ArrayView<WorkReport>) {
     const reportsLength = reports.length;
     let currentGas = 0n;
 
     for (let i = 0; i < reportsLength; i++) {
-      const report = reports[i];
+      const report = reports.get(i);
       const resultsGas = report.results.map((result) => result.gas).reduce((a, b) => a + b, 0n);
 
       if (currentGas + resultsGas > gasLimit) {
@@ -117,6 +119,7 @@ export class Accumulate {
   private async pvmAccumulateInvocation(
     slot: TimeSlot,
     serviceId: ServiceId,
+    transfers: PendingTransfer[],
     operands: Operand[],
     gas: ServiceGas,
     entropy: EntropyHash,
@@ -152,15 +155,23 @@ export class Accumulate {
       slot,
     );
 
+    const fetchExternalities = Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
+      ? FetchExternalities.createForAccumulate({ entropy, transfers, operands }, this.chainSpec)
+      : FetchExternalities.createForPre071Accumulate({ entropy, operands }, this.chainSpec);
+
     const externalities = {
       partialState,
       serviceExternalities: partialState,
-      fetchExternalities: FetchExternalities.createForAccumulate({ entropy, operands }, this.chainSpec),
+      fetchExternalities,
     };
 
     const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);
-    const args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands: tryAsU32(operands.length) });
-    const result = await executor.run(args, tryAsGas(gas));
+    const invocationArgs = Encoder.encodeObject(ARGS_CODEC, {
+      slot,
+      serviceId,
+      argsLength: tryAsU32(transfers.length + operands.length),
+    });
+    const result = await executor.run(invocationArgs, tryAsGas(gas));
     const [newState, checkpoint] = partialState.getStateUpdates();
 
     /**
@@ -204,15 +215,24 @@ export class Accumulate {
    */
   private async accumulateSingleService(
     serviceId: ServiceId,
+    transfers: PendingTransfer[],
     operands: Operand[],
     gasCost: ServiceGas,
     slot: TimeSlot,
     entropy: EntropyHash,
     inputStateUpdate: AccumulationStateUpdate,
   ) {
-    logger.log`Accumulating service ${serviceId}, items: ${operands.length} at slot: ${slot}.`;
+    logger.log`Accumulating service ${serviceId}, transfers: ${transfers.length} operands: ${operands.length} at slot: ${slot}.`;
 
-    const result = await this.pvmAccumulateInvocation(slot, serviceId, operands, gasCost, entropy, inputStateUpdate);
+    const result = await this.pvmAccumulateInvocation(
+      slot,
+      serviceId,
+      transfers,
+      operands,
+      gasCost,
+      entropy,
+      inputStateUpdate,
+    );
 
     if (result.isError) {
       // https://graypaper.fluffylabs.dev/#/7e6ff6a/2fb6012fb601?v=0.6.7
@@ -232,13 +252,14 @@ export class Accumulate {
    *
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/179d00179d00?v=0.6.7
    */
-  private async accumulateSequentially(
+  private async accumulateSequentiallyLegacy(
     gasLimit: ServiceGas,
-    reports: WorkReport[],
+    reports: ArrayView<WorkReport>,
     slot: TimeSlot,
     entropy: EntropyHash,
     statistics: Map<ServiceId, CountAndGasUsed>,
     stateUpdate: AccumulationStateUpdate,
+    autoAccumulateServices: readonly AutoAccumulate[],
   ): Promise<SequentialAccumulationResult> {
     const i = this.findReportCutoffIndex(gasLimit, reports);
 
@@ -250,10 +271,9 @@ export class Accumulate {
       };
     }
 
-    const reportsToAccumulateInParallel = reports.slice(0, i);
-    const autoAccumulateServices = this.state.privilegedServices.autoAccumulateServices;
-    const accumulateData = new AccumulateData(reportsToAccumulateInParallel, autoAccumulateServices);
-    const reportsToAccumulateSequentially = reports.slice(i);
+    const reportsToAccumulateInParallel = reports.subview(0, i);
+    const accumulateData = new AccumulateData(reportsToAccumulateInParallel, [], autoAccumulateServices);
+    const reportsToAccumulateSequentially = reports.subview(i);
 
     const {
       gasCost,
@@ -268,13 +288,81 @@ export class Accumulate {
       gasCost: seqGasCost,
       state,
       ...seqRest
-    } = await this.accumulateSequentially(
+    } = await this.accumulateSequentiallyLegacy(
       tryAsServiceGas(gasLimit - gasCost),
       reportsToAccumulateSequentially,
       slot,
       entropy,
       statistics,
       stateAfterParallelAcc,
+      [],
+    );
+    assertEmpty(seqRest);
+
+    return {
+      accumulatedReports: tryAsU32(i + accumulatedReports),
+      gasCost: tryAsServiceGas(gasCost + seqGasCost),
+      state,
+    };
+  }
+
+  /**
+   * The outer accumulation function ∆+ which transforms a gas-limit, a sequence of work-reports,
+   * an initial partial-state and a dictionary of services enjoying free accumulation,
+   * into a tuple of the number of work-results accumulated, a posterior state-context,
+   * the resultant deferred-transfers and accumulation-output pairing.
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/172901172901?v=0.7.2
+   */
+  private async accumulateSequentially(
+    gasLimit: ServiceGas,
+    reports: ArrayView<WorkReport>,
+    transfers: PendingTransfer[],
+    slot: TimeSlot,
+    entropy: EntropyHash,
+    statistics: Map<ServiceId, CountAndGasUsed>,
+    stateUpdate: AccumulationStateUpdate,
+    autoAccumulateServices: readonly AutoAccumulate[],
+  ): Promise<SequentialAccumulationResult> {
+    const i = this.findReportCutoffIndex(gasLimit, reports);
+
+    const n = transfers.length + i + reports.length;
+
+    if (n === 0) {
+      return {
+        accumulatedReports: tryAsU32(0),
+        gasCost: tryAsServiceGas(0),
+        state: stateUpdate,
+      };
+    }
+
+    const reportsToAccumulateInParallel = reports.subview(0, i);
+    const accumulateData = new AccumulateData(reportsToAccumulateInParallel, transfers, autoAccumulateServices);
+    const reportsToAccumulateSequentially = reports.subview(i);
+
+    const {
+      gasCost,
+      state: stateAfterParallelAcc,
+      ...rest
+    } = await this.accumulateInParallel(accumulateData, slot, entropy, statistics, stateUpdate);
+    const newTransfers = stateAfterParallelAcc.transfers;
+    assertEmpty(rest);
+
+    // NOTE [ToDr] recursive invocation
+    const {
+      accumulatedReports,
+      gasCost: seqGasCost,
+      state,
+      ...seqRest
+    } = await this.accumulateSequentially(
+      tryAsServiceGas(gasLimit - gasCost),
+      reportsToAccumulateSequentially,
+      newTransfers,
+      slot,
+      entropy,
+      statistics,
+      stateAfterParallelAcc,
+      [],
     );
     assertEmpty(seqRest);
 
@@ -293,7 +381,7 @@ export class Accumulate {
    * into a tuple of the total gas utilized in pvm execution u, a posterior state-context
    * and the resultant accumulation-output pairings b and deferred-transfers.
    *
-   * https://graypaper.fluffylabs.dev/#/7e6ff6a/175501175501?v=0.6.7
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/174602174602?v=0.7.2
    */
   private async accumulateInParallel(
     accumulateData: AccumulateData,
@@ -312,6 +400,7 @@ export class Accumulate {
       const checkpoint = AccumulationStateUpdate.copyFrom(currentState);
       const { consumedGas, stateUpdate } = await this.accumulateSingleService(
         serviceId,
+        accumulateData.getTransfers(serviceId),
         accumulateData.getOperands(serviceId),
         accumulateData.getGasCost(serviceId),
         slot,
@@ -336,6 +425,7 @@ export class Accumulate {
           // We need this accumulation to get the correct `validatorsManager`
           const { stateUpdate } = await this.accumulateSingleService(
             newV,
+            [],
             accumulateData.getOperands(newV),
             accumulateData.getGasCost(newV),
             slot,
@@ -415,7 +505,7 @@ export class Accumulate {
    *
    * Please note it cannot overflow because we use `BigInt`, and the final result is clamped to `maxBlockGas` (W_G).
    *
-   * https://graypaper.fluffylabs.dev/#/7e6ff6a/18f40118f401?v=0.6.7
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/183402184502?v=0.7.2
    */
   private getGasLimit() {
     const calculatedGasLimit =
@@ -440,23 +530,36 @@ export class Accumulate {
       getWorkPackageHashes(toAccumulateImmediately),
     );
     const queue = accumulateQueue.enqueueReports(toEnqueue);
-    const accumulatableReports = toAccumulateImmediately.concat(queue);
+    const accumulatableReports = ArrayView.from(toAccumulateImmediately.concat(queue));
 
     const gasLimit = this.getGasLimit();
+    const autoAccumulateServices = this.state.privilegedServices.autoAccumulateServices;
 
-    const { accumulatedReports, gasCost, state, ...rest } = await this.accumulateSequentially(
-      gasLimit,
-      accumulatableReports,
-      slot,
-      entropy,
-      statistics,
-      AccumulationStateUpdate.empty(),
-    );
+    const { accumulatedReports, gasCost, state, ...rest } = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+      ? await this.accumulateSequentially(
+          gasLimit,
+          accumulatableReports,
+          [],
+          slot,
+          entropy,
+          statistics,
+          AccumulationStateUpdate.empty(),
+          autoAccumulateServices,
+        )
+      : await this.accumulateSequentiallyLegacy(
+          gasLimit,
+          accumulatableReports,
+          slot,
+          entropy,
+          statistics,
+          AccumulationStateUpdate.empty(),
+          autoAccumulateServices,
+        );
     // we can safely ignore top-level gas cost from accSequentially.
     const _gasCost = gasCost;
     assertEmpty(rest);
 
-    const accumulated = accumulatableReports.slice(0, accumulatedReports);
+    const accumulated = accumulatableReports.subview(0, accumulatedReports);
     const {
       services,
       yieldedRoots,
@@ -469,7 +572,7 @@ export class Accumulate {
     assertEmpty(stateUpdateRest);
 
     const accStateUpdate = this.getAccumulationStateUpdate(
-      accumulated,
+      accumulated.toArray(),
       toAccumulateLater,
       slot,
       Array.from(statistics.keys()),

@@ -4,6 +4,7 @@ import { minU64, tryAsU64, type U32, type U64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
 import { clampU64ToU32 } from "./utils.js";
@@ -166,9 +167,22 @@ export interface IFetchExternalities {
    * Accumulate: `E(↕o)`
    * On Transfer: <empty>
    *
+   * @deprecated since 0.7.1
+   *
    * https://graypaper.fluffylabs.dev/#/9a08063/32fb0132fb01?v=0.6.6
    */
   allOperands(): BytesBlob | null;
+
+  /**
+   * Get all accumulation operands (work results?) and transfers.
+   *
+   * Is Authorized: <empty>
+   * Refine: <empty>
+   * Accumulate: `E(↕i)`
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/314c03314c03?v=0.7.2
+   */
+  allTransfersAndOperands(): BytesBlob | null;
 
   /**
    * Get one selected accumulation operand.
@@ -178,9 +192,22 @@ export interface IFetchExternalities {
    * Accumulate: `E(o[omega_11])`
    * On Transfer: <empty>
    *
+   * @deprecated 0.7.1
+   *
    * https://graypaper.fluffylabs.dev/#/9a08063/320202320202?v=0.6.6
    */
   oneOperand(operandIndex: U64): BytesBlob | null;
+
+  /**
+   * Get one selected accumulation operand or transfer.
+   *
+   * Is Authorized: <empty>
+   * Refine: <empty>
+   * Accumulate: `E(i[omega_11])`
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/315503315503?v=0.7.2
+   */
+  oneTransferOrOperand(index: U64): BytesBlob | null;
 
   /**
    * Inspect all incoming transfers.
@@ -189,6 +216,8 @@ export interface IFetchExternalities {
    * Refine: <empty>
    * Accumulate: <empty>
    * On Transfer: `E(↕t)`
+   *
+   * @deprecated 0.7.1
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/320c02320c02?v=0.6.6
    */
@@ -201,6 +230,8 @@ export interface IFetchExternalities {
    * Refine: <empty>
    * Accumulate: <empty>
    * On Transfer: `E(t[omega_11])`
+   *
+   * @deprecated 0.7.1
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/321302321302?v=0.6.6
    */
@@ -319,22 +350,33 @@ export class Fetch implements HostCallHandler {
       return this.fetch.workItemPayload(workItem);
     }
 
-    if (kind === FetchKind.AllOperands) {
-      return this.fetch.allOperands();
-    }
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
+      if (kind === FetchKind.AllTransfersAndOperands) {
+        return this.fetch.allTransfersAndOperands();
+      }
 
-    if (kind === FetchKind.OneOperand) {
-      const index = regs.get(11);
-      return this.fetch.oneOperand(index);
-    }
+      if (kind === FetchKind.OneTransferOrOperand) {
+        const index = regs.get(11);
+        return this.fetch.oneTransferOrOperand(index);
+      }
+    } else {
+      if (kind === FetchKind.LegacyAllOperands) {
+        return this.fetch.allOperands();
+      }
 
-    if (kind === FetchKind.AllTransfers) {
-      return this.fetch.allTransfers();
-    }
+      if (kind === FetchKind.LegacyOneOperand) {
+        const index = regs.get(11);
+        return this.fetch.oneOperand(index);
+      }
 
-    if (kind === FetchKind.OneTransfer) {
-      const index = regs.get(11);
-      return this.fetch.oneTransfer(index);
+      if (kind === FetchKind.LegacyAllTransfers) {
+        return this.fetch.allTransfers();
+      }
+
+      if (kind === FetchKind.LegacyOneTransfer) {
+        const index = regs.get(11);
+        return this.fetch.oneTransfer(index);
+      }
     }
 
     return null;
@@ -356,8 +398,10 @@ export enum FetchKind {
   AllWorkItems = 11,
   OneWorkItem = 12,
   WorkItemPayload = 13,
-  AllOperands = 14,
-  OneOperand = 15,
-  AllTransfers = 16,
-  OneTransfer = 17,
+  LegacyAllOperands = 14,
+  AllTransfersAndOperands = 14,
+  LegacyOneOperand = 15,
+  OneTransferOrOperand = 15,
+  LegacyAllTransfers = 16,
+  LegacyOneTransfer = 17,
 }
