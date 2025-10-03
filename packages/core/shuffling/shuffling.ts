@@ -1,5 +1,5 @@
 import type { Bytes } from "@typeberry/bytes";
-import { blake2b } from "@typeberry/hash";
+import type { Blake2b } from "@typeberry/hash";
 import { leBytesAsU32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { check, safeAllocUint8Array } from "@typeberry/utils";
 
@@ -11,10 +11,10 @@ type ENTROPY_BYTES = typeof ENTROPY_BYTES;
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/3b9a013b9a01
  */
-export function fisherYatesShuffle<T>(arr: T[], entropy: Bytes<ENTROPY_BYTES>): T[] {
+export function fisherYatesShuffle<T>(blake2b: Blake2b, arr: T[], entropy: Bytes<ENTROPY_BYTES>): T[] {
   check`${entropy.length === ENTROPY_BYTES} Expected entropy of length ${ENTROPY_BYTES}, got ${entropy.length}`;
   const n = arr.length;
-  const randomNumbers = hashToNumberSequence(entropy, arr.length);
+  const randomNumbers = hashToNumberSequence(blake2b, entropy, arr.length);
   const result: T[] = new Array<T>(n);
 
   let itemsLeft = n;
@@ -30,7 +30,7 @@ export function fisherYatesShuffle<T>(arr: T[], entropy: Bytes<ENTROPY_BYTES>): 
   return result;
 }
 
-function hashToNumberSequence(entropy: Bytes<ENTROPY_BYTES>, length: number) {
+function hashToNumberSequence(blake2b: Blake2b, entropy: Bytes<ENTROPY_BYTES>, length: number) {
   const result: number[] = new Array(length);
   const randomBytes = safeAllocUint8Array(ENTROPY_BYTES + 4);
   randomBytes.set(entropy.raw);

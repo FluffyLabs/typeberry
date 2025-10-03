@@ -20,7 +20,7 @@ import { asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/crypto/bandersnatch.js";
-import { HASH_SIZE, keccak, SimpleAllocator } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE, keccak } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { asOpaqueType, Compatibility, deepEqual, GpVersion } from "@typeberry/utils";
 import { TransitionHasher } from "./hasher.js";
@@ -30,8 +30,8 @@ describe("TransitionHasher", () => {
     async function prepareHasher() {
       const spec = tinyChainSpec;
       const keccakHasher = await keccak.KeccakHasher.create();
-      const allocator = new SimpleAllocator();
-      return new TransitionHasher(spec, keccakHasher, allocator);
+      const blake2b = await Blake2b.createHasher();
+      return new TransitionHasher(spec, keccakHasher, blake2b);
     }
 
     function prepareExtrinsicView(partialExtrinsic: Partial<Extrinsic>) {

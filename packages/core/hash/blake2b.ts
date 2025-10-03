@@ -1,43 +1,44 @@
-import { BytesBlob } from "@typeberry/bytes";
-// TODO [ToDr] (#212) compare with blake2b from hash-wasm?
-import blake2b from "blake2b";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { createBLAKE2b, type IHasher } from "hash-wasm";
 
-import { defaultAllocator, type HashAllocator } from "./allocator.js";
 import { type Blake2bHash, HASH_SIZE } from "./hash.js";
 
-/**
- * Hash given collection of blobs.
- *
- * If empty array is given a zero-hash is returned.
- */
-export function hashBlobs<H extends Blake2bHash>(
-  r: (BytesBlob | Uint8Array)[],
-  allocator: HashAllocator = defaultAllocator,
-): H {
-  const out = allocator.emptyHash();
-  if (r.length === 0) {
-    return out.asOpaque();
+const zero = Bytes.zero(HASH_SIZE);
+
+export class Blake2b {
+  static async createHasher() {
+    return new Blake2b(await createBLAKE2b(HASH_SIZE * 8));
   }
 
-  const hasher = blake2b(HASH_SIZE);
-  for (const v of r) {
-    hasher?.update(v instanceof BytesBlob ? v.raw : v);
+  private constructor(private readonly hasher: IHasher) {}
+
+  /**
+   * Hash given collection of blobs.
+   *
+   * If empty array is given a zero-hash is returned.
+   */
+  hashBlobs<H extends Blake2bHash>(r: (BytesBlob | Uint8Array)[]): H {
+    if (r.length === 0) {
+      return zero.asOpaque();
+    }
+
+    const hasher = this.hasher.init();
+    for (const v of r) {
+      hasher.update(v instanceof BytesBlob ? v.raw : v);
+    }
+    return Bytes.fromBlob(hasher.digest("binary"), HASH_SIZE).asOpaque();
   }
-  hasher?.digest(out.raw);
-  return out.asOpaque();
-}
 
-/** Hash given blob of bytes. */
-export function hashBytes(blob: BytesBlob | Uint8Array, allocator: HashAllocator = defaultAllocator): Blake2bHash {
-  const hasher = blake2b(HASH_SIZE);
-  const bytes = blob instanceof BytesBlob ? blob.raw : blob;
-  hasher?.update(bytes);
-  const out = allocator.emptyHash();
-  hasher?.digest(out.raw);
-  return out;
-}
+  /** Hash given blob of bytes. */
+  hashBytes(blob: BytesBlob | Uint8Array): Blake2bHash {
+    const hasher = this.hasher.init();
+    const bytes = blob instanceof BytesBlob ? blob.raw : blob;
+    hasher.update(bytes);
+    return Bytes.fromBlob(hasher.digest("binary"), HASH_SIZE).asOpaque();
+  }
 
-/** Convert given string into bytes and hash it. */
-export function hashString(str: string, allocator: HashAllocator = defaultAllocator) {
-  return hashBytes(BytesBlob.blobFromString(str), allocator);
+  /** Convert given string into bytes and hash it. */
+  hashString(str: string) {
+    return this.hashBytes(BytesBlob.blobFromString(str));
+  }
 }

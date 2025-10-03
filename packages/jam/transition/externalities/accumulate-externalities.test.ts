@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import {
   type CodeHash,
   type ServiceGas,
@@ -15,7 +15,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize, FixedSizeArray, HashDictionary } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES } from "@typeberry/crypto";
-import { blake2b, HASH_SIZE } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import {
   EjectError,
   ForgetPreimageError,
@@ -54,6 +54,12 @@ import { testState } from "@typeberry/state/test.utils.js";
 import { asOpaqueType, Compatibility, deepEqual, GpVersion, OK, Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "./accumulate-externalities.js";
 
+let blake2b: Blake2b;
+
+before(async () => {
+  blake2b = await Blake2b.createHasher();
+});
+
 function partiallyUpdatedState() {
   return new PartiallyUpdatedState(testState());
 }
@@ -63,6 +69,7 @@ describe("PartialState.checkPreimageStatus", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -85,6 +92,7 @@ describe("PartialState.checkPreimageStatus", () => {
     const serviceId = tryAsServiceId(0);
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       serviceId,
       tryAsServiceId(10),
@@ -123,6 +131,7 @@ describe("PartialState.requestPreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       serviceId,
       tryAsServiceId(10),
@@ -162,6 +171,7 @@ describe("PartialState.requestPreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -194,6 +204,7 @@ describe("PartialState.requestPreimage", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -212,6 +223,7 @@ describe("PartialState.requestPreimage", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -230,6 +242,7 @@ describe("PartialState.requestPreimage", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -247,6 +260,7 @@ describe("PartialState.forgetPreimage", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -269,6 +283,7 @@ describe("PartialState.forgetPreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       serviceId,
       tryAsServiceId(10),
@@ -302,6 +317,7 @@ describe("PartialState.forgetPreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       serviceId,
       tryAsServiceId(10),
@@ -337,6 +353,7 @@ describe("PartialState.forgetPreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -385,6 +402,7 @@ describe("PartialState.forgetPreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -413,6 +431,7 @@ describe("PartialState.forgetPreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -457,6 +476,7 @@ describe("PartialState.forgetPreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -509,6 +529,7 @@ describe("PartialState.forgetPreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -537,6 +558,7 @@ describe("PartialState.forgetPreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -569,6 +591,7 @@ describe("PartialState.newService", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -646,6 +669,7 @@ describe("PartialState.newService", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -693,6 +717,7 @@ describe("PartialState.newService", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -722,6 +747,7 @@ describe("PartialState.updateValidatorsData", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -753,6 +779,7 @@ describe("PartialState.updateValidatorsData", () => {
     });
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -782,6 +809,7 @@ describe("PartialState.checkpoint", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -811,6 +839,7 @@ describe("PartialState.upgradeService", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -846,6 +875,7 @@ describe("PartialState.updateAuthorizationQueue", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -870,6 +900,7 @@ describe("PartialState.updateAuthorizationQueue", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -899,6 +930,7 @@ describe("PartialState.updateAuthorizationQueue", () => {
     });
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -928,6 +960,7 @@ describe("PartialState.updateAuthorizationQueue", () => {
     });
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -955,6 +988,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -992,6 +1026,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     state.state.privilegedServices = { ...state.state.privilegedServices, manager: tryAsServiceId(1) };
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1019,6 +1054,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     state.state.privilegedServices = { ...state.state.privilegedServices, manager: tryAsServiceId(1) };
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1046,6 +1082,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     state.state.privilegedServices = { ...state.state.privilegedServices, manager: tryAsServiceId(1) };
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1072,6 +1109,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1098,6 +1136,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1152,6 +1191,7 @@ describe("PartialState.transfer", () => {
     const { state, service } = partiallyUpdatedStateWithSecondService();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1194,6 +1234,7 @@ describe("PartialState.transfer", () => {
     const { state } = partiallyUpdatedStateWithSecondService();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1215,6 +1256,7 @@ describe("PartialState.transfer", () => {
     const { state } = partiallyUpdatedStateWithSecondService();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1237,6 +1279,7 @@ describe("PartialState.transfer", () => {
     const { state } = partiallyUpdatedStateWithSecondService();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1262,6 +1305,7 @@ describe("PartialState.yield", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       currentServiceId,
       tryAsServiceId(10),
@@ -1349,6 +1393,7 @@ describe("PartialState.providePreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1380,6 +1425,7 @@ describe("PartialState.providePreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1414,6 +1460,7 @@ describe("PartialState.providePreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1440,6 +1487,7 @@ describe("PartialState.providePreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1484,6 +1532,7 @@ describe("PartialState.providePreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1508,6 +1557,7 @@ describe("PartialState.providePreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1545,6 +1595,7 @@ describe("PartialState.providePreimage", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1645,6 +1696,7 @@ describe("PartialState.eject", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1665,6 +1717,7 @@ describe("PartialState.eject", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1691,6 +1744,7 @@ describe("PartialState.eject", () => {
     const tombstone = Bytes.fill(HASH_SIZE, 0xec).asOpaque();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1714,6 +1768,7 @@ describe("PartialState.eject", () => {
     const tombstone = Bytes.fill(HASH_SIZE, 0xeb).asOpaque();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1737,6 +1792,7 @@ describe("PartialState.eject", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1767,6 +1823,7 @@ describe("PartialState.eject", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1797,6 +1854,7 @@ describe("PartialState.eject", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1829,6 +1887,7 @@ describe("PartialState.eject", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1875,6 +1934,7 @@ describe("PartialState.eject", () => {
 
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
+      blake2b,
       state,
       tryAsServiceId(0),
       tryAsServiceId(10),
@@ -1964,6 +2024,7 @@ describe("AccumulateServiceExternalities", () => {
 
       const accumulateServiceExternalities = new AccumulateExternalities(
         tinyChainSpec,
+        blake2b,
         state,
         currentServiceId,
         tryAsServiceId(42),
@@ -1983,6 +2044,7 @@ describe("AccumulateServiceExternalities", () => {
 
       const accumulateServiceExternalities = new AccumulateExternalities(
         tinyChainSpec,
+        blake2b,
         state,
         currentServiceId,
         tryAsServiceId(42),
@@ -2002,6 +2064,7 @@ describe("AccumulateServiceExternalities", () => {
 
       const accumulateServiceExternalities = new AccumulateExternalities(
         tinyChainSpec,
+        blake2b,
         state,
         currentServiceId,
         tryAsServiceId(42),
@@ -2024,6 +2087,7 @@ describe("AccumulateServiceExternalities", () => {
 
       const accumulateServiceExternalities = new AccumulateExternalities(
         tinyChainSpec,
+        blake2b,
         state,
         currentServiceId,
         tryAsServiceId(42),
@@ -2044,6 +2108,7 @@ describe("AccumulateServiceExternalities", () => {
 
       const accumulateServiceExternalities = new AccumulateExternalities(
         tinyChainSpec,
+        blake2b,
         state,
         currentServiceId,
         tryAsServiceId(42),
@@ -2066,6 +2131,7 @@ describe("AccumulateServiceExternalities", () => {
 
       const accumulateServiceExternalities = new AccumulateExternalities(
         tinyChainSpec,
+        blake2b,
         state,
         currentServiceId,
         tryAsServiceId(42),
@@ -2087,6 +2153,7 @@ describe("AccumulateServiceExternalities", () => {
 
       const accumulateServiceExternalities = new AccumulateExternalities(
         tinyChainSpec,
+        blake2b,
         state,
         serviceId,
         tryAsServiceId(42),
@@ -2108,6 +2175,7 @@ describe("AccumulateServiceExternalities", () => {
 
       const accumulateServiceExternalities = new AccumulateExternalities(
         tinyChainSpec,
+        blake2b,
         state,
         currentServiceId,
         tryAsServiceId(42),
@@ -2126,6 +2194,7 @@ describe("AccumulateServiceExternalities", () => {
       const state = prepareState([prepareService(currentServiceId)]);
       const accumulateServiceExternalities = new AccumulateExternalities(
         tinyChainSpec,
+        blake2b,
         state,
         currentServiceId,
         tryAsServiceId(42),
@@ -2155,6 +2224,7 @@ describe("AccumulateServiceExternalities", () => {
 
       const accumulateServiceExternalities = new AccumulateExternalities(
         tinyChainSpec,
+        blake2b,
         state,
         currentServiceId,
         tryAsServiceId(42),
@@ -2172,6 +2242,7 @@ describe("AccumulateServiceExternalities", () => {
       const state = prepareState([prepareService(currentServiceId)]);
       const accumulateServiceExternalities = new AccumulateExternalities(
         tinyChainSpec,
+        blake2b,
         state,
         currentServiceId,
         tryAsServiceId(42),
@@ -2196,6 +2267,7 @@ describe("AccumulateServiceExternalities", () => {
       const state = prepareState([prepareService(currentServiceId, { storage: initialStorage })]);
       const accumulateServiceExternalities = new AccumulateExternalities(
         tinyChainSpec,
+        blake2b,
         state,
         currentServiceId,
         tryAsServiceId(42),

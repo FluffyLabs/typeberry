@@ -3,6 +3,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import { Blake2b } from "@typeberry/hash";
 import { type InMemoryState, type ServicesUpdate, type State, UpdateError } from "@typeberry/state";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { inMemoryStateCodec } from "@typeberry/state-merkleization/in-memory-state-codec.js";
@@ -68,7 +69,8 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
   }
 
   async getStateRoot(state: InMemoryState): Promise<StateRootHash> {
-    return StateEntries.serializeInMemory(this.spec, state).getRootHash();
+    const blake2b = await Blake2b.createHasher();
+    return StateEntries.serializeInMemory(this.spec, blake2b, state).getRootHash(blake2b);
   }
 
   /** Insert a full state into the database. */

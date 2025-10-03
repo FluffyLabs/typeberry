@@ -1,11 +1,11 @@
 import assert from "node:assert";
 import * as fs from "node:fs";
-import { afterEach, beforeEach, describe, it } from "node:test";
+import { afterEach, before, beforeEach, describe, it } from "node:test";
 import { type HeaderHash, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { SortedSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   InMemoryState,
@@ -19,10 +19,19 @@ import {
 import { testState } from "@typeberry/state/test.utils.js";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { InMemoryTrie, leafComparator } from "@typeberry/trie";
-import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
+import { getBlake2bTrieHasher } from "@typeberry/trie/hasher.js";
+import type { TrieHasher } from "@typeberry/trie/nodesDb.js";
 import { deepEqual, OK, Result } from "@typeberry/utils";
 import { LmdbRoot } from "./root.js";
 import { LmdbStates } from "./states.js";
+
+let blake2bTrieHasher: TrieHasher;
+let blake2b: Blake2b;
+
+before(async () => {
+  blake2b = await Blake2b.createHasher();
+  blake2bTrieHasher = getBlake2bTrieHasher(blake2b);
+});
 
 function createTempDir(suffix = "lmdb"): string {
   return fs.mkdtempSync(`typeberry-${suffix}`);
@@ -45,11 +54,11 @@ describe("LMDB States database", () => {
 
   it("should import state and read state", async () => {
     const root = new LmdbRoot(tmpDir);
-    const states = new LmdbStates(spec, root);
+    const states = new LmdbStates(spec, blake2b, root);
 
     const emptyState = InMemoryState.empty(spec);
-    const serialized = StateEntries.serializeInMemory(spec, emptyState);
-    const emptyRoot = serialized.getRootHash();
+    const serialized = StateEntries.serializeInMemory(spec, blake2b, emptyState);
+    const emptyRoot = serialized.getRootHash(blake2b);
 
     // when
     const res = await states.insertState(headerHash, serialized);
@@ -64,9 +73,9 @@ describe("LMDB States database", () => {
 
   it("should update the state", async () => {
     const root = new LmdbRoot(tmpDir);
-    const states = new LmdbStates(spec, root);
+    const states = new LmdbStates(spec, blake2b, root);
     const state = InMemoryState.empty(spec);
-    await states.insertState(headerHash, StateEntries.serializeInMemory(spec, state));
+    await states.insertState(headerHash, StateEntries.serializeInMemory(spec, blake2b, state));
     const newState = states.getState(headerHash);
     assert.ok(newState !== null);
     const headerHash2: HeaderHash = Bytes.fill(HASH_SIZE, 2).asOpaque();
@@ -132,7 +141,10 @@ describe("LMDB States database", () => {
       ),
       state,
     );
-    assert.strictEqual(`${updatedStateRoot}`, `${StateEntries.serializeInMemory(spec, state).getRootHash()}`);
+    assert.strictEqual(
+      `${updatedStateRoot}`,
+      `${StateEntries.serializeInMemory(spec, blake2b, state).getRootHash(blake2b)}`,
+    );
   });
 
   it("sorted set should be actual to trie", () => {
@@ -161,7 +173,7 @@ describe("LMDB States database", () => {
 
   it("should import more complex state", async () => {
     const root = new LmdbRoot(tmpDir);
-    const states = new LmdbStates(spec, root);
+    const states = new LmdbStates(spec, blake2b, root);
 
     const initialState = testState();
     const initialService = initialState.services.get(tryAsServiceId(0));
@@ -169,8 +181,8 @@ describe("LMDB States database", () => {
       throw new Error("Expected service in test state!");
     }
 
-    const serialized = StateEntries.serializeInMemory(spec, initialState);
-    const initialRoot = serialized.getRootHash();
+    const serialized = StateEntries.serializeInMemory(spec, blake2b, initialState);
+    const initialRoot = serialized.getRootHash(blake2b);
 
     // when
     const res = await states.insertState(headerHash, serialized);
@@ -188,13 +200,13 @@ describe("LMDB States database", () => {
 
   it("should update more complex entries", async () => {
     const root = new LmdbRoot(tmpDir);
-    const states = new LmdbStates(spec, root);
+    const states = new LmdbStates(spec, blake2b, root);
     const state = testState();
     const initialService = state.services.get(tryAsServiceId(0));
     if (initialService === undefined) {
       throw new Error("Expected service in test state!");
     }
-    await states.insertState(headerHash, StateEntries.serializeInMemory(spec, state));
+    await states.insertState(headerHash, StateEntries.serializeInMemory(spec, blake2b, state));
     const newState = states.getState(headerHash);
     assert.ok(newState !== null);
     const headerHash2: HeaderHash = Bytes.fill(HASH_SIZE, 2).asOpaque();
@@ -218,6 +230,9 @@ describe("LMDB States database", () => {
       InMemoryState.copyFrom(updatedState, new Map([[initialService.serviceId, initialService.getEntries()]])),
       state,
     );
-    assert.strictEqual(`${updatedStateRoot}`, `${StateEntries.serializeInMemory(spec, state).getRootHash()}`);
+    assert.strictEqual(
+      `${updatedStateRoot}`,
+      `${StateEntries.serializeInMemory(spec, blake2b, state).getRootHash(blake2b)}`,
+    );
   });
 });

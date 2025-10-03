@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { before, describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
-import { SimpleAllocator } from "@typeberry/hash";
+import { Blake2b } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import type { BandersnatchKey } from "./bandersnatch.js";
 import type { Ed25519Key } from "./ed25519.js";
@@ -91,11 +91,15 @@ describe("Key Derivation: trivial seed", () => {
 });
 
 describe("Key Derivation: Ed25519 secret seed", () => {
-  const allocator = new SimpleAllocator();
+  let blake2b: Blake2b;
+
+  before(async () => {
+    blake2b = await Blake2b.createHasher();
+  });
 
   it("should derive from seed: 0", () => {
     const seed = trivialSeed(tryAsU32(0));
-    const ed25519_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_seed = deriveEd25519SecretKey(seed, blake2b);
     assert.deepStrictEqual(
       ed25519_seed,
       Bytes.fromBlob(
@@ -107,7 +111,7 @@ describe("Key Derivation: Ed25519 secret seed", () => {
 
   it("should derive from seed: 1", () => {
     const seed = trivialSeed(tryAsU32(1));
-    const ed25519_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_seed = deriveEd25519SecretKey(seed, blake2b);
     assert.deepStrictEqual(
       ed25519_seed,
       Bytes.fromBlob(
@@ -119,7 +123,7 @@ describe("Key Derivation: Ed25519 secret seed", () => {
 
   it("should derive from seed: 2", () => {
     const seed = trivialSeed(tryAsU32(2));
-    const ed25519_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_seed = deriveEd25519SecretKey(seed, blake2b);
     assert.deepStrictEqual(
       ed25519_seed,
       Bytes.fromBlob(
@@ -131,7 +135,7 @@ describe("Key Derivation: Ed25519 secret seed", () => {
 
   it("should derive from seed: 3", () => {
     const seed = trivialSeed(tryAsU32(3));
-    const ed25519_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_seed = deriveEd25519SecretKey(seed, blake2b);
     assert.deepStrictEqual(
       ed25519_seed,
       Bytes.fromBlob(
@@ -143,7 +147,7 @@ describe("Key Derivation: Ed25519 secret seed", () => {
 
   it("should derive from seed: 4", () => {
     const seed = trivialSeed(tryAsU32(4));
-    const ed25519_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_seed = deriveEd25519SecretKey(seed, blake2b);
     assert.deepStrictEqual(
       ed25519_seed,
       Bytes.fromBlob(
@@ -155,7 +159,7 @@ describe("Key Derivation: Ed25519 secret seed", () => {
 
   it("should derive from seed: 5", () => {
     const seed = trivialSeed(tryAsU32(5));
-    const ed25519_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_seed = deriveEd25519SecretKey(seed, blake2b);
     assert.deepStrictEqual(
       ed25519_seed,
       Bytes.fromBlob(
@@ -170,7 +174,7 @@ describe("Key Derivation: Ed25519 secret seed", () => {
       Bytes.parseBlobNoPrefix("f92d680ea3f0ac06307795490d8a03c5c0d4572b5e0a8cffec87e1294855d9d1").raw,
       SEED_SIZE,
     ).asOpaque<KeySeed>();
-    const ed25519_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_seed = deriveEd25519SecretKey(seed, blake2b);
     assert.deepStrictEqual(
       ed25519_seed,
       Bytes.fromBlob(
@@ -182,11 +186,15 @@ describe("Key Derivation: Ed25519 secret seed", () => {
 });
 
 describe("Key Derivation: Ed25519 public key", () => {
-  const allocator = new SimpleAllocator();
+  let blake2b: Blake2b;
+
+  before(async () => {
+    blake2b = await Blake2b.createHasher();
+  });
 
   it("should derive from seed: 0", async () => {
     const seed = trivialSeed(tryAsU32(0));
-    const ed25519_secret_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_secret_seed = deriveEd25519SecretKey(seed, blake2b);
     const ed25519_public_key = await deriveEd25519PublicKey(ed25519_secret_seed);
     assert.deepStrictEqual(
       ed25519_public_key,
@@ -199,7 +207,7 @@ describe("Key Derivation: Ed25519 public key", () => {
 
   it("should derive from seed: 1", async () => {
     const seed = trivialSeed(tryAsU32(1));
-    const ed25519_secret_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_secret_seed = deriveEd25519SecretKey(seed, blake2b);
     const ed25519_public_key = await deriveEd25519PublicKey(ed25519_secret_seed);
     assert.deepStrictEqual(
       ed25519_public_key,
@@ -212,7 +220,7 @@ describe("Key Derivation: Ed25519 public key", () => {
 
   it("should derive from seed: 2", async () => {
     const seed = trivialSeed(tryAsU32(2));
-    const ed25519_secret_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_secret_seed = deriveEd25519SecretKey(seed, blake2b);
     const ed25519_public_key = await deriveEd25519PublicKey(ed25519_secret_seed);
     assert.deepStrictEqual(
       ed25519_public_key,
@@ -225,7 +233,7 @@ describe("Key Derivation: Ed25519 public key", () => {
 
   it("should derive from seed: 3", async () => {
     const seed = trivialSeed(tryAsU32(3));
-    const ed25519_secret_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_secret_seed = deriveEd25519SecretKey(seed, blake2b);
     const ed25519_public_key = await deriveEd25519PublicKey(ed25519_secret_seed);
     assert.deepStrictEqual(
       ed25519_public_key,
@@ -238,7 +246,7 @@ describe("Key Derivation: Ed25519 public key", () => {
 
   it("should derive from seed: 4", async () => {
     const seed = trivialSeed(tryAsU32(4));
-    const ed25519_secret_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_secret_seed = deriveEd25519SecretKey(seed, blake2b);
     const ed25519_public_key = await deriveEd25519PublicKey(ed25519_secret_seed);
     assert.deepStrictEqual(
       ed25519_public_key,
@@ -251,7 +259,7 @@ describe("Key Derivation: Ed25519 public key", () => {
 
   it("should derive from seed: 5", async () => {
     const seed = trivialSeed(tryAsU32(5));
-    const ed25519_secret_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_secret_seed = deriveEd25519SecretKey(seed, blake2b);
     const ed25519_public_key = await deriveEd25519PublicKey(ed25519_secret_seed);
     assert.deepStrictEqual(
       ed25519_public_key,
@@ -267,7 +275,7 @@ describe("Key Derivation: Ed25519 public key", () => {
       Bytes.parseBlobNoPrefix("f92d680ea3f0ac06307795490d8a03c5c0d4572b5e0a8cffec87e1294855d9d1").raw,
       SEED_SIZE,
     ).asOpaque<KeySeed>();
-    const ed25519_secret_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_secret_seed = deriveEd25519SecretKey(seed, blake2b);
     const ed25519_public_key = await deriveEd25519PublicKey(ed25519_secret_seed);
     assert.deepStrictEqual(
       ed25519_public_key,
@@ -280,11 +288,15 @@ describe("Key Derivation: Ed25519 public key", () => {
 });
 
 describe("Key Derivation: Bandersnatch secret seed", () => {
-  const allocator = new SimpleAllocator();
+  let blake2b: Blake2b;
+
+  before(async () => {
+    blake2b = await Blake2b.createHasher();
+  });
 
   it("should derive from seed: 0", () => {
     const seed = trivialSeed(tryAsU32(0));
-    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     assert.deepStrictEqual(
       bandersnatch_seed,
       Bytes.fromBlob(
@@ -296,7 +308,7 @@ describe("Key Derivation: Bandersnatch secret seed", () => {
 
   it("should derive from seed: 1", () => {
     const seed = trivialSeed(tryAsU32(1));
-    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     assert.deepStrictEqual(
       bandersnatch_seed,
       Bytes.fromBlob(
@@ -308,7 +320,7 @@ describe("Key Derivation: Bandersnatch secret seed", () => {
 
   it("should derive from seed: 1", () => {
     const seed = trivialSeed(tryAsU32(1));
-    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     assert.deepStrictEqual(
       bandersnatch_seed,
       Bytes.fromBlob(
@@ -320,7 +332,7 @@ describe("Key Derivation: Bandersnatch secret seed", () => {
 
   it("should derive from seed: 2", () => {
     const seed = trivialSeed(tryAsU32(2));
-    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     assert.deepStrictEqual(
       bandersnatch_seed,
       Bytes.fromBlob(
@@ -332,7 +344,7 @@ describe("Key Derivation: Bandersnatch secret seed", () => {
 
   it("should derive from seed: 3", () => {
     const seed = trivialSeed(tryAsU32(3));
-    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     assert.deepStrictEqual(
       bandersnatch_seed,
       Bytes.fromBlob(
@@ -344,7 +356,7 @@ describe("Key Derivation: Bandersnatch secret seed", () => {
 
   it("should derive from seed: 4", () => {
     const seed = trivialSeed(tryAsU32(4));
-    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     assert.deepStrictEqual(
       bandersnatch_seed,
       Bytes.fromBlob(
@@ -356,7 +368,7 @@ describe("Key Derivation: Bandersnatch secret seed", () => {
 
   it("should derive from seed: 5", () => {
     const seed = trivialSeed(tryAsU32(5));
-    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     assert.deepStrictEqual(
       bandersnatch_seed,
       Bytes.fromBlob(
@@ -371,7 +383,7 @@ describe("Key Derivation: Bandersnatch secret seed", () => {
       Bytes.parseBlobNoPrefix("f92d680ea3f0ac06307795490d8a03c5c0d4572b5e0a8cffec87e1294855d9d1").raw,
       SEED_SIZE,
     ).asOpaque<KeySeed>();
-    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     assert.deepStrictEqual(
       bandersnatch_seed,
       Bytes.fromBlob(
@@ -383,11 +395,15 @@ describe("Key Derivation: Bandersnatch secret seed", () => {
 });
 
 describe("Key Derivation: Bandersnatch public key", () => {
-  const allocator = new SimpleAllocator();
+  let blake2b: Blake2b;
+
+  before(async () => {
+    blake2b = await Blake2b.createHasher();
+  });
 
   it("should derive from seed: 0", () => {
     const seed = trivialSeed(tryAsU32(0));
-    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
     assert.deepStrictEqual(
       bandersnatch_public_key,
@@ -400,7 +416,7 @@ describe("Key Derivation: Bandersnatch public key", () => {
 
   it("should derive from seed: 1", () => {
     const seed = trivialSeed(tryAsU32(1));
-    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
     assert.deepStrictEqual(
       bandersnatch_public_key,
@@ -413,7 +429,7 @@ describe("Key Derivation: Bandersnatch public key", () => {
 
   it("should derive from seed: 2", () => {
     const seed = trivialSeed(tryAsU32(2));
-    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
     assert.deepStrictEqual(
       bandersnatch_public_key,
@@ -426,7 +442,7 @@ describe("Key Derivation: Bandersnatch public key", () => {
 
   it("should derive from seed: 3", () => {
     const seed = trivialSeed(tryAsU32(3));
-    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
     assert.deepStrictEqual(
       bandersnatch_public_key,
@@ -439,7 +455,7 @@ describe("Key Derivation: Bandersnatch public key", () => {
 
   it("should derive from seed: 4", () => {
     const seed = trivialSeed(tryAsU32(4));
-    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
     assert.deepStrictEqual(
       bandersnatch_public_key,
@@ -452,7 +468,7 @@ describe("Key Derivation: Bandersnatch public key", () => {
 
   it("should derive from seed: 5", () => {
     const seed = trivialSeed(tryAsU32(5));
-    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
     assert.deepStrictEqual(
       bandersnatch_public_key,
@@ -468,7 +484,7 @@ describe("Key Derivation: Bandersnatch public key", () => {
       Bytes.parseBlobNoPrefix("f92d680ea3f0ac06307795490d8a03c5c0d4572b5e0a8cffec87e1294855d9d1").raw,
       SEED_SIZE,
     ).asOpaque<KeySeed>();
-    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
     assert.deepStrictEqual(
       bandersnatch_public_key,

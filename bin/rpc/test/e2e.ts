@@ -3,7 +3,7 @@ import { once } from "node:events";
 import { after, before, describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { main } from "../index.js";
+import { main } from "../main.js";
 import { RpcClient } from "../src/client.js";
 import type { RpcServer } from "../src/server.js";
 import { JSON_RPC_VERSION } from "../src/types.js";
@@ -13,7 +13,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
   let server: RpcServer;
 
   before(async () => {
-    server = main(["--config", `${import.meta.dirname}/e2e.config.json`]);
+    server = await main(["--config", `${import.meta.dirname}/e2e.config.json`]);
     client = new RpcClient("ws://localhost:19800");
     await client.waitForConnection();
   });

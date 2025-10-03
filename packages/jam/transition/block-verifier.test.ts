@@ -14,7 +14,7 @@ import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
-import { HASH_SIZE, keccak, SimpleAllocator, WithHash } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE, keccak, WithHash } from "@typeberry/hash";
 import { Compatibility, deepEqual, GpVersion, Result } from "@typeberry/utils";
 import { BlockVerifier, BlockVerifierError } from "./block-verifier.js";
 import { TransitionHasher } from "./hasher.js";
@@ -26,7 +26,7 @@ const DEFAULT_TIME_SLOT = tryAsTimeSlot(1);
 
 describe("Block Verifier", async () => {
   const spec = tinyChainSpec;
-  const hasher = new TransitionHasher(spec, await keccak.KeccakHasher.create(), new SimpleAllocator());
+  const hasher = new TransitionHasher(spec, await keccak.KeccakHasher.create(), await Blake2b.createHasher());
 
   const toBlockView = (block: Block): BlockView => {
     const encodedBlock = Encoder.encodeObject(Block.Codec, block, spec);

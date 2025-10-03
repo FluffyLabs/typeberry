@@ -12,7 +12,7 @@ import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-co
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { codec, Descriptor, readonlyArray } from "@typeberry/codec";
 import { HashSet, SortedArray } from "@typeberry/collections";
-import { HASH_SIZE } from "@typeberry/hash";
+import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import {
   AvailabilityAssignment,
@@ -188,20 +188,20 @@ export namespace serialize {
   });
 
   /** https://graypaper.fluffylabs.dev/#/85129da/384803384803?v=0.6.3 */
-  export const serviceStorage = (serviceId: ServiceId, key: StorageKey) => ({
-    key: stateKeys.serviceStorage(serviceId, key),
+  export const serviceStorage = (blake2b: Blake2b, serviceId: ServiceId, key: StorageKey) => ({
+    key: stateKeys.serviceStorage(blake2b, serviceId, key),
     Codec: dumpCodec,
   });
 
   /** https://graypaper.fluffylabs.dev/#/85129da/385b03385b03?v=0.6.3 */
-  export const servicePreimages = (serviceId: ServiceId, hash: PreimageHash) => ({
-    key: stateKeys.servicePreimage(serviceId, hash),
+  export const servicePreimages = (blake2b: Blake2b, serviceId: ServiceId, hash: PreimageHash) => ({
+    key: stateKeys.servicePreimage(blake2b, serviceId, hash),
     Codec: dumpCodec,
   });
 
   /** https://graypaper.fluffylabs.dev/#/85129da/387603387603?v=0.6.3 */
-  export const serviceLookupHistory = (serviceId: ServiceId, hash: PreimageHash, len: U32) => ({
-    key: stateKeys.serviceLookupHistory(serviceId, hash, len),
+  export const serviceLookupHistory = (blake2b: Blake2b, serviceId: ServiceId, hash: PreimageHash, len: U32) => ({
+    key: stateKeys.serviceLookupHistory(blake2b, serviceId, hash, len),
     Codec: readonlyArray(codec.sequenceVarLen(codec.u32)),
   });
 }

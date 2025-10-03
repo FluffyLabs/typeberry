@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { type EntropyHash, tryAsCoreIndex, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { RefineContext, type WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
@@ -8,10 +8,16 @@ import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, HashSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { HASH_SIZE } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { deepEqual } from "@typeberry/utils";
 import { generateNextServiceId, getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils.js";
+
+let blake2b: Blake2b;
+
+before(async () => {
+  blake2b = await Blake2b.createHasher();
+});
 
 describe("accumulate-utils", () => {
   describe("uniquePreserveOrder", () => {
@@ -89,7 +95,7 @@ describe("accumulate-utils", () => {
       const timeslot = tryAsTimeSlot(6);
       const expectedServiceId = tryAsServiceId(2596189433);
 
-      const result = generateNextServiceId({ serviceId, entropy, timeslot }, tinyChainSpec);
+      const result = generateNextServiceId({ serviceId, entropy, timeslot }, tinyChainSpec, blake2b);
 
       assert.strictEqual(result, expectedServiceId);
     });

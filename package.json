@@ -12,6 +12,7 @@
     "bin/rpc",
     "bin/tci",
     "bin/test-runner",
+    "benchmarks",
     "packages/configs",
     "packages/core/bytes",
     "packages/core/codec",

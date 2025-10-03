@@ -15,6 +15,7 @@
     "@typeberry/collections": "*",
     "@typeberry/config": "*",
     "@typeberry/crypto": "*",
+    "@typeberry/numbers": "*",
     "@typeberry/hash": "*",
     "@typeberry/safrole": "*",
     "@typeberry/state": "*",

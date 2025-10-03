@@ -12,6 +12,7 @@ import type { WorkReport } from "@typeberry/block/work-report.js";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import { asKnownSize, HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { InMemoryService } from "@typeberry/state";
 import { AutoAccumulate, InMemoryState, PrivilegedServices, tryAsPerCore } from "@typeberry/state";
@@ -140,7 +141,7 @@ export async function runAccumulateTest(test: AccumulateTest, path: string) {
   const entropy = test.pre_state.entropy;
 
   const state = TestState.toAccumulateState(test.pre_state as TestState, chainSpec);
-  const accumulate = new Accumulate(chainSpec, state);
+  const accumulate = new Accumulate(chainSpec, await Blake2b.createHasher(), state);
   const accumulateOutput = new AccumulateOutput();
   const result = await accumulate.transition({ ...test.input, entropy });
 
