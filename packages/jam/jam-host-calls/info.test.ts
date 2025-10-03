@@ -70,7 +70,7 @@ describe("HostCalls: Info", () => {
     const currentServiceId = serviceId;
     const accounts = new TestAccounts(currentServiceId);
     const info = new Info(currentServiceId, accounts);
-    // NOTE: GP ^0.7.1 `version` field is 1 byte (in test) but hint points to 8 bytes
+    // NOTE: GP ^0.7.1 `version` fields is 1 byte (in test) but hint points to 8 bytes
     const serviceSize = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
       ? serviceAccountInfoSize - 7
       : serviceAccountInfoSize;
@@ -114,11 +114,7 @@ describe("HostCalls: Info", () => {
     const currentServiceId = serviceId;
     const accounts = new TestAccounts(currentServiceId);
     const info = new Info(currentServiceId, accounts);
-    // NOTE: GP ^0.7.1 `version` field is 1 byte (in test) but hint points to 8 bytes
-    const serviceSize = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-      ? serviceAccountInfoSize - 7
-      : serviceAccountInfoSize;
-    const { registers, memory, readRaw } = prepareRegsAndMemory(serviceId, serviceSize, serviceSize);
+    const { registers, memory, readRaw } = prepareRegsAndMemory(serviceId);
     registers.set(LEN_REG, tryAsU64(10));
     const storageUtilisationBytes = tryAsU64(10_000);
     const storageUtilisationCount = tryAsU32(1_000);
@@ -168,10 +164,7 @@ describe("HostCalls: Info", () => {
     const currentServiceId = serviceId;
     const accounts = new TestAccounts(currentServiceId);
     const info = new Info(serviceId, accounts);
-    // NOTE: GP ^0.7.1 `version` field is 1 byte (in test) but hint points to 8 bytes
-    const serviceSize = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-      ? serviceAccountInfoSize - 7
-      : serviceAccountInfoSize;
+    const serviceSize = serviceAccountInfoSize - 7;
     const { registers, memory } = prepareRegsAndMemory(serviceId, 10, serviceSize);
     const storageUtilisationBytes = tryAsU64(10_000);
     const storageUtilisationCount = tryAsU32(1_000);
