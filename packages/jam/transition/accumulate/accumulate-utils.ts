@@ -4,7 +4,7 @@ import type { WorkReport } from "@typeberry/block/work-report.js";
 import { codec, Encoder } from "@typeberry/codec";
 import { HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { blake2b, HASH_SIZE } from "@typeberry/hash";
+import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { leBytesAsU32 } from "@typeberry/numbers";
 
 /**
@@ -55,6 +55,7 @@ const NEXT_ID_CODEC = codec.object({
 export function generateNextServiceId(
   { serviceId, entropy, timeslot }: NextServiceIdInput,
   chainSpec: ChainSpec,
+  blake2b: Blake2b,
 ): ServiceId {
   const encoded = Encoder.encodeObject(
     NEXT_ID_CODEC,

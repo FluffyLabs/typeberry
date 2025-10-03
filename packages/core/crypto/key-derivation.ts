@@ -1,5 +1,5 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { blake2b, SimpleAllocator } from "@typeberry/hash";
+import type { Blake2b } from "@typeberry/hash";
 import { type U32, u32AsLeBytes } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
 import { type BandersnatchKey, publicKey } from "./bandersnatch.js";
@@ -36,22 +36,16 @@ export function trivialSeed(s: U32): KeySeed {
  * Derives a Ed25519 secret key from a seed.
  * https://github.com/polkadot-fellows/JIPs/blob/7048f79edf4f4eb8bfe6fb42e6bbf61900f44c65/JIP-5.md#derivation-method
  */
-export function deriveEd25519SecretKey(
-  seed: KeySeed,
-  allocator: SimpleAllocator = new SimpleAllocator(),
-): Ed25519SecretSeed {
-  return blake2b.hashBytes(BytesBlob.blobFromParts([ED25519_SECRET_KEY.raw, seed.raw]), allocator).asOpaque();
+export function deriveEd25519SecretKey(seed: KeySeed, blake2b: Blake2b): Ed25519SecretSeed {
+  return blake2b.hashBytes(BytesBlob.blobFromParts([ED25519_SECRET_KEY.raw, seed.raw])).asOpaque();
 }
 
 /**
  * Derives a Bandersnatch secret key from a seed.
  * https://github.com/polkadot-fellows/JIPs/blob/7048f79edf4f4eb8bfe6fb42e6bbf61900f44c65/JIP-5.md#derivation-method
  */
-export function deriveBandersnatchSecretKey(
-  seed: KeySeed,
-  allocator: SimpleAllocator = new SimpleAllocator(),
-): BandersnatchSecretSeed {
-  return blake2b.hashBytes(BytesBlob.blobFromParts([BANDERSNATCH_SECRET_KEY.raw, seed.raw]), allocator).asOpaque();
+export function deriveBandersnatchSecretKey(seed: KeySeed, blake2b: Blake2b): BandersnatchSecretSeed {
+  return blake2b.hashBytes(BytesBlob.blobFromParts([BANDERSNATCH_SECRET_KEY.raw, seed.raw])).asOpaque();
 }
 
 /**

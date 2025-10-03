@@ -1,5 +1,6 @@
 import type { ChainSpec } from "@typeberry/config";
 import { LmdbBlocks, type LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
+import type { Blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { WebSocket } from "ws";
 import { WebSocketServer } from "ws";
@@ -48,12 +49,13 @@ export class RpcServer {
     port: number,
     private readonly rootDb: LmdbRoot,
     private readonly chainSpec: ChainSpec,
+    private readonly blake2b: Blake2b,
     private readonly methods: RpcMethodRepo,
   ) {
     this.logger = Logger.new(import.meta.filename, "rpc");
 
     this.blocks = new LmdbBlocks(chainSpec, this.rootDb);
-    this.states = new LmdbStates(chainSpec, this.rootDb);
+    this.states = new LmdbStates(chainSpec, this.blake2b, this.rootDb);
 
     this.wss = new WebSocketServer({ port });
     this.setupWebSocket();

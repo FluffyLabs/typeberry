@@ -4,15 +4,7 @@ import { WorkPackage } from "@typeberry/block/work-package.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { type Codec, codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import {
-  blake2b,
-  type HashAllocator,
-  type KeccakHash,
-  keccak,
-  type OpaqueHash,
-  WithHash,
-  WithHashAndBytes,
-} from "@typeberry/hash";
+import { type Blake2b, type KeccakHash, keccak, type OpaqueHash, WithHash, WithHashAndBytes } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { dumpCodec } from "@typeberry/state-merkleization/serialize.js";
 
@@ -21,7 +13,7 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
   constructor(
     private readonly context: ChainSpec,
     private readonly keccakHasher: keccak.KeccakHasher,
-    private readonly allocator: HashAllocator,
+    public readonly blake2b: Blake2b,
   ) {}
 
   /** Concatenates two hashes and hash this concatenation */
@@ -35,7 +27,7 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
 
   /** Creates hash from the block header view */
   header(header: HeaderView): WithHash<HeaderHash, HeaderView> {
-    return new WithHash(blake2b.hashBytes(header.encoded(), this.allocator).asOpaque(), header);
+    return new WithHash(this.blake2b.hashBytes(header.encoded()).asOpaque(), header);
   }
 
   /**
@@ -49,7 +41,7 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
       .view()
       .map((g) => g.view())
       .map((guarantee) => {
-        const reportHash = blake2b.hashBytes(guarantee.report.encoded(), this.allocator).asOpaque<WorkReportHash>();
+        const reportHash = this.blake2b.hashBytes(guarantee.report.encoded()).asOpaque<WorkReportHash>();
         return BytesBlob.blobFromParts([
           reportHash.raw,
           guarantee.slot.encoded().raw,
@@ -59,15 +51,15 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
 
     const guaranteeBlob = Encoder.encodeObject(codec.sequenceVarLen(dumpCodec), guarantees, this.context);
 
-    const et = blake2b.hashBytes(extrinsicView.tickets.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
-    const ep = blake2b.hashBytes(extrinsicView.preimages.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
-    const eg = blake2b.hashBytes(guaranteeBlob, this.allocator).asOpaque<ExtrinsicHash>();
-    const ea = blake2b.hashBytes(extrinsicView.assurances.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
-    const ed = blake2b.hashBytes(extrinsicView.disputes.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
+    const et = this.blake2b.hashBytes(extrinsicView.tickets.encoded()).asOpaque<ExtrinsicHash>();
+    const ep = this.blake2b.hashBytes(extrinsicView.preimages.encoded()).asOpaque<ExtrinsicHash>();
+    const eg = this.blake2b.hashBytes(guaranteeBlob).asOpaque<ExtrinsicHash>();
+    const ea = this.blake2b.hashBytes(extrinsicView.assurances.encoded()).asOpaque<ExtrinsicHash>();
+    const ed = this.blake2b.hashBytes(extrinsicView.disputes.encoded()).asOpaque<ExtrinsicHash>();
 
     const encoded = BytesBlob.blobFromParts([et.raw, ep.raw, eg.raw, ea.raw, ed.raw]);
 
-    return new WithHashAndBytes(blake2b.hashBytes(encoded, this.allocator).asOpaque(), extrinsicView, encoded);
+    return new WithHashAndBytes(this.blake2b.hashBytes(encoded).asOpaque(), extrinsicView, encoded);
   }
 
   /** Creates hash for given WorkPackage */
@@ -78,6 +70,6 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
   private encode<T, THash extends OpaqueHash>(codec: Codec<T>, data: T): WithHashAndBytes<THash, T> {
     // TODO [ToDr] Use already allocated encoding destination and hash bytes from some arena.
     const encoded = Encoder.encodeObject(codec, data, this.context);
-    return new WithHashAndBytes(blake2b.hashBytes(encoded, this.allocator).asOpaque(), data, encoded);
+    return new WithHashAndBytes(this.blake2b.hashBytes(encoded).asOpaque(), data, encoded);
   }
 }

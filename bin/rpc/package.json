@@ -12,8 +12,9 @@
   "scripts": {
     "start": "NODE_ENV=development tsx ./index.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
+    "test:e2e": "npm run test:e2e-setup && npm run test:e2e-run",
     "test:e2e-setup": "NODE_ENV=development GP_VERSION=0.7.0 tsx ./test/e2e-setup.ts",
-    "test:e2e": "npm run test:e2e-setup && GP_VERSION=0.7.0 tsx --test ./test/e2e.ts"
+    "test:e2e-run": "NODE_ENV=development GP_VERSION=0.7.0 tsx --test ./test/e2e.ts"
   },
   "dependencies": {
     "@typeberry/block": "*",

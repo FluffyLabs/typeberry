@@ -11,6 +11,7 @@ import { fromJson, guaranteesExtrinsicFromJson, segmentRootLookupItemFromJson } 
 import { asKnownSize, FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
+import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import {
   type AvailabilityAssignment,
@@ -277,7 +278,7 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
     },
   };
 
-  const reports = new Reports(spec, preState.state, headerChain);
+  const reports = new Reports(spec, await Blake2b.createHasher(), preState.state, headerChain);
 
   const output = await reports.transition(input);
   let state = reports.state;

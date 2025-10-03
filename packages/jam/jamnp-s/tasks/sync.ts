@@ -9,7 +9,7 @@ import {
 import { Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
-import { blake2b, WithHash } from "@typeberry/hash";
+import { type Blake2b, WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { Peer, PeerId } from "@typeberry/networking";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
@@ -40,13 +40,14 @@ const MAX_BLOCK_SEQUENCE = 128;
 export class SyncTask {
   static start(
     spec: ChainSpec,
+    blake2b: Blake2b,
     streamManager: StreamManager,
     connections: Connections,
     blocks: BlocksDb,
     // TODO [ToDr] Use listener instead of a callback maybe?
     onNewBlocks: (blocks: BlockView[], peerId: PeerId) => void,
   ) {
-    const syncTask = new SyncTask(spec, streamManager, connections, blocks, onNewBlocks);
+    const syncTask = new SyncTask(spec, blake2b, streamManager, connections, blocks, onNewBlocks);
 
     const getPeerForStream = (streamId: StreamId) => {
       // NOTE [ToDr] Needing to query stream manager for a peer might be a bit
@@ -99,6 +100,7 @@ export class SyncTask {
 
   private constructor(
     private readonly spec: ChainSpec,
+    private readonly blake2b: Blake2b,
     private readonly streamManager: StreamManager,
     private readonly connections: Connections,
     private readonly blocks: BlocksDb,
@@ -140,7 +142,7 @@ export class SyncTask {
 
   private onUp0Annoucement(peer: Peer, announcement: up0.Announcement) {
     const { hash, slot } = announcement.final;
-    const bestHeader = hashHeader(announcement.header, this.spec);
+    const bestHeader = hashHeader(this.blake2b, announcement.header, this.spec);
     logger.info`[${peer.id}] --> Received new header #${announcement.header.timeSlotIndex}: ${bestHeader.hash}`;
 
     // NOTE [ToDr] Instead of having `Connections` store aux data perhaps
@@ -364,7 +366,7 @@ export type RequestedBlocks = {
   count: number;
 };
 
-function hashHeader(header: Header, spec: ChainSpec): WithHash<HeaderHash, Header> {
+function hashHeader(blake2b: Blake2b, header: Header, spec: ChainSpec): WithHash<HeaderHash, Header> {
   const encoded = Encoder.encodeObject(Header.Codec, header, spec);
   return new WithHash(blake2b.hashBytes(encoded).asOpaque(), header);
 }
