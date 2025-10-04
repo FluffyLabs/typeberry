@@ -49,6 +49,31 @@ export const ignoreValueWithDefault = <T>(defaultValue: T) =>
     (_s) => {},
   );
 
+/** Encode and decode object with leading version number. */
+export const codecWithVersion = <T>(val: Descriptor<T>): Descriptor<T> =>
+  Descriptor.new<T>(
+    "withVersion",
+    {
+      bytes: val.sizeHint.bytes + 8,
+      isExact: false,
+    },
+    (e, v) => {
+      e.varU64(0n);
+      val.encode(e, v);
+    },
+    (d) => {
+      const version = d.varU64();
+      if (version !== 0n) {
+        throw new Error("Non-zero version is not supported!");
+      }
+      return val.decode(d);
+    },
+    (s) => {
+      s.varU64();
+      val.skip(s);
+    },
+  );
+
 /**
  * Service account details.
  *

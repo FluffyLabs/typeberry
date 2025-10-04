@@ -17,6 +17,7 @@ import type { U32 } from "@typeberry/numbers";
 import {
   AvailabilityAssignment,
   codecPerCore,
+  codecWithVersion,
   DisputesRecords,
   ENTROPY_ENTRIES,
   PrivilegedServices,
@@ -30,6 +31,7 @@ import { AccumulationOutput, accumulationOutputComparator } from "@typeberry/sta
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { RecentBlocksHistory } from "@typeberry/state/recent-blocks.js";
 import { SafroleData } from "@typeberry/state/safrole-data.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { type StateKey, StateKeyIdx, stateKeys } from "./keys.js";
 
 export type StateCodec<T> = {
@@ -180,7 +182,9 @@ export namespace serialize {
   /** C(255, s): https://graypaper.fluffylabs.dev/#/85129da/383103383103?v=0.6.3 */
   export const serviceData = (serviceId: ServiceId) => ({
     key: stateKeys.serviceInfo(serviceId),
-    Codec: ServiceAccountInfo.Codec,
+    Codec: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+      ? codecWithVersion(ServiceAccountInfo.Codec)
+      : ServiceAccountInfo.Codec,
   });
 
   /** https://graypaper.fluffylabs.dev/#/85129da/384803384803?v=0.6.3 */
