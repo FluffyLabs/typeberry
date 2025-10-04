@@ -1,5 +1,5 @@
 import type { Bytes } from "@typeberry/bytes";
-import { type CodecRecord, codec } from "@typeberry/codec";
+import { type CodecRecord, codec, type DescribedBy } from "@typeberry/codec";
 import {
   BANDERSNATCH_KEY_BYTES,
   type BandersnatchKey,
@@ -48,3 +48,5 @@ export class ValidatorData extends WithDebug {
     super();
   }
 }
+
+export type ValidatorDataView = DescribedBy<typeof ValidatorData.Codec.View>;

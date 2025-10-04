@@ -1,0 +1,100 @@
+import type { ServiceId } from "@typeberry/block";
+import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
+import { type CodecWithView, Decoder, type SequenceView } from "@typeberry/codec";
+import type { ImmutableHashSet } from "@typeberry/collections";
+import type { ChainSpec } from "@typeberry/config";
+import type {
+  AuthorizationPool,
+  AuthorizationQueue,
+  AvailabilityAssignmentsView,
+  NotYetAccumulatedReport,
+  RecentBlocksView,
+  SafroleDataView,
+  ServiceAccountInfoView,
+  StatisticsDataView,
+  ValidatorData,
+  ValidatorDataView,
+} from "@typeberry/state";
+import type { StateView } from "@typeberry/state/state-view.js";
+import type { StateKey } from "./keys.js";
+import { serialize } from "./serialize.js";
+import type { SerializedStateBackend } from "./serialized-state.js";
+
+export class SerializedStateView<T extends SerializedStateBackend> implements StateView {
+  constructor(
+    private readonly spec: ChainSpec,
+    public backend: T,
+    /** Best-effort list of recently active services. */
+    private readonly _recentServiceIds: ServiceId[],
+  ) {}
+
+  private retrieveView<A, B>({ key, Codec }: KeyAndCodecWithView<A, B>, description: string): B {
+    const bytes = this.backend.get(key);
+    if (bytes === null) {
+      throw new Error(`Required state entry for ${description} is missing!. Accessing view of key: ${key}`);
+    }
+    // TODO [ToDr] consider cache here
+    return Decoder.decodeObject(Codec.View, bytes, this.spec);
+  }
+
+  availabilityAssignmentView(): AvailabilityAssignmentsView {
+    return this.retrieveView(serialize.availabilityAssignment, "availabilityAssignmentView");
+  }
+
+  designatedValidatorDataView(): SequenceView<ValidatorData, ValidatorDataView> {
+    return this.retrieveView(serialize.designatedValidators, "designatedValidatorsView");
+  }
+
+  currentValidatorDataView(): SequenceView<ValidatorData, ValidatorDataView> {
+    return this.retrieveView(serialize.currentValidators, "currentValidatorsView");
+  }
+
+  previousValidatorDataView(): SequenceView<ValidatorData, ValidatorDataView> {
+    return this.retrieveView(serialize.previousValidators, "currentValidatorsView");
+  }
+
+  authPoolsView(): SequenceView<AuthorizationPool, SequenceView<AuthorizerHash>> {
+    return this.retrieveView(serialize.authPools, "authPoolsView");
+  }
+
+  authQueuesView(): SequenceView<AuthorizationQueue, SequenceView<AuthorizerHash>> {
+    return this.retrieveView(serialize.authQueues, "authQueuesView");
+  }
+
+  recentBlocksView(): RecentBlocksView {
+    return this.retrieveView(serialize.recentBlocks, "recentBlocksView");
+  }
+
+  statisticsView(): StatisticsDataView {
+    return this.retrieveView(serialize.statistics, "statisticsView");
+  }
+
+  accumulationQueueView(): SequenceView<readonly NotYetAccumulatedReport[]> {
+    return this.retrieveView(serialize.accumulationQueue, "accumulationQueueView");
+  }
+
+  recentlyAccumulatedView(): SequenceView<ImmutableHashSet<WorkPackageHash>> {
+    return this.retrieveView(serialize.recentlyAccumulated, "recentlyAccumulatedView");
+  }
+
+  safroleDataView(): SafroleDataView {
+    return this.retrieveView(serialize.safrole, "safroleDataView");
+  }
+
+  getServiceInfoView(id: ServiceId): ServiceAccountInfoView | null {
+    const serviceData = serialize.serviceData(id);
+    const bytes = this.backend.get(serviceData.key);
+    if (bytes === null) {
+      return null;
+    }
+    if (!this._recentServiceIds.includes(id)) {
+      this._recentServiceIds.push(id);
+    }
+    return Decoder.decodeObject(serviceData.Codec.View, bytes, this.spec);
+  }
+}
+
+type KeyAndCodecWithView<T, V> = {
+  key: StateKey;
+  Codec: CodecWithView<T, V>;
+};

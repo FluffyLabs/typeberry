@@ -14,9 +14,11 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
+import type { StateView, WithStateView } from "@typeberry/state/state-view.js";
 import { asOpaqueType, Compatibility, GpVersion, safeAllocUint8Array, TEST_COMPARE_USING } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
 import { serialize } from "./serialize.js";
+import { SerializedStateView } from "./serialized-state-view.js";
 import type { StateEntries } from "./state-entries.js";
 
 /**
@@ -38,7 +40,7 @@ export interface SerializedStateBackend {
  * in the backend layer, so it MAY fail during runtime.
  */
 export class SerializedState<T extends SerializedStateBackend = SerializedStateBackend>
-  implements State, EnumerableState
+  implements State, WithStateView, EnumerableState
 {
   /** Create a state-like object from collection of serialized entries. */
   static fromStateEntries(spec: ChainSpec, blake2b: Blake2b, state: StateEntries, recentServices: ServiceId[] = []) {
@@ -66,6 +68,11 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
   /** Comparing the serialized states, just means comparing their backends. */
   [TEST_COMPARE_USING]() {
     return this.backend;
+  }
+
+  /** Return a non-decoding version of the state. */
+  view(): StateView {
+    return new SerializedStateView(this.spec, this.backend, this._recentServiceIds);
   }
 
   // TODO [ToDr] Temporary method to update the state,
@@ -96,6 +103,7 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
     if (bytes === null) {
       throw new Error(`Required state entry for ${description} is missing!. Accessing key: ${key}`);
     }
+    // TODO [ToDr] consider cache here
     return Decoder.decodeObject(Codec, bytes, this.spec);
   }
 
@@ -104,6 +112,7 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
     if (bytes === null) {
       return undefined;
     }
+    // TODO [ToDr] consider cache here
     return Decoder.decodeObject(Codec, bytes, this.spec);
   }
 

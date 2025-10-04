@@ -1,7 +1,7 @@
 import { codecPerValidator, type PerEpochBlock, type PerValidator, tryAsPerEpochBlock } from "@typeberry/block";
 import { codecWithContext } from "@typeberry/block/codec.js";
 import { Ticket } from "@typeberry/block/tickets.js";
-import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
+import { type CodecRecord, codec, type DescribedBy, readonlyArray } from "@typeberry/codec";
 import { asKnownSize, type KnownSizeArray } from "@typeberry/collections";
 import { BANDERSNATCH_KEY_BYTES, type BandersnatchKey } from "@typeberry/crypto";
 import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/crypto/bandersnatch.js";
@@ -113,3 +113,5 @@ export class SafroleData {
     public readonly ticketsAccumulator: KnownSizeArray<Ticket, "0...EpochLength">,
   ) {}
 }
+
+export type SafroleDataView = DescribedBy<typeof SafroleData.Codec.View>;

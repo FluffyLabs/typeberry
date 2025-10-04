@@ -38,7 +38,7 @@ import { type PerCore, tryAsPerCore } from "./common.js";
 import { DisputesRecords, hashComparator } from "./disputes.js";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
 import { PrivilegedServices } from "./privileged-services.js";
-import { RecentBlocksHistory } from "./recent-blocks.js";
+import { RecentBlocks } from "./recent-blocks.js";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "./safrole-data.js";
 import {
   LookupHistoryItem,
@@ -407,7 +407,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
   entropy: FixedSizeArray<EntropyHash, ENTROPY_ENTRIES>;
   authPools: PerCore<KnownSizeArray<AuthorizerHash, `At most ${typeof MAX_AUTH_POOL_SIZE}`>>;
   authQueues: PerCore<FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>>;
-  recentBlocks: RecentBlocksHistory;
+  recentBlocks: RecentBlocks;
   statistics: StatisticsData;
   accumulationQueue: PerEpochBlock<readonly NotYetAccumulatedReport[]>;
   recentlyAccumulated: PerEpochBlock<ImmutableHashSet<WorkPackageHash>>;
@@ -521,7 +521,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
         ),
         spec,
       ),
-      recentBlocks: RecentBlocksHistory.empty(),
+      recentBlocks: RecentBlocks.empty(),
       statistics: StatisticsData.create({
         current: tryAsPerValidator(
           Array.from({ length: spec.validatorsCount }, () => ValidatorStatistics.empty()),

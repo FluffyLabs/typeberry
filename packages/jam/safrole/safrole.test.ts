@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import {
   type EntropyHash,
   EpochMarker,
-  type PerEpochBlock,
   type PerValidator,
   reencodeAsView,
   TicketsMarker,
@@ -485,11 +484,7 @@ describe("Safrole", () => {
       extrinsic,
       punishSet,
       epochMarker: null,
-      ticketsMarker: reencodeAsView(
-        TicketsMarker.Codec,
-        TicketsMarker.create( {tickets}),
-        tinyChainSpec,
-      ),
+      ticketsMarker: reencodeAsView(TicketsMarker.Codec, TicketsMarker.create({ tickets }), tinyChainSpec),
     };
 
     const result = await safrole.transition(input);
@@ -879,11 +874,7 @@ describe("Safrole", () => {
       extrinsic,
       punishSet,
       epochMarker: null,
-      ticketsMarker: reencodeAsView(
-        TicketsMarker.Codec,
-        TicketsMarker.create( {tickets}),
-        tinyChainSpec
-      ),
+      ticketsMarker: reencodeAsView(TicketsMarker.Codec, TicketsMarker.create({ tickets }), tinyChainSpec),
     };
 
     const result = await safrole.transition(input);

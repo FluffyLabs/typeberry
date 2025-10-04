@@ -23,7 +23,7 @@ import { testWorkReportHex } from "@typeberry/block/test-helpers.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { codec, Decoder, Encoder } from "@typeberry/codec";
+import { codec, Decoder } from "@typeberry/codec";
 import { asKnownSize, FixedSizeArray, HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
@@ -47,7 +47,7 @@ import {
   ValidatorData,
 } from "@typeberry/state";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
-import { RecentBlocks, RecentBlocksHistory } from "@typeberry/state/recent-blocks.js";
+import { RecentBlocks } from "@typeberry/state/recent-blocks.js";
 import { asOpaqueType } from "@typeberry/utils";
 import { Reports, type ReportsState } from "./reports.js";
 import type { HeaderChain } from "./verify-contextual.js";
@@ -203,57 +203,55 @@ function newReportsState({
     previousValidatorData: tryAsPerValidator(initialValidators(), spec),
     entropy: ENTROPY,
     authPools: getAuthPools([1, 2, 3, 4], spec),
-    recentBlocks: RecentBlocksHistory.create(
-      RecentBlocks.create({
-        blocks: asKnownSize([
-          {
-            headerHash: Bytes.parseBytes(
-              "0x168490e085497fcb6cbe3b220e2fa32456f30c1570412edd76ccb93be9254fef",
-              HASH_SIZE,
-            ).asOpaque(),
-            accumulationResult: Bytes.parseBytes(
-              "0x675f9e53123c83ddcdb2c1f5231f13646378aefc83837a4571d052ac80014837",
-              HASH_SIZE,
-            ).asOpaque(),
-            postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
-            reported: reportedInRecentBlocks,
-          },
-          {
-            headerHash: Bytes.parseBytes(
-              "0xbed5792b7df998e5520dfbb8c91386cf2117b2c07b7837094c79d5c0b4de9de7",
-              HASH_SIZE,
-            ).asOpaque(),
-            accumulationResult: Bytes.parseBytes(
-              "0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5",
-              HASH_SIZE,
-            ).asOpaque(),
-            postStateRoot: Bytes.parseBytes(
-              "0x1324bad2e35946c1a95dd25380a6e9199fbd40045ae49eacfc67599cbd23cda7",
-              HASH_SIZE,
-            ).asOpaque(),
-            reported: HashDictionary.new(),
-          },
-          {
-            headerHash: Bytes.parseBytes(
-              "0xc0564c5e0de0942589df4343ad1956da66797240e2a2f2d6f8116b5047768986",
-              HASH_SIZE,
-            ).asOpaque(),
-            accumulationResult: Bytes.zero(HASH_SIZE),
-            postStateRoot: Bytes.parseBytes(
-              "0xf6967658df626fa39cbfb6014b50196d23bc2cfbfa71a7591ca7715472dd2b48",
-              HASH_SIZE,
-            ).asOpaque(),
-            reported: HashDictionary.new(),
-          },
-        ]),
-        accumulationLog: {
-          peaks: [
-            Bytes.zero(HASH_SIZE),
-            Bytes.parseBytes("0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5", HASH_SIZE),
-          ],
+    recentBlocks: RecentBlocks.create({
+      blocks: asKnownSize([
+        {
+          headerHash: Bytes.parseBytes(
+            "0x168490e085497fcb6cbe3b220e2fa32456f30c1570412edd76ccb93be9254fef",
+            HASH_SIZE,
+          ).asOpaque(),
+          accumulationResult: Bytes.parseBytes(
+            "0x675f9e53123c83ddcdb2c1f5231f13646378aefc83837a4571d052ac80014837",
+            HASH_SIZE,
+          ).asOpaque(),
+          postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+          reported: reportedInRecentBlocks,
         },
-      }),
-    ),
+        {
+          headerHash: Bytes.parseBytes(
+            "0xbed5792b7df998e5520dfbb8c91386cf2117b2c07b7837094c79d5c0b4de9de7",
+            HASH_SIZE,
+          ).asOpaque(),
+          accumulationResult: Bytes.parseBytes(
+            "0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5",
+            HASH_SIZE,
+          ).asOpaque(),
+          postStateRoot: Bytes.parseBytes(
+            "0x1324bad2e35946c1a95dd25380a6e9199fbd40045ae49eacfc67599cbd23cda7",
+            HASH_SIZE,
+          ).asOpaque(),
+          reported: HashDictionary.new(),
+        },
+        {
+          headerHash: Bytes.parseBytes(
+            "0xc0564c5e0de0942589df4343ad1956da66797240e2a2f2d6f8116b5047768986",
+            HASH_SIZE,
+          ).asOpaque(),
+          accumulationResult: Bytes.zero(HASH_SIZE),
+          postStateRoot: Bytes.parseBytes(
+            "0xf6967658df626fa39cbfb6014b50196d23bc2cfbfa71a7591ca7715472dd2b48",
+            HASH_SIZE,
+          ).asOpaque(),
+          reported: HashDictionary.new(),
+        },
+      ]),
+      accumulationLog: {
+        peaks: [
+          Bytes.zero(HASH_SIZE),
+          Bytes.parseBytes("0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5", HASH_SIZE),
+        ],
+      },
+    }),
     services,
   });
 }

@@ -13,7 +13,7 @@ import {
   type InMemoryService,
   InMemoryState,
   PrivilegedServices,
-  RecentBlocksHistory,
+  RecentBlocks,
   type State,
   tryAsPerCore,
 } from "@typeberry/state";
@@ -132,7 +132,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           }),
           spec,
         ),
-        recentBlocks: beta ?? RecentBlocksHistory.empty(),
+        recentBlocks: beta ?? RecentBlocks.empty(),
         nextValidatorData: gamma.gamma_k,
         epochRoot: gamma.gamma_z,
         sealingKeySeries: TicketsOrKeys.toSafroleSealingKeys(gamma.gamma_s, spec),

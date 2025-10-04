@@ -26,7 +26,13 @@ import {
   initWasm,
 } from "@typeberry/crypto";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
-import { AvailabilityAssignment, State, tryAsPerCore, VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
+import {
+  AvailabilityAssignment,
+  type State,
+  tryAsPerCore,
+  VALIDATOR_META_BYTES,
+  ValidatorData,
+} from "@typeberry/state";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { Assurances, AssurancesError, type AssurancesInput } from "./assurances.js";
 import { copyAndUpdateState } from "./test.utils.js";
@@ -48,7 +54,9 @@ const DEFAULT_HEADER_HASH: HeaderHash = Bytes.parseBytes(
 ).asOpaque();
 
 describe("Assurances", () => {
-  const testAssignment = (data: (AvailabilityAssignment | null)[] = INITIAL_ASSIGNMENT.slice()): State['availabilityAssignment'] => tryAsPerCore(data, tinyChainSpec)
+  const testAssignment = (
+    data: (AvailabilityAssignment | null)[] = INITIAL_ASSIGNMENT.slice(),
+  ): State["availabilityAssignment"] => tryAsPerCore(data, tinyChainSpec);
 
   it("should perform a transition with empty state", async () => {
     const initialState = {
