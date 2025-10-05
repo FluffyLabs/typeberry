@@ -316,17 +316,16 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
   }
 
   updateServiceInfo(serviceId: ServiceId, newInfo: ServiceAccountInfo) {
-    const updates = this.stateUpdate.services.servicesUpdates.get(serviceId);
+    const existingUpdate = this.stateUpdate.services.servicesUpdates.get(serviceId);
 
-    if (updates?.action.kind === UpdateServiceKind.Create) {
+    if (existingUpdate?.action.kind === UpdateServiceKind.Create) {
       this.stateUpdate.services.servicesUpdates.set(
         serviceId,
         UpdateService.create({
           serviceInfo: newInfo,
-          lookupHistory: updates.action.lookupHistory,
+          lookupHistory: existingUpdate.action.lookupHistory,
         }),
       );
-
       return;
     }
 
