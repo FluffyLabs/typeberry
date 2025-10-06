@@ -7,13 +7,11 @@ import {
   tryAsServiceGas,
   tryAsServiceId,
 } from "@typeberry/block";
-import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
-import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
-import type { PerCore, ValidatorData } from "@typeberry/state";
+import type { AuthorizationQueue, PerCore, ValidatorData } from "@typeberry/state";
 import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
 import {
   type EjectError,
@@ -132,7 +130,7 @@ export class PartialStateMock implements PartialState {
 
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
-    authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
+    authQueue: AuthorizationQueue,
     authManager: ServiceId | null,
   ): Result<OK, UpdatePrivilegesError> {
     if (this.authQueueResponse.isOk) {

@@ -12,7 +12,7 @@ import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
-import type { ServicesUpdate, State } from "@typeberry/state";
+import type { ServicesUpdate, State, WithStateView } from "@typeberry/state";
 import {
   assertEmpty,
   Compatibility,
@@ -141,7 +141,7 @@ export class OnChain {
 
   constructor(
     public readonly chainSpec: ChainSpec,
-    public readonly state: State,
+    public readonly state: State & WithStateView,
     blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
   ) {

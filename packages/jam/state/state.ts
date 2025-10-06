@@ -1,17 +1,17 @@
-import type { EntropyHash, PerEpochBlock, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
+import type { EntropyHash, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import type { FixedSizeArray, ImmutableHashSet, SortedArray } from "@typeberry/collections";
+import type { FixedSizeArray, SortedArray } from "@typeberry/collections";
 import type { U32 } from "@typeberry/numbers";
 import type { AccumulationOutput } from "./accumulation-output.js";
+import type { AccumulationQueue } from "./accumulation-queue.js";
 import type { AvailabilityAssignment } from "./assurances.js";
 import type { AuthorizationPool, AuthorizationQueue } from "./auth.js";
 import type { PerCore } from "./common.js";
 import type { DisputesRecords } from "./disputes.js";
-import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
 import type { PrivilegedServices } from "./privileged-services.js";
 import type { RecentBlocks } from "./recent-blocks.js";
+import type { RecentlyAccumulated } from "./recently-accumulated.js";
 import type { SafroleData } from "./safrole-data.js";
 import type { LookupHistorySlots, ServiceAccountInfo, StorageKey } from "./service.js";
 import type { StatisticsData } from "./statistics.js";
@@ -147,7 +147,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/165300165500
    */
-  readonly accumulationQueue: PerEpochBlock<readonly NotYetAccumulatedReport[]>;
+  readonly accumulationQueue: AccumulationQueue;
 
   /**
    * `ξ xi`: In order to know which work-packages have been
@@ -157,7 +157,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/161a00161d00
    */
-  readonly recentlyAccumulated: PerEpochBlock<ImmutableHashSet<WorkPackageHash>>;
+  readonly recentlyAccumulated: RecentlyAccumulated;
 
   /*
    * `γₐ gamma_a`: The ticket accumulator - a series of highest-scoring ticket identifiers to be

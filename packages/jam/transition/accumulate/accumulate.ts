@@ -27,12 +27,12 @@ import {
   type AutoAccumulate,
   accumulationOutputComparator,
   hashComparator,
+  type NotYetAccumulatedReport,
   PrivilegedServices,
   ServiceAccountInfo,
   type ServicesUpdate,
   tryAsPerCore,
 } from "@typeberry/state";
-import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { assertEmpty, Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/index.js";

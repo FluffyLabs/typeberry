@@ -1,3 +1,4 @@
+import { codecPerValidator } from "@typeberry/block";
 import type { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec, type DescribedBy } from "@typeberry/codec";
 import {
@@ -50,3 +51,5 @@ export class ValidatorData extends WithDebug {
 }
 
 export type ValidatorDataView = DescribedBy<typeof ValidatorData.Codec.View>;
+
+export const validatorsDataCodec = codecPerValidator(ValidatorData.Codec);

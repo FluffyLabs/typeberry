@@ -36,6 +36,7 @@ import {
 } from "@typeberry/crypto";
 import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import type { AuthorizationPool, NotYetAccumulatedReport, PerCore } from "@typeberry/state";
 import {
   AvailabilityAssignment,
   ENTROPY_ENTRIES,
@@ -46,7 +47,6 @@ import {
   VALIDATOR_META_BYTES,
   ValidatorData,
 } from "@typeberry/state";
-import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { RecentBlocks } from "@typeberry/state/recent-blocks.js";
 import { asOpaqueType } from "@typeberry/utils";
 import { Reports, type ReportsState } from "./reports.js";
@@ -256,7 +256,7 @@ function newReportsState({
   });
 }
 
-function getAuthPools(source: number[], spec: ChainSpec): ReportsState["authPools"] {
+function getAuthPools(source: number[], spec: ChainSpec): PerCore<AuthorizationPool> {
   return tryAsPerCore(
     [
       asOpaqueType(source.map((x) => Bytes.fill(HASH_SIZE, x).asOpaque())),

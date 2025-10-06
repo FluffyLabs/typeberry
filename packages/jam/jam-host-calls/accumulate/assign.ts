@@ -1,5 +1,4 @@
 import { type ServiceId, tryAsCoreIndex } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import { codec, Decoder } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
@@ -7,6 +6,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/state";
 import { assertNever, safeAllocUint8Array } from "@typeberry/utils";
 import { type PartialState, UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
@@ -59,7 +59,7 @@ export class Assign implements HostCallHandler {
     const coreIndex = tryAsCoreIndex(Number(maybeCoreIndex));
 
     const decoder = Decoder.fromBlob(res);
-    const authQueue = decoder.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
+    const authQueue = decoder.sequenceFixLen(codec.bytes(HASH_SIZE).asOpaque(), AUTHORIZATION_QUEUE_SIZE);
     const fixedSizeAuthQueue = FixedSizeArray.new(authQueue, AUTHORIZATION_QUEUE_SIZE);
 
     const result = this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, authManager);

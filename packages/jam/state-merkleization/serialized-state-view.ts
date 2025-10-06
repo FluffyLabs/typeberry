@@ -1,14 +1,14 @@
 import type { ServiceId } from "@typeberry/block";
-import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
+import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { type CodecWithView, Decoder, type SequenceView } from "@typeberry/codec";
-import type { ImmutableHashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type {
+  AccumulationQueueView,
   AuthorizationPool,
   AuthorizationQueue,
   AvailabilityAssignmentsView,
-  NotYetAccumulatedReport,
   RecentBlocksView,
+  RecentlyAccumulatedView,
   SafroleDataView,
   ServiceAccountInfoView,
   StatisticsDataView,
@@ -69,11 +69,11 @@ export class SerializedStateView<T extends SerializedStateBackend> implements St
     return this.retrieveView(serialize.statistics, "statisticsView");
   }
 
-  accumulationQueueView(): SequenceView<readonly NotYetAccumulatedReport[]> {
+  accumulationQueueView(): AccumulationQueueView {
     return this.retrieveView(serialize.accumulationQueue, "accumulationQueueView");
   }
 
-  recentlyAccumulatedView(): SequenceView<ImmutableHashSet<WorkPackageHash>> {
+  recentlyAccumulatedView(): RecentlyAccumulatedView {
     return this.retrieveView(serialize.recentlyAccumulated, "recentlyAccumulatedView");
   }
 

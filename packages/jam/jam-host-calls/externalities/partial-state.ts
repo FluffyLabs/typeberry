@@ -1,11 +1,10 @@
 import type { CodeHash, CoreIndex, PerValidator, ServiceGas, ServiceId, TimeSlot } from "@typeberry/block";
-import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants.js";
+import { W_T } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
-import type { FixedSizeArray } from "@typeberry/collections";
-import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
+import type { OpaqueHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
-import type { LookupHistorySlots, PerCore, ValidatorData } from "@typeberry/state";
+import type { AuthorizationQueue, LookupHistorySlots, PerCore, ValidatorData } from "@typeberry/state";
 import type { OK, Result } from "@typeberry/utils";
 
 /** Size of the transfer memo. */
@@ -251,7 +250,7 @@ export interface PartialState {
   /** Update authorization queue for given core and authorize a service for this core. */
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
-    authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
+    authQueue: AuthorizationQueue,
     authManager: ServiceId | null,
   ): Result<OK, UpdatePrivilegesError>;
 

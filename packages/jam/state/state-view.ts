@@ -1,20 +1,20 @@
 import type { ServiceId } from "@typeberry/block";
-import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
+import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import type { SequenceView } from "@typeberry/codec";
-import type { ImmutableHashSet } from "@typeberry/collections";
+import type { AccumulationQueueView } from "./accumulation-queue.js";
 import type { AvailabilityAssignmentsView } from "./assurances.js";
 import type { AuthorizationPool, AuthorizationQueue } from "./auth.js";
-import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
 import type { RecentBlocksView } from "./recent-blocks.js";
+import type { RecentlyAccumulatedView } from "./recently-accumulated.js";
 import type { SafroleDataView } from "./safrole-data.js";
 import type { ServiceAccountInfoView } from "./service.js";
 import type { StatisticsDataView } from "./statistics.js";
 import type { ValidatorData, ValidatorDataView } from "./validator-data.js";
 
 /** Additional marker interface, when state view is supported/required. */
-export type WithStateView = {
+export type WithStateView<V = StateView> = {
   /** Get view of the state. */
-  view(): StateView;
+  view(): V;
 };
 
 /**
@@ -97,7 +97,7 @@ export type StateView = {
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/165300165500
    */
-  accumulationQueueView(): SequenceView<readonly NotYetAccumulatedReport[]>;
+  accumulationQueueView(): AccumulationQueueView;
 
   /**
    * `ξ xi`: In order to know which work-packages have been
@@ -107,7 +107,7 @@ export type StateView = {
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/161a00161d00
    */
-  recentlyAccumulatedView(): SequenceView<ImmutableHashSet<WorkPackageHash>>;
+  recentlyAccumulatedView(): RecentlyAccumulatedView;
 
   /*
    * `γ gamma`: Safrole data.

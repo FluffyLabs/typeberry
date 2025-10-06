@@ -1,6 +1,5 @@
 import {
   type EntropyHash,
-  type PerEpochBlock,
   type PerValidator,
   type ServiceId,
   type TimeSlot,
@@ -10,9 +9,8 @@ import {
   tryAsTimeSlot,
   type WorkReportHash,
 } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE, type MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
+import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import type { Ticket } from "@typeberry/block/tickets.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { codec } from "@typeberry/codec";
@@ -21,7 +19,6 @@ import {
   FixedSizeArray,
   HashDictionary,
   HashSet,
-  type ImmutableHashSet,
   type KnownSizeArray,
   SortedArray,
   SortedSet,
@@ -33,12 +30,15 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { asOpaqueType, assertNever, check, OK, Result, WithDebug } from "@typeberry/utils";
 import { type AccumulationOutput, accumulationOutputComparator } from "./accumulation-output.js";
+import type { AccumulationQueue } from "./accumulation-queue.js";
 import type { AvailabilityAssignment } from "./assurances.js";
+import { AUTHORIZATION_QUEUE_SIZE, type AuthorizationPool, type AuthorizationQueue } from "./auth.js";
 import { type PerCore, tryAsPerCore } from "./common.js";
 import { DisputesRecords, hashComparator } from "./disputes.js";
-import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
+import { InMemoryStateView } from "./in-memory-state-view.js";
 import { PrivilegedServices } from "./privileged-services.js";
 import { RecentBlocks } from "./recent-blocks.js";
+import type { RecentlyAccumulated } from "./recently-accumulated.js";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "./safrole-data.js";
 import {
   LookupHistoryItem,
@@ -59,6 +59,7 @@ import {
   type UpdateStorage,
   UpdateStorageKind,
 } from "./state-update.js";
+import type { StateView, WithStateView } from "./state-view.js";
 import { CoreStatistics, StatisticsData, ValidatorStatistics } from "./statistics.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "./validator-data.js";
 
@@ -178,7 +179,7 @@ export class InMemoryService extends WithDebug implements Service {
 /**
  * A special version of state, stored fully in-memory.
  */
-export class InMemoryState extends WithDebug implements State, EnumerableState {
+export class InMemoryState extends WithDebug implements State, WithStateView, EnumerableState {
   /** Create a new `InMemoryState` by providing all required fields. */
   static create(state: InMemoryStateFields) {
     return new InMemoryState(state);
@@ -405,12 +406,12 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
   disputesRecords: DisputesRecords;
   timeslot: TimeSlot;
   entropy: FixedSizeArray<EntropyHash, ENTROPY_ENTRIES>;
-  authPools: PerCore<KnownSizeArray<AuthorizerHash, `At most ${typeof MAX_AUTH_POOL_SIZE}`>>;
-  authQueues: PerCore<FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>>;
+  authPools: PerCore<AuthorizationPool>;
+  authQueues: PerCore<AuthorizationQueue>;
   recentBlocks: RecentBlocks;
   statistics: StatisticsData;
-  accumulationQueue: PerEpochBlock<readonly NotYetAccumulatedReport[]>;
-  recentlyAccumulated: PerEpochBlock<ImmutableHashSet<WorkPackageHash>>;
+  accumulationQueue: AccumulationQueue;
+  recentlyAccumulated: RecentlyAccumulated;
   ticketsAccumulator: KnownSizeArray<Ticket, "0...EpochLength">;
   sealingKeySeries: SafroleSealingKeys;
   epochRoot: BandersnatchRingRoot;
@@ -448,6 +449,10 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     this.privilegedServices = s.privilegedServices;
     this.accumulationOutputLog = s.accumulationOutputLog;
     this.services = s.services;
+  }
+
+  view(): StateView {
+    return new InMemoryStateView(this);
   }
 
   /**

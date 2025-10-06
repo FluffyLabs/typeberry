@@ -7,7 +7,6 @@ import {
   tryAsTimeSlot,
   type WorkReportHash,
 } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { Ticket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
@@ -20,6 +19,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
 import {
+  AUTHORIZATION_QUEUE_SIZE,
   AvailabilityAssignment,
   accumulationOutputComparator,
   BlockState,
