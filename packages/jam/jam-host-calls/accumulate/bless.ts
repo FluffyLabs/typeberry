@@ -6,7 +6,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { tryAsPerCore } from "@typeberry/state";
-import { asOpaqueType, assertNever, safeAllocUint8Array } from "@typeberry/utils";
+import { asOpaqueType, assertNever, Compatibility, GpVersion, safeAllocUint8Array } from "@typeberry/utils";
 import { type PartialState, UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -33,7 +33,9 @@ const serviceIdAndGasCodec = codec.object({
 export class Bless implements HostCallHandler {
   index = tryAsHostCallIndex(14);
   basicGasCost = tryAsSmallGas(10);
-  tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10, 11);
+  tracedRegisters = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+    ? traceRegisters(IN_OUT_REG, 8, 9, 10, 11, 12)
+    : traceRegisters(IN_OUT_REG, 8, 9, 10, 11);
 
   constructor(
     public readonly currentServiceId: ServiceId,
@@ -49,14 +51,15 @@ export class Bless implements HostCallHandler {
     // `m`: manager service (can change privileged services)
     const manager = getServiceId(regs.get(IN_OUT_REG));
     // `a`: manages authorization queue
-    // NOTE It can be either ServiceId (pre GP 067) or memory index (GP ^067)
     const authorization = regs.get(8);
     // `v`: manages validator keys
-    const validator = getServiceId(regs.get(9));
+    const delegator = getServiceId(regs.get(9));
+    // `r`: manages creation of new services with id within protected range
+    const registrar = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? getServiceId(regs.get(10)) : null;
     // `o`: memory offset
-    const sourceStart = regs.get(10);
+    const sourceStart = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? regs.get(11) : regs.get(10);
     // `n`: number of items in the auto-accumulate dictionary
-    const numberOfItems = regs.get(11);
+    const numberOfItems = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? regs.get(12) : regs.get(11);
 
     /*
      * `z`: array of key-value pairs serviceId -> gas that auto-accumulate every block
@@ -71,7 +74,7 @@ export class Bless implements HostCallHandler {
       decoder.resetTo(0);
       const memoryReadResult = memory.loadInto(result, memIndex);
       if (memoryReadResult.isError) {
-        logger.trace`BLESS(${manager}, ${validator}) <- PANIC`;
+        logger.trace`BLESS(${manager}, ${delegator}, ${registrar}) <- PANIC`;
         return PvmExecution.Panic;
       }
 
@@ -85,10 +88,11 @@ export class Bless implements HostCallHandler {
     const authorizersDecoder = Decoder.fromBlob(res);
     const memoryReadResult = memory.loadInto(res, authorization);
     if (memoryReadResult.isError) {
-      logger.trace`BLESS(${manager}, ${validator}, ${autoAccumulateEntries}) <- PANIC`;
+      logger.trace`BLESS(${manager}, ${delegator}, ${registrar}, ${autoAccumulateEntries}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
+    // `a`
     const authorizers = tryAsPerCore(
       authorizersDecoder.sequenceFixLen(codec.u32.asOpaque<ServiceId>(), this.chainSpec.coresCount),
       this.chainSpec,
@@ -97,12 +101,13 @@ export class Bless implements HostCallHandler {
     const updateResult = this.partialState.updatePrivilegedServices(
       manager,
       authorizers,
-      validator,
+      delegator,
+      registrar,
       autoAccumulateEntries,
     );
 
     if (updateResult.isOk) {
-      logger.trace`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries}) <- OK`;
+      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulateEntries}) <- OK`;
       regs.set(IN_OUT_REG, HostCallResult.OK);
       return;
     }
@@ -110,13 +115,13 @@ export class Bless implements HostCallHandler {
     const e = updateResult.error;
 
     if (e === UpdatePrivilegesError.UnprivilegedService) {
-      logger.trace`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries}) <- HUH`;
+      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulateEntries}) <- HUH`;
       regs.set(IN_OUT_REG, HostCallResult.HUH);
       return;
     }
 
     if (e === UpdatePrivilegesError.InvalidServiceId) {
-      logger.trace`BLESS(${manager}, ${authorizers}, ${validator}, ${autoAccumulateEntries}) <- WHO`;
+      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulateEntries}) <- WHO`;
       regs.set(IN_OUT_REG, HostCallResult.WHO);
       return;
     }

@@ -261,14 +261,16 @@ export interface PartialState {
    * `m`: manager service (can change privileged services)
    * `a`: manages authorization queue
    * `v`: manages validator keys
-   * `g`: collection of serviceId -> gas that auto-accumulate every block
+   * `r`: manages create new services in protected id range.
+   * `z`: collection of serviceId -> gas that auto-accumulate every block
    *
    */
   updatePrivilegedServices(
     m: ServiceId | null,
     a: PerCore<ServiceId>,
     v: ServiceId | null,
-    g: [ServiceId, ServiceGas][],
+    r: ServiceId | null,
+    z: [ServiceId, ServiceGas][],
   ): Result<OK, UpdatePrivilegesError>;
 
   /** Yield accumulation trie result hash. */
