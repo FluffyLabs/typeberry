@@ -30,6 +30,65 @@ import { GAS_TO_INVOKE_WORK_REPORT } from "../accumulate/accumulate-state.js";
 import { Operand } from "../accumulate/operand.js";
 import { REPORT_TIMEOUT_GRACE_PERIOD } from "../assurances.js";
 
+enum TransferOperandKind {
+  OPERAND = 0,
+  TRANSFER = 1,
+}
+
+export type TransferOrOperand =
+  | {
+      kind: TransferOperandKind.OPERAND;
+      value: Operand;
+    }
+  | {
+      kind: TransferOperandKind.TRANSFER;
+      value: PendingTransfer;
+    };
+
+const TRANSFER_OR_OPERAND = codec.custom<TransferOrOperand>(
+  {
+    name: "TransferOrOperand",
+    sizeHint: { bytes: 1, isExact: false },
+  },
+  (e, x) => {
+    e.varU32(tryAsU32(x.kind));
+    if (x.kind === TransferOperandKind.OPERAND) {
+      e.object(Operand.Codec, x.value);
+    }
+
+    if (x.kind === TransferOperandKind.TRANSFER) {
+      e.object(PendingTransfer.Codec, x.value);
+    }
+  },
+  (d) => {
+    const kind = d.varU32();
+    if (kind === TransferOperandKind.OPERAND) {
+      return {
+        kind: TransferOperandKind.OPERAND,
+        value: d.object(Operand.Codec),
+      };
+    }
+
+    if (kind === TransferOperandKind.TRANSFER) {
+      return { kind: TransferOperandKind.TRANSFER, value: d.object(PendingTransfer.Codec) };
+    }
+
+    throw new Error(`Unable to decode TransferOrOperand. Invalid kind: ${kind}.`);
+  },
+  (s) => {
+    const kind = s.decoder.varU32();
+    if (kind === TransferOperandKind.OPERAND) {
+      s.object(Operand.Codec);
+    }
+
+    if (kind === TransferOperandKind.TRANSFER) {
+      s.object(PendingTransfer.Codec);
+    }
+  },
+);
+
+const TRANSFERS_AND_OPERANDS = codec.sequenceVarLen(TRANSFER_OR_OPERAND);
+
 // https://github.com/gavofyork/graypaper/pull/414
 // 0.7.0 encoding is used for prior versions as well.
 const CONSTANTS_CODEC = codec.object({
@@ -119,28 +178,44 @@ function getEncodedConstants(chainSpec: ChainSpec) {
 
 enum FetchContext {
   Accumulate = 0,
-  OnTransfer = 1,
+  /** @deprecated since 0.7.1 */
+  LegacyAccumulate = 1,
+  /** @deprecated since 0.7.1 */
+  LegacyOnTransfer = 2,
 }
 
-type AccumulateFetchData = {
-  context: FetchContext.Accumulate;
+type LegacyAccumulateFetchData = {
+  context: FetchContext.LegacyAccumulate;
   entropy: EntropyHash;
   operands: Operand[];
 };
 
-type OnTransferFetchData = {
-  context: FetchContext.OnTransfer;
+type LegacyOnTransferFetchData = {
+  context: FetchContext.LegacyOnTransfer;
   entropy: EntropyHash;
   transfers: PendingTransfer[];
 };
 
-type FetchData = AccumulateFetchData | OnTransferFetchData;
+type AccumulateFetchData = {
+  context: FetchContext.Accumulate;
+  entropy: EntropyHash;
+  transfers: PendingTransfer[];
+  operands: Operand[];
+};
+
+type FetchData = LegacyAccumulateFetchData | LegacyOnTransferFetchData | AccumulateFetchData;
 
 export class FetchExternalities implements IFetchExternalities {
   private constructor(
     private fetchData: FetchData,
     private chainSpec: ChainSpec,
   ) {}
+  static createForPre071Accumulate(
+    fetchData: Omit<LegacyAccumulateFetchData, "context">,
+    chainSpec: ChainSpec,
+  ): FetchExternalities {
+    return new FetchExternalities({ context: FetchContext.LegacyAccumulate, ...fetchData }, chainSpec);
+  }
 
   static createForAccumulate(
     fetchData: Omit<AccumulateFetchData, "context">,
@@ -150,10 +225,10 @@ export class FetchExternalities implements IFetchExternalities {
   }
 
   static createForOnTransfer(
-    fetchData: Omit<OnTransferFetchData, "context">,
+    fetchData: Omit<LegacyOnTransferFetchData, "context">,
     chainSpec: ChainSpec,
   ): FetchExternalities {
-    return new FetchExternalities({ context: FetchContext.OnTransfer, ...fetchData }, chainSpec);
+    return new FetchExternalities({ context: FetchContext.LegacyOnTransfer, ...fetchData }, chainSpec);
   }
 
   constants(): BytesBlob {
@@ -210,62 +285,99 @@ export class FetchExternalities implements IFetchExternalities {
   }
 
   allOperands(): BytesBlob | null {
-    if (this.fetchData.context !== FetchContext.Accumulate) {
-      return null;
+    if (this.fetchData.context === FetchContext.LegacyAccumulate) {
+      const operands = this.fetchData.operands;
+
+      return Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), operands, this.chainSpec);
     }
 
-    const operands = this.fetchData.operands;
-
-    return Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), operands, this.chainSpec);
+    return null;
   }
 
   oneOperand(operandIndex: U64): BytesBlob | null {
-    if (this.fetchData.context !== FetchContext.Accumulate) {
-      return null;
+    if (this.fetchData.context === FetchContext.LegacyAccumulate) {
+      const { operands } = this.fetchData;
+
+      if (operandIndex >= 2n ** 32n) {
+        return null;
+      }
+
+      const operand = operands[Number(operandIndex)];
+
+      if (operand === undefined) {
+        return null;
+      }
+
+      return Encoder.encodeObject(Operand.Codec, operand, this.chainSpec);
     }
 
-    const { operands } = this.fetchData;
-
-    if (operandIndex >= 2n ** 32n) {
-      return null;
-    }
-
-    const operand = operands[Number(operandIndex)];
-
-    if (operand === undefined) {
-      return null;
-    }
-
-    return Encoder.encodeObject(Operand.Codec, operand, this.chainSpec);
+    return null;
   }
 
   allTransfers(): BytesBlob | null {
-    if (this.fetchData.context !== FetchContext.OnTransfer) {
-      return null;
+    if (this.fetchData.context === FetchContext.LegacyOnTransfer) {
+      const { transfers } = this.fetchData;
+
+      return Encoder.encodeObject(codec.sequenceVarLen(PendingTransfer.Codec), transfers, this.chainSpec);
     }
 
-    const { transfers } = this.fetchData;
-
-    return Encoder.encodeObject(codec.sequenceVarLen(PendingTransfer.Codec), transfers, this.chainSpec);
+    return null;
   }
 
   oneTransfer(transferIndex: U64): BytesBlob | null {
-    if (this.fetchData.context !== FetchContext.OnTransfer) {
-      return null;
+    if (this.fetchData.context === FetchContext.LegacyOnTransfer) {
+      const { transfers } = this.fetchData;
+
+      if (transferIndex >= 2n ** 32n) {
+        return null;
+      }
+
+      const transfer = transfers[Number(transferIndex)];
+
+      if (transfer === undefined) {
+        return null;
+      }
+
+      return Encoder.encodeObject(PendingTransfer.Codec, transfer, this.chainSpec);
     }
 
-    const { transfers } = this.fetchData;
+    return null;
+  }
 
-    if (transferIndex >= 2n ** 32n) {
-      return null;
+  allTransfersAndOperands(): BytesBlob | null {
+    if (this.fetchData.context === FetchContext.Accumulate) {
+      const { transfers, operands } = this.fetchData;
+      const transfersAndOperands: TransferOrOperand[] = transfers
+        .map((transfer): TransferOrOperand => ({ kind: TransferOperandKind.TRANSFER, value: transfer }))
+        .concat(operands.map((operand): TransferOrOperand => ({ kind: TransferOperandKind.OPERAND, value: operand })));
+
+      return Encoder.encodeObject(TRANSFERS_AND_OPERANDS, transfersAndOperands, this.chainSpec);
     }
 
-    const transfer = transfers[Number(transferIndex)];
+    return null;
+  }
 
-    if (transfer === undefined) {
-      return null;
+  oneTransferOrOperand(index: U64): BytesBlob | null {
+    if (this.fetchData.context === FetchContext.Accumulate) {
+      const { operands, transfers } = this.fetchData;
+
+      if (index >= operands.length + transfers.length) {
+        return null;
+      }
+
+      const kind = index < operands.length ? TransferOperandKind.OPERAND : TransferOperandKind.TRANSFER;
+      const transferOrOperand =
+        kind === TransferOperandKind.OPERAND
+          ? ({ kind: TransferOperandKind.OPERAND, value: operands[Number(index)] } as const)
+          : ({ kind: TransferOperandKind.TRANSFER, value: transfers[Number(index) - operands.length] } as const);
+
+      if (transferOrOperand.value === undefined) {
+        return null;
+      }
+
+      return Encoder.encodeObject(TRANSFER_OR_OPERAND, transferOrOperand, this.chainSpec);
     }
 
-    return Encoder.encodeObject(PendingTransfer.Codec, transfer, this.chainSpec);
+    return null;
   }
 }
