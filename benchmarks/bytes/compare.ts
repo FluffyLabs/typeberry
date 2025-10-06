@@ -25,6 +25,36 @@ function isEqualTo<T extends number>(
   return true;
 }
 
+export function leBytesAsU48(uint8Array: Uint8Array): number {
+  return (
+    uint8Array[0] |
+    (uint8Array[1] << 8) |
+    (uint8Array[2] << 16) |
+    (uint8Array[3] << 24) |
+    (uint8Array[4] << 32) |
+    (uint8Array[5] << 40)
+  );
+}
+
+function isEqualToU48<T extends number>(that: Bytes<T>, other: Bytes<T>) {
+  const len = that.length;
+  if (len !== other.length) {
+    return false;
+  }
+
+  const a = that;
+  const b = other;
+  for (let i = 0; i < len; i += 6) {
+    const aSlice = a.raw.subarray(i, i + 6);
+    const bSlice = b.raw.subarray(i, i + 6);
+    if (leBytesAsU48(aSlice) !== leBytesAsU48(bSlice)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 function generateHash<T extends number>(len: T): Bytes<T> {
   const result: number[] = [];
   for (let i = 0; i < len; i += 1) {
@@ -70,6 +100,15 @@ export default function run() {
         const x = arr[arr.length - 1];
         for (const y of arr) {
           x.isEqualTo(y);
+        }
+      };
+    }),
+
+    add("Comparing U48 numbers", () => {
+      return () => {
+        const x = arr[arr.length - 1];
+        for (const y of arr) {
+          isEqualToU48(x, y);
         }
       };
     }),
