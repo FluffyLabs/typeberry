@@ -92,8 +92,8 @@ class TestState {
       ),
       privilegedServices: PrivilegedServices.create({
         manager: privileges.bless,
-        authManager: tryAsPerCore(privileges.assign, chainSpec),
-        validatorsManager: privileges.designate,
+        assigners: tryAsPerCore(privileges.assign, chainSpec),
+        delegator: privileges.designate,
         autoAccumulateServices: privileges.always_acc.map(({ gas, id }) =>
           AutoAccumulate.create({ gasLimit: gas, service: id }),
         ),

@@ -241,9 +241,9 @@ const createService = (serviceId: ServiceId, hash: OpaqueHash, blob: BytesBlob, 
 
 const createPrivilegedServices = (spec: ChainSpec) =>
   PrivilegedServices.create({
-    authManager: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
+    assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
     manager: tryAsServiceId(0),
-    validatorsManager: tryAsServiceId(0),
+    delegator: tryAsServiceId(0),
     autoAccumulateServices: [],
   });
 

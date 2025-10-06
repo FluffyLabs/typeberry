@@ -555,8 +555,8 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
       privilegedServices: PrivilegedServices.create({
         manager: tryAsServiceId(0),
-        authManager: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
-        validatorsManager: tryAsServiceId(0),
+        assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
+        delegator: tryAsServiceId(0),
         autoAccumulateServices: [],
       }),
       accumulationOutputLog: SortedArray.fromArray(accumulationOutputComparator, []),

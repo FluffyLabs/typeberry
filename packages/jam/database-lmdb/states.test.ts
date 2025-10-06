@@ -89,8 +89,8 @@ describe("LMDB States database", () => {
       timeslot: tryAsTimeSlot(15),
       privilegedServices: PrivilegedServices.create({
         manager: tryAsServiceId(1),
-        authManager: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(2)), spec),
-        validatorsManager: tryAsServiceId(3),
+        assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(2)), spec),
+        delegator: tryAsServiceId(3),
         autoAccumulateServices: [],
       }),
       servicesUpdates: [

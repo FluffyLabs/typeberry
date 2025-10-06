@@ -354,8 +354,8 @@ export const testState = (): InMemoryState => {
     accumulationOutputLog: SortedArray.fromArray(accumulationOutputComparator, []),
     privilegedServices: PrivilegedServices.create({
       manager: tryAsServiceId(0),
-      authManager: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
-      validatorsManager: tryAsServiceId(0),
+      assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
+      delegator: tryAsServiceId(0),
       autoAccumulateServices: [],
     }),
   });

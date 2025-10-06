@@ -252,7 +252,7 @@ export interface PartialState {
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
-    authManager: ServiceId | null,
+    assigners: ServiceId | null,
   ): Result<OK, UpdatePrivilegesError>;
 
   /**

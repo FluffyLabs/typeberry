@@ -47,8 +47,8 @@ type JsonStateDump = {
   tau: State["timeslot"];
   chi: {
     chi_m: PrivilegedServices["manager"];
-    chi_a: PrivilegedServices["authManager"];
-    chi_v: PrivilegedServices["validatorsManager"];
+    chi_a: PrivilegedServices["assigners"];
+    chi_v: PrivilegedServices["delegator"];
     chi_g: PrivilegedServices["autoAccumulateServices"] | null;
   };
   pi: JsonStatisticsData;
@@ -146,8 +146,8 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
         timeslot: tau,
         privilegedServices: PrivilegedServices.create({
           manager: chi.chi_m,
-          authManager: chi.chi_a,
-          validatorsManager: chi.chi_v,
+          assigners: chi.chi_a,
+          delegator: chi.chi_v,
           autoAccumulateServices: chi.chi_g ?? [],
         }),
         statistics: JsonStatisticsData.toStatisticsData(spec, pi),

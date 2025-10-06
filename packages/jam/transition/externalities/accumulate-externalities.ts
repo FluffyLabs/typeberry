@@ -476,10 +476,10 @@ export class AccumulateExternalities
 
   updateValidatorsData(validatorsData: PerValidator<ValidatorData>): Result<OK, UnprivilegedError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/362802362d02?v=0.6.7 */
-    const validatorsManager = this.updatedState.getPrivilegedServices().validatorsManager;
+    const delegator = this.updatedState.getPrivilegedServices().delegator;
 
-    if (validatorsManager !== this.currentServiceId) {
-      logger.trace`Current service id (${this.currentServiceId}) is not a validators manager. (expected: ${validatorsManager}) and cannot update validators data. Ignoring`;
+    if (delegator !== this.currentServiceId) {
+      logger.trace`Current service id (${this.currentServiceId}) is not a validators manager. (expected: ${delegator}) and cannot update validators data. Ignoring`;
       return Result.error(UnprivilegedError);
     }
 
@@ -495,20 +495,20 @@ export class AccumulateExternalities
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>,
-    authManager: ServiceId | null,
+    assigners: ServiceId | null,
   ): Result<OK, UpdatePrivilegesError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36a40136a401?v=0.6.7 */
 
     // NOTE `coreIndex` is already verified in the HC, so this is infallible.
-    const currentAuthManager = this.updatedState.getPrivilegedServices().authManager[coreIndex];
+    const currentassigners = this.updatedState.getPrivilegedServices().assigners[coreIndex];
 
-    if (currentAuthManager !== this.currentServiceId) {
-      logger.trace`Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentAuthManager}) and cannot update authorization queue. Ignoring`;
+    if (currentassigners !== this.currentServiceId) {
+      logger.trace`Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentassigners}) and cannot update authorization queue. Ignoring`;
 
       return Result.error(UpdatePrivilegesError.UnprivilegedService);
     }
 
-    if (authManager === null && Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
+    if (assigners === null && Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
       logger.trace`The new auth manager is not a valid service id. Ignoring`;
       return Result.error(UpdatePrivilegesError.InvalidServiceId);
     }
@@ -520,7 +520,7 @@ export class AccumulateExternalities
   updatePrivilegedServices(
     manager: ServiceId | null,
     authorizers: PerCore<ServiceId>,
-    validatorsManager: ServiceId | null,
+    delegator: ServiceId | null,
     autoAccumulate: [ServiceId, ServiceGas][],
   ): Result<OK, UpdatePrivilegesError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
@@ -530,14 +530,14 @@ export class AccumulateExternalities
       return Result.error(UpdatePrivilegesError.UnprivilegedService);
     }
 
-    if (manager === null || validatorsManager === null) {
+    if (manager === null || delegator === null) {
       return Result.error(UpdatePrivilegesError.InvalidServiceId);
     }
 
     this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
       manager,
-      authManager: authorizers,
-      validatorsManager,
+      assigners: authorizers,
+      delegator,
       autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) => AutoAccumulate.create({ service, gasLimit })),
     });
     return Result.ok(OK);
