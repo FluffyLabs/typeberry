@@ -12,7 +12,7 @@ import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import { codecPerCore, type PerCore, tryAsPerCore } from "@typeberry/state";
-import { Result } from "@typeberry/utils";
+import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
@@ -23,8 +23,9 @@ const RESULT_REG = 7;
 const MANAGER_REG = 7;
 const AUTHORIZATION_REG = 8;
 const VALIDATOR_REG = 9;
-const DICTIONARY_START = 10;
-const DICTIONARY_COUNT = 11;
+const REGISTRAR_REG = 10;
+const DICTIONARY_START = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? 11 : 10;
+const DICTIONARY_COUNT = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? 12 : 11;
 
 function prepareServiceGasEntires() {
   const entries: [ServiceId, ServiceGas][] = [];
