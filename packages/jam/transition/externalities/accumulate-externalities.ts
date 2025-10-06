@@ -74,7 +74,6 @@ const BASE_STORAGE_BYTES = tryAsU64(34);
 /** https://graypaper.fluffylabs.dev/#/ab2cdbd/447a00447a00?v=0.7.2 */
 const MIN_PUBLIC_SERVICE_INDEX = tryAsU32(2 ** 16);
 
-
 const logger = Logger.new(import.meta.filename, "externalities");
 
 export class AccumulateExternalities
@@ -172,7 +171,9 @@ export class AccumulateExternalities
           return currentServiceId;
         }
         // keep trying
-        currentServiceId = tryAsServiceId(((currentServiceId - MIN_PUBLIC_SERVICE_INDEX + 1 + mod) % mod) + MIN_PUBLIC_SERVICE_INDEX);
+        currentServiceId = tryAsServiceId(
+          ((currentServiceId - MIN_PUBLIC_SERVICE_INDEX + 1 + mod) % mod) + MIN_PUBLIC_SERVICE_INDEX,
+        );
       }
     } else {
       const mod = 2 ** 32 - 2 ** 9;
@@ -410,7 +411,7 @@ export class AccumulateExternalities
     accumulateMinGas: ServiceGas,
     onTransferMinGas: ServiceGas,
     gratisStorage: U64,
-    serviceId: ServiceId,
+    serviceId: U64,
   ): Result<ServiceId, NewServiceError> {
     // calculate the threshold. Storage is empty, one preimage requested.
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/115901115901?v=0.6.7
@@ -462,26 +463,28 @@ export class AccumulateExternalities
     });
 
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      if (serviceId !== null && serviceId < MIN_PUBLIC_SERVICE_INDEX && this.currentServiceId === this.updatedState.getPrivilegedServices().registrar) {
-        if (this.getServiceInfo(serviceId) !== null) {
+      if (
+        serviceId < MIN_PUBLIC_SERVICE_INDEX &&
+        this.currentServiceId === this.updatedState.getPrivilegedServices().registrar
+      ) {
+        // NOTE: It's safe to cast to `Number` here, bcs here service ID cannot be bigger than 2**16
+        const newServiceId = tryAsServiceId(Number(serviceId));
+        if (this.getServiceInfo(newServiceId) !== null) {
           return Result.error(NewServiceError.ServiceAlreadyExists);
         }
         // add the new service with selected ID
         // https://graypaper.fluffylabs.dev/#/ab2cdbd/36be0336c003?v=0.7.2
         this.updatedState.stateUpdate.services.servicesUpdates.push(
           UpdateService.create({
-            serviceId: serviceId,
+            serviceId: newServiceId,
             serviceInfo: newAccount,
             lookupHistory: newLookupItem,
           }),
         );
         // update the balance of current service
         // https://graypaper.fluffylabs.dev/#/ab2cdbd/36c20336c403?v=0.7.2
-        this.updatedState.updateServiceInfo(
-          this.currentServiceId,
-          updatedCurrentAccount,
-        );
-        return Result.ok(serviceId);
+        this.updatedState.updateServiceInfo(this.currentServiceId, updatedCurrentAccount);
+        return Result.ok(newServiceId);
       }
     }
 
@@ -498,10 +501,7 @@ export class AccumulateExternalities
     );
     // update the balance of current service
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/36ec0336ee03?v=0.7.2
-    this.updatedState.updateServiceInfo(
-      this.currentServiceId,
-      updatedCurrentAccount,
-    );
+    this.updatedState.updateServiceInfo(this.currentServiceId, updatedCurrentAccount);
 
     // update the next service id we are going to create next
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/36a70336a703?v=0.6.7
@@ -752,8 +752,7 @@ function bumpServiceId(serviceId: ServiceId): ServiceId {
   if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
     const mod = 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8;
     return tryAsServiceId(MIN_PUBLIC_SERVICE_INDEX + ((serviceId - MIN_PUBLIC_SERVICE_INDEX + 42 + mod) % mod));
-  } else {
-    const mod = 2 ** 32 - 2 ** 9;
-    return tryAsServiceId(2 ** 8 + ((serviceId - 2 ** 8 + 42 + mod) % mod));
   }
+  const mod = 2 ** 32 - 2 ** 9;
+  return tryAsServiceId(2 ** 8 + ((serviceId - 2 ** 8 + 42 + mod) % mod));
 }

@@ -10,7 +10,7 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
-import { Result } from "@typeberry/utils";
+import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { NewServiceError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
@@ -23,6 +23,7 @@ const CODE_LENGTH_REG = 8;
 const GAS_REG = 9;
 const BALANCE_REG = 10;
 const GRATIS_STORAGE_REG = 11;
+const SERVICE_ID_REG = 12;
 
 function prepareRegsAndMemory(
   codeHash: CodeHash,
@@ -30,6 +31,7 @@ function prepareRegsAndMemory(
   gas: U64,
   balance: U64,
   gratisStorage: U64,
+  serviceId: U64 = tryAsU64(2 ** 32 - 1),
   { skipCodeHash = false }: { skipCodeHash?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
@@ -39,6 +41,7 @@ function prepareRegsAndMemory(
   registers.set(GAS_REG, gas);
   registers.set(BALANCE_REG, balance);
   registers.set(GRATIS_STORAGE_REG, gratisStorage);
+  registers.set(SERVICE_ID_REG, serviceId);
 
   const builder = new MemoryBuilder();
 
@@ -53,11 +56,13 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: New", () => {
+  const itPost071 = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? it : it.skip;
+
   it("should create a new service", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);
-    accumulate.newServiceResponse = Result.ok(tryAsServiceId(23_000));
+    accumulate.newServiceResponse = Result.ok(tryAsServiceId(2 ** 20));
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),
@@ -70,10 +75,10 @@ describe("HostCalls: New", () => {
     await n.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(tryAsServiceId(Number(registers.get(RESULT_REG))), tryAsServiceId(23_000));
+    assert.deepStrictEqual(tryAsServiceId(Number(registers.get(RESULT_REG))), tryAsServiceId(2 ** 20));
     const gratisStorage = 1_024n;
     assert.deepStrictEqual(accumulate.newServiceCalled, [
-      [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, gratisStorage],
+      [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, gratisStorage, 2n ** 32n - 1n],
     ]);
   });
 
@@ -108,6 +113,7 @@ describe("HostCalls: New", () => {
       tryAsU64(2n ** 40n),
       tryAsU64(2n ** 50n),
       tryAsU64(1_024n),
+      tryAsU64(2 ** 32 - 1), // default service id
       { skipCodeHash: true },
     );
 
@@ -138,5 +144,80 @@ describe("HostCalls: New", () => {
     // then
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
     assert.deepStrictEqual(accumulate.newServiceCalled.length, 1);
+  });
+
+  itPost071("should create a new service with selected id", async () => {
+    const accumulate = new PartialStateMock();
+    const serviceId = tryAsServiceId(10); // service has registrar privilege
+    const n = new New(serviceId, accumulate);
+    accumulate.newServiceResponse = Result.ok(tryAsServiceId(42));
+    const { registers, memory } = prepareRegsAndMemory(
+      Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
+      tryAsU64(4_096n),
+      tryAsU64(2n ** 40n),
+      tryAsU64(2n ** 50n),
+      tryAsU64(1_024n),
+      tryAsU64(42n),
+    );
+
+    // when
+    await n.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(tryAsServiceId(Number(registers.get(RESULT_REG))), tryAsServiceId(42));
+    const gratisStorage = 1_024n;
+    assert.deepStrictEqual(accumulate.newServiceCalled, [
+      [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, gratisStorage, 42n],
+    ]);
+  });
+
+  itPost071("should create a new service with random id", async () => {
+    const accumulate = new PartialStateMock();
+    const serviceId = tryAsServiceId(10_000); // service does not have registrar privilege
+    const n = new New(serviceId, accumulate);
+    accumulate.newServiceResponse = Result.ok(tryAsServiceId(2 ** 20));
+    const { registers, memory } = prepareRegsAndMemory(
+      Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
+      tryAsU64(4_096n),
+      tryAsU64(2n ** 40n),
+      tryAsU64(2n ** 50n),
+      tryAsU64(1_024n),
+      tryAsU64(42n),
+    );
+
+    // when
+    await n.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(tryAsServiceId(Number(registers.get(RESULT_REG))), tryAsServiceId(2 ** 20));
+    const gratisStorage = 1_024n;
+    assert.deepStrictEqual(accumulate.newServiceCalled, [
+      [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, gratisStorage, 42n],
+    ]);
+  });
+
+  itPost071("should fail when trying to set selected id, but service already exists", async () => {
+    const accumulate = new PartialStateMock();
+    const serviceId = tryAsServiceId(10);
+    const n = new New(serviceId, accumulate);
+    accumulate.newServiceResponse = Result.error(NewServiceError.ServiceAlreadyExists);
+    const { registers, memory } = prepareRegsAndMemory(
+      Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
+      tryAsU64(4_096n),
+      tryAsU64(2n ** 40n),
+      tryAsU64(2n ** 50n),
+      tryAsU64(1_024n),
+      tryAsU64(serviceId),
+    );
+
+    // when
+    await n.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.FULL);
+    const gratisStorage = 1_024n;
+    assert.deepStrictEqual(accumulate.newServiceCalled, [
+      [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, gratisStorage, 10n],
+    ]);
   });
 });

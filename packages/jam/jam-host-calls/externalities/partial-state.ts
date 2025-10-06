@@ -233,6 +233,7 @@ export interface PartialState {
     gas: ServiceGas,
     allowance: ServiceGas,
     gratisStorage: U64,
+    serviceId: U64,
   ): Result<ServiceId, NewServiceError>;
 
   /** Upgrade code of currently running service. */

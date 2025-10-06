@@ -1,7 +1,7 @@
-import { tryAsServiceId, type ServiceGas, type ServiceId } from "@typeberry/block";
+import { type ServiceGas, type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
-import { codecPerCore, type PerCore } from "./common.js";
 import { Compatibility, GpVersion } from "@typeberry/utils";
+import { codecPerCore, type PerCore } from "./common.js";
 import { ignoreValueWithDefault } from "./service.js";
 
 /** Dictionary entry of services that auto-accumulate every block. */
@@ -32,7 +32,9 @@ export class PrivilegedServices {
     manager: codec.u32.asOpaque<ServiceId>(),
     assigners: codecPerCore(codec.u32.asOpaque<ServiceId>()),
     delegator: codec.u32.asOpaque<ServiceId>(),
-    registrar: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? codec.u32.asOpaque<ServiceId>() : ignoreValueWithDefault(tryAsServiceId(0)),
+    registrar: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+      ? codec.u32.asOpaque<ServiceId>()
+      : ignoreValueWithDefault(tryAsServiceId(0)),
     autoAccumulateServices: readonlyArray(codec.sequenceVarLen(AutoAccumulate.Codec)),
   });
 
