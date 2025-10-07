@@ -356,6 +356,7 @@ export const testState = (): InMemoryState => {
       manager: tryAsServiceId(0),
       assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
       delegator: tryAsServiceId(0),
+      registrar: tryAsServiceId(0),
       autoAccumulateServices: [],
     }),
   });
@@ -403,7 +404,7 @@ export const TEST_STATE_ROOT = Compatibility.selectIfGreaterOrEqual({
   versions: {
     [GpVersion.V0_6_7]: "0x1a7a9e304769a973af637617b07fab19d3836a62d603cb6bf116c79d79eaf32e",
     [GpVersion.V0_7_0]: "0xa48088ed900219e5115670c1dff1ae69396b8ca152f6a3d279d770114c458059",
-    [GpVersion.V0_7_1]: "0xec2ccd971b5c401e8486c68b35bc76ff416f5c9d950b0b6e774046b9c62d7d2b",
+    [GpVersion.V0_7_1]: "0x653358d16fbea29b45c820a2f69f84ce36948dc5be27d7e7aecdf4617d1d03a7",
   },
 });
 
@@ -492,7 +493,9 @@ export const TEST_STATE = [
   ["0x0b00000000000000000000000000000000000000000000000000000000000000", "0x10000000", "c11", ""],
   [
     "0x0c00000000000000000000000000000000000000000000000000000000000000",
-    "0x0000000000000000000000000000000000",
+    Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+      ? "0x000000000000000000000000000000000000000000"
+      : "0x0000000000000000000000000000000000",
     "c12",
     "",
   ],

@@ -553,13 +553,12 @@ export class AccumulateExternalities
     const currentassigners = this.updatedState.getPrivilegedServices().assigners[coreIndex];
 
     if (currentassigners !== this.currentServiceId) {
-      logger.trace`Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentassigners}) and cannot update authorization queue. Ignoring`;
-
+      logger.trace`Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentassigners}) and cannot update authorization queue.`;
       return Result.error(UpdatePrivilegesError.UnprivilegedService);
     }
 
     if (assigners === null && Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      logger.trace`The new auth manager is not a valid service id. Ignoring`;
+      logger.trace`The new auth manager is not a valid service id.`;
       return Result.error(UpdatePrivilegesError.InvalidServiceId);
     }
 
@@ -586,6 +585,7 @@ export class AccumulateExternalities
     }
 
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && registrar === null) {
+      logger.trace`The new register manager is not a valid service id.`;
       return Result.error(UpdatePrivilegesError.InvalidServiceId);
     }
 
@@ -593,7 +593,7 @@ export class AccumulateExternalities
       manager,
       assigners: authorizers,
       delegator,
-      registrar: registrar ?? tryAsServiceId(0),
+      registrar: registrar ?? tryAsServiceId(0), // introduced in 0.7.1
       autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) => AutoAccumulate.create({ service, gasLimit })),
     });
     return Result.ok(OK);

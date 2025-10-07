@@ -50,7 +50,7 @@ function prepareRegsAndMemory(
     manager,
     validator,
     registrar,
-  }: { skipDictionary?: boolean; skipAuth?: boolean; manager?: U64; validator?: U64, registrar?: U64 } = {},
+  }: { skipDictionary?: boolean; skipAuth?: boolean; manager?: U64; validator?: U64; registrar?: U64 } = {},
 ) {
   const memAuthStart = 2 ** 24;
   const memStart = 2 ** 16;

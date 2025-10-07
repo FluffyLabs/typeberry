@@ -244,6 +244,7 @@ const createPrivilegedServices = (spec: ChainSpec) =>
     assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
     manager: tryAsServiceId(0),
     delegator: tryAsServiceId(0),
+    registrar: tryAsServiceId(0),
     autoAccumulateServices: [],
   });
 

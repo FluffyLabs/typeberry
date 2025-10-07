@@ -1,4 +1,10 @@
-import { type EntropyHash, type PerEpochBlock, tryAsPerEpochBlock, tryAsServiceGas } from "@typeberry/block";
+import {
+  type EntropyHash,
+  type PerEpochBlock,
+  tryAsPerEpochBlock,
+  tryAsServiceGas,
+  tryAsServiceId,
+} from "@typeberry/block";
 import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { fromJson } from "@typeberry/block-json";
@@ -17,6 +23,7 @@ import {
   type State,
   tryAsPerCore,
 } from "@typeberry/state";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { JsonService } from "./accounts.js";
 import { accumulationOutput } from "./accumulation-output.js";
 import { availabilityAssignmentFromJson } from "./availability-assignment.js";
@@ -49,6 +56,7 @@ type JsonStateDump = {
     chi_m: PrivilegedServices["manager"];
     chi_a: PrivilegedServices["assigners"];
     chi_v: PrivilegedServices["delegator"];
+    chi_r?: PrivilegedServices["registrar"];
     chi_g: PrivilegedServices["autoAccumulateServices"] | null;
   };
   pi: JsonStatisticsData;
@@ -81,6 +89,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
         chi_m: "number",
         chi_a: json.array("number"),
         chi_v: "number",
+        chi_r: json.optional("number"),
         chi_g: json.nullable(
           json.array({
             service: "number",
@@ -113,6 +122,8 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
       theta,
       accounts,
     }): InMemoryState => {
+      if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && chi.chi_r === undefined)
+        throw new Error("Registrar is required in Privileges GP ^0.7.1");
       return InMemoryState.create({
         authPools: tryAsPerCore(
           alpha.map((perCore) => {
@@ -148,6 +159,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           manager: chi.chi_m,
           assigners: chi.chi_a,
           delegator: chi.chi_v,
+          registrar: chi.chi_r ?? tryAsServiceId(0),
           autoAccumulateServices: chi.chi_g ?? [],
         }),
         statistics: JsonStatisticsData.toStatisticsData(spec, pi),

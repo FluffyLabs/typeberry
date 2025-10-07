@@ -21,7 +21,7 @@ import { StateEntries } from "@typeberry/state-merkleization";
 import { InMemoryTrie, leafComparator } from "@typeberry/trie";
 import { getBlake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import type { TrieHasher } from "@typeberry/trie/nodesDb.js";
-import { deepEqual, OK, Result } from "@typeberry/utils";
+import { Compatibility, deepEqual, GpVersion, OK, Result } from "@typeberry/utils";
 import { LmdbRoot } from "./root.js";
 import { LmdbStates } from "./states.js";
 
@@ -91,6 +91,7 @@ describe("LMDB States database", () => {
         manager: tryAsServiceId(1),
         assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(2)), spec),
         delegator: tryAsServiceId(3),
+        registrar: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? tryAsServiceId(4) : tryAsServiceId(0),
         autoAccumulateServices: [],
       }),
       servicesUpdates: [
