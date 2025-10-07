@@ -52,7 +52,6 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
   UpdatePreimage,
-  UpdateService,
   type ValidatorData,
 } from "@typeberry/state";
 import { assertNever, Compatibility, check, GpVersion, OK, Result } from "@typeberry/utils";
@@ -425,23 +424,21 @@ export class AccumulateExternalities
 
     // add the new service
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/36cb0236cb02?v=0.6.7
-    this.updatedState.stateUpdate.services.servicesUpdates.set(
+    this.updatedState.stateUpdate.servicesUpdates.createService(
       newServiceId,
-      UpdateService.create({
-        serviceInfo: ServiceAccountInfo.create({
-          codeHash,
-          balance: thresholdForNew,
-          accumulateMinGas,
-          onTransferMinGas,
-          storageUtilisationBytes: bytes.value,
-          storageUtilisationCount: items,
-          gratisStorage,
-          created: this.currentTimeslot,
-          lastAccumulation: tryAsTimeSlot(0),
-          parentService: this.currentServiceId,
-        }),
-        lookupHistory: new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([])),
+      ServiceAccountInfo.create({
+        codeHash,
+        balance: thresholdForNew,
+        accumulateMinGas,
+        onTransferMinGas,
+        storageUtilisationBytes: bytes.value,
+        storageUtilisationCount: items,
+        gratisStorage,
+        created: this.currentTimeslot,
+        lastAccumulation: tryAsTimeSlot(0),
+        parentService: this.currentServiceId,
       }),
+      new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([])),
     );
     // update the balance of current service
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/364d03364d03?v=0.6.7
@@ -639,14 +636,14 @@ export class AccumulateExternalities
       }),
     );
     // and finally add an ejected service.
-    this.updatedState.stateUpdate.services.servicesRemoved.add(destination);
+    this.updatedState.stateUpdate.servicesUpdates.servicesRemoved.add(destination);
 
     // take care of the code preimage and its lookup history
     // Safe, because we know the preimage is valid, and it's the code of the service, which is bounded by maximal service code size anyway (much smaller than 2**32 bytes).
     const preimageLength = tryAsU32(Number(l));
-    const preimages = this.updatedState.stateUpdate.services.preimages.get(destination) ?? [];
+    const preimages = this.updatedState.stateUpdate.servicesUpdates.preimages.get(destination) ?? [];
     preimages.push(UpdatePreimage.remove({ hash: previousCodeHash, length: preimageLength }));
-    this.updatedState.stateUpdate.services.preimages.set(destination, preimages);
+    this.updatedState.stateUpdate.servicesUpdates.preimages.set(destination, preimages);
 
     return Result.ok(OK);
   }

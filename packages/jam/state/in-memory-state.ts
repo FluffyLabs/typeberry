@@ -52,12 +52,10 @@ import {
 import { ENTROPY_ENTRIES, type EnumerableState, type Service, type State } from "./state.js";
 import {
   type ServicesUpdate,
-  type UpdatePreimage,
   UpdatePreimageKind,
-  type UpdateService,
   UpdateServiceKind,
-  type UpdateStorage,
   UpdateStorageKind,
+  type Updates,
 } from "./state-update.js";
 import { CoreStatistics, StatisticsData, ValidatorStatistics } from "./statistics.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "./validator-data.js";
@@ -255,25 +253,17 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
    * Modify the state and apply a single state update.
    */
   applyUpdate(update: Partial<State & ServicesUpdate>): Result<OK, UpdateError> {
-    const { servicesRemoved, servicesUpdates, preimages, storage, ...rest } = update;
+    const { removed, updated, ...rest } = update;
     // just assign all other variables
     Object.assign(this, rest);
 
     // and update the services state
     let result: Result<OK, UpdateError>;
-    result = this.updateServices(servicesUpdates);
+    result = this.update(updated);
     if (result.isError) {
       return result;
     }
-    result = this.updatePreimages(preimages);
-    if (result.isError) {
-      return result;
-    }
-    result = this.updateStorage(storage);
-    if (result.isError) {
-      return result;
-    }
-    this.removeServices(servicesRemoved);
+    this.removeServices(removed);
 
     return Result.ok(OK);
   }
@@ -285,103 +275,18 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     }
   }
 
-  private updateStorage(storageUpdates: Map<ServiceId, UpdateStorage[]> | undefined): Result<OK, UpdateError> {
-    if (storageUpdates !== undefined) {
-      for (const [serviceId, updates] of storageUpdates.entries()) {
-        for (const update of updates) {
-          const { kind } = update.action;
-          const service = this.services.get(serviceId);
-          if (service === undefined) {
-            return Result.error(
-              UpdateError.NoService,
-              `Attempting to update storage of non-existing service: ${serviceId}`,
-            );
-          }
+  private update(allUpdates: Map<ServiceId, Updates> | undefined): Result<OK, UpdateError> {
+    if (allUpdates === undefined) return Result.ok(OK);
+    for (const [serviceId, updates] of allUpdates.entries()) {
+      const service = this.services.get(serviceId);
 
-          if (kind === UpdateStorageKind.Set) {
-            const { key, value } = update.action.storage;
-            service.data.storage.set(key.toString(), StorageItem.create({ key, value }));
-          } else if (kind === UpdateStorageKind.Remove) {
-            const { key } = update.action;
-            check`
-          ${service.data.storage.has(key.toString())}
-          Attempting to remove non-existing storage item at ${serviceId}: ${update.action.key}
-        `;
-            service.data.storage.delete(key.toString());
-          } else {
-            assertNever(kind);
-          }
-        }
-      }
-    }
-    return Result.ok(OK);
-  }
-
-  private updatePreimages(preimagesUpdates: Map<ServiceId, UpdatePreimage[]> | undefined): Result<OK, UpdateError> {
-    if (preimagesUpdates !== undefined) {
-      for (const [serviceId, updates] of preimagesUpdates.entries()) {
-        const service = this.services.get(serviceId);
-        if (service === undefined) {
-          return Result.error(
-            UpdateError.NoService,
-            `Attempting to update preimage of non-existing service: ${serviceId}`,
-          );
-        }
-        for (const update of updates) {
-          const { kind } = update.action;
-          if (kind === UpdatePreimageKind.Provide) {
-            const { preimage, slot } = update.action;
-            if (service.data.preimages.has(preimage.hash)) {
-              return Result.error(
-                UpdateError.PreimageExists,
-                `Overwriting existing preimage at ${serviceId}: ${preimage}`,
-              );
-            }
-            service.data.preimages.set(preimage.hash, preimage);
-            if (slot !== null) {
-              const lookupHistory = service.data.lookupHistory.get(preimage.hash);
-              const length = tryAsU32(preimage.blob.length);
-              const lookup = new LookupHistoryItem(preimage.hash, length, tryAsLookupHistorySlots([slot]));
-              if (lookupHistory === undefined) {
-                // no lookup history for that preimage at all (edge case, should be requested)
-                service.data.lookupHistory.set(preimage.hash, [lookup]);
-              } else {
-                // insert or replace exiting entry
-                const index = lookupHistory.map((x) => x.length).indexOf(length);
-                lookupHistory.splice(index, index === -1 ? 0 : 1, lookup);
-              }
-            }
-          } else if (kind === UpdatePreimageKind.Remove) {
-            const { hash, length } = update.action;
-            service.data.preimages.delete(hash);
-            const history = service.data.lookupHistory.get(hash) ?? [];
-            const idx = history.map((x) => x.length).indexOf(length);
-            if (idx !== -1) {
-              history.splice(idx, 1);
-            }
-          } else if (kind === UpdatePreimageKind.UpdateOrAdd) {
-            const { item } = update.action;
-            const history = service.data.lookupHistory.get(item.hash) ?? [];
-            const existingIdx = history.map((x) => x.length).indexOf(item.length);
-            const removeCount = existingIdx === -1 ? 0 : 1;
-            history.splice(existingIdx, removeCount, item);
-            service.data.lookupHistory.set(item.hash, history);
-          } else {
-            assertNever(kind);
-          }
-        }
-      }
-    }
-    return Result.ok(OK);
-  }
-
-  private updateServices(servicesUpdates: Map<ServiceId, UpdateService> | undefined): Result<OK, UpdateError> {
-    if (servicesUpdates !== undefined) {
-      for (const [serviceId, update] of servicesUpdates.entries()) {
-        const { kind, account } = update.action;
+      // service update
+      if (updates.service !== undefined) {
+        const action = updates.service.action;
+        const { kind, account } = action;
         if (kind === UpdateServiceKind.Create) {
-          const { lookupHistory } = update.action;
-          if (this.services.has(serviceId)) {
+          const { lookupHistory } = action;
+          if (service !== undefined) {
             return Result.error(UpdateError.DuplicateService, `${serviceId} already exists!`);
           }
           this.services.set(
@@ -401,6 +306,81 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
             return Result.error(UpdateError.NoService, `Cannot update ${serviceId} because it does not exist.`);
           }
           existingService.data.info = account;
+        } else {
+          assertNever(kind);
+        }
+      }
+
+      // preimage update
+      for (const { action } of updates.preimages ?? []) {
+        if (service === undefined) {
+          return Result.error(
+            UpdateError.NoService,
+            `Attempting to update preimage of non-existing service: ${serviceId}`,
+          );
+        }
+        const { kind } = action;
+        if (kind === UpdatePreimageKind.Provide) {
+          const { preimage, slot } = action;
+          if (service.data.preimages.has(preimage.hash)) {
+            return Result.error(
+              UpdateError.PreimageExists,
+              `Overwriting existing preimage at ${serviceId}: ${preimage}`,
+            );
+          }
+          service.data.preimages.set(preimage.hash, preimage);
+          if (slot !== null) {
+            const lookupHistory = service.data.lookupHistory.get(preimage.hash);
+            const length = tryAsU32(preimage.blob.length);
+            const lookup = new LookupHistoryItem(preimage.hash, length, tryAsLookupHistorySlots([slot]));
+            if (lookupHistory === undefined) {
+              // no lookup history for that preimage at all (edge case, should be requested)
+              service.data.lookupHistory.set(preimage.hash, [lookup]);
+            } else {
+              // insert or replace exiting entry
+              const index = lookupHistory.map((x) => x.length).indexOf(length);
+              lookupHistory.splice(index, index === -1 ? 0 : 1, lookup);
+            }
+          }
+        } else if (kind === UpdatePreimageKind.Remove) {
+          const { hash, length } = action;
+          service.data.preimages.delete(hash);
+          const history = service.data.lookupHistory.get(hash) ?? [];
+          const idx = history.map((x) => x.length).indexOf(length);
+          if (idx !== -1) {
+            history.splice(idx, 1);
+          }
+        } else if (kind === UpdatePreimageKind.UpdateOrAdd) {
+          const { item } = action;
+          const history = service.data.lookupHistory.get(item.hash) ?? [];
+          const existingIdx = history.map((x) => x.length).indexOf(item.length);
+          const removeCount = existingIdx === -1 ? 0 : 1;
+          history.splice(existingIdx, removeCount, item);
+          service.data.lookupHistory.set(item.hash, history);
+        } else {
+          assertNever(kind);
+        }
+      }
+
+      // storage update
+      for (const { action } of updates.storage ?? []) {
+        const { kind } = action;
+        if (service === undefined) {
+          return Result.error(
+            UpdateError.NoService,
+            `Attempting to update storage of non-existing service: ${serviceId}`,
+          );
+        }
+        if (kind === UpdateStorageKind.Set) {
+          const { key, value } = action.storage;
+          service.data.storage.set(key.toString(), StorageItem.create({ key, value }));
+        } else if (kind === UpdateStorageKind.Remove) {
+          const { key } = action;
+          check`
+        ${service.data.storage.has(key.toString())}
+        Attempting to remove non-existing storage item at ${serviceId}: ${action.key}
+      `;
+          service.data.storage.delete(key.toString());
         } else {
           assertNever(kind);
         }

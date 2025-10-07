@@ -186,13 +186,120 @@ export class UpdateStorage {
   }
 }
 
-export type ServicesUpdate = {
-  /** Service ids to remove from state alongside all their data. */
-  servicesRemoved: Set<ServiceId>;
-  /** Services to update or create anew. */
-  servicesUpdates: Map<ServiceId, UpdateService>;
+export type Updates = {
+  /** Updates current service or create a new one. */
+  service?: UpdateService;
   /** Service preimages to update and potentially lookup history */
-  preimages: Map<ServiceId, UpdatePreimage[]>;
+  preimages?: UpdatePreimage[];
   /** Service storage to update. */
-  storage: Map<ServiceId, UpdateStorage[]>;
+  storage?: UpdateStorage[];
 };
+
+export class ServicesUpdate {
+  public static empty(): ServicesUpdate {
+    return new ServicesUpdate(new Set(), new Map());
+  }
+
+  public static copyFrom(update: ServicesUpdate): ServicesUpdate {
+    return new ServicesUpdate(new Set(update.removed), new Map(update.updated));
+  }
+
+  public removeService(id: ServiceId): void {
+    this.removed.add(id);
+  }
+
+  public getService(id: ServiceId): UpdateService | undefined {
+    return this.updated.get(id)?.service;
+  }
+
+  public createService(id: ServiceId, info: ServiceAccountInfo, lookupHistory: LookupHistoryItem): void {
+    const serviceUpdate = this.updated.get(id);
+    if (serviceUpdate === undefined) {
+      this.updated.set(id, {
+        service: UpdateService.create({
+          serviceInfo: info,
+          lookupHistory,
+        }),
+      });
+      return;
+    }
+    if (serviceUpdate.service !== undefined) throw new Error(`Attempting to create duplicated service with id: ${id}`);
+    this.updated.set(id, {
+      ...serviceUpdate,
+      service: UpdateService.create({
+        serviceInfo: info,
+        lookupHistory,
+      }),
+    });
+  }
+
+  public updateServiceInfo(id: ServiceId, info: ServiceAccountInfo): void {
+    const serviceUpdate = this.updated.get(id);
+    if (serviceUpdate === undefined) {
+      this.updated.set(id, {
+        service: UpdateService.update({
+          serviceInfo: info,
+        }),
+      });
+      return;
+    }
+    const service = serviceUpdate.service;
+    if (service?.action.kind === UpdateServiceKind.Create) {
+      this.updated.set(id, {
+        ...serviceUpdate,
+        service: UpdateService.create({
+          serviceInfo: info,
+          lookupHistory: service.action.lookupHistory,
+        }),
+      });
+      return;
+    }
+    this.updated.set(id, {
+      ...serviceUpdate,
+      service: UpdateService.update({
+        serviceInfo: info,
+      }),
+    });
+  }
+
+  public getPreimages(id: ServiceId): UpdatePreimage[] | undefined {
+    return this.updated.get(id)?.preimages;
+  }
+
+  public updatePreimage(id: ServiceId, preimageUpdate: UpdatePreimage): void {
+    const serviceUpdate = this.updated.get(id);
+    if (serviceUpdate === undefined) {
+      this.updated.set(id, { preimages: [preimageUpdate] });
+      return;
+    }
+    const preimages = serviceUpdate.preimages ?? [];
+    preimages.push(preimageUpdate);
+    this.updated.set(id, { ...serviceUpdate, preimages });
+  }
+
+  public getStorage(id: ServiceId): UpdateStorage[] | undefined {
+    return this.updated.get(id)?.storage;
+  }
+
+  public updateStorage(id: ServiceId, storageUpdate: UpdateStorage): void {
+    const serviceUpdate = this.updated.get(id);
+    if (serviceUpdate === undefined) {
+      this.updated.set(id, { storage: [storageUpdate] });
+      return;
+    }
+
+    const storage = serviceUpdate.storage ?? [];
+    const index = storage.findIndex((x) => x.key.isEqualTo(storageUpdate.key));
+    const count = index === -1 ? 0 : 1;
+    storage.splice(index, count, storageUpdate);
+
+    this.updated.set(id, { ...serviceUpdate, storage: storage });
+  }
+
+  private constructor(
+    /** Service ids to remove from state alongside all their data. */
+    public readonly removed: Set<ServiceId>,
+    /** Services to update, create anew, update preimage, change storage. */
+    public readonly updated: Map<ServiceId, Updates>,
+  ) {}
+}

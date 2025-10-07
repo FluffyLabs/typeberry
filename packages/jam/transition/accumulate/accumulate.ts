@@ -496,7 +496,7 @@ export class Accumulate {
       recentlyAccumulated,
       timeslot: slot,
       accumulationQueue: tryAsPerEpochBlock(accumulationQueue, this.chainSpec),
-      ...partialStateUpdate.stateUpdate.services,
+      ...partialStateUpdate.stateUpdate.servicesUpdates,
     };
   }
 
@@ -561,7 +561,7 @@ export class Accumulate {
 
     const accumulated = accumulatableReports.subview(0, accumulatedReports);
     const {
-      services,
+      servicesUpdates: services,
       yieldedRoots,
       transfers,
       validatorsData,

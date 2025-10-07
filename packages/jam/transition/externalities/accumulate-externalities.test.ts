@@ -105,13 +105,13 @@ describe("PartialState.checkPreimageStatus", () => {
     ).asOpaque();
     const length = tryAsU64(35);
 
-    const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
+    const updates = state.stateUpdate.servicesUpdates.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
         lookupHistory: new LookupHistoryItem(preimageHash, tryAsU32(Number(length)), tryAsLookupHistorySlots([])),
       }),
     );
-    state.stateUpdate.services.preimages.set(serviceId, updates);
+    state.stateUpdate.servicesUpdates.preimages.set(serviceId, updates);
 
     const status = partialState.checkPreimageStatus(preimageHash, length);
     assert.deepStrictEqual(status, {
@@ -144,7 +144,7 @@ describe("PartialState.requestPreimage", () => {
     assert.deepStrictEqual(status, Result.ok(OK));
 
     assert.deepStrictEqual(
-      state.stateUpdate.services.preimages,
+      state.stateUpdate.servicesUpdates.preimages,
       new Map([
         [
           serviceId,
@@ -157,7 +157,7 @@ describe("PartialState.requestPreimage", () => {
       ]),
     );
     assert.deepStrictEqual(
-      state.stateUpdate.services.servicesUpdates,
+      state.stateUpdate.servicesUpdates.servicesUpdates,
       new Map([
         [
           serviceId,
@@ -196,7 +196,7 @@ describe("PartialState.requestPreimage", () => {
     assert.deepStrictEqual(status, Result.ok(OK));
 
     assert.deepStrictEqual(
-      state.stateUpdate.services.preimages,
+      state.stateUpdate.servicesUpdates.preimages,
       new Map([
         [
           serviceId,
@@ -209,7 +209,7 @@ describe("PartialState.requestPreimage", () => {
       ]),
     );
     assert.deepStrictEqual(
-      state.stateUpdate.services.servicesUpdates,
+      state.stateUpdate.servicesUpdates.servicesUpdates,
       new Map([
         [
           serviceId,
@@ -314,7 +314,7 @@ describe("PartialState.forgetPreimage", () => {
       tryAsServiceId(10),
       tryAsTimeSlot(50),
     );
-    const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
+    const updates = state.stateUpdate.servicesUpdates.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
         lookupHistory: new LookupHistoryItem(
@@ -324,12 +324,12 @@ describe("PartialState.forgetPreimage", () => {
         ),
       }),
     );
-    state.stateUpdate.services.preimages.set(serviceId, updates);
+    state.stateUpdate.servicesUpdates.preimages.set(serviceId, updates);
 
     const result1 = partialState.forgetPreimage(hash, length);
     assert.deepStrictEqual(result1, Result.ok(OK));
 
-    state.state.applyUpdate(state.stateUpdate.services);
+    state.state.applyUpdate(state.stateUpdate.servicesUpdates);
 
     const result2 = partialState.forgetPreimage(hash, length);
     assert.deepStrictEqual(result2, Result.error(ForgetPreimageError.NotFound));
@@ -355,7 +355,7 @@ describe("PartialState.forgetPreimage", () => {
     assert.deepStrictEqual(result, Result.ok(OK));
 
     assert.deepStrictEqual(
-      state.stateUpdate.services.preimages,
+      state.stateUpdate.servicesUpdates.preimages,
       new Map([
         [
           serviceId,
@@ -392,7 +392,7 @@ describe("PartialState.forgetPreimage", () => {
       tryAsServiceId(10),
       tryAsTimeSlot(50),
     );
-    const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
+    const updates = state.stateUpdate.servicesUpdates.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
         lookupHistory: new LookupHistoryItem(
@@ -402,12 +402,12 @@ describe("PartialState.forgetPreimage", () => {
         ),
       }),
     );
-    state.stateUpdate.services.preimages.set(serviceId, updates);
+    state.stateUpdate.servicesUpdates.preimages.set(serviceId, updates);
     const result = partialState.forgetPreimage(hash, length);
     assert.deepStrictEqual(result, Result.ok(OK));
 
     assert.deepStrictEqual(
-      state.stateUpdate.services.preimages,
+      state.stateUpdate.servicesUpdates.preimages,
       new Map([
         [
           serviceId,
@@ -448,13 +448,13 @@ describe("PartialState.forgetPreimage", () => {
       tryAsServiceId(10),
       tryAsTimeSlot(16),
     );
-    const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
+    const updates = state.stateUpdate.servicesUpdates.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
         lookupHistory: new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([recentSlot])),
       }),
     );
-    state.stateUpdate.services.preimages.set(serviceId, updates);
+    state.stateUpdate.servicesUpdates.preimages.set(serviceId, updates);
 
     const result = partialState.forgetPreimage(hash, length);
     assert.deepStrictEqual(result, Result.ok(OK));
@@ -479,19 +479,19 @@ describe("PartialState.forgetPreimage", () => {
       tryAsServiceId(10),
       tryAsTimeSlot(100),
     );
-    const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
+    const updates = state.stateUpdate.servicesUpdates.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
         lookupHistory: new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([availableSlot])),
       }),
     );
-    state.stateUpdate.services.preimages.set(serviceId, updates);
+    state.stateUpdate.servicesUpdates.preimages.set(serviceId, updates);
 
     const result = partialState.forgetPreimage(hash, length);
     assert.deepStrictEqual(result, Result.ok(OK));
 
     assert.deepStrictEqual(
-      state.stateUpdate.services.preimages,
+      state.stateUpdate.servicesUpdates.preimages,
       new Map([
         [
           serviceId,
@@ -536,7 +536,7 @@ describe("PartialState.forgetPreimage", () => {
       tryAsServiceId(10),
       tryAsTimeSlot(100000),
     );
-    const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
+    const updates = state.stateUpdate.servicesUpdates.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
         lookupHistory: new LookupHistoryItem(
@@ -546,13 +546,13 @@ describe("PartialState.forgetPreimage", () => {
         ),
       }),
     );
-    state.stateUpdate.services.preimages.set(serviceId, updates);
+    state.stateUpdate.servicesUpdates.preimages.set(serviceId, updates);
 
     const result = partialState.forgetPreimage(hash, length);
     assert.deepStrictEqual(result, Result.ok(OK));
 
     assert.deepStrictEqual(
-      state.stateUpdate.services.preimages,
+      state.stateUpdate.servicesUpdates.preimages,
       new Map([
         [
           serviceId,
@@ -597,7 +597,7 @@ describe("PartialState.forgetPreimage", () => {
       tryAsServiceId(10),
       tryAsTimeSlot(100),
     );
-    const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
+    const updates = state.stateUpdate.servicesUpdates.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
         lookupHistory: new LookupHistoryItem(
@@ -607,7 +607,7 @@ describe("PartialState.forgetPreimage", () => {
         ),
       }),
     );
-    state.stateUpdate.services.preimages.set(serviceId, updates);
+    state.stateUpdate.servicesUpdates.preimages.set(serviceId, updates);
 
     const result = partialState.forgetPreimage(hash, length);
     assert.deepStrictEqual(result, Result.error(ForgetPreimageError.NotExpired));
@@ -628,7 +628,7 @@ describe("PartialState.forgetPreimage", () => {
       tryAsServiceId(10),
       tryAsTimeSlot(2),
     );
-    const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
+    const updates = state.stateUpdate.servicesUpdates.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
         lookupHistory: new LookupHistoryItem(
@@ -638,7 +638,7 @@ describe("PartialState.forgetPreimage", () => {
         ),
       }),
     );
-    state.stateUpdate.services.preimages.set(serviceId, updates);
+    state.stateUpdate.servicesUpdates.preimages.set(serviceId, updates);
 
     const result = partialState.forgetPreimage(hash, length);
     assert.deepStrictEqual(result, Result.error(ForgetPreimageError.NotExpired));
@@ -685,7 +685,7 @@ describe("PartialState.newService", () => {
 
     // Verify service updates
     assert.deepStrictEqual(
-      state.stateUpdate.services.servicesUpdates,
+      state.stateUpdate.servicesUpdates.servicesUpdates,
       new Map([
         [
           tryAsServiceId(0),
@@ -762,7 +762,7 @@ describe("PartialState.newService", () => {
     assert.deepStrictEqual(result, Result.error(NewServiceError.InsufficientFunds));
 
     // Verify no side effects
-    assert.deepStrictEqual(state.stateUpdate.services.servicesUpdates, new Map());
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.servicesUpdates, new Map());
   });
 
   it("should return an error if service is unprivileged to set gratis storage", () => {
@@ -810,7 +810,7 @@ describe("PartialState.newService", () => {
     assert.deepStrictEqual(result, Result.error(NewServiceError.UnprivilegedService));
 
     // Verify no side effects
-    assert.deepStrictEqual(state.stateUpdate.services.servicesUpdates, new Map());
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.servicesUpdates, new Map());
   });
 });
 
@@ -927,7 +927,7 @@ describe("PartialState.upgradeService", () => {
 
     // then
     assert.deepStrictEqual(
-      state.stateUpdate.services.servicesUpdates,
+      state.stateUpdate.servicesUpdates.servicesUpdates,
       new Map([
         [
           tryAsServiceId(0),
@@ -1297,7 +1297,7 @@ describe("PartialState.transfer", () => {
       }),
     ]);
     assert.deepStrictEqual(
-      state.stateUpdate.services.servicesUpdates,
+      state.stateUpdate.servicesUpdates.servicesUpdates,
       new Map([
         [
           tryAsServiceId(0),
@@ -1483,7 +1483,7 @@ describe("PartialState.providePreimage", () => {
     );
 
     const serviceId = tryAsServiceId(1);
-    assert.deepStrictEqual(state.stateUpdate.services.preimages.size, 0);
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.preimages.size, 0);
 
     // when
     const result = partialState.providePreimage(serviceId, preimage.blob);
@@ -1491,7 +1491,7 @@ describe("PartialState.providePreimage", () => {
     // then
     assert.deepStrictEqual(result, Result.ok(OK));
     assert.deepStrictEqual(
-      state.stateUpdate.services.preimages,
+      state.stateUpdate.servicesUpdates.preimages,
       new Map([
         [
           tryAsServiceId(1),
@@ -1522,7 +1522,7 @@ describe("PartialState.providePreimage", () => {
     );
 
     const serviceId = tryAsServiceId(0);
-    assert.deepStrictEqual(state.stateUpdate.services.preimages.size, 0);
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.preimages.size, 0);
 
     // when
     const result = partialState.providePreimage(serviceId, preimage.blob);
@@ -1530,7 +1530,7 @@ describe("PartialState.providePreimage", () => {
     // then
     assert.deepStrictEqual(result, Result.ok(OK));
     assert.deepStrictEqual(
-      state.stateUpdate.services.preimages,
+      state.stateUpdate.servicesUpdates.preimages,
       new Map([
         [
           tryAsServiceId(0),
@@ -1564,14 +1564,14 @@ describe("PartialState.providePreimage", () => {
     );
 
     const serviceId = tryAsServiceId(1);
-    assert.deepStrictEqual(state.stateUpdate.services.preimages.size, 0);
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.preimages.size, 0);
 
     // when
     const result = partialState.providePreimage(serviceId, preimage.blob);
 
     // then
     assert.deepStrictEqual(result, Result.error(ProvidePreimageError.WasNotRequested));
-    assert.deepStrictEqual(state.stateUpdate.services.preimages.size, 0);
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.preimages.size, 0);
   });
 
   it("should return error if preimage is requested and already available for other service", () => {
@@ -1590,7 +1590,7 @@ describe("PartialState.providePreimage", () => {
       tryAsTimeSlot(16),
     );
     const serviceId = tryAsServiceId(1);
-    const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
+    const updates = state.stateUpdate.servicesUpdates.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.provide({
         preimage: PreimageItem.create({
@@ -1600,7 +1600,7 @@ describe("PartialState.providePreimage", () => {
         slot: state.state.timeslot,
       }),
     );
-    state.stateUpdate.services.preimages.set(serviceId, updates);
+    state.stateUpdate.servicesUpdates.preimages.set(serviceId, updates);
 
     // when
     const result = partialState.providePreimage(serviceId, preimage.blob);
@@ -1608,7 +1608,7 @@ describe("PartialState.providePreimage", () => {
     // then
     assert.deepStrictEqual(result, Result.error(ProvidePreimageError.WasNotRequested));
     assert.deepStrictEqual(
-      state.stateUpdate.services.preimages,
+      state.stateUpdate.servicesUpdates.preimages,
       new Map([
         [
           tryAsServiceId(1),
@@ -1648,7 +1648,7 @@ describe("PartialState.providePreimage", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(ProvidePreimageError.AlreadyProvided));
-    assert.deepStrictEqual(state.stateUpdate.services.preimages, new Map());
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.preimages, new Map());
   });
 
   it("should return ok and then error if preimage is provided twice for self", () => {
@@ -1668,7 +1668,7 @@ describe("PartialState.providePreimage", () => {
     );
 
     const serviceId = tryAsServiceId(0);
-    assert.deepStrictEqual(state.stateUpdate.services.preimages, new Map());
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.preimages, new Map());
 
     // when
     const resultok = partialState.providePreimage(serviceId, preimage.blob);
@@ -1678,7 +1678,7 @@ describe("PartialState.providePreimage", () => {
     assert.deepStrictEqual(resultok, Result.ok(OK));
     assert.deepStrictEqual(resulterr, Result.error(ProvidePreimageError.WasNotRequested));
     assert.deepStrictEqual(
-      state.stateUpdate.services.preimages,
+      state.stateUpdate.servicesUpdates.preimages,
       new Map([
         [
           tryAsServiceId(0),
@@ -1713,7 +1713,7 @@ describe("PartialState.providePreimage", () => {
     );
 
     const serviceId = tryAsServiceId(1);
-    assert.deepStrictEqual(state.stateUpdate.services.preimages, new Map());
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.preimages, new Map());
 
     // when
     const resultok = partialState.providePreimage(serviceId, preimage.blob);
@@ -1723,7 +1723,7 @@ describe("PartialState.providePreimage", () => {
     assert.deepStrictEqual(resultok, Result.ok(OK));
     assert.deepStrictEqual(resulterr, Result.error(ProvidePreimageError.WasNotRequested));
     assert.deepStrictEqual(
-      state.stateUpdate.services.preimages,
+      state.stateUpdate.servicesUpdates.preimages,
       new Map([
         [
           tryAsServiceId(1),
@@ -1827,7 +1827,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Service missing"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.servicesRemoved, new Set());
   });
 
   it("should return InvalidService if destination service does not exist", () => {
@@ -1849,7 +1849,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Service missing"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.servicesRemoved, new Set());
   });
 
   it("should return InvalidService if destination service codeHash does not match expected pattern", () => {
@@ -1873,7 +1873,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Invalid code hash"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.servicesRemoved, new Set());
   });
 
   it("should return InvalidPreimage if storageUtilisationCount is not equal to required value", () => {
@@ -1897,7 +1897,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Too many storage items"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.servicesRemoved, new Set());
   });
 
   it("should return InvalidPreimage if the tombstone preimage is missing", () => {
@@ -1921,7 +1921,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Previous code available: wrong status"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.servicesRemoved, new Set());
   });
 
   it("should return InvalidPreimage if tombstone preimage exists but has wrong status", () => {
@@ -1952,7 +1952,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Previous code available: wrong status"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.servicesRemoved, new Set());
   });
 
   it("should return InvalidPreimage if tombstone preimage exists but is not expired", () => {
@@ -1983,7 +1983,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Previous code available: not expired"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.servicesRemoved, new Set());
   });
 
   it("should return InvalidService if summing balances would overflow", () => {
@@ -2030,7 +2030,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Balance overflow"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.servicesRemoved, new Set());
   });
 
   it("should return OK", () => {
@@ -2063,9 +2063,9 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.ok(OK));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set([destinationId]));
+    assert.deepStrictEqual(state.stateUpdate.servicesUpdates.servicesRemoved, new Set([destinationId]));
     assert.deepStrictEqual(
-      state.stateUpdate.services.preimages,
+      state.stateUpdate.servicesUpdates.preimages,
       new Map([[destinationId, [UpdatePreimage.remove({ hash: tombstone, length: length })]]]),
     );
   });
@@ -2367,11 +2367,11 @@ describe("AccumulateServiceExternalities", () => {
         tryAsTimeSlot(16),
       );
 
-      assert.strictEqual(state.stateUpdate.services.storage.size, 0);
+      assert.strictEqual(state.stateUpdate.servicesUpdates.storage.size, 0);
 
       accumulateServiceExternalities.write(hash, blob);
 
-      assert.strictEqual(state.stateUpdate.services.storage.size, 1);
+      assert.strictEqual(state.stateUpdate.servicesUpdates.storage.size, 1);
     });
 
     it("should return new value if there was a write", () => {
@@ -2394,7 +2394,7 @@ describe("AccumulateServiceExternalities", () => {
 
       accumulateServiceExternalities.write(key, newBlob);
 
-      assert.strictEqual(state.stateUpdate.services.storage.size, 1);
+      assert.strictEqual(state.stateUpdate.servicesUpdates.storage.size, 1);
 
       const result = accumulateServiceExternalities.read(currentServiceId, key);
 
