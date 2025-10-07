@@ -16,7 +16,6 @@ import {
   type UpdateStorage,
   UpdateStorageKind,
 } from "@typeberry/state";
-import { assertNever } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
 import { type StateCodec, serialize } from "./serialize.js";
 
@@ -60,7 +59,10 @@ function* serializeRemovedServices(servicesRemoved: Set<ServiceId> | undefined):
   }
 }
 
-function* serializeStorage(storageUpdates: Map<ServiceId, UpdateStorage[]> | undefined, blake2b: Blake2b): Generator<StateEntryUpdate> {
+function* serializeStorage(
+  storageUpdates: Map<ServiceId, UpdateStorage[]> | undefined,
+  blake2b: Blake2b,
+): Generator<StateEntryUpdate> {
   if (storageUpdates === undefined) return;
   let count = 0;
   for (const [serviceId, updates] of storageUpdates.entries()) {
