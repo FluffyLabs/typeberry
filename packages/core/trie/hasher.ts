@@ -1,14 +1,16 @@
 import { BytesBlob } from "@typeberry/bytes";
-import { blake2b } from "@typeberry/hash";
+import type { Blake2b } from "@typeberry/hash";
 import { hashBlobs, type KeccakHasher } from "@typeberry/hash/keccak.js";
 import type { TrieNodeHash } from "./nodes.js";
 import type { TrieHasher } from "./nodesDb.js";
 
-export const blake2bTrieHasher: TrieHasher = {
-  hashConcat(n: Uint8Array, rest: Uint8Array[] = []): TrieNodeHash {
-    return blake2b.hashBlobs([n, ...rest]);
-  },
-};
+export function getBlake2bTrieHasher(hasher: Blake2b): TrieHasher {
+  return {
+    hashConcat(n: Uint8Array, rest: Uint8Array[] = []): TrieNodeHash {
+      return hasher.hashBlobs([n, ...rest]);
+    },
+  };
+}
 
 export function getKeccakTrieHasher(hasher: KeccakHasher): TrieHasher {
   return {

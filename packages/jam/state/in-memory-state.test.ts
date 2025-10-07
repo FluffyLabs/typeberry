@@ -1,10 +1,10 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { blake2b, HASH_SIZE } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { asOpaqueType, deepEqual, OK, Result } from "@typeberry/utils";
 import { InMemoryState, UpdateError } from "./in-memory-state.js";
@@ -17,6 +17,12 @@ import {
   tryAsLookupHistorySlots,
 } from "./service.js";
 import { UpdatePreimage, UpdateService, UpdateStorage } from "./state-update.js";
+
+let blake2b: Blake2b;
+
+before(async () => {
+  blake2b = await Blake2b.createHasher();
+});
 
 describe("InMemoryState", () => {
   // backward-compatable account fields

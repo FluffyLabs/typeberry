@@ -6,14 +6,13 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_VRF_SIGNATURE_BYTES } from "@typeberry/crypto";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
-import { SimpleAllocator } from "@typeberry/hash";
+import type { Blake2b } from "@typeberry/hash";
 import type { KeccakHasher } from "@typeberry/hash/keccak.js";
 import type { State } from "@typeberry/state";
 import { TransitionHasher } from "@typeberry/transition";
 import { asOpaqueType } from "@typeberry/utils";
 
 export class Generator {
-  private readonly hashAllocator = new SimpleAllocator();
   private lastHeaderHash: HeaderHash;
   private lastHeader: Header;
   private lastState: State;
@@ -21,6 +20,7 @@ export class Generator {
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly keccakHasher: KeccakHasher,
+    public readonly blake2b: Blake2b,
     private readonly blocks: BlocksDb,
     private readonly states: StatesDb,
   ) {
@@ -72,7 +72,7 @@ export class Generator {
     const validatorId = tryAsValidatorIndex(newTimeSlot % 6);
 
     // retriev data from previous block
-    const hasher = new TransitionHasher(this.chainSpec, this.keccakHasher, this.hashAllocator);
+    const hasher = new TransitionHasher(this.chainSpec, this.keccakHasher, this.blake2b);
     const parentHeaderHash = this.lastHeaderHash;
     const stateRoot = this.states.getStateRoot(this.lastState);
 

@@ -1,10 +1,13 @@
 import { describe, it } from "node:test";
-import { tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
+import { type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { testWorkReportHex } from "@typeberry/block/test-helpers.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
-import { BytesBlob } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
+import { ArrayView } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
+import { PendingTransfer, TRANSFER_MEMO_BYTES } from "@typeberry/jam-host-calls";
+import { tryAsU64 } from "@typeberry/numbers";
 import { AutoAccumulate } from "@typeberry/state";
 import { deepEqual } from "@typeberry/utils";
 import { AccumulateData } from "./accumulate-data.js";
@@ -13,6 +16,16 @@ import { Operand } from "./operand.js";
 const getWorkReport = () => {
   const hex = testWorkReportHex();
   return Decoder.decodeObject(WorkReport.Codec, BytesBlob.parseBlob(hex), tinyChainSpec);
+};
+
+const getTransfer = (serviceId: ServiceId) => {
+  return PendingTransfer.create({
+    source: tryAsServiceId(0),
+    destination: serviceId,
+    amount: tryAsU64(0),
+    gas: tryAsServiceGas(0),
+    memo: Bytes.zero(TRANSFER_MEMO_BYTES),
+  });
 };
 
 const createAutoAccumulate = (serviceId: number, gasCost = 0n) => {
@@ -38,13 +51,14 @@ const transformReportToOperands = (report: WorkReport) => {
 
   return operands;
 };
+
 describe("AccumulateData", () => {
   describe("getOperands", () => {
     it("should return correct operands for a report", () => {
       const serviceId = tryAsServiceId(129);
       const report = getWorkReport();
-      const reports = [report];
-      const accumulateData = new AccumulateData(reports, []);
+      const reports = ArrayView.from([report]);
+      const accumulateData = new AccumulateData(reports, [], []);
       const expectedOperands = transformReportToOperands(report);
 
       const result = accumulateData.getOperands(serviceId);
@@ -57,8 +71,8 @@ describe("AccumulateData", () => {
     it("should return correct reports length for a report", () => {
       const serviceId = tryAsServiceId(129);
       const report = getWorkReport();
-      const reports = [report];
-      const accumulateData = new AccumulateData(reports, []);
+      const reports = ArrayView.from([report]);
+      const accumulateData = new AccumulateData(reports, [], []);
       const expectedLength = report.results.length;
 
       const result = accumulateData.getReportsLength(serviceId);
@@ -71,8 +85,8 @@ describe("AccumulateData", () => {
     it("should return correct gas cost for a report", () => {
       const serviceId = tryAsServiceId(129);
       const report = getWorkReport();
-      const reports = [report];
-      const accumulateData = new AccumulateData(reports, []);
+      const reports = ArrayView.from([report]);
+      const accumulateData = new AccumulateData(reports, [], []);
       const expectedGasCost = report.results.reduce((acc, result) => acc + result.gas, 0n);
 
       const result = accumulateData.getGasCost(serviceId);
@@ -86,8 +100,8 @@ describe("AccumulateData", () => {
       const autoAccumulateGas = 100n;
       const autoAccumulateServices = [createAutoAccumulate(129, autoAccumulateGas)];
 
-      const reports = [report];
-      const accumulateData = new AccumulateData(reports, autoAccumulateServices);
+      const reports = ArrayView.from([report]);
+      const accumulateData = new AccumulateData(reports, [], autoAccumulateServices);
       const expectedGasCost = report.results.reduce((acc, result) => acc + result.gas, 0n) + autoAccumulateGas;
 
       const result = accumulateData.getGasCost(serviceId);
@@ -98,7 +112,7 @@ describe("AccumulateData", () => {
 
   describe("getServiceIds", () => {
     it("should return empty array when no reports and auto accumulate services", () => {
-      const accumulateData = new AccumulateData([], []);
+      const accumulateData = new AccumulateData(ArrayView.from([]), [], []);
 
       const result = accumulateData.getServiceIds();
 
@@ -106,9 +120,9 @@ describe("AccumulateData", () => {
     });
 
     it("should return unique service ids from reports", () => {
-      const reports = [getWorkReport(), getWorkReport()];
+      const reports = ArrayView.from([getWorkReport(), getWorkReport()]);
       const expectedServiceIds = [129].map(tryAsServiceId);
-      const accumulateData = new AccumulateData(reports, []);
+      const accumulateData = new AccumulateData(reports, [], []);
 
       const result = accumulateData.getServiceIds();
 
@@ -118,7 +132,7 @@ describe("AccumulateData", () => {
     it("should return unique service ids from auto accumulate services", () => {
       const autoAccumulateServices = [createAutoAccumulate(129), createAutoAccumulate(129)];
       const expectedServiceIds = [129].map(tryAsServiceId);
-      const accumulateData = new AccumulateData([], autoAccumulateServices);
+      const accumulateData = new AccumulateData(ArrayView.from([]), [], autoAccumulateServices);
 
       const result = accumulateData.getServiceIds();
 
@@ -126,14 +140,41 @@ describe("AccumulateData", () => {
     });
 
     it("should return unique service ids from reports and auto accumulate services", () => {
-      const reports = [getWorkReport()];
+      const reports = ArrayView.from([getWorkReport()]);
       const autoAccumulateServices = [createAutoAccumulate(129)];
       const expectedServiceIds = [129].map(tryAsServiceId);
-      const accumulateData = new AccumulateData(reports, autoAccumulateServices);
+      const accumulateData = new AccumulateData(reports, [], autoAccumulateServices);
 
       const result = accumulateData.getServiceIds();
 
       deepEqual(result, expectedServiceIds);
+    });
+  });
+
+  describe("getTransfers", () => {
+    it("should return transfers for a service id", () => {
+      const serviceId = tryAsServiceId(129);
+      const transfer = getTransfer(serviceId);
+      const transfers = [transfer];
+      const accumulateData = new AccumulateData(ArrayView.from([]), transfers, []);
+
+      const result = accumulateData.getTransfers(serviceId);
+
+      deepEqual(result, transfers);
+    });
+  });
+
+  describe("getOperands", () => {
+    it("should return operands for a service id", () => {
+      const serviceId = tryAsServiceId(129);
+      const report = getWorkReport();
+      const reports = ArrayView.from([report]);
+      const accumulateData = new AccumulateData(reports, [], []);
+      const expectedOperands = transformReportToOperands(report);
+
+      const result = accumulateData.getOperands(serviceId);
+
+      deepEqual(result, expectedOperands);
     });
   });
 });

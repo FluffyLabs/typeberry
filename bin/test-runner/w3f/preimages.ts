@@ -5,7 +5,7 @@ import { fromJson, preimagesExtrinsicFromJson } from "@typeberry/block-json";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
@@ -100,11 +100,12 @@ export class PreImagesTest {
 }
 
 export async function runPreImagesTest(testContent: PreImagesTest) {
+  const blake2b = await Blake2b.createHasher();
   const preState = InMemoryState.partial(tinyChainSpec, {
     services: new Map(
       testContent.pre_state.accounts.map((account) => [
         tryAsServiceId(account.id),
-        testAccountsMapEntryToAccount(account),
+        testAccountsMapEntryToAccount(account, blake2b),
       ]),
     ),
   });
@@ -112,11 +113,11 @@ export async function runPreImagesTest(testContent: PreImagesTest) {
     services: new Map(
       testContent.post_state.accounts.map((account) => [
         tryAsServiceId(account.id),
-        testAccountsMapEntryToAccount(account),
+        testAccountsMapEntryToAccount(account, blake2b),
       ]),
     ),
   });
-  const preimages = new Preimages(preState);
+  const preimages = new Preimages(preState, blake2b);
   const result = preimages.integrate(testContent.input);
 
   deepEqual(result, testOutputToResult(testContent.output), { ignore: ["ok"] });
@@ -126,7 +127,7 @@ export async function runPreImagesTest(testContent: PreImagesTest) {
   assert.deepEqual(preState, postState);
 }
 
-function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): InMemoryService {
+function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry, blake2b: Blake2b): InMemoryService {
   const preimages = HashDictionary.fromEntries(
     entry.data.preimages
       .map((x) => {

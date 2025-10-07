@@ -3,7 +3,7 @@ import http from "node:http";
 import type { Header } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { JamnpIpcHandler } from "@typeberry/ext-ipc/jamnp/handler.js";
-import { blake2b, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
+import { Blake2b, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
 import { ce129 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
 import { type JSONRPCID, JSONRPCServer, type JSONRPCSuccessResponse } from "json-rpc-2.0";
@@ -20,7 +20,8 @@ export function startRpc(db: Database, client: JamnpIpcHandler) {
     return db.bestHeader;
   });
 
-  server.addMethodAdvanced("jam_getBalance", (request) => {
+  server.addMethodAdvanced("jam_getBalance", async (request) => {
+    const blake2b = await Blake2b.createHasher();
     return new Promise((resolve) => {
       client.withNewStream<ce129.Handler>(ce129.STREAM_KIND, (handler, sender) => {
         if (db.bestHeader === null) return;

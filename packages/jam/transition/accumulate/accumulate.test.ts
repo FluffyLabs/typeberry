@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import {
   type EntropyHash,
   type ServiceId,
@@ -19,7 +19,7 @@ import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize, FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
-import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   type AccumulationOutput,
@@ -34,6 +34,12 @@ import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js
 import { deepEqual, resultToString } from "@typeberry/utils";
 import { Accumulate } from "./accumulate.js";
 import type { AccumulateInput, AccumulateState } from "./accumulate-state.js";
+
+let blake2b: Blake2b;
+
+before(async () => {
+  blake2b = await Blake2b.createHasher();
+});
 
 type TestServiceInfo = {
   lastAccumulation?: TimeSlot;
@@ -182,7 +188,7 @@ describe("accumulate", () => {
       accumulationQueue: tryAsPerEpochBlock([[], [], [], [], [], [], [], [], [], [], [], []], tinyChainSpec),
     });
     const expectedOutput: AccumulationOutput[] = [];
-    const accumulate = new Accumulate(tinyChainSpec, state);
+    const accumulate = new Accumulate(tinyChainSpec, blake2b, state);
 
     // when
     const output = await accumulate.transition(input);

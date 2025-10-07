@@ -1,19 +1,25 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { tryAsPerValidator, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import { HASH_SIZE } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { deepEqual } from "@typeberry/utils";
 import { generateCoreAssignment } from "./guarantor-assignment.js";
+
+let blake2b: Blake2b;
+
+before(async () => {
+  blake2b = await Blake2b.createHasher();
+});
 
 describe("Core assignment", () => {
   it("should assign validators to cores in tinyChainSpec", async () => {
     const spec = tinyChainSpec;
     const entropy = Bytes.fill(HASH_SIZE, 1).asOpaque();
 
-    const coreAssignment1 = generateCoreAssignment(spec, entropy, tryAsTimeSlot(1));
-    const coreAssignment2 = generateCoreAssignment(spec, entropy, tryAsTimeSlot(11));
+    const coreAssignment1 = generateCoreAssignment(spec, blake2b, entropy, tryAsTimeSlot(1));
+    const coreAssignment2 = generateCoreAssignment(spec, blake2b, entropy, tryAsTimeSlot(11));
 
     deepEqual(coreAssignment1, tryAsPerValidator([1, 1, 1, 0, 0, 0], spec));
     deepEqual(coreAssignment2, tryAsPerValidator([1, 1, 1, 0, 0, 0], spec));
@@ -26,8 +32,8 @@ describe("Core assignment", () => {
       HASH_SIZE,
     ).asOpaque();
 
-    const coreAssignment1 = generateCoreAssignment(spec, entropy, tryAsTimeSlot(14));
-    const coreAssignment2 = generateCoreAssignment(spec, entropy, tryAsTimeSlot(11));
+    const coreAssignment1 = generateCoreAssignment(spec, blake2b, entropy, tryAsTimeSlot(14));
+    const coreAssignment2 = generateCoreAssignment(spec, blake2b, entropy, tryAsTimeSlot(11));
 
     assert.deepStrictEqual(coreAssignment1, tryAsPerValidator([1, 0, 0, 1, 0, 1], spec));
     assert.deepStrictEqual(coreAssignment2, tryAsPerValidator([1, 0, 0, 1, 0, 1], spec));
@@ -37,8 +43,8 @@ describe("Core assignment", () => {
     const spec = fullChainSpec;
     const entropy = Bytes.fill(HASH_SIZE, 0xfe).asOpaque();
 
-    const coreAssignment1 = generateCoreAssignment(spec, entropy, tryAsTimeSlot(1));
-    const coreAssignment2 = generateCoreAssignment(spec, entropy, tryAsTimeSlot(132));
+    const coreAssignment1 = generateCoreAssignment(spec, blake2b, entropy, tryAsTimeSlot(1));
+    const coreAssignment2 = generateCoreAssignment(spec, blake2b, entropy, tryAsTimeSlot(132));
 
     deepEqual(coreAssignment1.toString(), tryAsPerValidator(FULL_1, spec).toString());
     deepEqual(coreAssignment2.toString(), tryAsPerValidator(FULL_2, spec).toString());

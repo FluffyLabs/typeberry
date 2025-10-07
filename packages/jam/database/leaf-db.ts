@@ -1,9 +1,10 @@
 import type { StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { SortedSet, TruncatedHashDictionary } from "@typeberry/collections";
+import type { Blake2b } from "@typeberry/hash";
 import { type SerializedStateBackend, StateEntries, type StateKey } from "@typeberry/state-merkleization";
 import { InMemoryTrie, type LeafNode, leafComparator, NodeType, TRIE_NODE_BYTES, TrieNode } from "@typeberry/trie";
-import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
+import { getBlake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { assertNever, Result } from "@typeberry/utils";
 
 /** Error during `LeafDb` creation. */
@@ -93,7 +94,8 @@ export class LeafDb implements SerializedStateBackend {
     assertNever(val);
   }
 
-  getStateRoot(): StateRootHash {
+  getStateRoot(blake2b: Blake2b): StateRootHash {
+    const blake2bTrieHasher = getBlake2bTrieHasher(blake2b);
     return InMemoryTrie.computeStateRoot(blake2bTrieHasher, this.leaves).asOpaque();
   }
 

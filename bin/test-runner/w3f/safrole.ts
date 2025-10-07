@@ -21,6 +21,7 @@ import {
   BANDERSNATCH_RING_ROOT_BYTES,
   type BandersnatchRingRoot,
 } from "@typeberry/crypto/bandersnatch.js";
+import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
@@ -214,7 +215,7 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const chainSpec = getChainSpec(path);
   const preState = JsonState.toSafroleState(testContent.pre_state, chainSpec);
   const punishSet = SortedSet.fromArrayUnique(hashComparator, testContent.pre_state.post_offenders);
-  const safrole = new Safrole(chainSpec, preState, bwasm);
+  const safrole = new Safrole(chainSpec, await Blake2b.createHasher(), preState, bwasm);
   const expectedResult = Output.toSafroleOutput(testContent.output, chainSpec);
   const { epochMarker, ticketsMarker } = extractMarkers(expectedResult, chainSpec);
 

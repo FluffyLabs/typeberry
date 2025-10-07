@@ -3,7 +3,7 @@ import { Bytes } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { WorkerConfig } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
-import { HASH_SIZE } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { createImporter } from "@typeberry/importer";
 import { ImporterReady, importBlockResultCodec } from "@typeberry/importer/state-machine.js";
 import { CURRENT_SUITE, CURRENT_VERSION, Result } from "@typeberry/utils";
@@ -20,14 +20,16 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
   logger.info`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
   logger.info`🎸 Starting importer: ${config.nodeName}.`;
   const chainSpec = getChainSpec(config.node.flavor);
+  const blake2b = await Blake2b.createHasher();
   const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
+    blake2b,
     config.nodeName,
     config.node.chainSpec.genesisHeader,
     withRelPath(config.node.databaseBasePath),
   );
 
   // Initialize the database with genesis state and block if there isn't one.
-  await initializeDatabase(chainSpec, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
+  await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
   await rootDb.close();
 
   const workerConfig = new WorkerConfig(chainSpec, dbPath, false);

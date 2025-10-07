@@ -1,4 +1,4 @@
-import type { BlockView, CoreIndex, EntropyHash, HeaderHash, TimeSlot } from "@typeberry/block";
+import type { BlockView, CoreIndex, EntropyHash, HeaderHash, ServiceId, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { asKnownSize, HashSet } from "@typeberry/collections";
@@ -7,14 +7,22 @@ import type { Ed25519Key } from "@typeberry/crypto";
 import type { BlocksDb } from "@typeberry/database";
 import { Disputes, type DisputesStateUpdate } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code.js";
-import { blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
-import type { State } from "@typeberry/state";
-import { assertEmpty, type ErrorResult, measure, OK, Result, type TaggedError } from "@typeberry/utils";
+import type { ServicesUpdate, State } from "@typeberry/state";
+import {
+  assertEmpty,
+  Compatibility,
+  type ErrorResult,
+  GpVersion,
+  measure,
+  OK,
+  Result,
+  type TaggedError,
+} from "@typeberry/utils";
 import { AccumulateOutput } from "./accumulate/accumulate-output.js";
 import {
   type ACCUMULATION_ERROR,
@@ -30,7 +38,7 @@ import { Preimages, type PreimagesErrorCode, type PreimagesStateUpdate } from ".
 import { RecentHistory, type RecentHistoryStateUpdate } from "./recent-history.js";
 import { Reports, type ReportsError, type ReportsStateUpdate } from "./reports/index.js";
 import type { HeaderChain } from "./reports/verify-contextual.js";
-import { Statistics, type StatisticsStateUpdate } from "./statistics.js";
+import { type CountAndGasUsed, Statistics, type StatisticsStateUpdate } from "./statistics.js";
 
 class DbHeaderChain implements HeaderChain {
   constructor(private readonly blocks: BlocksDb) {}
@@ -140,19 +148,19 @@ export class OnChain {
     const bandersnatch = BandernsatchWasm.new();
     this.statistics = new Statistics(chainSpec, state);
 
-    this.safrole = new Safrole(chainSpec, state, bandersnatch);
+    this.safrole = new Safrole(chainSpec, hasher.blake2b, state, bandersnatch);
     this.safroleSeal = new SafroleSeal(bandersnatch);
 
     this.recentHistory = new RecentHistory(hasher, state);
 
-    this.disputes = new Disputes(chainSpec, state);
+    this.disputes = new Disputes(chainSpec, hasher.blake2b, state);
 
-    this.reports = new Reports(chainSpec, state, new DbHeaderChain(blocks));
-    this.assurances = new Assurances(chainSpec, state);
-    this.accumulate = new Accumulate(chainSpec, state);
+    this.reports = new Reports(chainSpec, hasher.blake2b, state, new DbHeaderChain(blocks));
+    this.assurances = new Assurances(chainSpec, state, hasher.blake2b);
+    this.accumulate = new Accumulate(chainSpec, hasher.blake2b, state);
     this.accumulateOutput = new AccumulateOutput();
-    this.deferredTransfers = new DeferredTransfers(chainSpec, state);
-    this.preimages = new Preimages(state);
+    this.deferredTransfers = new DeferredTransfers(chainSpec, hasher.blake2b, state);
+    this.preimages = new Preimages(state, hasher.blake2b);
 
     this.authorization = new Authorization(chainSpec, state);
   }
@@ -188,7 +196,7 @@ export class OnChain {
     // safrole seal
     let newEntropyHash: EntropyHash;
     if (omitSealVerification) {
-      newEntropyHash = blake2b.hashBytes(header.seal).asOpaque();
+      newEntropyHash = this.hasher.blake2b.hashBytes(header.seal).asOpaque();
     } else {
       const sealResult = await this.verifySeal(timeSlot, block);
       if (sealResult.isError) {
@@ -319,26 +327,33 @@ export class OnChain {
       preimages: accumulatePreimages,
       accumulationQueue,
       recentlyAccumulated,
-      ...servicesUpdate
+      ...servicesUpdateFromAccumulate
     } = accumulateUpdate;
 
-    const deferredTransfersResult = await this.deferredTransfers.transition({
-      entropy: entropy[0],
-      pendingTransfers,
-      servicesUpdate: { ...servicesUpdate, preimages: accumulatePreimages },
-      timeslot: timeSlot,
-    });
+    let transferStatistics = new Map<ServiceId, CountAndGasUsed>();
+    let servicesUpdate: ServicesUpdate = { ...servicesUpdateFromAccumulate, preimages: accumulatePreimages };
 
-    if (deferredTransfersResult.isError) {
-      return stfError(StfErrorKind.DeferredTransfers, deferredTransfersResult);
+    if (Compatibility.isLessThan(GpVersion.V0_7_1)) {
+      const deferredTransfersResult = await this.deferredTransfers.transition({
+        entropy: entropy[0],
+        pendingTransfers,
+        servicesUpdate,
+        timeslot: timeSlot,
+      });
+
+      if (deferredTransfersResult.isError) {
+        return stfError(StfErrorKind.DeferredTransfers, deferredTransfersResult);
+      }
+
+      const {
+        servicesUpdate: servicesUpdateFromDeferredTransfers,
+        transferStatistics: transferStatisticsFromDeferredTransfers,
+        ...deferredTransfersRest
+      } = deferredTransfersResult.ok;
+      transferStatistics = transferStatisticsFromDeferredTransfers;
+      servicesUpdate = servicesUpdateFromDeferredTransfers;
+      assertEmpty(deferredTransfersRest);
     }
-
-    const {
-      servicesUpdate: newServicesUpdate,
-      transferStatistics,
-      ...deferredTransfersRest
-    } = deferredTransfersResult.ok;
-    assertEmpty(deferredTransfersRest);
 
     const accumulateRoot = await this.accumulateOutput.transition({ accumulationOutputLog });
     // recent history
@@ -402,7 +417,7 @@ export class OnChain {
       accumulationQueue,
       recentlyAccumulated,
       accumulationOutputLog,
-      ...newServicesUpdate,
+      ...servicesUpdate,
       preimages,
     });
   }

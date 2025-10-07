@@ -1,8 +1,8 @@
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { tinyChainSpec } from "@typeberry/config";
-import { HASH_SIZE } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   InMemoryState,
@@ -14,6 +14,12 @@ import {
 import { deepEqual } from "@typeberry/utils";
 import { SerializedState } from "./serialized-state.js";
 import { StateEntries } from "./state-entries.js";
+
+let blake2b: Blake2b;
+
+before(async () => {
+  blake2b = await Blake2b.createHasher();
+});
 
 describe("SerializedState", () => {
   const testInitialState = () => {
@@ -46,7 +52,7 @@ describe("SerializedState", () => {
       ]),
     });
     // serialize into a dictionary
-    const serializedState = StateEntries.serializeInMemory(tinyChainSpec, initialState);
+    const serializedState = StateEntries.serializeInMemory(tinyChainSpec, blake2b, initialState);
     return {
       initialState,
       serializedState,
@@ -56,7 +62,7 @@ describe("SerializedState", () => {
   it("should load serialized state", () => {
     const { initialState, serializedState } = testInitialState();
     // load the state from a dictionary.
-    const state = SerializedState.fromStateEntries(tinyChainSpec, serializedState);
+    const state = SerializedState.fromStateEntries(tinyChainSpec, blake2b, serializedState);
 
     // copy back to memory from it's serialized form
     const copiedState = InMemoryState.copyFrom(

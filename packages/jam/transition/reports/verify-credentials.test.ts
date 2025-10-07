@@ -5,6 +5,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Key } from "@typeberry/crypto";
+import { Blake2b } from "@typeberry/hash";
 import { asOpaqueType, Compatibility, deepEqual, GpVersion } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 import {
@@ -39,7 +40,7 @@ describe("Reports.verifyCredentials", () => {
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
     };
-    const hashes = reports.workReportHashes(guarantees);
+    const hashes = reports.workReportHashes(guarantees, await Blake2b.createHasher());
     const res = reports.verifyCredentials(input, hashes);
 
     deepEqual(res, {
@@ -72,7 +73,7 @@ describe("Reports.verifyCredentials", () => {
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
     };
-    const hashes = reports.workReportHashes(guarantees);
+    const hashes = reports.workReportHashes(guarantees, await Blake2b.createHasher());
     const res = reports.verifyCredentials(input, hashes);
 
     deepEqual(res, {
@@ -101,7 +102,7 @@ describe("Reports.verifyCredentials", () => {
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
     };
-    const hashes = reports.workReportHashes(guarantees);
+    const hashes = reports.workReportHashes(guarantees, await Blake2b.createHasher());
     const res = reports.verifyCredentials(input, hashes);
 
     deepEqual(res, {
@@ -130,7 +131,7 @@ describe("Reports.verifyCredentials", () => {
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
     };
-    const hashes = reports.workReportHashes(guarantees);
+    const hashes = reports.workReportHashes(guarantees, await Blake2b.createHasher());
     const res = reports.verifyCredentials(input, hashes);
 
     deepEqual(res, {
@@ -159,7 +160,7 @@ describe("Reports.verifyCredentials", () => {
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
     };
-    const hashes = reports.workReportHashes(guarantees);
+    const hashes = reports.workReportHashes(guarantees, await Blake2b.createHasher());
     const res = reports.verifyCredentials(input, hashes);
 
     deepEqual(res, {
@@ -188,7 +189,7 @@ describe("Reports.verifyCredentials", () => {
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
     };
-    const hashes = reports.workReportHashes(guarantees);
+    const hashes = reports.workReportHashes(guarantees, await Blake2b.createHasher());
     const res = reports.verifyCredentials(input, hashes);
 
     deepEqual(res, {
@@ -217,7 +218,7 @@ describe("Reports.verifyCredentials", () => {
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
     };
-    const hashes = reports.workReportHashes(guarantees);
+    const hashes = reports.workReportHashes(guarantees, await Blake2b.createHasher());
     const res = reports.verifyCredentials(input, hashes);
 
     const message = BytesBlob.parseBlob(

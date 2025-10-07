@@ -6,7 +6,7 @@ import { asKnownSize, FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
 import type { DisputesStateUpdate } from "@typeberry/disputes";
-import { blake2b } from "@typeberry/hash";
+import type { Blake2b } from "@typeberry/hash";
 import type { State } from "@typeberry/state";
 import { check, OK, Result } from "@typeberry/utils";
 
@@ -57,6 +57,7 @@ export class Assurances {
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly state: AssurancesState,
+    public readonly blake2b: Blake2b,
   ) {}
 
   async transition(input: AssurancesInput): Promise<
@@ -136,7 +137,7 @@ export class Assurances {
           coresToClear.push(c);
         }
         if (noOfAssurances >= validatorsSuperMajority) {
-          availableReports.push(workReport.workReport.data);
+          availableReports.push(workReport.workReport);
           coresToClear.push(c);
         }
       }
@@ -180,7 +181,7 @@ export class Assurances {
       signatures.push({
         signature: v.signature.materialize(),
         key: key.ed25519,
-        message: signingPayload(v.anchor.encoded(), v.bitfield.encoded()),
+        message: signingPayload(this.blake2b, v.anchor.encoded(), v.bitfield.encoded()),
       });
     }
     const signaturesValid = await ed25519.verify(signatures);
@@ -200,6 +201,6 @@ export class Assurances {
 
 const JAM_AVAILABLE = BytesBlob.blobFromString("jam_available").raw;
 
-function signingPayload(anchor: BytesBlob, blob: BytesBlob): BytesBlob {
+function signingPayload(blake2b: Blake2b, anchor: BytesBlob, blob: BytesBlob): BytesBlob {
   return BytesBlob.blobFromParts(JAM_AVAILABLE, blake2b.hashBytes(BytesBlob.blobFromParts(anchor.raw, blob.raw)).raw);
 }

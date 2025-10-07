@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import {
   type HeaderHash,
   tryAsCoreIndex,
@@ -24,11 +24,18 @@ import {
   ED25519_SIGNATURE_BYTES,
   initWasm,
 } from "@typeberry/crypto";
-import { blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { AvailabilityAssignment, tryAsPerCore, VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { Assurances, AssurancesError, type AssurancesInput } from "./assurances.js";
 import { copyAndUpdateState } from "./test.utils.js";
+
+let blake2b: Blake2b;
+
+before(async () => {
+  await initWasm();
+  blake2b = await Blake2b.createHasher();
+});
 
 function assurancesAsView(spec: ChainSpec, assurances: AvailabilityAssurance[]): AssurancesExtrinsicView {
   const encoded = Encoder.encodeObject(assurancesExtrinsicCodec, asOpaqueType(assurances), spec);
@@ -40,15 +47,13 @@ const DEFAULT_HEADER_HASH: HeaderHash = Bytes.parseBytes(
   HASH_SIZE,
 ).asOpaque();
 
-await initWasm();
-
 describe("Assurances", () => {
   it("should perform a transition with empty state", async () => {
     const initialState = {
       availabilityAssignment: tryAsPerCore([null, null], tinyChainSpec),
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
     };
-    const assurances = new Assurances(tinyChainSpec, initialState);
+    const assurances = new Assurances(tinyChainSpec, initialState, blake2b);
 
     const input: AssurancesInput = {
       parentHash: DEFAULT_HEADER_HASH,
@@ -73,7 +78,7 @@ describe("Assurances", () => {
       availabilityAssignment: tryAsPerCore([null, null], tinyChainSpec), // empty assignment to make sure assurances use disputesAvailAssignment
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
     };
-    const assurances = new Assurances(tinyChainSpec, initialState);
+    const assurances = new Assurances(tinyChainSpec, initialState, blake2b);
 
     const input: AssurancesInput = {
       parentHash: DEFAULT_HEADER_HASH,
@@ -125,7 +130,7 @@ describe("Assurances", () => {
     const res = await assurances.transition(input);
 
     assert.strictEqual(res.isOk, true);
-    deepEqual(res.ok.availableReports, [INITIAL_ASSIGNMENT[0].workReport.data], { context: "result" });
+    deepEqual(res.ok.availableReports, [INITIAL_ASSIGNMENT[0].workReport], { context: "result" });
     const state = copyAndUpdateState(assurances.state, res.ok.stateUpdate);
     deepEqual(
       state,
@@ -142,7 +147,7 @@ describe("Assurances", () => {
       availabilityAssignment: tryAsPerCore(INITIAL_ASSIGNMENT.slice(), tinyChainSpec),
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
     };
-    const assurances = new Assurances(tinyChainSpec, initialState);
+    const assurances = new Assurances(tinyChainSpec, initialState, blake2b);
 
     const input: AssurancesInput = {
       parentHash: DEFAULT_HEADER_HASH,
@@ -188,7 +193,7 @@ describe("Assurances", () => {
       availabilityAssignment: tryAsPerCore(INITIAL_ASSIGNMENT.slice(), tinyChainSpec),
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
     };
-    const assurances = new Assurances(tinyChainSpec, initialState);
+    const assurances = new Assurances(tinyChainSpec, initialState, blake2b);
 
     const input: AssurancesInput = {
       parentHash: DEFAULT_HEADER_HASH,
@@ -234,7 +239,7 @@ describe("Assurances", () => {
       availabilityAssignment: tryAsPerCore(INITIAL_ASSIGNMENT.slice(), tinyChainSpec),
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
     };
-    const assurances = new Assurances(tinyChainSpec, initialState);
+    const assurances = new Assurances(tinyChainSpec, initialState, blake2b);
 
     const input: AssurancesInput = {
       parentHash: DEFAULT_HEADER_HASH,
@@ -322,11 +327,7 @@ function newAvailabilityAssignment(core: number, timeout: number): AvailabilityA
     results,
     authorizationGasUsed,
   });
-  const encoded = Encoder.encodeObject(WorkReport.Codec, workReport, tinyChainSpec);
-  const hash = blake2b.hashBytes(encoded).asOpaque();
-  const workReportWithHash = new WithHash(hash, workReport);
-
-  return AvailabilityAssignment.create({ workReport: workReportWithHash, timeout: tryAsTimeSlot(timeout) });
+  return AvailabilityAssignment.create({ workReport, timeout: tryAsTimeSlot(timeout) });
 }
 
 const INITIAL_ASSIGNMENT: AvailabilityAssignment[] = [

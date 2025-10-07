@@ -1,9 +1,9 @@
 import assert, { deepEqual } from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { HASH_SIZE, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
 import type { State } from "@typeberry/state";
 import { tryAsPerCore } from "@typeberry/state/common.js";
 import { TEST_STATE, TEST_STATE_ROOT, testState } from "@typeberry/state/test.utils.js";
@@ -14,10 +14,16 @@ import { StateEntries } from "./state-entries.js";
 
 const spec = tinyChainSpec;
 
+let blake2b: Blake2b;
+
+before(async () => {
+  blake2b = await Blake2b.createHasher();
+});
+
 describe("State Serialization", () => {
   it("should load and serialize the test state", () => {
     const state = testState();
-    const serialized = StateEntries.serializeInMemory(spec, state);
+    const serialized = StateEntries.serializeInMemory(spec, blake2b, state);
     for (const [actualKey, actualValue] of serialized) {
       let foundKey = false;
       for (const [expectedKey, expectedValue, details] of TEST_STATE) {
@@ -34,40 +40,40 @@ describe("State Serialization", () => {
   });
 
   it("should update the state", () => {
-    const serialized = StateEntries.serializeInMemory(spec, testState());
-    assert.strictEqual(serialized.getRootHash().toString(), TEST_STATE_ROOT);
+    const serialized = StateEntries.serializeInMemory(spec, blake2b, testState());
+    assert.strictEqual(serialized.getRootHash(blake2b).toString(), TEST_STATE_ROOT);
 
     const authPools: State["authPools"] = tryAsPerCore(
       [asKnownSize([Bytes.fill(HASH_SIZE, 12).asOpaque()]), asKnownSize([Bytes.fill(HASH_SIZE, 15).asOpaque()])],
       spec,
     );
-    const update = serializeStateUpdate(spec, { authPools });
+    const update = serializeStateUpdate(spec, blake2b, { authPools });
 
     // when
     serialized.applyUpdate(update);
 
     // check the value
-    const state = SerializedState.fromStateEntries(spec, serialized);
+    const state = SerializedState.fromStateEntries(spec, blake2b, serialized);
     assert.deepStrictEqual(state.authPools, authPools);
 
-    let expectedRoot: string;
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)) {
-      expectedRoot = "0xcf33ddfb0987283f7614652d7eb4d3509e5efd93466a4b28ab4865cc912a66e1";
-    } else if (Compatibility.is(GpVersion.V0_6_7)) {
-      expectedRoot = "0xa6354341d3c232456ec5cdd4fd84daf474d7083ebc4de180363e656c6e62a704";
-    } else {
-      expectedRoot = "0xb075c9dacc6df40a4ac189b6573e9a0d35f2744a759b1ce0d51a272bab3bea5f";
-    }
+    const expectedRoot = Compatibility.selectIfGreaterOrEqual({
+      fallback: "0xb075c9dacc6df40a4ac189b6573e9a0d35f2744a759b1ce0d51a272bab3bea5f",
+      versions: {
+        [GpVersion.V0_6_7]: "0xa6354341d3c232456ec5cdd4fd84daf474d7083ebc4de180363e656c6e62a704",
+        [GpVersion.V0_7_0]: "0xcf33ddfb0987283f7614652d7eb4d3509e5efd93466a4b28ab4865cc912a66e1",
+        [GpVersion.V0_7_1]: "0xd105b9efbcc6c4556eac36fe1020c93ab01fa4c62214d7f78accc7444da448d8",
+      },
+    });
 
-    assert.strictEqual(serialized.getRootHash().toString(), expectedRoot);
+    assert.strictEqual(serialized.getRootHash(blake2b).toString(), expectedRoot);
   });
 });
 
 describe("State Merkleization", () => {
   it("should load and merkelize the test state", () => {
     const state = testState();
-    const serialized = StateEntries.serializeInMemory(spec, state);
-    const stateRoot = serialized.getRootHash();
+    const serialized = StateEntries.serializeInMemory(spec, blake2b, state);
+    const stateRoot = serialized.getRootHash(blake2b);
 
     assert.strictEqual(stateRoot.toString(), TEST_STATE_ROOT);
   });

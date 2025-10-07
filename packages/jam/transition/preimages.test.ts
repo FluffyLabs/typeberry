@@ -6,7 +6,7 @@ import type { PreimagesExtrinsic } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { blake2b, HASH_SIZE } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   InMemoryService,
@@ -53,7 +53,9 @@ function createAccount(
   });
 }
 
-describe("Preimages", () => {
+describe("Preimages", async () => {
+  const blake2b = await Blake2b.createHasher();
+
   it("should reject preimages that are not sorted by requester", () => {
     const state = InMemoryState.partial(tinyChainSpec, {
       services: new Map([
@@ -61,7 +63,7 @@ describe("Preimages", () => {
         [tryAsServiceId(1), createAccount(tryAsServiceId(1))],
       ]),
     });
-    const preimages = new Preimages(state);
+    const preimages = new Preimages(state, blake2b);
 
     const blob1 = BytesBlob.parseBlob("0xd34db33f11223344556677889900aabbccddeeff0123456789abcdef01234567");
     const blob2 = BytesBlob.parseBlob("0xf00dc0de11223344556677889900aabbccddeeff0123456789abcdef01234567");
@@ -87,7 +89,7 @@ describe("Preimages", () => {
     const state = InMemoryState.partial(tinyChainSpec, {
       services: new Map([[tryAsServiceId(0), createAccount(tryAsServiceId(0))]]),
     });
-    const preimages = new Preimages(state);
+    const preimages = new Preimages(state, blake2b);
 
     const blob1 = BytesBlob.parseBlob("0xf00dc0de11223344556677889900aabbccddeeff0123456789abcdef01234567");
     const blob2 = BytesBlob.parseBlob("0xd34db33f11223344556677889900aabbccddeeff0123456789abcdef01234567");
@@ -113,7 +115,7 @@ describe("Preimages", () => {
     const state = InMemoryState.partial(tinyChainSpec, {
       services: new Map([[tryAsServiceId(0), createAccount(tryAsServiceId(0))]]),
     });
-    const preimages = new Preimages(state);
+    const preimages = new Preimages(state, blake2b);
 
     const blob = BytesBlob.parseBlob("0xdeadbeef11223344556677889900aabbccddeeff0123456789abcdef01234567");
     const input = createInput(
@@ -138,7 +140,7 @@ describe("Preimages", () => {
     const state = InMemoryState.partial(tinyChainSpec, {
       services: new Map([[tryAsServiceId(0), createAccount(tryAsServiceId(0))]]),
     });
-    const preimages = new Preimages(state);
+    const preimages = new Preimages(state, blake2b);
 
     const blob = BytesBlob.parseBlob("0xc0ffee0011223344556677889900aabbccddeeff0123456789abcdef01234567");
     const input = createInput([{ requester: tryAsServiceId(1), blob }], tryAsTimeSlot(12));
@@ -152,7 +154,7 @@ describe("Preimages", () => {
     const state = InMemoryState.partial(tinyChainSpec, {
       services: new Map([[tryAsServiceId(0), createAccount(tryAsServiceId(0))]]),
     });
-    const preimages = new Preimages(state);
+    const preimages = new Preimages(state, blake2b);
 
     const blob = BytesBlob.parseBlob("0xbaddcafe11223344556677889900aabbccddeeff0123456789abcdef01234567");
     const input = createInput([{ requester: tryAsServiceId(0), blob }], tryAsTimeSlot(12));
@@ -179,7 +181,7 @@ describe("Preimages", () => {
     const state = InMemoryState.partial(tinyChainSpec, {
       services: new Map([[tryAsServiceId(0), createAccount(tryAsServiceId(0), preimages, lookupHistory)]]),
     });
-    const preimagesService = new Preimages(state);
+    const preimagesService = new Preimages(state, blake2b);
 
     const input = createInput([{ requester: tryAsServiceId(0), blob }], tryAsTimeSlot(12));
 
@@ -210,7 +212,7 @@ describe("Preimages", () => {
         [tryAsServiceId(1), createAccount(tryAsServiceId(1), [], lookupHistory)],
       ]),
     });
-    const preimages = new Preimages(state);
+    const preimages = new Preimages(state, blake2b);
 
     const input = createInput(
       [

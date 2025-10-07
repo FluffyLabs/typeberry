@@ -1,12 +1,20 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { SortedSet } from "@typeberry/collections";
-import { HASH_SIZE, type OpaqueHash, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE, type OpaqueHash, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
 import { deepEqual } from "@typeberry/utils";
-import { blake2bTrieHasher } from "./hasher.js";
+import { getBlake2bTrieHasher } from "./hasher.js";
 import { type InputKey, LeafNode, parseInputKey } from "./nodes.js";
+import type { TrieHasher } from "./nodesDb.js";
 import { findSharedPrefix, InMemoryTrie, leafComparator } from "./trie.js";
+
+let blake2bTrieHasher: TrieHasher;
+
+before(async () => {
+  const blake2b = await Blake2b.createHasher();
+  blake2bTrieHasher = getBlake2bTrieHasher(blake2b);
+});
 
 describe("Root hash", () => {
   it("should compute state root hash that is equal to the trie one (complex)", () => {
