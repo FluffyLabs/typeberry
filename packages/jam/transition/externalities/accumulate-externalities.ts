@@ -160,30 +160,19 @@ export class AccumulateExternalities
   /** `check`: https://graypaper.fluffylabs.dev/#/ab2cdbd/30c60330c603?v=0.7.2 */
   private getNextAvailableServiceId(serviceId: ServiceId): ServiceId {
     let currentServiceId = serviceId;
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      const mod = 2 ** 32 - 2 ** 8 - MIN_PUBLIC_SERVICE_INDEX;
-      for (;;) {
-        const service = this.getServiceInfo(currentServiceId);
-        // we found an empty id
-        if (service === null) {
-          return currentServiceId;
-        }
-        // keep trying
-        currentServiceId = tryAsServiceId(
-          ((currentServiceId - MIN_PUBLIC_SERVICE_INDEX + 1 + mod) % mod) + MIN_PUBLIC_SERVICE_INDEX,
-        );
+    const mod = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+      ? 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8
+      : 2 ** 32 - 2 ** 9;
+    const offset = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? MIN_PUBLIC_SERVICE_INDEX : 2 ** 8;
+
+    for (;;) {
+      const service = this.getServiceInfo(currentServiceId);
+      // we found an empty id
+      if (service === null) {
+        return currentServiceId;
       }
-    } else {
-      const mod = 2 ** 32 - 2 ** 9;
-      for (;;) {
-        const service = this.getServiceInfo(currentServiceId);
-        // we found an empty id
-        if (service === null) {
-          return currentServiceId;
-        }
-        // keep trying
-        currentServiceId = tryAsServiceId(((currentServiceId - 2 ** 8 + 1 + mod) % mod) + 2 ** 8);
-      }
+      // keep trying
+      currentServiceId = tryAsServiceId(((currentServiceId - offset + 1 + mod) % mod) + offset);
     }
   }
 
@@ -524,10 +513,10 @@ export class AccumulateExternalities
 
   updateValidatorsData(validatorsData: PerValidator<ValidatorData>): Result<OK, UnprivilegedError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/362802362d02?v=0.6.7 */
-    const delegator = this.updatedState.getPrivilegedServices().delegator;
+    const currentDelegator = this.updatedState.getPrivilegedServices().delegator;
 
-    if (delegator !== this.currentServiceId) {
-      logger.trace`Current service id (${this.currentServiceId}) is not a validators manager. (expected: ${delegator}) and cannot update validators data. Ignoring`;
+    if (currentDelegator !== this.currentServiceId) {
+      logger.trace`Current service id (${this.currentServiceId}) is not a validators manager. (expected: ${currentDelegator}) and cannot update validators data. Ignoring`;
       return Result.error(UnprivilegedError);
     }
 
@@ -548,10 +537,10 @@ export class AccumulateExternalities
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36a40136a401?v=0.6.7 */
 
     // NOTE `coreIndex` is already verified in the HC, so this is infallible.
-    const currentassigners = this.updatedState.getPrivilegedServices().assigners[coreIndex];
+    const currentAssigners = this.updatedState.getPrivilegedServices().assigners[coreIndex];
 
-    if (currentassigners !== this.currentServiceId) {
-      logger.trace`Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentassigners}) and cannot update authorization queue.`;
+    if (currentAssigners !== this.currentServiceId) {
+      logger.trace`Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentAssigners}) and cannot update authorization queue.`;
       return Result.error(UpdatePrivilegesError.UnprivilegedService);
     }
 
@@ -747,10 +736,9 @@ export class AccumulateExternalities
 }
 
 function bumpServiceId(serviceId: ServiceId): ServiceId {
-  if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-    const mod = 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8;
-    return tryAsServiceId(MIN_PUBLIC_SERVICE_INDEX + ((serviceId - MIN_PUBLIC_SERVICE_INDEX + 42 + mod) % mod));
-  }
-  const mod = 2 ** 32 - 2 ** 9;
-  return tryAsServiceId(2 ** 8 + ((serviceId - 2 ** 8 + 42 + mod) % mod));
+  const mod = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+    ? 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8
+    : 2 ** 32 - 2 ** 9;
+  const offset = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? MIN_PUBLIC_SERVICE_INDEX : 2 ** 8;
+  return tryAsServiceId(offset + ((serviceId - offset + 42 + mod) % mod));
 }

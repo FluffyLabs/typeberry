@@ -31,6 +31,7 @@ function prepareRegsAndMemory(
   gas: U64,
   balance: U64,
   gratisStorage: U64,
+  // If value exceeds 2 ** 16, it's just ignored.
   serviceId: U64 = tryAsU64(2 ** 32 - 1),
   { skipCodeHash = false }: { skipCodeHash?: boolean } = {},
 ) {
@@ -62,7 +63,7 @@ describe("HostCalls: New", () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);
-    accumulate.newServiceResponse = Result.ok(tryAsServiceId(2 ** 20));
+    accumulate.newServiceResponse = Result.ok(tryAsServiceId(23_000));
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),
@@ -75,7 +76,7 @@ describe("HostCalls: New", () => {
     await n.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(tryAsServiceId(Number(registers.get(RESULT_REG))), tryAsServiceId(2 ** 20));
+    assert.deepStrictEqual(tryAsServiceId(Number(registers.get(RESULT_REG))), tryAsServiceId(23_000));
     const gratisStorage = 1_024n;
     assert.deepStrictEqual(accumulate.newServiceCalled, [
       [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, gratisStorage, 2n ** 32n - 1n],

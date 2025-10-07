@@ -109,7 +109,7 @@ describe("HostCalls: Bless", () => {
       ]);
     } else {
       assert.deepStrictEqual(accumulate.privilegedServices, [
-        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), null, entries],
+        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), tryAsServiceId(0), entries],
       ]);
     }
   });
@@ -167,7 +167,7 @@ describe("HostCalls: Bless", () => {
       ]);
     } else {
       assert.deepStrictEqual(accumulate.privilegedServices, [
-        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), null, entries],
+        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), tryAsServiceId(0), entries],
       ]);
     }
   });
@@ -193,7 +193,7 @@ describe("HostCalls: Bless", () => {
       ]);
     } else {
       assert.deepStrictEqual(accumulate.privilegedServices, [
-        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), null, entries],
+        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), tryAsServiceId(0), entries],
       ]);
     }
   });

@@ -1,4 +1,4 @@
-import { type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/block";
+import { type ServiceGas, type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { codec, Decoder, tryAsExactBytes } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU64 } from "@typeberry/numbers";
@@ -55,7 +55,7 @@ export class Bless implements HostCallHandler {
     // `v`: manages validator keys
     const delegator = getServiceId(regs.get(9));
     // `r`: manages creation of new services with id within protected range
-    const registrar = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? getServiceId(regs.get(10)) : null;
+    const registrar = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? getServiceId(regs.get(10)) : tryAsServiceId(0);
     // `o`: memory offset
     const sourceStart = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? regs.get(11) : regs.get(10);
     // `n`: number of items in the auto-accumulate dictionary
