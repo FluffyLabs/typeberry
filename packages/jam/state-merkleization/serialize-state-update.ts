@@ -51,7 +51,6 @@ export function* serializeStateUpdate(
 
 function* serializeRemovedServices(servicesRemoved: Set<ServiceId> | undefined): Generator<StateEntryUpdate> {
   if (servicesRemoved === undefined) return;
-  console.log`Removed: ${servicesRemoved.size}`;
   for (const serviceId of servicesRemoved) {
     // TODO [ToDr] what about all data associated with a service?
     const codec = serialize.serviceData(serviceId);
@@ -64,7 +63,6 @@ function* serializeStorage(
   blake2b: Blake2b,
 ): Generator<StateEntryUpdate> {
   if (storageUpdates === undefined) return;
-  let count = 0;
   for (const [serviceId, updates] of storageUpdates.entries()) {
     for (const { action } of updates) {
       switch (action.kind) {
@@ -81,10 +79,8 @@ function* serializeStorage(
           break;
         }
       }
-      count++;
     }
   }
-  console.log`Storage: ${count}`;
 }
 
 function* serializePreimages(
@@ -93,7 +89,6 @@ function* serializePreimages(
   blake2b: Blake2b,
 ): Generator<StateEntryUpdate> {
   if (preimagesUpdates === undefined) return;
-  let count = 0;
   for (const [serviceId, updates] of preimagesUpdates.entries()) {
     for (const { action } of updates) {
       switch (action.kind) {
@@ -128,10 +123,8 @@ function* serializePreimages(
           break;
         }
       }
-      count++;
     }
   }
-  console.log`Preimages: ${count}`;
 }
 function* serializeServiceUpdates(
   servicesUpdates: Map<ServiceId, UpdateService> | undefined,
@@ -139,7 +132,6 @@ function* serializeServiceUpdates(
   blake2b: Blake2b,
 ): Generator<StateEntryUpdate> {
   if (servicesUpdates === undefined) return;
-  console.log`Services: ${servicesUpdates.size}`;
   for (const [serviceId, { action }] of servicesUpdates.entries()) {
     // new service being created or updated
     const codec = serialize.serviceData(serviceId);
