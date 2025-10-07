@@ -662,7 +662,7 @@ describe("PartialState.newService", () => {
     }
   });
 
-  itPost071("should create a new service with givent id and update balance", () => {
+  itPost071("should create a new service with givent id and update balance + not changed next service ID", () => {
     const state = partiallyUpdatedState();
     const maybeService = state.state.services.get(tryAsServiceId(0));
     if (maybeService === undefined) {
@@ -685,6 +685,7 @@ describe("PartialState.newService", () => {
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
     const gratisStorage = tryAsU64(50);
+    // selecting service id
     const serviceId = tryAsU64(42);
 
     const items = tryAsU32(2); // 2 * 1 + 0
@@ -843,6 +844,97 @@ describe("PartialState.newService", () => {
     // Verify no side effects
     assert.deepStrictEqual(state.stateUpdate.services.servicesUpdates, []);
   });
+
+  itPost071("should return an error if attempting to create new service with selected id that already exists", () => {
+    const state = partiallyUpdatedState();
+    const serviceId = 0;
+    const maybeService = state.state.services.get(tryAsServiceId(serviceId));
+    if (maybeService === undefined) {
+      throw new Error("Invalid service!");
+    }
+
+    const partialState = new AccumulateExternalities(
+      tinyChainSpec,
+      blake2b,
+      state,
+      tryAsServiceId(0),
+      tryAsServiceId(10),
+      tryAsTimeSlot(16),
+    );
+
+    const codeHash = Bytes.fill(HASH_SIZE, 0x11).asOpaque();
+    const codeLength = tryAsU32(100);
+    const codeLengthU64 = tryAsU64(codeLength);
+    const accumulateMinGas = tryAsServiceGas(10n);
+    const onTransferMinGas = tryAsServiceGas(20n);
+    const gratisStorage = tryAsU64(50);
+
+    // when
+    const result = partialState.newService(
+      codeHash,
+      codeLengthU64,
+      accumulateMinGas,
+      onTransferMinGas,
+      gratisStorage,
+      tryAsU64(serviceId),
+    );
+
+    // then
+    assert.deepStrictEqual(result, Result.error(NewServiceError.ServiceAlreadyExists));
+
+    // Verify no side effects
+    assert.deepStrictEqual(state.stateUpdate.services.servicesUpdates, []);
+
+    // Verify next service ID is not bumped
+    assert.deepStrictEqual(partialState.getNextNewServiceId(), tryAsServiceId(10));
+  });
+
+  itPost071(
+    "should create a new service with random id if service is unprivileged to select new service id + next service id",
+    () => {
+      const state = partiallyUpdatedState();
+      // setting different service than our privileged registrar
+      state.stateUpdate.privilegedServices = {
+        ...state.state.privilegedServices,
+        registrar: tryAsServiceId(1),
+      };
+      const maybeService = state.state.services.get(tryAsServiceId(0));
+      if (maybeService === undefined) {
+        throw new Error("Invalid service!");
+      }
+
+      const partialState = new AccumulateExternalities(
+        tinyChainSpec,
+        blake2b,
+        state,
+        tryAsServiceId(0),
+        tryAsServiceId(10),
+        tryAsTimeSlot(16),
+      );
+
+      const codeHash = Bytes.fill(HASH_SIZE, 0x12).asOpaque();
+      const codeLength = tryAsU64(1024);
+      const accumulateMinGas = tryAsServiceGas(10n);
+      const onTransferMinGas = tryAsServiceGas(20n);
+      const gratisStorage = tryAsU64(1024);
+      // selecting service id
+      const serviceId = tryAsU64(42);
+
+      // when
+      const result = partialState.newService(
+        codeHash,
+        codeLength,
+        accumulateMinGas,
+        onTransferMinGas,
+        gratisStorage,
+        serviceId,
+      );
+
+      // then
+      assert.deepStrictEqual(result, Result.ok(10));
+      assert.deepStrictEqual(partialState.getNextNewServiceId(), tryAsServiceId(4294901556));
+    },
+  );
 });
 
 describe("PartialState.updateValidatorsData", () => {
