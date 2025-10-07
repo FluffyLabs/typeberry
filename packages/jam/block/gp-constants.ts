@@ -55,6 +55,14 @@ export const W_X = 3_072;
 // TODO [ToDr] Not sure where these should live yet :(
 
 /**
+ * `S`: The minimum public service index.
+ * Services of indices below these may only be created by the Registrar.
+ *
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/447a00447a00?v=0.7.2
+ */
+export const MIN_PUBLIC_SERVICE_INDEX = 2 ** 16;
+
+/**
  * `J`: The maximum sum of dependency items in a work-report.
  *
  * https://graypaper.fluffylabs.dev/#/5f542d7/416a00416a00?v=0.6.2

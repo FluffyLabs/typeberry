@@ -9,7 +9,7 @@ import {
   tryAsServiceId,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
+import { type AUTHORIZATION_QUEUE_SIZE, MIN_PUBLIC_SERVICE_INDEX } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
@@ -71,8 +71,6 @@ const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 const LOOKUP_HISTORY_ENTRY_BYTES = tryAsU64(81);
 /** https://graypaper.fluffylabs.dev/#/7e6ff6a/117a01117a01?v=0.6.7 */
 const BASE_STORAGE_BYTES = tryAsU64(34);
-/** https://graypaper.fluffylabs.dev/#/ab2cdbd/447a00447a00?v=0.7.2 */
-const MIN_PUBLIC_SERVICE_INDEX = tryAsU32(2 ** 16);
 
 const logger = Logger.new(import.meta.filename, "externalities");
 
