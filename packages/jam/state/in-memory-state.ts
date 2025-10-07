@@ -181,8 +181,8 @@ export class InMemoryService extends WithDebug implements Service {
  */
 export class InMemoryState extends WithDebug implements State, WithStateView, EnumerableState {
   /** Create a new `InMemoryState` by providing all required fields. */
-  static create(state: InMemoryStateFields) {
-    return new InMemoryState(state);
+  static new(chainSpec: ChainSpec, state: InMemoryStateFields) {
+    return new InMemoryState(chainSpec, state);
   }
 
   /**
@@ -200,7 +200,7 @@ export class InMemoryState extends WithDebug implements State, WithStateView, En
   /**
    * Create a new `InMemoryState` from some other state object.
    */
-  static copyFrom(other: State, servicesData: Map<ServiceId, ServiceEntries>) {
+  static copyFrom(chainSpec: ChainSpec, other: State, servicesData: Map<ServiceId, ServiceEntries>) {
     const services = new Map<ServiceId, InMemoryService>();
     for (const [id, entries] of servicesData.entries()) {
       const service = other.getService(id);
@@ -211,7 +211,7 @@ export class InMemoryState extends WithDebug implements State, WithStateView, En
       services.set(id, inMemService);
     }
 
-    return InMemoryState.create({
+    return InMemoryState.new(chainSpec, {
       availabilityAssignment: other.availabilityAssignment,
       accumulationQueue: other.accumulationQueue,
       designatedValidatorData: other.designatedValidatorData,
@@ -427,7 +427,10 @@ export class InMemoryState extends WithDebug implements State, WithStateView, En
     return this.services.get(id) ?? null;
   }
 
-  private constructor(s: InMemoryStateFields) {
+  protected constructor(
+    private readonly chainSpec: ChainSpec,
+    s: InMemoryStateFields,
+  ) {
     super();
     this.availabilityAssignment = s.availabilityAssignment;
     this.designatedValidatorData = s.designatedValidatorData;
@@ -452,14 +455,14 @@ export class InMemoryState extends WithDebug implements State, WithStateView, En
   }
 
   view(): StateView {
-    return new InMemoryStateView(this);
+    return new InMemoryStateView(this.chainSpec, this);
   }
 
   /**
    * Create an empty and possibly incoherent `InMemoryState`.
    */
   static empty(spec: ChainSpec) {
-    return new InMemoryState({
+    return new InMemoryState(spec, {
       availabilityAssignment: tryAsPerCore(
         Array.from({ length: spec.coresCount }, () => null),
         spec,

@@ -1,6 +1,7 @@
 import { reencodeAsView, type ServiceId } from "@typeberry/block";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import type { SequenceView } from "@typeberry/codec";
+import type { ChainSpec } from "@typeberry/config";
 import { type AccumulationQueueView, accumulationQueueCodec } from "./accumulation-queue.js";
 import { type AvailabilityAssignmentsView, availabilityAssignmentsCodec } from "./assurances.js";
 import { type AuthorizationPool, type AuthorizationQueue, authPoolsCodec, authQueuesCodec } from "./auth.js";
@@ -14,46 +15,49 @@ import { StatisticsData, type StatisticsDataView } from "./statistics.js";
 import { type ValidatorData, type ValidatorDataView, validatorsDataCodec } from "./validator-data.js";
 
 export class InMemoryStateView implements StateView {
-  constructor(private readonly state: State) {}
+  constructor(
+    private readonly chainSpec: ChainSpec,
+    private readonly state: State,
+  ) {}
 
   availabilityAssignmentView(): AvailabilityAssignmentsView {
-    return reencodeAsView(availabilityAssignmentsCodec, this.state.availabilityAssignment);
+    return reencodeAsView(availabilityAssignmentsCodec, this.state.availabilityAssignment, this.chainSpec);
   }
 
   designatedValidatorDataView(): SequenceView<ValidatorData, ValidatorDataView> {
-    return reencodeAsView(validatorsDataCodec, this.state.designatedValidatorData);
+    return reencodeAsView(validatorsDataCodec, this.state.designatedValidatorData, this.chainSpec);
   }
 
   currentValidatorDataView(): SequenceView<ValidatorData, ValidatorDataView> {
-    return reencodeAsView(validatorsDataCodec, this.state.currentValidatorData);
+    return reencodeAsView(validatorsDataCodec, this.state.currentValidatorData, this.chainSpec);
   }
 
   previousValidatorDataView(): SequenceView<ValidatorData, ValidatorDataView> {
-    return reencodeAsView(validatorsDataCodec, this.state.previousValidatorData);
+    return reencodeAsView(validatorsDataCodec, this.state.previousValidatorData, this.chainSpec);
   }
 
   authPoolsView(): SequenceView<AuthorizationPool, SequenceView<AuthorizerHash>> {
-    return reencodeAsView(authPoolsCodec, this.state.authPools);
+    return reencodeAsView(authPoolsCodec, this.state.authPools, this.chainSpec);
   }
 
   authQueuesView(): SequenceView<AuthorizationQueue, SequenceView<AuthorizerHash>> {
-    return reencodeAsView(authQueuesCodec, this.state.authQueues);
+    return reencodeAsView(authQueuesCodec, this.state.authQueues, this.chainSpec);
   }
 
   recentBlocksView(): RecentBlocksView {
-    return reencodeAsView(RecentBlocks.Codec, this.state.recentBlocks);
+    return reencodeAsView(RecentBlocks.Codec, this.state.recentBlocks, this.chainSpec);
   }
 
   statisticsView(): StatisticsDataView {
-    return reencodeAsView(StatisticsData.Codec, this.state.statistics);
+    return reencodeAsView(StatisticsData.Codec, this.state.statistics, this.chainSpec);
   }
 
   accumulationQueueView(): AccumulationQueueView {
-    return reencodeAsView(accumulationQueueCodec, this.state.accumulationQueue);
+    return reencodeAsView(accumulationQueueCodec, this.state.accumulationQueue, this.chainSpec);
   }
 
   recentlyAccumulatedView(): RecentlyAccumulatedView {
-    return reencodeAsView(recentlyAccumulatedCodec, this.state.recentlyAccumulated);
+    return reencodeAsView(recentlyAccumulatedCodec, this.state.recentlyAccumulated, this.chainSpec);
   }
 
   safroleDataView(): SafroleDataView {
@@ -65,7 +69,7 @@ export class InMemoryStateView implements StateView {
       sealingKeySeries: this.state.sealingKeySeries,
       ticketsAccumulator: this.state.ticketsAccumulator,
     });
-    return reencodeAsView(SafroleData.Codec, safrole);
+    return reencodeAsView(SafroleData.Codec, safrole, this.chainSpec);
   }
 
   getServiceInfoView(id: ServiceId): ServiceAccountInfoView | null {
@@ -74,6 +78,6 @@ export class InMemoryStateView implements StateView {
       return null;
     }
 
-    return reencodeAsView(ServiceAccountInfo.Codec, service.getInfo());
+    return reencodeAsView(ServiceAccountInfo.Codec, service.getInfo(), this.chainSpec);
   }
 }

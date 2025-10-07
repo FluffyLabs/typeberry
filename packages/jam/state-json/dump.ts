@@ -114,7 +114,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
       theta,
       accounts,
     }): InMemoryState => {
-      return InMemoryState.create({
+      return InMemoryState.new(spec, {
         authPools: tryAsPerCore(
           alpha.map((perCore) => {
             if (perCore.length > MAX_AUTH_POOL_SIZE) {

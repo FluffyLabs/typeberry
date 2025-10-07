@@ -46,7 +46,7 @@ const spec = tinyChainSpec;
 
 // based on jamduna/assurances/state_snapshots/1_004.json
 export const testState = (): InMemoryState => {
-  const state = InMemoryState.create({
+  const state = InMemoryState.new(spec, {
     // rho
     availabilityAssignment: tryAsPerCore(
       [
