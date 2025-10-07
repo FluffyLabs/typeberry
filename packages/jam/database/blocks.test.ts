@@ -1,11 +1,17 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { testBlockView } from "@typeberry/block/test-helpers.js";
 import { Bytes } from "@typeberry/bytes";
-import { blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
 import { InMemoryBlocks } from "./index.js";
 
 describe("InMemoryDatabase", () => {
+  let blake2b: Blake2b;
+
+  before(async () => {
+    blake2b = await Blake2b.createHasher();
+  });
+
   it("should set and retrieve best header hash", () => {
     const db = InMemoryBlocks.new();
 

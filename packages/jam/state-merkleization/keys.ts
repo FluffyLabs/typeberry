@@ -1,7 +1,7 @@
 import type { ServiceId } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import { type Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU32, type U32, u32AsLeBytes } from "@typeberry/numbers";
 import type { StorageKey } from "@typeberry/state";
 import { Compatibility, GpVersion, type Opaque } from "@typeberry/utils";
@@ -70,7 +70,7 @@ export namespace stateKeys {
   }
 
   /** https://graypaper.fluffylabs.dev/#/1c979cb/3bba033bba03?v=0.7.1 */
-  export function serviceStorage(serviceId: ServiceId, key: StorageKey): StateKey {
+  export function serviceStorage(blake2b: Blake2b, serviceId: ServiceId, key: StorageKey): StateKey {
     if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
       const out = Bytes.zero(HASH_SIZE);
       out.raw.set(u32AsLeBytes(tryAsU32(2 ** 32 - 1)), 0);
@@ -78,11 +78,11 @@ export namespace stateKeys {
       return legacyServiceNested(serviceId, out);
     }
 
-    return serviceNested(serviceId, tryAsU32(2 ** 32 - 1), key);
+    return serviceNested(blake2b, serviceId, tryAsU32(2 ** 32 - 1), key);
   }
 
   /** https://graypaper.fluffylabs.dev/#/1c979cb/3bd7033bd703?v=0.7.1 */
-  export function servicePreimage(serviceId: ServiceId, hash: PreimageHash): StateKey {
+  export function servicePreimage(blake2b: Blake2b, serviceId: ServiceId, hash: PreimageHash): StateKey {
     if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
       const out = Bytes.zero(HASH_SIZE);
       out.raw.set(u32AsLeBytes(tryAsU32(2 ** 32 - 2)), 0);
@@ -90,11 +90,16 @@ export namespace stateKeys {
       return legacyServiceNested(serviceId, out);
     }
 
-    return serviceNested(serviceId, tryAsU32(2 ** 32 - 2), hash);
+    return serviceNested(blake2b, serviceId, tryAsU32(2 ** 32 - 2), hash);
   }
 
   /** https://graypaper.fluffylabs.dev/#/1c979cb/3b0a043b0a04?v=0.7.1 */
-  export function serviceLookupHistory(serviceId: ServiceId, hash: PreimageHash, preimageLength: U32): StateKey {
+  export function serviceLookupHistory(
+    blake2b: Blake2b,
+    serviceId: ServiceId,
+    hash: PreimageHash,
+    preimageLength: U32,
+  ): StateKey {
     if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
       const doubleHash = blake2b.hashBytes(hash);
       const out = Bytes.zero(HASH_SIZE);
@@ -103,11 +108,11 @@ export namespace stateKeys {
       return legacyServiceNested(serviceId, out);
     }
 
-    return serviceNested(serviceId, preimageLength, hash);
+    return serviceNested(blake2b, serviceId, preimageLength, hash);
   }
 
   /** https://graypaper.fluffylabs.dev/#/1c979cb/3b88003b8800?v=0.7.1 */
-  export function serviceNested(serviceId: ServiceId, numberPrefix: U32, hash: BytesBlob): StateKey {
+  export function serviceNested(blake2b: Blake2b, serviceId: ServiceId, numberPrefix: U32, hash: BytesBlob): StateKey {
     const inputToHash = BytesBlob.blobFromParts(u32AsLeBytes(numberPrefix), hash.raw);
     const newHash = blake2b.hashBytes(inputToHash).raw.subarray(0, 28);
     const key = Bytes.zero(HASH_SIZE);

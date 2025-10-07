@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
+import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { fisherYatesShuffle } from "@typeberry/shuffling";
 
@@ -22,11 +23,12 @@ class ShufflingTest {
 export const shufflingTests = json.array(ShufflingTest.fromJson);
 
 export async function runShufflingTests(testContents: ShufflingTest[]) {
+  const blake2b = await Blake2b.createHasher();
   for (const testContent of testContents) {
     it(`should correctly shuffle input of length ${testContent.input}`, () => {
       const input = Array.from({ length: testContent.input }, (_, i) => i);
 
-      const result = fisherYatesShuffle(input, testContent.entropy);
+      const result = fisherYatesShuffle(blake2b, input, testContent.entropy);
 
       assert.deepStrictEqual(result, testContent.output);
     });

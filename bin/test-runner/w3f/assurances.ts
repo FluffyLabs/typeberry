@@ -5,6 +5,7 @@ import type { WorkReport } from "@typeberry/block/work-report.js";
 import { fromJson, getAssurancesExtrinsicFromJson, workReportFromJson } from "@typeberry/block-json";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type AvailabilityAssignment, type State, tryAsPerCore, type ValidatorData } from "@typeberry/state";
 import { availabilityAssignmentFromJson, validatorDataFromJson } from "@typeberry/state-json";
@@ -16,6 +17,8 @@ import {
 } from "@typeberry/transition/assurances.js";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { deepEqual, Result } from "@typeberry/utils";
+
+const blake2b = Blake2b.createHasher();
 
 class Input {
   assurances!: AssurancesExtrinsic;
@@ -169,7 +172,7 @@ async function runAssurancesTest(
   input: AssurancesInput,
   expectedResult: Result<WorkReport[], AssurancesError>,
 ) {
-  const assurances = new Assurances(spec, preState);
+  const assurances = new Assurances(spec, preState, await blake2b);
   const res = await assurances.transition(input);
 
   // validators are in incorrect order as well so it depends which error is checked first

@@ -3,7 +3,7 @@ import { fromJson } from "@typeberry/block-json";
 import type { BytesBlob } from "@typeberry/bytes";
 import { codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
+import { type Blake2b, HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { loadState as loadSerializedState } from "@typeberry/state-merkleization";
 
@@ -36,9 +36,10 @@ export class TestState {
   keyvals!: StateKeyVal[];
 }
 
-export function loadState(spec: ChainSpec, keyvals: StateKeyVal[]) {
+export function loadState(spec: ChainSpec, blake2b: Blake2b, keyvals: StateKeyVal[]) {
   return loadSerializedState(
     spec,
+    blake2b,
     keyvals.map((x) => [x.key, x.value]),
   );
 }

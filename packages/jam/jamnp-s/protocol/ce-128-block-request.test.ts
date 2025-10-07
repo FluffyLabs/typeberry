@@ -1,18 +1,22 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import type { BlockView, HeaderHash } from "@typeberry/block";
 import { testBlockView } from "@typeberry/block/test-helpers.js";
 import { tinyChainSpec } from "@typeberry/config";
-import { blake2b } from "@typeberry/hash";
+import { Blake2b } from "@typeberry/hash";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { OK } from "@typeberry/utils";
 import { ClientHandler, Direction, ServerHandler, STREAM_KIND } from "./ce-128-block-request.js";
 import type { StreamId } from "./stream.js";
 import { testClientServer } from "./test-utils.js";
 
-const HEADER_HASH: HeaderHash = blake2b
-  .hashString("0x7e1b07b8039cf840d51c4825362948c8ecb8fce1d290f705c269b6bcc7992731")
-  .asOpaque();
+let HEADER_HASH: HeaderHash;
+
+before(async () => {
+  const blake2b = await Blake2b.createHasher();
+  HEADER_HASH = blake2b.hashString("0x7e1b07b8039cf840d51c4825362948c8ecb8fce1d290f705c269b6bcc7992731").asOpaque();
+});
+
 const MAX_BLOCKS = tryAsU32(10);
 const TEST_BLOCK_VIEW = testBlockView();
 

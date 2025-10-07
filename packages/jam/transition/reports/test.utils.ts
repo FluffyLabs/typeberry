@@ -33,7 +33,7 @@ import {
   ED25519_SIGNATURE_BYTES,
   type Ed25519Signature,
 } from "@typeberry/crypto";
-import { blake2b, HASH_SIZE, type OpaqueHash, WithHash } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AvailabilityAssignment,
@@ -150,6 +150,7 @@ export function guaranteesAsView(
 }
 
 export async function newReports(options: Parameters<typeof newReportsState>[0] = {}) {
+  const blake2b = await Blake2b.createHasher();
   const state = newReportsState(options);
   const headerChain: HeaderChain = {
     isAncestor() {
@@ -157,7 +158,7 @@ export async function newReports(options: Parameters<typeof newReportsState>[0] 
     },
   };
 
-  return new Reports(tinyChainSpec, state, headerChain);
+  return new Reports(tinyChainSpec, blake2b, state, headerChain);
 }
 
 export function newCredential(index: number, signature?: Ed25519Signature) {
@@ -282,11 +283,7 @@ function getEntropy(e0: number, e1: number, e2: number, e3: number): ReportsStat
 
 function newAvailabilityAssignment({ core, timeout }: { core: number; timeout: number }): AvailabilityAssignment {
   const workReport = newWorkReport({ core });
-  const encoded = Encoder.encodeObject(WorkReport.Codec, workReport, tinyChainSpec);
-  const hash = blake2b.hashBytes(encoded).asOpaque();
-  const workReportWithHash = new WithHash(hash, workReport);
-
-  return AvailabilityAssignment.create({ workReport: workReportWithHash, timeout: tryAsTimeSlot(timeout) });
+  return AvailabilityAssignment.create({ workReport, timeout: tryAsTimeSlot(timeout) });
 }
 
 function intoValidatorData({ bandersnatch, ed25519 }: { bandersnatch: string; ed25519: string }): ValidatorData {

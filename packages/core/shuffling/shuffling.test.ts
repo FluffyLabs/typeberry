@@ -1,7 +1,14 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
+import { Blake2b } from "@typeberry/hash";
 import { fisherYatesShuffle } from "./shuffling.js";
+
+let blake2b: Blake2b;
+
+before(async () => {
+  blake2b = await Blake2b.createHasher();
+});
 
 function prepareArrayToShuffle(length: number) {
   return Array.from({ length }, (_, i) => i);
@@ -13,7 +20,7 @@ describe("fisherYatesShuffle", () => {
     const entropy = Bytes.zero(32);
     const expectedData: number[] = [];
 
-    const result = fisherYatesShuffle(data, entropy);
+    const result = fisherYatesShuffle(blake2b, data, entropy);
 
     assert.deepStrictEqual(result, expectedData);
   });
@@ -23,7 +30,7 @@ describe("fisherYatesShuffle", () => {
     const entropy = Bytes.zero(32);
     const expectedData = [0];
 
-    const result = fisherYatesShuffle(data, entropy);
+    const result = fisherYatesShuffle(blake2b, data, entropy);
 
     assert.deepStrictEqual(result, expectedData);
   });
@@ -32,7 +39,7 @@ describe("fisherYatesShuffle", () => {
     const data = prepareArrayToShuffle(7);
     const entropy = Bytes.zero(32);
     const expectedData = [0, 1, 4, 5, 3, 6, 2];
-    const result = fisherYatesShuffle(data, entropy);
+    const result = fisherYatesShuffle(blake2b, data, entropy);
 
     assert.deepStrictEqual(result, expectedData);
   });
@@ -45,7 +52,7 @@ describe("fisherYatesShuffle", () => {
       23, 4, 19, 30, 35, 1, 10,
     ];
 
-    const result = fisherYatesShuffle(data, entropy);
+    const result = fisherYatesShuffle(blake2b, data, entropy);
 
     assert.deepStrictEqual(result, expectedData);
   });
@@ -58,7 +65,7 @@ describe("fisherYatesShuffle", () => {
       31, 6, 18, 0, 32, 2, 12,
     ];
 
-    const result = fisherYatesShuffle(data, entropy);
+    const result = fisherYatesShuffle(blake2b, data, entropy);
 
     assert.deepStrictEqual(result, expectedData);
   });

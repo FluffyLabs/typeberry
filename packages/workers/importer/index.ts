@@ -3,7 +3,7 @@ import type { WorkerConfig } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import type { Finished } from "@typeberry/generic-worker";
-import { keccak, SimpleAllocator } from "@typeberry/hash";
+import { Blake2b, keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 import { TransitionHasher } from "@typeberry/transition";
@@ -20,12 +20,13 @@ if (!isMainThread) {
 }
 
 const keccakHasher = keccak.KeccakHasher.create();
+const blake2b = Blake2b.createHasher();
 
 export async function createImporter(config: WorkerConfig) {
   const lmdb = new LmdbRoot(config.dbPath);
   const blocks = new LmdbBlocks(config.chainSpec, lmdb);
-  const states = new LmdbStates(config.chainSpec, lmdb);
-  const hasher = new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator());
+  const states = new LmdbStates(config.chainSpec, await blake2b, lmdb);
+  const hasher = new TransitionHasher(config.chainSpec, await keccakHasher, await blake2b);
   const importer = new Importer(config.chainSpec, hasher, logger, blocks, states);
   return {
     lmdb,
