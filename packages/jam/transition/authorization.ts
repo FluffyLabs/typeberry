@@ -50,11 +50,12 @@ export class Authorization {
    */
   transition(input: AuthorizationInput): AuthorizationStateUpdate {
     const authPoolsUpdate = this.state.authPools.slice();
+    const authQueues = this.state.authQueues;
     // we transition authorizations for each core.
     for (let coreIndex = tryAsCoreIndex(0); coreIndex < this.chainSpec.coresCount; coreIndex++) {
       let pool = authPoolsUpdate[coreIndex].slice();
       // the queue is only read (we should most likely use `ArrayView` here).
-      const queue = this.state.authQueues[coreIndex];
+      const queue = authQueues[coreIndex];
       // if there were any used hashes - remove them
       const usedHashes = input.used.get(coreIndex);
       if (usedHashes !== undefined) {

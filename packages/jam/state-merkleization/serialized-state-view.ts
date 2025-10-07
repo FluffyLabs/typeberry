@@ -34,7 +34,14 @@ export class SerializedStateView<T extends SerializedStateBackend> implements St
       throw new Error(`Required state entry for ${description} is missing!. Accessing view of key: ${key}`);
     }
     // TODO [ToDr] consider cache here
-    return Decoder.decodeObject(Codec.View, bytes, this.spec);
+
+    // NOTE [ToDr] we are not using `Decoder.decodeObject` here because
+    // it needs to get to the end of the data (skip), yet that's expensive.
+    // we assume that the state data is correct and coherent anyway, so
+    // for performance reasons we simply create the view here.
+    const d = Decoder.fromBytesBlob(bytes);
+    d.attachContext(this.spec);
+    return Codec.View.decode(d);
   }
 
   availabilityAssignmentView(): AvailabilityAssignmentsView {

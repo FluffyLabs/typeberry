@@ -469,9 +469,10 @@ export class Accumulate {
     const accumulationQueue = this.state.accumulationQueue.slice();
     accumulationQueue[phaseIndex] = pruneQueue(toAccumulateLater, accumulatedSet);
 
+    const timeslot = this.state.timeslot;
     for (let i = 1; i < epochLength; i++) {
       const queueIndex = (phaseIndex + epochLength - i) % epochLength;
-      if (i < slot - this.state.timeslot) {
+      if (i < slot - timeslot) {
         accumulationQueue[queueIndex] = [];
       } else {
         accumulationQueue[queueIndex] = pruneQueue(accumulationQueue[queueIndex], accumulatedSet);
