@@ -122,8 +122,9 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
       theta,
       accounts,
     }): InMemoryState => {
-      if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && chi.chi_r === undefined)
+      if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && chi.chi_r === undefined) {
         throw new Error("Registrar is required in Privileges GP ^0.7.1");
+      }
       return InMemoryState.create({
         authPools: tryAsPerCore(
           alpha.map((perCore) => {
