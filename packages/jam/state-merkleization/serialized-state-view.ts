@@ -1,5 +1,6 @@
 import type { ServiceId } from "@typeberry/block";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
+import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecWithView, Decoder, type SequenceView } from "@typeberry/codec";
 import type { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
@@ -19,7 +20,16 @@ import type {
 import type { StateView } from "@typeberry/state/state-view.js";
 import type { StateKey } from "./keys.js";
 import { serialize } from "./serialize.js";
-import type { SerializedStateBackend } from "./serialized-state.js";
+
+/**
+ * Abstraction over some backend containing serialized state entries.
+ *
+ * This may or may not be backed by some on-disk database or can be just stored in memory.
+ */
+export interface SerializedStateBackend {
+  /** Retrieve given state key. */
+  get(key: StateKey): BytesBlob | null;
+}
 
 export class SerializedStateView<T extends SerializedStateBackend> implements StateView {
   constructor(

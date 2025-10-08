@@ -19,18 +19,8 @@ import type { StateView, WithStateView } from "@typeberry/state/state-view.js";
 import { asOpaqueType, Compatibility, GpVersion, safeAllocUint8Array, TEST_COMPARE_USING } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
 import { serialize } from "./serialize.js";
-import { SerializedStateView } from "./serialized-state-view.js";
+import { type SerializedStateBackend, SerializedStateView } from "./serialized-state-view.js";
 import type { StateEntries } from "./state-entries.js";
-
-/**
- * Abstraction over some backend containing serialized state entries.
- *
- * This may or may not be backed by some on-disk database or can be just stored in memory.
- */
-export interface SerializedStateBackend {
-  /** Retrieve given state key. */
-  get(key: StateKey): BytesBlob | null;
-}
 
 /**
  * State object which reads it's entries from some backend.
