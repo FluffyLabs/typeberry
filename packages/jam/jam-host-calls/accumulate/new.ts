@@ -44,8 +44,8 @@ export class New implements HostCallHandler {
     const allowance = tryAsServiceGas(regs.get(10));
     // `f`
     const gratisStorage = regs.get(11);
-    // `i`
-    const serviceId = regs.get(12);
+    // `i`: requested service id. Ignored if current service is not registrar or value is bigger than `S`.
+    const requestedServiceId = regs.get(12);
 
     // `c`
     const codeHash = Bytes.zero(HASH_SIZE);
