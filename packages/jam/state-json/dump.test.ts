@@ -29,7 +29,7 @@ describe("JSON state dump", () => {
     const expectedRoot = Compatibility.selectIfGreaterOrEqual({
       fallback: "0xf0c62b7961a17dba89a886c17dc881d7fb9e230f2cbf62316f2123a7fdbcfad5",
       versions: {
-        [GpVersion.V0_7_1]: "0x400fc9f27118e1ae5275d6a076d28ff532998c65f7de32d8273d3db2f8462075",
+        [GpVersion.V0_7_1]: "0xeab8f2d4aebacd4ddcb73d8b5a388e5723aff1d2bc3f4aab40e931addf1862dc",
       },
     });
     strictEqual(rootHash.toString(), expectedRoot);
