@@ -159,7 +159,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           manager: chi.chi_m,
           assigners: chi.chi_a,
           delegator: chi.chi_v,
-          registrar: chi.chi_r ?? tryAsServiceId(0),
+          registrar: chi.chi_r ?? tryAsServiceId(2**32 - 1),
           autoAccumulateServices: chi.chi_g ?? [],
         }),
         statistics: JsonStatisticsData.toStatisticsData(spec, pi),
