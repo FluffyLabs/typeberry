@@ -79,8 +79,9 @@ class TestState {
     { accounts, slot, ready_queue, accumulated, privileges }: TestState,
     chainSpec: ChainSpec,
   ): InMemoryState {
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && privileges.register === undefined)
-      throw new Error("Privileges from version 0.7.1 should have register field!");
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && privileges.register === undefined) {
+      throw new Error("Privileges from version 0.7.1 must have `register` field!");
+    }
     return InMemoryState.partial(chainSpec, {
       timeslot: slot,
       accumulationQueue: tryAsPerEpochBlock(
