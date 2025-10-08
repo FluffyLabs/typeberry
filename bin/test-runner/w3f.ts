@@ -25,38 +25,14 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-fluffy", {
 
     ...(Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
       ? [
-          "accumulate/full/accumulate_ready_queued_reports-1.json",
-          "accumulate/full/enqueue_and_unlock_chain_wraps-2.json",
-          "accumulate/full/enqueue_and_unlock_chain_wraps-4.json",
-          "accumulate/full/enqueue_and_unlock_chain_wraps-5.json",
-          "accumulate/full/enqueue_and_unlock_chain-3.json",
-          "accumulate/full/enqueue_and_unlock_chain-4.json",
-          "accumulate/full/enqueue_and_unlock_simple-2.json",
-          "accumulate/full/enqueue_and_unlock_with_sr_lookup-2.json",
-          "accumulate/full/process_one_immediate_report-1.json",
-          "accumulate/full/queues_are_shifted-1.json",
-          "accumulate/full/ready_queue_editing-2.json",
-          "accumulate/full/ready_queue_editing-3.json",
-          "accumulate/full/same_code_different_services-1.json",
+          // infinite loop during accumulation
           "accumulate/full/transfer_for_ejected_service-1.json",
+          // incorrect balance
           "accumulate/full/work_for_ejected_service-2.json",
-          "accumulate/full/work_for_ejected_service-3.json",
-          "accumulate/tiny/accumulate_ready_queued_reports-1.json",
-          "accumulate/tiny/enqueue_and_unlock_chain_wraps-2.json",
-          "accumulate/tiny/enqueue_and_unlock_chain_wraps-4.json",
-          "accumulate/tiny/enqueue_and_unlock_chain_wraps-5.json",
-          "accumulate/tiny/enqueue_and_unlock_chain-3.json",
-          "accumulate/tiny/enqueue_and_unlock_chain-4.json",
-          "accumulate/tiny/enqueue_and_unlock_simple-2.json",
-          "accumulate/tiny/enqueue_and_unlock_with_sr_lookup-2.json",
-          "accumulate/tiny/process_one_immediate_report-1.json",
-          "accumulate/tiny/queues_are_shifted-1.json",
-          "accumulate/tiny/ready_queue_editing-2.json",
-          "accumulate/tiny/ready_queue_editing-3.json",
-          "accumulate/tiny/same_code_different_services-1.json",
+          // infinite loop during accumulation
           "accumulate/tiny/transfer_for_ejected_service-1.json",
+          // incorrect balance
           "accumulate/tiny/work_for_ejected_service-2.json",
-          "accumulate/tiny/work_for_ejected_service-3.json",
         ]
       : []),
   ],
