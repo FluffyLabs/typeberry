@@ -151,8 +151,8 @@ export enum NewServiceError {
   InsufficientFunds = 0,
   /** Service is not privileged to set gratis storage. */
   UnprivilegedService = 1,
-  /** Trying to create a service with an ID that already exists. */
-  ServiceAlreadyExists = 2,
+  /** Registrar attempting to create a service with already existing ID. */
+  RegistrarServiceIdAlreadyTaken = 2,
 }
 
 export enum UpdatePrivilegesError {
