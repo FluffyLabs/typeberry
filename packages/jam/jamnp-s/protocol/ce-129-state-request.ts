@@ -100,7 +100,9 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     if (this.isServer) {
       logger.info`[${sender.streamId}][server]: Received request.`;
 
-      if (this.getBoundaryNodes === undefined || this.getKeyValuePairs === undefined) return;
+      if (this.getBoundaryNodes === undefined || this.getKeyValuePairs === undefined) {
+        return;
+      }
 
       const request = Decoder.decodeObject(StateRequest.Codec, message);
 

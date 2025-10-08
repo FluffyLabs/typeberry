@@ -515,7 +515,9 @@ describe("InMemoryState", () => {
     assert.deepEqual(result, Result.ok(OK));
 
     const service = state.services.get(serviceId);
-    if (service === undefined) assert.fail("Service not found after provide.");
+    if (service === undefined) {
+      assert.fail("Service not found after provide.");
+    }
 
     assert.deepEqual(service.data.preimages.get(hash), preimage);
     assert.deepEqual(service.data.lookupHistory.get(hash)?.length, 1);
@@ -591,7 +593,9 @@ describe("InMemoryState", () => {
     });
 
     const service = state.services.get(serviceId);
-    if (service === undefined) assert.fail("Service not found");
+    if (service === undefined) {
+      assert.fail("Service not found");
+    }
 
     const historyBefore = service.data.lookupHistory.get(hash);
     assert.deepEqual(historyBefore?.length, 2);
