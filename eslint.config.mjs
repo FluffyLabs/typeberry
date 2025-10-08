@@ -29,6 +29,7 @@ export default tseslint.config(
         },
       ],
       "import/no-relative-packages": "error",
+      curly: "error",
     },
   },
 );
