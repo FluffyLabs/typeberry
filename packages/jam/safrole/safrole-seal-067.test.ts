@@ -178,7 +178,7 @@ if (Compatibility.isLessThan(GpVersion.V0_7_0)) {
           ),
         ),
         currentEntropy: Bytes.parseBytes(
-          "0xd2d34655ebcad804c56d2fd5f932c575b6a5dbb3f5652c5202bcc75ab9c2cc95",
+          "0x835ac82bfa2ce8390bb50680d4b7a73dfa2a4cff6d8c30694b24a605f9574eaf",
           HASH_SIZE,
         ).asOpaque(),
       });
