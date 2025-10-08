@@ -398,7 +398,7 @@ export class AccumulateExternalities
     accumulateMinGas: ServiceGas,
     onTransferMinGas: ServiceGas,
     gratisStorage: U64,
-    serviceId: U64,
+    wantedServiceId: U64,
   ): Result<ServiceId, NewServiceError> {
     // calculate the threshold. Storage is empty, one preimage requested.
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/115901115901?v=0.6.7
