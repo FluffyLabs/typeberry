@@ -31,8 +31,8 @@ function prepareRegsAndMemory(
   gas: U64,
   balance: U64,
   gratisStorage: U64,
-  // If value exceeds 2 ** 16, it's just ignored.
-  serviceId: U64 = tryAsU64(2 ** 32 - 1),
+  // If value exceeds 2 ** 16 or the service is not registrar, it's ignored.
+  wantedServiceId: U64 = tryAsU64(2 ** 32 - 1),
   { skipCodeHash = false }: { skipCodeHash?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
