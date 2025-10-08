@@ -34,7 +34,7 @@ export class PrivilegedServices {
     delegator: codec.u32.asOpaque<ServiceId>(),
     registrar: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
       ? codec.u32.asOpaque<ServiceId>()
-      : ignoreValueWithDefault(tryAsServiceId(2**32)),
+      : ignoreValueWithDefault(tryAsServiceId(2 ** 32 - 1)),
     autoAccumulateServices: readonlyArray(codec.sequenceVarLen(AutoAccumulate.Codec)),
   });
 

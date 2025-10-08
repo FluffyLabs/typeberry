@@ -100,7 +100,7 @@ class TestState {
         manager: privileges.bless,
         assigners: tryAsPerCore(privileges.assign, chainSpec),
         delegator: privileges.designate,
-        registrar: privileges.register ?? tryAsServiceId(2**32 - 1),
+        registrar: privileges.register ?? tryAsServiceId(2 ** 32 - 1),
         autoAccumulateServices: privileges.always_acc.map(({ gas, id }) =>
           AutoAccumulate.create({ gasLimit: gas, service: id }),
         ),

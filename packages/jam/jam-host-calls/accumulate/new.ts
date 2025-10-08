@@ -52,7 +52,7 @@ export class New implements HostCallHandler {
     const memoryReadResult = memory.loadInto(codeHash.raw, codeHashStart);
     // error while reading the memory.
     if (memoryReadResult.isError) {
-      logger.trace`NEW(${codeHash}, ${codeLength}, ${gas}, ${allowance}, ${gratisStorage}) <- PANIC`;
+      logger.trace`NEW(${codeHash}, ${codeLength}, ${gas}, ${allowance}, ${gratisStorage}, ${requestedServiceId}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
@@ -62,9 +62,9 @@ export class New implements HostCallHandler {
       gas,
       allowance,
       gratisStorage,
-      serviceId,
+      requestedServiceId,
     );
-    logger.trace`NEW(${codeHash}, ${codeLength}, ${gas}, ${allowance}, ${gratisStorage}) <- ${resultToString(assignedId)}`;
+    logger.trace`NEW(${codeHash}, ${codeLength}, ${gas}, ${allowance}, ${gratisStorage}, ${requestedServiceId}) <- ${resultToString(assignedId)}`;
 
     if (assignedId.isOk) {
       regs.set(IN_OUT_REG, tryAsU64(assignedId.ok));
@@ -84,7 +84,7 @@ export class New implements HostCallHandler {
     }
 
     // Post 0.7.1
-    if (e === NewServiceError.ServiceAlreadyExists) {
+    if (e === NewServiceError.RegistrarServiceIdAlreadyTaken) {
       regs.set(IN_OUT_REG, HostCallResult.FULL);
       return;
     }

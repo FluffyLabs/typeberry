@@ -42,7 +42,7 @@ function prepareRegsAndMemory(
   registers.set(GAS_REG, gas);
   registers.set(BALANCE_REG, balance);
   registers.set(GRATIS_STORAGE_REG, gratisStorage);
-  registers.set(SERVICE_ID_REG, serviceId);
+  registers.set(SERVICE_ID_REG, wantedServiceId);
 
   const builder = new MemoryBuilder();
 
@@ -201,7 +201,7 @@ describe("HostCalls: New", () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10);
     const n = new New(serviceId, accumulate);
-    accumulate.newServiceResponse = Result.error(NewServiceError.ServiceAlreadyExists);
+    accumulate.newServiceResponse = Result.error(NewServiceError.RegistrarServiceIdAlreadyTaken);
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),

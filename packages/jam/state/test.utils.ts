@@ -18,6 +18,7 @@ import type { Ed25519Key } from "@typeberry/crypto";
 import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { MAX_VALUE } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
 import {
   AvailabilityAssignment,
@@ -356,7 +357,7 @@ export const testState = (): InMemoryState => {
       manager: tryAsServiceId(0),
       assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
       delegator: tryAsServiceId(0),
-      registrar: tryAsServiceId(0),
+      registrar: tryAsServiceId(MAX_VALUE),
       autoAccumulateServices: [],
     }),
   });
@@ -404,7 +405,7 @@ export const TEST_STATE_ROOT = Compatibility.selectIfGreaterOrEqual({
   versions: {
     [GpVersion.V0_6_7]: "0x1a7a9e304769a973af637617b07fab19d3836a62d603cb6bf116c79d79eaf32e",
     [GpVersion.V0_7_0]: "0xa48088ed900219e5115670c1dff1ae69396b8ca152f6a3d279d770114c458059",
-    [GpVersion.V0_7_1]: "0x653358d16fbea29b45c820a2f69f84ce36948dc5be27d7e7aecdf4617d1d03a7",
+    [GpVersion.V0_7_1]: "0xbc43a80476054e2b1bd154b5a33cf48762731dbb949b1dcdc0c0566a99797618",
   },
 });
 
@@ -494,7 +495,7 @@ export const TEST_STATE = [
   [
     "0x0c00000000000000000000000000000000000000000000000000000000000000",
     Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-      ? "0x000000000000000000000000000000000000000000"
+      ? "0x00000000000000000000000000000000ffffffff00"
       : "0x0000000000000000000000000000000000",
     "c12",
     "",

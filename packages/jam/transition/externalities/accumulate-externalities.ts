@@ -451,13 +451,13 @@ export class AccumulateExternalities
 
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
       if (
-        serviceId < MIN_PUBLIC_SERVICE_INDEX &&
+        wantedServiceId < MIN_PUBLIC_SERVICE_INDEX &&
         this.currentServiceId === this.updatedState.getPrivilegedServices().registrar
       ) {
         // NOTE: It's safe to cast to `Number` here, bcs here service ID cannot be bigger than 2**16
-        const newServiceId = tryAsServiceId(Number(serviceId));
+        const newServiceId = tryAsServiceId(Number(wantedServiceId));
         if (this.getServiceInfo(newServiceId) !== null) {
-          return Result.error(NewServiceError.ServiceAlreadyExists);
+          return Result.error(NewServiceError.RegistrarServiceIdAlreadyTaken);
         }
         // add the new service with selected ID
         // https://graypaper.fluffylabs.dev/#/ab2cdbd/36be0336c003?v=0.7.2
@@ -472,10 +472,9 @@ export class AccumulateExternalities
         // https://graypaper.fluffylabs.dev/#/ab2cdbd/36c20336c403?v=0.7.2
         this.updatedState.updateServiceInfo(this.currentServiceId, updatedCurrentAccount);
         return Result.ok(newServiceId);
-      } else {
-         // in case the service is not a registrar or the requested serviceId is out of range, 
-         // we completely ignore the `requestedServiceId` and assign a random one
       }
+      // NOTE: in case the service is not a registrar or the requested serviceId is out of range,
+      // we completely ignore the `wantedServiceId` and assign a random one
     }
 
     const newServiceId = this.nextNewServiceId;
@@ -571,11 +570,14 @@ export class AccumulateExternalities
     }
 
     if (manager === null || delegator === null) {
-      return Result.error(UpdatePrivilegesError.InvalidServiceId, "Either manager or delegator is not valid service id.");
+      return Result.error(
+        UpdatePrivilegesError.InvalidServiceId,
+        "Either manager or delegator is not valid service id.",
+      );
     }
 
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && registrar === null) {
-  return Result.error(UpdatePrivilegesError.InvalidServiceId, 'Register manager is not valid service id.');
+      return Result.error(UpdatePrivilegesError.InvalidServiceId, "Register manager is not valid service id.");
     }
 
     this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({

@@ -10,7 +10,7 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
+import { MAX_VALUE, MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import { codecPerCore, type PerCore, tryAsPerCore } from "@typeberry/state";
 import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
@@ -109,7 +109,13 @@ describe("HostCalls: Bless", () => {
       ]);
     } else {
       assert.deepStrictEqual(accumulate.privilegedServices, [
-        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), tryAsServiceId(0), entries],
+        [
+          tryAsServiceId(5),
+          [tryAsServiceId(10), tryAsServiceId(15)],
+          tryAsServiceId(20),
+          tryAsServiceId(MAX_VALUE),
+          entries,
+        ],
       ]);
     }
   });
@@ -167,7 +173,13 @@ describe("HostCalls: Bless", () => {
       ]);
     } else {
       assert.deepStrictEqual(accumulate.privilegedServices, [
-        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), tryAsServiceId(0), entries],
+        [
+          tryAsServiceId(5),
+          [tryAsServiceId(10), tryAsServiceId(15)],
+          tryAsServiceId(20),
+          tryAsServiceId(MAX_VALUE),
+          entries,
+        ],
       ]);
     }
   });
@@ -193,7 +205,13 @@ describe("HostCalls: Bless", () => {
       ]);
     } else {
       assert.deepStrictEqual(accumulate.privilegedServices, [
-        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), tryAsServiceId(0), entries],
+        [
+          tryAsServiceId(5),
+          [tryAsServiceId(10), tryAsServiceId(15)],
+          tryAsServiceId(20),
+          tryAsServiceId(MAX_VALUE),
+          entries,
+        ],
       ]);
     }
   });

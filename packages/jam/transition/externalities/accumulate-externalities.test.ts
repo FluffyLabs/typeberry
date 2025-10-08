@@ -664,7 +664,13 @@ describe("PartialState.newService", () => {
 
   itPost071("should create a new service with givent id and update balance + not changed next service ID", () => {
     const state = partiallyUpdatedState();
-    const maybeService = state.state.services.get(tryAsServiceId(0));
+    const serviceId = 0;
+    // setting registrar privileges for our service
+    state.stateUpdate.privilegedServices = {
+      ...state.state.privilegedServices,
+      registrar: tryAsServiceId(serviceId),
+    };
+    const maybeService = state.state.services.get(tryAsServiceId(serviceId));
     if (maybeService === undefined) {
       throw new Error("Invalid service!");
     }
@@ -674,7 +680,7 @@ describe("PartialState.newService", () => {
       tinyChainSpec,
       blake2b,
       state,
-      tryAsServiceId(0),
+      tryAsServiceId(serviceId),
       tryAsServiceId(10),
       tryAsTimeSlot(16),
     );
@@ -686,7 +692,7 @@ describe("PartialState.newService", () => {
     const onTransferMinGas = tryAsServiceGas(20n);
     const gratisStorage = tryAsU64(50);
     // selecting service id
-    const serviceId = tryAsU64(42);
+    const wantedServiceId = tryAsU64(42);
 
     const items = tryAsU32(2); // 2 * 1 + 0
     const bytes = tryAsU64(81 + codeLength);
@@ -700,7 +706,7 @@ describe("PartialState.newService", () => {
       accumulateMinGas,
       onTransferMinGas,
       gratisStorage,
-      serviceId,
+      wantedServiceId,
     );
 
     // then
@@ -848,6 +854,11 @@ describe("PartialState.newService", () => {
   itPost071("should return an error if attempting to create new service with selected id that already exists", () => {
     const state = partiallyUpdatedState();
     const serviceId = 0;
+    // setting registrar privileges for our service
+    state.stateUpdate.privilegedServices = {
+      ...state.state.privilegedServices,
+      registrar: tryAsServiceId(serviceId),
+    };
     const maybeService = state.state.services.get(tryAsServiceId(serviceId));
     if (maybeService === undefined) {
       throw new Error("Invalid service!");
@@ -880,7 +891,7 @@ describe("PartialState.newService", () => {
     );
 
     // then
-    assert.deepStrictEqual(result, Result.error(NewServiceError.ServiceAlreadyExists));
+    assert.deepStrictEqual(result, Result.error(NewServiceError.RegistrarServiceIdAlreadyTaken));
 
     // Verify no side effects
     assert.deepStrictEqual(state.stateUpdate.services.servicesUpdates, []);
@@ -1331,7 +1342,10 @@ describe("PartialState.updatePrivilegedServices", () => {
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
 
     // then
-    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.InvalidServiceId));
+    assert.deepStrictEqual(
+      result,
+      Result.error(UpdatePrivilegesError.InvalidServiceId, "Either manager or delegator is not valid service id."),
+    );
     assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
   });
 
@@ -1359,7 +1373,10 @@ describe("PartialState.updatePrivilegedServices", () => {
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
 
     // then
-    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.InvalidServiceId));
+    assert.deepStrictEqual(
+      result,
+      Result.error(UpdatePrivilegesError.InvalidServiceId, "Either manager or delegator is not valid service id."),
+    );
     assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
   });
 
@@ -1387,7 +1404,10 @@ describe("PartialState.updatePrivilegedServices", () => {
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
 
     // then
-    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.InvalidServiceId));
+    assert.deepStrictEqual(
+      result,
+      Result.error(UpdatePrivilegesError.InvalidServiceId, "Register manager is not valid service id."),
+    );
     assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
   });
 });
