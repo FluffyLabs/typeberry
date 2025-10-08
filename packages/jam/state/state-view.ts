@@ -1,4 +1,5 @@
 import type { ServiceId } from "@typeberry/block";
+
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import type { SequenceView } from "@typeberry/codec";
 import type { AccumulationQueueView } from "./accumulation-queue.js";
@@ -21,7 +22,7 @@ export type WithStateView<V = StateView> = {
  * A non-decoding version of the `State`.
  *
  * Note we don't require all fields to have view accessors, since
- * for it's only beneficial for large collections to be read via views.
+ * it's only beneficial for large collections to be read via views.
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/08f10008f100
  */

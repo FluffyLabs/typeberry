@@ -14,7 +14,7 @@ export type MAX_AUTH_POOL_SIZE = typeof MAX_AUTH_POOL_SIZE;
 export const AUTHORIZATION_QUEUE_SIZE = Q;
 export type AUTHORIZATION_QUEUE_SIZE = typeof AUTHORIZATION_QUEUE_SIZE;
 
-/** A pool with authorization hashes that is filled from the queue.. */
+/** A pool of authorization hashes that is filled from the queue. */
 export type AuthorizationPool = KnownSizeArray<AuthorizerHash, `At most ${typeof MAX_AUTH_POOL_SIZE}`>;
 
 /**

@@ -73,7 +73,7 @@ export class SerializedStateView<T extends SerializedStateBackend> implements St
   }
 
   previousValidatorDataView(): SequenceView<ValidatorData, ValidatorDataView> {
-    return this.retrieveView(serialize.previousValidators, "currentValidatorsView");
+    return this.retrieveView(serialize.previousValidators, "previousValidatorsView");
   }
 
   authPoolsView(): SequenceView<AuthorizationPool, SequenceView<AuthorizerHash>> {

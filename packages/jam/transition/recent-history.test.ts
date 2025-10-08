@@ -27,7 +27,7 @@ const asRecentHistory = (arr: BlocksState, accumulationLog?: MmrPeaks<KeccakHash
 
   return {
     recentBlocks: RecentBlocks.create({
-      blocks: arr as BlocksState,
+      blocks: arr,
       accumulationLog: accumulationLog ?? {
         peaks: [],
       },
