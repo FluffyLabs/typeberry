@@ -30,7 +30,8 @@
         "noInferrableTypes": "error",
         "noUselessElse": "error",
         "useConsistentArrayType": { "level": "error", "options": { "syntax": "shorthand" } },
-        "noSubstr": "error"
+        "noSubstr": "error",
+        "useBlockStatements": "error"
       },
       "complexity": {
         "noStaticOnlyClass": "off"
