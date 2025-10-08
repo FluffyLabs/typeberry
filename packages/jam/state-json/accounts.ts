@@ -27,7 +27,7 @@ import { asOpaqueType, Compatibility, GpVersion } from "@typeberry/utils";
 class JsonServiceInfo {
   static fromJson = json.object<JsonServiceInfo, ServiceAccountInfo>(
     {
-      version: "number",
+      ...(Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? { version: "number" } : {}),
       code_hash: fromJson.bytes32(),
       balance: json.fromNumber((x) => tryAsU64(x)),
       min_item_gas: json.fromNumber((x) => tryAsServiceGas(x)),
@@ -66,7 +66,7 @@ class JsonServiceInfo {
     },
   );
 
-  version!: number;
+  version?: number;
   code_hash!: CodeHash;
   balance!: U64;
   min_item_gas!: ServiceGas;
