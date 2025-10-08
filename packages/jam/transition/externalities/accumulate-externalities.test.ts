@@ -973,7 +973,7 @@ describe("PartialState.newService", () => {
     assert.deepStrictEqual(result, Result.error(NewServiceError.RegistrarServiceIdAlreadyTaken));
 
     // Verify no side effects
-    assert.deepStrictEqual(state.stateUpdate.services.servicesUpdates, []);
+    assert.deepStrictEqual(state.stateUpdate.services.servicesUpdates, new Map());
 
     // Verify next service ID is not bumped
     assert.deepStrictEqual(partialState.getNextNewServiceId(), tryAsServiceId(10));
