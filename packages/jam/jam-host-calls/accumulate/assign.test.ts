@@ -29,14 +29,14 @@ const AUTH_MANAGER_REG = 9;
 function prepareRegsAndMemory(
   coreIndex: CoreIndex,
   authQueue: Blake2bHash[],
-  { skipAuthQueue = false, authManager = null }: { skipAuthQueue?: boolean; authManager?: bigint | number | null } = {},
+  { skipAuthQueue = false, assigners = null }: { skipAuthQueue?: boolean; assigners?: bigint | number | null } = {},
 ) {
   const memStart = 2 ** 16;
   const registers = new HostCallRegisters(new Registers());
   registers.set(CORE_INDEX_REG, tryAsU64(coreIndex));
   registers.set(AUTH_QUEUE_START_REG, tryAsU64(memStart));
-  if (authManager !== null) {
-    registers.set(AUTH_MANAGER_REG, tryAsU64(authManager));
+  if (assigners !== null) {
+    registers.set(AUTH_MANAGER_REG, tryAsU64(assigners));
   }
 
   const builder = new MemoryBuilder();
@@ -139,7 +139,7 @@ describe("HostCalls: Assign", () => {
     accumulate.authQueueResponse = Result.error(UpdatePrivilegesError.UnprivilegedService);
     const serviceId = tryAsServiceId(10_000);
     const assign = new Assign(serviceId, accumulate, tinyChainSpec);
-    const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { authManager: 0 });
+    const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { assigners: 0 });
 
     // when
     const result = await assign.execute(gas, registers, memory);
@@ -155,7 +155,7 @@ describe("HostCalls: Assign", () => {
     accumulate.authQueueResponse = Result.error(UpdatePrivilegesError.InvalidServiceId);
     const serviceId = tryAsServiceId(10_000);
     const assign = new Assign(serviceId, accumulate, tinyChainSpec);
-    const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { authManager: null });
+    const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { assigners: null });
 
     // when
     const result = await assign.execute(gas, registers, memory);

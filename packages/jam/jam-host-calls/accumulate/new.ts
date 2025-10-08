@@ -5,7 +5,7 @@ import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { assertNever, resultToString } from "@typeberry/utils";
+import { assertNever, Compatibility, GpVersion, resultToString } from "@typeberry/utils";
 import { NewServiceError, type PartialState } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -20,7 +20,9 @@ const IN_OUT_REG = 7;
 export class New implements HostCallHandler {
   index = tryAsHostCallIndex(18);
   basicGasCost = tryAsSmallGas(10);
-  tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10, 11);
+  tracedRegisters = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+    ? traceRegisters(IN_OUT_REG, 8, 9, 10, 11, 12)
+    : traceRegisters(IN_OUT_REG, 8, 9, 10, 11);
 
   constructor(
     public readonly currentServiceId: ServiceId,
@@ -42,18 +44,27 @@ export class New implements HostCallHandler {
     const allowance = tryAsServiceGas(regs.get(10));
     // `f`
     const gratisStorage = regs.get(11);
+    // `i`: requested service id. Ignored if current service is not registrar or value is bigger than `S`.
+    const requestedServiceId = regs.get(12);
 
     // `c`
     const codeHash = Bytes.zero(HASH_SIZE);
     const memoryReadResult = memory.loadInto(codeHash.raw, codeHashStart);
     // error while reading the memory.
     if (memoryReadResult.isError) {
-      logger.trace`NEW(${codeHash}, ${codeLength}, ${gas}, ${allowance}, ${gratisStorage}) <- PANIC`;
+      logger.trace`NEW(${codeHash}, ${codeLength}, ${gas}, ${allowance}, ${gratisStorage}, ${requestedServiceId}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
-    const assignedId = this.partialState.newService(codeHash.asOpaque(), codeLength, gas, allowance, gratisStorage);
-    logger.trace`NEW(${codeHash}, ${codeLength}, ${gas}, ${allowance}, ${gratisStorage}) <- ${resultToString(assignedId)}`;
+    const assignedId = this.partialState.newService(
+      codeHash.asOpaque(),
+      codeLength,
+      gas,
+      allowance,
+      gratisStorage,
+      requestedServiceId,
+    );
+    logger.trace`NEW(${codeHash}, ${codeLength}, ${gas}, ${allowance}, ${gratisStorage}, ${requestedServiceId}) <- ${resultToString(assignedId)}`;
 
     if (assignedId.isOk) {
       regs.set(IN_OUT_REG, tryAsU64(assignedId.ok));
@@ -69,6 +80,12 @@ export class New implements HostCallHandler {
 
     if (e === NewServiceError.UnprivilegedService) {
       regs.set(IN_OUT_REG, HostCallResult.HUH);
+      return;
+    }
+
+    // Post 0.7.1
+    if (e === NewServiceError.RegistrarServiceIdAlreadyTaken) {
+      regs.set(IN_OUT_REG, HostCallResult.FULL);
       return;
     }
 

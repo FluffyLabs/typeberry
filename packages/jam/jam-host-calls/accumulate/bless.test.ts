@@ -10,9 +10,9 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
+import { MAX_VALUE, MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import { codecPerCore, type PerCore, tryAsPerCore } from "@typeberry/state";
-import { Result } from "@typeberry/utils";
+import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
@@ -23,8 +23,9 @@ const RESULT_REG = 7;
 const MANAGER_REG = 7;
 const AUTHORIZATION_REG = 8;
 const VALIDATOR_REG = 9;
-const DICTIONARY_START = 10;
-const DICTIONARY_COUNT = 11;
+const REGISTRAR_REG = 10;
+const DICTIONARY_START = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? 11 : 10;
+const DICTIONARY_COUNT = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? 12 : 11;
 
 function prepareServiceGasEntires() {
   const entries: [ServiceId, ServiceGas][] = [];
@@ -48,7 +49,8 @@ function prepareRegsAndMemory(
     skipAuth = false,
     manager,
     validator,
-  }: { skipDictionary?: boolean; skipAuth?: boolean; manager?: U64; validator?: U64 } = {},
+    registrar,
+  }: { skipDictionary?: boolean; skipAuth?: boolean; manager?: U64; validator?: U64; registrar?: U64 } = {},
 ) {
   const memAuthStart = 2 ** 24;
   const memStart = 2 ** 16;
@@ -56,6 +58,7 @@ function prepareRegsAndMemory(
   registers.set(MANAGER_REG, manager ?? tryAsU64(5));
   registers.set(AUTHORIZATION_REG, tryAsU64(memAuthStart));
   registers.set(VALIDATOR_REG, validator ?? tryAsU64(20));
+  registers.set(REGISTRAR_REG, registrar ?? tryAsU64(42));
   registers.set(DICTIONARY_START, tryAsU64(memStart));
   registers.set(DICTIONARY_COUNT, tryAsU64(entries.length));
 
@@ -84,6 +87,8 @@ function prepareRegsAndMemory(
   };
 }
 describe("HostCalls: Bless", () => {
+  const itPost071 = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? it : it.skip;
+
   it("should set new privileged services and auto-accumulate services", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
@@ -98,9 +103,21 @@ describe("HostCalls: Bless", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
-    assert.deepStrictEqual(accumulate.privilegedServices, [
-      [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), entries],
-    ]);
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
+      assert.deepStrictEqual(accumulate.privilegedServices, [
+        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), tryAsServiceId(42), entries],
+      ]);
+    } else {
+      assert.deepStrictEqual(accumulate.privilegedServices, [
+        [
+          tryAsServiceId(5),
+          [tryAsServiceId(10), tryAsServiceId(15)],
+          tryAsServiceId(20),
+          tryAsServiceId(MAX_VALUE),
+          entries,
+        ],
+      ]);
+    }
   });
 
   it("should return panic when dictionary is not readable", async () => {
@@ -150,9 +167,21 @@ describe("HostCalls: Bless", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
-    assert.deepStrictEqual(accumulate.privilegedServices, [
-      [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), entries],
-    ]);
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
+      assert.deepStrictEqual(accumulate.privilegedServices, [
+        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), tryAsServiceId(42), entries],
+      ]);
+    } else {
+      assert.deepStrictEqual(accumulate.privilegedServices, [
+        [
+          tryAsServiceId(5),
+          [tryAsServiceId(10), tryAsServiceId(15)],
+          tryAsServiceId(20),
+          tryAsServiceId(MAX_VALUE),
+          entries,
+        ],
+      ]);
+    }
   });
 
   it("should auto-accumulate services when dictionary contains duplicates", async () => {
@@ -170,9 +199,21 @@ describe("HostCalls: Bless", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
-    assert.deepStrictEqual(accumulate.privilegedServices, [
-      [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), entries],
-    ]);
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
+      assert.deepStrictEqual(accumulate.privilegedServices, [
+        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), tryAsServiceId(42), entries],
+      ]);
+    } else {
+      assert.deepStrictEqual(accumulate.privilegedServices, [
+        [
+          tryAsServiceId(5),
+          [tryAsServiceId(10), tryAsServiceId(15)],
+          tryAsServiceId(20),
+          tryAsServiceId(MAX_VALUE),
+          entries,
+        ],
+      ]);
+    }
   });
 
   it("should return HUH when service is unprivileged", async () => {
@@ -219,6 +260,24 @@ describe("HostCalls: Bless", () => {
     const entries = prepareServiceGasEntires();
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers, { validator: tryAsU64(MAX_VALUE_U64) });
+
+    // when
+    const result = await bless.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(result, undefined);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
+    assert.deepStrictEqual(accumulate.privilegedServices, []);
+  });
+
+  itPost071("should return WHO if given registrar is invalid", async () => {
+    const accumulate = new PartialStateMock();
+    accumulate.privilegedServicesResponse = Result.error(UpdatePrivilegesError.InvalidServiceId);
+    const serviceId = tryAsServiceId(11_000);
+    const bless = new Bless(serviceId, accumulate, tinyChainSpec);
+    const entries = prepareServiceGasEntires();
+    const authorizers = prepareAuthorizers();
+    const { registers, memory } = prepareRegsAndMemory(entries, authorizers, { registrar: tryAsU64(MAX_VALUE_U64) });
 
     // when
     const result = await bless.execute(gas, registers, memory);
