@@ -70,6 +70,30 @@ describe("CLI", () => {
     });
   });
 
+  it("should parse export command and add rel path to output directory", () => {
+    const args = parse(["export", "./output-dir"]);
+
+    deepEqual(args, {
+      command: Command.Export,
+      args: {
+        ...defaultOptions,
+        outputDir: ".././output-dir",
+      },
+    });
+  });
+
+  it("should use default export output directory when none provided", () => {
+    const args = parse(["export"]);
+
+    deepEqual(args, {
+      command: Command.Export,
+      args: {
+        ...defaultOptions,
+        outputDir: "../../export",
+      },
+    });
+  });
+
   it("should parse dev-validator index", () => {
     const args = parse(["dev", "0xa"]);
 

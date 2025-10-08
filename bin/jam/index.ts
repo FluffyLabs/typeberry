@@ -4,7 +4,7 @@ import { loadConfig } from "@typeberry/config-node";
 import { deriveEd25519SecretKey } from "@typeberry/crypto/key-derivation.js";
 import { Blake2b } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
-import { importBlocks, JamConfig, main, mainFuzz } from "@typeberry/node";
+import { exportBlocks, importBlocks, JamConfig, main, mainFuzz } from "@typeberry/node";
 import { workspacePathFix } from "@typeberry/utils";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 
@@ -83,6 +83,10 @@ async function startNode(args: Arguments, withRelPath: (p: string) => string) {
       withRelPath,
     );
     return await importBlocks(node, args.args.files);
+  }
+
+  if (args.command === Command.Export) {
+    return await exportBlocks(jamNodeConfig, args.args.outputDir, withRelPath);
   }
 
   // Run regular node.

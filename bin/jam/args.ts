@@ -10,6 +10,7 @@ Usage:
   jam [options]
   jam [options] dev <dev-validator-index>
   jam [options] import <bin-or-json-blocks>
+  jam [options] export <output-directory>
   jam [options] [--version=1] fuzz-target [socket-path=/tmp/jam_target.sock]
 
 Options:
@@ -27,6 +28,8 @@ export enum Command {
   Dev = "dev",
   /** Import the blocks from CLI and finish. */
   Import = "import",
+  /** Export blocks to .bin files. */
+  Export = "export",
   /** Run as a Fuzz Target. */
   FuzzTarget = "fuzz-target",
 }
@@ -55,6 +58,12 @@ export type Arguments =
       Command.Import,
       SharedOptions & {
         files: string[];
+      }
+    >
+  | CommandArgs<
+      Command.Export,
+      SharedOptions & {
+        outputDir: string;
       }
     >;
 
@@ -128,6 +137,18 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
         args: {
           ...data,
           files,
+        },
+      };
+    }
+    case Command.Export: {
+      const data = parseSharedOptions(args, withRelPath);
+      const outputDir = args._.shift() ?? withRelPath("export");
+      assertNoMoreArgs(args);
+      return {
+        command: Command.Export,
+        args: {
+          ...data,
+          outputDir: withRelPath(outputDir),
         },
       };
     }
