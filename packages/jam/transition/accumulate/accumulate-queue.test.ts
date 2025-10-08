@@ -103,8 +103,9 @@ describe("accumulate-queue", () => {
         InMemoryState.partial(tinyChainSpec, {
           privilegedServices: PrivilegedServices.create({
             manager: tryAsServiceId(0),
-            authManager: tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(0)), tinyChainSpec),
-            validatorsManager: tryAsServiceId(0),
+            assigners: tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(0)), tinyChainSpec),
+            delegator: tryAsServiceId(0),
+            registrar: tryAsServiceId(0),
             autoAccumulateServices: [],
           }),
           recentlyAccumulated: tryAsPerEpochBlock(recentlyAccumulated, tinyChainSpec),
