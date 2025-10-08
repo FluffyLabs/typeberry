@@ -568,7 +568,7 @@ export class AccumulateExternalities
     }
 
     if (manager === null || delegator === null) {
-      return Result.error(UpdatePrivilegesError.InvalidServiceId);
+      return Result.error(UpdatePrivilegesError.InvalidServiceId, "Either manager or delegator is not valid service id.");
     }
 
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && registrar === null) {
