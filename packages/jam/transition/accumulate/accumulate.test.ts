@@ -201,8 +201,6 @@ describe("accumulate", () => {
     deepEqual(output.ok.accumulationOutputLog.array, expectedOutput);
     deepEqual(state, expectedState);
   });
-
-  it("should detect duplicate service id creation", () => {});
 });
 
 const hashFromString = <T>(blob: string): T => {

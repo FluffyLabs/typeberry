@@ -80,11 +80,25 @@ export class AccumulationStateUpdate {
 
   /** Create a copy of another `StateUpdate`. Used by checkpoints. */
   static copyFrom(from: AccumulationStateUpdate): AccumulationStateUpdate {
+    const cloneMap = <A, B>(m: Map<A, B>): Map<A, B> => {
+      const a: [A, B][] = [];
+      for (const [key, value] of m.entries()) {
+        a.push([key, value]);
+      }
+      return new Map(a);
+    };
+    const cloneMapWithArray = <A, B>(m: Map<A, B[]>): Map<A, B[]> => {
+      const a: [A, B[]][] = [];
+      for (const [key, value] of m.entries()) {
+        a.push([key, value.slice()]);
+      }
+      return new Map(a);
+    };
     const serviceUpdates: ServicesUpdate = {
-      servicesUpdates: new Map(from.services.servicesUpdates),
+      servicesUpdates: cloneMap(from.services.servicesUpdates),
       servicesRemoved: new Set(from.services.servicesRemoved),
-      preimages: new Map(from.services.preimages),
-      storage: new Map(from.services.storage),
+      preimages: cloneMapWithArray(from.services.preimages),
+      storage: cloneMapWithArray(from.services.storage),
     };
     const transfers = [...from.transfers];
     const update = new AccumulationStateUpdate(serviceUpdates, transfers, new Map(from.yieldedRoots));
