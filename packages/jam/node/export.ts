@@ -7,8 +7,8 @@ import { Encoder } from "@typeberry/codec";
 import { LmdbBlocks } from "@typeberry/database-lmdb";
 import { Blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import type { JamConfig } from "@typeberry/node";
-import { getChainSpec, openDatabase } from "@typeberry/node/common.js";
+import { getChainSpec, openDatabase } from "./common.js";
+import type { JamConfig } from "./jam-config.js";
 
 export async function exportBlocks(jamNodeConfig: JamConfig, outputDir: string, withRelPath: (p: string) => string) {
   const logger = Logger.new(import.meta.filename, "export");
