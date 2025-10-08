@@ -50,7 +50,9 @@ export function* serializeStateUpdate(
 }
 
 function* serializeRemovedServices(servicesRemoved: Set<ServiceId> | undefined): Generator<StateEntryUpdate> {
-  if (servicesRemoved === undefined) return;
+  if (servicesRemoved === undefined) {
+    return;
+  }
   for (const serviceId of servicesRemoved) {
     // TODO [ToDr] what about all data associated with a service?
     const codec = serialize.serviceData(serviceId);
@@ -62,7 +64,9 @@ function* serializeStorage(
   storageUpdates: Map<ServiceId, UpdateStorage[]> | undefined,
   blake2b: Blake2b,
 ): Generator<StateEntryUpdate> {
-  if (storageUpdates === undefined) return;
+  if (storageUpdates === undefined) {
+    return;
+  }
   for (const [serviceId, updates] of storageUpdates.entries()) {
     for (const { action } of updates) {
       switch (action.kind) {
@@ -88,7 +92,9 @@ function* serializePreimages(
   encode: EncodeFun,
   blake2b: Blake2b,
 ): Generator<StateEntryUpdate> {
-  if (preimagesUpdates === undefined) return;
+  if (preimagesUpdates === undefined) {
+    return;
+  }
   for (const [serviceId, updates] of preimagesUpdates.entries()) {
     for (const { action } of updates) {
       switch (action.kind) {
@@ -131,7 +137,9 @@ function* serializeServiceUpdates(
   encode: EncodeFun,
   blake2b: Blake2b,
 ): Generator<StateEntryUpdate> {
-  if (servicesUpdates === undefined) return;
+  if (servicesUpdates === undefined) {
+    return;
+  }
   for (const [serviceId, { action }] of servicesUpdates.entries()) {
     // new service being created or updated
     const codec = serialize.serviceData(serviceId);

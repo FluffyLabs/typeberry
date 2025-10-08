@@ -787,31 +787,38 @@ describe("PartialState.newService", () => {
     assert.deepStrictEqual(result, Result.ok(expectedServiceId));
 
     // Verify service updates
-    assert.deepStrictEqual(state.stateUpdate.services.servicesUpdates, [
-      UpdateService.update({
-        serviceId: tryAsServiceId(0),
-        serviceInfo: ServiceAccountInfo.create({
-          ...service.data.info,
-          balance: expectedBalance,
-        }),
-      }),
-      UpdateService.create({
-        serviceId: expectedServiceId,
-        serviceInfo: ServiceAccountInfo.create({
-          codeHash,
-          balance: thresholdForNew,
-          accumulateMinGas,
-          onTransferMinGas,
-          storageUtilisationBytes: bytes,
-          gratisStorage: gratisStorage,
-          storageUtilisationCount: items,
-          created: tryAsTimeSlot(16),
-          lastAccumulation: tryAsTimeSlot(0),
-          parentService: service.serviceId,
-        }),
-        lookupHistory: new LookupHistoryItem(codeHash, codeLength, tryAsLookupHistorySlots([])),
-      }),
-    ]);
+    assert.deepStrictEqual(
+      state.stateUpdate.services.servicesUpdates,
+      new Map([
+        [
+          tryAsServiceId(0),
+          UpdateService.update({
+            serviceInfo: ServiceAccountInfo.create({
+              ...service.data.info,
+              balance: expectedBalance,
+            }),
+          }),
+        ],
+        [
+          expectedServiceId,
+          UpdateService.create({
+            serviceInfo: ServiceAccountInfo.create({
+              codeHash,
+              balance: thresholdForNew,
+              accumulateMinGas,
+              onTransferMinGas,
+              storageUtilisationBytes: bytes,
+              gratisStorage: gratisStorage,
+              storageUtilisationCount: items,
+              created: tryAsTimeSlot(16),
+              lastAccumulation: tryAsTimeSlot(0),
+              parentService: service.serviceId,
+            }),
+            lookupHistory: new LookupHistoryItem(codeHash, codeLength, tryAsLookupHistorySlots([])),
+          }),
+        ],
+      ]),
+    );
 
     // Verify next service ID is not bumped
     assert.deepStrictEqual(partialState.getNextNewServiceId(), tryAsServiceId(10));

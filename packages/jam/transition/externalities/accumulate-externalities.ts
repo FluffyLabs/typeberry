@@ -461,9 +461,9 @@ export class AccumulateExternalities
         }
         // add the new service with selected ID
         // https://graypaper.fluffylabs.dev/#/ab2cdbd/36be0336c003?v=0.7.2
-        this.updatedState.stateUpdate.services.servicesUpdates.push(
+        this.updatedState.stateUpdate.services.servicesUpdates.set(
+          newServiceId,
           UpdateService.create({
-            serviceId: newServiceId,
             serviceInfo: newAccount,
             lookupHistory: newLookupItem,
           }),
@@ -484,7 +484,6 @@ export class AccumulateExternalities
     this.updatedState.stateUpdate.services.servicesUpdates.set(
       newServiceId,
       UpdateService.create({
-        serviceId: newServiceId,
         serviceInfo: newAccount,
         lookupHistory: newLookupItem,
       }),
