@@ -572,8 +572,7 @@ export class AccumulateExternalities
     }
 
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && registrar === null) {
-      logger.trace`The new register manager is not a valid service id.`;
-      return Result.error(UpdatePrivilegesError.InvalidServiceId);
+  return Result.error(UpdatePrivilegesError.InvalidServiceId, 'Register manager is not valid service id.');
     }
 
     this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
