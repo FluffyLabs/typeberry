@@ -27,12 +27,8 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-fluffy", {
       ? [
           // infinite loop during accumulation
           "accumulate/full/transfer_for_ejected_service-1.json",
-          // incorrect balance
-          "accumulate/full/work_for_ejected_service-2.json",
           // infinite loop during accumulation
           "accumulate/tiny/transfer_for_ejected_service-1.json",
-          // incorrect balance
-          "accumulate/tiny/work_for_ejected_service-2.json",
         ]
       : []),
   ],

@@ -153,15 +153,19 @@ export class JsonService {
           },
     },
     ({ id, data }) => {
-      const lookupHistory = HashDictionary.new<PreimageHash, LookupHistoryItem[]>();
-      for (const item of data.lookup_meta ?? data.preimages_status ?? []) {
-        const data = lookupHistory.get(item.hash) ?? [];
-        data.push(item);
-        lookupHistory.set(item.hash, data);
-      }
       const preimages = HashDictionary.fromEntries(
         (data.preimages ?? data.preimages_blob ?? []).map((x) => [x.hash, x]),
       );
+
+      const lookupHistory = HashDictionary.new<PreimageHash, LookupHistoryItem[]>();
+
+      for (const item of data.lookup_meta ?? data.preimages_status ?? []) {
+        const data = lookupHistory.get(item.hash) ?? [];
+        const length = tryAsU32(preimages.get(item.hash)?.blob.length ?? item.length);
+        data.push(new LookupHistoryItem(item.hash, length, item.slots));
+        lookupHistory.set(item.hash, data);
+      }
+
       const storage = new Map<string, StorageItem>();
 
       const entries = (data.storage ?? []).map(({ key, value }) => {
