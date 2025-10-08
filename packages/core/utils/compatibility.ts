@@ -37,7 +37,9 @@ function parseCurrentVersion(env?: string): GpVersion | undefined {
 }
 
 function parseCurrentSuite(env?: string): TestSuite | undefined {
-  if (env === undefined) return undefined;
+  if (env === undefined) {
+    return undefined;
+  }
   switch (env) {
     case TestSuite.W3F_DAVXY:
     case TestSuite.JAMDUNA:

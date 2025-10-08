@@ -41,7 +41,7 @@ export class Assign implements HostCallHandler {
     // o
     const authorizationQueueStart = regs.get(8);
     // a
-    const authManager = getServiceId(regs.get(9));
+    const assigners = getServiceId(regs.get(9));
 
     const res = safeAllocUint8Array(HASH_SIZE * AUTHORIZATION_QUEUE_SIZE);
     const memoryReadResult = memory.loadInto(res, authorizationQueueStart);
@@ -62,7 +62,7 @@ export class Assign implements HostCallHandler {
     const authQueue = decoder.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
     const fixedSizeAuthQueue = FixedSizeArray.new(authQueue, AUTHORIZATION_QUEUE_SIZE);
 
-    const result = this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, authManager);
+    const result = this.partialState.updateAuthorizationQueue(coreIndex, fixedSizeAuthQueue, assigners);
     if (result.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);
       logger.trace`ASSIGN(${coreIndex}, ${fixedSizeAuthQueue}) <- OK`;

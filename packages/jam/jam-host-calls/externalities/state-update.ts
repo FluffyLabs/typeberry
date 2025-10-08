@@ -115,7 +115,7 @@ export class AccumulationStateUpdate {
     if (from.privilegedServices !== null) {
       update.privilegedServices = PrivilegedServices.create({
         ...from.privilegedServices,
-        authManager: asKnownSize([...from.privilegedServices.authManager]),
+        assigners: asKnownSize([...from.privilegedServices.assigners]),
       });
     }
     return update;

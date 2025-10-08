@@ -9,7 +9,7 @@ import {
   tryAsServiceId,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
+import { type AUTHORIZATION_QUEUE_SIZE, MIN_PUBLIC_SERVICE_INDEX } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
@@ -157,10 +157,14 @@ export class AccumulateExternalities
     return [isExpired, isExpired ? "" : "not expired"];
   }
 
-  /** `check`: https://graypaper.fluffylabs.dev/#/9a08063/303f02303f02?v=0.6.6 */
+  /** `check`: https://graypaper.fluffylabs.dev/#/ab2cdbd/30c60330c603?v=0.7.2 */
   private getNextAvailableServiceId(serviceId: ServiceId): ServiceId {
     let currentServiceId = serviceId;
-    const mod = 2 ** 32 - 2 ** 9;
+    const mod = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+      ? 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8
+      : 2 ** 32 - 2 ** 9;
+    const offset = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? MIN_PUBLIC_SERVICE_INDEX : 2 ** 8;
+
     for (;;) {
       const service = this.getServiceInfo(currentServiceId);
       // we found an empty id
@@ -168,7 +172,7 @@ export class AccumulateExternalities
         return currentServiceId;
       }
       // keep trying
-      currentServiceId = tryAsServiceId(((currentServiceId - 2 ** 8 + 1 + mod) % mod) + 2 ** 8);
+      currentServiceId = tryAsServiceId(((currentServiceId - offset + 1 + mod) % mod) + offset);
     }
   }
 
@@ -394,8 +398,8 @@ export class AccumulateExternalities
     accumulateMinGas: ServiceGas,
     onTransferMinGas: ServiceGas,
     gratisStorage: U64,
+    wantedServiceId: U64,
   ): Result<ServiceId, NewServiceError> {
-    const newServiceId = this.nextNewServiceId;
     // calculate the threshold. Storage is empty, one preimage requested.
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/115901115901?v=0.6.7
     const items = tryAsU32(2 * 1 + 0);
@@ -423,35 +427,71 @@ export class AccumulateExternalities
       return Result.error(NewServiceError.InsufficientFunds);
     }
 
+    // `a`: https://graypaper.fluffylabs.dev/#/ab2cdbd/366b02366d02?v=0.7.2
+    const newAccount = ServiceAccountInfo.create({
+      codeHash,
+      balance: thresholdForNew,
+      accumulateMinGas,
+      onTransferMinGas,
+      storageUtilisationBytes: bytes.value,
+      storageUtilisationCount: items,
+      gratisStorage,
+      created: this.currentTimeslot,
+      lastAccumulation: tryAsTimeSlot(0),
+      parentService: this.currentServiceId,
+    });
+
+    const newLookupItem = new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([]));
+
+    // `s`: https://graypaper.fluffylabs.dev/#/ab2cdbd/361003361003?v=0.7.2
+    const updatedCurrentAccount = ServiceAccountInfo.create({
+      ...currentService,
+      balance: tryAsU64(balanceLeftForCurrent),
+    });
+
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
+      if (
+        wantedServiceId < MIN_PUBLIC_SERVICE_INDEX &&
+        this.currentServiceId === this.updatedState.getPrivilegedServices().registrar
+      ) {
+        // NOTE: It's safe to cast to `Number` here, bcs here service ID cannot be bigger than 2**16
+        const newServiceId = tryAsServiceId(Number(wantedServiceId));
+        if (this.getServiceInfo(newServiceId) !== null) {
+          return Result.error(NewServiceError.RegistrarServiceIdAlreadyTaken);
+        }
+        // add the new service with selected ID
+        // https://graypaper.fluffylabs.dev/#/ab2cdbd/36be0336c003?v=0.7.2
+        this.updatedState.stateUpdate.services.servicesUpdates.push(
+          UpdateService.create({
+            serviceId: newServiceId,
+            serviceInfo: newAccount,
+            lookupHistory: newLookupItem,
+          }),
+        );
+        // update the balance of current service
+        // https://graypaper.fluffylabs.dev/#/ab2cdbd/36c20336c403?v=0.7.2
+        this.updatedState.updateServiceInfo(this.currentServiceId, updatedCurrentAccount);
+        return Result.ok(newServiceId);
+      }
+      // NOTE: in case the service is not a registrar or the requested serviceId is out of range,
+      // we completely ignore the `wantedServiceId` and assign a random one
+    }
+
+    const newServiceId = this.nextNewServiceId;
+
     // add the new service
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/36cb0236cb02?v=0.6.7
     this.updatedState.stateUpdate.services.servicesUpdates.set(
       newServiceId,
       UpdateService.create({
-        serviceInfo: ServiceAccountInfo.create({
-          codeHash,
-          balance: thresholdForNew,
-          accumulateMinGas,
-          onTransferMinGas,
-          storageUtilisationBytes: bytes.value,
-          storageUtilisationCount: items,
-          gratisStorage,
-          created: this.currentTimeslot,
-          lastAccumulation: tryAsTimeSlot(0),
-          parentService: this.currentServiceId,
-        }),
-        lookupHistory: new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([])),
+        serviceId: newServiceId,
+        serviceInfo: newAccount,
+        lookupHistory: newLookupItem,
       }),
     );
     // update the balance of current service
-    // https://graypaper.fluffylabs.dev/#/7e6ff6a/364d03364d03?v=0.6.7
-    this.updatedState.updateServiceInfo(
-      this.currentServiceId,
-      ServiceAccountInfo.create({
-        ...currentService,
-        balance: tryAsU64(balanceLeftForCurrent),
-      }),
-    );
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/36ec0336ee03?v=0.7.2
+    this.updatedState.updateServiceInfo(this.currentServiceId, updatedCurrentAccount);
 
     // update the next service id we are going to create next
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/36a70336a703?v=0.6.7
@@ -476,10 +516,10 @@ export class AccumulateExternalities
 
   updateValidatorsData(validatorsData: PerValidator<ValidatorData>): Result<OK, UnprivilegedError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/362802362d02?v=0.6.7 */
-    const validatorsManager = this.updatedState.getPrivilegedServices().validatorsManager;
+    const currentDelegator = this.updatedState.getPrivilegedServices().delegator;
 
-    if (validatorsManager !== this.currentServiceId) {
-      logger.trace`Current service id (${this.currentServiceId}) is not a validators manager. (expected: ${validatorsManager}) and cannot update validators data. Ignoring`;
+    if (currentDelegator !== this.currentServiceId) {
+      logger.trace`Current service id (${this.currentServiceId}) is not a validators manager. (expected: ${currentDelegator}) and cannot update validators data. Ignoring`;
       return Result.error(UnprivilegedError);
     }
 
@@ -495,21 +535,20 @@ export class AccumulateExternalities
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>,
-    authManager: ServiceId | null,
+    assigners: ServiceId | null,
   ): Result<OK, UpdatePrivilegesError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36a40136a401?v=0.6.7 */
 
     // NOTE `coreIndex` is already verified in the HC, so this is infallible.
-    const currentAuthManager = this.updatedState.getPrivilegedServices().authManager[coreIndex];
+    const currentAssigners = this.updatedState.getPrivilegedServices().assigners[coreIndex];
 
-    if (currentAuthManager !== this.currentServiceId) {
-      logger.trace`Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentAuthManager}) and cannot update authorization queue. Ignoring`;
-
+    if (currentAssigners !== this.currentServiceId) {
+      logger.trace`Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentAssigners}) and cannot update authorization queue.`;
       return Result.error(UpdatePrivilegesError.UnprivilegedService);
     }
 
-    if (authManager === null && Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      logger.trace`The new auth manager is not a valid service id. Ignoring`;
+    if (assigners === null && Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
+      logger.trace`The new auth manager is not a valid service id.`;
       return Result.error(UpdatePrivilegesError.InvalidServiceId);
     }
 
@@ -520,7 +559,8 @@ export class AccumulateExternalities
   updatePrivilegedServices(
     manager: ServiceId | null,
     authorizers: PerCore<ServiceId>,
-    validatorsManager: ServiceId | null,
+    delegator: ServiceId | null,
+    registrar: ServiceId | null,
     autoAccumulate: [ServiceId, ServiceGas][],
   ): Result<OK, UpdatePrivilegesError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
@@ -530,14 +570,22 @@ export class AccumulateExternalities
       return Result.error(UpdatePrivilegesError.UnprivilegedService);
     }
 
-    if (manager === null || validatorsManager === null) {
-      return Result.error(UpdatePrivilegesError.InvalidServiceId);
+    if (manager === null || delegator === null) {
+      return Result.error(
+        UpdatePrivilegesError.InvalidServiceId,
+        "Either manager or delegator is not valid service id.",
+      );
+    }
+
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && registrar === null) {
+      return Result.error(UpdatePrivilegesError.InvalidServiceId, "Register manager is not valid service id.");
     }
 
     this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
       manager,
-      authManager: authorizers,
-      validatorsManager,
+      assigners: authorizers,
+      delegator,
+      registrar: registrar ?? tryAsServiceId(0), // introduced in 0.7.1
       autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) => AutoAccumulate.create({ service, gasLimit })),
     });
     return Result.ok(OK);
@@ -692,7 +740,10 @@ export class AccumulateExternalities
   }
 }
 
-function bumpServiceId(serviceId: ServiceId) {
-  const mod = 2 ** 32 - 2 ** 9;
-  return tryAsServiceId(2 ** 8 + ((serviceId - 2 ** 8 + 42 + mod) % mod));
+function bumpServiceId(serviceId: ServiceId): ServiceId {
+  const mod = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+    ? 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8
+    : 2 ** 32 - 2 ** 9;
+  const offset = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? MIN_PUBLIC_SERVICE_INDEX : 2 ** 8;
+  return tryAsServiceId(offset + ((serviceId - offset + 42 + mod) % mod));
 }

@@ -23,9 +23,13 @@ describe("JSON state dump", () => {
     const parsedState = parseFromJson(testState.default, fromJson);
 
     const rootHash = StateEntries.serializeInMemory(spec, blake2b, parsedState).getRootHash(blake2b);
-    const expectedRoot = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-      ? "0x7e18927ddf545a60fc4d406eee600095092ff1760f4acb8b3b9843b01445f6d7"
-      : "0xf0c62b7961a17dba89a886c17dc881d7fb9e230f2cbf62316f2123a7fdbcfad5";
+
+    const expectedRoot = Compatibility.selectIfGreaterOrEqual({
+      fallback: "0xf0c62b7961a17dba89a886c17dc881d7fb9e230f2cbf62316f2123a7fdbcfad5",
+      versions: {
+        [GpVersion.V0_7_1]: "0xeab8f2d4aebacd4ddcb73d8b5a388e5723aff1d2bc3f4aab40e931addf1862dc",
+      },
+    });
     strictEqual(rootHash.toString(), expectedRoot);
   });
 });

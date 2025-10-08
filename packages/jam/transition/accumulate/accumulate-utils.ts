@@ -1,4 +1,5 @@
 import { type EntropyHash, type ServiceId, type TimeSlot, tryAsServiceId } from "@typeberry/block";
+import { MIN_PUBLIC_SERVICE_INDEX } from "@typeberry/block/gp-constants.js";
 import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import { codec, Encoder } from "@typeberry/codec";
@@ -6,6 +7,7 @@ import { HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { leBytesAsU32 } from "@typeberry/numbers";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 
 /**
  * A function that removes duplicates but does not change order - it keeps the first occurence.
@@ -50,7 +52,7 @@ const NEXT_ID_CODEC = codec.object({
  *
  * Please not that it does not call `check` function!
  *
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/2f4c022f4c02?v=0.6.7
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/2fa9042fc304?v=0.7.2
  */
 export function generateNextServiceId(
   { serviceId, entropy, timeslot }: NextServiceIdInput,
@@ -69,5 +71,9 @@ export function generateNextServiceId(
 
   const result = blake2b.hashBytes(encoded).raw.subarray(0, 4);
   const number = leBytesAsU32(result) >>> 0;
-  return tryAsServiceId((number % (2 ** 32 - 2 ** 9)) + 2 ** 8);
+  const mod = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+    ? 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8
+    : 2 ** 32 - 2 ** 9;
+  const offset = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? MIN_PUBLIC_SERVICE_INDEX : 2 ** 8;
+  return tryAsServiceId((number % mod) + offset);
 }
