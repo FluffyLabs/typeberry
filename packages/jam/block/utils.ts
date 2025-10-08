@@ -9,6 +9,5 @@ import type { ChainSpec } from "@typeberry/config";
  */
 export function reencodeAsView<T, V>(codec: Descriptor<T, V>, object: T, chainSpec?: ChainSpec): V {
   const encoded = Encoder.encodeObject(codec, object, chainSpec);
-  console.log("encoded", encoded, object, codec, chainSpec);
   return Decoder.decodeObject(codec.View, encoded, chainSpec);
 }
