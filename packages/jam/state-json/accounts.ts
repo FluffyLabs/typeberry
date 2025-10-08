@@ -12,7 +12,7 @@ import { fromJson } from "@typeberry/block-json";
 import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
-import { tryAsU64, type U32, type U64 } from "@typeberry/numbers";
+import { tryAsU32, tryAsU64, type U32, type U64 } from "@typeberry/numbers";
 import {
   InMemoryService,
   LookupHistoryItem,
@@ -22,11 +22,12 @@ import {
   StorageItem,
   type StorageKey,
 } from "@typeberry/state";
-import { asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType, Compatibility, GpVersion } from "@typeberry/utils";
 
 class JsonServiceInfo {
   static fromJson = json.object<JsonServiceInfo, ServiceAccountInfo>(
     {
+      version: "number",
       code_hash: fromJson.bytes32(),
       balance: json.fromNumber((x) => tryAsU64(x)),
       min_item_gas: json.fromNumber((x) => tryAsServiceGas(x)),
@@ -65,6 +66,7 @@ class JsonServiceInfo {
     },
   );
 
+  version!: number;
   code_hash!: CodeHash;
   balance!: U64;
   min_item_gas!: ServiceGas;
@@ -111,6 +113,19 @@ const lookupMetaFromJson = json.object<JsonLookupMeta, LookupHistoryItem>(
   ({ key, value }) => new LookupHistoryItem(key.hash, key.length, value),
 );
 
+const preimageStatusFromJson = json.object<JsonPreimageStatus, LookupHistoryItem>(
+  {
+    hash: fromJson.bytes32(),
+    status: json.array("number"),
+  },
+  ({ hash, status }) => new LookupHistoryItem(hash, tryAsU32(0), status),
+);
+
+type JsonPreimageStatus = {
+  hash: PreimageHash;
+  status: LookupHistorySlots;
+};
+
 type JsonLookupMeta = {
   key: {
     hash: PreimageHash;
@@ -123,21 +138,30 @@ export class JsonService {
   static fromJson = json.object<JsonService, InMemoryService>(
     {
       id: "number",
-      data: {
-        service: JsonServiceInfo.fromJson,
-        preimages: json.optional(json.array(JsonPreimageItem.fromJson)),
-        storage: json.optional(json.array(JsonStorageItem.fromJson)),
-        lookup_meta: json.optional(json.array(lookupMetaFromJson)),
-      },
+      data: Compatibility.isLessThan(GpVersion.V0_7_1)
+        ? {
+            service: JsonServiceInfo.fromJson,
+            preimages: json.optional(json.array(JsonPreimageItem.fromJson)),
+            storage: json.optional(json.array(JsonStorageItem.fromJson)),
+            lookup_meta: json.optional(json.array(lookupMetaFromJson)),
+          }
+        : {
+            service: JsonServiceInfo.fromJson,
+            storage: json.optional(json.array(JsonStorageItem.fromJson)),
+            preimages_blob: json.optional(json.array(JsonPreimageItem.fromJson)),
+            preimages_status: json.optional(json.array(preimageStatusFromJson)),
+          },
     },
     ({ id, data }) => {
       const lookupHistory = HashDictionary.new<PreimageHash, LookupHistoryItem[]>();
-      for (const item of data.lookup_meta ?? []) {
+      for (const item of data.lookup_meta ?? data.preimages_status ?? []) {
         const data = lookupHistory.get(item.hash) ?? [];
         data.push(item);
         lookupHistory.set(item.hash, data);
       }
-      const preimages = HashDictionary.fromEntries((data.preimages ?? []).map((x) => [x.hash, x]));
+      const preimages = HashDictionary.fromEntries(
+        (data.preimages ?? data.preimages_blob ?? []).map((x) => [x.hash, x]),
+      );
       const storage = new Map<string, StorageItem>();
 
       const entries = (data.storage ?? []).map(({ key, value }) => {
@@ -164,5 +188,7 @@ export class JsonService {
     preimages?: JsonPreimageItem[];
     storage?: JsonStorageItem[];
     lookup_meta?: LookupHistoryItem[];
+    preimages_blob?: JsonPreimageItem[];
+    preimages_status?: LookupHistoryItem[];
   };
 }
