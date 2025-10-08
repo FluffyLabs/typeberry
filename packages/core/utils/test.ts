@@ -153,8 +153,12 @@ export function deepEqual<T>(
           const aKey = `${a.key}`;
           const bKey = `${b.key}`;
 
-          if (aKey < bKey) return -1;
-          if (bKey < aKey) return 1;
+          if (aKey < bKey) {
+            return -1;
+          }
+          if (bKey < aKey) {
+            return 1;
+          }
           return 0;
         });
     };
