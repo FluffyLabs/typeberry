@@ -112,7 +112,7 @@ export class SafroleSeal {
       return Result.error(SafroleSealError.IncorrectSeal);
     }
 
-    if (!ticket?.id.isEqualTo(result.ok)) {
+    if (ticket === undefined || !ticket.id.isEqualTo(result.ok)) {
       return Result.error(SafroleSealError.InvalidTicket);
     }
 
@@ -130,7 +130,7 @@ export class SafroleSeal {
     const index = timeSlot % keys.length;
     const sealingKey = keys.at(index);
     const authorBandersnatchKey = authorKey.bandersnatch;
-    if (!sealingKey?.isEqualTo(authorBandersnatchKey)) {
+    if (sealingKey === undefined || !sealingKey.isEqualTo(authorBandersnatchKey)) {
       return Result.error(
         SafroleSealError.InvalidValidator,
         `Invalid Validator. Expected: ${sealingKey}, got: ${authorKey.bandersnatch}`,
