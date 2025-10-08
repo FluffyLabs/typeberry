@@ -7,6 +7,7 @@ import { SortedSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { MAX_VALUE } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import {
   InMemoryState,
   LookupHistoryItem,
@@ -21,7 +22,7 @@ import { StateEntries } from "@typeberry/state-merkleization";
 import { InMemoryTrie, leafComparator } from "@typeberry/trie";
 import { getBlake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import type { TrieHasher } from "@typeberry/trie/nodesDb.js";
-import { deepEqual, OK, Result } from "@typeberry/utils";
+import { Compatibility, deepEqual, GpVersion, OK, Result } from "@typeberry/utils";
 import { LmdbRoot } from "./root.js";
 import { LmdbStates } from "./states.js";
 
@@ -89,8 +90,9 @@ describe("LMDB States database", () => {
       timeslot: tryAsTimeSlot(15),
       privilegedServices: PrivilegedServices.create({
         manager: tryAsServiceId(1),
-        authManager: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(2)), spec),
-        validatorsManager: tryAsServiceId(3),
+        assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(2)), spec),
+        delegator: tryAsServiceId(3),
+        registrar: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? tryAsServiceId(4) : tryAsServiceId(MAX_VALUE),
         autoAccumulateServices: [],
       }),
       servicesUpdates: new Map([

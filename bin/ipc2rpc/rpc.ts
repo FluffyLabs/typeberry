@@ -24,7 +24,9 @@ export function startRpc(db: Database, client: JamnpIpcHandler) {
     const blake2b = await Blake2b.createHasher();
     return new Promise((resolve) => {
       client.withNewStream<ce129.Handler>(ce129.STREAM_KIND, (handler, sender) => {
-        if (db.bestHeader === null) return;
+        if (db.bestHeader === null) {
+          return;
+        }
 
         const key: string = request.params.accountId;
         const handleResponse = (response: ce129.StateResponse) => {

@@ -31,6 +31,7 @@ import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519K
 import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
+import { MAX_VALUE } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import { asOpaqueType, assertNever, check, OK, Result, WithDebug } from "@typeberry/utils";
 import { type AccumulationOutput, accumulationOutputComparator } from "./accumulation-output.js";
 import type { AvailabilityAssignment } from "./assurances.js";
@@ -547,8 +548,9 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
       privilegedServices: PrivilegedServices.create({
         manager: tryAsServiceId(0),
-        authManager: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
-        validatorsManager: tryAsServiceId(0),
+        assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
+        delegator: tryAsServiceId(0),
+        registrar: tryAsServiceId(MAX_VALUE),
         autoAccumulateServices: [],
       }),
       accumulationOutputLog: SortedArray.fromArray(accumulationOutputComparator, []),

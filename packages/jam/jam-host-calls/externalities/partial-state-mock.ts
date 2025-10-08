@@ -98,8 +98,9 @@ export class PartialStateMock implements PartialState {
     gas: ServiceGas,
     balance: ServiceGas,
     gratisStorage: U64,
+    serviceId: U64,
   ): Result<ServiceId, NewServiceError> {
-    this.newServiceCalled.push([codeHash, codeLength, gas, balance, gratisStorage]);
+    this.newServiceCalled.push([codeHash, codeLength, gas, balance, gratisStorage, serviceId]);
     return this.newServiceResponse;
   }
 
@@ -122,10 +123,11 @@ export class PartialStateMock implements PartialState {
     m: ServiceId | null,
     a: PerCore<ServiceId>,
     v: ServiceId | null,
+    r: ServiceId | null,
     g: [ServiceId, ServiceGas][],
   ): Result<OK, UpdatePrivilegesError> {
     if (this.privilegedServicesResponse.isOk) {
-      this.privilegedServices.push([m, a, v, g]);
+      this.privilegedServices.push([m, a, v, r, g]);
     }
     return this.privilegedServicesResponse;
   }
@@ -133,10 +135,10 @@ export class PartialStateMock implements PartialState {
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
-    authManager: ServiceId | null,
+    assigners: ServiceId | null,
   ): Result<OK, UpdatePrivilegesError> {
     if (this.authQueueResponse.isOk) {
-      this.authQueue.push([coreIndex, authQueue, authManager]);
+      this.authQueue.push([coreIndex, authQueue, assigners]);
     }
     return this.authQueueResponse;
   }
