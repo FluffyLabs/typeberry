@@ -1,6 +1,7 @@
 import type { ServiceId } from "@typeberry/block";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { type CodecWithView, Decoder, type SequenceView } from "@typeberry/codec";
+import type { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type {
   AccumulationQueueView,
@@ -26,22 +27,27 @@ export class SerializedStateView<T extends SerializedStateBackend> implements St
     public backend: T,
     /** Best-effort list of recently active services. */
     private readonly _recentServiceIds: ServiceId[],
+    private readonly viewCache: HashDictionary<StateKey, unknown>,
   ) {}
 
   private retrieveView<A, B>({ key, Codec }: KeyAndCodecWithView<A, B>, description: string): B {
+    const cached = this.viewCache.get(key);
+    if (cached !== undefined) {
+      return cached as B;
+    }
     const bytes = this.backend.get(key);
     if (bytes === null) {
       throw new Error(`Required state entry for ${description} is missing!. Accessing view of key: ${key}`);
     }
-    // TODO [ToDr] consider cache here
-
     // NOTE [ToDr] we are not using `Decoder.decodeObject` here because
     // it needs to get to the end of the data (skip), yet that's expensive.
     // we assume that the state data is correct and coherent anyway, so
     // for performance reasons we simply create the view here.
     const d = Decoder.fromBytesBlob(bytes);
     d.attachContext(this.spec);
-    return Codec.View.decode(d);
+    const view = Codec.View.decode(d);
+    this.viewCache.set(key, view);
+    return view;
   }
 
   availabilityAssignmentView(): AvailabilityAssignmentsView {
