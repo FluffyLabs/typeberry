@@ -472,6 +472,9 @@ export class AccumulateExternalities
         // https://graypaper.fluffylabs.dev/#/ab2cdbd/36c20336c403?v=0.7.2
         this.updatedState.updateServiceInfo(this.currentServiceId, updatedCurrentAccount);
         return Result.ok(newServiceId);
+      } else {
+         // in case the service is not a registrar or the requested serviceId is out of range, 
+         // we completely ignore the `requestedServiceId` and assign a random one
       }
     }
 
