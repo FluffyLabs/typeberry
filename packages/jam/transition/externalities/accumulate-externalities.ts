@@ -565,7 +565,7 @@ export class AccumulateExternalities
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
     const currentManager = this.updatedState.getPrivilegedServices().manager;
 
-    if (currentManager !== this.currentServiceId) {
+    if (currentManager !== this.currentServiceId && Compatibility.isLessThan(GpVersion.V0_7_1)) {
       return Result.error(UpdatePrivilegesError.UnprivilegedService);
     }
 
