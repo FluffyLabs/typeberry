@@ -32,6 +32,7 @@
   "scripts": {
     "start": "tsx --test-timeout=600000 ./index.ts",
     "w3f:0.6.7": "GP_VERSION=0.6.7 tsx ./w3f.ts",
+    "w3f:0.7.1": "GP_VERSION=0.7.1-preview tsx ./w3f.ts",
     "w3f-davxy:0.6.7": "GP_VERSION=0.6.7 tsx ./w3f-davxy-067.ts",
     "w3f-davxy:0.7.0": "GP_VERSION=0.7.0 tsx ./w3f-davxy-070.ts",
     "jam-conformance:0.6.7": "GP_VERSION=0.6.7 tsx ./jam-conformance-067.ts",
