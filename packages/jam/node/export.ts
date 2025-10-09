@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { Block } from "@typeberry/block";
+import type { HeaderHash } from "@typeberry/block";
 import { Block as BlockCodec } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
@@ -13,7 +13,7 @@ import type { JamConfig } from "./jam-config.js";
 export async function exportBlocks(jamNodeConfig: JamConfig, outputDir: string, withRelPath: (p: string) => string) {
   const logger = Logger.new(import.meta.filename, "export");
 
-  logger.info`📤 Exporting blocks to ${path.resolve(outputDir)}`;
+  logger.info`📤 Exporting blocks to ${outputDir}`;
 
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
@@ -31,45 +31,46 @@ export async function exportBlocks(jamNodeConfig: JamConfig, outputDir: string, 
 
   const blocks = new LmdbBlocks(chainSpec, rootDb);
 
-  const allBlocks: Array<{ block: Block; timeSlot: number }> = [];
+  logger.info`📖 Gathering blocks...`;
+
+  const hashes: HeaderHash[] = [];
   let currentHash = blocks.getBestHeaderHash();
 
   while (currentHash.isEqualTo(Bytes.zero(32)) !== true) {
     const header = blocks.getHeader(currentHash);
-    const extrinsic = blocks.getExtrinsic(currentHash);
 
-    if (header !== null && extrinsic !== null) {
-      const timeSlot = header.timeSlotIndex.materialize();
-      const block = BlockCodec.create({
-        header: header.materialize(),
-        extrinsic: extrinsic.materialize(),
-      });
-
-      allBlocks.push({
-        block,
-        timeSlot,
-      });
-
+    if (header !== null) {
+      hashes.push(currentHash);
       currentHash = header.parentHeaderHash.materialize();
     } else {
       break;
     }
   }
 
-  allBlocks.sort((a, b) => a.timeSlot - b.timeSlot);
+  logger.info`📕 ${hashes.length} blocks gathered.`;
 
-  for (let i = 0; i < allBlocks.length; i++) {
-    const { block, timeSlot } = allBlocks[i];
-    const filename = `${timeSlot.toString().padStart(8, "0")}.bin`;
+  for (let i = 0; i < hashes.length; i++) {
+    const header = blocks.getHeader(hashes[i]);
+    const extrinsic = blocks.getExtrinsic(hashes[i]);
+
+    if (header === null || extrinsic === null) {
+      throw new Error(`❌ Block ${currentHash} could not be read from the database.`);
+    }
+
+    const filename = `${header.timeSlotIndex.materialize().toString().padStart(8, "0")}.bin`;
     const filepath = path.join(outputDir, filename);
 
+    const block = BlockCodec.create({
+      header: header.materialize(),
+      extrinsic: extrinsic.materialize(),
+    });
     const encodedBlock = Encoder.encodeObject(BlockCodec.Codec, block, chainSpec);
 
     fs.writeFileSync(filepath, encodedBlock.raw);
-    logger.log`✅ Exported block ${i + 1}/${allBlocks.length}: ${filename}`;
+    logger.log`✅ Exported block ${i + 1}/${hashes.length}: ${filename}`;
   }
 
   await rootDb.close();
 
-  logger.info`🫡 Export completed successfully: ${allBlocks.length} blocks exported to ${path.resolve(outputDir)}`;
+  logger.info`🫡 Export completed successfully: ${hashes.length} blocks exported to ${outputDir}`;
 }

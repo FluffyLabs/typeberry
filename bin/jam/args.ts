@@ -142,7 +142,10 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
     }
     case Command.Export: {
       const data = parseSharedOptions(args, withRelPath);
-      const outputDir = args._.shift() ?? withRelPath("export");
+      const outputDir = args._.shift();
+      if (outputDir === undefined) {
+        throw new Error("Missing output directory.");
+      }
       assertNoMoreArgs(args);
       return {
         command: Command.Export,

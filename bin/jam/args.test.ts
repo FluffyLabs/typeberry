@@ -82,16 +82,15 @@ describe("CLI", () => {
     });
   });
 
-  it("should use default export output directory when none provided", () => {
-    const args = parse(["export"]);
-
-    deepEqual(args, {
-      command: Command.Export,
-      args: {
-        ...defaultOptions,
-        outputDir: "../../export",
+  it("should throw on missing output directory", () => {
+    assert.throws(
+      () => {
+        const _args = parse(["export"]);
       },
-    });
+      {
+        message: "Missing output directory.",
+      },
+    );
   });
 
   it("should parse dev-validator index", () => {

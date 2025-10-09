@@ -1,4 +1,3 @@
-import path from "node:path";
 import { Block, type BlockView, emptyBlock, Header, type HeaderHash, type TimeSlot } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
@@ -35,7 +34,7 @@ export function openDatabase(
   const genesisHeaderHashNibbles = genesisHeaderHash.toString().substring(2, 10);
 
   const dbPath = `${databaseBasePath}/${nodeNameHash}/${genesisHeaderHashNibbles}`;
-  logger.info`🛢️ Opening database at ${path.resolve(dbPath)}`;
+  logger.info`🛢️ Opening database at ${dbPath}`;
   try {
     return {
       dbPath,
