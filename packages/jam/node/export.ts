@@ -5,7 +5,7 @@ import { Block as BlockCodec } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import { LmdbBlocks } from "@typeberry/database-lmdb";
-import { Blake2b } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { getChainSpec, openDatabase } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
@@ -36,7 +36,7 @@ export async function exportBlocks(jamNodeConfig: JamConfig, outputDir: string, 
   const hashes: HeaderHash[] = [];
   let currentHash = blocks.getBestHeaderHash();
 
-  while (currentHash.isEqualTo(Bytes.zero(32)) !== true) {
+  while (currentHash.isEqualTo(Bytes.zero(HASH_SIZE)) !== true) {
     const header = blocks.getHeader(currentHash);
 
     if (header !== null) {
