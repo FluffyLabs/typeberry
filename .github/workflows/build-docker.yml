@@ -30,3 +30,14 @@ jobs:
     - name: Test Docker image
       run: |
         docker run --rm typeberry:latest --help
+
+    - name: Save Docker image
+      run: |
+        docker save typeberry:latest | gzip > typeberry-image.tar.gz
+
+    - name: Upload Docker image artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: typeberry-docker-image
+        path: typeberry-image.tar.gz
+        retention-days: 1

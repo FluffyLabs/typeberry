@@ -157,7 +157,7 @@ export class Accumulate {
       slot,
     );
 
-    const fetchExternalities = Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
+    const fetchExternalities = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
       ? FetchExternalities.createForAccumulate({ entropy, transfers, operands }, this.chainSpec)
       : FetchExternalities.createForPre071Accumulate({ entropy, operands }, this.chainSpec);
 
