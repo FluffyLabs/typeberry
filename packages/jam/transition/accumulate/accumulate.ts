@@ -347,7 +347,7 @@ export class Accumulate {
       state: stateAfterParallelAcc,
       ...rest
     } = await this.accumulateInParallel(accumulateData, slot, entropy, statistics, stateUpdate);
-    const newTransfers = stateAfterParallelAcc.transfers;
+    const newTransfers = stateAfterParallelAcc.takeTransfers();
     assertEmpty(rest);
 
     // NOTE [ToDr] recursive invocation
