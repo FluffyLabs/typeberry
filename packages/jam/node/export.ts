@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { HeaderHash } from "@typeberry/block";
+import type { Block, HeaderHash } from "@typeberry/block";
 import { Block as BlockCodec } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
@@ -46,6 +46,9 @@ export async function exportBlocks(jamNodeConfig: JamConfig, outputDir: string, 
       break;
     }
   }
+
+  // reverse to export in chronological order
+  hashes.reverse();
 
   logger.info`📕 ${hashes.length} blocks gathered.`;
 
