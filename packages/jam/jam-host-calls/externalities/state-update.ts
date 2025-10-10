@@ -22,7 +22,7 @@ import {
   UpdateStorage,
   type ValidatorData,
 } from "@typeberry/state";
-import { assertNever, check, OK, Result } from "@typeberry/utils";
+import { assertNever, check, deepCloneMapWithArray, OK, Result } from "@typeberry/utils";
 import type { PendingTransfer } from "./pending-transfer.js";
 
 export const InsufficientFundsError = "insufficient funds";
@@ -81,21 +81,14 @@ export class AccumulationStateUpdate {
 
   /** Create a copy of another `StateUpdate`. Used by checkpoints. */
   static copyFrom(from: AccumulationStateUpdate): AccumulationStateUpdate {
-    const cloneMapWithArray = <A, B>(m: Map<A, B[]>): Map<A, B[]> => {
-      const a: [A, B[]][] = [];
-      for (const [key, value] of m.entries()) {
-        a.push([key, value.slice()]);
-      }
-      return new Map(a);
-    };
     const serviceUpdates: ServicesUpdate = {
-      // shallow coppies
+      // shallow copy
       created: [...from.services.created],
       updated: new Map(from.services.updated),
       removed: [...from.services.removed],
-      // deep coppies
-      preimages: cloneMapWithArray(from.services.preimages),
-      storage: cloneMapWithArray(from.services.storage),
+      // deep copy
+      preimages: deepCloneMapWithArray(from.services.preimages),
+      storage: deepCloneMapWithArray(from.services.storage),
     };
     const transfers = [...from.transfers];
     const update = new AccumulationStateUpdate(serviceUpdates, transfers, new Map(from.yieldedRoots));
