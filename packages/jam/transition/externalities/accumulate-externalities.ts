@@ -51,6 +51,7 @@ import {
   ServiceAccountInfo,
   type StorageKey,
   tryAsLookupHistorySlots,
+  tryAsPerCore,
   UpdatePreimage,
   UpdateService,
   type ValidatorData,
@@ -555,6 +556,23 @@ export class AccumulateExternalities
     return Result.ok(OK);
   }
 
+  private updatePrivilegedServiceId(
+    newId: ServiceId,
+    currentId: ServiceId,
+    previousId: ServiceId,
+    { isManager, isSelf }: { isManager: boolean; isSelf: boolean },
+  ) {
+    if (isManager) {
+      return newId;
+    }
+
+    if (isSelf && previousId === currentId) {
+      return newId;
+    }
+
+    return currentId;
+  }
+
   updatePrivilegedServices(
     manager: ServiceId | null,
     authorizers: PerCore<ServiceId>,
@@ -563,9 +581,21 @@ export class AccumulateExternalities
     autoAccumulate: [ServiceId, ServiceGas][],
   ): Result<OK, UpdatePrivilegesError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
-    const currentManager = this.updatedState.getPrivilegedServices().manager;
+    const {
+      manager: currentManager,
+      delegator: currentDelegator,
+      registrar: currentRegistrar,
+      assigners: currentAssigners,
+    } = this.updatedState.getPrivilegedServices();
 
-    if (currentManager !== this.currentServiceId && Compatibility.isLessThan(GpVersion.V0_7_1)) {
+    const {
+      delegator: unmodifiedDelegator,
+      registrar: unmodifiedRegistrar,
+      assigners: unmodifiedAssigners,
+    } = this.updatedState.state.privilegedServices;
+
+    const isManager = currentManager === this.currentServiceId;
+    if (!isManager && Compatibility.isLessThan(GpVersion.V0_7_1)) {
       return Result.error(UpdatePrivilegesError.UnprivilegedService);
     }
 
@@ -579,14 +609,46 @@ export class AccumulateExternalities
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && registrar === null) {
       return Result.error(UpdatePrivilegesError.InvalidServiceId, "Register manager is not valid service id.");
     }
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
+      const newDelegator = this.updatePrivilegedServiceId(delegator, currentDelegator, unmodifiedDelegator, {
+        isManager,
+        isSelf: this.currentServiceId === currentDelegator,
+      });
 
-    this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
-      manager,
-      assigners: authorizers,
-      delegator,
-      registrar: registrar ?? tryAsServiceId(0), // introduced in 0.7.1
-      autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) => AutoAccumulate.create({ service, gasLimit })),
-    });
+      const newRegistrar = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+        ? this.updatePrivilegedServiceId(registrar ?? tryAsServiceId(0), currentRegistrar, unmodifiedRegistrar, {
+            isManager,
+            isSelf: this.currentServiceId === currentRegistrar,
+          })
+        : tryAsServiceId(0);
+
+      const newAssigners = currentAssigners.map((currentAssigner, index) =>
+        this.updatePrivilegedServiceId(authorizers[index], currentAssigner, unmodifiedAssigners[index], {
+          isManager,
+          isSelf: this.currentServiceId === currentAssigner,
+        }),
+      );
+
+      this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
+        manager: currentManager === this.currentServiceId ? manager : currentManager,
+        assigners: tryAsPerCore(newAssigners, this.chainSpec),
+        delegator: newDelegator,
+        registrar: newRegistrar,
+        autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) =>
+          AutoAccumulate.create({ service, gasLimit }),
+        ),
+      });
+    } else {
+      this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
+        manager,
+        assigners: authorizers,
+        delegator: delegator,
+        registrar: registrar ?? tryAsServiceId(0),
+        autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) =>
+          AutoAccumulate.create({ service, gasLimit }),
+        ),
+      });
+    }
     return Result.ok(OK);
   }
 
