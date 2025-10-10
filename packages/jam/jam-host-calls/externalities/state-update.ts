@@ -50,7 +50,7 @@ export class AccumulationStateUpdate {
     /** Services state updates. */
     public readonly services: ServicesUpdate,
     /** Pending transfers. */
-    public readonly transfers: PendingTransfer[],
+    public transfers: PendingTransfer[],
     /** Yielded accumulation root. */
     public readonly yieldedRoots: Map<ServiceId, OpaqueHash> = new Map(),
   ) {}
@@ -109,6 +109,13 @@ export class AccumulationStateUpdate {
       });
     }
     return update;
+  }
+
+  /** Retrieve and clear pending transfers. */
+  takeTransfers() {
+    const transfers = this.transfers;
+    this.transfers = [];
+    return transfers;
   }
 }
 
