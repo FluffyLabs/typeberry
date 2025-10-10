@@ -10,15 +10,13 @@ import {
   LookupHistoryItem,
   PrivilegedServices,
   ServiceAccountInfo,
-  type ServicesUpdate,
+  ServicesUpdate,
   type State,
   StorageItem,
   type StorageKey,
   tryAsLookupHistorySlots,
   type UpdatePreimage,
   UpdatePreimageKind,
-  UpdateService,
-  UpdateServiceKind,
   UpdateStorage,
   type ValidatorData,
 } from "@typeberry/state";
@@ -35,7 +33,7 @@ export type ServiceStateUpdate = Partial<Pick<State, "privilegedServices" | "aut
 /**
  * State updates that currently accumulating service produced.
  *
- * `x_u`: https://graypaper.fluffylabs.dev/#/9a08063/2f31012f3101?v=0.6.6
+ * `L_e`: https://graypaper.fluffylabs.dev/#/ab2cdbd/2fe4022fe402?v=0.7.2
  */
 export class AccumulationStateUpdate {
   /** Updated authorization queues for cores. */
@@ -48,7 +46,7 @@ export class AccumulationStateUpdate {
 
   private constructor(
     /** Services state updates. */
-    public readonly services: ServicesUpdate,
+    public readonly servicesUpdates: ServicesUpdate,
     /** Pending transfers. */
     public transfers: PendingTransfer[],
     /** Yielded accumulation root. */
@@ -57,35 +55,17 @@ export class AccumulationStateUpdate {
 
   /** Create new empty state update. */
   static empty(): AccumulationStateUpdate {
-    return new AccumulationStateUpdate(
-      {
-        servicesUpdates: [],
-        servicesRemoved: [],
-        preimages: [],
-        storage: [],
-      },
-      [],
-    );
+    return new AccumulationStateUpdate(ServicesUpdate.empty(), []);
   }
 
   /** Create a state update with some existing, yet uncommited services updates. */
   static new(update: ServicesUpdate): AccumulationStateUpdate {
-    return new AccumulationStateUpdate(
-      {
-        ...update,
-      },
-      [],
-    );
+    return new AccumulationStateUpdate(ServicesUpdate.copyFrom(update), []);
   }
 
   /** Create a copy of another `StateUpdate`. Used by checkpoints. */
   static copyFrom(from: AccumulationStateUpdate): AccumulationStateUpdate {
-    const serviceUpdates: ServicesUpdate = {
-      servicesUpdates: [...from.services.servicesUpdates],
-      servicesRemoved: [...from.services.servicesRemoved],
-      preimages: [...from.services.preimages],
-      storage: [...from.services.storage],
-    };
+    const serviceUpdates = ServicesUpdate.copyFrom(from.servicesUpdates);
     const transfers = [...from.transfers];
     const update = new AccumulationStateUpdate(serviceUpdates, transfers, new Map(from.yieldedRoots));
 
@@ -142,9 +122,7 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
       return null;
     }
 
-    const maybeNewService = this.stateUpdate.services.servicesUpdates.find(
-      (update) => update.serviceId === destination,
-    );
+    const maybeNewService = this.stateUpdate.servicesUpdates.getService(destination);
 
     if (maybeNewService !== undefined) {
       return maybeNewService.action.account;
@@ -159,7 +137,8 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
   }
 
   getStorage(serviceId: ServiceId, rawKey: StorageKey): BytesBlob | null {
-    const item = this.stateUpdate.services.storage.find((x) => x.serviceId === serviceId && x.key.isEqualTo(rawKey));
+    const storages = this.stateUpdate.servicesUpdates.getStorage(serviceId) ?? [];
+    const item = storages.find((x) => x.key.isEqualTo(rawKey));
     if (item !== undefined) {
       return item.value;
     }
@@ -176,10 +155,11 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
    * the existence in `preimages` map.
    */
   hasPreimage(serviceId: ServiceId, hash: PreimageHash): boolean {
-    const providedPreimage = this.stateUpdate.services.preimages.find(
+    const preimages = this.stateUpdate.servicesUpdates.getPreimages(serviceId) ?? [];
+    const providedPreimage = preimages.find(
       // we ignore the action here, since if there is <any> update on that
       // hash it means it has to exist, right?
-      (p) => p.serviceId === serviceId && p.hash.isEqualTo(hash),
+      (p) => p.hash.isEqualTo(hash),
     );
     if (providedPreimage !== undefined) {
       return true;
@@ -196,9 +176,8 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
 
   getPreimage(serviceId: ServiceId, hash: PreimageHash): BytesBlob | null {
     // TODO [ToDr] Should we verify availability here?
-    const freshlyProvided = this.stateUpdate.services.preimages.find(
-      (x) => x.serviceId === serviceId && x.hash.isEqualTo(hash),
-    );
+    const preimages = this.stateUpdate.servicesUpdates.getPreimages(serviceId) ?? [];
+    const freshlyProvided = preimages.find((x) => x.hash.isEqualTo(hash));
     if (freshlyProvided !== undefined && freshlyProvided.action.kind === UpdatePreimageKind.Provide) {
       return freshlyProvided.action.preimage.blob;
     }
@@ -214,11 +193,12 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     hash: PreimageHash,
     length: U64,
   ): LookupHistoryItem | null {
+    const preimages = this.stateUpdate.servicesUpdates.getPreimages(serviceId) ?? [];
     // TODO [ToDr] This is most likely wrong. We may have `provide` and `remove` within
     // the same state update. We should however switch to proper "updated state"
     // representation soon.
-    const updatedPreimage = this.stateUpdate.services.preimages.findLast(
-      (update) => update.serviceId === serviceId && update.hash.isEqualTo(hash) && BigInt(update.length) === length,
+    const updatedPreimage = preimages.findLast(
+      (update) => update.hash.isEqualTo(hash) && BigInt(update.length) === length,
     );
 
     const stateFallback = () => {
@@ -261,21 +241,14 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
   }
 
   /* State update functions. */
-
   updateStorage(serviceId: ServiceId, key: StorageKey, value: BytesBlob | null) {
     const update =
       value === null
-        ? UpdateStorage.remove({ serviceId, key })
+        ? UpdateStorage.remove({ key })
         : UpdateStorage.set({
-            serviceId,
             storage: StorageItem.create({ key, value }),
           });
-
-    const index = this.stateUpdate.services.storage.findIndex(
-      (x) => x.serviceId === update.serviceId && x.key.isEqualTo(key),
-    );
-    const count = index === -1 ? 0 : 1;
-    this.stateUpdate.services.storage.splice(index, count, update);
+    this.stateUpdate.servicesUpdates.updateStorage(serviceId, update);
   }
 
   /**
@@ -284,8 +257,8 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
    * Note we store all previous entries as well, since there might be a sequence of:
    * `provide` -> `remove` and both should update the end state somehow.
    */
-  updatePreimage(newUpdate: UpdatePreimage) {
-    this.stateUpdate.services.preimages.push(newUpdate);
+  updatePreimage(serviceId: ServiceId, newUpdate: UpdatePreimage) {
+    this.stateUpdate.servicesUpdates.updatePreimage(serviceId, newUpdate);
   }
 
   updateServiceStorageUtilisation(
@@ -323,32 +296,7 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
   }
 
   updateServiceInfo(serviceId: ServiceId, newInfo: ServiceAccountInfo) {
-    const idx = this.stateUpdate.services.servicesUpdates.findIndex((x) => x.serviceId === serviceId);
-    const toRemove = idx === -1 ? 0 : 1;
-    const existingItem = this.stateUpdate.services.servicesUpdates[idx];
-
-    if (existingItem?.action.kind === UpdateServiceKind.Create) {
-      this.stateUpdate.services.servicesUpdates.splice(
-        idx,
-        toRemove,
-        UpdateService.create({
-          serviceId,
-          serviceInfo: newInfo,
-          lookupHistory: existingItem.action.lookupHistory,
-        }),
-      );
-
-      return;
-    }
-
-    this.stateUpdate.services.servicesUpdates.splice(
-      idx,
-      toRemove,
-      UpdateService.update({
-        serviceId,
-        serviceInfo: newInfo,
-      }),
-    );
+    this.stateUpdate.servicesUpdates.updateServiceInfo(serviceId, newInfo);
   }
 
   getPrivilegedServices() {

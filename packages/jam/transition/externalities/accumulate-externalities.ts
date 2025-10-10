@@ -52,7 +52,6 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
   UpdatePreimage,
-  UpdateService,
   type ValidatorData,
 } from "@typeberry/state";
 import { assertNever, Compatibility, check, GpVersion, OK, Result } from "@typeberry/utils";
@@ -234,16 +233,16 @@ export class AccumulateExternalities
     if (existingPreimage === null) {
       // https://graypaper.fluffylabs.dev/#/9a08063/38a60038a600?v=0.6.6
       this.updatedState.updatePreimage(
+        this.currentServiceId,
         UpdatePreimage.updateOrAdd({
-          serviceId: this.currentServiceId,
           lookupHistory: new LookupHistoryItem(hash, clampedLength, tryAsLookupHistorySlots([])),
         }),
       );
     } else {
       /** https://graypaper.fluffylabs.dev/#/9a08063/38ca0038ca00?v=0.6.6 */
       this.updatedState.updatePreimage(
+        this.currentServiceId,
         UpdatePreimage.updateOrAdd({
-          serviceId: this.currentServiceId,
           lookupHistory: new LookupHistoryItem(
             hash,
             clampedLength,
@@ -279,8 +278,8 @@ export class AccumulateExternalities
         return Result.error(ForgetPreimageError.StorageUtilisationError);
       }
       this.updatedState.updatePreimage(
+        serviceId,
         UpdatePreimage.remove({
-          serviceId,
           hash: status.hash,
           length: status.length,
         }),
@@ -298,8 +297,8 @@ export class AccumulateExternalities
           return Result.error(ForgetPreimageError.StorageUtilisationError);
         }
         this.updatedState.updatePreimage(
+          serviceId,
           UpdatePreimage.remove({
-            serviceId,
             hash: status.hash,
             length: status.length,
           }),
@@ -313,8 +312,8 @@ export class AccumulateExternalities
     // https://graypaper.fluffylabs.dev/#/9a08063/38c80138c801?v=0.6.6
     if (s.status === PreimageStatusKind.Available) {
       this.updatedState.updatePreimage(
+        serviceId,
         UpdatePreimage.updateOrAdd({
-          serviceId,
           lookupHistory: new LookupHistoryItem(status.hash, status.length, tryAsLookupHistorySlots([s.data[0], t])),
         }),
       );
@@ -326,8 +325,8 @@ export class AccumulateExternalities
       const y = s.data[1];
       if (y < t - this.chainSpec.preimageExpungePeriod) {
         this.updatedState.updatePreimage(
+          serviceId,
           UpdatePreimage.updateOrAdd({
-            serviceId,
             lookupHistory: new LookupHistoryItem(status.hash, status.length, tryAsLookupHistorySlots([s.data[2], t])),
           }),
         );
@@ -461,12 +460,10 @@ export class AccumulateExternalities
         }
         // add the new service with selected ID
         // https://graypaper.fluffylabs.dev/#/ab2cdbd/36be0336c003?v=0.7.2
-        this.updatedState.stateUpdate.services.servicesUpdates.push(
-          UpdateService.create({
-            serviceId: newServiceId,
-            serviceInfo: newAccount,
-            lookupHistory: newLookupItem,
-          }),
+        this.updatedState.stateUpdate.servicesUpdates.createService(
+          newServiceId,
+          newAccount,
+          newLookupItem,
         );
         // update the balance of current service
         // https://graypaper.fluffylabs.dev/#/ab2cdbd/36c20336c403?v=0.7.2
@@ -480,13 +477,11 @@ export class AccumulateExternalities
     const newServiceId = this.nextNewServiceId;
 
     // add the new service
-    // https://graypaper.fluffylabs.dev/#/ab2cdbd/36e70336e903?v=0.7.2
-    this.updatedState.stateUpdate.services.servicesUpdates.push(
-      UpdateService.create({
-        serviceId: newServiceId,
-        serviceInfo: newAccount,
-        lookupHistory: newLookupItem,
-      }),
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/36cb0236cb02?v=0.6.7
+    this.updatedState.stateUpdate.servicesUpdates.createService(
+      newServiceId,
+      newAccount,
+      newLookupItem,
     );
     // update the balance of current service
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/36ec0336ee03?v=0.7.2
@@ -625,8 +620,8 @@ export class AccumulateExternalities
 
     // setting up the new preimage
     this.updatedState.updatePreimage(
+      serviceId,
       UpdatePreimage.provide({
-        serviceId,
         preimage: PreimageItem.create({
           hash: preimageHash,
           blob: preimage,
@@ -686,14 +681,14 @@ export class AccumulateExternalities
       }),
     );
     // and finally add an ejected service.
-    this.updatedState.stateUpdate.services.servicesRemoved.push(destination);
+    this.updatedState.stateUpdate.servicesUpdates.servicesRemoved.add(destination);
 
     // take care of the code preimage and its lookup history
     // Safe, because we know the preimage is valid, and it's the code of the service, which is bounded by maximal service code size anyway (much smaller than 2**32 bytes).
     const preimageLength = tryAsU32(Number(l));
-    this.updatedState.stateUpdate.services.preimages.push(
-      UpdatePreimage.remove({ serviceId: destination, hash: previousCodeHash, length: preimageLength }),
-    );
+    const preimages = this.updatedState.stateUpdate.servicesUpdates.preimages.get(destination) ?? [];
+    preimages.push(UpdatePreimage.remove({ hash: previousCodeHash, length: preimageLength }));
+    this.updatedState.stateUpdate.servicesUpdates.preimages.set(destination, preimages);
 
     return Result.ok(OK);
   }

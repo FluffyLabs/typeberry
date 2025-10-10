@@ -134,7 +134,7 @@ export class DeferredTransfers {
     return Result.ok({
       // NOTE: we return only services, since it's impossible to update
       // anything else during `on_transfer` call.
-      servicesUpdate: currentStateUpdate.services,
+      servicesUpdate: currentStateUpdate.servicesUpdates,
       transferStatistics,
     });
   }

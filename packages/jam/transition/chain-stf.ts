@@ -387,6 +387,16 @@ export class OnChain {
     const { statistics, ...statisticsRest } = statisticsUpdate;
     assertEmpty(statisticsRest);
 
+    // Concat accumulatePreimages updates with preimages
+    for (const [serviceId, accPreimageUpdates] of accumulatePreimages.entries()) {
+      const preimagesUpdates = preimages.get(serviceId);
+      if (preimagesUpdates === undefined) {
+        preimages.set(serviceId, accPreimageUpdates);
+      } else {
+        preimages.set(serviceId, preimagesUpdates.concat(accPreimageUpdates));
+      }
+    }
+
     return Result.ok({
       ...(maybeAuthorizationQueues !== undefined ? { authQueues: maybeAuthorizationQueues } : {}),
       ...(maybeDesignatedValidatorData !== undefined ? { designatedValidatorData: maybeDesignatedValidatorData } : {}),
@@ -408,7 +418,7 @@ export class OnChain {
       recentlyAccumulated,
       accumulationOutputLog,
       ...servicesUpdate,
-      preimages: preimages.concat(accumulatePreimages),
+      preimages,
     });
   }
 

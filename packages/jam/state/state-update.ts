@@ -23,7 +23,6 @@ export enum UpdatePreimageKind {
  */
 export class UpdatePreimage {
   private constructor(
-    public readonly serviceId: ServiceId,
     public readonly action:
       | {
           kind: UpdatePreimageKind.Provide;
@@ -43,16 +42,8 @@ export class UpdatePreimage {
   ) {}
 
   /** A preimage is provided. We should update the lookuphistory and add the preimage to db. */
-  static provide({
-    serviceId,
-    preimage,
-    slot,
-  }: {
-    serviceId: ServiceId;
-    preimage: PreimageItem;
-    slot: TimeSlot | null;
-  }) {
-    return new UpdatePreimage(serviceId, {
+  static provide({ preimage, slot }: { preimage: PreimageItem; slot: TimeSlot | null }) {
+    return new UpdatePreimage({
       kind: UpdatePreimageKind.Provide,
       preimage,
       slot,
@@ -60,8 +51,8 @@ export class UpdatePreimage {
   }
 
   /** The preimage should be removed completely from the database. */
-  static remove({ serviceId, hash, length }: { serviceId: ServiceId; hash: PreimageHash; length: U32 }) {
-    return new UpdatePreimage(serviceId, {
+  static remove({ hash, length }: { hash: PreimageHash; length: U32 }) {
+    return new UpdatePreimage({
       kind: UpdatePreimageKind.Remove,
       hash,
       length,
@@ -69,8 +60,8 @@ export class UpdatePreimage {
   }
 
   /** Update the lookup history of some preimage or add a new one (request). */
-  static updateOrAdd({ serviceId, lookupHistory }: { serviceId: ServiceId; lookupHistory: LookupHistoryItem }) {
-    return new UpdatePreimage(serviceId, {
+  static updateOrAdd({ lookupHistory }: { lookupHistory: LookupHistoryItem }) {
+    return new UpdatePreimage({
       kind: UpdatePreimageKind.UpdateOrAdd,
       item: lookupHistory,
     });
@@ -109,11 +100,10 @@ export enum UpdateServiceKind {
   Create = 1,
 }
 /**
- * Update service info of a particular `ServiceId` or create a new one.
+ * Update service info or create a new one.
  */
 export class UpdateService {
   private constructor(
-    public readonly serviceId: ServiceId,
     public readonly action:
       | {
           kind: UpdateServiceKind.Update;
@@ -126,23 +116,21 @@ export class UpdateService {
         },
   ) {}
 
-  static update({ serviceId, serviceInfo }: { serviceId: ServiceId; serviceInfo: ServiceAccountInfo }) {
-    return new UpdateService(serviceId, {
+  static update({ serviceInfo }: { serviceInfo: ServiceAccountInfo }) {
+    return new UpdateService({
       kind: UpdateServiceKind.Update,
       account: serviceInfo,
     });
   }
 
   static create({
-    serviceId,
     serviceInfo,
     lookupHistory,
   }: {
-    serviceId: ServiceId;
     serviceInfo: ServiceAccountInfo;
     lookupHistory: LookupHistoryItem | null;
   }) {
-    return new UpdateService(serviceId, {
+    return new UpdateService({
       kind: UpdateServiceKind.Create,
       account: serviceInfo,
       lookupHistory,
@@ -164,7 +152,6 @@ export enum UpdateStorageKind {
  */
 export class UpdateStorage {
   private constructor(
-    public readonly serviceId: ServiceId,
     public readonly action:
       | {
           kind: UpdateStorageKind.Set;
@@ -176,12 +163,12 @@ export class UpdateStorage {
         },
   ) {}
 
-  static set({ serviceId, storage }: { serviceId: ServiceId; storage: StorageItem }) {
-    return new UpdateStorage(serviceId, { kind: UpdateStorageKind.Set, storage });
+  static set({ storage }: { storage: StorageItem }) {
+    return new UpdateStorage({ kind: UpdateStorageKind.Set, storage });
   }
 
-  static remove({ serviceId, key }: { serviceId: ServiceId; key: StorageKey }) {
-    return new UpdateStorage(serviceId, { kind: UpdateStorageKind.Remove, key });
+  static remove({ key }: { key: StorageKey }) {
+    return new UpdateStorage({ kind: UpdateStorageKind.Remove, key });
   }
 
   get key() {
@@ -199,14 +186,120 @@ export class UpdateStorage {
   }
 }
 
-// TODO [ToDr] This would be more convenient to use if the data was grouped by `ServiceId`.
-export type ServicesUpdate = {
-  /** Service ids to remove from state alongside all their data. */
-  servicesRemoved: ServiceId[];
-  /** Services to update or create anew. */
-  servicesUpdates: UpdateService[];
+export type Updates = {
+  /** Updates current service or create a new one. */
+  service?: UpdateService;
   /** Service preimages to update and potentially lookup history */
-  preimages: UpdatePreimage[];
+  preimages?: UpdatePreimage[];
   /** Service storage to update. */
-  storage: UpdateStorage[];
+  storage?: UpdateStorage[];
 };
+
+export class ServicesUpdate {
+  public static empty(): ServicesUpdate {
+    return new ServicesUpdate(new Set(), new Map());
+  }
+
+  public static copyFrom(update: ServicesUpdate): ServicesUpdate {
+    return new ServicesUpdate(new Set(update.removed), new Map(update.updated));
+  }
+
+  public removeService(id: ServiceId): void {
+    this.removed.add(id);
+  }
+
+  public getService(id: ServiceId): UpdateService | undefined {
+    return this.updated.get(id)?.service;
+  }
+
+  public createService(id: ServiceId, info: ServiceAccountInfo, lookupHistory: LookupHistoryItem): void {
+    const serviceUpdate = this.updated.get(id);
+    if (serviceUpdate === undefined) {
+      this.updated.set(id, {
+        service: UpdateService.create({
+          serviceInfo: info,
+          lookupHistory,
+        }),
+      });
+      return;
+    }
+    if (serviceUpdate.service !== undefined) throw new Error(`Attempting to create duplicated service with id: ${id}`);
+    this.updated.set(id, {
+      ...serviceUpdate,
+      service: UpdateService.create({
+        serviceInfo: info,
+        lookupHistory,
+      }),
+    });
+  }
+
+  public updateServiceInfo(id: ServiceId, info: ServiceAccountInfo): void {
+    const serviceUpdate = this.updated.get(id);
+    if (serviceUpdate === undefined) {
+      this.updated.set(id, {
+        service: UpdateService.update({
+          serviceInfo: info,
+        }),
+      });
+      return;
+    }
+    const service = serviceUpdate.service;
+    if (service?.action.kind === UpdateServiceKind.Create) {
+      this.updated.set(id, {
+        ...serviceUpdate,
+        service: UpdateService.create({
+          serviceInfo: info,
+          lookupHistory: service.action.lookupHistory,
+        }),
+      });
+      return;
+    }
+    this.updated.set(id, {
+      ...serviceUpdate,
+      service: UpdateService.update({
+        serviceInfo: info,
+      }),
+    });
+  }
+
+  public getPreimages(id: ServiceId): UpdatePreimage[] | undefined {
+    return this.updated.get(id)?.preimages;
+  }
+
+  public updatePreimage(id: ServiceId, preimageUpdate: UpdatePreimage): void {
+    const serviceUpdate = this.updated.get(id);
+    if (serviceUpdate === undefined) {
+      this.updated.set(id, { preimages: [preimageUpdate] });
+      return;
+    }
+    const preimages = serviceUpdate.preimages ?? [];
+    preimages.push(preimageUpdate);
+    this.updated.set(id, { ...serviceUpdate, preimages });
+  }
+
+  public getStorage(id: ServiceId): UpdateStorage[] | undefined {
+    return this.updated.get(id)?.storage;
+  }
+
+  public updateStorage(id: ServiceId, storageUpdate: UpdateStorage): void {
+    const serviceUpdate = this.updated.get(id);
+    if (serviceUpdate === undefined) {
+      this.updated.set(id, { storage: [storageUpdate] });
+      return;
+    }
+
+    const storage = serviceUpdate.storage ?? [];
+    const index = storage.findIndex((x) => x.key.isEqualTo(storageUpdate.key));
+    const count = index === -1 ? 0 : 1;
+    storage.splice(index, count, storageUpdate);
+
+    this.updated.set(id, { ...serviceUpdate, storage: storage });
+  }
+
+  private constructor(
+    /** Service ids to remove from state alongside all their data. */
+    public readonly removed: Set<ServiceId>,
+    /** Services to update, create anew, update preimage, change storage. */
+    public readonly updated: Map<ServiceId, Updates>,
+  ) {}
+}
