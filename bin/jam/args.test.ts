@@ -70,19 +70,32 @@ describe("CLI", () => {
     });
   });
 
-  it("should parse export command and add rel path to output directory", () => {
-    const args = parse(["export", "./output-dir"]);
+  it("should parse export command and add rel path to output path and give concat the default value of false", () => {
+    const args = parse(["export", "./output"]);
 
     deepEqual(args, {
       command: Command.Export,
       args: {
         ...defaultOptions,
-        outputDir: ".././output-dir",
+        output: ".././output",
+        concat: false,
       },
     });
   });
 
-  it("should throw on missing output directory", () => {
+  it("should parse the concat option", () => {
+    const args = parse(["export", "./output", "--concat"]);
+    deepEqual(args, {
+      command: Command.Export,
+      args: {
+        ...defaultOptions,
+        output: ".././output",
+        concat: true,
+      },
+    });
+  });
+
+  it("should throw on missing output path", () => {
     assert.throws(
       () => {
         const _args = parse(["export"]);

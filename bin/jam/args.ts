@@ -10,7 +10,7 @@ Usage:
   jam [options]
   jam [options] dev <dev-validator-index>
   jam [options] import <bin-or-json-blocks>
-  jam [options] export <output-directory>
+  jam [options] [--concat] export <output-directory-or-file>
   jam [options] [--version=1] fuzz-target [socket-path=/tmp/jam_target.sock]
 
 Options:
@@ -63,7 +63,8 @@ export type Arguments =
   | CommandArgs<
       Command.Export,
       SharedOptions & {
-        outputDir: string;
+        output: string;
+        concat: boolean;
       }
     >;
 
@@ -142,8 +143,9 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
     }
     case Command.Export: {
       const data = parseSharedOptions(args, withRelPath);
-      const outputDir = args._.shift();
-      if (outputDir === undefined) {
+      const { concat } = parseValueOption(args, "concat", "boolean", (v: boolean) => v, false);
+      const output = args._.shift();
+      if (output === undefined) {
         throw new Error("Missing output directory.");
       }
       assertNoMoreArgs(args);
@@ -151,7 +153,8 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
         command: Command.Export,
         args: {
           ...data,
-          outputDir: withRelPath(outputDir),
+          output: withRelPath(output),
+          concat,
         },
       };
     }
@@ -176,7 +179,7 @@ function parseStringOption<S extends string, T>(
 function parseValueOption<X, S extends string, T>(
   args: minimist.ParsedArgs,
   option: S,
-  typeOfX: "number" | "string",
+  typeOfX: "number" | "string" | "boolean",
   parser: (v: X) => T | null,
   defaultValue: T,
 ): Record<S, T> {
