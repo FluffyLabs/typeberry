@@ -1231,6 +1231,136 @@ describe("PartialState.updatePrivilegedServices", () => {
     );
   });
 
+  itPost071("should allow delegator to transfer its power ", () => {
+    const state = partiallyUpdatedState();
+    const currentServiceId = tryAsServiceId(0);
+    state.state.privilegedServices = PrivilegedServices.create({
+      ...state.state.privilegedServices,
+      manager: tryAsServiceId(2),
+      delegator: currentServiceId,
+      registrar: tryAsServiceId(3),
+      assigners: tryAsPerCore(
+        new Array(tinyChainSpec.coresCount).fill(0).map((_, index) => tryAsServiceId(index + 10)),
+        tinyChainSpec,
+      ),
+    });
+    const partialState = new AccumulateExternalities(
+      tinyChainSpec,
+      blake2b,
+      state,
+      currentServiceId,
+      tryAsServiceId(10),
+      tryAsTimeSlot(16),
+    );
+
+    const manager = tryAsServiceId(20);
+    const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
+    const delegator = tryAsServiceId(30);
+    const registrar = tryAsServiceId(40);
+    const autoAccumulate: [ServiceId, ServiceGas][] = [];
+
+    // when
+    const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
+
+    // then
+    assert.deepStrictEqual(result, Result.ok(OK));
+    assert.deepStrictEqual(
+      state.stateUpdate.privilegedServices,
+      PrivilegedServices.create({
+        ...state.state.privilegedServices,
+        delegator,
+      }),
+    );
+  });
+
+  itPost071("should allow registrar to transfer its power ", () => {
+    const state = partiallyUpdatedState();
+    const currentServiceId = tryAsServiceId(0);
+    state.state.privilegedServices = PrivilegedServices.create({
+      ...state.state.privilegedServices,
+      manager: tryAsServiceId(2),
+      delegator: tryAsServiceId(3),
+      registrar: currentServiceId,
+      assigners: tryAsPerCore(
+        new Array(tinyChainSpec.coresCount).fill(0).map((_, index) => tryAsServiceId(index + 10)),
+        tinyChainSpec,
+      ),
+    });
+    const partialState = new AccumulateExternalities(
+      tinyChainSpec,
+      blake2b,
+      state,
+      currentServiceId,
+      tryAsServiceId(10),
+      tryAsTimeSlot(16),
+    );
+
+    const manager = tryAsServiceId(20);
+    const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
+    const delegator = tryAsServiceId(30);
+    const registrar = tryAsServiceId(40);
+    const autoAccumulate: [ServiceId, ServiceGas][] = [];
+
+    // when
+    const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
+
+    // then
+    assert.deepStrictEqual(result, Result.ok(OK));
+    assert.deepStrictEqual(
+      state.stateUpdate.privilegedServices,
+      PrivilegedServices.create({
+        ...state.state.privilegedServices,
+        registrar,
+      }),
+    );
+  });
+
+  itPost071("should allow one of assigners to transfer its power ", () => {
+    const state = partiallyUpdatedState();
+    const currentServiceId = tryAsServiceId(0);
+    state.state.privilegedServices = PrivilegedServices.create({
+      ...state.state.privilegedServices,
+      manager: tryAsServiceId(2),
+      delegator: tryAsServiceId(3),
+      registrar: tryAsServiceId(4),
+      assigners: tryAsPerCore(
+        new Array(tinyChainSpec.coresCount).fill(0).map((_, index) => tryAsServiceId(index)),
+        tinyChainSpec,
+      ),
+    });
+    const partialState = new AccumulateExternalities(
+      tinyChainSpec,
+      blake2b,
+      state,
+      currentServiceId,
+      tryAsServiceId(10),
+      tryAsTimeSlot(16),
+    );
+
+    const manager = tryAsServiceId(20);
+    const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
+    const delegator = tryAsServiceId(30);
+    const registrar = tryAsServiceId(40);
+    const autoAccumulate: [ServiceId, ServiceGas][] = [];
+
+    const newAssigners = tryAsPerCore(
+      [assigners[0], ...state.state.privilegedServices.assigners.slice(1)],
+      tinyChainSpec,
+    );
+    // when
+    const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
+
+    // then
+    assert.deepStrictEqual(result, Result.ok(OK));
+    assert.deepStrictEqual(
+      state.stateUpdate.privilegedServices,
+      PrivilegedServices.create({
+        ...state.state.privilegedServices,
+        assigners: newAssigners,
+      }),
+    );
+  });
+
   itPre071("should return UnprivilegedError when current service is unprivileged", () => {
     const state = partiallyUpdatedState();
     state.state.privilegedServices = { ...state.state.privilegedServices, manager: tryAsServiceId(1) };
