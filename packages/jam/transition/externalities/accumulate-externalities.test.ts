@@ -157,7 +157,7 @@ describe("PartialState.requestPreimage", () => {
       ]),
     );
     assert.deepStrictEqual(
-      state.stateUpdate.services.servicesUpdates,
+      state.stateUpdate.services.updated,
       new Map([
         [
           serviceId,
@@ -209,7 +209,7 @@ describe("PartialState.requestPreimage", () => {
       ]),
     );
     assert.deepStrictEqual(
-      state.stateUpdate.services.servicesUpdates,
+      state.stateUpdate.services.updated,
       new Map([
         [
           serviceId,
@@ -694,7 +694,7 @@ describe("PartialState.newService", () => {
 
     // Verify service updates
     assert.deepStrictEqual(
-      state.stateUpdate.services.servicesUpdates,
+      state.stateUpdate.services.updated,
       new Map([
         [
           tryAsServiceId(0),
@@ -725,6 +725,7 @@ describe("PartialState.newService", () => {
         ],
       ]),
     );
+    assert.deepStrictEqual(state.stateUpdate.services.created, [expectedServiceId]);
 
     // Verify next service ID bumped
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
@@ -788,7 +789,7 @@ describe("PartialState.newService", () => {
 
     // Verify service updates
     assert.deepStrictEqual(
-      state.stateUpdate.services.servicesUpdates,
+      state.stateUpdate.services.updated,
       new Map([
         [
           tryAsServiceId(0),
@@ -819,6 +820,7 @@ describe("PartialState.newService", () => {
         ],
       ]),
     );
+    assert.deepStrictEqual(state.stateUpdate.services.created, [expectedServiceId]);
 
     // Verify next service ID is not bumped
     assert.deepStrictEqual(partialState.getNextNewServiceId(), tryAsServiceId(10));
@@ -872,7 +874,7 @@ describe("PartialState.newService", () => {
     assert.deepStrictEqual(result, Result.error(NewServiceError.InsufficientFunds));
 
     // Verify no side effects
-    assert.deepStrictEqual(state.stateUpdate.services.servicesUpdates, new Map());
+    assert.deepStrictEqual(state.stateUpdate.services.updated, new Map());
   });
 
   it("should return an error if service is unprivileged to set gratis storage", () => {
@@ -927,7 +929,7 @@ describe("PartialState.newService", () => {
     assert.deepStrictEqual(result, Result.error(NewServiceError.UnprivilegedService));
 
     // Verify no side effects
-    assert.deepStrictEqual(state.stateUpdate.services.servicesUpdates, new Map());
+    assert.deepStrictEqual(state.stateUpdate.services.updated, new Map());
   });
 
   itPost071("should return an error if attempting to create new service with selected id that already exists", () => {
@@ -973,7 +975,7 @@ describe("PartialState.newService", () => {
     assert.deepStrictEqual(result, Result.error(NewServiceError.RegistrarServiceIdAlreadyTaken));
 
     // Verify no side effects
-    assert.deepStrictEqual(state.stateUpdate.services.servicesUpdates, new Map());
+    assert.deepStrictEqual(state.stateUpdate.services.updated, new Map());
 
     // Verify next service ID is not bumped
     assert.deepStrictEqual(partialState.getNextNewServiceId(), tryAsServiceId(10));
@@ -1140,7 +1142,7 @@ describe("PartialState.upgradeService", () => {
 
     // then
     assert.deepStrictEqual(
-      state.stateUpdate.services.servicesUpdates,
+      state.stateUpdate.services.updated,
       new Map([
         [
           tryAsServiceId(0),
@@ -1556,7 +1558,7 @@ describe("PartialState.transfer", () => {
       }),
     ]);
     assert.deepStrictEqual(
-      state.stateUpdate.services.servicesUpdates,
+      state.stateUpdate.services.updated,
       new Map([
         [
           tryAsServiceId(0),
@@ -2086,7 +2088,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Service missing"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
   it("should return InvalidService if destination service does not exist", () => {
@@ -2108,7 +2110,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Service missing"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
   it("should return InvalidService if destination service codeHash does not match expected pattern", () => {
@@ -2132,7 +2134,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Invalid code hash"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
   it("should return InvalidPreimage if storageUtilisationCount is not equal to required value", () => {
@@ -2156,7 +2158,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Too many storage items"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
   it("should return InvalidPreimage if the tombstone preimage is missing", () => {
@@ -2180,7 +2182,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Previous code available: wrong status"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
   it("should return InvalidPreimage if tombstone preimage exists but has wrong status", () => {
@@ -2211,7 +2213,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Previous code available: wrong status"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
   it("should return InvalidPreimage if tombstone preimage exists but is not expired", () => {
@@ -2242,7 +2244,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Previous code available: not expired"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
   it("should return InvalidService if summing balances would overflow", () => {
@@ -2289,7 +2291,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Balance overflow"));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set());
+    assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
   it("should return OK", () => {
@@ -2322,7 +2324,7 @@ describe("PartialState.eject", () => {
 
     // then
     assert.deepStrictEqual(result, Result.ok(OK));
-    assert.deepStrictEqual(state.stateUpdate.services.servicesRemoved, new Set([destinationId]));
+    assert.deepStrictEqual(state.stateUpdate.services.removed, [destinationId]);
     assert.deepStrictEqual(
       state.stateUpdate.services.preimages,
       new Map([[destinationId, [UpdatePreimage.remove({ hash: tombstone, length: length })]]]),

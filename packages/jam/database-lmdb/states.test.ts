@@ -95,7 +95,7 @@ describe("LMDB States database", () => {
         registrar: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? tryAsServiceId(4) : tryAsServiceId(MAX_VALUE),
         autoAccumulateServices: [],
       }),
-      servicesUpdates: new Map([
+      updated: new Map([
         [
           tryAsServiceId(1),
           UpdateService.create({

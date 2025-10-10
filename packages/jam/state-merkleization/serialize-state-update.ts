@@ -43,13 +43,13 @@ export function* serializeStateUpdate(
   const encode = <T>(codec: Encode<T>, val: T) => Encoder.encodeObject(codec, val, spec);
 
   // then let's proceed with service updates
-  yield* serializeServiceUpdates(update.servicesUpdates, encode, blake2b);
+  yield* serializeServiceUpdates(update.updated, encode, blake2b);
   yield* serializePreimages(update.preimages, encode, blake2b);
   yield* serializeStorage(update.storage, blake2b);
-  yield* serializeRemovedServices(update.servicesRemoved);
+  yield* serializeRemovedServices(update.removed);
 }
 
-function* serializeRemovedServices(servicesRemoved: Set<ServiceId> | undefined): Generator<StateEntryUpdate> {
+function* serializeRemovedServices(servicesRemoved: ServiceId[] | undefined): Generator<StateEntryUpdate> {
   if (servicesRemoved === undefined) {
     return;
   }

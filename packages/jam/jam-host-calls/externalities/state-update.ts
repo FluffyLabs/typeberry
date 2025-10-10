@@ -59,8 +59,9 @@ export class AccumulationStateUpdate {
   static empty(): AccumulationStateUpdate {
     return new AccumulationStateUpdate(
       {
-        servicesUpdates: new Map(),
-        servicesRemoved: new Set(),
+        created: [],
+        updated: new Map(),
+        removed: [],
         preimages: new Map(),
         storage: new Map(),
       },
@@ -80,13 +81,6 @@ export class AccumulationStateUpdate {
 
   /** Create a copy of another `StateUpdate`. Used by checkpoints. */
   static copyFrom(from: AccumulationStateUpdate): AccumulationStateUpdate {
-    const cloneMap = <A, B>(m: Map<A, B>): Map<A, B> => {
-      const a: [A, B][] = [];
-      for (const [key, value] of m.entries()) {
-        a.push([key, value]);
-      }
-      return new Map(a);
-    };
     const cloneMapWithArray = <A, B>(m: Map<A, B[]>): Map<A, B[]> => {
       const a: [A, B[]][] = [];
       for (const [key, value] of m.entries()) {
@@ -95,8 +89,11 @@ export class AccumulationStateUpdate {
       return new Map(a);
     };
     const serviceUpdates: ServicesUpdate = {
-      servicesUpdates: cloneMap(from.services.servicesUpdates),
-      servicesRemoved: new Set(from.services.servicesRemoved),
+      // shallow coppies
+      created: [...from.services.created],
+      updated: new Map(from.services.updated),
+      removed: [...from.services.removed],
+      // deep coppies
       preimages: cloneMapWithArray(from.services.preimages),
       storage: cloneMapWithArray(from.services.storage),
     };
@@ -149,10 +146,10 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
       return null;
     }
 
-    const maybeNewService = this.stateUpdate.services.servicesUpdates.get(destination);
+    const maybeUpdatedServiceInfo = this.stateUpdate.services.updated.get(destination);
 
-    if (maybeNewService !== undefined) {
-      return maybeNewService.action.account;
+    if (maybeUpdatedServiceInfo !== undefined) {
+      return maybeUpdatedServiceInfo.action.account;
     }
 
     const maybeService = this.state.getService(destination);
@@ -330,10 +327,10 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
   }
 
   updateServiceInfo(serviceId: ServiceId, newInfo: ServiceAccountInfo) {
-    const existingUpdate = this.stateUpdate.services.servicesUpdates.get(serviceId);
+    const existingUpdate = this.stateUpdate.services.updated.get(serviceId);
 
     if (existingUpdate?.action.kind === UpdateServiceKind.Create) {
-      this.stateUpdate.services.servicesUpdates.set(
+      this.stateUpdate.services.updated.set(
         serviceId,
         UpdateService.create({
           serviceInfo: newInfo,
@@ -343,10 +340,21 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
       return;
     }
 
-    this.stateUpdate.services.servicesUpdates.set(
+    this.stateUpdate.services.updated.set(
       serviceId,
       UpdateService.update({
         serviceInfo: newInfo,
+      }),
+    );
+  }
+
+  createService(serviceId: ServiceId, newInfo: ServiceAccountInfo, newLookupHistory: LookupHistoryItem) {
+    this.stateUpdate.services.created.push(serviceId);
+    this.stateUpdate.services.updated.set(
+      serviceId,
+      UpdateService.create({
+        serviceInfo: newInfo,
+        lookupHistory: newLookupHistory,
       }),
     );
   }

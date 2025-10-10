@@ -52,7 +52,6 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
   UpdatePreimage,
-  UpdateService,
   type ValidatorData,
 } from "@typeberry/state";
 import { assertNever, Compatibility, check, GpVersion, OK, Result } from "@typeberry/utils";
@@ -461,13 +460,7 @@ export class AccumulateExternalities
         }
         // add the new service with selected ID
         // https://graypaper.fluffylabs.dev/#/ab2cdbd/36be0336c003?v=0.7.2
-        this.updatedState.stateUpdate.services.servicesUpdates.set(
-          newServiceId,
-          UpdateService.create({
-            serviceInfo: newAccount,
-            lookupHistory: newLookupItem,
-          }),
-        );
+        this.updatedState.createService(newServiceId, newAccount, newLookupItem);
         // update the balance of current service
         // https://graypaper.fluffylabs.dev/#/ab2cdbd/36c20336c403?v=0.7.2
         this.updatedState.updateServiceInfo(this.currentServiceId, updatedCurrentAccount);
@@ -481,13 +474,8 @@ export class AccumulateExternalities
 
     // add the new service
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/36cb0236cb02?v=0.6.7
-    this.updatedState.stateUpdate.services.servicesUpdates.set(
-      newServiceId,
-      UpdateService.create({
-        serviceInfo: newAccount,
-        lookupHistory: newLookupItem,
-      }),
-    );
+    this.updatedState.createService(newServiceId, newAccount, newLookupItem);
+
     // update the balance of current service
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/36ec0336ee03?v=0.7.2
     this.updatedState.updateServiceInfo(this.currentServiceId, updatedCurrentAccount);
@@ -686,7 +674,7 @@ export class AccumulateExternalities
       }),
     );
     // and finally add an ejected service.
-    this.updatedState.stateUpdate.services.servicesRemoved.add(destination);
+    this.updatedState.stateUpdate.services.removed.push(destination);
 
     // take care of the code preimage and its lookup history
     // Safe, because we know the preimage is valid, and it's the code of the service, which is bounded by maximal service code size anyway (much smaller than 2**32 bytes).

@@ -517,6 +517,18 @@ export class Accumulate {
     return tryAsServiceGas(gasLimit);
   }
 
+  private hasDuplicatedServicesCreated(createdServices: ServiceId[]): boolean {
+    const createdServiceIds = new Set<ServiceId>();
+    for (const id of createdServices) {
+      if (createdServiceIds.has(id)) {
+        logger.log`Duplicated Service creation detected ${id}. Block is invalid.`;
+        return true;
+      }
+      createdServiceIds.add(id);
+    }
+    return false;
+  }
+
   async transition({ reports, slot, entropy }: AccumulateInput): Promise<Result<AccumulateResult, ACCUMULATION_ERROR>> {
     const statistics = new Map();
     const accumulateQueue = new AccumulateQueue(this.chainSpec, this.state);
@@ -569,6 +581,10 @@ export class Accumulate {
       ...stateUpdateRest
     } = state;
     assertEmpty(stateUpdateRest);
+
+    if (this.hasDuplicatedServicesCreated(services.created)) {
+      return Result.error(ACCUMULATION_ERROR);
+    }
 
     const accStateUpdate = this.getAccumulationStateUpdate(
       accumulated.toArray(),

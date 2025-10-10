@@ -57,7 +57,7 @@ describe("InMemoryState", () => {
     });
 
     const result = state.applyUpdate({
-      servicesUpdates: new Map([
+      updated: new Map([
         [
           serviceId,
           UpdateService.create({
@@ -96,7 +96,7 @@ describe("InMemoryState", () => {
 
     // First creation succeeds
     let result = state.applyUpdate({
-      servicesUpdates: new Map([
+      updated: new Map([
         [
           serviceId,
           UpdateService.create({
@@ -111,7 +111,7 @@ describe("InMemoryState", () => {
 
     // Second creation should fail
     result = state.applyUpdate({
-      servicesUpdates: new Map([
+      updated: new Map([
         [
           serviceId,
           UpdateService.create({
@@ -141,7 +141,7 @@ describe("InMemoryState", () => {
 
     // Create service first
     let result = state.applyUpdate({
-      servicesUpdates: new Map([
+      updated: new Map([
         [
           serviceId,
           UpdateService.create({
@@ -226,7 +226,7 @@ describe("InMemoryState", () => {
 
     // Create service first
     let result = state.applyUpdate({
-      servicesUpdates: new Map([
+      updated: new Map([
         [
           serviceId,
           UpdateService.create({
@@ -289,7 +289,7 @@ describe("InMemoryState", () => {
 
     // Create service first
     let result = state.applyUpdate({
-      servicesUpdates: new Map([
+      updated: new Map([
         [
           serviceId,
           UpdateService.create({
@@ -349,7 +349,7 @@ describe("InMemoryState", () => {
 
     // Create the service
     let result = state.applyUpdate({
-      servicesUpdates: new Map([
+      updated: new Map([
         [
           serviceId,
           UpdateService.create({
@@ -433,7 +433,7 @@ describe("InMemoryState", () => {
 
     // Create the service
     let result = state.applyUpdate({
-      servicesUpdates: new Map([
+      updated: new Map([
         [
           serviceId,
           UpdateService.create({
@@ -505,7 +505,7 @@ describe("InMemoryState", () => {
 
     // Create the service
     let result = state.applyUpdate({
-      servicesUpdates: new Map([
+      updated: new Map([
         [
           serviceId,
           UpdateService.create({
@@ -585,7 +585,7 @@ describe("InMemoryState", () => {
     });
 
     let result = state.applyUpdate({
-      servicesUpdates: new Map([
+      updated: new Map([
         [
           serviceId,
           UpdateService.create({

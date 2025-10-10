@@ -99,6 +99,7 @@ export enum UpdateServiceKind {
   /** Create a new `Service` instance. */
   Create = 1,
 }
+
 /**
  * Update service info or create a new one.
  */
@@ -188,9 +189,11 @@ export class UpdateStorage {
 
 export type ServicesUpdate = {
   /** Service ids to remove from state alongside all their data. */
-  servicesRemoved: Set<ServiceId>;
-  /** Services to update or create anew. */
-  servicesUpdates: Map<ServiceId, UpdateService>;
+  removed: ServiceId[];
+  /** Services newly created. */
+  created: ServiceId[];
+  /** Services to update. */
+  updated: Map<ServiceId, UpdateService>;
   /** Service preimages to update and potentially lookup history */
   preimages: Map<ServiceId, UpdatePreimage[]>;
   /** Service storage to update. */

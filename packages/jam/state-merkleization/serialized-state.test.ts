@@ -26,7 +26,7 @@ describe("SerializedState", () => {
     const initialState = InMemoryState.empty(tinyChainSpec);
     // add one service
     initialState.applyUpdate({
-      servicesUpdates: new Map([
+      updated: new Map([
         [
           tryAsServiceId(10),
           UpdateService.create({

@@ -256,13 +256,13 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
    * Modify the state and apply a single state update.
    */
   applyUpdate(update: Partial<State & ServicesUpdate>): Result<OK, UpdateError> {
-    const { servicesRemoved, servicesUpdates, preimages, storage, ...rest } = update;
+    const { removed, created: _, updated, preimages, storage, ...rest } = update;
     // just assign all other variables
     Object.assign(this, rest);
 
     // and update the services state
     let result: Result<OK, UpdateError>;
-    result = this.updateServices(servicesUpdates);
+    result = this.updateServices(updated);
     if (result.isError) {
       return result;
     }
@@ -274,12 +274,12 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     if (result.isError) {
       return result;
     }
-    this.removeServices(servicesRemoved);
+    this.removeServices(removed);
 
     return Result.ok(OK);
   }
 
-  private removeServices(servicesRemoved: Set<ServiceId> | undefined) {
+  private removeServices(servicesRemoved: ServiceId[] | undefined) {
     for (const serviceId of servicesRemoved ?? []) {
       check`${this.services.has(serviceId)} Attempting to remove non-existing service: ${serviceId}`;
       this.services.delete(serviceId);
