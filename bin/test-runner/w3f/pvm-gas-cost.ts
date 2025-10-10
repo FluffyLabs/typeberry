@@ -1,7 +1,7 @@
+import assert from "node:assert";
 import { fromJson } from "@typeberry/block-json";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Interpreter, tryAsGas } from "@typeberry/pvm-interpreter";
-import { deepEqual } from "@typeberry/utils";
 
 function isPlainObject(value: unknown): value is object {
   return Object.prototype.toString.call(value) === "[object Object]";
@@ -37,5 +37,5 @@ export async function runPvmGasCostTest(testContent: PvmGasCostTest) {
 
   const blockGasCosts = pvm.calculateBlockGasCost();
 
-  deepEqual(blockGasCosts, testContent.block_gas_costs);
+  assert.deepStrictEqual(blockGasCosts, testContent.block_gas_costs);
 }
