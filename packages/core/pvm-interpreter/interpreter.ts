@@ -324,4 +324,8 @@ export class Interpreter {
   getMemoryPage(pageNumber: number): null | Uint8Array {
     return this.memory.getPageDump(tryAsPageNumber(pageNumber));
   }
+
+  calculateBlockGasCost(): Record<string, number> {
+    return {};
+  }
 }
