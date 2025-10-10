@@ -101,11 +101,8 @@ function dumpOutput(
       if (type.encode === undefined) {
         throw new Error(`${type.name} does not support encoding to JAM codec.`);
       }
-      let encoded: BytesBlob;
-      if (typeof type.encode === "function") {
-        encoded = Encoder.encodeObject(type.encode(spec), data, spec);
-      } else {
-        encoded = Encoder.encodeObject(type.encode, data, spec);
+      const encoder = typeof type.encode === "function" ? type.encode(spec): type.encode;
+      const encoded = Encoder.encodeObject(encoder, data, spec);
       }
       dump(`${encoded}`);
       return;
