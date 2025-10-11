@@ -3,7 +3,7 @@ import "json-bigint-patch";
 import { fail } from "node:assert";
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import test from "node:test";
+import test, { type TestContext } from "node:test";
 import util from "node:util";
 import { initWasm } from "@typeberry/crypto";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
@@ -15,7 +15,7 @@ export const logger = Logger.new(import.meta.filename, "test-runner");
 export function runner<T>(
   name: string,
   fromJson: FromJson<T>,
-  run: (test: T, path: string) => Promise<void>,
+  run: (test: T, path: string, t: TestContext) => Promise<void>,
 ): Runner<unknown> {
   return { name, fromJson, run } as Runner<unknown>;
 }
@@ -23,7 +23,7 @@ export function runner<T>(
 export type Runner<T> = {
   name: string;
   fromJson: FromJson<T>;
-  run: (test: T, path: string) => Promise<void>;
+  run: (test: T, path: string, t: TestContext) => Promise<void>;
 };
 
 export async function main(
@@ -126,7 +126,7 @@ type TestAndRunner = {
   shouldSkip: boolean;
   runner: string;
   file: string;
-  test: () => Promise<void>;
+  test: (ctx: TestContext) => Promise<void>;
 };
 
 function prepareTest(runners: Runner<unknown>[], testContent: unknown, file: string, path: string): TestAndRunner {
@@ -147,10 +147,10 @@ function prepareTest(runners: Runner<unknown>[], testContent: unknown, file: str
         shouldSkip: false,
         runner: name,
         file,
-        test: () => {
+        test: (ctx) => {
           logger.log`[${name}] running test from ${file}`;
           logger.trace` ${util.inspect(parsedTest)}`;
-          return run(parsedTest, path);
+          return run(parsedTest, path, ctx);
         },
       };
     } catch (e) {

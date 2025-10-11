@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
+import type { TestContext } from "node:test";
 import { Block, emptyBlock, Header } from "@typeberry/block";
 import { blockFromJson, headerFromJson } from "@typeberry/block-json";
 import { codec, Decoder, Encoder } from "@typeberry/codec";
@@ -98,7 +99,7 @@ const jamConformance070V0Spec = new ChainSpec({
   maxLookupAnchorAge: tryAsU32(14_400),
 });
 
-export async function runStateTransition(testContent: StateTransition, testPath: string) {
+export async function runStateTransition(testContent: StateTransition, testPath: string, t: TestContext) {
   const blake2b = await Blake2b.createHasher();
   // a bit of a hack, but the new value for `maxLookupAnchorAge` was proposed with V1
   // version of the fuzzer, yet these tests were still depending on the older value.
@@ -158,6 +159,12 @@ export async function runStateTransition(testContent: StateTransition, testPath:
   }
 
   preState.backend.applyUpdate(serializeStateUpdate(spec, blake2b, stfResult.ok));
+
+  // some conformance test vectors have an empty state, we run them, yet do not perform any assertions.
+  if (testContent.post_state.keyvals.length === 0) {
+    t.skip(`Successfuly run a test vector with empty post state!. Please verify: ${testPath}`);
+    return;
+  }
 
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
   const root = preState.backend.getRootHash(blake2b);
