@@ -561,14 +561,14 @@ export class AccumulateExternalities
     newId: ServiceId,
     // Current id of privileged service (updated state)
     currentId: ServiceId,
-    // Original id of privileged service (at the start of the block)
-    stateId: ServiceId,
     {
       // is current service id a manager (can update anything)
       isManager,
       // is current service attempting to update itself (privileged are owned)
       isSelf,
-    }: { isManager: boolean; isSelf: boolean },
+      // is the service id already changed in this block
+      isAlreadyChanged,
+    }: { isManager: boolean; isSelf: boolean; isAlreadyChanged: boolean },
   ) {
     if (isManager) {
       return newId;
@@ -577,7 +577,7 @@ export class AccumulateExternalities
     // current service can update itself, only if it was a privileged
     // service at the start of the block. I.e. owned privileges cannot
     // be transfered multiple times in a block.
-    if (isSelf && stateId === currentId) {
+    if (isSelf && !isAlreadyChanged) {
       return newId;
     }
 
@@ -630,20 +630,23 @@ export class AccumulateExternalities
       );
     }
 
-    const newDelegator = this.updatePrivilegedServiceId(delegator, current.delegator, original.delegator, {
+    const newDelegator = this.updatePrivilegedServiceId(delegator, current.delegator, {
       isManager,
       isSelf: this.currentServiceId === current.delegator,
+      isAlreadyChanged: current.delegator !== original.delegator,
     });
 
-    const newRegistrar = this.updatePrivilegedServiceId(registrar, current.registrar, original.registrar, {
+    const newRegistrar = this.updatePrivilegedServiceId(registrar, current.registrar, {
       isManager,
       isSelf: this.currentServiceId === current.registrar,
+      isAlreadyChanged: current.registrar !== original.registrar,
     });
 
     const newAssigners = current.assigners.map((currentAssigner, index) =>
-      this.updatePrivilegedServiceId(authorizers[index], currentAssigner, original.assigners[index], {
+      this.updatePrivilegedServiceId(authorizers[index], currentAssigner, {
         isManager,
         isSelf: this.currentServiceId === currentAssigner,
+        isAlreadyChanged: currentAssigner !== original.assigners[index],
       }),
     );
 
