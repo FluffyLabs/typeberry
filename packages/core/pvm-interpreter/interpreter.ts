@@ -324,4 +324,29 @@ export class Interpreter {
   getMemoryPage(pageNumber: number): null | Uint8Array {
     return this.memory.getPageDump(tryAsPageNumber(pageNumber));
   }
+
+  calculateBlockGasCost(): Record<string, number> {
+    const codeLength = this.code.length;
+    const blocks: Record<string, number> = {};
+    let currentBlock = "0";
+    let gasCost = 0;
+    for (let index = 0; index < codeLength; index++) {
+      if (!this.mask.isInstruction(index)) {
+        continue;
+      }
+
+      const instruction = this.code[index];
+      if (this.basicBlocks.isBeginningOfBasicBlock(index)) {
+        blocks[currentBlock] = gasCost;
+        currentBlock = index.toString();
+        gasCost = 0;
+      }
+
+      gasCost += instructionGasMap[instruction];
+    }
+
+    blocks[currentBlock] = gasCost;
+
+    return blocks;
+  }
 }
