@@ -16,7 +16,7 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
 } from "./service.js";
-import { UpdatePreimage, UpdateServiceKind, UpdateStorage } from "./state-update.js";
+import { UpdatePreimage, UpdateService, UpdateStorage } from "./state-update.js";
 
 let blake2b: Blake2b;
 
@@ -57,16 +57,15 @@ describe("InMemoryState", () => {
     });
 
     const result = state.applyUpdate({
-      servicesUpdates: [
-        {
+      updated: new Map([
+        [
           serviceId,
-          action: {
-            kind: UpdateServiceKind.Create,
-            account: accountInfo,
+          UpdateService.create({
+            serviceInfo: accountInfo,
             lookupHistory: null,
-          },
-        },
-      ],
+          }),
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
@@ -97,32 +96,30 @@ describe("InMemoryState", () => {
 
     // First creation succeeds
     let result = state.applyUpdate({
-      servicesUpdates: [
-        {
+      updated: new Map([
+        [
           serviceId,
-          action: {
-            kind: UpdateServiceKind.Create,
-            account: accountInfo,
+          UpdateService.create({
+            serviceInfo: accountInfo,
             lookupHistory: null,
-          },
-        },
-      ],
+          }),
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
 
     // Second creation should fail
     result = state.applyUpdate({
-      servicesUpdates: [
-        {
+      updated: new Map([
+        [
           serviceId,
-          action: {
-            kind: UpdateServiceKind.Create,
-            account: accountInfo,
+          UpdateService.create({
+            serviceInfo: accountInfo,
             lookupHistory: null,
-          },
-        },
-      ],
+          }),
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.error(UpdateError.DuplicateService, "1 already exists!"));
@@ -144,16 +141,15 @@ describe("InMemoryState", () => {
 
     // Create service first
     let result = state.applyUpdate({
-      servicesUpdates: [
-        {
+      updated: new Map([
+        [
           serviceId,
-          action: {
-            kind: UpdateServiceKind.Create,
-            account: accountInfo,
+          UpdateService.create({
+            serviceInfo: accountInfo,
             lookupHistory: null,
-          },
-        },
-      ],
+          }),
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
@@ -164,12 +160,16 @@ describe("InMemoryState", () => {
     const expectedItem = StorageItem.create({ key, value });
 
     result = state.applyUpdate({
-      storage: [
-        UpdateStorage.set({
+      storage: new Map([
+        [
           serviceId,
-          storage: item,
-        }),
-      ],
+          [
+            UpdateStorage.set({
+              storage: item,
+            }),
+          ],
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
@@ -192,12 +192,16 @@ describe("InMemoryState", () => {
     const item = StorageItem.create({ key, value });
 
     const result = state.applyUpdate({
-      storage: [
-        UpdateStorage.set({
+      storage: new Map([
+        [
           serviceId,
-          storage: item,
-        }),
-      ],
+          [
+            UpdateStorage.set({
+              storage: item,
+            }),
+          ],
+        ],
+      ]),
     });
 
     assert.deepEqual(
@@ -222,16 +226,15 @@ describe("InMemoryState", () => {
 
     // Create service first
     let result = state.applyUpdate({
-      servicesUpdates: [
-        {
+      updated: new Map([
+        [
           serviceId,
-          action: {
-            kind: UpdateServiceKind.Create,
-            account: accountInfo,
+          UpdateService.create({
+            serviceInfo: accountInfo,
             lookupHistory: null,
-          },
-        },
-      ],
+          }),
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
@@ -242,13 +245,17 @@ describe("InMemoryState", () => {
     const slot = tryAsTimeSlot(5);
 
     result = state.applyUpdate({
-      preimages: [
-        UpdatePreimage.provide({
+      preimages: new Map([
+        [
           serviceId,
-          preimage,
-          slot,
-        }),
-      ],
+          [
+            UpdatePreimage.provide({
+              preimage,
+              slot,
+            }),
+          ],
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
@@ -282,16 +289,15 @@ describe("InMemoryState", () => {
 
     // Create service first
     let result = state.applyUpdate({
-      servicesUpdates: [
-        {
+      updated: new Map([
+        [
           serviceId,
-          action: {
-            kind: UpdateServiceKind.Create,
-            account: accountInfo,
+          UpdateService.create({
+            serviceInfo: accountInfo,
             lookupHistory: null,
-          },
-        },
-      ],
+          }),
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
@@ -301,13 +307,17 @@ describe("InMemoryState", () => {
     const preimage = PreimageItem.create({ hash, blob });
 
     result = state.applyUpdate({
-      preimages: [
-        UpdatePreimage.provide({
+      preimages: new Map([
+        [
           serviceId,
-          preimage,
-          slot: null,
-        }),
-      ],
+          [
+            UpdatePreimage.provide({
+              preimage,
+              slot: null,
+            }),
+          ],
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
@@ -339,16 +349,15 @@ describe("InMemoryState", () => {
 
     // Create the service
     let result = state.applyUpdate({
-      servicesUpdates: [
-        {
+      updated: new Map([
+        [
           serviceId,
-          action: {
-            kind: UpdateServiceKind.Create,
-            account: accountInfo,
+          UpdateService.create({
+            serviceInfo: accountInfo,
             lookupHistory: null,
-          },
-        },
-      ],
+          }),
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
@@ -360,13 +369,17 @@ describe("InMemoryState", () => {
     const slot1 = tryAsTimeSlot(1);
 
     result = state.applyUpdate({
-      preimages: [
-        UpdatePreimage.provide({
+      preimages: new Map([
+        [
           serviceId,
-          preimage,
-          slot: slot1,
-        }),
-      ],
+          [
+            UpdatePreimage.provide({
+              preimage,
+              slot: slot1,
+            }),
+          ],
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
@@ -376,12 +389,16 @@ describe("InMemoryState", () => {
     const newItem = new LookupHistoryItem(hash, tryAsU32(blob.length), tryAsLookupHistorySlots([slot2]));
 
     result = state.applyUpdate({
-      preimages: [
-        UpdatePreimage.updateOrAdd({
+      preimages: new Map([
+        [
           serviceId,
-          lookupHistory: newItem,
-        }),
-      ],
+          [
+            UpdatePreimage.updateOrAdd({
+              lookupHistory: newItem,
+            }),
+          ],
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
@@ -416,16 +433,15 @@ describe("InMemoryState", () => {
 
     // Create the service
     let result = state.applyUpdate({
-      servicesUpdates: [
-        {
+      updated: new Map([
+        [
           serviceId,
-          action: {
-            kind: UpdateServiceKind.Create,
-            account: accountInfo,
+          UpdateService.create({
+            serviceInfo: accountInfo,
             lookupHistory: null,
-          },
-        },
-      ],
+          }),
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
@@ -437,26 +453,34 @@ describe("InMemoryState", () => {
 
     // First application should succeed
     result = state.applyUpdate({
-      preimages: [
-        UpdatePreimage.provide({
+      preimages: new Map([
+        [
           serviceId,
-          preimage,
-          slot,
-        }),
-      ],
+          [
+            UpdatePreimage.provide({
+              preimage,
+              slot,
+            }),
+          ],
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
 
     // Second application should fail
     result = state.applyUpdate({
-      preimages: [
-        UpdatePreimage.provide({
+      preimages: new Map([
+        [
           serviceId,
-          preimage,
-          slot,
-        }),
-      ],
+          [
+            UpdatePreimage.provide({
+              preimage,
+              slot,
+            }),
+          ],
+        ],
+      ]),
     });
 
     assert.deepEqual(
@@ -481,16 +505,15 @@ describe("InMemoryState", () => {
 
     // Create the service
     let result = state.applyUpdate({
-      servicesUpdates: [
-        {
+      updated: new Map([
+        [
           serviceId,
-          action: {
-            kind: UpdateServiceKind.Create,
-            account: accountInfo,
+          UpdateService.create({
+            serviceInfo: accountInfo,
             lookupHistory: null,
-          },
-        },
-      ],
+          }),
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
@@ -503,13 +526,17 @@ describe("InMemoryState", () => {
     const slot = tryAsTimeSlot(3);
 
     result = state.applyUpdate({
-      preimages: [
-        UpdatePreimage.provide({
+      preimages: new Map([
+        [
           serviceId,
-          preimage,
-          slot,
-        }),
-      ],
+          [
+            UpdatePreimage.provide({
+              preimage,
+              slot,
+            }),
+          ],
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
@@ -524,13 +551,17 @@ describe("InMemoryState", () => {
 
     // Now remove the preimage
     result = state.applyUpdate({
-      preimages: [
-        UpdatePreimage.remove({
+      preimages: new Map([
+        [
           serviceId,
-          hash,
-          length,
-        }),
-      ],
+          [
+            UpdatePreimage.remove({
+              hash,
+              length,
+            }),
+          ],
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));
@@ -554,16 +585,15 @@ describe("InMemoryState", () => {
     });
 
     let result = state.applyUpdate({
-      servicesUpdates: [
-        {
+      updated: new Map([
+        [
           serviceId,
-          action: {
-            kind: UpdateServiceKind.Create,
-            account: accountInfo,
+          UpdateService.create({
+            serviceInfo: accountInfo,
             lookupHistory: null,
-          },
-        },
-      ],
+          }),
+        ],
+      ]),
     });
     assert.deepEqual(result, Result.ok(OK));
 
@@ -579,17 +609,20 @@ describe("InMemoryState", () => {
     const secondItem = new LookupHistoryItem(hash, length2, tryAsLookupHistorySlots([slot2]));
 
     result = state.applyUpdate({
-      preimages: [
-        UpdatePreimage.provide({
+      preimages: new Map([
+        [
           serviceId,
-          preimage,
-          slot: slot1,
-        }),
-        UpdatePreimage.updateOrAdd({
-          serviceId,
-          lookupHistory: secondItem,
-        }),
-      ],
+          [
+            UpdatePreimage.provide({
+              preimage,
+              slot: slot1,
+            }),
+            UpdatePreimage.updateOrAdd({
+              lookupHistory: secondItem,
+            }),
+          ],
+        ],
+      ]),
     });
 
     const service = state.services.get(serviceId);
@@ -602,13 +635,17 @@ describe("InMemoryState", () => {
 
     // Now remove only length1
     result = state.applyUpdate({
-      preimages: [
-        UpdatePreimage.remove({
+      preimages: new Map([
+        [
           serviceId,
-          hash,
-          length: length1,
-        }),
-      ],
+          [
+            UpdatePreimage.remove({
+              hash,
+              length: length1,
+            }),
+          ],
+        ],
+      ]),
     });
 
     assert.deepEqual(result, Result.ok(OK));

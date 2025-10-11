@@ -168,6 +168,6 @@ function testOutputToResult(testOutput: Output): ReturnType<Preimages["integrate
   return testOutput.err !== undefined
     ? Result.error(testOutput.err)
     : Result.ok({
-        preimages: [],
+        preimages: new Map(),
       });
 }

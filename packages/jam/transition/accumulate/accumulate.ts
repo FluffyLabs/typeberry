@@ -31,8 +31,6 @@ import {
   ServiceAccountInfo,
   type ServicesUpdate,
   tryAsPerCore,
-  type UpdateService,
-  UpdateServiceKind,
 } from "@typeberry/state";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { assertEmpty, Compatibility, GpVersion, Result } from "@typeberry/utils";
@@ -519,17 +517,14 @@ export class Accumulate {
     return tryAsServiceGas(gasLimit);
   }
 
-  private hasDuplicatedServicesCreated(updateServices: UpdateService[]): boolean {
+  private hasDuplicatedServicesCreated(createdServices: ServiceId[]): boolean {
     const createdServiceIds = new Set<ServiceId>();
-    for (const update of updateServices) {
-      if (update.action.kind === UpdateServiceKind.Create) {
-        const serviceId = update.serviceId;
-        if (createdServiceIds.has(serviceId)) {
-          logger.log`Duplicated Service creation detected ${serviceId}. Block is invalid.`;
-          return true;
-        }
-        createdServiceIds.add(serviceId);
+    for (const id of createdServices) {
+      if (createdServiceIds.has(id)) {
+        logger.log`Duplicated Service creation detected ${id}. Block is invalid.`;
+        return true;
       }
+      createdServiceIds.add(id);
     }
     return false;
   }
@@ -587,7 +582,7 @@ export class Accumulate {
     } = state;
     assertEmpty(stateUpdateRest);
 
-    if (this.hasDuplicatedServicesCreated(services.servicesUpdates)) {
+    if (this.hasDuplicatedServicesCreated(services.created)) {
       return Result.error(ACCUMULATION_ERROR);
     }
 

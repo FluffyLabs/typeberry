@@ -16,7 +16,6 @@ import {
   type UpdateStorage,
   UpdateStorageKind,
 } from "@typeberry/state";
-import { assertNever } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
 import { type StateCodec, serialize } from "./serialize.js";
 
@@ -44,89 +43,104 @@ export function* serializeStateUpdate(
   const encode = <T>(codec: Encode<T>, val: T) => Encoder.encodeObject(codec, val, spec);
 
   // then let's proceed with service updates
-  yield* serializeServiceUpdates(update.servicesUpdates, encode, blake2b);
+  yield* serializeServiceUpdates(update.updated, encode, blake2b);
   yield* serializePreimages(update.preimages, encode, blake2b);
   yield* serializeStorage(update.storage, blake2b);
-  yield* serializeRemovedServices(update.servicesRemoved);
+  yield* serializeRemovedServices(update.removed);
 }
 
 function* serializeRemovedServices(servicesRemoved: ServiceId[] | undefined): Generator<StateEntryUpdate> {
-  for (const serviceId of servicesRemoved ?? []) {
+  if (servicesRemoved === undefined) {
+    return;
+  }
+  for (const serviceId of servicesRemoved) {
     // TODO [ToDr] what about all data associated with a service?
     const codec = serialize.serviceData(serviceId);
     yield [StateEntryUpdateAction.Remove, codec.key, EMPTY_BLOB];
   }
 }
 
-function* serializeStorage(storage: UpdateStorage[] | undefined, blake2b: Blake2b): Generator<StateEntryUpdate> {
-  for (const { action, serviceId } of storage ?? []) {
-    switch (action.kind) {
-      case UpdateStorageKind.Set: {
-        const key = action.storage.key;
-        const codec = serialize.serviceStorage(blake2b, serviceId, key);
-        yield [StateEntryUpdateAction.Insert, codec.key, action.storage.value];
-        break;
+function* serializeStorage(
+  storageUpdates: Map<ServiceId, UpdateStorage[]> | undefined,
+  blake2b: Blake2b,
+): Generator<StateEntryUpdate> {
+  if (storageUpdates === undefined) {
+    return;
+  }
+  for (const [serviceId, updates] of storageUpdates.entries()) {
+    for (const { action } of updates) {
+      switch (action.kind) {
+        case UpdateStorageKind.Set: {
+          const key = action.storage.key;
+          const codec = serialize.serviceStorage(blake2b, serviceId, key);
+          yield [StateEntryUpdateAction.Insert, codec.key, action.storage.value];
+          break;
+        }
+        case UpdateStorageKind.Remove: {
+          const key = action.key;
+          const codec = serialize.serviceStorage(blake2b, serviceId, key);
+          yield [StateEntryUpdateAction.Remove, codec.key, EMPTY_BLOB];
+          break;
+        }
       }
-      case UpdateStorageKind.Remove: {
-        const key = action.key;
-        const codec = serialize.serviceStorage(blake2b, serviceId, key);
-        yield [StateEntryUpdateAction.Remove, codec.key, EMPTY_BLOB];
-        break;
-      }
-      default:
-        assertNever(action);
     }
   }
 }
 
 function* serializePreimages(
-  preimages: UpdatePreimage[] | undefined,
+  preimagesUpdates: Map<ServiceId, UpdatePreimage[]> | undefined,
   encode: EncodeFun,
   blake2b: Blake2b,
 ): Generator<StateEntryUpdate> {
-  for (const { action, serviceId } of preimages ?? []) {
-    switch (action.kind) {
-      case UpdatePreimageKind.Provide: {
-        const { hash, blob } = action.preimage;
-        const codec = serialize.servicePreimages(blake2b, serviceId, hash);
-        yield [StateEntryUpdateAction.Insert, codec.key, blob];
+  if (preimagesUpdates === undefined) {
+    return;
+  }
+  for (const [serviceId, updates] of preimagesUpdates.entries()) {
+    for (const { action } of updates) {
+      switch (action.kind) {
+        case UpdatePreimageKind.Provide: {
+          const { hash, blob } = action.preimage;
+          const codec = serialize.servicePreimages(blake2b, serviceId, hash);
+          yield [StateEntryUpdateAction.Insert, codec.key, blob];
 
-        if (action.slot !== null) {
-          const codec2 = serialize.serviceLookupHistory(blake2b, serviceId, hash, tryAsU32(blob.length));
-          yield [
-            StateEntryUpdateAction.Insert,
-            codec2.key,
-            encode(codec2.Codec, tryAsLookupHistorySlots([action.slot])),
-          ];
+          if (action.slot !== null) {
+            const codec2 = serialize.serviceLookupHistory(blake2b, serviceId, hash, tryAsU32(blob.length));
+            yield [
+              StateEntryUpdateAction.Insert,
+              codec2.key,
+              encode(codec2.Codec, tryAsLookupHistorySlots([action.slot])),
+            ];
+          }
+          break;
         }
-        break;
-      }
-      case UpdatePreimageKind.UpdateOrAdd: {
-        const { hash, length, slots } = action.item;
-        const codec = serialize.serviceLookupHistory(blake2b, serviceId, hash, length);
-        yield [StateEntryUpdateAction.Insert, codec.key, encode(codec.Codec, slots)];
-        break;
-      }
-      case UpdatePreimageKind.Remove: {
-        const { hash, length } = action;
-        const codec = serialize.servicePreimages(blake2b, serviceId, hash);
-        yield [StateEntryUpdateAction.Remove, codec.key, EMPTY_BLOB];
+        case UpdatePreimageKind.UpdateOrAdd: {
+          const { hash, length, slots } = action.item;
+          const codec = serialize.serviceLookupHistory(blake2b, serviceId, hash, length);
+          yield [StateEntryUpdateAction.Insert, codec.key, encode(codec.Codec, slots)];
+          break;
+        }
+        case UpdatePreimageKind.Remove: {
+          const { hash, length } = action;
+          const codec = serialize.servicePreimages(blake2b, serviceId, hash);
+          yield [StateEntryUpdateAction.Remove, codec.key, EMPTY_BLOB];
 
-        const codec2 = serialize.serviceLookupHistory(blake2b, serviceId, hash, length);
-        yield [StateEntryUpdateAction.Remove, codec2.key, EMPTY_BLOB];
-        break;
+          const codec2 = serialize.serviceLookupHistory(blake2b, serviceId, hash, length);
+          yield [StateEntryUpdateAction.Remove, codec2.key, EMPTY_BLOB];
+          break;
+        }
       }
-      default:
-        assertNever(action);
     }
   }
 }
 function* serializeServiceUpdates(
-  servicesUpdates: UpdateService[] | undefined,
+  servicesUpdates: Map<ServiceId, UpdateService> | undefined,
   encode: EncodeFun,
   blake2b: Blake2b,
 ): Generator<StateEntryUpdate> {
-  for (const { action, serviceId } of servicesUpdates ?? []) {
+  if (servicesUpdates === undefined) {
+    return;
+  }
+  for (const [serviceId, { action }] of servicesUpdates.entries()) {
     // new service being created or updated
     const codec = serialize.serviceData(serviceId);
     yield [StateEntryUpdateAction.Insert, codec.key, encode(codec.Codec, action.account)];
