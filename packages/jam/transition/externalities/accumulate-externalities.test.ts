@@ -64,6 +64,10 @@ function partiallyUpdatedState() {
   return new PartiallyUpdatedState(testState());
 }
 
+const INVALID_SERVICE_ID_ERROR = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+  ? "Either manager or delegator or registrar is not a valid service id."
+  : "Either manager or delegator is not a valid service id.";
+
 describe("PartialState.checkPreimageStatus", () => {
   it("should check preimage status from state", () => {
     const state = partiallyUpdatedState();
@@ -1478,10 +1482,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
 
     // then
-    assert.deepStrictEqual(
-      result,
-      Result.error(UpdatePrivilegesError.InvalidServiceId, "Either manager or delegator is not valid service id."),
-    );
+    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.InvalidServiceId, INVALID_SERVICE_ID_ERROR));
     assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
   });
 
@@ -1509,10 +1510,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
 
     // then
-    assert.deepStrictEqual(
-      result,
-      Result.error(UpdatePrivilegesError.InvalidServiceId, "Either manager or delegator is not valid service id."),
-    );
+    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.InvalidServiceId, INVALID_SERVICE_ID_ERROR));
     assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
   });
 
@@ -1540,10 +1538,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
 
     // then
-    assert.deepStrictEqual(
-      result,
-      Result.error(UpdatePrivilegesError.InvalidServiceId, "Register manager is not valid service id."),
-    );
+    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.InvalidServiceId, INVALID_SERVICE_ID_ERROR));
     assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
   });
 });

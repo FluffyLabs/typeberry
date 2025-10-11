@@ -557,16 +557,27 @@ export class AccumulateExternalities
   }
 
   private updatePrivilegedServiceId(
+    // The id that privileged service wants to be updated to
     newId: ServiceId,
+    // Current id of privileged service (updated state)
     currentId: ServiceId,
-    previousId: ServiceId,
-    { isManager, isSelf }: { isManager: boolean; isSelf: boolean },
+    // Original id of privileged service (at the start of the block)
+    stateId: ServiceId,
+    {
+      // is current service id a manager (can update anything)
+      isManager,
+      // is current service attempting to update itself (privileged are owned)
+      isSelf,
+    }: { isManager: boolean; isSelf: boolean },
   ) {
     if (isManager) {
       return newId;
     }
 
-    if (isSelf && previousId === currentId) {
+    // current service can update itself, only if it was a privileged
+    // service at the start of the block. I.e. owned privileges cannot
+    // be transfered multiple times in a block.
+    if (isSelf && stateId === currentId) {
       return newId;
     }
 
@@ -581,64 +592,22 @@ export class AccumulateExternalities
     autoAccumulate: [ServiceId, ServiceGas][],
   ): Result<OK, UpdatePrivilegesError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
-    const {
-      manager: currentManager,
-      delegator: currentDelegator,
-      registrar: currentRegistrar,
-      assigners: currentAssigners,
-    } = this.updatedState.getPrivilegedServices();
+    const current = this.updatedState.getPrivilegedServices();
 
-    const {
-      delegator: unmodifiedDelegator,
-      registrar: unmodifiedRegistrar,
-      assigners: unmodifiedAssigners,
-    } = this.updatedState.state.privilegedServices;
+    const isManager = current.manager === this.currentServiceId;
 
-    const isManager = currentManager === this.currentServiceId;
-    if (!isManager && Compatibility.isLessThan(GpVersion.V0_7_1)) {
-      return Result.error(UpdatePrivilegesError.UnprivilegedService);
-    }
+    if (Compatibility.isLessThan(GpVersion.V0_7_1)) {
+      if (!isManager) {
+        return Result.error(UpdatePrivilegesError.UnprivilegedService);
+      }
 
-    if (manager === null || delegator === null) {
-      return Result.error(
-        UpdatePrivilegesError.InvalidServiceId,
-        "Either manager or delegator is not valid service id.",
-      );
-    }
+      if (manager === null || delegator === null) {
+        return Result.error(
+          UpdatePrivilegesError.InvalidServiceId,
+          "Either manager or delegator is not a valid service id.",
+        );
+      }
 
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && registrar === null) {
-      return Result.error(UpdatePrivilegesError.InvalidServiceId, "Register manager is not valid service id.");
-    }
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      const newDelegator = this.updatePrivilegedServiceId(delegator, currentDelegator, unmodifiedDelegator, {
-        isManager,
-        isSelf: this.currentServiceId === currentDelegator,
-      });
-
-      const newRegistrar = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-        ? this.updatePrivilegedServiceId(registrar ?? tryAsServiceId(0), currentRegistrar, unmodifiedRegistrar, {
-            isManager,
-            isSelf: this.currentServiceId === currentRegistrar,
-          })
-        : tryAsServiceId(0);
-
-      const newAssigners = currentAssigners.map((currentAssigner, index) =>
-        this.updatePrivilegedServiceId(authorizers[index], currentAssigner, unmodifiedAssigners[index], {
-          isManager,
-          isSelf: this.currentServiceId === currentAssigner,
-        }),
-      );
-
-      this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
-        manager: currentManager === this.currentServiceId ? manager : currentManager,
-        assigners: tryAsPerCore(newAssigners, this.chainSpec),
-        delegator: newDelegator,
-        registrar: newRegistrar,
-        autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) =>
-          AutoAccumulate.create({ service, gasLimit }),
-        ),
-      });
-    } else {
       this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
         manager,
         assigners: authorizers,
@@ -648,7 +617,51 @@ export class AccumulateExternalities
           AutoAccumulate.create({ service, gasLimit }),
         ),
       });
+
+      return Result.ok(OK);
     }
+
+    const original = this.updatedState.state.privilegedServices;
+
+    if (manager === null || delegator === null || registrar === null) {
+      return Result.error(
+        UpdatePrivilegesError.InvalidServiceId,
+        "Either manager or delegator or registrar is not a valid service id.",
+      );
+    }
+
+    const newDelegator = this.updatePrivilegedServiceId(delegator, current.delegator, original.delegator, {
+      isManager,
+      isSelf: this.currentServiceId === current.delegator,
+    });
+
+    const newRegistrar = this.updatePrivilegedServiceId(registrar, current.registrar, original.registrar, {
+      isManager,
+      isSelf: this.currentServiceId === current.registrar,
+    });
+
+    const newAssigners = current.assigners.map((currentAssigner, index) =>
+      this.updatePrivilegedServiceId(authorizers[index], currentAssigner, original.assigners[index], {
+        isManager,
+        isSelf: this.currentServiceId === currentAssigner,
+      }),
+    );
+
+    const newManager = isManager ? manager : current.manager;
+
+    const newAutoAccumulateServices = isManager
+      ? autoAccumulate.map(([service, gasLimit]) => AutoAccumulate.create({ service, gasLimit }))
+      : current.autoAccumulateServices;
+
+    // finally update the privileges
+    this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
+      manager: newManager,
+      assigners: tryAsPerCore(newAssigners, this.chainSpec),
+      delegator: newDelegator,
+      registrar: newRegistrar,
+      autoAccumulateServices: newAutoAccumulateServices,
+    });
+
     return Result.ok(OK);
   }
 
