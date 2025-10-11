@@ -116,10 +116,15 @@ export async function main(
 }
 
 async function scanDir(relPath: string, dir: string, filePattern: string): Promise<string[]> {
-  const files = await fs.readdir(`${relPath}/${dir}`, {
-    recursive: true,
-  });
-  return files.filter((f) => f.endsWith(filePattern)).map((f) => `${dir}/${f}`);
+  try {
+    const files = await fs.readdir(`${relPath}/${dir}`, {
+      recursive: true,
+    });
+    return files.filter((f) => f.endsWith(filePattern)).map((f) => `${dir}/${f}`);
+  } catch (e) {
+    logger.error`Unable to find test vectors in ${relPath}/${dir}: ${e}`;
+    return [];
+  }
 }
 
 type TestAndRunner = {
