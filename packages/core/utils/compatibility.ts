@@ -1,7 +1,7 @@
 export enum GpVersion {
   V0_6_7 = "0.6.7",
   V0_7_0 = "0.7.0",
-  V0_7_1 = "0.7.1-preview",
+  V0_7_1 = "0.7.1",
   V0_7_2 = "0.7.2-preview",
 }
 
@@ -11,13 +11,13 @@ export enum TestSuite {
 }
 
 export const DEFAULT_SUITE = TestSuite.W3F_DAVXY;
-
-const ALL_VERSIONS_IN_ORDER = [GpVersion.V0_6_7, GpVersion.V0_7_0, GpVersion.V0_7_1, GpVersion.V0_7_2];
+export const DEFAULT_VERSION = GpVersion.V0_7_1;
 
 const env = typeof process === "undefined" ? {} : process.env;
-export const DEFAULT_VERSION = GpVersion.V0_7_0;
 export let CURRENT_VERSION = parseCurrentVersion(env.GP_VERSION) ?? DEFAULT_VERSION;
 export let CURRENT_SUITE = parseCurrentSuite(env.TEST_SUITE) ?? DEFAULT_SUITE;
+
+const ALL_VERSIONS_IN_ORDER = [GpVersion.V0_6_7, GpVersion.V0_7_0, GpVersion.V0_7_1, GpVersion.V0_7_2];
 
 function parseCurrentVersion(env?: string): GpVersion | undefined {
   if (env === undefined) {
