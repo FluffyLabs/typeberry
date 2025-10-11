@@ -1,4 +1,4 @@
-name: VECTORS - conformance-0.7.1
+name: VECTORS - conformance-0.7.1 (running 0.7.0 for now!)
 
 on:
   workflow_dispatch:
@@ -39,7 +39,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/test-runner -- jam-conformance-071.ts
+        # TODO [ToDr] Note, currently there is no 0.7.1 reports so we the older ones in newer version.
+      - run: npm start -w @typeberry/test-runner -- jam-conformance-070.ts
       - name: Display results
         if: always()
         run: cat ./dist/jam-conformance-071.txt
