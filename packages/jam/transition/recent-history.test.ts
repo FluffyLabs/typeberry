@@ -5,7 +5,7 @@ import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, keccak } from "@typeberry/hash";
 import type { MmrHasher, MmrPeaks } from "@typeberry/mmr";
-import { BlockState, type BlocksState, MAX_RECENT_HISTORY, RecentBlocks, RecentBlocksHistory } from "@typeberry/state";
+import { BlockState, type BlocksState, MAX_RECENT_HISTORY, RecentBlocks } from "@typeberry/state";
 import { asOpaqueType, check } from "@typeberry/utils";
 import {
   RecentHistory,
@@ -26,14 +26,12 @@ const asRecentHistory = (arr: BlocksState, accumulationLog?: MmrPeaks<KeccakHash
   check`${arr.length <= MAX_RECENT_HISTORY} Invalid size of the state input.`;
 
   return {
-    recentBlocks: RecentBlocksHistory.create(
-      RecentBlocks.create({
-        blocks: arr as BlocksState,
-        accumulationLog: accumulationLog ?? {
-          peaks: [],
-        },
-      }),
-    ),
+    recentBlocks: RecentBlocks.create({
+      blocks: arr,
+      accumulationLog: accumulationLog ?? {
+        peaks: [],
+      },
+    }),
   };
 };
 
@@ -55,7 +53,7 @@ describe("Recent History", () => {
     const state = copyAndUpdateState(recentHistory.state, stateUpdate);
 
     assert.deepStrictEqual(
-      state.recentBlocks.asCurrent(),
+      state.recentBlocks,
       RecentBlocks.create({
         blocks: asOpaqueType([
           BlockState.create({
@@ -103,7 +101,7 @@ describe("Recent History", () => {
     const stateUpdate = recentHistory.transition(input);
     const state = copyAndUpdateState(recentHistory.state, stateUpdate);
 
-    const recentBlocks = state.recentBlocks.asCurrent();
+    const recentBlocks = state.recentBlocks;
     assert.deepStrictEqual(recentBlocks.blocks.length, 2);
     assert.deepStrictEqual(
       recentBlocks.blocks[0],
@@ -159,7 +157,7 @@ describe("Recent History", () => {
       state = copyAndUpdateState(recentHistory.state, stateUpdate);
     }
 
-    const recentBlocks = state.recentBlocks.asCurrent();
+    const recentBlocks = state.recentBlocks;
     assert.deepStrictEqual(recentBlocks.blocks.length, 8);
     assert.deepStrictEqual(recentBlocks.accumulationLog, {
       peaks: [

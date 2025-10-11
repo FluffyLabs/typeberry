@@ -4,6 +4,7 @@ import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Ticket } from "@typeberry/block/tickets.js";
 import { type CodecRecord, codec, Descriptor, readonlyArray, TYPICAL_DICTIONARY_LENGTH } from "@typeberry/codec";
 import { asKnownSize, HashDictionary } from "@typeberry/collections";
+import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
@@ -155,50 +156,58 @@ class ServiceWithCodec extends InMemoryService {
   }
 }
 
-export const inMemoryStateCodec = codec.Class<InMemoryState>(InMemoryState, {
-  // alpha
-  authPools: serialize.authPools.Codec,
-  // phi
-  authQueues: serialize.authQueues.Codec,
-  // beta
-  recentBlocks: serialize.recentBlocks.Codec,
-  // gamma_k
-  nextValidatorData: codecPerValidator(ValidatorData.Codec),
-  // gamma_z
-  epochRoot: codec.bytes(BANDERSNATCH_RING_ROOT_BYTES).asOpaque<BandersnatchRingRoot>(),
-  // gamma_s
-  sealingKeySeries: SafroleSealingKeysData.Codec,
-  // gamma_a
-  ticketsAccumulator: readonlyArray(codec.sequenceVarLen(Ticket.Codec)).convert<State["ticketsAccumulator"]>(
-    (x) => x,
-    asKnownSize,
-  ),
-  // psi
-  disputesRecords: serialize.disputesRecords.Codec,
-  // eta
-  entropy: serialize.entropy.Codec,
-  // iota
-  designatedValidatorData: serialize.designatedValidators.Codec,
-  // kappa
-  currentValidatorData: serialize.currentValidators.Codec,
-  // lambda
-  previousValidatorData: serialize.previousValidators.Codec,
-  // rho
-  availabilityAssignment: serialize.availabilityAssignment.Codec,
-  // tau
-  timeslot: serialize.timeslot.Codec,
-  // chi
-  privilegedServices: serialize.privilegedServices.Codec,
-  // pi
-  statistics: serialize.statistics.Codec,
-  // omega
-  accumulationQueue: serialize.accumulationQueue.Codec,
-  // xi
-  recentlyAccumulated: serialize.recentlyAccumulated.Codec,
-  // theta
-  accumulationOutputLog: serialize.accumulationOutputLog.Codec,
-  // delta
-  services: codec.dictionary(codec.u32.asOpaque<ServiceId>(), ServiceWithCodec.Codec, {
-    sortKeys: (a, b) => a - b,
-  }),
-});
+export const inMemoryStateCodec = (spec: ChainSpec) =>
+  codec.Class(
+    class State extends InMemoryState {
+      static create(data: CodecRecord<InMemoryState>) {
+        return InMemoryState.new(spec, data);
+      }
+    },
+    {
+      // alpha
+      authPools: serialize.authPools.Codec,
+      // phi
+      authQueues: serialize.authQueues.Codec,
+      // beta
+      recentBlocks: serialize.recentBlocks.Codec,
+      // gamma_k
+      nextValidatorData: codecPerValidator(ValidatorData.Codec),
+      // gamma_z
+      epochRoot: codec.bytes(BANDERSNATCH_RING_ROOT_BYTES).asOpaque<BandersnatchRingRoot>(),
+      // gamma_s
+      sealingKeySeries: SafroleSealingKeysData.Codec,
+      // gamma_a
+      ticketsAccumulator: readonlyArray(codec.sequenceVarLen(Ticket.Codec)).convert<State["ticketsAccumulator"]>(
+        (x) => x,
+        asKnownSize,
+      ),
+      // psi
+      disputesRecords: serialize.disputesRecords.Codec,
+      // eta
+      entropy: serialize.entropy.Codec,
+      // iota
+      designatedValidatorData: serialize.designatedValidators.Codec,
+      // kappa
+      currentValidatorData: serialize.currentValidators.Codec,
+      // lambda
+      previousValidatorData: serialize.previousValidators.Codec,
+      // rho
+      availabilityAssignment: serialize.availabilityAssignment.Codec,
+      // tau
+      timeslot: serialize.timeslot.Codec,
+      // chi
+      privilegedServices: serialize.privilegedServices.Codec,
+      // pi
+      statistics: serialize.statistics.Codec,
+      // omega
+      accumulationQueue: serialize.accumulationQueue.Codec,
+      // xi
+      recentlyAccumulated: serialize.recentlyAccumulated.Codec,
+      // theta
+      accumulationOutputLog: serialize.accumulationOutputLog.Codec,
+      // delta
+      services: codec.dictionary(codec.u32.asOpaque<ServiceId>(), ServiceWithCodec.Codec, {
+        sortKeys: (a, b) => a - b,
+      }),
+    },
+  );

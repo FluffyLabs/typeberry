@@ -47,10 +47,14 @@ export type ClassConstructor<T> = {
   create: (o: CodecRecord<T>) => T;
 };
 
-/**
- * A full codec type, i.e. the `Encode` and `Decode`.
- */
+/** A full codec type, i.e. the `Encode` and `Decode`. */
 export type Codec<T> = Encode<T> & Decode<T>;
+
+/** A codec descriptor with extra view. */
+export type CodecWithView<T, V> = Codec<T> & {
+  /** encoded data view codec. */
+  View: Codec<V>;
+};
 
 /**
  * Type descriptor definition.
@@ -60,7 +64,7 @@ export type Codec<T> = Encode<T> & Decode<T>;
  *
  * Descriptors can be composed to form more complex typings.
  */
-export class Descriptor<T, V = T> implements Codec<T>, Skip {
+export class Descriptor<T, V = T> implements Codec<T>, Skip, CodecWithView<T, V> {
   /** A "lightweight" version of the object. */
   public readonly View: Descriptor<V>;
 

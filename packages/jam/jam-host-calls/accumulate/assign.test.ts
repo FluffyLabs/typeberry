@@ -1,7 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type CoreIndex, tryAsCoreIndex, tryAsServiceId } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
@@ -14,6 +13,7 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
+import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";

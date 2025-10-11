@@ -11,16 +11,15 @@ environment (aka "core" files).
 
 ## Repository structure
 
-1. `./packages/jam` - self-contained parts of the typeberry implementation.
-    Think: libraries, but specific to JAM. Always named `@typeberry/<name>`.
-2. `./packages/core` - re-usable libraries that are JAM-agnostic. May only depend
+1. `./bin` - full-featured binaries that are core to typeberry.
+2. `./packages/extensions` - optional features of the client.
+3. `./packages/core` - re-usable libraries that are JAM-agnostic. May only depend
     on other `core` packages and never `jam`.
-3. `./bin` - full-featured binaries that are core to typeberry.
-4. `./tools` - auxiliary, stand-alone tools which can be executed separately.
-5. `./workers` - parts of typeberry that run as a worker. And communicate with
+4. `./packages/jam` - self-contained parts of the typeberry implementation.
+    Think: libraries, but specific to JAM. Always named `@typeberry/<name>`.
+5. `./packages/workers` - parts of typeberry that run as a worker. And communicate with
     other components. Use `./packages` for their underlying logic.
-6. `./benchmarks` - contains all micro & macro benchmarks for the typeberry components
-    or simply tests to figure out the best way to solve some problem.
+6. `./packages/misc` - auxiliary, non-production utilities that don't fit anywhere else.
 
 ## NPM workspace
 
@@ -34,11 +33,9 @@ Below some pre-defined scripts and their expected behaviour:
     exactly the same for all of the packages.
 2. `start` - optional script to execute the package. Note that it's not limited
     only to `./bin` packages.
-3. `build` - if package can be built into a CommonJS module and later potentially
+3. `build` - if package can be built into a ESM and later potentially
     published to NPM registry that should be the command which produces the final
     JS file in `./dist` directory.
-4. `obfuscate` - if package should be obfuscated before publishing. This step should
-    also automatically build the package.
 
 ## Avoid constructor overloading
 

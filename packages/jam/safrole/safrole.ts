@@ -402,7 +402,6 @@ export class Safrole {
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/0fe4000fe400
      */
-
     const ticketsVerifcationResult = this.verifyTickets(tickets);
     if (ticketsVerifcationResult.isError) {
       return Result.error(ticketsVerifcationResult.error);

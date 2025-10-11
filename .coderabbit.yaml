@@ -27,13 +27,21 @@ reviews:
   labeling_instructions: []
   path_filters: []
   path_instructions:
-    - path: 'packages/**/*.package.json'
+    - path: 'packages/**/package.json'
       instructions: |
         Whenever a new package is added, the `packages/README.md` should be updated accordingly.
     - path: 'packages/core/**/*.ts'
       instructions: |
         Core packages must not import any JAM-related packages
         (i.e. packages defined under `packages/jam/**`)
+    - path: '**/*.ts'
+      instructions: |
+        rules from `./CODESTYLE.md` should be adhered to.
+    - path: '**/*.ts'
+      instructions: |
+        Any function whose documentation mention it must not be used in production code,
+        can be safely used in `*.test.ts` files. Other usage should be carefuly reviewed
+        and the comment must explain why it's safe to use there.
     - path: '**/*.ts'
       instructions: |
         `as` conversions must not be used. Suggest using `tryAs` conversion methods.

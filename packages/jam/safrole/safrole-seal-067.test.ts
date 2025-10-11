@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   EpochMarker,
   Header,
+  reencodeAsView,
   tryAsPerEpochBlock,
   tryAsPerValidator,
   tryAsTimeSlot,
@@ -11,7 +12,6 @@ import {
 } from "@typeberry/block";
 import { Ticket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES } from "@typeberry/crypto";
@@ -66,8 +66,8 @@ if (Compatibility.isLessThan(GpVersion.V0_7_0)) {
           BANDERSNATCH_VRF_SIGNATURE_BYTES,
         ).asOpaque(),
       });
-      const encoded = Encoder.encodeObject(Header.Codec, header, tinyChainSpec);
-      const headerView = Decoder.decodeObject(Header.Codec.View, encoded, tinyChainSpec);
+      const spec = tinyChainSpec;
+      const headerView = reencodeAsView(Header.Codec, header, spec);
 
       const safroleSeal = new SafroleSeal(bandersnatch);
       const result = await safroleSeal.verifyHeaderSeal(headerView, {
@@ -91,7 +91,7 @@ if (Compatibility.isLessThan(GpVersion.V0_7_0)) {
               Bytes.zero(BANDERSNATCH_KEY_BYTES).asOpaque(),
               Bytes.zero(BANDERSNATCH_KEY_BYTES).asOpaque(),
             ],
-            tinyChainSpec,
+            spec,
           ),
         ),
         currentEntropy: Bytes.parseBytes(
@@ -149,8 +149,8 @@ if (Compatibility.isLessThan(GpVersion.V0_7_0)) {
           BANDERSNATCH_VRF_SIGNATURE_BYTES,
         ).asOpaque(),
       });
-      const encoded = Encoder.encodeObject(Header.Codec, header, tinyChainSpec);
-      const headerView = Decoder.decodeObject(Header.Codec.View, encoded, tinyChainSpec);
+      const spec = tinyChainSpec;
+      const headerView = reencodeAsView(Header.Codec, header, spec);
 
       const safroleSeal = new SafroleSeal(bandersnatch);
       const result = await safroleSeal.verifyHeaderSeal(headerView, {
@@ -174,7 +174,7 @@ if (Compatibility.isLessThan(GpVersion.V0_7_0)) {
               emptyTicket(),
               emptyTicket(),
             ],
-            tinyChainSpec,
+            spec,
           ),
         ),
         currentEntropy: Bytes.parseBytes(

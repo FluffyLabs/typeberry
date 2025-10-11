@@ -8,7 +8,7 @@ import { HashSet } from "@typeberry/collections/hash-set.js";
 import { tinyChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
-import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
+import { NotYetAccumulatedReport } from "@typeberry/state";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 import { ENTROPY, guaranteesAsView, initialServices, newCredential, newReports, newWorkReport } from "./test.utils.js";

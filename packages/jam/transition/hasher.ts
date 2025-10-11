@@ -6,7 +6,7 @@ import { type Codec, codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { type Blake2b, type KeccakHash, keccak, type OpaqueHash, WithHash, WithHashAndBytes } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
-import { dumpCodec } from "@typeberry/state-merkleization/serialize.js";
+import { tryAsU32 } from "@typeberry/numbers";
 
 /** Helper function to create most used hashes in the block */
 export class TransitionHasher implements MmrHasher<KeccakHash> {
@@ -37,23 +37,25 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
    */
   extrinsic(extrinsicView: ExtrinsicView): WithHashAndBytes<ExtrinsicHash, ExtrinsicView> {
     // https://graypaper.fluffylabs.dev/#/cc517d7/0cfb000cfb00?v=0.6.5
-    const guarantees = extrinsicView.guarantees
+    const guaranteesCount = tryAsU32(extrinsicView.guarantees.view().length);
+    const countEncoded = Encoder.encodeObject(codec.varU32, guaranteesCount);
+    const guaranteesBlobs = extrinsicView.guarantees
       .view()
       .map((g) => g.view())
-      .map((guarantee) => {
-        const reportHash = this.blake2b.hashBytes(guarantee.report.encoded()).asOpaque<WorkReportHash>();
-        return BytesBlob.blobFromParts([
-          reportHash.raw,
-          guarantee.slot.encoded().raw,
-          guarantee.credentials.encoded().raw,
-        ]);
-      });
-
-    const guaranteeBlob = Encoder.encodeObject(codec.sequenceVarLen(dumpCodec), guarantees, this.context);
+      .reduce(
+        (aggregated, guarantee) => {
+          const reportHash = this.blake2b.hashBytes(guarantee.report.encoded()).asOpaque<WorkReportHash>();
+          aggregated.push(reportHash.raw);
+          aggregated.push(guarantee.slot.encoded().raw);
+          aggregated.push(guarantee.credentials.encoded().raw);
+          return aggregated;
+        },
+        [countEncoded.raw],
+      );
 
     const et = this.blake2b.hashBytes(extrinsicView.tickets.encoded()).asOpaque<ExtrinsicHash>();
     const ep = this.blake2b.hashBytes(extrinsicView.preimages.encoded()).asOpaque<ExtrinsicHash>();
-    const eg = this.blake2b.hashBytes(guaranteeBlob).asOpaque<ExtrinsicHash>();
+    const eg = this.blake2b.hashBlobs(guaranteesBlobs).asOpaque<ExtrinsicHash>();
     const ea = this.blake2b.hashBytes(extrinsicView.assurances.encoded()).asOpaque<ExtrinsicHash>();
     const ed = this.blake2b.hashBytes(extrinsicView.disputes.encoded()).asOpaque<ExtrinsicHash>();
 

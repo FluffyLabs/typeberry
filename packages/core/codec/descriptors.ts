@@ -443,15 +443,25 @@ export namespace codec {
       sizeHint: SizeHint;
     },
     chooser: (ctx: unknown | null) => Descriptor<T, V>,
-  ): Descriptor<T, V> =>
-    Descriptor.withView(
+  ): Descriptor<T, V> => {
+    const Self = chooser(null);
+    return Descriptor.withView(
       name,
       sizeHint,
       (e, x) => chooser(e.getContext()).encode(e, x),
       (d) => chooser(d.getContext()).decode(d),
       (s) => chooser(s.decoder.getContext()).skip(s),
-      chooser(null).View,
+      hasUniqueView(Self)
+        ? select(
+            {
+              name: Self.View.name,
+              sizeHint: Self.View.sizeHint,
+            },
+            (ctx) => chooser(ctx).View,
+          )
+        : Self.View,
     );
+  };
 
   /**
    * A descriptor for a more complex POJO.

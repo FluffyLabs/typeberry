@@ -9,6 +9,7 @@ export * from "./header.js";
 export * as preimage from "./preimage.js";
 export * as refineContext from "./refine-context.js";
 export * as tickets from "./tickets.js";
+export * from "./utils.js";
 export * as workItem from "./work-item.js";
 export * from "./work-item-segment.js";
 export * as workPackage from "./work-package.js";

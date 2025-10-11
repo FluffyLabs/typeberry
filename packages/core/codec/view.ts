@@ -1,5 +1,5 @@
 import { BytesBlob } from "@typeberry/bytes";
-import { check } from "@typeberry/utils";
+import { check, TEST_COMPARE_USING } from "@typeberry/utils";
 import type { Decoder } from "./decoder.js";
 import type { ClassConstructor, CodecRecord, Descriptor, DescriptorRecord } from "./descriptor.js";
 import { Skipper } from "./skip.js";
@@ -153,6 +153,10 @@ export abstract class ObjectView<T> {
 
   toString() {
     return `View<${this.materializedConstructor.name}>(cache: ${this.cache.size})`;
+  }
+
+  [TEST_COMPARE_USING]() {
+    return this.materialize();
   }
 }
 

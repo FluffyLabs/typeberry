@@ -1,5 +1,4 @@
 import type { CoreIndex, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
-import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import type { BytesBlob } from "@typeberry/bytes";
@@ -7,6 +6,7 @@ import { asKnownSize, type FixedSizeArray } from "@typeberry/collections";
 import type { OpaqueHash } from "@typeberry/hash";
 import { isU32, isU64, tryAsU32, type U64 } from "@typeberry/numbers";
 import {
+  type AUTHORIZATION_QUEUE_SIZE,
   LookupHistoryItem,
   PrivilegedServices,
   ServiceAccountInfo,

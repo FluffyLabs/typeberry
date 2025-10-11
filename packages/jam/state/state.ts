@@ -1,17 +1,17 @@
-import type { EntropyHash, PerEpochBlock, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
-import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
+import type { EntropyHash, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import type { FixedSizeArray, ImmutableHashSet, KnownSizeArray, SortedArray } from "@typeberry/collections";
+import type { FixedSizeArray, SortedArray } from "@typeberry/collections";
 import type { U32 } from "@typeberry/numbers";
 import type { AccumulationOutput } from "./accumulation-output.js";
+import type { AccumulationQueue } from "./accumulation-queue.js";
 import type { AvailabilityAssignment } from "./assurances.js";
+import type { AuthorizationPool, AuthorizationQueue } from "./auth.js";
 import type { PerCore } from "./common.js";
 import type { DisputesRecords } from "./disputes.js";
-import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
 import type { PrivilegedServices } from "./privileged-services.js";
-import type { RecentBlocksHistory } from "./recent-blocks.js";
+import type { RecentBlocks } from "./recent-blocks.js";
+import type { RecentlyAccumulated } from "./recently-accumulated.js";
 import type { SafroleData } from "./safrole-data.js";
 import type { LookupHistorySlots, ServiceAccountInfo, StorageKey } from "./service.js";
 import type { StatisticsData } from "./statistics.js";
@@ -68,7 +68,7 @@ export type State = {
   /**
    * `γₖ gamma_k`: The keys for the validators of the next epoch, equivalent to those keys which constitute γ_z .
    */
-  readonly nextValidatorData: SafroleData["nextValidatorData"];
+  readonly nextValidatorData: PerValidator<ValidatorData>;
 
   /**
    * `κ kappa`: Validators, who are the set of economic actors uniquely
@@ -114,7 +114,7 @@ export type State = {
    *
    * https://graypaper-reader.netlify.app/#/6e1c0cd/102400102400
    */
-  readonly authPools: PerCore<KnownSizeArray<AuthorizerHash, `At most ${typeof MAX_AUTH_POOL_SIZE}`>>;
+  readonly authPools: PerCore<AuthorizationPool>;
 
   /**
    * `φ phi`: A queue of authorizers for each core used to fill up the pool.
@@ -123,14 +123,14 @@ export type State = {
    *
    * https://graypaper-reader.netlify.app/#/6e1c0cd/102400102400
    */
-  readonly authQueues: PerCore<FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>>;
+  readonly authQueues: PerCore<AuthorizationQueue>;
 
   /**
    * `β beta`: State of the blocks from recent history.
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/0fb7010fb701
    */
-  readonly recentBlocks: RecentBlocksHistory;
+  readonly recentBlocks: RecentBlocks;
 
   /**
    * `π pi`: Previous and current statistics of each validator,
@@ -147,7 +147,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/165300165500
    */
-  readonly accumulationQueue: PerEpochBlock<readonly NotYetAccumulatedReport[]>;
+  readonly accumulationQueue: AccumulationQueue;
 
   /**
    * `ξ xi`: In order to know which work-packages have been
@@ -157,7 +157,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/161a00161d00
    */
-  readonly recentlyAccumulated: PerEpochBlock<ImmutableHashSet<WorkPackageHash>>;
+  readonly recentlyAccumulated: RecentlyAccumulated;
 
   /*
    * `γₐ gamma_a`: The ticket accumulator - a series of highest-scoring ticket identifiers to be

@@ -101,18 +101,20 @@ function dumpOutput(
       if (type.encode === undefined) {
         throw new Error(`${type.name} does not support encoding to JAM codec.`);
       }
-      const encoded = Encoder.encodeObject(type.encode, data, spec);
+      const encoder = typeof type.encode === "function" ? type.encode(spec) : type.encode;
+      const encoded = Encoder.encodeObject(encoder, data, spec);
       dump(`${encoded}`);
       return;
     }
     case OutputFormat.Bin: {
-      if (type.encode === undefined) {
-        throw new Error(`${type.name} does not support encoding to JAM codec.`);
-      }
       if (destination === null) {
         throw new Error(`${OutputFormat.Bin} requires destination file.`);
       }
-      const encoded = Encoder.encodeObject(type.encode, data, spec);
+      if (type.encode === undefined) {
+        throw new Error(`${type.name} does not support encoding to JAM codec.`);
+      }
+      const encoder = typeof type.encode === "function" ? type.encode(spec) : type.encode;
+      const encoded = Encoder.encodeObject(encoder, data, spec);
       dump(encoded.raw);
       return;
     }
@@ -260,7 +262,11 @@ async function loadAndProcessDataFile(
     if (decodeType.decode === undefined) {
       throw new Error(`${decodeType.name} does not support decoding from binary data.`);
     }
-    data = Decoder.decodeObject(decodeType.decode, input.data, spec);
+    if (typeof decodeType.decode === "function") {
+      data = Decoder.decodeObject(decodeType.decode(spec), input.data, spec);
+    } else {
+      data = Decoder.decodeObject(decodeType.decode, input.data, spec);
+    }
   } else if (input.type === "json") {
     if (decodeType.json === undefined) {
       throw new Error(`${decodeType.name} does not support reading from JSON.`);

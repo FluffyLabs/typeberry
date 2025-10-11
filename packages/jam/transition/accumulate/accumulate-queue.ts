@@ -3,7 +3,7 @@ import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import { asKnownSize, HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
+import { NotYetAccumulatedReport } from "@typeberry/state";
 import type { AccumulateState } from "./accumulate-state.js";
 import { getWorkPackageHashes } from "./accumulate-utils.js";
 

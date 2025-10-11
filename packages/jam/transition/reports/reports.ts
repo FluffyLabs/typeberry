@@ -7,7 +7,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { type Ed25519Key, ed25519 } from "@typeberry/crypto";
 import type { Blake2b } from "@typeberry/hash";
 import type { SafroleStateUpdate } from "@typeberry/safrole";
-import { AvailabilityAssignment, type State, tryAsPerCore } from "@typeberry/state";
+import { AvailabilityAssignment, type State, type StateView, tryAsPerCore, type WithStateView } from "@typeberry/state";
 import { asOpaqueType, OK, Result } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment.js";
@@ -25,11 +25,11 @@ export type ReportsState = Pick<
   | "previousValidatorData"
   | "entropy"
   | "getService"
-  | "authPools"
   | "recentBlocks"
   | "accumulationQueue"
   | "recentlyAccumulated"
->;
+> &
+  WithStateView<Pick<StateView, "authPoolsView">>;
 
 // NOTE: this is most likely part of the `disputesState`, but I'm not sure what
 // to do with that exactly. It's being passed in the JAM test vectors, but isn't used?
@@ -160,7 +160,8 @@ export class Reports {
     input: GuaranteesExtrinsicView,
     assurancesAvailAssignment: ReportsInput["assurancesAvailAssignment"],
   ) {
-    return verifyPostSignatureChecks(input, assurancesAvailAssignment, this.state.authPools, (id) =>
+    const authPoolsView = this.state.view().authPoolsView();
+    return verifyPostSignatureChecks(input, assurancesAvailAssignment, authPoolsView, (id) =>
       this.state.getService(id),
     );
   }

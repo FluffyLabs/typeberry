@@ -75,7 +75,7 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
 
   /** Insert a full state into the database. */
   async insertState(headerHash: HeaderHash, state: InMemoryState): Promise<Result<OK, StateUpdateError>> {
-    const encoded = Encoder.encodeObject(inMemoryStateCodec, state, this.spec);
+    const encoded = Encoder.encodeObject(inMemoryStateCodec(this.spec), state, this.spec);
     this.db.set(headerHash, encoded);
     return Result.ok(OK);
   }
@@ -86,6 +86,6 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
       return null;
     }
 
-    return Decoder.decodeObject(inMemoryStateCodec, encodedState, this.spec);
+    return Decoder.decodeObject(inMemoryStateCodec(this.spec), encodedState, this.spec);
   }
 }
