@@ -36,7 +36,7 @@ export class SerializedStateView<T extends SerializedStateBackend> implements St
     private readonly spec: ChainSpec,
     public backend: T,
     /** Best-effort list of recently active services. */
-    private readonly _recentServiceIds: ServiceId[],
+    private readonly recentlyUsedServices: ServiceId[],
     private readonly viewCache: HashDictionary<StateKey, unknown>,
   ) {}
 
@@ -110,8 +110,8 @@ export class SerializedStateView<T extends SerializedStateBackend> implements St
     if (bytes === null) {
       return null;
     }
-    if (!this._recentServiceIds.includes(id)) {
-      this._recentServiceIds.push(id);
+    if (!this.recentlyUsedServices.includes(id)) {
+      this.recentlyUsedServices.push(id);
     }
     return Decoder.decodeObject(serviceData.Codec.View, bytes, this.spec);
   }
