@@ -116,6 +116,7 @@ export class Bless implements HostCallHandler {
 
     const e = updateResult.error;
 
+    // NOTE: `UpdatePrivilegesError.UnprivilegedService` won't happen in 0.7.1+
     if (e === UpdatePrivilegesError.UnprivilegedService) {
       logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulateEntries}) <- HUH`;
       regs.set(IN_OUT_REG, HostCallResult.HUH);
