@@ -73,8 +73,6 @@ enum PvmInvocationError {
   NoService = 0,
   NoPreimage = 1,
   PreimageTooLong = 2,
-  // Processing of incoming transfers resulted in balance overflow.
-  ServiceBalanceOverflow = 3,
 }
 
 const logger = Logger.new(import.meta.filename, "accumulate");
