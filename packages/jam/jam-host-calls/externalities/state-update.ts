@@ -328,6 +328,7 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     const existingItem = this.stateUpdate.services.servicesUpdates[idx];
 
     if (existingItem?.action.kind === UpdateServiceKind.Create) {
+      console.log("updating created service");
       this.stateUpdate.services.servicesUpdates.splice(
         idx,
         toRemove,
