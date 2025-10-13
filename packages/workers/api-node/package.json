@@ -7,6 +7,14 @@
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
+    "@typeberry/codec": "*",
+    "@typeberry/config": "*",
+    "@typeberry/database-lmdb": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/listener": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*",
     "@typeberry/workers-api": "*"
   },
   "author": "Fluffy Labs",

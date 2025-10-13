@@ -15,7 +15,9 @@
     "@typeberry/logger": "*",
     "@typeberry/state-merkleization": "*",
     "@typeberry/transition": "*",
-    "@typeberry/utils": "*"
+    "@typeberry/utils": "*",
+    "@typeberry/workers-api": "*",
+    "@typeberry/workers-api-node": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

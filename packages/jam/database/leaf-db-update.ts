@@ -1,11 +1,10 @@
 import { BytesBlob } from "@typeberry/bytes";
 import type { SortedSet } from "@typeberry/collections";
 import type { Blake2b, TruncatedHash } from "@typeberry/hash";
+import { StateEntryUpdateAction, type StateKey } from "@typeberry/state-merkleization";
 import { InMemoryTrie, type LeafNode, type ValueHash } from "@typeberry/trie";
 import { getBlake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { assertNever } from "@typeberry/utils";
-import type { StateKey } from "./keys.js";
-import { StateEntryUpdateAction } from "./serialize-state-update.js";
 
 export function updateLeafs(
   leafs: SortedSet<LeafNode>,

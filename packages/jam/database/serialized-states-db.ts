@@ -2,16 +2,20 @@ import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { type InitStatesDb, LeafDb, type StatesDb, type StateUpdateError } from "@typeberry/database";
 import { Blake2b } from "@typeberry/hash";
 import type { State } from "@typeberry/state/state.js";
 import type { ServicesUpdate } from "@typeberry/state/state-update.js";
+import {
+  SerializedState,
+  type StateEntries,
+  StateEntryUpdateAction,
+  serializeStateUpdate,
+} from "@typeberry/state-merkleization";
 import { leafComparator, type ValueHash } from "@typeberry/trie";
 import { OK, Result } from "@typeberry/utils";
-import { updateLeafs } from "./leafs-db-update.js";
-import { StateEntryUpdateAction, serializeStateUpdate } from "./serialize-state-update.js";
-import { SerializedState } from "./serialized-state.js";
-import type { StateEntries } from "./state-entries.js";
+import { LeafDb } from "./leaf-db.js";
+import { updateLeafs } from "./leaf-db-update.js";
+import type { InitStatesDb, StatesDb, StateUpdateError } from "./states.js";
 
 export class InMemorySerializedStates implements StatesDb<SerializedState<LeafDb>>, InitStatesDb<StateEntries> {
   private readonly db: HashDictionary<HeaderHash, SerializedState<LeafDb>> = HashDictionary.new();

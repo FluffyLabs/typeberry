@@ -25,7 +25,6 @@
  */
 
 export * from "./binary-merkleization.js";
-export * from "./in-memory-states-db.js";
 export * from "./keys.js";
 export * from "./loader.js";
 export * from "./serialize.js";
