@@ -16,6 +16,7 @@ import type { ServicesUpdate, State } from "@typeberry/state";
 import {
   assertEmpty,
   Compatibility,
+  check,
   type ErrorResult,
   GpVersion,
   measure,
@@ -353,6 +354,8 @@ export class OnChain {
       transferStatistics = transferStatisticsFromDeferredTransfers;
       servicesUpdate = servicesUpdateFromDeferredTransfers;
       assertEmpty(deferredTransfersRest);
+    } else {
+      check`${pendingTransfers.length === 0} All transfers should be already accumulated.`;
     }
 
     const accumulateRoot = await this.accumulateOutput.transition({ accumulationOutputLog });
