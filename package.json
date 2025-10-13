@@ -29,6 +29,7 @@
     "packages/core/ordering",
     "packages/core/pvm-debugger-adapter",
     "packages/core/pvm-host-calls",
+    "packages/core/pvm-interface",
     "packages/core/pvm-interpreter",
     "packages/core/pvm-program",
     "packages/core/pvm-spi-decoder",
