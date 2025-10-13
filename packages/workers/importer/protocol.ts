@@ -1,49 +1,50 @@
 import { Block, type HeaderHash, headerViewWithHashCodec, type StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { HASH_SIZE } from "@typeberry/hash";
+import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { Result } from "@typeberry/utils";
 import { type Api, createProtocol, type Internal } from "@typeberry/workers-api";
 
-const importBlockResultCodec = codec.custom<Result<HeaderHash, string>>(
-  {
-    name: "Result<HeaderHash, string>",
-    sizeHint: { bytes: 1, isExact: false },
-  },
-  (e, x) => {
-    e.varU32(tryAsU32(x.isOk ? 0 : 1));
-    if (x.isOk) {
-      e.bytes(x.ok);
-    } else {
-      e.bytesBlob(BytesBlob.blobFromString(`${x.error}`));
-    }
-  },
-  (d) => {
-    const kind = d.varU32();
-    if (kind === 0) {
-      const hash = d.bytes(HASH_SIZE);
-      return Result.ok(hash.asOpaque<HeaderHash>());
-    }
-    if (kind === 1) {
-      const error = d.bytesBlob();
-      return Result.error(error.asText());
-    }
+const importBlockResultCodec = <T extends OpaqueHash>(hashName: string) =>
+  codec.custom<Result<T, string>>(
+    {
+      name: `Result<${hashName}, string>`,
+      sizeHint: { bytes: 1, isExact: false },
+    },
+    (e, x) => {
+      e.varU32(tryAsU32(x.isOk ? 0 : 1));
+      if (x.isOk) {
+        e.bytes(x.ok);
+      } else {
+        e.bytesBlob(BytesBlob.blobFromString(`${x.error}`));
+      }
+    },
+    (d) => {
+      const kind = d.varU32();
+      if (kind === 0) {
+        const hash = d.bytes(HASH_SIZE);
+        return Result.ok<T>(hash.asOpaque());
+      }
+      if (kind === 1) {
+        const error = d.bytesBlob();
+        return Result.error(error.asText());
+      }
 
-    throw new Error(`Invalid Result: ${kind}`);
-  },
-  (s) => {
-    const kind = s.decoder.varU32();
-    if (kind === 0) {
-      s.bytes(HASH_SIZE);
-    } else if (kind === 1) {
-      s.bytesBlob();
-    } else {
       throw new Error(`Invalid Result: ${kind}`);
-    }
-  },
-);
+    },
+    (s) => {
+      const kind = s.decoder.varU32();
+      if (kind === 0) {
+        s.bytes(HASH_SIZE);
+      } else if (kind === 1) {
+        s.bytesBlob();
+      } else {
+        throw new Error(`Invalid Result: ${kind}`);
+      }
+    },
+  );
 
 export const protocol = createProtocol("importer", {
   toWorker: {
@@ -57,7 +58,7 @@ export const protocol = createProtocol("importer", {
     },
     importBlock: {
       request: Block.Codec.View,
-      response: importBlockResultCodec,
+      response: importBlockResultCodec("HeaderHash"),
     },
     finish: {
       request: codec.nothing,

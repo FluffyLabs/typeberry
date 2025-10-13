@@ -1,4 +1,4 @@
-import { type BlockView, type HeaderHash, type HeaderView, tryAsTimeSlot } from "@typeberry/block";
+import { type BlockView, type HeaderHash, type HeaderView, type StateRootHash, tryAsTimeSlot } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, LeafDb, StatesDb, StateUpdateError } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
@@ -36,7 +36,7 @@ export class Importer {
 
   constructor(
     spec: ChainSpec,
-    hasher: TransitionHasher,
+    private readonly hasher: TransitionHasher,
     private readonly logger: Logger,
     private readonly blocks: BlocksDb,
     private readonly states: StatesDb<SerializedState<LeafDb>>,
@@ -63,6 +63,18 @@ export class Importer {
     } catch (e) {
       this.logger.error`Unable to prepare for next epoch: ${e}`;
     }
+  }
+
+  // TODO [ToDr] import block and get state root
+  public async importBlockWithStateRoot(
+    block: BlockView,
+    omitSealVerification: boolean,
+  ): Promise<Result<StateRootHash, ImporterError>> {
+    const res = await this.importBlock(block, omitSealVerification);
+    if (res.isOk) {
+      return Result.ok(this.state.backend.getStateRoot(this.hasher.blake2b));
+    }
+    return res;
   }
 
   public async importBlock(

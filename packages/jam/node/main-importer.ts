@@ -45,9 +45,9 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
   const api: NodeApi = {
     chainSpec,
     async importBlock(block: BlockView): Promise<Result<StateRootHash, string>> {
-      const res = await importer.importBlock(block, omitSealVerification);
+      const res = await importer.importBlockWithStateRoot(block, omitSealVerification);
       if (res.isOk) {
-        return Result.ok(importer.getBestStateRootHash() ?? zeroHash);
+        return res;
       }
       return Result.error(resultToString(res));
     },

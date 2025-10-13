@@ -17,7 +17,7 @@ type Config = WorkerConfig<ImporterConfig, BlocksDb, StatesDb<SerializedState<Le
 
 export async function createImporter(config: Config) {
   const chainSpec = config.chainSpec;
-  const db = config.openDatabase({ readonly: false });
+  const db = config.openDatabase({ readonly: true });
   const blocks = db.getBlocksDb();
   const states = db.getStatesDb();
 
@@ -54,6 +54,7 @@ export async function main(config: Config, comms: ImporterInternal) {
     }
 
     await comms.sendBestHeaderAnnouncement(res.ok);
+
     return Result.ok(res.ok.hash);
   });
 
