@@ -77,8 +77,18 @@ export namespace codec {
     };
   })();
 
+  /** Zero-size `void` value. */
   export const nothing = Descriptor.new<void>(
     "void",
+    { bytes: 0, isExact: true },
+    (_e, _v) => {},
+    (_d) => {},
+    (_s) => {},
+  );
+
+  /** Zero-size `undefined` value. */
+  export const notdefined = Descriptor.new<undefined>(
+    "undefined",
     { bytes: 0, isExact: true },
     (_e, _v) => {},
     (_d) => {},

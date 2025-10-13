@@ -36,4 +36,9 @@ export class Listener<T> {
     this.emitter.removeAllListeners(EVENT);
     this.emitter.removeAllListeners(EVENT_DONE);
   }
+
+  /** Return a callback that will emit events. */
+  callbackHandler(): (req: T) => Promise<void> {
+    return async (req) => this.emit(req);
+  }
 }

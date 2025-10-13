@@ -86,7 +86,7 @@ export class Channel {
           });
         } catch (e) {
           logger.error`Error while handling ${key} (${responseId}): ${e}`;
-          logger.error`${e}`;
+          throw e;
         }
       });
     };

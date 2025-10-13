@@ -26,6 +26,7 @@ export class ThreadPort implements Port {
         logger.error`Received a malformed data from another thread: ${input}`;
         return;
       }
+
       const { eventName, responseId, data } = input;
 
       this.events.emit(eventName, responseId, data);

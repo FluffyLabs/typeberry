@@ -4,7 +4,7 @@ import { initWasm } from "@typeberry/crypto";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { createImporter } from "@typeberry/importer";
 import { CURRENT_SUITE, CURRENT_VERSION, Result, resultToString } from "@typeberry/utils";
-import { NodeConfig } from "@typeberry/workers-api-node";
+import { NodeWorkerConfig } from "@typeberry/workers-api-node";
 import { getChainSpec, initializeDatabase, logger, openDatabase } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 import type { NodeApi } from "./main.js";
@@ -31,7 +31,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
   await rootDb.close();
 
   const omitSealVerification = false;
-  const workerConfig = NodeConfig.new({
+  const workerConfig = NodeWorkerConfig.new({
     chainSpec,
     blake2b,
     dbPath,

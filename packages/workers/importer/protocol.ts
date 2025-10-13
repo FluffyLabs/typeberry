@@ -1,6 +1,6 @@
 import { Block, type HeaderHash, headerViewWithHashCodec, type StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import { codec } from "@typeberry/codec";
+import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import { StateEntries } from "@typeberry/state-merkleization";
@@ -75,6 +75,14 @@ export const protocol = createProtocol("importer", {
 export type ImporterInternal = Internal<typeof protocol>;
 export type ImporterApi = Api<typeof protocol>;
 
-export type ImporterConfig = {
-  omitSealVerification: boolean;
-};
+export class ImporterConfig {
+  static Codec = codec.Class(ImporterConfig, {
+    omitSealVerification: codec.bool,
+  });
+
+  static create({ omitSealVerification }: CodecRecord<ImporterConfig>) {
+    return new ImporterConfig(omitSealVerification);
+  }
+
+  private constructor(public readonly omitSealVerification: boolean) {}
+}

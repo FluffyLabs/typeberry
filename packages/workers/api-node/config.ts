@@ -1,14 +1,15 @@
-import type { ChainSpec } from "@typeberry/config";
+import { type Decode, Decoder, type Encode, Encoder } from "@typeberry/codec";
+import { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, LeafDb, StatesDb } from "@typeberry/database";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
-import type { Blake2b } from "@typeberry/hash";
+import { Blake2b } from "@typeberry/hash";
 import type { SerializedState } from "@typeberry/state-merkleization";
 import type { DatabaseAccess, WorkerConfig } from "@typeberry/workers-api";
 
 /**
  * A worker config that's usable in node.js and uses LMDB database backend.
  */
-export class NodeConfig<T = undefined> implements WorkerConfig<T, BlocksDb, StatesDb<SerializedState<LeafDb>>> {
+export class NodeWorkerConfig<T = undefined> implements WorkerConfig<T, BlocksDb, StatesDb<SerializedState<LeafDb>>> {
   static new<T>({
     chainSpec,
     workerParams,
@@ -20,7 +21,21 @@ export class NodeConfig<T = undefined> implements WorkerConfig<T, BlocksDb, Stat
     dbPath: string;
     blake2b: Blake2b;
   }) {
-    return new NodeConfig(chainSpec, workerParams, dbPath, blake2b);
+    return new NodeWorkerConfig(chainSpec, workerParams, dbPath, blake2b);
+  }
+
+  /** Restore node config from a transferrable config object. */
+  static async fromTranferable<T>(decodeParams: Decode<T>, config: TransferableConfig) {
+    const blake2b = await Blake2b.createHasher();
+    const chainSpec = new ChainSpec(config.chainSpec);
+    const workerParams = Decoder.decodeObject(decodeParams, config.workerParams, chainSpec);
+
+    return NodeWorkerConfig.new({
+      chainSpec,
+      workerParams,
+      dbPath: config.dbPath,
+      blake2b,
+    });
   }
 
   private constructor(
@@ -41,4 +56,19 @@ export class NodeConfig<T = undefined> implements WorkerConfig<T, BlocksDb, Stat
       close: () => lmdb.close(),
     };
   }
+
+  /** Convert this config into a thread-transferrable object. */
+  intoTransferable(paramsCodec: Encode<T>): TransferableConfig {
+    return {
+      chainSpec: this.chainSpec,
+      workerParams: Encoder.encodeObject(paramsCodec, this.workerParams, this.chainSpec).raw,
+      dbPath: this.dbPath,
+    };
+  }
 }
+
+export type TransferableConfig = {
+  chainSpec: ChainSpec;
+  workerParams: Uint8Array;
+  dbPath: string;
+};

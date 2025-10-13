@@ -72,7 +72,6 @@ export async function initializeDatabase(
     state !== null && !state.isEqualTo(Bytes.zero(HASH_SIZE)) && !header.isEqualTo(Bytes.zero(HASH_SIZE));
 
   if (isDbInitialized) {
-    await rootDb.db.close();
     return;
   }
 
@@ -95,9 +94,6 @@ export async function initializeDatabase(
   await states.insertInitialState(genesisHeaderHash, genesisStateSerialized);
   await blocks.setPostStateRoot(genesisHeaderHash, genesisStateRootHash);
   await blocks.setBestHeaderHash(genesisHeaderHash);
-
-  // close the DB
-  await rootDb.db.close();
 }
 
 function loadGenesisState(spec: ChainSpec, blake2b: Blake2b, data: JipChainSpec["genesisState"]) {

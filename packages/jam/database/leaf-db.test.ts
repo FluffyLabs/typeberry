@@ -2,7 +2,7 @@ import assert, { deepEqual } from "node:assert";
 import { before, describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Blake2b, HASH_SIZE, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
-import { InMemoryTrie, ValueHash, type InputKey } from "@typeberry/trie";
+import { InMemoryTrie, type InputKey, type ValueHash } from "@typeberry/trie";
 import { getBlake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import type { TrieHasher } from "@typeberry/trie/nodesDb.js";
 import { type Result, resultToString } from "@typeberry/utils";
