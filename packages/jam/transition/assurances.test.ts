@@ -2,6 +2,7 @@ import assert from "node:assert";
 import { before, describe, it } from "node:test";
 import {
   type HeaderHash,
+  reencodeAsView,
   tryAsCoreIndex,
   tryAsPerValidator,
   tryAsTimeSlot,
@@ -15,7 +16,7 @@ import {
 import { testWorkReportHex } from "@typeberry/block/test-helpers.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
 import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Decoder } from "@typeberry/codec";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import {
   BANDERSNATCH_KEY_BYTES,
@@ -25,7 +26,13 @@ import {
   initWasm,
 } from "@typeberry/crypto";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
-import { AvailabilityAssignment, tryAsPerCore, VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
+import {
+  AvailabilityAssignment,
+  type State,
+  tryAsPerCore,
+  VALIDATOR_META_BYTES,
+  ValidatorData,
+} from "@typeberry/state";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { Assurances, AssurancesError, type AssurancesInput } from "./assurances.js";
 import { copyAndUpdateState } from "./test.utils.js";
@@ -38,8 +45,7 @@ before(async () => {
 });
 
 function assurancesAsView(spec: ChainSpec, assurances: AvailabilityAssurance[]): AssurancesExtrinsicView {
-  const encoded = Encoder.encodeObject(assurancesExtrinsicCodec, asOpaqueType(assurances), spec);
-  return Decoder.decodeObject(assurancesExtrinsicCodec.View, encoded, spec);
+  return reencodeAsView(assurancesExtrinsicCodec, asOpaqueType(assurances), spec);
 }
 
 const DEFAULT_HEADER_HASH: HeaderHash = Bytes.parseBytes(
@@ -48,9 +54,13 @@ const DEFAULT_HEADER_HASH: HeaderHash = Bytes.parseBytes(
 ).asOpaque();
 
 describe("Assurances", () => {
+  const testAssignment = (
+    data: (AvailabilityAssignment | null)[] = INITIAL_ASSIGNMENT.slice(),
+  ): State["availabilityAssignment"] => tryAsPerCore(data, tinyChainSpec);
+
   it("should perform a transition with empty state", async () => {
     const initialState = {
-      availabilityAssignment: tryAsPerCore([null, null], tinyChainSpec),
+      availabilityAssignment: testAssignment([null, null]),
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
     };
     const assurances = new Assurances(tinyChainSpec, initialState, blake2b);
@@ -68,14 +78,14 @@ describe("Assurances", () => {
     deepEqual(res.ok.availableReports, []);
     const state = copyAndUpdateState(assurances.state, res.ok.stateUpdate);
     deepEqual(state, {
-      availabilityAssignment: tryAsPerCore([null, null], tinyChainSpec),
+      availabilityAssignment: testAssignment([null, null]),
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
     });
   });
 
   it("should perform some transition", async () => {
     const initialState = {
-      availabilityAssignment: tryAsPerCore([null, null], tinyChainSpec), // empty assignment to make sure assurances use disputesAvailAssignment
+      availabilityAssignment: testAssignment([null, null]),
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
     };
     const assurances = new Assurances(tinyChainSpec, initialState, blake2b);
@@ -135,7 +145,7 @@ describe("Assurances", () => {
     deepEqual(
       state,
       {
-        availabilityAssignment: tryAsPerCore([null, INITIAL_ASSIGNMENT[1]], tinyChainSpec),
+        availabilityAssignment: testAssignment([null, INITIAL_ASSIGNMENT[1]]),
         currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
       },
       { context: "state" },
@@ -144,7 +154,7 @@ describe("Assurances", () => {
 
   it("should reject invalid signatures", async () => {
     const initialState = {
-      availabilityAssignment: tryAsPerCore(INITIAL_ASSIGNMENT.slice(), tinyChainSpec),
+      availabilityAssignment: testAssignment(),
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
     };
     const assurances = new Assurances(tinyChainSpec, initialState, blake2b);
@@ -181,7 +191,7 @@ describe("Assurances", () => {
     deepEqual(
       assurances.state,
       {
-        availabilityAssignment: tryAsPerCore(INITIAL_ASSIGNMENT, tinyChainSpec),
+        availabilityAssignment: testAssignment(),
         currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
       },
       { context: "state" },
@@ -190,7 +200,7 @@ describe("Assurances", () => {
 
   it("should reject invalid validator index", async () => {
     const initialState = {
-      availabilityAssignment: tryAsPerCore(INITIAL_ASSIGNMENT.slice(), tinyChainSpec),
+      availabilityAssignment: testAssignment(),
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
     };
     const assurances = new Assurances(tinyChainSpec, initialState, blake2b);
@@ -227,7 +237,7 @@ describe("Assurances", () => {
     deepEqual(
       assurances.state,
       {
-        availabilityAssignment: tryAsPerCore(INITIAL_ASSIGNMENT, tinyChainSpec),
+        availabilityAssignment: testAssignment(),
         currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
       },
       { context: "state" },
@@ -236,7 +246,7 @@ describe("Assurances", () => {
 
   it("should reject invalid order", async () => {
     const initialState = {
-      availabilityAssignment: tryAsPerCore(INITIAL_ASSIGNMENT.slice(), tinyChainSpec),
+      availabilityAssignment: testAssignment(),
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
     };
     const assurances = new Assurances(tinyChainSpec, initialState, blake2b);
@@ -279,7 +289,7 @@ describe("Assurances", () => {
     deepEqual(
       assurances.state,
       {
-        availabilityAssignment: tryAsPerCore(INITIAL_ASSIGNMENT, tinyChainSpec),
+        availabilityAssignment: testAssignment(),
         currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
       },
       { context: "state" },

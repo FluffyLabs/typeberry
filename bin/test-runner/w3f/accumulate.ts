@@ -16,8 +16,13 @@ import type { ChainSpec } from "@typeberry/config";
 import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { InMemoryService } from "@typeberry/state";
-import { AutoAccumulate, InMemoryState, PrivilegedServices, tryAsPerCore } from "@typeberry/state";
-import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
+import {
+  AutoAccumulate,
+  InMemoryState,
+  NotYetAccumulatedReport,
+  PrivilegedServices,
+  tryAsPerCore,
+} from "@typeberry/state";
 import { JsonService } from "@typeberry/state-json/accounts.js";
 import { AccumulateOutput } from "@typeberry/transition/accumulate/accumulate-output.js";
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
