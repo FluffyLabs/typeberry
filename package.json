@@ -4,6 +4,7 @@
   "description": "JAM implementation in TypeScript",
   "private": true,
   "workspaces": [
+    "benchmarks",
     "bin/convert",
     "bin/ipc2rpc",
     "bin/jam",
@@ -12,7 +13,6 @@
     "bin/rpc",
     "bin/tci",
     "bin/test-runner",
-    "benchmarks",
     "packages/configs",
     "packages/core/bytes",
     "packages/core/codec",
@@ -22,6 +22,7 @@
     "packages/core/erasure-coding",
     "packages/core/hash",
     "packages/core/json-parser",
+    "packages/core/listener",
     "packages/core/logger",
     "packages/core/mmr",
     "packages/core/networking",
@@ -54,12 +55,11 @@
     "packages/jam/transition/disputes",
     "packages/misc/benchmark",
     "packages/misc/builder",
+    "packages/workers/api",
+    "packages/workers/api-node",
     "packages/workers/block-generator",
     "packages/workers/importer",
-    "packages/workers/jam-network",
-    "packages/core/listener",
-    "packages/workers/api",
-    "packages/workers/api-node"
+    "packages/workers/jam-network"
   ],
   "engines": {
     "node": ">=22",
