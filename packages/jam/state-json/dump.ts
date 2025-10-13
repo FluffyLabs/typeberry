@@ -5,7 +5,6 @@ import {
   tryAsServiceGas,
   tryAsServiceId,
 } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { fromJson } from "@typeberry/block-json";
 import { Bytes } from "@typeberry/bytes";
@@ -15,11 +14,13 @@ import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js"
 import { json } from "@typeberry/json-parser";
 import {
   type AccumulationOutput,
+  AUTHORIZATION_QUEUE_SIZE,
   accumulationOutputComparator,
   type InMemoryService,
   InMemoryState,
+  MAX_AUTH_POOL_SIZE,
   PrivilegedServices,
-  RecentBlocksHistory,
+  RecentBlocks,
   type State,
   tryAsPerCore,
 } from "@typeberry/state";
@@ -125,7 +126,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
       if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && chi.chi_r === undefined) {
         throw new Error("Registrar is required in Privileges GP ^0.7.1");
       }
-      return InMemoryState.create({
+      return InMemoryState.new(spec, {
         authPools: tryAsPerCore(
           alpha.map((perCore) => {
             if (perCore.length > MAX_AUTH_POOL_SIZE) {
@@ -144,7 +145,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           }),
           spec,
         ),
-        recentBlocks: beta ?? RecentBlocksHistory.empty(),
+        recentBlocks: beta ?? RecentBlocks.empty(),
         nextValidatorData: gamma.gamma_k,
         epochRoot: gamma.gamma_z,
         sealingKeySeries: TicketsOrKeys.toSafroleSealingKeys(gamma.gamma_s, spec),

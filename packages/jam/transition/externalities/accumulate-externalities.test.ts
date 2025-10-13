@@ -9,7 +9,6 @@ import {
   tryAsServiceId,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize, FixedSizeArray, HashDictionary } from "@typeberry/collections";
@@ -33,6 +32,7 @@ import {
 } from "@typeberry/jam-host-calls";
 import { tryAsU32, tryAsU64, type U32, type U64 } from "@typeberry/numbers";
 import {
+  AUTHORIZATION_QUEUE_SIZE,
   AutoAccumulate,
   InMemoryService,
   InMemoryState,

@@ -6,7 +6,7 @@ import {
   tryAsServiceGas,
   tryAsServiceId,
 } from "@typeberry/block";
-import { type CodecRecord, codec, type Descriptor } from "@typeberry/codec";
+import { type CodecRecord, codec, type DescribedBy, type Descriptor } from "@typeberry/codec";
 import { tryAsU16, tryAsU32, tryAsU64, type U16, type U32 } from "@typeberry/numbers";
 import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
 import { codecPerCore, type PerCore } from "./common.js";
@@ -289,3 +289,5 @@ export class StatisticsData {
     public readonly services: Map<ServiceId, ServiceStatistics>,
   ) {}
 }
+
+export type StatisticsDataView = DescribedBy<typeof StatisticsData.Codec.View>;

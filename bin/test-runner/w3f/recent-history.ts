@@ -5,7 +5,7 @@ import { HashDictionary } from "@typeberry/collections";
 import { type KeccakHash, keccak, type OpaqueHash } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
-import type { RecentBlocksHistory } from "@typeberry/state";
+import type { RecentBlocks } from "@typeberry/state";
 import { recentBlocksHistoryFromJson, reportedWorkPackageFromJson } from "@typeberry/state-json";
 import {
   RecentHistory,
@@ -52,7 +52,7 @@ class TestState {
     }),
   );
 
-  beta!: RecentBlocksHistory;
+  beta!: RecentBlocks;
 }
 
 export class HistoryTest {
@@ -78,7 +78,7 @@ export async function runHistoryTest(testContent: HistoryTest) {
 
   const recentHistory = new RecentHistory(hasher, testContent.pre_state);
   const partialUpdate = recentHistory.partialTransition({ priorStateRoot: testContent.input.priorStateRoot });
-  const stateUpdate = await recentHistory.transition({
+  const stateUpdate = recentHistory.transition({
     partial: partialUpdate,
     headerHash: testContent.input.headerHash,
     accumulateRoot: testContent.input.accumulateRoot,
