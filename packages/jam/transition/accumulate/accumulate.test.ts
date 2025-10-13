@@ -25,12 +25,12 @@ import {
   type AccumulationOutput,
   InMemoryService,
   InMemoryState,
+  NotYetAccumulatedReport,
   PreimageItem,
   PrivilegedServices,
   ServiceAccountInfo,
   tryAsPerCore,
 } from "@typeberry/state";
-import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
 import { Accumulate } from "./accumulate.js";
 import type { AccumulateInput, AccumulateState } from "./accumulate-state.js";
@@ -199,7 +199,7 @@ describe("accumulate", () => {
 
     // then
     deepEqual(output.ok.accumulationOutputLog.array, expectedOutput);
-    deepEqual(state, expectedState);
+    deepEqual<AccumulateState>(state, expectedState);
   });
 });
 

@@ -2,6 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import {
   Header,
+  reencodeAsView,
   tryAsPerEpochBlock,
   tryAsPerValidator,
   tryAsTimeSlot,
@@ -9,7 +10,6 @@ import {
   ValidatorKeys,
 } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES } from "@typeberry/crypto";
@@ -54,8 +54,8 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)) {
           BANDERSNATCH_VRF_SIGNATURE_BYTES,
         ).asOpaque(),
       });
-      const encoded = Encoder.encodeObject(Header.Codec, header, tinyChainSpec);
-      const headerView = Decoder.decodeObject(Header.Codec.View, encoded, tinyChainSpec);
+      const spec = tinyChainSpec;
+      const headerView = reencodeAsView(Header.Codec, header, spec);
 
       const safroleSeal = new SafroleSeal(bandersnatch);
       const result = await safroleSeal.verifyHeaderSeal(headerView, {
@@ -106,8 +106,8 @@ if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)) {
           BANDERSNATCH_VRF_SIGNATURE_BYTES,
         ).asOpaque(),
       });
-      const encoded = Encoder.encodeObject(Header.Codec, header, tinyChainSpec);
-      const headerView = Decoder.decodeObject(Header.Codec.View, encoded, tinyChainSpec);
+      const spec = tinyChainSpec;
+      const headerView = reencodeAsView(Header.Codec, header, spec);
 
       const safroleSeal = new SafroleSeal(bandersnatch);
       const result = await safroleSeal.verifyHeaderSeal(headerView, {

@@ -27,6 +27,7 @@ import {
   type AutoAccumulate,
   accumulationOutputComparator,
   hashComparator,
+  type NotYetAccumulatedReport,
   PrivilegedServices,
   ServiceAccountInfo,
   type ServicesUpdate,
@@ -34,7 +35,6 @@ import {
   type UpdateService,
   UpdateServiceKind,
 } from "@typeberry/state";
-import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { assertEmpty, Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/index.js";
@@ -256,7 +256,7 @@ export class Accumulate {
     );
 
     if (result.isError) {
-      // https://graypaper.fluffylabs.dev/#/7e6ff6a/2fb6012fb601?v=0.6.7
+      // https://graypaper.fluffylabs.dev/#/ab2cdbd/2fc9032fc903?v=0.7.2
       logger.log`Accumulation failed for ${serviceId}.`;
       // even though accumulation failed, we still need to make sure that
       // incoming transfers updated the balance, hence we pass state update here
@@ -435,10 +435,15 @@ export class Accumulate {
       gasCost = tryAsServiceGas(gasCost + consumedGas);
 
       // https://graypaper.fluffylabs.dev/#/ab2cdbd/193b05193b05?v=0.7.2
-      // do not update statistics, if the service only had incoming transfers
-      if (operands.length > 0) {
-        const serviceStatistics = statistics.get(serviceId) ?? { count: tryAsU32(0), gasUsed: tryAsServiceGas(0) };
-        serviceStatistics.count = tryAsU32(serviceStatistics.count + accumulateData.getReportsLength(serviceId));
+      const serviceStatistics = statistics.get(serviceId) ?? { count: tryAsU32(0), gasUsed: tryAsServiceGas(0) };
+      const count = accumulateData.getReportsLength(serviceId);
+
+      // [0.7.1]: do not update statistics, if the service only had incoming transfers
+      if (
+        (Compatibility.isLessThan(GpVersion.V0_7_2) && count > 0) ||
+        (Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) && (count > 0 || consumedGas > 0n))
+      ) {
+        serviceStatistics.count = tryAsU32(serviceStatistics.count + count);
         serviceStatistics.gasUsed = tryAsServiceGas(serviceStatistics.gasUsed + consumedGas);
         statistics.set(serviceId, serviceStatistics);
       }
@@ -496,9 +501,10 @@ export class Accumulate {
     const accumulationQueue = this.state.accumulationQueue.slice();
     accumulationQueue[phaseIndex] = pruneQueue(toAccumulateLater, accumulatedSet);
 
+    const timeslot = this.state.timeslot;
     for (let i = 1; i < epochLength; i++) {
       const queueIndex = (phaseIndex + epochLength - i) % epochLength;
-      if (i < slot - this.state.timeslot) {
+      if (i < slot - timeslot) {
         accumulationQueue[queueIndex] = [];
       } else {
         accumulationQueue[queueIndex] = pruneQueue(accumulationQueue[queueIndex], accumulatedSet);

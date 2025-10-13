@@ -1,13 +1,12 @@
 import { describe, it } from "node:test";
 import { tryAsTimeSlot } from "@typeberry/block";
-import { MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { Bytes } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsPerCore } from "@typeberry/state";
+import { MAX_AUTH_POOL_SIZE, tryAsPerCore } from "@typeberry/state";
 import { deepEqual } from "@typeberry/utils";
 import { Authorization, type AuthorizationInput, type AuthorizationState } from "./authorization.js";
 import { copyAndUpdateState } from "./test.utils.js";
