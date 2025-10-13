@@ -19,7 +19,7 @@ import {
   PartiallyUpdatedState,
 } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
-import { tryAsU32, type U32 } from "@typeberry/numbers";
+import { sumU64, tryAsU32, type U32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
 import {
@@ -125,17 +125,17 @@ export class Accumulate {
     operands: Operand[],
     gas: ServiceGas,
     entropy: EntropyHash,
-    inputStateUpdate: AccumulationStateUpdate,
+    updatedState: PartiallyUpdatedState,
   ): Promise<Result<InvocationResult, PvmInvocationError>> {
-    const service = this.state.getService(serviceId);
-    if (service === null) {
+    const serviceInfo = updatedState.getServiceInfo(serviceId);
+    if (serviceInfo === null) {
       logger.log`Service with id ${serviceId} not found.`;
       return Result.error(PvmInvocationError.NoService);
     }
 
-    const codeHash = service.getInfo().codeHash;
+    const codeHash = serviceInfo.codeHash;
     // TODO [ToDr] Should we check that the preimage is still available?
-    const code = service.getPreimage(codeHash.asOpaque());
+    const code = updatedState.getPreimage(serviceId, codeHash.asOpaque());
 
     if (code === null) {
       logger.log`Code with hash ${codeHash} not found for service ${serviceId}.`;
@@ -151,13 +151,13 @@ export class Accumulate {
     const partialState = new AccumulateExternalities(
       this.chainSpec,
       this.blake2b,
-      new PartiallyUpdatedState(this.state, inputStateUpdate),
+      updatedState,
       serviceId,
       nextServiceId,
       slot,
     );
 
-    const fetchExternalities = Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
+    const fetchExternalities = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
       ? FetchExternalities.createForAccumulate({ entropy, transfers, operands }, this.chainSpec)
       : FetchExternalities.createForPre071Accumulate({ entropy, operands }, this.chainSpec);
 
@@ -226,6 +226,25 @@ export class Accumulate {
   ) {
     logger.log`Accumulating service ${serviceId}, transfers: ${transfers.length} operands: ${operands.length} at slot: ${slot}.`;
 
+    const updatedState = new PartiallyUpdatedState(this.state, inputStateUpdate);
+
+    // update service balance from incoming transfers
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
+      const serviceInfo = updatedState.getServiceInfo(serviceId);
+      if (serviceInfo !== null) {
+        // update the balance from incoming tranfsers
+        const newBalance = sumU64(serviceInfo.balance, ...transfers.map((item) => item.amount));
+
+        if (newBalance.overflow) {
+          logger.log`Accumulation failed because of overflowing balance ${serviceId}.`;
+          return { stateUpdate: null, consumedGas: 0n };
+        }
+
+        const newInfo = ServiceAccountInfo.create({ ...serviceInfo, balance: newBalance.value });
+        updatedState.updateServiceInfo(serviceId, newInfo);
+      }
+    }
+
     const result = await this.pvmAccumulateInvocation(
       slot,
       serviceId,
@@ -233,13 +252,15 @@ export class Accumulate {
       operands,
       gasCost,
       entropy,
-      inputStateUpdate,
+      updatedState,
     );
 
     if (result.isError) {
       // https://graypaper.fluffylabs.dev/#/7e6ff6a/2fb6012fb601?v=0.6.7
       logger.log`Accumulation failed for ${serviceId}.`;
-      return { stateUpdate: null, consumedGas: 0n };
+      // even though accumulation failed, we still need to make sure that
+      // incoming transfers updated the balance, hence we pass state update here
+      return { stateUpdate: updatedState.stateUpdate, consumedGas: 0n };
     }
 
     logger.log`Accumulation successful for ${serviceId}. Consumed: ${result.ok.consumedGas}`;
@@ -347,7 +368,7 @@ export class Accumulate {
       state: stateAfterParallelAcc,
       ...rest
     } = await this.accumulateInParallel(accumulateData, slot, entropy, statistics, stateUpdate);
-    const newTransfers = stateAfterParallelAcc.transfers;
+    const newTransfers = stateAfterParallelAcc.takeTransfers();
     assertEmpty(rest);
 
     // NOTE [ToDr] recursive invocation
@@ -400,10 +421,11 @@ export class Accumulate {
 
     for (const serviceId of serviceIds) {
       const checkpoint = AccumulationStateUpdate.copyFrom(currentState);
+      const operands = accumulateData.getOperands(serviceId);
       const { consumedGas, stateUpdate } = await this.accumulateSingleService(
         serviceId,
         accumulateData.getTransfers(serviceId),
-        accumulateData.getOperands(serviceId),
+        operands,
         accumulateData.getGasCost(serviceId),
         slot,
         entropy,
@@ -412,10 +434,14 @@ export class Accumulate {
 
       gasCost = tryAsServiceGas(gasCost + consumedGas);
 
-      const serviceStatistics = statistics.get(serviceId) ?? { count: tryAsU32(0), gasUsed: tryAsServiceGas(0) };
-      serviceStatistics.count = tryAsU32(serviceStatistics.count + accumulateData.getReportsLength(serviceId));
-      serviceStatistics.gasUsed = tryAsServiceGas(serviceStatistics.gasUsed + consumedGas);
-      statistics.set(serviceId, serviceStatistics);
+      // https://graypaper.fluffylabs.dev/#/ab2cdbd/193b05193b05?v=0.7.2
+      // do not update statistics, if the service only had incoming transfers
+      if (operands.length > 0) {
+        const serviceStatistics = statistics.get(serviceId) ?? { count: tryAsU32(0), gasUsed: tryAsServiceGas(0) };
+        serviceStatistics.count = tryAsU32(serviceStatistics.count + accumulateData.getReportsLength(serviceId));
+        serviceStatistics.gasUsed = tryAsServiceGas(serviceStatistics.gasUsed + consumedGas);
+        statistics.set(serviceId, serviceStatistics);
+      }
       currentState = stateUpdate === null ? checkpoint : stateUpdate;
 
       if (Compatibility.is(GpVersion.V0_7_0) && serviceId === currentManager) {
@@ -488,6 +514,7 @@ export class Accumulate {
       const info = partialStateUpdate.getServiceInfo(serviceId);
       if (info === null) {
         // NOTE If there is no service, we dont update it.
+        logger.log`Skipping update of ${serviceId}, because we have no service info.`;
         continue;
       }
       // δ‡

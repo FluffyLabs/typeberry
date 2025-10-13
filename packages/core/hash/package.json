@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/hash",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Hashing utilities for typeberry.",
   "main": "index.ts",
   "dependencies": {

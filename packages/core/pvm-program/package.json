@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/pvm-program",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "A tool to parse all types of PVM programs",
   "main": "index.ts",
   "dependencies": {

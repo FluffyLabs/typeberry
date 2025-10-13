@@ -16,7 +16,9 @@ before(async () => {
 describe("JSON state dump", () => {
   it("should load full JSON state dump", async () => {
     const spec = tinyChainSpec;
-    const dumpFile = "./dump.example.json";
+    const dumpFile = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+      ? "./dump-071.example.json"
+      : "./dump.example.json";
     const testState = await import(dumpFile);
     const fromJson = fullStateDumpFromJson(spec);
 
