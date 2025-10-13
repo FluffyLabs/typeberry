@@ -10,6 +10,7 @@ import { type CodecRecord, codec, type Descriptor } from "@typeberry/codec";
 import { tryAsU16, tryAsU32, tryAsU64, type U16, type U32 } from "@typeberry/numbers";
 import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
 import { codecPerCore, type PerCore } from "./common.js";
+import { ignoreValueWithDefault } from "./service.js";
 
 const codecServiceId: Descriptor<ServiceId> =
   Compatibility.isSuite(TestSuite.W3F_DAVXY) || Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_7)
@@ -151,12 +152,26 @@ export class CoreStatistics {
  * Service statistics.
  * Updated per block, based on available work reports (`W`).
  *
- * https://graypaper.fluffylabs.dev/#/68eaa1f/185104185104?v=0.6.4
- * https://github.com/gavofyork/graypaper/blob/9bffb08f3ea7b67832019176754df4fb36b9557d/text/statistics.tex#L77
+ * https://graypaper.fluffylabs.dev/#/1c979cb/199802199802?v=0.7.1
  */
 export class ServiceStatistics {
-  static Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
-    ? codec.Class(ServiceStatistics, {
+  static Codec = Compatibility.selectIfGreaterOrEqual({
+    fallback: codec.Class(ServiceStatistics, {
+      providedCount: codecVarU16,
+      providedSize: codec.varU32,
+      refinementCount: codec.varU32,
+      refinementGasUsed: codecVarGas,
+      imports: codecVarU16,
+      exports: codecVarU16,
+      extrinsicSize: codec.varU32,
+      extrinsicCount: codecVarU16,
+      accumulateCount: codec.varU32,
+      accumulateGasUsed: codecVarGas,
+      onTransfersCount: codec.varU32,
+      onTransfersGasUsed: codecVarGas,
+    }),
+    versions: {
+      [GpVersion.V0_7_0]: codec.Class(ServiceStatistics, {
         providedCount: codecVarU16,
         providedSize: codec.varU32,
         refinementCount: codec.varU32,
@@ -169,21 +184,23 @@ export class ServiceStatistics {
         accumulateGasUsed: codecVarGas,
         onTransfersCount: codec.varU32,
         onTransfersGasUsed: codecVarGas,
-      })
-    : codec.Class(ServiceStatistics, {
+      }),
+      [GpVersion.V0_7_1]: codec.Class(ServiceStatistics, {
         providedCount: codecVarU16,
         providedSize: codec.varU32,
         refinementCount: codec.varU32,
         refinementGasUsed: codecVarGas,
         imports: codecVarU16,
-        exports: codecVarU16,
-        extrinsicSize: codec.varU32,
         extrinsicCount: codecVarU16,
+        extrinsicSize: codec.varU32,
+        exports: codecVarU16,
         accumulateCount: codec.varU32,
         accumulateGasUsed: codecVarGas,
-        onTransfersCount: codec.varU32,
-        onTransfersGasUsed: codecVarGas,
-      });
+        onTransfersCount: ignoreValueWithDefault(tryAsU32(0)),
+        onTransfersGasUsed: ignoreValueWithDefault(tryAsServiceGas(0)),
+      }),
+    },
+  });
 
   static create(v: CodecRecord<ServiceStatistics>) {
     return new ServiceStatistics(
@@ -223,9 +240,9 @@ export class ServiceStatistics {
     public accumulateCount: U32,
     /** `a.1` */
     public accumulateGasUsed: ServiceGas,
-    /** `t.0` */
+    /** `t.0` @deprecated since 0.7.1 */
     public onTransfersCount: U32,
-    /** `t.1` */
+    /** `t.1` @deprecated since 0.7.1 */
     public onTransfersGasUsed: ServiceGas,
   ) {}
 
