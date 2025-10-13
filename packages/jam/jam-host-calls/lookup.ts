@@ -57,7 +57,7 @@ export class Lookup implements HostCallHandler {
     // v
     const preImage = this.account.lookup(serviceId, preImageHash);
 
-    logger.trace`LOOKUP(${serviceId}, ${preImageHash}) <- ${preImage?.toStringTruncated()}...`;
+    logger.trace`LOOKUP(${serviceId}, ${preImageHash}) <- ${preImage?.toStringTruncated() ?? "<missing>"}...`;
 
     const preImageLength = preImage === null ? tryAsU64(0) : tryAsU64(preImage.raw.length);
     const preimageBlobOffset = regs.get(10);
