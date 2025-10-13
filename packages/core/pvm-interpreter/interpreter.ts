@@ -330,11 +330,9 @@ export class Interpreter {
     const blocks: Map<string, number> = new Map();
     let currentBlock = "0";
     let gasCost = 0;
-    for (let index = 0; index < codeLength; index++) {
-      if (!this.mask.isInstruction(index)) {
-        continue;
-      }
+    const getNextIstructionIndex = (index: number) => index + 1 + this.mask.getNoOfBytesToNextInstruction(index + 1);
 
+    for (let index = 0; index < codeLength; index = getNextIstructionIndex(index)) {
       const instruction = this.code[index];
       if (this.basicBlocks.isBeginningOfBasicBlock(index)) {
         blocks.set(currentBlock, gasCost);
