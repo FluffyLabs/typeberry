@@ -61,7 +61,7 @@ describe("State Serialization", () => {
       versions: {
         [GpVersion.V0_6_7]: "0xa6354341d3c232456ec5cdd4fd84daf474d7083ebc4de180363e656c6e62a704",
         [GpVersion.V0_7_0]: "0xcf33ddfb0987283f7614652d7eb4d3509e5efd93466a4b28ab4865cc912a66e1",
-        [GpVersion.V0_7_1]: "0xe8a8d8d0fdb81442018614fb7fb5b0c67a78b667414ca5e17b0b8f6cefcc9323",
+        [GpVersion.V0_7_1]: "0xf1dff0f8d8d5470aa6fc381d07e644f5b2f7a32bf06a7cf1dc664fe4b6298402",
       },
     });
 
