@@ -92,7 +92,7 @@ export async function initializeDatabase(
   for (const [hash, slot] of ancestry) {
     await blocks.insertBlock(new WithHash(hash, blockAsView(emptyBlock(slot), spec)));
   }
-  await states.insertState(genesisHeaderHash, genesisStateSerialized);
+  await states.insertInitialState(genesisHeaderHash, genesisStateSerialized);
   await blocks.setPostStateRoot(genesisHeaderHash, genesisStateRootHash);
   await blocks.setBestHeaderHash(genesisHeaderHash);
 

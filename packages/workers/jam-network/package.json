@@ -11,12 +11,9 @@
     "@typeberry/config-node": "*",
     "@typeberry/crypto": "*",
     "@typeberry/database": "*",
-    "@typeberry/database-lmdb": "*",
-    "@typeberry/generic-worker": "*",
     "@typeberry/hash": "*",
     "@typeberry/jamnp-s": "*",
     "@typeberry/logger": "*",
-    "@typeberry/state-machine": "*",
     "@typeberry/utils": "*"
   },
   "scripts": {

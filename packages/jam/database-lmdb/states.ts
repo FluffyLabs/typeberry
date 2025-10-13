@@ -2,16 +2,16 @@ import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { LeafDb, type StatesDb, StateUpdateError } from "@typeberry/database";
+import { type InitStatesDb, LeafDb, type StatesDb, StateUpdateError } from "@typeberry/database";
 import type { Blake2b, TruncatedHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { ServicesUpdate, State } from "@typeberry/state";
 import type { StateEntries, StateKey } from "@typeberry/state-merkleization";
 import { SerializedState, StateEntryUpdateAction, serializeStateUpdate } from "@typeberry/state-merkleization";
+import { updateLeafs } from "@typeberry/state-merkleization/leafs-db-update.js";
 import type { LeafNode, ValueHash } from "@typeberry/trie";
-import { InMemoryTrie, leafComparator } from "@typeberry/trie";
-import { getBlake2bTrieHasher } from "@typeberry/trie/hasher.js";
-import { assertNever, OK, Result, resultToString } from "@typeberry/utils";
+import { leafComparator } from "@typeberry/trie";
+import { OK, Result, resultToString } from "@typeberry/utils";
 import type { LmdbRoot, SubDb } from "./root.js";
 
 const logger = Logger.new(import.meta.filename, "db");
@@ -64,7 +64,7 @@ const logger = Logger.new(import.meta.filename, "db");
  * - [ ] removing unused values
  */
 
-export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
+export class LmdbStates implements StatesDb<SerializedState<LeafDb>>, InitStatesDb<StateEntries> {
   private readonly states: SubDb;
   private readonly values: SubDb;
 
@@ -77,12 +77,10 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     this.values = this.root.subDb("values");
   }
 
-  /**
-   * Insert a pre-defined, serialized state directly into the database.
-   *
-   * Optionally passing service enumeration data.
-   */
-  async insertState(headerHash: HeaderHash, serializedState: StateEntries): Promise<Result<OK, StateUpdateError>> {
+  async insertInitialState(
+    headerHash: HeaderHash,
+    serializedState: StateEntries,
+  ): Promise<Result<OK, StateUpdateError>> {
     return await this.updateAndCommit(
       headerHash,
       SortedSet.fromArray<LeafNode>(leafComparator, []),
@@ -95,24 +93,7 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     leafs: SortedSet<LeafNode>,
     data: Iterable<[StateEntryUpdateAction, StateKey | TruncatedHash, BytesBlob]>,
   ): Promise<Result<OK, StateUpdateError>> {
-    const blake2bTrieHasher = getBlake2bTrieHasher(this.blake2b);
-    // We will collect all values that don't fit directly into leaf nodes.
-    const values: [ValueHash, BytesBlob][] = [];
-    for (const [action, key, value] of data) {
-      if (action === StateEntryUpdateAction.Insert) {
-        const leafNode = InMemoryTrie.constructLeaf(blake2bTrieHasher, key.asOpaque(), value);
-        leafs.replace(leafNode);
-        if (!leafNode.hasEmbeddedValue()) {
-          values.push([leafNode.getValueHash(), value]);
-        }
-      } else if (action === StateEntryUpdateAction.Remove) {
-        const leafNode = InMemoryTrie.constructLeaf(blake2bTrieHasher, key.asOpaque(), BytesBlob.empty());
-        leafs.removeOne(leafNode);
-        // TODO [ToDr] Handle ref-counting values or updating some header-hash-based references.
-      } else {
-        assertNever(action);
-      }
-    }
+    const { values } = updateLeafs(leafs, this.blake2b, data);
     // TODO [ToDr] could be optimized to already have leaves written to one big chunk
     // (we could pre-allocate one buffer for all the leafs)
     const stateLeafs = BytesBlob.blobFromParts(leafs.array.map((x) => x.node.raw));
@@ -138,11 +119,9 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     state: SerializedState<LeafDb>,
     update: Partial<State & ServicesUpdate>,
   ): Promise<Result<OK, StateUpdateError>> {
-    // TODO [ToDr] We should probably detect a conflicting state (i.e. two services
-    // updated at once, etc), for now we're just ignoring it.
     const updatedValues = serializeStateUpdate(this.spec, this.blake2b, update);
     // and finally we insert new values and store leaves in the DB.
-    return await this.updateAndCommit(headerHash, state.backend.leaves, updatedValues);
+    return await this.updateAndCommit(headerHash, state.backend.leafs, updatedValues);
   }
 
   async getStateRoot(state: SerializedState<LeafDb>): Promise<StateRootHash> {
@@ -157,10 +136,10 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     }
     const values = this.values;
     const leafDbResult = LeafDb.fromLeavesBlob(BytesBlob.blobFrom(leafNodes), {
-      get(key: Uint8Array): Uint8Array {
-        const val = values.get(key);
+      get(key: ValueHash): Uint8Array {
+        const val = values.get(key.raw);
         if (val === undefined) {
-          throw new Error(`Missing required value: ${BytesBlob.blobFrom(key)} in the DB`);
+          throw new Error(`Missing required value: ${key} in the DB`);
         }
         return val;
       },

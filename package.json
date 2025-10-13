@@ -33,7 +33,6 @@
     "packages/core/pvm-program",
     "packages/core/pvm-spi-decoder",
     "packages/core/shuffling",
-    "packages/core/state-machine",
     "packages/core/trie",
     "packages/core/utils",
     "packages/extensions/ipc",
@@ -56,9 +55,11 @@
     "packages/misc/benchmark",
     "packages/misc/builder",
     "packages/workers/block-generator",
-    "packages/workers/generic",
     "packages/workers/importer",
-    "packages/workers/jam-network"
+    "packages/workers/jam-network",
+    "packages/core/listener",
+    "packages/workers/api",
+    "packages/workers/api-node"
   ],
   "engines": {
     "node": ">=22",

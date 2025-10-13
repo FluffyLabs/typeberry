@@ -62,7 +62,7 @@ describe("LMDB States database", () => {
     const emptyRoot = serialized.getRootHash(blake2b);
 
     // when
-    const res = await states.insertState(headerHash, serialized);
+    const res = await states.insertInitialState(headerHash, serialized);
     deepEqual(res, Result.ok(OK));
     const newState = states.getState(headerHash);
     assert.ok(newState !== null);
@@ -76,7 +76,7 @@ describe("LMDB States database", () => {
     const root = new LmdbRoot(tmpDir);
     const states = new LmdbStates(spec, blake2b, root);
     const state = InMemoryState.empty(spec);
-    await states.insertState(headerHash, StateEntries.serializeInMemory(spec, blake2b, state));
+    await states.insertInitialState(headerHash, StateEntries.serializeInMemory(spec, blake2b, state));
     const newState = states.getState(headerHash);
     assert.ok(newState !== null);
     const headerHash2: HeaderHash = Bytes.fill(HASH_SIZE, 2).asOpaque();
@@ -187,7 +187,7 @@ describe("LMDB States database", () => {
     const initialRoot = serialized.getRootHash(blake2b);
 
     // when
-    const res = await states.insertState(headerHash, serialized);
+    const res = await states.insertInitialState(headerHash, serialized);
     deepEqual(res, Result.ok(OK));
     const newState = states.getState(headerHash);
     assert.ok(newState !== null);
@@ -208,7 +208,7 @@ describe("LMDB States database", () => {
     if (initialService === undefined) {
       throw new Error("Expected service in test state!");
     }
-    await states.insertState(headerHash, StateEntries.serializeInMemory(spec, blake2b, state));
+    await states.insertInitialState(headerHash, StateEntries.serializeInMemory(spec, blake2b, state));
     const newState = states.getState(headerHash);
     assert.ok(newState !== null);
     const headerHash2: HeaderHash = Bytes.fill(HASH_SIZE, 2).asOpaque();

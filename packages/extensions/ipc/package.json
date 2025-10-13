@@ -14,8 +14,8 @@
     "@typeberry/jamnp-s": "*",
     "@typeberry/logger": "*",
     "@typeberry/networking": "*",
+    "@typeberry/listener": "*",
     "@typeberry/numbers": "*",
-    "@typeberry/state-machine": "*",
     "@typeberry/state-merkleization": "*",
     "@typeberry/utils": "*"
   },

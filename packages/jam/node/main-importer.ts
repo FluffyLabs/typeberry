@@ -1,18 +1,16 @@
-import type { BlockView, HeaderHash } from "@typeberry/block";
+import type { BlockView, HeaderHash, StateRootHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { Decoder } from "@typeberry/codec";
-import { WorkerConfig } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { createImporter } from "@typeberry/importer";
-import { ImporterReady, importBlockResultCodec } from "@typeberry/importer/state-machine.js";
-import { CURRENT_SUITE, CURRENT_VERSION, Result } from "@typeberry/utils";
+import { CURRENT_SUITE, CURRENT_VERSION, Result, resultToString } from "@typeberry/utils";
+import { NodeConfig } from "@typeberry/workers-api-node";
 import { getChainSpec, initializeDatabase, logger, openDatabase } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 import type { NodeApi } from "./main.js";
 import packageJson from "./package.json" with { type: "json" };
 
-const zeroHash = Bytes.zero(HASH_SIZE).asOpaque();
+const zeroHash = Bytes.zero(HASH_SIZE).asOpaque<StateRootHash>();
 
 export async function mainImporter(config: JamConfig, withRelPath: (v: string) => string): Promise<NodeApi> {
   await initWasm();
@@ -32,21 +30,26 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
   await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
   await rootDb.close();
 
-  const workerConfig = new WorkerConfig(chainSpec, dbPath, false);
-  const { lmdb, importer } = await createImporter(workerConfig);
-  const importerReady = new ImporterReady();
-  importerReady.setConfig(workerConfig);
-  importerReady.setImporter(importer);
+  const omitSealVerification = false;
+  const workerConfig = NodeConfig.new({
+    chainSpec,
+    blake2b,
+    dbPath,
+    workerParams: {
+      omitSealVerification,
+    },
+  });
+  const { db, importer } = await createImporter(workerConfig);
   await importer.prepareForNextEpoch();
 
   const api: NodeApi = {
     chainSpec,
-    async importBlock(block: BlockView) {
-      const res = (await importerReady.importBlock(block.encoded().raw)).response;
-      if (res !== null && res !== undefined) {
-        return Decoder.decodeObject(importBlockResultCodec, res);
+    async importBlock(block: BlockView): Promise<Result<StateRootHash, string>> {
+      const res = await importer.importBlock(block, omitSealVerification);
+      if (res.isOk) {
+        return Result.ok(importer.getBestStateRootHash() ?? zeroHash);
       }
-      return Result.error("");
+      return Result.error(resultToString(res));
     },
     async getStateEntries(hash: HeaderHash) {
       return importer.getStateEntries(hash);
@@ -56,7 +59,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
     },
     async close() {
       logger.log`[main] 🛢️ Closing the database`;
-      await lmdb.close();
+      await db.close();
       logger.info`[main] ✅ Done.`;
     },
   };

@@ -11,13 +11,10 @@
     "@typeberry/config": "*",
     "@typeberry/crypto": "*",
     "@typeberry/database": "*",
-    "@typeberry/database-lmdb": "*",
-    "@typeberry/generic-worker": "*",
     "@typeberry/hash": "*",
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
     "@typeberry/ordering": "*",
-    "@typeberry/state-machine": "*",
     "@typeberry/state-merkleization": "*",
     "@typeberry/transition": "*",
     "@typeberry/utils": "*"

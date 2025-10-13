@@ -1,7 +1,7 @@
 import type { HeaderHash } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import { ce129, up0 } from "@typeberry/jamnp-s";
-import type { Listener } from "@typeberry/state-machine";
+import type { Listener } from "@typeberry/listener";
 import type { TrieNode } from "@typeberry/trie/nodes.js";
 import { startIpcServer } from "../server.js";
 import { JamnpIpcHandler } from "./handler.js";

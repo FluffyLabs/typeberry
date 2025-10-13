@@ -1,21 +1,14 @@
 import { isMainThread } from "node:worker_threads";
 
 import type { BlockView, HeaderHash, HeaderView, StateRootHash } from "@typeberry/block";
-import { type ChainSpec, WorkerConfig } from "@typeberry/config";
+import type { ChainSpec } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
-import type { Finished, MainInit } from "@typeberry/generic-worker";
 import { Blake2b, type WithHash } from "@typeberry/hash";
-import type { MainReady } from "@typeberry/importer/state-machine.js";
-import * as blockImporter from "@typeberry/importer/worker.js";
-import { NetworkWorkerConfig } from "@typeberry/jam-network/state-machine.js";
-import type { Listener, MessageChannelStateMachine } from "@typeberry/state-machine";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import { CURRENT_SUITE, CURRENT_VERSION, type Result } from "@typeberry/utils";
-import { startBlockGenerator } from "./author.js";
 import { getChainSpec, initializeDatabase, logger, openDatabase } from "./common.js";
 import { initializeExtensions } from "./extensions.js";
 import type { JamConfig, NetworkConfig } from "./jam-config.js";
-import { startNetwork } from "./network.js";
 import packageJson from "./package.json" with { type: "json" };
 
 export type NodeApi = {
@@ -49,7 +42,6 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
 
   // Start extensions
   const importerInit = await blockImporter.spawnWorker();
-  const bestHeader = importerInit.getState<MainReady>("ready(main)").onBestBlock;
   const closeExtensions = initializeExtensions({ chainSpec, bestHeader });
 
   // Start block importer
