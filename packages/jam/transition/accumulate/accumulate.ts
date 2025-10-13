@@ -27,6 +27,7 @@ import {
   type AutoAccumulate,
   accumulationOutputComparator,
   hashComparator,
+  type NotYetAccumulatedReport,
   PrivilegedServices,
   ServiceAccountInfo,
   type ServicesUpdate,
@@ -34,7 +35,6 @@ import {
   type UpdateService,
   UpdateServiceKind,
 } from "@typeberry/state";
-import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { assertEmpty, Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/index.js";
@@ -501,9 +501,10 @@ export class Accumulate {
     const accumulationQueue = this.state.accumulationQueue.slice();
     accumulationQueue[phaseIndex] = pruneQueue(toAccumulateLater, accumulatedSet);
 
+    const timeslot = this.state.timeslot;
     for (let i = 1; i < epochLength; i++) {
       const queueIndex = (phaseIndex + epochLength - i) % epochLength;
-      if (i < slot - this.state.timeslot) {
+      if (i < slot - timeslot) {
         accumulationQueue[queueIndex] = [];
       } else {
         accumulationQueue[queueIndex] = pruneQueue(accumulationQueue[queueIndex], accumulatedSet);

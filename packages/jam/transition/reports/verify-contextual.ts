@@ -10,7 +10,7 @@ import { HashSet } from "@typeberry/collections/hash-set.js";
 import { Logger } from "@typeberry/logger";
 import type { U32 } from "@typeberry/numbers";
 import type { State } from "@typeberry/state";
-import { type BlockState, RecentBlocksHistory } from "@typeberry/state/recent-blocks.js";
+import type { BlockState } from "@typeberry/state/recent-blocks.js";
 import { OK, Result } from "@typeberry/utils";
 import type { RecentHistoryStateUpdate } from "../recent-history.js";
 import { ReportsError } from "./error.js";
@@ -171,7 +171,7 @@ function verifyRefineContexts(
     }
 
     // check beefy root
-    const beefyRoot = RecentBlocksHistory.accumulationResult(recentBlock);
+    const beefyRoot = recentBlock.accumulationResult;
     if (!beefyRoot.isEqualTo(context.beefyRoot)) {
       return Result.error(
         ReportsError.BadBeefyMmrRoot,

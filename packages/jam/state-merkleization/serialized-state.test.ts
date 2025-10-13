@@ -64,6 +64,7 @@ describe("SerializedState", () => {
 
     // copy back to memory from it's serialized form
     const copiedState = InMemoryState.copyFrom(
+      tinyChainSpec,
       state,
       new Map([
         [
