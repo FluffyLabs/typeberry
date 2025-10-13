@@ -264,7 +264,6 @@ async function loadAndProcessDataFile(
     }
     const decoder = typeof decodeType.decode === "function" ? decodeType.decode(spec) : decodeType.decode;
     data = Decoder.decodeObject(decoder, input.data, spec);
-    }
   } else if (input.type === "json") {
     if (decodeType.json === undefined) {
       throw new Error(`${decodeType.name} does not support reading from JSON.`);
