@@ -262,10 +262,8 @@ async function loadAndProcessDataFile(
     if (decodeType.decode === undefined) {
       throw new Error(`${decodeType.name} does not support decoding from binary data.`);
     }
-    if (typeof decodeType.decode === "function") {
-      data = Decoder.decodeObject(decodeType.decode(spec), input.data, spec);
-    } else {
-      data = Decoder.decodeObject(decodeType.decode, input.data, spec);
+    const decoder = typeof decodeType.decode === "function" ? decodeType.decode(spec) : decodeType.decode;
+    data = Decoder.decodeObject(decoder, input.data, spec);
     }
   } else if (input.type === "json") {
     if (decodeType.json === undefined) {
