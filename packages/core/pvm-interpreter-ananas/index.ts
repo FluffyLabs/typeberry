@@ -1,6 +1,16 @@
-import { disassemble, getExitArg, getGasLeft, getRegisters, getStatus, nextStep, prepareProgram, resetGenericWithMemory, resetJAM, runProgram, setNextProgramCounter } from "anan-as";
-import { InputKind, HasMetadata } from "anan-as";
-import { Status, Registers, tryAsGas, Memory, gasCounter, Gas, tryAsBigGas } from "@typeberry/pvm-interpreter";
+import { type Gas, gasCounter, Memory, Registers, Status, tryAsBigGas, tryAsGas } from "@typeberry/pvm-interpreter";
+import {
+  disassemble,
+  getExitArg,
+  getGasLeft,
+  getRegisters,
+  getStatus,
+  HasMetadata,
+  InputKind,
+  nextStep,
+  resetGenericWithMemory,
+  setNextProgramCounter,
+} from "anan-as";
 
 export class AnanasInterpreter {
   private code: number[] = [];
@@ -9,11 +19,18 @@ export class AnanasInterpreter {
   private kind: InputKind = InputKind.SPI;
   private hasMeta: HasMetadata = HasMetadata.No;
 
-  reset(rawProgram: Uint8Array, pc: number, gas: Gas, _maybeRegisters?: Registers, _maybeMemory?: Memory) {
+  reset(rawProgram: Uint8Array, pc: number, gas: Gas, maybeRegisters?: Registers, _maybeMemory?: Memory) {
     this.code = this.lowerBytes(rawProgram);
     this.pc = pc;
     this.initialGas = gasCounter(gas);
-    resetGenericWithMemory(this.code, [], new Uint8Array(), new Uint8Array(), gas as bigint, this.hasMeta === HasMetadata.Yes);
+    let regs: number[] = [];
+    if (maybeRegisters !== undefined) {
+      regs = this.lowerBytes(maybeRegisters.getAllBytesAsLittleEndian());
+    }
+    const pages = new Uint8Array();
+    const chunks = new Uint8Array();
+    // TODO [MaSo] Set memory
+    resetGenericWithMemory(this.code, regs, pages, chunks, gas as bigint, this.hasMeta === HasMetadata.Yes);
     setNextProgramCounter(this.pc);
   }
 
@@ -22,16 +39,15 @@ export class AnanasInterpreter {
   }
 
   runProgram() {
-    while(nextStep());
+    while (nextStep()) {}
   }
 
   getStatus() {
     const status = getStatus();
     if (status < 0) {
       return Status.OK;
-    } else {
-      return status;
     }
+    return status;
   }
 
   getPC() {

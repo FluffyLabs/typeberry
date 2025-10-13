@@ -3,13 +3,13 @@ import type { Gas } from "@typeberry/pvm-interpreter/gas.js";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import type { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
+import type { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
 import { assertNever, check, safeAllocUint8Array } from "@typeberry/utils";
 import { PvmExecution, tryAsHostCallIndex } from "./host-call-handler.js";
 import { HostCallMemory } from "./host-call-memory.js";
 import { HostCallRegisters } from "./host-call-registers.js";
 import type { HostCallsManager } from "./host-calls-manager.js";
 import type { InterpreterInstanceManager } from "./interpreter-instance-manager.js";
-import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
 
 class ReturnValue {
   private constructor(

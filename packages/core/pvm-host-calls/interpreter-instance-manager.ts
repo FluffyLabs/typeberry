@@ -4,9 +4,9 @@ import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
 type ResolveFn = (pvm: Interpreter | AnanasInterpreter) => void;
 
 export enum InterpreterKind {
-  BuildIn,
-  Ananas,
-  Both,
+  BuildIn = 0,
+  Ananas = 1,
+  Both = 2,
 }
 
 export class InterpreterInstanceManager {
@@ -24,9 +24,7 @@ export class InterpreterInstanceManager {
           );
           break;
         case InterpreterKind.Ananas:
-          this.instances.push(
-            new AnanasInterpreter(),
-          );
+          this.instances.push(new AnanasInterpreter());
           break;
         case InterpreterKind.Both:
           this.instances.push(
@@ -34,9 +32,7 @@ export class InterpreterInstanceManager {
               useSbrkGas: false,
             }),
           );
-          this.instances.push(
-            new AnanasInterpreter(),
-          );
+          this.instances.push(new AnanasInterpreter());
           break;
       }
     }
