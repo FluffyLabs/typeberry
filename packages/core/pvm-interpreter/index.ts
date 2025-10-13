@@ -18,3 +18,4 @@ export {
   tryAsSbrkIndex,
 } from "./memory/index.js";
 export { Registers } from "./registers.js";
+export { Status } from "./status.js";

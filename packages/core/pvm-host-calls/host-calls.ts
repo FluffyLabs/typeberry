@@ -9,6 +9,7 @@ import { HostCallMemory } from "./host-call-memory.js";
 import { HostCallRegisters } from "./host-call-registers.js";
 import type { HostCallsManager } from "./host-calls-manager.js";
 import type { InterpreterInstanceManager } from "./interpreter-instance-manager.js";
+import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
 
 class ReturnValue {
   private constructor(
@@ -44,7 +45,7 @@ export class HostCalls {
     private hostCalls: HostCallsManager,
   ) {}
 
-  private getReturnValue(status: Status, pvmInstance: Interpreter): ReturnValue {
+  private getReturnValue(status: Status, pvmInstance: Interpreter | AnanasInterpreter): ReturnValue {
     const gasConsumed = pvmInstance.getGasConsumed();
     if (status === Status.OOG) {
       return ReturnValue.fromStatus(gasConsumed, status);
@@ -70,7 +71,7 @@ export class HostCalls {
     return ReturnValue.fromStatus(gasConsumed, Status.PANIC);
   }
 
-  private async execute(pvmInstance: Interpreter) {
+  private async execute(pvmInstance: Interpreter | AnanasInterpreter) {
     pvmInstance.runProgram();
     for (;;) {
       let status = pvmInstance.getStatus();
