@@ -325,9 +325,9 @@ export class Interpreter {
     return this.memory.getPageDump(tryAsPageNumber(pageNumber));
   }
 
-  calculateBlockGasCost(): Record<string, number> {
+  calculateBlockGasCost(): Map<string, number> {
     const codeLength = this.code.length;
-    const blocks: Record<string, number> = {};
+    const blocks: Map<string, number> = new Map();
     let currentBlock = "0";
     let gasCost = 0;
     for (let index = 0; index < codeLength; index++) {
@@ -337,7 +337,7 @@ export class Interpreter {
 
       const instruction = this.code[index];
       if (this.basicBlocks.isBeginningOfBasicBlock(index)) {
-        blocks[currentBlock] = gasCost;
+        blocks.set(currentBlock, gasCost);
         currentBlock = index.toString();
         gasCost = 0;
       }
@@ -345,7 +345,7 @@ export class Interpreter {
       gasCost += instructionGasMap[instruction];
     }
 
-    blocks[currentBlock] = gasCost;
+    blocks.set(currentBlock, gasCost);
 
     return blocks;
   }
