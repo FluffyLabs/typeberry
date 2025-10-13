@@ -16,7 +16,7 @@ describe("fuzzing config", () => {
         nodeName: "@typeberry/jam",
         nodeVersion: {
           major: tryAsU8(0),
-          minor: tryAsU8(1),
+          minor: tryAsU8(2),
           patch: tryAsU8(0),
         },
         gpVersion: {

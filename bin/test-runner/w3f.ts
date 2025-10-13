@@ -1,4 +1,3 @@
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import { logger, main } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
@@ -22,15 +21,6 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-fluffy", {
     "pvm/programs/inst_store_indirect_u8_with_offset_nok.json",
     "pvm/programs/inst_store_u8_trap_inaccessible.json",
     "pvm/programs/inst_store_u8_trap_read_only.json",
-
-    ...(Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-      ? [
-          // infinite loop during accumulation
-          "accumulate/full/transfer_for_ejected_service-1.json",
-          // infinite loop during accumulation
-          "accumulate/tiny/transfer_for_ejected_service-1.json",
-        ]
-      : []),
   ],
 })
   .then((r) => logger.log`${r}`)

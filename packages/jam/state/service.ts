@@ -9,7 +9,7 @@ import {
 } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, codec, Descriptor, type SizeHint } from "@typeberry/codec";
+import { type CodecRecord, codec, type DescribedBy, Descriptor, type SizeHint } from "@typeberry/codec";
 import { asKnownSize, type KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU64, type U32, type U64 } from "@typeberry/numbers";
@@ -152,6 +152,8 @@ export class ServiceAccountInfo extends WithDebug {
     super();
   }
 }
+
+export type ServiceAccountInfoView = DescribedBy<typeof ServiceAccountInfo.Codec.View>;
 
 export class PreimageItem extends WithDebug {
   static Codec = codec.Class(PreimageItem, {

@@ -82,7 +82,7 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
 
   /** Insert a full state into the database. */
   async insertInitialState(headerHash: HeaderHash, state: InMemoryState): Promise<Result<OK, StateUpdateError>> {
-    const copy = InMemoryState.copyFrom(state, state.intoServicesData());
+    const copy = InMemoryState.copyFrom(this.spec, state, state.intoServicesData());
     this.db.set(headerHash, copy);
     return Result.ok(OK);
   }
@@ -93,6 +93,6 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
       return null;
     }
 
-    return InMemoryState.copyFrom(state, state.intoServicesData());
+    return InMemoryState.copyFrom(this.spec, state, state.intoServicesData());
   }
 }

@@ -1,6 +1,14 @@
-import { Block, type BlockView, emptyBlock, Header, type HeaderHash, type TimeSlot } from "@typeberry/block";
+import {
+  Block,
+  type BlockView,
+  emptyBlock,
+  Header,
+  type HeaderHash,
+  reencodeAsView,
+  type TimeSlot,
+} from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Decoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type JipChainSpec, KnownChainSpec } from "@typeberry/config-node";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
@@ -80,7 +88,7 @@ export async function initializeDatabase(
   const genesisHeader = Decoder.decodeObject(Header.Codec, config.genesisHeader, spec);
   const genesisExtrinsic = emptyBlock().extrinsic;
   const genesisBlock = Block.create({ header: genesisHeader, extrinsic: genesisExtrinsic });
-  const blockView = blockAsView(genesisBlock, spec);
+  const blockView = reencodeAsView(Block.Codec, genesisBlock, spec);
   logger.log`🧬 Writing genesis block #${genesisHeader.timeSlotIndex}: ${genesisHeaderHash}`;
 
   const { genesisStateSerialized, genesisStateRootHash } = loadGenesisState(spec, blake2b, config.genesisState);
@@ -89,7 +97,7 @@ export async function initializeDatabase(
   await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(genesisHeaderHash, blockView));
   // insert fake blocks for ancestry data
   for (const [hash, slot] of ancestry) {
-    await blocks.insertBlock(new WithHash(hash, blockAsView(emptyBlock(slot), spec)));
+    await blocks.insertBlock(new WithHash(hash, reencodeAsView(Block.Codec, emptyBlock(slot), spec)));
   }
   await states.insertInitialState(genesisHeaderHash, genesisStateSerialized);
   await blocks.setPostStateRoot(genesisHeaderHash, genesisStateRootHash);
@@ -108,7 +116,4 @@ function loadGenesisState(spec: ChainSpec, blake2b: Blake2b, data: JipChainSpec[
     genesisStateSerialized: stateEntries,
     genesisStateRootHash,
   };
-}
-function blockAsView(block: Block, spec: ChainSpec): BlockView {
-  return Decoder.decodeObject(Block.Codec.View, Encoder.encodeObject(Block.Codec, block, spec), spec);
 }

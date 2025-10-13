@@ -19,7 +19,7 @@ import {
   ENTROPY_ENTRIES,
   type InMemoryService,
   InMemoryState,
-  type RecentBlocksHistory,
+  type RecentBlocks,
   tryAsPerCore,
   type ValidatorData,
 } from "@typeberry/state";
@@ -98,7 +98,7 @@ class TestState {
   entropy!: EntropyHash[];
   offenders!: Ed25519Key[];
   auth_pools!: AuthorizerHash[][];
-  recent_blocks!: RecentBlocksHistory;
+  recent_blocks!: RecentBlocks;
   accounts!: InMemoryService[];
   cores_statistics!: CoreStatistics[];
   services_statistics!: ServiceStatisticsEntry[];

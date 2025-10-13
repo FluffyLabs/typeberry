@@ -4,7 +4,7 @@ import { Bytes } from "@typeberry/bytes";
 import { asKnownSize, type HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
-import { BlockState, MAX_RECENT_HISTORY, RecentBlocks, RecentBlocksHistory, type State } from "@typeberry/state";
+import { BlockState, MAX_RECENT_HISTORY, RecentBlocks, type State } from "@typeberry/state";
 import type { AccumulateRoot } from "./accumulate/accumulate-state.js";
 
 export type RecentHistoryPartialInput = {
@@ -57,7 +57,8 @@ export class RecentHistory {
    * https://graypaper.fluffylabs.dev/#/1c979cb/0f55020f5502?v=0.7.1
    */
   partialTransition(input: RecentHistoryPartialInput): RecentHistoryStateUpdate {
-    const recentBlocks = this.state.recentBlocks.blocks.slice();
+    const stateBlocks = this.state.recentBlocks;
+    const recentBlocks = stateBlocks.blocks.slice();
     const lastState = recentBlocks.length > 0 ? recentBlocks[recentBlocks.length - 1] : null;
     // update the posterior root of previous state.
     if (lastState !== null) {
@@ -65,7 +66,10 @@ export class RecentHistory {
     }
 
     return {
-      recentBlocks: this.state.recentBlocks.updateBlocks(recentBlocks), // β_H†
+      recentBlocks: RecentBlocks.create({
+        blocks: asKnownSize(recentBlocks),
+        accumulationLog: stateBlocks.accumulationLog,
+      }), // β_H†
     };
   }
 
@@ -80,8 +84,8 @@ export class RecentHistory {
 
     // `β′_B`
     const mmr =
-      this.state.recentBlocks.asCurrent().accumulationLog !== null
-        ? MerkleMountainRange.fromPeaks(this.hasher, this.state.recentBlocks.asCurrent().accumulationLog)
+      this.state.recentBlocks.accumulationLog !== null
+        ? MerkleMountainRange.fromPeaks(this.hasher, this.state.recentBlocks.accumulationLog)
         : MerkleMountainRange.empty(this.hasher);
 
     // append the accumulation root
@@ -105,7 +109,7 @@ export class RecentHistory {
 
     // write back to the state.
     return {
-      recentBlocks: RecentBlocksHistory.create(
+      recentBlocks: RecentBlocks.create(
         RecentBlocks.create({
           blocks: asKnownSize(recentBlocks),
           accumulationLog: peaks,

@@ -30,4 +30,5 @@ export * from "./loader.js";
 export * from "./serialize.js";
 export * from "./serialize-state-update.js";
 export * from "./serialized-state.js";
+export * from "./serialized-state-view.js";
 export * from "./state-entries.js";

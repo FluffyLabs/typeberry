@@ -12,10 +12,11 @@ import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
-import type { ServicesUpdate, State } from "@typeberry/state";
+import type { ServicesUpdate, State, WithStateView } from "@typeberry/state";
 import {
   assertEmpty,
   Compatibility,
+  check,
   type ErrorResult,
   GpVersion,
   measure,
@@ -141,7 +142,7 @@ export class OnChain {
 
   constructor(
     public readonly chainSpec: ChainSpec,
-    public readonly state: State,
+    public readonly state: State & WithStateView,
     blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
   ) {
@@ -353,6 +354,8 @@ export class OnChain {
       transferStatistics = transferStatisticsFromDeferredTransfers;
       servicesUpdate = servicesUpdateFromDeferredTransfers;
       assertEmpty(deferredTransfersRest);
+    } else {
+      check`${pendingTransfers.length === 0} All transfers should be already accumulated.`;
     }
 
     const accumulateRoot = await this.accumulateOutput.transition({ accumulationOutputLog });
