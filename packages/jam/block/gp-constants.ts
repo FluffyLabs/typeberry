@@ -11,7 +11,7 @@ import { MAX_NUMBER_OF_WORK_ITEMS } from "./work-package.js";
  * here are only temporarily for convenience. When we figure out better names
  * and places for these this file will be eradicated.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/413000413000
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/442300442300?v=0.7.2
  */
 
 /** `G_I`: The gas allocated to invoke a work-package’s Is-Authorized logic. */
