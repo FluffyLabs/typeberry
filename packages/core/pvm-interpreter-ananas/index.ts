@@ -14,6 +14,7 @@ import {
   InputKind,
   nextStep,
   resetJAM,
+  setGasLeft,
   setMemory,
   setRegister,
 } from "anan-as";
@@ -54,16 +55,24 @@ export class AnanasInterpreter implements IHostCallRegisters, IHostCallMemory {
     return tryAsGas(getGasLeft());
   }
 
-  getGasCounter() {
-    return gasCounter(this.getGas());
+  setGas(gas: Gas) {
+    setGasLeft(gas as bigint);
+  }
+
+  subGas(gas: Gas) {
+    const newGas = gasCounter(this.getGas());
+    const result = newGas.sub(gas);
+    setGasLeft(newGas.get() as bigint);
+    return result;
   }
 
   getExitParam() {
-    return getExitArg();
+    const arg = getExitArg();
+    return arg < 0 ? null : tryAsU32(arg);
   }
 
   getGasConsumed(): Gas {
-    const gasConsumed = tryAsBigGas(this.initialGas.get()) - tryAsBigGas(this.getGasCounter().get());
+    const gasConsumed = tryAsBigGas(this.initialGas.get()) - tryAsBigGas(this.getGas());
 
     if (gasConsumed < 0) {
       return this.initialGas.get();

@@ -1,5 +1,5 @@
 import type { Interpreter } from "@typeberry/pvm-interpreter";
-import type { Gas } from "@typeberry/pvm-interpreter/gas.js";
+import { type Gas, gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
 import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
@@ -95,7 +95,6 @@ export class HostCalls {
         "We know that the exit param is not null, because the status is 'Status.HOST'
       `;
       const hostCallIndex = pvmInstance.getExitParam() ?? -1;
-      const gas = pvmInstance.getGasCounter();
       const regs =
         pvmInstance instanceof AnanasInterpreter ? pvmInstance : new HostCallRegisters(pvmInstance.getRegisters());
       const memory =
@@ -103,18 +102,19 @@ export class HostCalls {
       const index = tryAsHostCallIndex(hostCallIndex);
 
       const hostCall = this.hostCalls.get(index);
-      const gasBefore = gas.get();
+      const gasBefore = pvmInstance.getGas();
       // NOTE: `basicGasCost(regs)` function is for compatibility reasons: pre GP 0.7.2
       const basicGasCost =
         typeof hostCall.basicGasCost === "number" ? hostCall.basicGasCost : hostCall.basicGasCost(regs);
-      const underflow = gas.sub(basicGasCost);
+      const underflow = pvmInstance.subGas(basicGasCost);
 
       const pcLog = `[PC: ${pvmInstance.getPC()}]`;
       if (underflow) {
-        this.hostCalls.traceHostCall(`${pcLog} OOG`, index, hostCall, regs, gas.get());
+        this.hostCalls.traceHostCall(`${pcLog} OOG`, index, hostCall, regs, pvmInstance.getGas());
         return ReturnValue.fromStatus(pvmInstance.getGasConsumed(), Status.OOG);
       }
       this.hostCalls.traceHostCall(`${pcLog} Invoking`, index, hostCall, regs, gasBefore);
+      const gas = gasCounter(pvmInstance.getGas());
       const result = await hostCall.execute(gas, regs, memory);
       this.hostCalls.traceHostCall(
         result === undefined ? `${pcLog} Result` : `${pcLog} Status(${PvmExecution[result]})`,
@@ -123,6 +123,7 @@ export class HostCalls {
         regs,
         gas.get(),
       );
+      pvmInstance.setGas(gas.get());
 
       if (result === PvmExecution.Halt) {
         status = Status.HALT;
@@ -151,7 +152,7 @@ export class HostCalls {
 
   async runProgram(program: Uint8Array, args: Uint8Array, initialPc: number, initialGas: Gas): Promise<ReturnValue> {
     const pvmInstance = await this.pvmInstanceManager.getInstance();
-    console.log`${pvmInstance.printProgram(program)}`;
+    //console.log`${pvmInstance.printProgram(program)}`;
     pvmInstance.resetJam(program, args, initialPc, initialGas);
     try {
       return await this.execute(pvmInstance);

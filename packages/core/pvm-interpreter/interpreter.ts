@@ -7,7 +7,7 @@ import { ArgumentType } from "./args-decoder/argument-type.js";
 import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-type-map.js";
 import { assemblify } from "./assemblify.js";
 import { BasicBlocks } from "./basic-blocks/index.js";
-import { type Gas, type GasCounter, gasCounter, tryAsBigGas, tryAsGas } from "./gas.js";
+import { type Gas, gasCounter, tryAsBigGas, tryAsGas } from "./gas.js";
 import { Instruction } from "./instruction.js";
 import { instructionGasMap } from "./instruction-gas-map.js";
 import { InstructionResult } from "./instruction-result.js";
@@ -133,6 +133,7 @@ export class Interpreter {
     const p = Program.fromSpi(program, args, true);
     this.resetGeneric(p.code, pc, gas, p.registers, p.memory);
   }
+
   resetGeneric(rawProgram: Uint8Array, pc: number, gas: Gas, maybeRegisters?: Registers, maybeMemory?: Memory) {
     const programDecoder = new ProgramDecoder(rawProgram);
     this.code = programDecoder.getCode();
@@ -299,6 +300,14 @@ export class Interpreter {
     return this.gas.get();
   }
 
+  setGas(gas: Gas) {
+    this.gas = gasCounter(gas);
+  }
+
+  subGas(gas: Gas) {
+    return this.gas.sub(gas);
+  }
+
   getGasConsumed(): Gas {
     const gasConsumed = tryAsBigGas(this.initialGas.get()) - tryAsBigGas(this.gas.get());
 
@@ -307,10 +316,6 @@ export class Interpreter {
     }
 
     return tryAsBigGas(gasConsumed);
-  }
-
-  getGasCounter(): GasCounter {
-    return this.gas;
   }
 
   getStatus() {

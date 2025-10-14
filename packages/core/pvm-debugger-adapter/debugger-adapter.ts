@@ -92,6 +92,6 @@ export class DebuggerAdapter {
   }
 
   setGasLeft(gas: bigint) {
-    this.pvm.getGasCounter().set(tryAsGas(gas));
+    this.pvm.setGas(tryAsGas(gas));
   }
 }
