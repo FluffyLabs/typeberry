@@ -92,6 +92,7 @@ async function start(options: { devIndex: number | null } = { devIndex: 1 }) {
   const args = options.devIndex === null ? ["--", "--config=dev"] : ["dev", `${options.devIndex}`];
   const spawned = spawn("npm", ["start", ...args], {
     env: {
+      ...process.env,
       JAM_LOG: "trace",
     },
     cwd: process.cwd(),
