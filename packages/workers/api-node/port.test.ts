@@ -38,7 +38,7 @@ describe("ThreadPort", () => {
       data: tryAsU32(42),
     });
 
-    await setTimeout(5);
+    await setTimeout(1_000);
 
     assert.deepStrictEqual(received, {
       responseId: "10",

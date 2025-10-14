@@ -1,4 +1,4 @@
-import { type MessagePort, parentPort, Worker } from "node:worker_threads";
+import { MessageChannel, type MessagePort, parentPort, Worker } from "node:worker_threads";
 import type { Decode, Encode } from "@typeberry/codec";
 import { Listener } from "@typeberry/listener";
 import { Logger } from "@typeberry/logger";
@@ -82,7 +82,13 @@ export function spawnWorker<To, From, Params>(
 
   const workerFinished = new Promise<void>((resolve, reject) => {
     worker.once("error", reject);
-    worker.once("close", resolve);
+    worker.once("exit", (exitCode) => {
+      if (exitCode === 0) {
+        resolve();
+      } else {
+        reject(new Error(`(${protocol.name}) exit code: ${exitCode}`));
+      }
+    });
   });
 
   // now return communication channel with that worker
@@ -112,13 +118,13 @@ export async function initWorker<To, From, Params>(
       throw new Error(`Unable to start ${protocol.name} worker. Not running in a worker thread!`);
     }
 
-    parentPort.once("close", reject);
+    parentPort.once("close", () => reject(new Error(`(${protocol.name}) parent port closed too early`)));
 
     let isResolved = false;
     const threadComms = new Listener<ThreadComms>();
     parentPort.on("message", async (msg) => {
       if (!isControlPlane(msg)) {
-        logger.error`--> (${protocol.name}) received unexepected message: ${msg}`;
+        logger.error`--> (${protocol.name}) received unexpected message: ${msg}`;
         return;
       }
 

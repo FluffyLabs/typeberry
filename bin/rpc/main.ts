@@ -23,11 +23,15 @@ export async function main(args: string[]) {
   const port = Number.parseInt(argv.port, 10);
   const config = loadConfig(argv.config);
   const spec = getChainSpec(config.flavor);
+  if (config.databaseBasePath === undefined) {
+    throw new Error("RPC server requires a LMDB database path.");
+  }
+
   const { dbPath } = getDatabasePath(
     blake2b,
     argv.nodeName,
     config.chainSpec.genesisHeader,
-    withRelPath(config.databaseBasePath ?? "<in-memory>"),
+    withRelPath(config.databaseBasePath),
   );
 
   const rootDb = new LmdbRoot(dbPath, true);

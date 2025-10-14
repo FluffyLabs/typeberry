@@ -36,7 +36,7 @@ export type Handler<Req, Res> = (x: (req: Req) => Promise<Res>) => void;
 export type Handlers<In> = {
   [K in keyof In as HandlerKey<K>]: In[K] extends MessageCodecs<infer Req, infer Res> ? Handler<Req, Res> : never;
 };
-/** Request sender key type. */
+/** Request handler key type. */
 export type HandlerKey<K> = `setOn${Capitalize<string & K>}`;
 
 /** Request sender. Takes a `Req` and promises a response. */

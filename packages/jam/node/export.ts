@@ -19,13 +19,18 @@ export async function exportBlocks(jamNodeConfig: JamConfig, outputDir: string, 
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
+  if (jamNodeConfig.node.databaseBasePath === undefined) {
+    logger.info`📖 Running with in-memory database. Nothing to do...`;
+    return;
+  }
+
   const blake2b = await Blake2b.createHasher();
   const chainSpec = getChainSpec(jamNodeConfig.node.flavor);
   const { dbPath } = getDatabasePath(
     blake2b,
     jamNodeConfig.nodeName,
     jamNodeConfig.node.chainSpec.genesisHeader,
-    withRelPath(jamNodeConfig.node.databaseBasePath ?? "<in-memory>"),
+    withRelPath(jamNodeConfig.node.databaseBasePath),
   );
   const config = LmdbWorkerConfig.new({
     chainSpec,
