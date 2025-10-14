@@ -69,7 +69,7 @@ describe("LMDB States database", () => {
     const newRoot = await states.getStateRoot(newState);
 
     assert.deepStrictEqual(`${newRoot}`, `${emptyRoot}`);
-    deepEqual(InMemoryState.copyFrom(newState, new Map()), emptyState);
+    deepEqual(InMemoryState.copyFrom(spec, newState, new Map()), emptyState);
   });
 
   it("should update the state", async () => {
@@ -131,6 +131,7 @@ describe("LMDB States database", () => {
 
     deepEqual(
       InMemoryState.copyFrom(
+        spec,
         updatedState,
         new Map([
           [
@@ -197,7 +198,7 @@ describe("LMDB States database", () => {
 
     assert.deepStrictEqual(`${newRoot}`, `${initialRoot}`);
     deepEqual(
-      InMemoryState.copyFrom(newState, new Map([[initialService.serviceId, initialService.getEntries()]])),
+      InMemoryState.copyFrom(spec, newState, new Map([[initialService.serviceId, initialService.getEntries()]])),
       initialState,
     );
   });
@@ -231,7 +232,7 @@ describe("LMDB States database", () => {
     const updatedStateRoot = await states.getStateRoot(updatedState);
 
     deepEqual(
-      InMemoryState.copyFrom(updatedState, new Map([[initialService.serviceId, initialService.getEntries()]])),
+      InMemoryState.copyFrom(spec, updatedState, new Map([[initialService.serviceId, initialService.getEntries()]])),
       state,
     );
     assert.strictEqual(

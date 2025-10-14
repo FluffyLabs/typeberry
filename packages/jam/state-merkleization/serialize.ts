@@ -1,66 +1,55 @@
-import {
-  codecPerEpochBlock,
-  codecPerValidator,
-  type EntropyHash,
-  type ServiceId,
-  type TimeSlot,
-} from "@typeberry/block";
-import { codecFixedSizeArray, codecKnownSizeArray } from "@typeberry/block/codec.js";
-import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
+import type { EntropyHash, ServiceId, TimeSlot } from "@typeberry/block";
+import { codecFixedSizeArray } from "@typeberry/block/codec.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { codec, Descriptor, readonlyArray } from "@typeberry/codec";
-import { HashSet, SortedArray } from "@typeberry/collections";
+import { SortedArray } from "@typeberry/collections";
 import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import {
-  AvailabilityAssignment,
-  codecPerCore,
+  accumulationQueueCodec,
+  authPoolsCodec,
+  authQueuesCodec,
+  availabilityAssignmentsCodec,
   codecWithVersion,
   DisputesRecords,
   ENTROPY_ENTRIES,
   PrivilegedServices,
+  RecentBlocks,
+  type RecentBlocksView,
   ServiceAccountInfo,
   type State,
   StatisticsData,
+  type StatisticsDataView,
   type StorageKey,
-  ValidatorData,
+  validatorsDataCodec,
 } from "@typeberry/state";
 import { AccumulationOutput, accumulationOutputComparator } from "@typeberry/state/accumulation-output.js";
-import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
-import { RecentBlocksHistory } from "@typeberry/state/recent-blocks.js";
-import { SafroleData } from "@typeberry/state/safrole-data.js";
+import { recentlyAccumulatedCodec } from "@typeberry/state/recently-accumulated.js";
+import { SafroleData, type SafroleDataView } from "@typeberry/state/safrole-data.js";
+import type { StateView } from "@typeberry/state/state-view.js";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import { type StateKey, StateKeyIdx, stateKeys } from "./keys.js";
 
-export type StateCodec<T> = {
+export type StateCodec<T, V = T> = {
   key: StateKey;
-  Codec: Descriptor<T>;
+  Codec: Descriptor<T, V>;
   extract: (s: State) => T;
 };
 
 /** Serialization for particular state entries. */
 export namespace serialize {
   /** C(1): https://graypaper.fluffylabs.dev/#/7e6ff6a/3b15013b1501?v=0.6.7 */
-  export const authPools: StateCodec<State["authPools"]> = {
+  export const authPools: StateCodec<State["authPools"], ReturnType<StateView["authPoolsView"]>> = {
     key: stateKeys.index(StateKeyIdx.Alpha),
-    Codec: codecPerCore(
-      codecKnownSizeArray(codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(), {
-        minLength: 0,
-        maxLength: MAX_AUTH_POOL_SIZE,
-        typicalLength: MAX_AUTH_POOL_SIZE,
-      }),
-    ),
+    Codec: authPoolsCodec,
     extract: (s) => s.authPools,
   };
 
   /** C(2): https://graypaper.fluffylabs.dev/#/7e6ff6a/3b31013b3101?v=0.6.7 */
-  export const authQueues: StateCodec<State["authQueues"]> = {
+  export const authQueues: StateCodec<State["authQueues"], ReturnType<StateView["authQueuesView"]>> = {
     key: stateKeys.index(StateKeyIdx.Phi),
-    Codec: codecPerCore(
-      codecFixedSizeArray(codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(), AUTHORIZATION_QUEUE_SIZE),
-    ),
+    Codec: authQueuesCodec,
     extract: (s) => s.authQueues,
   };
 
@@ -68,14 +57,14 @@ export namespace serialize {
    * C(3): Recent blocks with compatibility
    *  https://graypaper.fluffylabs.dev/#/7e6ff6a/3b3e013b3e01?v=0.6.7
    */
-  export const recentBlocks: StateCodec<State["recentBlocks"]> = {
+  export const recentBlocks: StateCodec<RecentBlocks, RecentBlocksView> = {
     key: stateKeys.index(StateKeyIdx.Beta),
-    Codec: RecentBlocksHistory.Codec,
+    Codec: RecentBlocks.Codec,
     extract: (s) => s.recentBlocks,
   };
 
   /** C(4): https://graypaper.fluffylabs.dev/#/7e6ff6a/3b63013b6301?v=0.6.7 */
-  export const safrole: StateCodec<SafroleData> = {
+  export const safrole: StateCodec<SafroleData, SafroleDataView> = {
     key: stateKeys.index(StateKeyIdx.Gamma),
     Codec: SafroleData.Codec,
     extract: (s) =>
@@ -88,7 +77,7 @@ export namespace serialize {
   };
 
   /** C(5): https://graypaper.fluffylabs.dev/#/7e6ff6a/3bba013bba01?v=0.6.7 */
-  export const disputesRecords: StateCodec<State["disputesRecords"]> = {
+  export const disputesRecords: StateCodec<DisputesRecords> = {
     key: stateKeys.index(StateKeyIdx.Psi),
     Codec: DisputesRecords.Codec,
     extract: (s) => s.disputesRecords,
@@ -102,30 +91,42 @@ export namespace serialize {
   };
 
   /** C(7): https://graypaper.fluffylabs.dev/#/7e6ff6a/3b00023b0002?v=0.6.7 */
-  export const designatedValidators: StateCodec<State["designatedValidatorData"]> = {
+  export const designatedValidators: StateCodec<
+    State["designatedValidatorData"],
+    ReturnType<StateView["designatedValidatorDataView"]>
+  > = {
     key: stateKeys.index(StateKeyIdx.Iota),
-    Codec: codecPerValidator(ValidatorData.Codec),
+    Codec: validatorsDataCodec,
     extract: (s) => s.designatedValidatorData,
   };
 
   /** C(8): https://graypaper.fluffylabs.dev/#/7e6ff6a/3b0d023b0d02?v=0.6.7 */
-  export const currentValidators: StateCodec<State["currentValidatorData"]> = {
+  export const currentValidators: StateCodec<
+    State["currentValidatorData"],
+    ReturnType<StateView["currentValidatorDataView"]>
+  > = {
     key: stateKeys.index(StateKeyIdx.Kappa),
-    Codec: codecPerValidator(ValidatorData.Codec),
+    Codec: validatorsDataCodec,
     extract: (s) => s.currentValidatorData,
   };
 
   /** C(9): https://graypaper.fluffylabs.dev/#/7e6ff6a/3b1a023b1a02?v=0.6.7 */
-  export const previousValidators: StateCodec<State["previousValidatorData"]> = {
+  export const previousValidators: StateCodec<
+    State["previousValidatorData"],
+    ReturnType<StateView["previousValidatorDataView"]>
+  > = {
     key: stateKeys.index(StateKeyIdx.Lambda),
-    Codec: codecPerValidator(ValidatorData.Codec),
+    Codec: validatorsDataCodec,
     extract: (s) => s.previousValidatorData,
   };
 
   /** C(10): https://graypaper.fluffylabs.dev/#/7e6ff6a/3b27023b2702?v=0.6.7 */
-  export const availabilityAssignment: StateCodec<State["availabilityAssignment"]> = {
+  export const availabilityAssignment: StateCodec<
+    State["availabilityAssignment"],
+    ReturnType<StateView["availabilityAssignmentView"]>
+  > = {
     key: stateKeys.index(StateKeyIdx.Rho),
-    Codec: codecPerCore(codec.optional(AvailabilityAssignment.Codec)),
+    Codec: availabilityAssignmentsCodec,
     extract: (s) => s.availabilityAssignment,
   };
 
@@ -144,28 +145,29 @@ export namespace serialize {
   };
 
   /** C(13): https://graypaper.fluffylabs.dev/#/7e6ff6a/3b5e023b5e02?v=0.6.7 */
-  export const statistics: StateCodec<State["statistics"]> = {
+  export const statistics: StateCodec<StatisticsData, StatisticsDataView> = {
     key: stateKeys.index(StateKeyIdx.Pi),
     Codec: StatisticsData.Codec,
     extract: (s) => s.statistics,
   };
 
   /** C(14): https://graypaper.fluffylabs.dev/#/1c979cb/3bf0023bf002?v=0.7.1 */
-  export const accumulationQueue: StateCodec<State["accumulationQueue"]> = {
+  export const accumulationQueue: StateCodec<
+    State["accumulationQueue"],
+    ReturnType<StateView["accumulationQueueView"]>
+  > = {
     key: stateKeys.index(StateKeyIdx.Omega),
-    Codec: codecPerEpochBlock(readonlyArray(codec.sequenceVarLen(NotYetAccumulatedReport.Codec))),
+    Codec: accumulationQueueCodec,
     extract: (s) => s.accumulationQueue,
   };
 
   /** C(15): https://graypaper.fluffylabs.dev/#/7e6ff6a/3b96023b9602?v=0.6.7 */
-  export const recentlyAccumulated: StateCodec<State["recentlyAccumulated"]> = {
+  export const recentlyAccumulated: StateCodec<
+    State["recentlyAccumulated"],
+    ReturnType<StateView["recentlyAccumulatedView"]>
+  > = {
     key: stateKeys.index(StateKeyIdx.Xi),
-    Codec: codecPerEpochBlock(
-      codec.sequenceVarLen(codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>()).convert(
-        (x) => Array.from(x),
-        (x) => HashSet.from(x),
-      ),
-    ),
+    Codec: recentlyAccumulatedCodec,
     extract: (s) => s.recentlyAccumulated,
   };
 

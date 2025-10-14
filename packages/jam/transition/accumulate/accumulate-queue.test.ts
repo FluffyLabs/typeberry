@@ -10,8 +10,7 @@ import { asKnownSize, FixedSizeArray, HashSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { InMemoryState, PrivilegedServices, tryAsPerCore } from "@typeberry/state";
-import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
+import { InMemoryState, NotYetAccumulatedReport, PrivilegedServices, tryAsPerCore } from "@typeberry/state";
 import { deepEqual } from "@typeberry/utils";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 

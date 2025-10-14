@@ -1,6 +1,6 @@
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import { sumU64 } from "@typeberry/numbers";
-import type { State } from "@typeberry/state";
+import type { State, StateView } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 
@@ -10,7 +10,7 @@ export const G_A = 10_000_000;
 export function verifyPostSignatureChecks(
   input: GuaranteesExtrinsicView,
   availabilityAssignment: State["availabilityAssignment"],
-  authPools: State["authPools"],
+  authPools: ReturnType<StateView["authPoolsView"]>,
   services: State["getService"],
 ): Result<OK, ReportsError> {
   for (const guaranteeView of input) {
@@ -35,8 +35,9 @@ export function verifyPostSignatureChecks(
      * https://graypaper.fluffylabs.dev/#/5f542d7/15eb0015ed00
      */
     const authorizerHash = report.authorizerHash;
-    const authorizerPool = authPools[coreIndex];
-    if (authorizerPool.find((hash) => hash.isEqualTo(authorizerHash)) === undefined) {
+    const authorizerPool = authPools.get(coreIndex);
+    const pool = authorizerPool?.materialize() ?? [];
+    if (pool.find((hash) => hash.isEqualTo(authorizerHash)) === undefined) {
       return Result.error(
         ReportsError.CoreUnauthorized,
         `Authorizer hash not found in the pool of core ${coreIndex}: ${authorizerHash}`,

@@ -1,10 +1,9 @@
 import { type CoreIndex, type TimeSlot, tryAsCoreIndex } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { asKnownSize } from "@typeberry/collections";
 import type { HashSet } from "@typeberry/collections/hash-set.js";
 import type { ChainSpec } from "@typeberry/config";
-import { type State, tryAsPerCore } from "@typeberry/state";
+import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE, type State, tryAsPerCore } from "@typeberry/state";
 
 /** Authorization state. */
 export type AuthorizationState = Pick<State, "authPools" | "authQueues">;
@@ -51,11 +50,12 @@ export class Authorization {
    */
   transition(input: AuthorizationInput): AuthorizationStateUpdate {
     const authPoolsUpdate = this.state.authPools.slice();
+    const authQueues = this.state.authQueues;
     // we transition authorizations for each core.
     for (let coreIndex = tryAsCoreIndex(0); coreIndex < this.chainSpec.coresCount; coreIndex++) {
       let pool = authPoolsUpdate[coreIndex].slice();
       // the queue is only read (we should most likely use `ArrayView` here).
-      const queue = this.state.authQueues[coreIndex];
+      const queue = authQueues[coreIndex];
       // if there were any used hashes - remove them
       const usedHashes = input.used.get(coreIndex);
       if (usedHashes !== undefined) {

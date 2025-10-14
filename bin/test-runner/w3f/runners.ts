@@ -39,6 +39,7 @@ import { HostCallGeneralTest, runHostCallGeneralTest } from "./host-calls-genera
 import { HostCallRefineTest, runHostCallRefineTest } from "./host-calls-refine.js";
 import { PreImagesTest, runPreImagesTest } from "./preimages.js";
 import { PvmTest, runPvmTest } from "./pvm.js";
+import { PvmGasCostTest, runPvmGasCostTest } from "./pvm-gas-cost.js";
 import { HistoryTest, runHistoryTest } from "./recent-history.js";
 import { ReportsTest, runReportsTestFull, runReportsTestTiny } from "./reports.js";
 import { runSafroleTest, SafroleTest } from "./safrole.js";
@@ -60,6 +61,7 @@ export const runners = [
   runner("schema", JsonSchema.fromJson, ignoreSchemaFiles), // ignore schema files
   runner("preimages", PreImagesTest.fromJson, runPreImagesTest),
   runner("pvm", PvmTest.fromJson, runPvmTest),
+  runner("gas-cost-tests", PvmGasCostTest.fromJson, runPvmGasCostTest),
   runner("host_function", HostCallGeneralTest.fromJson, runHostCallGeneralTest),
   runner("host_function", HostCallAccumulateTest.fromJson, runHostCallAccumulateTest),
   runner("host_function", HostCallRefineTest.fromJson, runHostCallRefineTest),

@@ -32,7 +32,7 @@ function prepareRegsAndMemory(machineId: MachineId, destinationStart: number, so
 
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
@@ -57,7 +57,7 @@ function prepareTest(result: Result<OK, PeekPokeError>) {
   return {
     peek,
     registers,
-    memory: new HostCallMemory(memory),
+    memory,
   };
 }
 
