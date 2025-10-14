@@ -9,6 +9,7 @@
   "dependencies": {
     "@typeberry/codec": "*",
     "@typeberry/config": "*",
+    "@typeberry/database": "*",
     "@typeberry/database-lmdb": "*",
     "@typeberry/hash": "*",
     "@typeberry/listener": "*",
