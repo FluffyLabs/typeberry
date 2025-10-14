@@ -3,7 +3,7 @@ import type { Gas } from "@typeberry/pvm-interpreter/gas.js";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import type { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
-import type { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
+import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
 import { assertNever, check, safeAllocUint8Array } from "@typeberry/utils";
 import { PvmExecution, tryAsHostCallIndex } from "./host-call-handler.js";
 import { HostCallMemory } from "./host-call-memory.js";
@@ -52,6 +52,19 @@ export class HostCalls {
     }
 
     if (status === Status.HALT) {
+      if (pvmInstance instanceof AnanasInterpreter) {
+        const address = pvmInstance.get(7);
+        const length = pvmInstance.get(8);
+        // NOTE IDK if it's safe, it's dirty quick code
+        const result = safeAllocUint8Array(Number(length));
+        const loadResult = pvmInstance.loadInto(result, address);
+
+        if (loadResult.isError) {
+          ReturnValue.fromMemorySlice(gasConsumed, new Uint8Array());
+        }
+
+        return ReturnValue.fromMemorySlice(gasConsumed, result);
+      }
       const memory = pvmInstance.getMemory();
       const regs = pvmInstance.getRegisters();
       const maybeAddress = regs.getLowerU32(7);
@@ -84,8 +97,10 @@ export class HostCalls {
       `;
       const hostCallIndex = pvmInstance.getExitParam() ?? -1;
       const gas = pvmInstance.getGasCounter();
-      const regs = new HostCallRegisters(pvmInstance.getRegisters());
-      const memory = new HostCallMemory(pvmInstance.getMemory());
+      const regs =
+        pvmInstance instanceof AnanasInterpreter ? pvmInstance : new HostCallRegisters(pvmInstance.getRegisters());
+      const memory =
+        pvmInstance instanceof AnanasInterpreter ? pvmInstance : new HostCallMemory(pvmInstance.getMemory());
       const index = tryAsHostCallIndex(hostCallIndex);
 
       const hostCall = this.hostCalls.get(index);
