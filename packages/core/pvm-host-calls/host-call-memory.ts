@@ -7,7 +7,6 @@ import { OK, Result } from "@typeberry/utils";
 export interface IHostCallMemory {
   storeFrom(address: U64, bytes: Uint8Array): Result<OK, PageFault | OutOfBounds>;
   loadInto(result: Uint8Array, startAddress: U64): Result<OK, PageFault | OutOfBounds>;
-  getMemory(): Memory;
 }
 
 export class HostCallMemory implements IHostCallMemory {
@@ -35,9 +34,5 @@ export class HostCallMemory implements IHostCallMemory {
     }
 
     return this.memory.loadInto(result, tryAsMemoryIndex(Number(startAddress)));
-  }
-
-  getMemory(): Memory {
-    return this.memory;
   }
 }

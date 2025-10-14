@@ -95,12 +95,4 @@ describe("HostCallMemory", () => {
       assert.deepEqual(hostCallMemory.loadInto(result, address), Result.error(new OutOfBounds()));
     });
   });
-
-  describe("getMemory", () => {
-    it("should return the underlying memory instance", () => {
-      const result = hostCallMemory.getMemory();
-
-      assert.strictEqual(result, memory);
-    });
-  });
 });
