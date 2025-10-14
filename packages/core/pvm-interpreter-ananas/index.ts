@@ -19,7 +19,7 @@ export class AnanasInterpreter {
   private kind: InputKind = InputKind.SPI;
   private hasMeta: HasMetadata = HasMetadata.No;
 
-  reset(rawProgram: Uint8Array, pc: number, gas: Gas, maybeRegisters?: Registers, _maybeMemory?: Memory) {
+  reset(rawProgram: Uint8Array, pc: number, gas: Gas, maybeRegisters?: Registers, maybeMemory?: Memory) {
     this.code = this.lowerBytes(rawProgram);
     this.pc = pc;
     this.initialGas = gasCounter(gas);
@@ -30,6 +30,9 @@ export class AnanasInterpreter {
     const pages = new Uint8Array();
     const chunks = new Uint8Array();
     // TODO [MaSo] Set memory
+    if (maybeMemory !== undefined) {
+      throw new Error("Setting memory in ANANAS is currently not implemented!");
+    }
     resetGenericWithMemory(this.code, regs, pages, chunks, gas as bigint, this.hasMeta === HasMetadata.Yes);
     setNextProgramCounter(this.pc);
   }
@@ -67,8 +70,8 @@ export class AnanasInterpreter {
   }
 
   // TODO [MaSo] Implement
-  getMemory() {
-    return new Memory();
+  getMemory(): Memory {
+    throw new Error("Getting memory from ANANAS is currently not implemented!");
   }
 
   getExitParam() {

@@ -10,10 +10,10 @@ import { type Gas, type GasCounter, gasCounter, tryAsBigGas, tryAsGas } from "./
 import { Instruction } from "./instruction.js";
 import { instructionGasMap } from "./instruction-gas-map.js";
 import { InstructionResult } from "./instruction-result.js";
-import { Memory } from "./memory/index.js";
+import { Memory, MemoryIndex, tryAsMemoryIndex } from "./memory/index.js";
 import { PAGE_SIZE } from "./memory/memory-consts.js";
 import { alignToPageSize } from "./memory/memory-utils.js";
-import { tryAsPageNumber } from "./memory/pages/page-utils.js";
+import { tryAsPageIndex, tryAsPageNumber } from "./memory/pages/page-utils.js";
 import {
   BitOps,
   BitRotationOps,
@@ -315,6 +315,14 @@ export class Interpreter {
   getExitParam(): null | U32 {
     const p = this.instructionResult.exitParam;
     return p !== null ? tryAsU32(p) : p;
+  }
+
+  storeFrom(address: MemoryIndex, bytes: Uint8Array) {
+    return this.memory.storeFrom(address, bytes);
+  }
+
+  loadInto(value: Uint8Array, address: MemoryIndex) {
+    return this.memory.loadInto(value, address);
   }
 
   getMemory() {

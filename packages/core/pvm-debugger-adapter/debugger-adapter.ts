@@ -45,7 +45,7 @@ export class DebuggerAdapter {
   }
 
   setMemory(address: number, value: Uint8Array) {
-    this.pvm.getMemory().storeFrom(tryAsMemoryIndex(address), value);
+    this.pvm.storeFrom(tryAsMemoryIndex(address), value);
   }
 
   getExitArg(): number {
