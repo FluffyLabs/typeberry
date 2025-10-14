@@ -51,7 +51,7 @@ function prepareTest(result: Result<OK, PeekPokeError>) {
     tryAsU64(memoryStart),
     tryAsU64(destinationStart),
     tryAsU64(dataLength),
-    memory.getMemory(),
+    memory,
   );
 
   return {

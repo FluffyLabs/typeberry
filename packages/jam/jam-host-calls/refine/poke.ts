@@ -42,13 +42,7 @@ export class Poke implements HostCallHandler {
     // `z`: memory length
     const length = regs.get(10);
 
-    const pokeResult = await this.refine.machinePokeInto(
-      machineIndex,
-      sourceStart,
-      destinationStart,
-      length,
-      memory.getMemory(),
-    );
+    const pokeResult = await this.refine.machinePokeInto(machineIndex, sourceStart, destinationStart, length, memory);
     logger.trace`POKE(${machineIndex}, ${sourceStart}, ${destinationStart}, ${length}) <- ${resultToString(pokeResult)}`;
 
     if (pokeResult.isOk) {
