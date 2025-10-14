@@ -22,8 +22,10 @@ import {
   HasMetadata,
   InputKind,
   nextStep,
+  resetGeneric,
   resetJAM,
   setMemory,
+  setNextProgramCounter,
   setRegister,
 } from "anan-as";
 
@@ -31,14 +33,23 @@ export class AnanasInterpreter implements IHostCallRegisters, IHostCallMemory {
   private code: number[] = [];
   private pc = 0;
   private initialGas = gasCounter(tryAsGas(0n));
-  private kind: InputKind = InputKind.SPI;
+  private kind: InputKind = InputKind.Generic;
   private hasMeta: HasMetadata = HasMetadata.Yes;
 
   reset(rawProgram: Uint8Array, pc: number, gas: Gas, _maybeRegisters?: Registers, _maybeMemory?: Memory) {
     this.code = this.lowerBytes(rawProgram);
     this.pc = pc;
     this.initialGas = gasCounter(gas);
-    resetJAM(this.code, this.pc, gas as bigint, [], this.hasMeta === HasMetadata.Yes);
+    if (this.kind === InputKind.SPI) {
+      resetJAM(this.code, this.pc, gas as bigint, [], this.hasMeta === HasMetadata.Yes);
+    } else {
+      resetGeneric(this.code, [], gas as bigint, this.hasMeta === HasMetadata.Yes);
+      setNextProgramCounter(this.pc);
+    }
+  }
+
+  setCode(rawProgram: Uint8Array) {
+    this.code = this.lowerBytes(rawProgram);
   }
 
   printProgram() {

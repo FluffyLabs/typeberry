@@ -158,6 +158,9 @@ export class HostCalls {
     maybeMemory?: Memory,
   ): Promise<ReturnValue> {
     const pvmInstance = await this.pvmInstanceManager.getInstance();
+    //console.log`${}`;
+    pvmInstance.setCode(rawProgram);
+    console.log`${pvmInstance.printProgram()}`;
     pvmInstance.reset(rawProgram, initialPc, initialGas, maybeRegisters, maybeMemory);
     try {
       return await this.execute(pvmInstance);

@@ -155,11 +155,18 @@ export class Interpreter {
     }
   }
 
+  setCode(rawProgram: Uint8Array) {
+    const programDecoder = new ProgramDecoder(rawProgram);
+    this.code = programDecoder.getCode();
+    this.mask = programDecoder.getMask();
+    this.jumpTable.copyFrom(programDecoder.getJumpTable());
+  }
+
   printProgram() {
     const p = assemblify(this.code, this.mask);
     // biome-ignore lint/suspicious/noConsole: We do want to print that.
     console.table(p);
-    return p;
+    return p.join(";\n");
   }
 
   runProgram() {
