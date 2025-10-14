@@ -4,6 +4,7 @@
   "description": "PVM host calls",
   "main": "index.ts",
   "dependencies": {
+    "@typeberry/config-node": "*",
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
     "@typeberry/pvm-interpreter": "*",

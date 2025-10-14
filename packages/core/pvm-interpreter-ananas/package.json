@@ -5,7 +5,9 @@
   "main": "index.ts",
   "dependencies": {
     "anan-as": "github:DrEverr/anan-as#build-2",
-    "@typeberry/pvm-interpreter": "*"
+    "@typeberry/numbers": "*",
+    "@typeberry/pvm-interpreter": "*",
+    "@typeberry/utils": "*"
   },
   "scripts": {
     "start": "tsx ./bin.ts",
