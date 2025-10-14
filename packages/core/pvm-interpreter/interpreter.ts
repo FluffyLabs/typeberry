@@ -10,10 +10,10 @@ import { type Gas, type GasCounter, gasCounter, tryAsBigGas, tryAsGas } from "./
 import { Instruction } from "./instruction.js";
 import { instructionGasMap } from "./instruction-gas-map.js";
 import { InstructionResult } from "./instruction-result.js";
-import { Memory, MemoryIndex, tryAsMemoryIndex } from "./memory/index.js";
+import { Memory, type MemoryIndex } from "./memory/index.js";
 import { PAGE_SIZE } from "./memory/memory-consts.js";
 import { alignToPageSize } from "./memory/memory-utils.js";
-import { tryAsPageIndex, tryAsPageNumber } from "./memory/pages/page-utils.js";
+import { tryAsPageNumber } from "./memory/pages/page-utils.js";
 import {
   BitOps,
   BitRotationOps,

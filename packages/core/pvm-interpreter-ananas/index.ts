@@ -1,4 +1,12 @@
-import { type Gas, gasCounter, Memory, Registers, Status, tryAsBigGas, tryAsGas } from "@typeberry/pvm-interpreter";
+import {
+  type Gas,
+  gasCounter,
+  type Memory,
+  Registers,
+  Status,
+  tryAsBigGas,
+  tryAsGas,
+} from "@typeberry/pvm-interpreter";
 import {
   disassemble,
   getExitArg,
