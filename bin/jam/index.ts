@@ -86,7 +86,7 @@ async function startNode(args: Arguments, withRelPath: (p: string) => string) {
   }
 
   if (args.command === Command.Export) {
-    return await exportBlocks(jamNodeConfig, args.args.output, args.args.concat, withRelPath);
+    return await exportBlocks(jamNodeConfig, args.args.output, withRelPath);
   }
 
   // Run regular node.

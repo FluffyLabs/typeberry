@@ -10,13 +10,9 @@ import { Logger } from "@typeberry/logger";
 import { getChainSpec, openDatabase } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 
-export async function exportBlocks(
-  jamNodeConfig: JamConfig,
-  output: string,
-  concat: boolean,
-  withRelPath: (p: string) => string,
-) {
+export async function exportBlocks(jamNodeConfig: JamConfig, output: string, withRelPath: (p: string) => string) {
   const logger = Logger.new(import.meta.filename, "export");
+  const concat = output.endsWith(".bin");
 
   if (concat) {
     logger.info`📤 Exporting blocks to ${output} (concatenated)`;

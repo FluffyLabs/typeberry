@@ -70,7 +70,7 @@ describe("CLI", () => {
     });
   });
 
-  it("should parse export command and add rel path to output path and give concat the default value of false", () => {
+  it("should parse export command and add rel path to output path", () => {
     const args = parse(["export", "./output"]);
 
     deepEqual(args, {
@@ -78,19 +78,6 @@ describe("CLI", () => {
       args: {
         ...defaultOptions,
         output: ".././output",
-        concat: false,
-      },
-    });
-  });
-
-  it("should parse the concat option", () => {
-    const args = parse(["export", "./output", "--concat"]);
-    deepEqual(args, {
-      command: Command.Export,
-      args: {
-        ...defaultOptions,
-        output: ".././output",
-        concat: true,
       },
     });
   });

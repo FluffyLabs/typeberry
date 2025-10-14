@@ -2,6 +2,8 @@ import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { tryAsU64, type U8, type U16, type U32, type U64 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 
+export const END_OF_DATA_ERROR_CAUSE = 0;
+
 /** A decoder for some specific type `T` */
 export type Decode<T> = {
   /** Decode object of type `T`. */
@@ -20,8 +22,8 @@ export class Decoder {
   /**
    * Create a new [`Decoder`] instance given a raw array of bytes as a source.
    */
-  static fromBlob(source: Uint8Array) {
-    return new Decoder(source);
+  static fromBlob(source: Uint8Array, context?: unknown) {
+    return new Decoder(source, undefined, context);
   }
 
   /**
@@ -87,7 +89,7 @@ export class Decoder {
    * The copy will maintain it's own `offset` within the source.
    */
   clone(): Decoder {
-    return new Decoder(this.source, this.offset, this.context);
+    return new Decoder(this.source.slice(0), this.offset, this.context);
   }
 
   /**
@@ -373,6 +375,7 @@ export class Decoder {
     if (this.offset + bytes > this.source.length) {
       throw new Error(
         `Attempting to decode more data than there is left. Need ${bytes}, left: ${this.source.length - this.offset}.`,
+        { cause: { asdf: 1234 } },
       );
     }
   }

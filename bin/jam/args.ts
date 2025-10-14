@@ -64,7 +64,6 @@ export type Arguments =
       Command.Export,
       SharedOptions & {
         output: string;
-        concat: boolean;
       }
     >;
 
@@ -143,7 +142,6 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
     }
     case Command.Export: {
       const data = parseSharedOptions(args, withRelPath);
-      const { concat } = parseValueOption(args, "concat", "boolean", (v: boolean) => v, false);
       const output = args._.shift();
       if (output === undefined) {
         throw new Error("Missing output directory.");
@@ -154,7 +152,6 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
         args: {
           ...data,
           output: withRelPath(output),
-          concat,
         },
       };
     }
@@ -179,7 +176,7 @@ function parseStringOption<S extends string, T>(
 function parseValueOption<X, S extends string, T>(
   args: minimist.ParsedArgs,
   option: S,
-  typeOfX: "number" | "string" | "boolean",
+  typeOfX: "number" | "string",
   parser: (v: X) => T | null,
   defaultValue: T,
 ): Record<S, T> {
