@@ -56,7 +56,7 @@ export class NodeConfiguration {
     if (version !== 1) {
       throw new Error("Only version=1 config is supported.");
     }
-    return new NodeConfiguration($schema, version, flavor, chain_spec, database_base_path, authorship);
+    return new NodeConfiguration($schema, version, flavor, chain_spec, database_base_path ?? undefined, authorship);
   }
 
   private constructor(

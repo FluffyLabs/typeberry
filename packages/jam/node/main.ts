@@ -35,11 +35,15 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   logger.info`🎸 Starting node: ${config.nodeName}.`;
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
+  if (config.node.databaseBasePath === undefined) {
+    throw new Error("Running with in-memory database is not supported yet.");
+  }
+
   const { dbPath, genesisHeaderHash } = getDatabasePath(
     blake2b,
     config.nodeName,
     config.node.chainSpec.genesisHeader,
-    withRelPath(config.node.databaseBasePath ?? "<in-memory>"),
+    withRelPath(config.node.databaseBasePath),
   );
 
   const baseConfig = { chainSpec, blake2b, dbPath };
@@ -54,7 +58,11 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   logger.info`🛢️ Opening database at ${dbPath}`;
   const rootDb = importerConfig.openDatabase({ readonly: false });
   await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
-  await rootDb.close();
+  // NOTE [ToDr] even though, we should be closing the database here,
+  // it seems that opening it in the main thread for writing, and later
+  // in the importer thread, causes issues. Everything works fine though,
+  // if we DO NOT close the database (I guess it's process-shared?)
+  // await rootDb.close();
 
   // Start block importer
   const { importer, finish: closeImporter } = await spawnImporterWorker(importerConfig);
@@ -62,7 +70,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   importer.setOnBestHeaderAnnouncement(bestHeader.callbackHandler());
 
   // Start extensions
-  const closeExtensions = initializeExtensions({ chainSpec, bestHeader });
+  const closeExtensions = initializeExtensions({ chainSpec, bestHeader, nodeName: config.nodeName });
 
   // Authorship initialization.
   // 1. load validator keys (bandersnatch, ed25519, bls)

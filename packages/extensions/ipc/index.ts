@@ -21,6 +21,7 @@ import { startJamnpIpcServer } from "./jamnp/server.js";
 import { startIpcServer } from "./server.js";
 
 export interface ExtensionApi {
+  nodeName: string;
   chainSpec: ChainSpec;
   bestHeader: Listener<WithHash<HeaderHash, HeaderView>>;
 }
@@ -81,7 +82,14 @@ function startJamnpExtension(api: ExtensionApi) {
     return [new ce129.KeyValuePair(startKey, value)];
   };
 
-  return startJamnpIpcServer(api.chainSpec, announcements, getHandshake, getBoundaryNodes, getKeyValuePairs);
+  return startJamnpIpcServer(
+    api.nodeName,
+    api.chainSpec,
+    announcements,
+    getHandshake,
+    getBoundaryNodes,
+    getKeyValuePairs,
+  );
 }
 
 const logger = Logger.new(import.meta.filename, "ext-ipc");

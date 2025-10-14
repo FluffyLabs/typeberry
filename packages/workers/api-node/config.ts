@@ -54,7 +54,7 @@ export class LmdbWorkerConfig<T = undefined> implements WorkerConfig<T, BlocksDb
     return {
       getBlocksDb: () => new LmdbBlocks(this.chainSpec, lmdb),
       getStatesDb: () => new LmdbStates(this.chainSpec, this.blake2b, lmdb),
-      close: () => lmdb.close(),
+      close: async () => await lmdb.close(),
     };
   }
 
