@@ -1,4 +1,3 @@
-import { Logger } from "@typeberry/logger";
 import { tryAsU32, tryAsU64, type U64 } from "@typeberry/numbers";
 import type { IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import {
@@ -12,7 +11,6 @@ import {
   tryAsMemoryIndex,
 } from "@typeberry/pvm-interpreter";
 import { type OutOfBounds, PageFault } from "@typeberry/pvm-interpreter/memory/errors.js";
-import { getStartPageIndexFromPageNumber } from "@typeberry/pvm-interpreter/memory/memory-utils.js";
 import { OK, Result } from "@typeberry/utils";
 import {
   disassemble,
@@ -24,44 +22,23 @@ import {
   HasMetadata,
   InputKind,
   nextStep,
-  resetGeneric,
+  resetJAM,
   setMemory,
-  setNextProgramCounter,
   setRegister,
 } from "anan-as";
-
-const logger = Logger.new(import.meta.filename, "pvm-ananas");
 
 export class AnanasInterpreter implements IHostCallRegisters, IHostCallMemory {
   private code: number[] = [];
   private pc = 0;
   private initialGas = gasCounter(tryAsGas(0n));
   private kind: InputKind = InputKind.SPI;
-  private hasMeta: HasMetadata = HasMetadata.No;
+  private hasMeta: HasMetadata = HasMetadata.Yes;
 
-  reset(rawProgram: Uint8Array, pc: number, gas: Gas, maybeRegisters?: Registers, maybeMemory?: Memory) {
+  reset(rawProgram: Uint8Array, pc: number, gas: Gas, _maybeRegisters?: Registers, _maybeMemory?: Memory) {
     this.code = this.lowerBytes(rawProgram);
     this.pc = pc;
     this.initialGas = gasCounter(gas);
-    let regs: number[] = [];
-    if (maybeRegisters !== undefined) {
-      regs = this.lowerBytes(maybeRegisters.getAllBytesAsLittleEndian());
-    }
-    resetGeneric(this.code, regs, gas as bigint, this.hasMeta === HasMetadata.Yes);
-    // TODO [MaSo] Set memory
-    if (maybeMemory !== undefined) {
-      const indexes = maybeMemory.getDirtyPages();
-      for (const i of indexes) {
-        const page = maybeMemory.getPageDump(i);
-        if (page === null) {
-          continue;
-        }
-        const address = getStartPageIndexFromPageNumber(i);
-        logger.log`memory: ${i}: ${address}`;
-        setMemory(address, page);
-      }
-    }
-    setNextProgramCounter(this.pc);
+    resetJAM(this.code, this.pc, gas as bigint, [], this.hasMeta === HasMetadata.Yes);
   }
 
   printProgram() {

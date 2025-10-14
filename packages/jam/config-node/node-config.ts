@@ -15,9 +15,20 @@ export const DEV_CONFIG = "dev";
 /** Default config file. */
 export const DEFAULT_CONFIG = "default";
 
+/** Implemented PVM Interpreters to choose from. */
+export enum PVMInterpreter {
+  /** Built-in aka. Typeberry. */
+  Default = "default",
+  /** Ananas 🍍. */
+  Ananas = "ananas",
+  /** Both. */
+  DefaultAnanas = "defaultananas",
+}
+
 export const NODE_DEFAULTS = {
   name: isBrowser() ? "browser" : os.hostname(),
   config: DEFAULT_CONFIG,
+  pvm: PVMInterpreter.Default,
 };
 
 /** Chain spec chooser. */

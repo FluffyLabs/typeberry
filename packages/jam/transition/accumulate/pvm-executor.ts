@@ -1,6 +1,7 @@
 import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
+import type { PVMInterpreter } from "@typeberry/config-node";
 import { Assign } from "@typeberry/jam-host-calls/accumulate/assign.js";
 import { Bless } from "@typeberry/jam-host-calls/accumulate/bless.js";
 import { Checkpoint } from "@typeberry/jam-host-calls/accumulate/checkpoint.js";
@@ -71,13 +72,15 @@ namespace entrypoint {
 export class PvmExecutor {
   private readonly pvm: PvmHostCallExtension;
   private hostCalls: HostCalls;
-  private pvmInstanceManager = new PvmInstanceManager(4);
+  private pvmInstanceManager;
 
   private constructor(
     private serviceCode: BytesBlob,
     hostCallHandlers: HostCallHandler[],
     private entrypoint: ProgramCounter,
+    pvmInterpreter: PVMInterpreter,
   ) {
+    this.pvmInstanceManager = new PvmInstanceManager(4, pvmInterpreter);
     this.hostCalls = new HostCalls({
       missing: new Missing(),
       handlers: hostCallHandlers,
@@ -141,9 +144,10 @@ export class PvmExecutor {
     serviceCode: BytesBlob,
     externalities: AccumulateHostCallExternalities,
     chainSpec: ChainSpec,
+    pvm: PVMInterpreter,
   ) {
     const hostCallHandlers = PvmExecutor.prepareAccumulateHostCalls(serviceId, externalities, chainSpec);
-    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ACCUMULATE);
+    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ACCUMULATE, pvm);
   }
 
   /** A utility function that can be used to prepare on transfer executor */
@@ -151,8 +155,9 @@ export class PvmExecutor {
     serviceId: ServiceId,
     serviceCode: BytesBlob,
     externalities: OnTransferHostCallExternalities,
+    pvm: PVMInterpreter,
   ) {
     const hostCallHandlers = PvmExecutor.prepareOnTransferHostCalls(serviceId, externalities);
-    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ON_TRANSFER);
+    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ON_TRANSFER, pvm);
   }
 }

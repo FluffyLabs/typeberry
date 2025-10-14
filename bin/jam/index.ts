@@ -53,6 +53,7 @@ function prepareConfigFile(args: Arguments, blake2b: Blake2b): JamConfig {
     isAuthoring: args.command === Command.Dev,
     nodeName,
     nodeConfig,
+    nodeInterpreter: args.args.pvm,
     networkConfig: {
       key: networkingKey,
       host: "127.0.0.1",

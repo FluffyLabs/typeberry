@@ -2,6 +2,7 @@ import { type EntropyHash, type ServiceId, type TimeSlot, tryAsServiceGas } from
 import { W_C } from "@typeberry/block/gp-constants.js";
 import { codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
+import { PVMInterpreter } from "@typeberry/config-node";
 import type { Blake2b } from "@typeberry/hash";
 import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import {
@@ -54,6 +55,7 @@ export class DeferredTransfers {
     public readonly chainSpec: ChainSpec,
     public readonly blake2b: Blake2b,
     private readonly state: DeferredTransfersState,
+    private readonly pvmInterpreter: PVMInterpreter = PVMInterpreter.Default,
   ) {}
 
   async transition({
@@ -114,7 +116,12 @@ export class DeferredTransfers {
           logger.trace`Skipping ON_TRANSFER execution for service ${serviceId} because code is too long`;
         }
       } else {
-        const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState, fetchExternalities });
+        const executor = PvmExecutor.createOnTransferExecutor(
+          serviceId,
+          code,
+          { partialState, fetchExternalities },
+          this.pvmInterpreter,
+        );
         const args = Encoder.encodeObject(
           ARGS_CODEC,
           { timeslot, serviceId, transfersLength: tryAsU32(transfers.length) },

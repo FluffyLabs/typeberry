@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { NODE_DEFAULTS } from "@typeberry/config-node";
+import { NODE_DEFAULTS, PVMInterpreter } from "@typeberry/config-node";
 import { tryAsU16 } from "@typeberry/numbers";
 import { deepEqual } from "@typeberry/utils";
 import { Command, parseArgs, type SharedOptions } from "./args.js";
@@ -11,6 +11,7 @@ describe("CLI", () => {
   const defaultOptions: SharedOptions = {
     nodeName: NODE_DEFAULTS.name,
     configPath: NODE_DEFAULTS.config,
+    pvm: NODE_DEFAULTS.pvm,
   };
 
   it("should start with default arguments", () => {
@@ -79,6 +80,27 @@ describe("CLI", () => {
         ...defaultOptions,
         outputDir: ".././output-dir",
       },
+    });
+  });
+
+  it("should parse pvm option", () => {
+    const args = parse(["--pvm=ananas"]);
+
+    deepEqual(args, {
+      command: Command.Run,
+      args: {
+        ...defaultOptions,
+        pvm: PVMInterpreter.Ananas,
+      },
+    });
+  });
+
+  it("should revert to default pvm option if provided unimplemented one", () => {
+    const args = parse(["--pvm=unimplemented"]);
+
+    deepEqual(args, {
+      command: Command.Run,
+      args: defaultOptions,
     });
   });
 

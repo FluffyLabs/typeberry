@@ -1,32 +1,27 @@
+import { PVMInterpreter } from "@typeberry/config-node";
 import { Interpreter } from "@typeberry/pvm-interpreter";
 import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
 
 type ResolveFn = (pvm: Interpreter | AnanasInterpreter) => void;
 
-export enum InterpreterKind {
-  BuildIn = 0,
-  Ananas = 1,
-  Both = 2,
-}
-
 export class InterpreterInstanceManager {
   private instances: (Interpreter | AnanasInterpreter)[] = [];
   private waitingQueue: ResolveFn[] = [];
 
-  constructor(noOfPvmInstances: number, interpreter: InterpreterKind = InterpreterKind.Ananas) {
+  constructor(noOfPvmInstances: number, interpreter: PVMInterpreter = PVMInterpreter.Default) {
     for (let i = 0; i < noOfPvmInstances; i++) {
       switch (interpreter) {
-        case InterpreterKind.BuildIn:
+        case PVMInterpreter.Default:
           this.instances.push(
             new Interpreter({
               useSbrkGas: false,
             }),
           );
           break;
-        case InterpreterKind.Ananas:
+        case PVMInterpreter.Ananas:
           this.instances.push(new AnanasInterpreter());
           break;
-        case InterpreterKind.Both:
+        case PVMInterpreter.DefaultAnanas:
           this.instances.push(
             new Interpreter({
               useSbrkGas: false,

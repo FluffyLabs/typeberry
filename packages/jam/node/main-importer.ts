@@ -19,6 +19,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
 
   logger.info`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
   logger.info`🎸 Starting importer: ${config.nodeName}.`;
+  logger.info`🖥️ Interpreter: ${config.nodeInterpreter}.`;
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
   const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
@@ -32,7 +33,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
   await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
   await rootDb.close();
 
-  const workerConfig = new WorkerConfig(chainSpec, dbPath, false);
+  const workerConfig = new WorkerConfig(chainSpec, dbPath, config.nodeInterpreter, false);
   const { lmdb, importer } = await createImporter(workerConfig);
   const importerReady = new ImporterReady();
   importerReady.setConfig(workerConfig);
