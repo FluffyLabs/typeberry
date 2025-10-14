@@ -91,6 +91,9 @@ async function terminate(jamProcess: ChildProcess | null) {
 async function start(options: { devIndex: number | null } = { devIndex: 1 }) {
   const args = options.devIndex === null ? ["--", "--config=dev"] : ["dev", `${options.devIndex}`];
   const spawned = spawn("npm", ["start", ...args], {
+    env: {
+      JAM_LOG: "trace",
+    },
     cwd: process.cwd(),
   });
   const timeout = setTimeout(() => {
