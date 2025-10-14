@@ -29,7 +29,7 @@ test("JAM Node network connection", { timeout: TEST_TIMEOUT }, async () => {
   try {
     jamProcess1 = await start({ devIndex: 2 });
     // introducing some timeout, due to networking issues when started at the same time
-    await promises.setTimeout(1_000);
+    await promises.setTimeout(5_000);
     jamProcess2 = await start({ devIndex: null });
 
     // wait for the dev-mode one to start
