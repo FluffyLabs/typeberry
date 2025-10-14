@@ -30,7 +30,6 @@ import { type AccountsRead, Read } from "@typeberry/jam-host-calls/read.js";
 import { type AccountsWrite, Write } from "@typeberry/jam-host-calls/write.js";
 import { type HostCallHandler, HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
 import type { Gas } from "@typeberry/pvm-interpreter";
-import { Program } from "@typeberry/pvm-program";
 
 const ACCUMULATE_HOST_CALL_CLASSES = [
   Bless,
@@ -133,9 +132,7 @@ export class PvmExecutor {
    * @returns `ReturnValue` object that can be a status or memory slice
    */
   async run(args: BytesBlob, gas: Gas) {
-    const program = Program.fromSpi(this.serviceCode.raw, args.raw, true);
-
-    return this.pvm.runProgram(program.code, Number(this.entrypoint), gas, program.registers, program.memory);
+    return this.pvm.runProgram(this.serviceCode.raw, args.raw, Number(this.entrypoint), gas);
   }
 
   /** A utility function that can be used to prepare accumulate executor */

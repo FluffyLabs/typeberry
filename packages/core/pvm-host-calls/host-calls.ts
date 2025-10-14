@@ -1,7 +1,6 @@
-import type { Interpreter, Memory } from "@typeberry/pvm-interpreter";
+import type { Interpreter } from "@typeberry/pvm-interpreter";
 import type { Gas } from "@typeberry/pvm-interpreter/gas.js";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import type { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
 import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
 import { assertNever, check, safeAllocUint8Array } from "@typeberry/utils";
@@ -150,18 +149,10 @@ export class HostCalls {
     }
   }
 
-  async runProgram(
-    rawProgram: Uint8Array,
-    initialPc: number,
-    initialGas: Gas,
-    maybeRegisters?: Registers,
-    maybeMemory?: Memory,
-  ): Promise<ReturnValue> {
+  async runProgram(program: Uint8Array, args: Uint8Array, initialPc: number, initialGas: Gas): Promise<ReturnValue> {
     const pvmInstance = await this.pvmInstanceManager.getInstance();
-    //console.log`${}`;
-    pvmInstance.setCode(rawProgram);
-    console.log`${pvmInstance.printProgram()}`;
-    pvmInstance.reset(rawProgram, initialPc, initialGas, maybeRegisters, maybeMemory);
+    console.log`${pvmInstance.printProgram(program)}`;
+    pvmInstance.resetJam(program, args, initialPc, initialGas);
     try {
       return await this.execute(pvmInstance);
     } finally {

@@ -1,15 +1,6 @@
 import { tryAsU32, tryAsU64, type U64 } from "@typeberry/numbers";
 import type { IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
-import {
-  type Gas,
-  gasCounter,
-  type Memory,
-  type Registers,
-  Status,
-  tryAsBigGas,
-  tryAsGas,
-  tryAsMemoryIndex,
-} from "@typeberry/pvm-interpreter";
+import { type Gas, gasCounter, Status, tryAsBigGas, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { type OutOfBounds, PageFault } from "@typeberry/pvm-interpreter/memory/errors.js";
 import { OK, Result } from "@typeberry/utils";
 import {
@@ -22,38 +13,25 @@ import {
   HasMetadata,
   InputKind,
   nextStep,
-  resetGeneric,
   resetJAM,
   setMemory,
-  setNextProgramCounter,
   setRegister,
 } from "anan-as";
 
 export class AnanasInterpreter implements IHostCallRegisters, IHostCallMemory {
-  private code: number[] = [];
   private pc = 0;
   private initialGas = gasCounter(tryAsGas(0n));
-  private kind: InputKind = InputKind.Generic;
-  private hasMeta: HasMetadata = HasMetadata.Yes;
 
-  reset(rawProgram: Uint8Array, pc: number, gas: Gas, _maybeRegisters?: Registers, _maybeMemory?: Memory) {
-    this.code = this.lowerBytes(rawProgram);
+  resetJam(program: Uint8Array, args: Uint8Array, pc: number, gas: Gas) {
+    const programArr = lowerBytes(program);
+    const argsArr = lowerBytes(args);
     this.pc = pc;
     this.initialGas = gasCounter(gas);
-    if (this.kind === InputKind.SPI) {
-      resetJAM(this.code, this.pc, gas as bigint, [], this.hasMeta === HasMetadata.Yes);
-    } else {
-      resetGeneric(this.code, [], gas as bigint, this.hasMeta === HasMetadata.Yes);
-      setNextProgramCounter(this.pc);
-    }
+    resetJAM(programArr, this.pc, BigInt(gas), argsArr, true);
   }
 
-  setCode(rawProgram: Uint8Array) {
-    this.code = this.lowerBytes(rawProgram);
-  }
-
-  printProgram() {
-    return disassemble(this.code, this.kind, this.hasMeta);
+  printProgram(program: Uint8Array) {
+    return disassemble(lowerBytes(program), InputKind.SPI, HasMetadata.Yes);
   }
 
   runProgram() {
@@ -120,13 +98,13 @@ export class AnanasInterpreter implements IHostCallRegisters, IHostCallMemory {
   set(registerIndex: number, value: U64): void {
     setRegister(registerIndex, value);
   }
+}
 
-  /**  Convert `Uint8Array` to `number[]` */
-  private lowerBytes(data: Uint8Array): number[] {
-    const r = new Array<number>(data.length);
-    for (let i = 0; i < data.length; i++) {
-      r[i] = data[i];
-    }
-    return r;
+/**  Convert `Uint8Array` to `number[]` */
+function lowerBytes(data: Uint8Array): number[] {
+  const r = new Array<number>(data.length);
+  for (let i = 0; i < data.length; i++) {
+    r[i] = data[i];
   }
+  return r;
 }

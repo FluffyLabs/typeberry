@@ -7,6 +7,6 @@ const program = new Uint8Array([
 ]);
 
 const pvm = new Interpreter();
-pvm.reset(program, 0, tryAsGas(1000));
+pvm.resetGeneric(program, 0, tryAsGas(1000));
 pvm.printProgram();
 pvm.runProgram();

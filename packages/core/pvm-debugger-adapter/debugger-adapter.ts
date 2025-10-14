@@ -18,11 +18,11 @@ export class DebuggerAdapter {
   }
 
   resetGeneric(rawProgram: Uint8Array, flatRegisters: Uint8Array, initialGas: bigint) {
-    this.pvm.reset(rawProgram, 0, tryAsGas(initialGas), new Registers(flatRegisters));
+    this.pvm.resetGeneric(rawProgram, 0, tryAsGas(initialGas), new Registers(flatRegisters));
   }
 
   reset(rawProgram: Uint8Array, pc: number, gas: bigint, maybeRegisters?: Registers, maybeMemory?: Memory) {
-    this.pvm.reset(rawProgram, pc, tryAsGas(gas), maybeRegisters, maybeMemory);
+    this.pvm.resetGeneric(rawProgram, pc, tryAsGas(gas), maybeRegisters, maybeMemory);
   }
 
   getPageDump(pageNumber: number): null | Uint8Array {

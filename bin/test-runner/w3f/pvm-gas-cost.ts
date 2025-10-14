@@ -15,7 +15,7 @@ export class PvmGasCostTest {
 
 export async function runPvmGasCostTest(testContent: PvmGasCostTest) {
   const pvm = new Interpreter();
-  pvm.reset(testContent.program, 0, tryAsGas(1000));
+  pvm.resetGeneric(testContent.program, 0, tryAsGas(1000));
 
   const blockGasCosts = pvm.calculateBlockGasCost();
 

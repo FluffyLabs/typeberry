@@ -113,7 +113,7 @@ export async function runPvmTest(testContent: PvmTest) {
     return "halt";
   };
 
-  pvm.reset(testContent.program, testContent["initial-pc"], tryAsGas(testContent["initial-gas"]), regs, memory);
+  pvm.resetGeneric(testContent.program, testContent["initial-pc"], tryAsGas(testContent["initial-gas"]), regs, memory);
   pvm.runProgram();
 
   assert.strictEqual(pvm.getGas(), BigInt(testContent["expected-gas"]));

@@ -1,5 +1,6 @@
 import { Logger } from "@typeberry/logger";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
+import { Program } from "@typeberry/pvm-program";
 import { ArgsDecoder } from "./args-decoder/args-decoder.js";
 import { createResults } from "./args-decoder/args-decoding-results.js";
 import { ArgumentType } from "./args-decoder/argument-type.js";
@@ -128,7 +129,11 @@ export class Interpreter {
     this.oneRegOneExtImmDispatcher = new OneRegOneExtImmDispatcher(loadOps);
   }
 
-  reset(rawProgram: Uint8Array, pc: number, gas: Gas, maybeRegisters?: Registers, maybeMemory?: Memory) {
+  resetJam(program: Uint8Array, args: Uint8Array, pc: number, gas: Gas) {
+    const p = Program.fromSpi(program, args, true);
+    this.resetGeneric(p.code, pc, gas, p.registers, p.memory);
+  }
+  resetGeneric(rawProgram: Uint8Array, pc: number, gas: Gas, maybeRegisters?: Registers, maybeMemory?: Memory) {
     const programDecoder = new ProgramDecoder(rawProgram);
     this.code = programDecoder.getCode();
     this.mask = programDecoder.getMask();
@@ -153,13 +158,6 @@ export class Interpreter {
     } else {
       this.memory.reset();
     }
-  }
-
-  setCode(rawProgram: Uint8Array) {
-    const programDecoder = new ProgramDecoder(rawProgram);
-    this.code = programDecoder.getCode();
-    this.mask = programDecoder.getMask();
-    this.jumpTable.copyFrom(programDecoder.getJumpTable());
   }
 
   printProgram() {
