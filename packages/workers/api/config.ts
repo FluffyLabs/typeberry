@@ -1,5 +1,5 @@
 import type { ChainSpec } from "@typeberry/config";
-import type { BlocksDb, InMemoryBlocks, InMemoryStates, StatesDb } from "@typeberry/database";
+import type { BlocksDb, InMemoryBlocks, InMemoryStates, RootDb, StatesDb } from "@typeberry/database";
 
 /** Standardized worker config. */
 export interface WorkerConfig<TParams = undefined, TBlocks = BlocksDb, TStates = StatesDb> {
@@ -9,19 +9,7 @@ export interface WorkerConfig<TParams = undefined, TBlocks = BlocksDb, TStates =
   readonly workerParams: TParams;
 
   /** Open database. */
-  openDatabase(options?: { readonly: boolean }): DatabaseAccess<TBlocks, TStates>;
-}
-
-/** Database access. */
-export interface DatabaseAccess<TBlocks = BlocksDb, TStates = StatesDb> {
-  /** Blocks DB. */
-  getBlocksDb(): TBlocks;
-
-  /** States DB. */
-  getStatesDb(): TStates;
-
-  /** Close access to the DB. */
-  close(): Promise<void>;
+  openDatabase(options?: { readonly: boolean }): RootDb<TBlocks, TStates>;
 }
 
 /**
@@ -51,7 +39,7 @@ export class DirectWorkerConfig<TParams = undefined, TBlocks = BlocksDb, TStates
     private readonly statesDb: TStates,
   ) {}
 
-  openDatabase(_options?: { readonly: boolean }): DatabaseAccess<TBlocks, TStates> {
+  openDatabase(_options?: { readonly: boolean }): RootDb<TBlocks, TStates> {
     return {
       getBlocksDb: () => this.blocksDb,
       getStatesDb: () => this.statesDb,

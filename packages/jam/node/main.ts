@@ -9,8 +9,8 @@ import { Listener } from "@typeberry/listener";
 import { tryAsU16 } from "@typeberry/numbers";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import { CURRENT_SUITE, CURRENT_VERSION, Result } from "@typeberry/utils";
-import { NodeWorkerConfig } from "@typeberry/workers-api-node";
-import { getChainSpec, initializeDatabase, logger, openDatabase } from "./common.js";
+import { LmdbWorkerConfig } from "@typeberry/workers-api-node";
+import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import { initializeExtensions } from "./extensions.js";
 import type { JamConfig, NetworkConfig } from "./jam-config.js";
 import packageJson from "./package.json" with { type: "json" };
@@ -35,24 +35,28 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   logger.info`🎸 Starting node: ${config.nodeName}.`;
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
-  const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
+  const { dbPath, genesisHeaderHash } = getDatabasePath(
     blake2b,
     config.nodeName,
     config.node.chainSpec.genesisHeader,
-    withRelPath(config.node.databaseBasePath),
+    withRelPath(config.node.databaseBasePath ?? "<in-memory>"),
   );
 
-  // Initialize the database with genesis state and block if there isn't one.
-  await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
-
-  // Start block importer
   const baseConfig = { chainSpec, blake2b, dbPath };
-  const importerConfig = NodeWorkerConfig.new({
+  const importerConfig = LmdbWorkerConfig.new({
     ...baseConfig,
     workerParams: ImporterConfig.create({
       omitSealVerification: config.node.authorship.omitSealVerification,
     }),
   });
+
+  // Initialize the database with genesis state and block if there isn't one.
+  logger.info`🛢️ Opening database at ${dbPath}`;
+  const rootDb = importerConfig.openDatabase({ readonly: false });
+  await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
+  await rootDb.close();
+
+  // Start block importer
   const { importer, finish: closeImporter } = await spawnImporterWorker(importerConfig);
   const bestHeader = new Listener<WithHash<HeaderHash, HeaderView>>();
   importer.setOnBestHeaderAnnouncement(bestHeader.callbackHandler());
@@ -67,13 +71,13 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   const closeAuthorship = await initAuthorship(
     importer,
     config.isAuthoring,
-    NodeWorkerConfig.new({ ...baseConfig, workerParams: undefined }),
+    LmdbWorkerConfig.new({ ...baseConfig, workerParams: undefined }),
   );
 
   // Networking initialization
   const closeNetwork = await initNetwork(
     importer,
-    NodeWorkerConfig.new({ ...baseConfig, workerParams: undefined }),
+    LmdbWorkerConfig.new({ ...baseConfig, workerParams: undefined }),
     genesisHeaderHash,
     config.network,
     bestHeader,
@@ -111,7 +115,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   return api;
 }
 
-const initAuthorship = async (importer: ImporterApi, isAuthoring: boolean, config: NodeWorkerConfig) => {
+const initAuthorship = async (importer: ImporterApi, isAuthoring: boolean, config: LmdbWorkerConfig) => {
   if (!isAuthoring) {
     logger.log`✍️  Authorship off: disabled`;
     return () => Promise.resolve();
@@ -131,7 +135,7 @@ const initAuthorship = async (importer: ImporterApi, isAuthoring: boolean, confi
 
 const initNetwork = async (
   importer: ImporterApi,
-  baseConfig: NodeWorkerConfig,
+  baseConfig: LmdbWorkerConfig,
   genesisHeaderHash: HeaderHash,
   networkConfig: NetworkConfig | null,
   bestHeader: Listener<WithHash<HeaderHash, HeaderView>>,
@@ -144,7 +148,7 @@ const initNetwork = async (
   const { key, host, port, bootnodes } = networkConfig;
 
   const { network, finish } = await spawnNetworkWorker(
-    NodeWorkerConfig.new({
+    LmdbWorkerConfig.new({
       ...baseConfig,
       workerParams: NetworkingConfig.create({
         genesisHeaderHash,

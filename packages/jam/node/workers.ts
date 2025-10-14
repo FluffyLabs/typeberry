@@ -5,9 +5,9 @@ import * as importer from "@typeberry/importer";
 import * as jamNetwork from "@typeberry/jam-network";
 import type { SerializedState } from "@typeberry/state-merkleization";
 import { type DirectWorkerConfig, startSameThread } from "@typeberry/workers-api";
-import { type NodeWorkerConfig, spawnWorker } from "@typeberry/workers-api-node";
+import { type LmdbWorkerConfig, spawnWorker } from "@typeberry/workers-api-node";
 
-export async function spawnImporterWorker(config: NodeWorkerConfig<importer.ImporterConfig>) {
+export async function spawnImporterWorker(config: LmdbWorkerConfig<importer.ImporterConfig>) {
   const { api, workerFinished } = spawnWorker(
     importer.protocol,
     importer.WORKER,
@@ -40,7 +40,7 @@ export async function startImporterDirect(
   };
 }
 
-export async function spawnNetworkWorker(config: NodeWorkerConfig<jamNetwork.NetworkingConfig>) {
+export async function spawnNetworkWorker(config: LmdbWorkerConfig<jamNetwork.NetworkingConfig>) {
   const { api, workerFinished } = spawnWorker(
     jamNetwork.protocol,
     jamNetwork.WORKER,
@@ -73,7 +73,7 @@ export async function startNetwork(
   };
 }
 
-export async function spawnBlockGeneratorWorker(config: NodeWorkerConfig) {
+export async function spawnBlockGeneratorWorker(config: LmdbWorkerConfig) {
   const { api, workerFinished } = spawnWorker(blockGenerator.protocol, blockGenerator.WORKER, config, codec.notdefined);
 
   return {

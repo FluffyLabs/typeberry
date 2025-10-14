@@ -4,8 +4,8 @@ import { initWasm } from "@typeberry/crypto";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { createImporter } from "@typeberry/importer";
 import { CURRENT_SUITE, CURRENT_VERSION, Result, resultToString } from "@typeberry/utils";
-import { NodeWorkerConfig } from "@typeberry/workers-api-node";
-import { getChainSpec, initializeDatabase, logger, openDatabase } from "./common.js";
+import { InMemWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
+import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 import type { NodeApi } from "./main.js";
 import packageJson from "./package.json" with { type: "json" };
@@ -19,26 +19,39 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
   logger.info`🎸 Starting importer: ${config.nodeName}.`;
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
-  const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
+  const omitSealVerification = false;
+
+  const { dbPath, genesisHeaderHash } = getDatabasePath(
     blake2b,
     config.nodeName,
     config.node.chainSpec.genesisHeader,
-    withRelPath(config.node.databaseBasePath),
+    withRelPath(config.node.databaseBasePath ?? "<in-memory>"),
   );
 
+  const workerConfig =
+    config.node.databaseBasePath === undefined
+      ? InMemWorkerConfig.new({
+          chainSpec,
+          blake2b,
+          workerParams: {
+            omitSealVerification,
+          },
+        })
+      : LmdbWorkerConfig.new({
+          chainSpec,
+          blake2b,
+          dbPath,
+          workerParams: {
+            omitSealVerification,
+          },
+        });
+
   // Initialize the database with genesis state and block if there isn't one.
+  logger.info`🛢️ Opening database at ${dbPath}`;
+  const rootDb = workerConfig.openDatabase({ readonly: false });
   await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
   await rootDb.close();
 
-  const omitSealVerification = false;
-  const workerConfig = NodeWorkerConfig.new({
-    chainSpec,
-    blake2b,
-    dbPath,
-    workerParams: {
-      omitSealVerification,
-    },
-  });
   const { db, importer } = await createImporter(workerConfig);
   await importer.prepareForNextEpoch();
 

@@ -5,7 +5,7 @@ import { Logger } from "@typeberry/logger";
 import { assertNever } from "@typeberry/utils";
 import { Channel } from "@typeberry/workers-api";
 import type { Api, Internal, LousyProtocol } from "@typeberry/workers-api/types.js";
-import { NodeWorkerConfig, type TransferableConfig } from "./config.js";
+import { LmdbWorkerConfig, type TransferableConfig } from "./config.js";
 import { ThreadPort } from "./port.js";
 
 const logger = Logger.new(import.meta.filename, "workers");
@@ -58,7 +58,7 @@ function isControlPlane(data: unknown): data is WorkerControlPlane {
 export function spawnWorker<To, From, Params>(
   protocol: LousyProtocol<To, From>,
   bootstrapPath: URL,
-  config: NodeWorkerConfig<Params>,
+  config: LmdbWorkerConfig<Params>,
   paramsEncoder: Encode<Params>,
 ): {
   api: Api<typeof protocol>;
@@ -101,7 +101,7 @@ export async function initWorker<To, From, Params>(
   protocol: LousyProtocol<To, From>,
   paramsDecoder: Decode<Params>,
 ): Promise<{
-  config: NodeWorkerConfig<Params>;
+  config: LmdbWorkerConfig<Params>;
   comms: Internal<typeof protocol>;
   threadComms: Listener<ThreadComms>;
 }> {
@@ -136,7 +136,7 @@ export async function initWorker<To, From, Params>(
 
         logger.trace`--> (${protocol.name}) received configuration.`;
         isResolved = true;
-        const config = await NodeWorkerConfig.fromTranferable(paramsDecoder, msg.config);
+        const config = await LmdbWorkerConfig.fromTranferable(paramsDecoder, msg.config);
         const rxPort = new ThreadPort(config.chainSpec, msg.parentPort);
         const comms = Channel.rx(protocol, rxPort);
 

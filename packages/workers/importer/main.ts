@@ -17,7 +17,7 @@ type Config = WorkerConfig<ImporterConfig, BlocksDb, StatesDb<SerializedState<Le
 
 export async function createImporter(config: Config) {
   const chainSpec = config.chainSpec;
-  const db = config.openDatabase({ readonly: true });
+  const db = config.openDatabase({ readonly: false });
   const blocks = db.getBlocksDb();
   const states = db.getStatesDb();
 
