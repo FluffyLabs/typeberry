@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { Block, type BlockView } from "@typeberry/block";
 import { blockFromJson } from "@typeberry/block-json";
-import { Decoder, Encoder, END_OF_DATA_ERROR_CAUSE } from "@typeberry/codec";
+import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { parseFromJson } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
@@ -75,11 +75,7 @@ function* readCodecBlocks(file: string, chainSpec: ChainSpec): Generator<BlockVi
     offset += bufferSize;
     return true;
   };
-  while (true) {
-    if (!getNextChunk()) {
-      break;
-    }
-
+  while (getNextChunk()) {
     const decoder = Decoder.fromBlob(buffer.slice(0, bytesRead), chainSpec);
 
     try {

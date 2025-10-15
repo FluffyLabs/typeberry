@@ -2,8 +2,6 @@ import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { tryAsU64, type U8, type U16, type U32, type U64 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 
-export const END_OF_DATA_ERROR_CAUSE = 0;
-
 /** A decoder for some specific type `T` */
 export type Decode<T> = {
   /** Decode object of type `T`. */
@@ -375,7 +373,6 @@ export class Decoder {
     if (this.offset + bytes > this.source.length) {
       throw new Error(
         `Attempting to decode more data than there is left. Need ${bytes}, left: ${this.source.length - this.offset}.`,
-        { cause: { asdf: 1234 } },
       );
     }
   }
