@@ -32,8 +32,6 @@ import {
   ServiceAccountInfo,
   type ServicesUpdate,
   tryAsPerCore,
-  type UpdateService,
-  UpdateServiceKind,
 } from "@typeberry/state";
 import { assertEmpty, Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
@@ -552,19 +550,16 @@ export class Accumulate {
     return tryAsServiceGas(gasLimit);
   }
 
-  private hasDuplicatedServicesCreated(updateServices: UpdateService[]): boolean {
-    const createdServiceIds = new Set<ServiceId>();
-    for (const update of updateServices) {
-      if (update.action.kind === UpdateServiceKind.Create) {
-        const serviceId = update.serviceId;
-        if (createdServiceIds.has(serviceId)) {
-          logger.log`Duplicated Service creation detected ${serviceId}. Block is invalid.`;
-          return true;
-        }
-        createdServiceIds.add(serviceId);
-      }
-    }
-    return false;
+  /**
+   * Detects the very unlikely situation where multiple services are created with the same ID.
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/30f20330f403?v=0.7.2
+   *
+   * NOTE: This is public only for testing purposes and should not be used outside of accumulation.
+   */
+  public hasDuplicatedServiceIdCreated(createdIds: ServiceId[]): boolean {
+    const uniqueIds = new Set(createdIds);
+    return uniqueIds.size !== createdIds.length;
   }
 
   async transition({ reports, slot, entropy }: AccumulateInput): Promise<Result<AccumulateResult, ACCUMULATION_ERROR>> {
@@ -620,7 +615,8 @@ export class Accumulate {
     } = state;
     assertEmpty(stateUpdateRest);
 
-    if (this.hasDuplicatedServicesCreated(services.servicesUpdates)) {
+    if (this.hasDuplicatedServiceIdCreated(services.created)) {
+      logger.trace`Duplicated Service creation detected. Block is invalid.`;
       return Result.error(ACCUMULATION_ERROR);
     }
 

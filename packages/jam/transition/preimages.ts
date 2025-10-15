@@ -1,4 +1,4 @@
-import type { TimeSlot } from "@typeberry/block";
+import type { ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage.js";
 import type { Blake2b } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
@@ -49,7 +49,7 @@ export class Preimages {
     }
 
     const { preimages, slot } = input;
-    const pendingChanges: UpdatePreimage[] = [];
+    const pendingChanges = new Map<ServiceId, UpdatePreimage[]>();
 
     // select preimages for integration
     for (const preimage of preimages) {
@@ -70,13 +70,14 @@ export class Preimages {
       }
 
       // https://graypaper.fluffylabs.dev/#/5f542d7/18c00018f300
-      pendingChanges.push(
+      const updates = pendingChanges.get(requester) ?? [];
+      updates.push(
         UpdatePreimage.provide({
-          serviceId: requester,
           preimage: PreimageItem.create({ hash, blob }),
           slot,
         }),
       );
+      pendingChanges.set(requester, updates);
     }
 
     return Result.ok({
