@@ -550,7 +550,14 @@ export class Accumulate {
     return tryAsServiceGas(gasLimit);
   }
 
-  private hasDuplicatedServiceIdCreated(createdIds: ServiceId[]): boolean {
+  /**
+   * Detects the very unlikely situation where multiple services are created with the same ID.
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/30f20330f403?v=0.7.2
+   *
+   * NOTE: This is public only for testing purposes and should not be used outside of accumulation.
+   */
+  public hasDuplicatedServiceIdCreated(createdIds: ServiceId[]): boolean {
     const uniqueIds = new Set(createdIds);
     return uniqueIds.size !== createdIds.length;
   }

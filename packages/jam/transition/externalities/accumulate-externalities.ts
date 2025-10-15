@@ -474,7 +474,6 @@ export class AccumulateExternalities
 
     const newServiceId = this.nextNewServiceId;
 
-    // TODO [MaSo] Add test to create duplicate service id and check if it handles detection of them.
     // add the new service
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/36cb0236cb02?v=0.6.7
     this.updatedState.createService(newServiceId, newAccount, newLookupItem);
