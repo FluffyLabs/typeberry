@@ -317,12 +317,18 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
 
     // TODO [ToDr] this is not specified in GP, but it seems sensible.
     if (overflowItems || overflowBytes) {
-      return Result.error(InsufficientFundsError);
+      return Result.error(
+        InsufficientFundsError,
+        () => `Storage utilisation overflow: items=${overflowItems}, bytes=${overflowBytes}`,
+      );
     }
 
     const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(items, bytes, serviceInfo.gratisStorage);
     if (serviceInfo.balance < thresholdBalance) {
-      return Result.error(InsufficientFundsError);
+      return Result.error(
+        InsufficientFundsError,
+        () => `Service balance (${serviceInfo.balance}) below threshold (${thresholdBalance})`,
+      );
     }
 
     // Update service info with new details.

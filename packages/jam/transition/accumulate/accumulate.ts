@@ -128,7 +128,7 @@ export class Accumulate {
     const serviceInfo = updatedState.getServiceInfo(serviceId);
     if (serviceInfo === null) {
       logger.log`Service with id ${serviceId} not found.`;
-      return Result.error(PvmInvocationError.NoService);
+      return Result.error(PvmInvocationError.NoService, () => `Accumulate: service ${serviceId} not found`);
     }
 
     const codeHash = serviceInfo.codeHash;
@@ -137,12 +137,18 @@ export class Accumulate {
 
     if (code === null) {
       logger.log`Code with hash ${codeHash} not found for service ${serviceId}.`;
-      return Result.error(PvmInvocationError.NoPreimage);
+      return Result.error(
+        PvmInvocationError.NoPreimage,
+        () => `Accumulate: code with hash ${codeHash} not found for service ${serviceId}`,
+      );
     }
 
     if (code.length > W_C) {
       logger.log`Code with hash ${codeHash} is too long for service ${serviceId}.`;
-      return Result.error(PvmInvocationError.PreimageTooLong);
+      return Result.error(
+        PvmInvocationError.PreimageTooLong,
+        () => `Accumulate: code length ${code.length} exceeds max ${W_C} for service ${serviceId}`,
+      );
     }
 
     const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec, this.blake2b);
@@ -617,7 +623,7 @@ export class Accumulate {
 
     if (this.hasDuplicatedServiceIdCreated(services.created)) {
       logger.trace`Duplicated Service creation detected. Block is invalid.`;
-      return Result.error(ACCUMULATION_ERROR);
+      return Result.error(ACCUMULATION_ERROR, () => "Accumulate: duplicate service created");
     }
 
     const accStateUpdate = this.getAccumulationStateUpdate(

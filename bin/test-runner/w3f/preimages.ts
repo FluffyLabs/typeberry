@@ -166,7 +166,7 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry, blake2b: Bla
 
 function testOutputToResult(testOutput: Output): ReturnType<Preimages["integrate"]> {
   return testOutput.err !== undefined
-    ? Result.error(testOutput.err)
+    ? Result.error(testOutput.err, () => `Preimages integration failed: ${testOutput.err}`)
     : Result.ok({
         preimages: new Map(),
       });

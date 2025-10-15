@@ -44,7 +44,10 @@ export class Preimages {
         prevPreimage.requester > currPreimage.requester ||
         currPreimage.blob.compare(prevPreimage.blob).isLessOrEqual()
       ) {
-        return Result.error(PreimagesErrorCode.PreimagesNotSortedUnique);
+        return Result.error(
+          PreimagesErrorCode.PreimagesNotSortedUnique,
+          () => `Preimages not sorted/unique at index ${i}`,
+        );
       }
     }
 
@@ -58,7 +61,7 @@ export class Preimages {
 
       const service = this.state.getService(requester);
       if (service === null) {
-        return Result.error(PreimagesErrorCode.AccountNotFound);
+        return Result.error(PreimagesErrorCode.AccountNotFound, () => `Service not found: ${requester}`);
       }
 
       const hasPreimage = service.hasPreimage(hash);
@@ -66,7 +69,11 @@ export class Preimages {
       // https://graypaper.fluffylabs.dev/#/5f542d7/181800181900
       // https://graypaper.fluffylabs.dev/#/5f542d7/116f0011a500
       if (hasPreimage || slots === null || !LookupHistoryItem.isRequested(slots)) {
-        return Result.error(PreimagesErrorCode.PreimageUnneeded);
+        return Result.error(
+          PreimagesErrorCode.PreimageUnneeded,
+          () =>
+            `Preimage unneeded: requester=${requester}, hash=${hash}, hasPreimage=${hasPreimage}, isRequested=${slots !== null && LookupHistoryItem.isRequested(slots)}`,
+        );
       }
 
       // https://graypaper.fluffylabs.dev/#/5f542d7/18c00018f300

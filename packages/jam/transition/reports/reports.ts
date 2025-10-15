@@ -130,7 +130,7 @@ export class Reports {
     ).slice();
 
     if (hasAnyOffenders(reporters, input.offenders)) {
-      return Result.error(ReportsError.BannedValidator);
+      return Result.error(ReportsError.BannedValidator, () => "One or more reporters are banned validators");
     }
 
     return Result.ok({
@@ -190,7 +190,7 @@ export class Reports {
 
     return Result.error(
       ReportsError.BadSignature,
-      `Invalid signatures for validators with keys: ${invalidKeys.join(", ")}`,
+      () => `Invalid signatures for validators with keys: ${invalidKeys.join(", ")}`,
     );
   }
 
@@ -215,14 +215,14 @@ export class Reports {
     if (guaranteeTimeSlot > headerTimeSlot) {
       return Result.error(
         ReportsError.FutureReportSlot,
-        `Report slot is in future. Block ${headerTimeSlot}, Report: ${guaranteeTimeSlot}`,
+        () => `Report slot is in future. Block ${headerTimeSlot}, Report: ${guaranteeTimeSlot}`,
       );
     }
 
     if (guaranteeTimeSlot < minTimeSlot) {
       return Result.error(
         ReportsError.ReportEpochBeforeLast,
-        `Report slot is too old. Block ${headerTimeSlot}, Report: ${guaranteeTimeSlot}`,
+        () => `Report slot is too old. Block ${headerTimeSlot}, Report: ${guaranteeTimeSlot}`,
       );
     }
 

@@ -45,7 +45,7 @@ export class Disputes {
     // check if culprits are sorted by key
     // https://graypaper.fluffylabs.dev/#/579bd12/12c50112c601
     if (!isUniqueSortedBy(disputes.culprits, "key")) {
-      return Result.error(DisputesErrorCode.CulpritsNotSortedUnique);
+      return Result.error(DisputesErrorCode.CulpritsNotSortedUnique, () => "Culprits are not uniquely sorted by key");
     }
 
     const culpritsLength = disputes.culprits.length;
@@ -55,27 +55,33 @@ export class Disputes {
       // https://graypaper.fluffylabs.dev/#/579bd12/125501125501
       const isInPunishSet = this.state.disputesRecords.asDictionaries().punishSet.has(key);
       if (isInPunishSet) {
-        return Result.error(DisputesErrorCode.OffenderAlreadyReported);
+        return Result.error(
+          DisputesErrorCode.OffenderAlreadyReported,
+          () => `Offender already reported: culprit ${i}, key=${key}`,
+        );
       }
 
       // check if the guarantor key is correct
       // https://graypaper.fluffylabs.dev/#/85129da/125501125501?v=0.6.3
       if (!allValidatorKeys.has(key)) {
-        return Result.error(DisputesErrorCode.BadGuarantorKey);
+        return Result.error(DisputesErrorCode.BadGuarantorKey, () => `Bad guarantor key: culprit ${i}, key=${key}`);
       }
 
       // verify if the culprit will be in new bad set
       // https://graypaper.fluffylabs.dev/#/579bd12/124601124601
       const isInNewBadSet = newItems.asDictionaries().badSet.has(workReportHash);
       if (!isInNewBadSet) {
-        return Result.error(DisputesErrorCode.CulpritsVerdictNotBad);
+        return Result.error(
+          DisputesErrorCode.CulpritsVerdictNotBad,
+          () => `Culprit verdict not bad: culprit ${i}, work report=${workReportHash}`,
+        );
       }
 
       // verify culprit signature
       // https://graypaper.fluffylabs.dev/#/579bd12/125c01125c01
       const result = verificationResult.culprits[i];
       if (!result?.isValid) {
-        return Result.error(DisputesErrorCode.BadSignature, `Invalid signature for culprit: ${i}`);
+        return Result.error(DisputesErrorCode.BadSignature, () => `Invalid signature for culprit: ${i}`);
       }
     }
 
@@ -91,7 +97,7 @@ export class Disputes {
     // check if faults are sorted by key
     // https://graypaper.fluffylabs.dev/#/579bd12/12c50112c601
     if (!isUniqueSortedBy(disputes.faults, "key")) {
-      return Result.error(DisputesErrorCode.FaultsNotSortedUnique);
+      return Result.error(DisputesErrorCode.FaultsNotSortedUnique, () => "Faults are not uniquely sorted by key");
     }
 
     const faultsLength = disputes.faults.length;
@@ -102,13 +108,16 @@ export class Disputes {
       const isInPunishSet = this.state.disputesRecords.asDictionaries().punishSet.has(key);
 
       if (isInPunishSet) {
-        return Result.error(DisputesErrorCode.OffenderAlreadyReported);
+        return Result.error(
+          DisputesErrorCode.OffenderAlreadyReported,
+          () => `Offender already reported: fault ${i}, key=${key}`,
+        );
       }
 
       // check if the auditor key is correct
       // https://graypaper.fluffylabs.dev/#/85129da/12a20112a201?v=0.6.3
       if (!allValidatorKeys.has(key)) {
-        return Result.error(DisputesErrorCode.BadAuditorKey);
+        return Result.error(DisputesErrorCode.BadAuditorKey, () => `Bad auditor key: fault ${i}, key=${key}`);
       }
 
       // verify if the fault will be included in new good/bad set
@@ -122,7 +131,11 @@ export class Disputes {
         const isInNewBadSet = badSet.has(workReportHash);
 
         if (isInNewGoodSet || !isInNewBadSet) {
-          return Result.error(DisputesErrorCode.FaultVerdictWrong);
+          return Result.error(
+            DisputesErrorCode.FaultVerdictWrong,
+            () =>
+              `Fault verdict wrong: fault ${i}, work report=${workReportHash}, inGood=${isInNewGoodSet}, inBad=${isInNewBadSet}`,
+          );
         }
       }
 
@@ -130,7 +143,7 @@ export class Disputes {
       // https://graypaper.fluffylabs.dev/#/579bd12/12a90112a901
       const result = verificationResult.faults[i];
       if (!result.isValid) {
-        return Result.error(DisputesErrorCode.BadSignature, `Invalid signature for fault: ${i}`);
+        return Result.error(DisputesErrorCode.BadSignature, () => `Invalid signature for fault: ${i}`);
       }
     }
 
@@ -144,13 +157,19 @@ export class Disputes {
     // check if verdicts are correctly sorted
     // https://graypaper.fluffylabs.dev/#/579bd12/12c40112c401
     if (!isUniqueSortedBy(disputes.verdicts, "workReportHash")) {
-      return Result.error(DisputesErrorCode.VerdictsNotSortedUnique);
+      return Result.error(
+        DisputesErrorCode.VerdictsNotSortedUnique,
+        () => "Verdicts are not uniquely sorted by work report hash",
+      );
     }
 
     // check if judgement are correctly sorted
     // https://graypaper.fluffylabs.dev/#/579bd12/123702123802
     if (disputes.verdicts.some((verdict) => !isUniqueSortedByIndex(verdict.votes))) {
-      return Result.error(DisputesErrorCode.JudgementsNotSortedUnique);
+      return Result.error(
+        DisputesErrorCode.JudgementsNotSortedUnique,
+        () => "Judgements are not uniquely sorted by index",
+      );
     }
 
     const currentEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
@@ -158,7 +177,10 @@ export class Disputes {
     for (const { votesEpoch, votes } of disputes.verdicts) {
       // https://graypaper.fluffylabs.dev/#/579bd12/12bb0012bc00
       if (votesEpoch !== currentEpoch && votesEpoch + 1 !== currentEpoch) {
-        return Result.error(DisputesErrorCode.BadJudgementAge);
+        return Result.error(
+          DisputesErrorCode.BadJudgementAge,
+          () => `Bad judgement age: epoch=${votesEpoch}, current=${currentEpoch}`,
+        );
       }
 
       const k = votesEpoch === currentEpoch ? this.state.currentValidatorData : this.state.previousValidatorData;
@@ -167,14 +189,20 @@ export class Disputes {
 
         // no particular GP fragment but I think we don't believe in ghosts
         if (key === undefined) {
-          return Result.error(DisputesErrorCode.BadValidatorIndex);
+          return Result.error(
+            DisputesErrorCode.BadValidatorIndex,
+            () => `Bad validator index: ${index} in epoch ${votesEpoch}`,
+          );
         }
 
         // verify vote signature. Verification was done earlier, here we only check the result.
         // https://graypaper.fluffylabs.dev/#/579bd12/12cd0012cd00
         const result = verificationResult.judgements[voteSignatureIndex];
         if (!result.isValid) {
-          return Result.error(DisputesErrorCode.BadSignature, `Invalid signature for judgement: ${voteSignatureIndex}`);
+          return Result.error(
+            DisputesErrorCode.BadSignature,
+            () => `Invalid signature for judgement: ${voteSignatureIndex}`,
+          );
         }
         voteSignatureIndex += 1;
       }
@@ -193,7 +221,10 @@ export class Disputes {
       const isInWonkySet = wonkySet.has(verdict.workReportHash);
 
       if (isInGoodSet || isInBadSet || isInWonkySet) {
-        return Result.error(DisputesErrorCode.AlreadyJudged);
+        return Result.error(
+          DisputesErrorCode.AlreadyJudged,
+          () => `Work report already judged: ${verdict.workReportHash}`,
+        );
       }
     }
 
@@ -235,7 +266,7 @@ export class Disputes {
         // https://graypaper.fluffylabs.dev/#/579bd12/12f10212fc02
         const f = disputes.faults.find((x) => x.workReportHash.isEqualTo(r));
         if (f === undefined) {
-          return Result.error(DisputesErrorCode.NotEnoughFaults);
+          return Result.error(DisputesErrorCode.NotEnoughFaults, () => `Not enough faults for work report: ${r}`);
         }
       } else if (sum === 0) {
         // there has to be at least 2 culprits with the same work report hash
@@ -243,12 +274,15 @@ export class Disputes {
         const c1 = disputes.culprits.find((x) => x.workReportHash.isEqualTo(r));
         const c2 = disputes.culprits.findLast((x) => x.workReportHash.isEqualTo(r));
         if (c1 === c2) {
-          return Result.error(DisputesErrorCode.NotEnoughCulprits);
+          return Result.error(DisputesErrorCode.NotEnoughCulprits, () => `Not enough culprits for work report: ${r}`);
         }
       } else if (sum !== this.chainSpec.thirdOfValidators) {
         // positive votes count is not correct
         // https://graypaper.fluffylabs.dev/#/579bd12/125002128102
-        return Result.error(DisputesErrorCode.BadVoteSplit);
+        return Result.error(
+          DisputesErrorCode.BadVoteSplit,
+          () => `Bad vote split: sum=${sum}, expected=${this.chainSpec.thirdOfValidators} for work report ${r}`,
+        );
       }
     }
 
@@ -347,7 +381,10 @@ export class Disputes {
 
         // no particular GP fragment but I think we don't believe in ghosts
         if (validator === undefined) {
-          return Result.error(DisputesErrorCode.BadValidatorIndex);
+          return Result.error(
+            DisputesErrorCode.BadValidatorIndex,
+            () => `Bad validator index in signature verification: ${j.index}`,
+          );
         }
 
         const key = validator.ed25519;

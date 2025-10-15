@@ -1,4 +1,3 @@
-import assert from "node:assert";
 import { describe, it } from "node:test";
 import {
   Block,
@@ -92,11 +91,11 @@ describe("Block Verifier", async () => {
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
-    assert.deepStrictEqual(
+    deepEqual(
       result,
       Result.error(
         BlockVerifierError.ParentNotFound,
-        "Parent 0x0808080808080808080808080808080808080808080808080808080808080808 not found",
+        () => "Parent 0x0808080808080808080808080808080808080808080808080808080808080808 not found",
       ),
     );
   });
@@ -110,9 +109,9 @@ describe("Block Verifier", async () => {
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
-    assert.deepStrictEqual(
+    deepEqual(
       result,
-      Result.error(BlockVerifierError.InvalidTimeSlot, "Invalid time slot index: 40, expected > 42"),
+      Result.error(BlockVerifierError.InvalidTimeSlot, () => "Invalid time slot index: 40, expected > 42"),
     );
   });
 
@@ -124,10 +123,9 @@ describe("Block Verifier", async () => {
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
-    assert.deepStrictEqual(
+    deepEqual(
       result,
-      Result.error(
-        BlockVerifierError.InvalidExtrinsic,
+      Result.error(BlockVerifierError.InvalidExtrinsic, () =>
         Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
           ? "Invalid extrinsic hash: 0x0202020202020202020202020202020202020202020202020202020202020202, expected 0x0377c11c61a370e532ce1b18a652aecdd060a3a3a257d53dac8f8e1cb32dea98"
           : "Invalid extrinsic hash: 0x0202020202020202020202020202020202020202020202020202020202020202, expected 0x0cae6b5fb28258312381144a6dd6f8996f7181d7d6ab1016ec6e8108c332f932",
@@ -150,11 +148,11 @@ describe("Block Verifier", async () => {
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
-    assert.deepStrictEqual(
+    deepEqual(
       result,
       Result.error(
         BlockVerifierError.StateRootNotFound,
-        "Posterior state root 0x0101010101010101010101010101010101010101010101010101010101010101 not found",
+        () => "Posterior state root 0x0101010101010101010101010101010101010101010101010101010101010101 not found",
       ),
     );
   });
@@ -174,11 +172,12 @@ describe("Block Verifier", async () => {
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
-    assert.deepStrictEqual(
+    deepEqual(
       result,
       Result.error(
         BlockVerifierError.InvalidStateRoot,
-        "Invalid prior state root: 0x0707070707070707070707070707070707070707070707070707070707070707, expected 0x0606060606060606060606060606060606060606060606060606060606060606 (ours)",
+        () =>
+          "Invalid prior state root: 0x0707070707070707070707070707070707070707070707070707070707070707, expected 0x0606060606060606060606060606060606060606060606060606060606060606 (ours)",
       ),
     );
   });

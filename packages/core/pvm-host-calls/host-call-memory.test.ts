@@ -52,7 +52,11 @@ describe("HostCallMemory", () => {
       const address = tryAsU64(MEMORY_SIZE);
       const bytes = new Uint8Array([1, 2, 3]);
 
-      assert.deepEqual(hostCallMemory.storeFrom(address, bytes), Result.error(new OutOfBounds()));
+      const res = hostCallMemory.storeFrom(address, bytes);
+      assert.strictEqual(res.isError, true);
+      if (res.isError) {
+        assert(res.error instanceof OutOfBounds);
+      }
     });
   });
 
@@ -92,7 +96,11 @@ describe("HostCallMemory", () => {
       const address = tryAsU64(MEMORY_SIZE);
       const result = new Uint8Array([1, 2, 3]);
 
-      assert.deepEqual(hostCallMemory.loadInto(result, address), Result.error(new OutOfBounds()));
+      const res = hostCallMemory.loadInto(result, address);
+      assert.strictEqual(res.isError, true);
+      if (res.isError) {
+        assert(res.error instanceof OutOfBounds);
+      }
     });
   });
 });

@@ -80,7 +80,7 @@ export class PartialStateMock implements PartialState {
     memo: Bytes<TRANSFER_MEMO_BYTES>,
   ): Result<OK, TransferError> {
     if (destination === null) {
-      return Result.error(TransferError.DestinationNotFound);
+      return Result.error(TransferError.DestinationNotFound, () => "Mock: destination is null for transfer");
     }
     if (!Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) || this.transferReturnValue.isOk) {
       this.transferData.push([destination, amount, suppliedGas, memo]);
@@ -147,7 +147,7 @@ export class PartialStateMock implements PartialState {
 
   providePreimage(service: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {
     if (service === null) {
-      return Result.error(ProvidePreimageError.ServiceNotFound);
+      return Result.error(ProvidePreimageError.ServiceNotFound, () => "Mock: service is null for providePreimage");
     }
     this.providePreimageData.push([service, preimage]);
     return this.providePreimageResponse;

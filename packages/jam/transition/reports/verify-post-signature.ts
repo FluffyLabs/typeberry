@@ -24,7 +24,7 @@ export function verifyPostSignatureChecks(
      * https://graypaper.fluffylabs.dev/#/5f542d7/15ea0015ea00
      */
     if (availabilityAssignment[coreIndex] !== null) {
-      return Result.error(ReportsError.CoreEngaged, `Report pending availability at core: ${coreIndex}`);
+      return Result.error(ReportsError.CoreEngaged, () => `Report pending availability at core: ${coreIndex}`);
     }
 
     /**
@@ -40,7 +40,7 @@ export function verifyPostSignatureChecks(
     if (pool.find((hash) => hash.isEqualTo(authorizerHash)) === undefined) {
       return Result.error(
         ReportsError.CoreUnauthorized,
-        `Authorizer hash not found in the pool of core ${coreIndex}: ${authorizerHash}`,
+        () => `Authorizer hash not found in the pool of core ${coreIndex}: ${authorizerHash}`,
       );
     }
 
@@ -54,7 +54,7 @@ export function verifyPostSignatureChecks(
     for (const result of report.results) {
       const service = services(result.serviceId);
       if (service === null) {
-        return Result.error(ReportsError.BadServiceId, `No service with id: ${result.serviceId}`);
+        return Result.error(ReportsError.BadServiceId, () => `No service with id: ${result.serviceId}`);
       }
       const info = service.getInfo();
 
@@ -62,7 +62,8 @@ export function verifyPostSignatureChecks(
       if (result.gas < info.accumulateMinGas) {
         return Result.error(
           ReportsError.ServiceItemGasTooLow,
-          `Service (${result.serviceId}) gas is less than minimal. Got: ${result.gas}, expected at least: ${info.accumulateMinGas}`,
+          () =>
+            `Service (${result.serviceId}) gas is less than minimal. Got: ${result.gas}, expected at least: ${info.accumulateMinGas}`,
         );
       }
     }
@@ -71,7 +72,7 @@ export function verifyPostSignatureChecks(
     if (totalGas.overflow || totalGas.value > G_A) {
       return Result.error(
         ReportsError.WorkReportGasTooHigh,
-        `Total gas too high. Got: ${totalGas.value} (ovfl: ${totalGas.overflow}), maximal: ${G_A}`,
+        () => `Total gas too high. Got: ${totalGas.value} (ovfl: ${totalGas.overflow}), maximal: ${G_A}`,
       );
     }
   }

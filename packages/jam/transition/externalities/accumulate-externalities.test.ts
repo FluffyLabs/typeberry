@@ -245,7 +245,13 @@ describe("PartialState.requestPreimage", () => {
     assert.deepStrictEqual(status, Result.ok(OK));
 
     const status2 = partialState.requestPreimage(preimageHash, tryAsU64(5));
-    assert.deepStrictEqual(status2, Result.error(RequestPreimageError.AlreadyRequested));
+    deepEqual(
+      status2,
+      Result.error(
+        RequestPreimageError.AlreadyRequested,
+        () => "Preimage already requested: hash=0x0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      ),
+    );
   });
 
   it("should fail if preimage is already available", () => {
@@ -264,7 +270,13 @@ describe("PartialState.requestPreimage", () => {
     ).asOpaque();
 
     const status = partialState.requestPreimage(preimageHash, tryAsU64(35));
-    assert.deepStrictEqual(status, Result.error(RequestPreimageError.AlreadyAvailable));
+    deepEqual(
+      status,
+      Result.error(
+        RequestPreimageError.AlreadyAvailable,
+        () => "Preimage already available: hash=0xc16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c",
+      ),
+    );
   });
 
   it("should fail if balance is insufficient", () => {
@@ -279,8 +291,14 @@ describe("PartialState.requestPreimage", () => {
     );
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
 
-    const status = partialState.requestPreimage(preimageHash, tryAsU64(2n ** 64n - 1n));
-    assert.deepStrictEqual(status, Result.error(RequestPreimageError.InsufficientFunds));
+    const status = partialState.requestPreimage(preimageHash, tryAsU64(2n ** 34n - 1n));
+    deepEqual(
+      status,
+      Result.error(
+        RequestPreimageError.InsufficientFunds,
+        () => "Service balance (10000000000) below threshold (17179869696)",
+      ),
+    );
   });
 });
 
@@ -298,7 +316,13 @@ describe("PartialState.forgetPreimage", () => {
     const hash = Bytes.fill(HASH_SIZE, 0x01).asOpaque();
 
     const result = partialState.forgetPreimage(hash, tryAsU64(42));
-    assert.deepStrictEqual(result, Result.error(ForgetPreimageError.NotFound));
+    deepEqual(
+      result,
+      Result.error(
+        ForgetPreimageError.NotFound,
+        () => "Preimage not found: hash=0x0101010101010101010101010101010101010101010101010101010101010101, length=42",
+      ),
+    );
   });
 
   it("should error if preimage is already forgotten", () => {
@@ -336,7 +360,13 @@ describe("PartialState.forgetPreimage", () => {
     state.state.applyUpdate(state.stateUpdate.services);
 
     const result2 = partialState.forgetPreimage(hash, length);
-    assert.deepStrictEqual(result2, Result.error(ForgetPreimageError.NotFound));
+    deepEqual(
+      result2,
+      Result.error(
+        ForgetPreimageError.NotFound,
+        () => "Preimage not found: hash=0xc16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c, length=35",
+      ),
+    );
   });
 
   it("should forget a requested preimage", () => {
@@ -614,7 +644,10 @@ describe("PartialState.forgetPreimage", () => {
     state.stateUpdate.services.preimages.set(serviceId, updates);
 
     const result = partialState.forgetPreimage(hash, length);
-    assert.deepStrictEqual(result, Result.error(ForgetPreimageError.NotExpired));
+    deepEqual(
+      result,
+      Result.error(ForgetPreimageError.NotExpired, () => "Preimage not expired: y=95, timeslot=100, period=32"),
+    );
   });
 
   it("should not forget unavailable preimage if too recent", () => {
@@ -645,7 +678,10 @@ describe("PartialState.forgetPreimage", () => {
     state.stateUpdate.services.preimages.set(serviceId, updates);
 
     const result = partialState.forgetPreimage(hash, length);
-    assert.deepStrictEqual(result, Result.error(ForgetPreimageError.NotExpired));
+    deepEqual(
+      result,
+      Result.error(ForgetPreimageError.NotExpired, () => "Preimage not expired: y=1, timeslot=2, period=32"),
+    );
   });
 });
 
@@ -875,7 +911,13 @@ describe("PartialState.newService", () => {
     );
 
     // then
-    assert.deepStrictEqual(result, Result.error(NewServiceError.InsufficientFunds));
+    deepEqual(
+      result,
+      Result.error(
+        NewServiceError.InsufficientFunds,
+        () => "Insufficient funds: balance=16777216, required=4294966474, overflow=false",
+      ),
+    );
 
     // Verify no side effects
     assert.deepStrictEqual(state.stateUpdate.services.updated, new Map());
@@ -930,7 +972,10 @@ describe("PartialState.newService", () => {
     );
 
     // then
-    assert.deepStrictEqual(result, Result.error(NewServiceError.UnprivilegedService));
+    deepEqual(
+      result,
+      Result.error(NewServiceError.UnprivilegedService, () => "Service 0 not privileged to set gratis storage"),
+    );
 
     // Verify no side effects
     assert.deepStrictEqual(state.stateUpdate.services.updated, new Map());
@@ -976,7 +1021,10 @@ describe("PartialState.newService", () => {
     );
 
     // then
-    assert.deepStrictEqual(result, Result.error(NewServiceError.RegistrarServiceIdAlreadyTaken));
+    deepEqual(
+      result,
+      Result.error(NewServiceError.RegistrarServiceIdAlreadyTaken, () => "Service ID 0 already taken"),
+    );
 
     // Verify no side effects
     assert.deepStrictEqual(state.stateUpdate.services.updated, new Map());
@@ -1090,7 +1138,10 @@ describe("PartialState.updateValidatorsData", () => {
     );
 
     // then
-    assert.deepStrictEqual(result, Result.error(UnprivilegedError));
+    deepEqual(
+      result,
+      Result.error(UnprivilegedError, () => "Service 0 is not delegator (expected: 1)"),
+    );
     assert.deepStrictEqual(state.stateUpdate.validatorsData, null);
   });
 });
@@ -1214,7 +1265,10 @@ describe("PartialState.updateAuthorizationQueue", () => {
     const result = partialState.updateAuthorizationQueue(coreIndex, queue, assigners);
 
     // then
-    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.InvalidServiceId));
+    deepEqual(
+      result,
+      Result.error(UpdatePrivilegesError.InvalidServiceId, () => "New auth manager is null for core 0"),
+    );
     assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), undefined);
   });
 
@@ -1244,7 +1298,10 @@ describe("PartialState.updateAuthorizationQueue", () => {
     const result = partialState.updateAuthorizationQueue(coreIndex, queue, assigners);
 
     // then
-    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.UnprivilegedService));
+    deepEqual(
+      result,
+      Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Service 0 not assigner for core 0 (expected: 1)"),
+    );
     assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), undefined);
   });
 
@@ -1274,7 +1331,10 @@ describe("PartialState.updateAuthorizationQueue", () => {
     const result = partialState.updateAuthorizationQueue(coreIndex, queue, assigners);
 
     // then
-    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.UnprivilegedService));
+    deepEqual(
+      result,
+      Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Service 0 not assigner for core 0 (expected: 1)"),
+    );
     assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), undefined);
   });
 });
@@ -1476,7 +1536,10 @@ describe("PartialState.updatePrivilegedServices", () => {
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
 
     // then
-    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.UnprivilegedService));
+    deepEqual(
+      result,
+      Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Test: error occurred"),
+    );
     assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
   });
 
@@ -1507,7 +1570,10 @@ describe("PartialState.updatePrivilegedServices", () => {
       const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
 
       // then
-      assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.UnprivilegedService));
+      deepEqual(
+        result,
+        Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Test: error occurred"),
+      );
       assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
     },
   );
@@ -1539,7 +1605,10 @@ describe("PartialState.updatePrivilegedServices", () => {
       const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
 
       // then
-      assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.UnprivilegedService));
+      deepEqual(
+        result,
+        Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Test: error occurred"),
+      );
       assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
     },
   );
@@ -1568,7 +1637,10 @@ describe("PartialState.updatePrivilegedServices", () => {
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
 
     // then
-    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.InvalidServiceId, INVALID_SERVICE_ID_ERROR));
+    deepEqual(
+      result,
+      Result.error(UpdatePrivilegesError.InvalidServiceId, () => INVALID_SERVICE_ID_ERROR),
+    );
     assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
   });
 
@@ -1596,7 +1668,10 @@ describe("PartialState.updatePrivilegedServices", () => {
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
 
     // then
-    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.InvalidServiceId, INVALID_SERVICE_ID_ERROR));
+    deepEqual(
+      result,
+      Result.error(UpdatePrivilegesError.InvalidServiceId, () => INVALID_SERVICE_ID_ERROR),
+    );
     assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
   });
 
@@ -1624,7 +1699,10 @@ describe("PartialState.updatePrivilegedServices", () => {
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
 
     // then
-    assert.deepStrictEqual(result, Result.error(UpdatePrivilegesError.InvalidServiceId, INVALID_SERVICE_ID_ERROR));
+    deepEqual(
+      result,
+      Result.error(UpdatePrivilegesError.InvalidServiceId, () => INVALID_SERVICE_ID_ERROR),
+    );
     assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
   });
 });
@@ -1723,7 +1801,10 @@ describe("PartialState.transfer", () => {
     const result = partialState.transfer(tryAsServiceId(4), amount, gas, memo);
 
     // then
-    assert.deepStrictEqual(result, Result.error(TransferError.DestinationNotFound));
+    deepEqual(
+      result,
+      Result.error(TransferError.DestinationNotFound, () => "Destination service not found: 4"),
+    );
   });
 
   it("should return GasTooLow error if gas is below destination's minimum", () => {
@@ -1746,7 +1827,10 @@ describe("PartialState.transfer", () => {
     const result = partialState.transfer(destinationId, amount, gas, memo);
 
     // then
-    assert.deepStrictEqual(result, Result.error(TransferError.GasTooLow));
+    deepEqual(
+      result,
+      Result.error(TransferError.GasTooLow, () => "Gas 999 below minimum 1000"),
+    );
   });
 
   it("should return BalanceBelowThreshold error if balance would fall too low", () => {
@@ -1769,7 +1853,10 @@ describe("PartialState.transfer", () => {
     const result = partialState.transfer(destinationId, amount, gas, memo);
 
     // then
-    assert.deepStrictEqual(result, Result.error(TransferError.BalanceBelowThreshold));
+    deepEqual(
+      result,
+      Result.error(TransferError.BalanceBelowThreshold, () => "Balance 1 below threshold 412"),
+    );
   });
 });
 
@@ -1962,7 +2049,14 @@ describe("PartialState.providePreimage", () => {
     const result = partialState.providePreimage(serviceId, preimage.blob);
 
     // then
-    assert.deepStrictEqual(result, Result.error(ProvidePreimageError.WasNotRequested));
+    deepEqual(
+      result,
+      Result.error(
+        ProvidePreimageError.WasNotRequested,
+        () =>
+          "Preimage was not requested: hash=0xe58b8e8cb80789549d264af831d0433975a8415b794e3622f2415127caa2aa25, service=1",
+      ),
+    );
     assert.deepStrictEqual(state.stateUpdate.services.preimages.size, 0);
   });
 
@@ -1998,7 +2092,14 @@ describe("PartialState.providePreimage", () => {
     const result = partialState.providePreimage(serviceId, preimage.blob);
 
     // then
-    assert.deepStrictEqual(result, Result.error(ProvidePreimageError.WasNotRequested));
+    deepEqual(
+      result,
+      Result.error(
+        ProvidePreimageError.WasNotRequested,
+        () =>
+          "Preimage was not requested: hash=0xe58b8e8cb80789549d264af831d0433975a8415b794e3622f2415127caa2aa25, service=1",
+      ),
+    );
     assert.deepStrictEqual(
       state.stateUpdate.services.preimages,
       new Map([
@@ -2039,7 +2140,14 @@ describe("PartialState.providePreimage", () => {
     const result = partialState.providePreimage(serviceId, preimage.blob);
 
     // then
-    assert.deepStrictEqual(result, Result.error(ProvidePreimageError.AlreadyProvided));
+    deepEqual(
+      result,
+      Result.error(
+        ProvidePreimageError.AlreadyProvided,
+        () =>
+          "Preimage already provided: hash=0xe58b8e8cb80789549d264af831d0433975a8415b794e3622f2415127caa2aa25, service=0",
+      ),
+    );
     assert.deepStrictEqual(state.stateUpdate.services.preimages, new Map());
   });
 
@@ -2068,7 +2176,14 @@ describe("PartialState.providePreimage", () => {
 
     // then
     assert.deepStrictEqual(resultok, Result.ok(OK));
-    assert.deepStrictEqual(resulterr, Result.error(ProvidePreimageError.WasNotRequested));
+    deepEqual(
+      resulterr,
+      Result.error(
+        ProvidePreimageError.WasNotRequested,
+        () =>
+          "Preimage was not requested: hash=0xe58b8e8cb80789549d264af831d0433975a8415b794e3622f2415127caa2aa25, service=0",
+      ),
+    );
     assert.deepStrictEqual(
       state.stateUpdate.services.preimages,
       new Map([
@@ -2113,7 +2228,14 @@ describe("PartialState.providePreimage", () => {
 
     // then
     assert.deepStrictEqual(resultok, Result.ok(OK));
-    assert.deepStrictEqual(resulterr, Result.error(ProvidePreimageError.WasNotRequested));
+    deepEqual(
+      resulterr,
+      Result.error(
+        ProvidePreimageError.WasNotRequested,
+        () =>
+          "Preimage was not requested: hash=0xe58b8e8cb80789549d264af831d0433975a8415b794e3622f2415127caa2aa25, service=1",
+      ),
+    );
     assert.deepStrictEqual(
       state.stateUpdate.services.preimages,
       new Map([
@@ -2218,7 +2340,10 @@ describe("PartialState.eject", () => {
     const result = partialState.eject(null, tombstone);
 
     // then
-    assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Service missing"));
+    deepEqual(
+      result,
+      Result.error(EjectError.InvalidService, () => "Service missing"),
+    );
     assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
@@ -2240,7 +2365,10 @@ describe("PartialState.eject", () => {
     const result = partialState.eject(nonExistentServiceId, tombstone);
 
     // then
-    assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Service missing"));
+    deepEqual(
+      result,
+      Result.error(EjectError.InvalidService, () => "Service missing"),
+    );
     assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
@@ -2264,7 +2392,10 @@ describe("PartialState.eject", () => {
     const result = partialState.eject(destinationId, tombstone);
 
     // then
-    assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Invalid code hash"));
+    deepEqual(
+      result,
+      Result.error(EjectError.InvalidService, () => "Invalid code hash"),
+    );
     assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
@@ -2288,7 +2419,10 @@ describe("PartialState.eject", () => {
     const result = partialState.eject(destinationId, tombstone);
 
     // then
-    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Too many storage items"));
+    deepEqual(
+      result,
+      Result.error(EjectError.InvalidPreimage, () => "Too many storage items"),
+    );
     assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
@@ -2312,7 +2446,10 @@ describe("PartialState.eject", () => {
     const result = partialState.eject(destinationId, tombstone);
 
     // then
-    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Previous code available: wrong status"));
+    deepEqual(
+      result,
+      Result.error(EjectError.InvalidPreimage, () => "Previous code available: wrong status"),
+    );
     assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
@@ -2343,7 +2480,10 @@ describe("PartialState.eject", () => {
     const result = partialState.eject(destinationId, tombstone);
 
     // then
-    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Previous code available: wrong status"));
+    deepEqual(
+      result,
+      Result.error(EjectError.InvalidPreimage, () => "Previous code available: wrong status"),
+    );
     assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
@@ -2374,7 +2514,10 @@ describe("PartialState.eject", () => {
     const result = partialState.eject(destinationId, tombstone);
 
     // then
-    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Previous code available: not expired"));
+    deepEqual(
+      result,
+      Result.error(EjectError.InvalidPreimage, () => "Previous code available: not expired"),
+    );
     assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
@@ -2421,7 +2564,10 @@ describe("PartialState.eject", () => {
     const result = partialState.eject(destinationId, tombstone);
 
     // then
-    assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Balance overflow"));
+    deepEqual(
+      result,
+      Result.error(EjectError.InvalidService, () => "Balance overflow"),
+    );
     assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 

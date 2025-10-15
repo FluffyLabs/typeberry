@@ -18,11 +18,12 @@ export function verifyReportsOrder(input: GuaranteesExtrinsicView, chainSpec: Ch
     if (lastCoreIndex >= coreIndex) {
       return Result.error(
         ReportsError.OutOfOrderGuarantee,
-        `Core indices of work reports are not unique or in order. Got: ${coreIndex}, expected at least: ${lastCoreIndex + 1}`,
+        () =>
+          `Core indices of work reports are not unique or in order. Got: ${coreIndex}, expected at least: ${lastCoreIndex + 1}`,
       );
     }
     if (coreIndex >= noOfCores) {
-      return Result.error(ReportsError.BadCoreIndex, `Invalid core index. Got: ${coreIndex}, max: ${noOfCores}`);
+      return Result.error(ReportsError.BadCoreIndex, () => `Invalid core index. Got: ${coreIndex}, max: ${noOfCores}`);
     }
     lastCoreIndex = coreIndex;
   }

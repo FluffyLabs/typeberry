@@ -120,7 +120,7 @@ export function deepEqual<T>(
 
     if (actual.isError && expected.isError) {
       deepEqual(actual.error, expected.error, { context: ctx.concat(["error"]), errorsCollector: errors, ignore });
-      deepEqual(actual.details, expected.details, {
+      deepEqual(actual.details(), expected.details(), {
         context: ctx.concat(["details"]),
         errorsCollector: errors,
         // display details when error does not match

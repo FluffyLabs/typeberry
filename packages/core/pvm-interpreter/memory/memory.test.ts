@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { OK, Result } from "@typeberry/utils";
+import { deepEqual, OK, Result } from "@typeberry/utils";
 import { PageFault } from "./errors.js";
 import { Memory } from "./memory.js";
 import { MAX_MEMORY_INDEX, MIN_ALLOCATION_LENGTH, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts.js";
@@ -20,7 +20,10 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, Result.error(PageFault.fromMemoryIndex(addressToLoad)));
+      deepEqual(
+        loadResult,
+        Result.error(PageFault.fromMemoryIndex(addressToLoad), () => "Page fault: page 16 not allocated"),
+      );
     });
 
     it("should correctly load data from one page", () => {
@@ -84,7 +87,10 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, Result.error(PageFault.fromPageNumber(17)));
+      deepEqual(
+        loadResult,
+        Result.error(PageFault.fromPageNumber(17), () => "Page fault: page 17 not allocated"),
+      );
     });
 
     it("should return fault when load data from the last page and the first page", () => {
@@ -112,7 +118,10 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, Result.error(PageFault.fromPageNumber(0, true)));
+      deepEqual(
+        loadResult,
+        Result.error(PageFault.fromPageNumber(0, true), () => "Page fault: attempted to access reserved page 0"),
+      );
       assert.deepStrictEqual(result, expectedResult);
     });
   });
@@ -124,7 +133,10 @@ describe("Memory", () => {
       const dataToStore = new Uint8Array([1, 2, 3, 4]);
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-      assert.deepStrictEqual(storeResult, Result.error(PageFault.fromMemoryIndex(addressToStore)));
+      deepEqual(
+        storeResult,
+        Result.error(PageFault.fromMemoryIndex(addressToStore), () => "Page fault: page 16 not allocated"),
+      );
     });
 
     it("should not return PageFault if the page does not exist and stored array length is 0 (standard page)", () => {
@@ -224,7 +236,10 @@ describe("Memory", () => {
 
       const storeResult = memory.storeFrom(addressToStore, new Uint8Array(4));
 
-      assert.deepStrictEqual(storeResult, Result.error(PageFault.fromPageNumber(17)));
+      deepEqual(
+        storeResult,
+        Result.error(PageFault.fromPageNumber(17), () => "Page fault: page 17 not allocated"),
+      );
     });
 
     it("should return fault when store data on two pages - the last page and the first page", () => {
@@ -253,7 +268,10 @@ describe("Memory", () => {
 
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-      assert.deepStrictEqual(storeResult, Result.error(PageFault.fromPageNumber(0, true)));
+      deepEqual(
+        storeResult,
+        Result.error(PageFault.fromPageNumber(0, true), () => "Page fault: attempted to access reserved page 0"),
+      );
       assert.deepEqual(memory, expectedMemory);
     });
   });

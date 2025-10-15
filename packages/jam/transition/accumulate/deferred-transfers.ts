@@ -77,7 +77,10 @@ export class DeferredTransfers {
 
       const info = partiallyUpdatedState.getServiceInfo(serviceId);
       if (info === null) {
-        return Result.error(DeferredTransfersErrorCode.ServiceInfoNotExist);
+        return Result.error(
+          DeferredTransfersErrorCode.ServiceInfoNotExist,
+          () => `Deferred transfers: service info not found for ${serviceId}`,
+        );
       }
       const codeHash = info.codeHash;
       const code = partiallyUpdatedState.getPreimage(serviceId, codeHash.asOpaque());
@@ -85,7 +88,10 @@ export class DeferredTransfers {
       const newBalance = sumU64(info.balance, ...transfers.map((item) => item.amount));
 
       if (newBalance.overflow) {
-        return Result.error(DeferredTransfersErrorCode.ServiceBalanceOverflow);
+        return Result.error(
+          DeferredTransfersErrorCode.ServiceBalanceOverflow,
+          () => `Deferred transfers: balance overflow for service ${serviceId}`,
+        );
       }
 
       const newInfo = ServiceAccountInfo.create({ ...info, balance: newBalance.value });

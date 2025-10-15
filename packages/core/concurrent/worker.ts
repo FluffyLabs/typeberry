@@ -46,7 +46,7 @@ export class ConcurrentWorker<TParams, TResult extends WithTransferList, TIntern
           port.postMessage(response, result.getTransferList());
         })
         .catch((e) => {
-          const response: MessageOut<TResult> = Result.error(`${e}`);
+          const response: MessageOut<TResult> = Result.error(`${e}`, () => `Worker execution failed: ${e}`);
           port.postMessage(response, []);
         });
     });
