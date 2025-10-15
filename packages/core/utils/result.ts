@@ -109,14 +109,3 @@ export const Result = {
     return Result.error(new RichTaggedError(kind, nested.error, enumMapping), nested.details);
   },
 };
-
-/** Deep clone of a map with array. */
-export function deepCloneMapWithArray<K, V>(map: Map<K, V[]>): Map<K, V[]> {
-  const cloned: [K, V[]][] = [];
-
-  for (const [k, v] of map.entries()) {
-    cloned.push([k, v.slice()]);
-  }
-
-  return new Map(cloned);
-}

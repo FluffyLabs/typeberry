@@ -550,16 +550,9 @@ export class Accumulate {
     return tryAsServiceGas(gasLimit);
   }
 
-  private hasDuplicatedServicesCreated(createdServices: ServiceId[]): boolean {
-    const createdServiceIds = new Set<ServiceId>();
-    for (const id of createdServices) {
-      if (createdServiceIds.has(id)) {
-        logger.log`Duplicated Service creation detected ${id}. Block is invalid.`;
-        return true;
-      }
-      createdServiceIds.add(id);
-    }
-    return false;
+  private hasDuplicatedServiceIdCreated(createdIds: ServiceId[]): boolean {
+    const uniqueIds = new Set(createdIds);
+    return uniqueIds.size !== createdIds.length;
   }
 
   async transition({ reports, slot, entropy }: AccumulateInput): Promise<Result<AccumulateResult, ACCUMULATION_ERROR>> {
@@ -615,7 +608,8 @@ export class Accumulate {
     } = state;
     assertEmpty(stateUpdateRest);
 
-    if (this.hasDuplicatedServicesCreated(services.created)) {
+    if (this.hasDuplicatedServiceIdCreated(services.created)) {
+      logger.trace`Duplicated Service creation detected. Block is invalid.`;
       return Result.error(ACCUMULATION_ERROR);
     }
 

@@ -22,7 +22,7 @@ import {
   UpdateStorage,
   type ValidatorData,
 } from "@typeberry/state";
-import { assertNever, check, deepCloneMapWithArray, OK, Result } from "@typeberry/utils";
+import { assertNever, check, OK, Result } from "@typeberry/utils";
 import type { PendingTransfer } from "./pending-transfer.js";
 
 export const InsufficientFundsError = "insufficient funds";
@@ -31,6 +31,17 @@ export type InsufficientFundsError = typeof InsufficientFundsError;
 /** Update of the state entries coming from accumulation of a single service. */
 export type ServiceStateUpdate = Partial<Pick<State, "privilegedServices" | "authQueues" | "designatedValidatorData">> &
   ServicesUpdate;
+
+/** Deep clone of a map with array. */
+function deepCloneMapWithArray<K, V>(map: Map<K, V[]>): Map<K, V[]> {
+  const cloned: [K, V[]][] = [];
+
+  for (const [k, v] of map.entries()) {
+    cloned.push([k, v.slice()]);
+  }
+
+  return new Map(cloned);
+}
 
 /**
  * State updates that currently accumulating service produced.
