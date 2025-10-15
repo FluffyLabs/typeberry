@@ -371,7 +371,7 @@ export class Decoder {
   private ensureHasBytes(bytes: number) {
     check`${bytes >= 0} Negative number of bytes given.`;
     if (this.offset + bytes > this.source.length) {
-      throw new Error(
+      throw new EndOfDataError(
         `Attempting to decode more data than there is left. Need ${bytes}, left: ${this.source.length - this.offset}.`,
       );
     }
@@ -389,3 +389,5 @@ export function decodeVariableLengthExtraBytes(firstByte: number) {
 
   return 0;
 }
+
+export class EndOfDataError extends Error {}

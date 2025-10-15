@@ -10,7 +10,7 @@ Usage:
   jam [options]
   jam [options] dev <dev-validator-index>
   jam [options] import <bin-or-json-blocks>
-  jam [options] [--concat] export <output-directory-or-file>
+  jam [options] export <output-directory-or-file>
   jam [options] [--version=1] fuzz-target [socket-path=/tmp/jam_target.sock]
 
 Options:
