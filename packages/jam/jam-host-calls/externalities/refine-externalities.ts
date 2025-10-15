@@ -2,7 +2,8 @@ import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
 import { tryAsU64, type U64 } from "@typeberry/numbers";
-import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
+import type { IHostCallMemory } from "@typeberry/pvm-host-calls";
+import type { BigGas, Registers } from "@typeberry/pvm-interpreter";
 import type { ProgramDecoderError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
 import { asOpaqueType, type OK, type Opaque, type Result } from "@typeberry/utils";
@@ -122,7 +123,7 @@ export interface RefineExternalities {
     destinationStart: U64,
     sourceStart: U64,
     length: U64,
-    destination: Memory,
+    destination: IHostCallMemory,
   ): Promise<Result<OK, PeekPokeError>>;
 
   /** Write a fragment of memory into `machineIndex` from given source memory. */
@@ -131,7 +132,7 @@ export interface RefineExternalities {
     sourceStart: U64,
     destinationStart: U64,
     length: U64,
-    source: Memory,
+    source: IHostCallMemory,
   ): Promise<Result<OK, PeekPokeError>>;
 
   /** Start an inner PVM instance with given entry point and starting code. */

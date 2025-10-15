@@ -35,9 +35,9 @@ function looseType<T>(output: ProcessOutput<T>): ProcessOutput<unknown> {
 export type SupportedType = {
   name: string;
   // biome-ignore lint/suspicious/noExplicitAny: We need to handle any possible output
-  encode?: Encode<any>;
+  encode?: Encode<any> | ((spec: ChainSpec) => Encode<any>);
   // biome-ignore lint/suspicious/noExplicitAny: We need to handle any possible output
-  decode?: Decode<any>;
+  decode?: Decode<any> | ((spec: ChainSpec) => Decode<any>);
   // biome-ignore lint/suspicious/noExplicitAny: We need to handle any possible output
   json?: (spec: ChainSpec) => FromJson<any>;
   process?: {

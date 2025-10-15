@@ -7,7 +7,6 @@ import {
   tryAsTimeSlot,
   type WorkReportHash,
 } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { Ticket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
@@ -21,6 +20,7 @@ import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { MAX_VALUE } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
 import {
+  AUTHORIZATION_QUEUE_SIZE,
   AvailabilityAssignment,
   accumulationOutputComparator,
   BlockState,
@@ -34,7 +34,6 @@ import {
   PreimageItem,
   PrivilegedServices,
   RecentBlocks,
-  RecentBlocksHistory,
   SafroleSealingKeysData,
   ServiceAccountInfo,
   ServiceStatistics,
@@ -48,7 +47,7 @@ const spec = tinyChainSpec;
 
 // based on jamduna/assurances/state_snapshots/1_004.json
 export const testState = (): InMemoryState => {
-  const state = InMemoryState.create({
+  const state = InMemoryState.new(spec, {
     // rho
     availabilityAssignment: tryAsPerCore(
       [
@@ -119,45 +118,43 @@ export const testState = (): InMemoryState => {
       spec,
     ),
     // beta
-    recentBlocks: RecentBlocksHistory.create(
-      RecentBlocks.create({
-        blocks: asKnownSize([
-          BlockState.create({
-            headerHash: b32("0xc83b057ac60f3029edafc4a005f97c965ab8c2c19f3e4469c6e280356737d07c"),
-            accumulationResult: emptyHash(),
-            postStateRoot: b32("0x59642abe3120e645f4cda9e464d1e594743f146404dd948f146cf5daf2e99660"),
-            reported: HashDictionary.new(),
-          }),
-          BlockState.create({
-            headerHash: b32("0xbed5792b7df998e5520dfbb8c91386cf2117b2c07b7837094c79d5c0b4de9de7"),
-            accumulationResult: b32("0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5"),
-            postStateRoot: b32("0x1324bad2e35946c1a95dd25380a6e9199fbd40045ae49eacfc67599cbd23cda7"),
-            reported: HashDictionary.new(),
-          }),
-          BlockState.create({
-            headerHash: b32("0x6ce5d0b9ec42d803bee92d7dead697df3379836b50e6ed361068ed0561b5a2b5"),
-            accumulationResult: b32("0x675f9e53123c83ddcdb2c1f5231f13646378aefc83837a4571d052ac80014837"),
-            postStateRoot: b32("0x331f8a5b07cfc35cd75749c605146d48a4863af1b8a578160f188f4a725c1236"),
-            reported: HashDictionary.new(),
-          }),
-          BlockState.create({
-            headerHash: b32("0x7897a9dd7529d62d8be3a0e1ddc2e36795e2fbcacdd738cd9d75b4e00b186d33"),
-            accumulationResult: b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30"),
-            postStateRoot: b32("0xfbae2505572f332ad18dd75ecfa1aa4be7959f1666ed75d3241505c4ca3dd3fc"),
-            reported: HashDictionary.new(),
-          }),
-          BlockState.create({
-            headerHash: b32("0x72b9718488b532a4e93788865bf47291e57cfd7ca9bce755814fd8e2db2d41c8"),
-            accumulationResult: b32("0xe884038e46068eaab1df24317c855e78fe94335d4adb7aa6c62920ce1352eed7"),
-            postStateRoot: emptyHash(),
-            reported: HashDictionary.new(),
-          }),
-        ]),
-        accumulationLog: {
-          peaks: [emptyHash(), null, b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30")],
-        },
-      }),
-    ),
+    recentBlocks: RecentBlocks.create({
+      blocks: asKnownSize([
+        BlockState.create({
+          headerHash: b32("0xc83b057ac60f3029edafc4a005f97c965ab8c2c19f3e4469c6e280356737d07c"),
+          accumulationResult: emptyHash(),
+          postStateRoot: b32("0x59642abe3120e645f4cda9e464d1e594743f146404dd948f146cf5daf2e99660"),
+          reported: HashDictionary.new(),
+        }),
+        BlockState.create({
+          headerHash: b32("0xbed5792b7df998e5520dfbb8c91386cf2117b2c07b7837094c79d5c0b4de9de7"),
+          accumulationResult: b32("0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5"),
+          postStateRoot: b32("0x1324bad2e35946c1a95dd25380a6e9199fbd40045ae49eacfc67599cbd23cda7"),
+          reported: HashDictionary.new(),
+        }),
+        BlockState.create({
+          headerHash: b32("0x6ce5d0b9ec42d803bee92d7dead697df3379836b50e6ed361068ed0561b5a2b5"),
+          accumulationResult: b32("0x675f9e53123c83ddcdb2c1f5231f13646378aefc83837a4571d052ac80014837"),
+          postStateRoot: b32("0x331f8a5b07cfc35cd75749c605146d48a4863af1b8a578160f188f4a725c1236"),
+          reported: HashDictionary.new(),
+        }),
+        BlockState.create({
+          headerHash: b32("0x7897a9dd7529d62d8be3a0e1ddc2e36795e2fbcacdd738cd9d75b4e00b186d33"),
+          accumulationResult: b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30"),
+          postStateRoot: b32("0xfbae2505572f332ad18dd75ecfa1aa4be7959f1666ed75d3241505c4ca3dd3fc"),
+          reported: HashDictionary.new(),
+        }),
+        BlockState.create({
+          headerHash: b32("0x72b9718488b532a4e93788865bf47291e57cfd7ca9bce755814fd8e2db2d41c8"),
+          accumulationResult: b32("0xe884038e46068eaab1df24317c855e78fe94335d4adb7aa6c62920ce1352eed7"),
+          postStateRoot: emptyHash(),
+          reported: HashDictionary.new(),
+        }),
+      ]),
+      accumulationLog: {
+        peaks: [emptyHash(), null, b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30")],
+      },
+    }),
     services: new Map([
       [
         tryAsServiceId(0),

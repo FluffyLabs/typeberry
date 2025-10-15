@@ -4,7 +4,7 @@ import { fromJson } from "@typeberry/block-json";
 import { HashDictionary } from "@typeberry/collections";
 import type { KeccakHash } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";
-import { BlockState, type BlocksState, RecentBlocks, RecentBlocksHistory } from "@typeberry/state";
+import { BlockState, type BlocksState, RecentBlocks } from "@typeberry/state";
 
 export const reportedWorkPackageFromJson = json.object<JsonReportedWorkPackageInfo, WorkPackageInfo>(
   {
@@ -45,7 +45,7 @@ type JsonRecentBlockState = {
   reported: WorkPackageInfo[];
 };
 
-export const recentBlocksHistoryFromJson = json.object<JsonRecentBlocks, RecentBlocksHistory>(
+export const recentBlocksHistoryFromJson = json.object<JsonRecentBlocks, RecentBlocks>(
   {
     history: json.array(recentBlockStateFromJson),
     mmr: {
@@ -53,12 +53,10 @@ export const recentBlocksHistoryFromJson = json.object<JsonRecentBlocks, RecentB
     },
   },
   ({ history, mmr }) => {
-    return RecentBlocksHistory.create(
-      RecentBlocks.create({
-        blocks: history,
-        accumulationLog: mmr,
-      }),
-    );
+    return RecentBlocks.create({
+      blocks: history,
+      accumulationLog: mmr,
+    });
   },
 );
 
