@@ -47,13 +47,10 @@ export interface Port {
  * so there is no need for any serialization - we simply pass the data.
  */
 export class DirectPort implements Port {
-  /** Create `[tx, rx]` pair of inter-connected ports. */
+  /** Create a pair of symmetrical inter-connected ports. */
   static pair(): [DirectPort, DirectPort] {
     const events = new EventEmitter();
-    const tx = new DirectPort(events);
-    const rx = new DirectPort(events);
-
-    return [tx, rx];
+    return [new DirectPort(events), new DirectPort(events)];
   }
 
   private constructor(private readonly events: EventEmitter) {}
