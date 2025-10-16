@@ -62,34 +62,43 @@ const isJson = (f: string) => f.endsWith(".json");
 
 function* readCodecBlocks(file: string, chainSpec: ChainSpec): Generator<BlockView> {
   const fileDescriptor = fs.openSync(file, "r");
-  const bufferSize = 1024 * 1024; // should be at least max block length
+  const bufferSize = 14 * 1024 * 1024; // should be at least max block length - https://graypaper.fluffylabs.dev/#/ab2cdbd/1b13001b1300?v=0.7.2
   const buffer = new Uint8Array(bufferSize);
   let offset = 0;
   let bytesRead = 0;
+  let bytesRequested = bufferSize;
+
   const getNextChunk = () => {
     try {
-      bytesRead = fs.readSync(fileDescriptor, buffer, offset, bufferSize, null);
+      bytesRead = fs.readSync(fileDescriptor, buffer, offset, bytesRequested, null);
     } catch (_) {
       return false;
     }
-    offset += bufferSize;
-    return true;
+    return bytesRead > 0;
   };
+
   while (getNextChunk()) {
-    const decoder = Decoder.fromBlob(buffer.slice(0, bytesRead), chainSpec);
+    const decoder = Decoder.fromBlob(buffer.subarray(0, offset + bytesRead), chainSpec);
+    let bytesDecoded = 0;
 
     try {
       while (true) {
         yield decoder.object(Block.Codec.View);
+        bytesDecoded = decoder.bytesRead();
       }
     } catch (e) {
       if (!(e instanceof EndOfDataError)) {
+        fs.closeSync(fileDescriptor);
         throw e;
       }
     }
 
-    offset -= bufferSize - decoder.bytesRead();
+    bytesRequested = bytesDecoded;
+    buffer.set(buffer.subarray(bytesDecoded, offset + bytesRead), 0);
+    offset = offset + bytesRead - bytesDecoded;
   }
+
+  fs.closeSync(fileDescriptor);
 }
 
 function readJsonBlock(file: string, chainSpec: ChainSpec): BlockView {
