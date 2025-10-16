@@ -78,13 +78,13 @@ function* readCodecBlocks(file: string, chainSpec: ChainSpec): Generator<BlockVi
   };
 
   while (getNextChunk()) {
-    const decoder = Decoder.fromBlob(buffer.subarray(0, offset + bytesRead), chainSpec);
     let bytesDecoded = 0;
 
     try {
       while (true) {
+        const decoder = Decoder.fromBlob(buffer.slice(bytesDecoded, offset + bytesRead), chainSpec);
         yield decoder.object(Block.Codec.View);
-        bytesDecoded = decoder.bytesRead();
+        bytesDecoded += decoder.bytesRead();
       }
     } catch (e) {
       if (!(e instanceof EndOfDataError)) {

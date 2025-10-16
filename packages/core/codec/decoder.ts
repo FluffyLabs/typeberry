@@ -87,7 +87,7 @@ export class Decoder {
    * The copy will maintain it's own `offset` within the source.
    */
   clone(): Decoder {
-    return new Decoder(this.source.slice(0), this.offset, this.context);
+    return new Decoder(this.source, this.offset, this.context);
   }
 
   /**
