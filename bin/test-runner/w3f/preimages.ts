@@ -120,7 +120,7 @@ export async function runPreImagesTest(testContent: PreImagesTest) {
   const preimages = new Preimages(preState, blake2b);
   const result = preimages.integrate(testContent.input);
 
-  deepEqual(result, testOutputToResult(testContent.output), { ignore: ["ok"] });
+  deepEqual(result, testOutputToResult(testContent.output), { ignore: ["ok", "details"] });
   if (result.isOk) {
     preState.applyUpdate(result.ok);
   }

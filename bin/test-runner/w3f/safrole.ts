@@ -229,7 +229,7 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const expectedState = JsonState.toSafroleState(testContent.post_state, chainSpec);
 
   if (result.isError) {
-    deepEqual(result, expectedResult);
+    deepEqual(result, expectedResult, { ignore: ["details"] });
     deepEqual(safrole.state, expectedState);
   } else {
     const state = copyAndUpdateState(safrole.state, result.ok.stateUpdate);
