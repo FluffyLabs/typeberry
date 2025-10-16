@@ -53,7 +53,7 @@ export class Connections {
       return OK;
     });
     network.peers.onPeerDisconnected((peer) => {
-      this.scheduleReconnect(peer.id);
+      this.scheduleReconnect(peer.id, true);
       return OK;
     });
   }
@@ -116,15 +116,17 @@ export class Connections {
   }
 
   /** Attempt to scheduled a reconnect for a peer that just got disconnected. */
-  private async scheduleReconnect(id: PeerId) {
+  private async scheduleReconnect(id: PeerId, markAsDisconnected = false) {
     const meta = this.peerInfo.get(id);
     // just ignore peers we don't know about.
     if (meta === undefined) {
       return;
     }
-    // assume the peer is disconnected.
-    meta.peerRef = null;
-    meta.backgroundTask = new AbortController();
+    if (markAsDisconnected) {
+      // mark the peer as disconnected
+      meta.peerRef = null;
+      meta.backgroundTask = new AbortController();
+    }
     // abort signal
     const signal = meta.backgroundTask.signal;
 
@@ -161,11 +163,12 @@ export class Connections {
         logger.trace`[${id}] Attempting to connect to peer at ${meta.address.host}:${meta.address.port}.`;
         await this.network.dial(meta.address, { signal, verifyName: meta.peerId });
         return;
-      } catch {
+      } catch (e) {
         if (signal.aborted) {
           return;
         }
         // failing to connect, will retry.
+        logger.trace`[${id}] Failure reason: ${e}`;
         logger.trace`[${id}] attempt failed. Will retry (${meta.currentRetry}/${meta.maxRetries})`;
       }
     }

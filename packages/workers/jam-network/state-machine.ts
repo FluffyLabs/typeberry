@@ -153,7 +153,7 @@ export class NetworkReady extends State<"ready(network)", Finished, NetworkWorke
       blocks,
       config.genericConfig.chainSpec,
     );
-    port.sendSignal("newBlocks", encoded.raw, [encoded.raw.buffer as ArrayBuffer]);
+    port.sendSignal("newBlocks", encoded.raw, []);
   }
 
   getConfig(): NetworkWorkerConfig {

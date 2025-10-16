@@ -110,47 +110,68 @@ export class Quic {
       await conn.start();
     });
 
+    // allow only one dial to be occuring at the time
+    // TODO [ToDr] investigate: it seems that there is some issue with multiple
+    // `QUICClients` being created?
+    let currentDial: Promise<QuicPeer> | null = null;
     // connecting to a peer
     async function dial(peer: PeerAddress, options: DialOptions): Promise<QuicPeer> {
-      const peerDetails = peerVerification();
-      const clientLater = QUICClient.createQUICClient(
-        {
-          socket: socket,
-          host: peer.host,
-          port: peer.port,
-          crypto: getQuicClientCrypto(),
-          config: {
-            ...config,
-            verifyCallback: peerDetails.verifyCallback,
+      if (currentDial !== null) {
+        await currentDial;
+        return dial(peer, options);
+      }
+
+      currentDial = (async () => {
+        try {
+          return await doDial();
+        } finally {
+          currentDial = null;
+        }
+      })();
+
+      return currentDial;
+
+      async function doDial() {
+        const peerDetails = peerVerification();
+        const clientLater = QUICClient.createQUICClient(
+          {
+            socket: socket,
+            host: peer.host,
+            port: peer.port,
+            crypto: getQuicClientCrypto(),
+            config: {
+              ...config,
+              verifyCallback: peerDetails.verifyCallback,
+            },
+            logger: quicLogger.getChild("client"),
           },
-          logger: quicLogger.getChild("client"),
-        },
-        {
-          signal: options.signal,
-        },
-      );
-      const client = await clientLater;
-
-      addEventListener(client, events.EventQUICClientClose, () => {
-        logger.log`⚰️ Client connection closed.`;
-      });
-
-      addEventListener(client, events.EventQUICClientError, (error) => {
-        logger.error`🔴 Client error: ${error.detail}`;
-      });
-
-      if (peerDetails.info === null) {
-        throw new Error("Client connected, but there is no peer details!");
-      }
-
-      if (options.verifyName !== undefined && options.verifyName !== peerDetails.info.id) {
-        throw new Error(
-          `Client connected, but the id didn't match. Expected: ${options.verifyName}, got: ${peerDetails.info.id}`,
+          {
+            signal: options.signal,
+          },
         );
-      }
+        const client = await clientLater;
 
-      logger.log`🤝 Client handshake with: ${peer.host}:${peer.port}`;
-      return newPeer(client.connection, peerDetails.info);
+        addEventListener(client, events.EventQUICClientClose, () => {
+          logger.log`⚰️ Client connection closed.`;
+        });
+
+        addEventListener(client, events.EventQUICClientError, (error) => {
+          logger.error`🔴 Client error: ${error.detail}`;
+        });
+
+        if (peerDetails.info === null) {
+          throw new Error("Client connected, but there is no peer details!");
+        }
+
+        if (options.verifyName !== undefined && options.verifyName !== peerDetails.info.id) {
+          throw new Error(
+            `Client connected, but the id didn't match. Expected: ${options.verifyName}, got: ${peerDetails.info.id}`,
+          );
+        }
+
+        logger.log`🤝 Client handshake with: ${peer.host}:${peer.port}`;
+        return newPeer(client.connection, peerDetails.info);
+      }
     }
 
     function newPeer(conn: QUICConnection, peerInfo: PeerInfo) {

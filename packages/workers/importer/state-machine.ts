@@ -110,7 +110,7 @@ export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
   sendBlock(port: TypedChannel, block: Uint8Array) {
     // TODO [ToDr] How to make a better API to pass this binary data around?
     // Currently we don't guarantee that the underlying buffer is actually `ArrayBuffer`.
-    port.sendSignal("block", block, [block.buffer as ArrayBuffer]);
+    port.sendSignal("block", block, []);
   }
 
   async importBlock(port: TypedChannel, block: Uint8Array): Promise<Result<StateRootHash, string>> {
