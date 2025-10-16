@@ -1538,7 +1538,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     // then
     deepEqual(
       result,
-      Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Test: error occurred"),
+      Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Service 0 is not manager"),
     );
     assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
   });
@@ -1572,7 +1572,7 @@ describe("PartialState.updatePrivilegedServices", () => {
       // then
       deepEqual(
         result,
-        Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Test: error occurred"),
+        Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Service 0 is not manager"),
       );
       assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
     },
@@ -1607,7 +1607,7 @@ describe("PartialState.updatePrivilegedServices", () => {
       // then
       deepEqual(
         result,
-        Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Test: error occurred"),
+        Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Service 0 is not manager"),
       );
       assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
     },
