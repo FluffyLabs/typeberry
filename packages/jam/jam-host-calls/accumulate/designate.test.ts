@@ -121,7 +121,10 @@ describe("HostCalls: Designate", () => {
 
   it("should fail when unprivileged service sets new validators", async () => {
     const accumulate = new PartialStateMock();
-    accumulate.validatorDataResponse = Result.error(UnprivilegedError);
+    accumulate.validatorDataResponse = Result.error(
+      UnprivilegedError,
+      () => "Test: unprivileged service attempting designate",
+    );
     const serviceId = tryAsServiceId(10_000);
     const designate = new Designate(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory([

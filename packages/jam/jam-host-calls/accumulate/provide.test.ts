@@ -13,7 +13,7 @@ import {
   tryAsSbrkIndex,
 } from "@typeberry/pvm-interpreter";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
-import { Result } from "@typeberry/utils";
+import { deepEqual, Result } from "@typeberry/utils";
 import { ProvidePreimageError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
@@ -73,7 +73,10 @@ describe("HostCalls: Provide", () => {
     const provide = new Provide(currentServiceId, accumulate);
     const serviceId = tryAsServiceId(15_000);
     const preimage = BytesBlob.blobFromNumbers([0xaa, 0xbb, 0xcc, 0xdd]);
-    accumulate.providePreimageResponse = Result.error(ProvidePreimageError.ServiceNotFound);
+    accumulate.providePreimageResponse = Result.error(
+      ProvidePreimageError.ServiceNotFound,
+      () => "Test: service not found for provide",
+    );
 
     const { registers, memory } = prepareRegsAndMemory(serviceId, preimage);
 
@@ -82,7 +85,10 @@ describe("HostCalls: Provide", () => {
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
     assert.deepStrictEqual(accumulate.providePreimageData, [[serviceId, preimage]]);
-    assert.deepStrictEqual(accumulate.providePreimageResponse, Result.error(ProvidePreimageError.ServiceNotFound));
+    deepEqual(
+      accumulate.providePreimageResponse,
+      Result.error(ProvidePreimageError.ServiceNotFound, () => "Test: service not found for provide"),
+    );
   });
 
   it("should return HUH if preimage was not previously requested", async () => {
@@ -91,7 +97,10 @@ describe("HostCalls: Provide", () => {
     const provide = new Provide(currentServiceId, accumulate);
     const serviceId = tryAsServiceId(15_000);
     const preimage = BytesBlob.blobFromNumbers([0xaa, 0xbb, 0xcc, 0xdd]);
-    accumulate.providePreimageResponse = Result.error(ProvidePreimageError.WasNotRequested);
+    accumulate.providePreimageResponse = Result.error(
+      ProvidePreimageError.WasNotRequested,
+      () => "Test: preimage was not requested for provide",
+    );
 
     const { registers, memory } = prepareRegsAndMemory(serviceId, preimage);
 
@@ -100,7 +109,10 @@ describe("HostCalls: Provide", () => {
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
     assert.deepStrictEqual(accumulate.providePreimageData, [[serviceId, preimage]]);
-    assert.deepStrictEqual(accumulate.providePreimageResponse, Result.error(ProvidePreimageError.WasNotRequested));
+    deepEqual(
+      accumulate.providePreimageResponse,
+      Result.error(ProvidePreimageError.WasNotRequested, () => "Test: preimage was not requested for provide"),
+    );
   });
 
   it("should return HUH if preimage already provided", async () => {
@@ -109,7 +121,10 @@ describe("HostCalls: Provide", () => {
     const provide = new Provide(currentServiceId, accumulate);
     const serviceId = tryAsServiceId(15_000);
     const preimage = BytesBlob.blobFromNumbers([0xaa, 0xbb, 0xcc, 0xdd]);
-    accumulate.providePreimageResponse = Result.error(ProvidePreimageError.AlreadyProvided);
+    accumulate.providePreimageResponse = Result.error(
+      ProvidePreimageError.AlreadyProvided,
+      () => "Test: preimage already provided",
+    );
 
     const { registers, memory } = prepareRegsAndMemory(serviceId, preimage);
 
@@ -118,7 +133,10 @@ describe("HostCalls: Provide", () => {
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
     assert.deepStrictEqual(accumulate.providePreimageData, [[serviceId, preimage]]);
-    assert.deepStrictEqual(accumulate.providePreimageResponse, Result.error(ProvidePreimageError.AlreadyProvided));
+    deepEqual(
+      accumulate.providePreimageResponse,
+      Result.error(ProvidePreimageError.AlreadyProvided, () => "Test: preimage already provided"),
+    );
   });
 
   it("should return OK if preimage was not provided before (for other service)", async () => {

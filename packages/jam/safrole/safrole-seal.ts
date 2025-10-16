@@ -58,7 +58,10 @@ export class SafroleSeal {
     );
 
     if (entropySourceResult.isError) {
-      return Result.error(SafroleSealError.IncorrectEntropySource);
+      return Result.error(
+        SafroleSealError.IncorrectEntropySource,
+        () => "Safrole: incorrect entropy source in header seal",
+      );
     }
 
     return Result.ok(entropySourceResult.ok);
@@ -73,7 +76,10 @@ export class SafroleSeal {
     const authorKeys = state.currentValidatorData.at(validatorIndex);
 
     if (authorKeys === undefined) {
-      return Result.error(SafroleSealError.InvalidValidatorIndex);
+      return Result.error(
+        SafroleSealError.InvalidValidatorIndex,
+        () => `Safrole: invalid validator index ${validatorIndex}`,
+      );
     }
 
     const timeSlot = headerView.timeSlotIndex.materialize();
@@ -109,11 +115,14 @@ export class SafroleSeal {
     );
 
     if (result.isError) {
-      return Result.error(SafroleSealError.IncorrectSeal);
+      return Result.error(SafroleSealError.IncorrectSeal, () => "Safrole: incorrect seal with ticket");
     }
 
     if (ticket === undefined || !ticket.id.isEqualTo(result.ok)) {
-      return Result.error(SafroleSealError.InvalidTicket);
+      return Result.error(
+        SafroleSealError.InvalidTicket,
+        () => `Safrole: invalid ticket, expected ${ticket?.id} got ${result.ok}`,
+      );
     }
 
     return Result.ok(result.ok);
@@ -133,7 +142,7 @@ export class SafroleSeal {
     if (sealingKey === undefined || !sealingKey.isEqualTo(authorBandersnatchKey)) {
       return Result.error(
         SafroleSealError.InvalidValidator,
-        `Invalid Validator. Expected: ${sealingKey}, got: ${authorKey.bandersnatch}`,
+        () => `Invalid Validator. Expected: ${sealingKey}, got: ${authorKey.bandersnatch}`,
       );
     }
 
@@ -148,7 +157,7 @@ export class SafroleSeal {
     );
 
     if (result.isError) {
-      return Result.error(SafroleSealError.IncorrectSeal);
+      return Result.error(SafroleSealError.IncorrectSeal, () => "Safrole: incorrect seal with keys");
     }
 
     return Result.ok(result.ok);

@@ -64,7 +64,7 @@ export class Memory {
     const pagesResult = this.getPages(address, bytes.length, AccessType.WRITE);
 
     if (pagesResult.isError) {
-      return Result.error(pagesResult.error);
+      return Result.error(pagesResult.error, pagesResult.details);
     }
 
     const pages = pagesResult.ok;
@@ -97,17 +97,23 @@ export class Memory {
 
     for (const pageNumber of pageRange) {
       if (pageNumber < RESERVED_NUMBER_OF_PAGES) {
-        return Result.error(PageFault.fromPageNumber(pageNumber, true));
+        return Result.error(
+          PageFault.fromPageNumber(pageNumber, true),
+          () => `Page fault: attempted to access reserved page ${pageNumber}`,
+        );
       }
 
       const page = this.memory.get(pageNumber);
 
       if (page === undefined) {
-        return Result.error(PageFault.fromPageNumber(pageNumber));
+        return Result.error(PageFault.fromPageNumber(pageNumber), () => `Page fault: page ${pageNumber} not allocated`);
       }
 
       if (accessType === AccessType.WRITE && !page.isWriteable()) {
-        return Result.error(PageFault.fromPageNumber(pageNumber, true));
+        return Result.error(
+          PageFault.fromPageNumber(pageNumber, true),
+          () => `Page fault: attempted to write to read-only page ${pageNumber}`,
+        );
       }
 
       pages.push(page);
@@ -129,7 +135,7 @@ export class Memory {
     const pagesResult = this.getPages(startAddress, result.length, AccessType.READ);
 
     if (pagesResult.isError) {
-      return Result.error(pagesResult.error);
+      return Result.error(pagesResult.error, pagesResult.details);
     }
 
     const pages = pagesResult.ok;

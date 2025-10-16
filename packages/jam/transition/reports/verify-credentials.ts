@@ -53,7 +53,7 @@ export function verifyCredentials(
     ) {
       return Result.error(
         ReportsError.InsufficientGuarantees,
-        `Invalid number of credentials. Expected ${REQUIRED_CREDENTIALS_RANGE}, got ${credentialsView.length}`,
+        () => `Invalid number of credentials. Expected ${REQUIRED_CREDENTIALS_RANGE}, got ${credentialsView.length}`,
       );
     }
 
@@ -74,7 +74,8 @@ export function verifyCredentials(
       if (lastValidatorIndex >= validatorIndex) {
         return Result.error(
           ReportsError.NotSortedOrUniqueGuarantors,
-          `Credentials must be sorted by validator index. Got ${validatorIndex}, expected at least ${lastValidatorIndex + 1}`,
+          () =>
+            `Credentials must be sorted by validator index. Got ${validatorIndex}, expected at least ${lastValidatorIndex + 1}`,
         );
       }
 
@@ -83,7 +84,7 @@ export function verifyCredentials(
       const signature = credentialView.signature.materialize();
       const guarantorData = guarantorAssignments[validatorIndex];
       if (guarantorData === undefined) {
-        return Result.error(ReportsError.BadValidatorIndex, `Invalid validator index: ${validatorIndex}`);
+        return Result.error(ReportsError.BadValidatorIndex, () => `Invalid validator index: ${validatorIndex}`);
       }
 
       /**
@@ -93,7 +94,8 @@ export function verifyCredentials(
       if (guarantorData.core !== coreIndex) {
         return Result.error(
           ReportsError.WrongAssignment,
-          `Invalid core assignment for validator ${validatorIndex}. Expected: ${guarantorData.core}, got: ${coreIndex}`,
+          () =>
+            `Invalid core assignment for validator ${validatorIndex}. Expected: ${guarantorData.core}, got: ${coreIndex}`,
         );
       }
 

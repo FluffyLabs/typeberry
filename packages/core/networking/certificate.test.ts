@@ -5,7 +5,6 @@ import { describe, it } from "node:test";
 import * as x509 from "@peculiar/x509";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ed25519 } from "@typeberry/crypto";
-import { Result } from "@typeberry/utils";
 import {
   altNameJwk,
   ed25519AsJsonWebKeyPair,
@@ -68,6 +67,6 @@ describe("X509 Certificate", () => {
     const verificationResult = await verifyCertificate([certDer]);
 
     // then
-    assert.deepEqual(verificationResult, Result.error(VerifyCertError.AltNameMismatch));
+    assert.deepEqual(verificationResult.isError && verificationResult.error, VerifyCertError.AltNameMismatch);
   });
 });

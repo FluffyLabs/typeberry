@@ -27,7 +27,7 @@ export class BlockVerifier {
     const headerHash = this.hasher.header(headerView);
     // check if current block is already imported
     if (this.blocks.getHeader(headerHash.hash) !== null) {
-      return Result.error(BlockVerifierError.AlreadyImported, `Block ${headerHash.hash} is already imported.`);
+      return Result.error(BlockVerifierError.AlreadyImported, () => `Block ${headerHash.hash} is already imported.`);
     }
 
     // Check if parent block exists.
@@ -38,7 +38,7 @@ export class BlockVerifier {
     if (!parentHash.isEqualTo(ZERO_HASH)) {
       const parentBlock = this.blocks.getHeader(parentHash);
       if (parentBlock === null) {
-        return Result.error(BlockVerifierError.ParentNotFound, `Parent ${parentHash.toString()} not found`);
+        return Result.error(BlockVerifierError.ParentNotFound, () => `Parent ${parentHash.toString()} not found`);
       }
 
       // Check if the time slot index is consecutive and not from future.
@@ -48,7 +48,7 @@ export class BlockVerifier {
       if (timeslot <= parentTimeslot) {
         return Result.error(
           BlockVerifierError.InvalidTimeSlot,
-          `Invalid time slot index: ${timeslot}, expected > ${parentTimeslot}`,
+          () => `Invalid time slot index: ${timeslot}, expected > ${parentTimeslot}`,
         );
       }
     }
@@ -60,7 +60,8 @@ export class BlockVerifier {
     if (!extrinsicHash.isEqualTo(extrinsicMerkleCommitment.hash)) {
       return Result.error(
         BlockVerifierError.InvalidExtrinsic,
-        `Invalid extrinsic hash: ${extrinsicHash.toString()}, expected ${extrinsicMerkleCommitment.hash.toString()}`,
+        () =>
+          `Invalid extrinsic hash: ${extrinsicHash.toString()}, expected ${extrinsicMerkleCommitment.hash.toString()}`,
       );
     }
 
@@ -71,13 +72,13 @@ export class BlockVerifier {
     if (posteriorStateRoot === null) {
       return Result.error(
         BlockVerifierError.StateRootNotFound,
-        `Posterior state root ${parentHash.toString()} not found`,
+        () => `Posterior state root ${parentHash.toString()} not found`,
       );
     }
     if (!stateRoot.isEqualTo(posteriorStateRoot)) {
       return Result.error(
         BlockVerifierError.InvalidStateRoot,
-        `Invalid prior state root: ${stateRoot.toString()}, expected ${posteriorStateRoot.toString()} (ours)`,
+        () => `Invalid prior state root: ${stateRoot.toString()}, expected ${posteriorStateRoot.toString()} (ours)`,
       );
     }
 

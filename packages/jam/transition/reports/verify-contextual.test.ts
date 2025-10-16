@@ -39,7 +39,7 @@ describe("Reports.verifyContextualValidity", () => {
       isOk: false,
       isError: true,
       error: ReportsError.BadCodeHash,
-      details:
+      details: () =>
         "Service (129) code hash mismatch. Got: 0x8178abf4f459e8ed591be1f7f629168213a5ac2a487c28c0ef1a806198096c7a, expected: 0x0101010101010101010101010101010101010101010101010101010101010101",
     });
   });
@@ -74,7 +74,7 @@ describe("Reports.verifyContextualValidity", () => {
       isOk: false,
       isError: true,
       error: ReportsError.DuplicatePackage,
-      details: "Duplicate work package detected.",
+      details: () => "Duplicate work package detected.",
     });
   });
 
@@ -106,7 +106,7 @@ describe("Reports.verifyContextualValidity", () => {
       isOk: false,
       isError: true,
       error: ReportsError.AnchorNotRecent,
-      details:
+      details: () =>
         "Anchor block 0x0101010101010101010101010101010101010101010101010101010101010101 not found in recent blocks.",
     });
   });
@@ -139,7 +139,7 @@ describe("Reports.verifyContextualValidity", () => {
       isOk: false,
       isError: true,
       error: ReportsError.BadStateRoot,
-      details:
+      details: () =>
         "Anchor state root mismatch. Got: 0x0101010101010101010101010101010101010101010101010101010101010101, expected: 0xf6967658df626fa39cbfb6014b50196d23bc2cfbfa71a7591ca7715472dd2b48.",
     });
   });
@@ -171,7 +171,7 @@ describe("Reports.verifyContextualValidity", () => {
       isOk: false,
       isError: true,
       error: ReportsError.BadBeefyMmrRoot,
-      details:
+      details: () =>
         "Invalid BEEFY super peak hash. Got: 0x9329de635d4bbb8c47cdccbbc1285e48bf9dbad365af44b205343e99dea298f3, expected: 0x0000000000000000000000000000000000000000000000000000000000000000. Anchor: 0xc0564c5e0de0942589df4343ad1956da66797240e2a2f2d6f8116b5047768986",
     });
   });
@@ -205,7 +205,7 @@ describe("Reports.verifyContextualValidity", () => {
       isOk: false,
       isError: true,
       error: ReportsError.SegmentRootLookupInvalid,
-      details: "Lookup anchor slot's too old. Got: 1, minimal: 19976",
+      details: () => "Lookup anchor slot's too old. Got: 1, minimal: 19976",
     });
   });
 
@@ -239,7 +239,7 @@ describe("Reports.verifyContextualValidity", () => {
       isOk: false,
       isError: true,
       error: ReportsError.SegmentRootLookupInvalid,
-      details:
+      details: () =>
         "Lookup anchor is not found in chain. Hash: 0x0101010101010101010101010101010101010101010101010101010101010101 (slot: 1)",
     });
   });
@@ -275,7 +275,7 @@ describe("Reports.verifyContextualValidity", () => {
       isOk: false,
       isError: true,
       error: ReportsError.DuplicatePackage,
-      details:
+      details: () =>
         "The same work package hash found in the pipeline (workPackageHash: 0x3930000063c03371b9dad9f1c60473ec0326c970984e9c90c0b5ed90eba6ada4)",
     });
   });
@@ -313,7 +313,7 @@ describe("Reports.verifyContextualValidity", () => {
       isOk: false,
       isError: true,
       error: ReportsError.DuplicatePackage,
-      details:
+      details: () =>
         "The same work package hash found in the pipeline (workPackageHash: 0x3930000063c03371b9dad9f1c60473ec0326c970984e9c90c0b5ed90eba6ada4)",
     });
   });
@@ -356,7 +356,7 @@ describe("Reports.verifyContextualValidity", () => {
       isOk: false,
       isError: true,
       error: ReportsError.DuplicatePackage,
-      details:
+      details: () =>
         "The same work package hash found in the pipeline (workPackageHash: 0x3930000063c03371b9dad9f1c60473ec0326c970984e9c90c0b5ed90eba6ada4)",
     });
   });
@@ -392,7 +392,7 @@ describe("Reports.verifyContextualValidity", () => {
       isOk: false,
       isError: true,
       error: ReportsError.DuplicatePackage,
-      details:
+      details: () =>
         "The same work package hash found in the pipeline (workPackageHash: 0x3930000063c03371b9dad9f1c60473ec0326c970984e9c90c0b5ed90eba6ada4)",
     });
   });
