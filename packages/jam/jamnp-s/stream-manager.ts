@@ -244,11 +244,13 @@ class QuicStreamSender implements StreamMessageSender {
     this.bufferedLength += data.length;
     // some other async task already has a lock, so it will keep writing.
     if (this.currentWriterPromise !== null) {
+      logger.trace`[${this.streamId}] adding more data to buffer.`;
       return true;
     }
     // let's start an async task to write the buffer
     this.currentWriterPromise = handleAsyncErrors(
       async () => {
+        logger.trace`[${this.streamId}] acquiring write lock`;
         const writer = this.internal.writable.getWriter();
         try {
           for (;;) {
@@ -259,12 +261,16 @@ class QuicStreamSender implements StreamMessageSender {
             const { data, addPrefix } = chunk;
             logger.trace`🚰 <-- [${this.streamId}] write: ${data}`;
             if (addPrefix) {
+              logger.trace`[${this.streamId}] writing length`;
               await writer.write(encodeMessageLength(data.raw));
             }
+            logger.trace`[${this.streamId}] writing data`;
             await writer.write(data.raw);
+            logger.trace`[${this.streamId}] data written`;
             this.bufferedLength -= data.length;
           }
         } finally {
+          logger.trace`[${this.streamId}] releasing write lock`;
           writer.releaseLock();
           this.currentWriterPromise = null;
         }

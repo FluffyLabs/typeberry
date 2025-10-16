@@ -23,15 +23,13 @@ test("JAM Node dev blocks", { timeout: TEST_TIMEOUT }, async () => {
   }
 });
 
-// TODO [ToDr] Skipping the test for now to get #223 merged.
-// Will be fixed in a follow up PR.
-test.skip("JAM Node network connection", { timeout: TEST_TIMEOUT }, async () => {
+test("JAM Node network connection", { timeout: TEST_TIMEOUT }, async () => {
   let jamProcess1: ChildProcess | null = null;
   let jamProcess2: ChildProcess | null = null;
   try {
     jamProcess1 = await start({ devIndex: 2 });
     // introducing some timeout, due to networking issues when started at the same time
-    await promises.setTimeout(5_000);
+    await promises.setTimeout(1_000);
     jamProcess2 = await start({ devIndex: null });
 
     // wait for the dev-mode one to start
