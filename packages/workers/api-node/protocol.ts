@@ -142,7 +142,7 @@ export async function initWorker<To, From, Params>(
 
         logger.trace`--> (${protocol.name}) received configuration.`;
         isResolved = true;
-        const config = await LmdbWorkerConfig.fromTranferable(paramsDecoder, msg.config);
+        const config = await LmdbWorkerConfig.fromTransferable(paramsDecoder, msg.config);
         const rxPort = new ThreadPort(config.chainSpec, msg.parentPort);
         const comms = Channel.rx(protocol, rxPort);
 

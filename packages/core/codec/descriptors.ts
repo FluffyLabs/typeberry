@@ -86,15 +86,6 @@ export namespace codec {
     (_s) => {},
   );
 
-  /** Zero-size `undefined` value. */
-  export const notdefined = Descriptor.new<undefined>(
-    "undefined",
-    { bytes: 0, isExact: true },
-    (_e, _v) => {},
-    (_d) => {},
-    (_s) => {},
-  );
-
   /** Variable-length U32. */
   export const varU32 = Descriptor.new<U32>(
     "var_u32",

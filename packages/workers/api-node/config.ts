@@ -12,7 +12,7 @@ import { Blake2b } from "@typeberry/hash";
 import type { WorkerConfig } from "@typeberry/workers-api";
 
 /** A worker config that's usable in node.js and uses LMDB database backend. */
-export class LmdbWorkerConfig<T = undefined> implements WorkerConfig<T, BlocksDb, SerializedStatesDb> {
+export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, SerializedStatesDb> {
   static new<T>({
     chainSpec,
     workerParams,
@@ -27,8 +27,8 @@ export class LmdbWorkerConfig<T = undefined> implements WorkerConfig<T, BlocksDb
     return new LmdbWorkerConfig(chainSpec, workerParams, dbPath, blake2b);
   }
 
-  /** Restore node config from a transferrable config object. */
-  static async fromTranferable<T>(decodeParams: Decode<T>, config: TransferableConfig) {
+  /** Restore node config from a transferable config object. */
+  static async fromTransferable<T>(decodeParams: Decode<T>, config: TransferableConfig) {
     const blake2b = await Blake2b.createHasher();
     const chainSpec = new ChainSpec(config.chainSpec);
     const workerParams = Decoder.decodeObject(decodeParams, config.workerParams, chainSpec);
@@ -58,7 +58,7 @@ export class LmdbWorkerConfig<T = undefined> implements WorkerConfig<T, BlocksDb
     };
   }
 
-  /** Convert this config into a thread-transferrable object. */
+  /** Convert this config into a thread-transferable object. */
   intoTransferable(paramsCodec: Encode<T>): TransferableConfig {
     return {
       chainSpec: this.chainSpec,

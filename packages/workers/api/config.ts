@@ -2,7 +2,7 @@ import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, InMemoryBlocks, InMemoryStates, RootDb, StatesDb } from "@typeberry/database";
 
 /** Standardized worker config. */
-export interface WorkerConfig<TParams = undefined, TBlocks = BlocksDb, TStates = StatesDb> {
+export interface WorkerConfig<TParams = void, TBlocks = BlocksDb, TStates = StatesDb> {
   /** Chain spec. */
   readonly chainSpec: ChainSpec;
   /** Worker parameters. */
@@ -15,7 +15,7 @@ export interface WorkerConfig<TParams = undefined, TBlocks = BlocksDb, TStates =
 /**
  * Worker config with in-thread database.
  */
-export class DirectWorkerConfig<TParams = undefined, TBlocks = BlocksDb, TStates = StatesDb>
+export class DirectWorkerConfig<TParams = void, TBlocks = BlocksDb, TStates = StatesDb>
   implements WorkerConfig<TParams, TBlocks, TStates>
 {
   static new<T>({

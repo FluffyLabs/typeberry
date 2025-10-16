@@ -74,7 +74,7 @@ export async function startNetwork(
 }
 
 export async function spawnBlockGeneratorWorker(config: LmdbWorkerConfig) {
-  const { api, workerFinished } = spawnWorker(blockGenerator.protocol, blockGenerator.WORKER, config, codec.notdefined);
+  const { api, workerFinished } = spawnWorker(blockGenerator.protocol, blockGenerator.WORKER, config, codec.nothing);
 
   return {
     generator: api,
