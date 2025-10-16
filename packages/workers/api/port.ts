@@ -38,6 +38,9 @@ export interface Port {
 
   /** Post a message to the port that should be received on the other end. */
   postMessage<T>(event: string, codec: Codec<T>, msg: Envelope<T>): void;
+
+  /** Destroy the communication channel. */
+  close(): void;
 }
 
 /**
@@ -85,5 +88,10 @@ export class DirectPort implements Port {
 
   postMessage<T>(event: string, _codec: Codec<T>, msg: Envelope<T>): void {
     this.events.emit(event, msg);
+  }
+
+  close() {
+    this.events.emit("error", new Error("closing channel"));
+    this.events.removeAllListeners();
   }
 }

@@ -90,4 +90,8 @@ export class LmdbBlocks implements BlocksDb {
     }
     return Decoder.decodeObject(Extrinsic.Codec.View, data, this.chainSpec);
   }
+
+  async close() {
+    await Promise.all([this.headers.close(), this.extrinsics.close(), this.postStateRoots.close()]);
+  }
 }

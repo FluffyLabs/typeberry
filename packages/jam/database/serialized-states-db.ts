@@ -90,4 +90,6 @@ export class InMemorySerializedStates implements StatesDb<SerializedState<LeafDb
     });
     return SerializedState.new(this.spec, this.blake2b, leafDb);
   }
+
+  async close() {}
 }

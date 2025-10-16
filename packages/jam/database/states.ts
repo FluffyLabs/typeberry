@@ -45,6 +45,9 @@ export interface StatesDb<T extends State = State> {
 
   /** Retrieve posterior state of given header. */
   getState(header: HeaderHash): T | null;
+
+  /** Close the database and free resources. */
+  close(): Promise<void>;
 }
 
 export class InMemoryStates implements StatesDb<InMemoryState> {
@@ -95,4 +98,6 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
 
     return InMemoryState.copyFrom(this.spec, state, state.intoServicesData());
   }
+
+  async close() {}
 }

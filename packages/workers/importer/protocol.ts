@@ -51,7 +51,7 @@ export const protocol = createProtocol("importer", {
   toWorker: {
     getStateEntries: {
       request: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
-      response: StateEntries.Codec,
+      response: codec.optional(StateEntries.Codec),
     },
     getBestStateRootHash: {
       request: codec.nothing,

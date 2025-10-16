@@ -1,6 +1,6 @@
 import { initWasm } from "@typeberry/crypto";
 import type { BlocksDb, LeafDb, StatesDb } from "@typeberry/database";
-import { Blake2b, keccak } from "@typeberry/hash";
+import { Blake2b, keccak, ZERO_HASH } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { SerializedState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
@@ -59,10 +59,22 @@ export async function main(config: Config, comms: ImporterInternal) {
     return Result.ok(res.ok.hash);
   });
 
+  comms.setOnGetStateEntries(async (headerHash) => {
+    return importer.getStateEntries(headerHash);
+  });
+
+  comms.setOnGetBestStateRootHash(async () => {
+    return importer.getBestStateRootHash() ?? ZERO_HASH.asOpaque();
+  });
+
   await wasmPromise;
   logger.info`📥 Importer waiting for blocks.`;
 
+  // await finish signal
   await finishPromise;
+  importer.close();
   logger.info`📥 Importer finished. Closing channel.`;
   await db.close();
+  comms.destroy();
+  logger.info`📥 Importer 🪦`;
 }

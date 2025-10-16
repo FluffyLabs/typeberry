@@ -191,6 +191,10 @@ export class Importer {
     const stateEntries = state?.backend.intoStateEntries();
     return stateEntries ?? null;
   }
+  async close() {
+    await this.blocks.close();
+    await this.states.close();
+  }
 }
 
 /**

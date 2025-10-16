@@ -47,14 +47,16 @@ export type Senders<Out> = {
   [K in keyof Out as SenderKey<K>]: Out[K] extends MessageCodecs<infer Req, infer Res> ? Sender<Req, Res> : never;
 };
 
+export type Destroy = { destroy(): void };
+
 /** Request sender key type. */
 export type SenderKey<K> = `send${Capitalize<string & K>}`;
 
 /** Receiving end of the protocol communication channel. */
-export type Rx<To, From> = Handlers<To> & Senders<From>;
+export type Rx<To, From> = Handlers<To> & Senders<From> & Destroy;
 
 /** Transmitting end of the protocol communication channel. */
-export type Tx<To, From> = Senders<To> & Handlers<From>;
+export type Tx<To, From> = Senders<To> & Handlers<From> & Destroy;
 
 export type Api<T> = T extends LousyProtocol<infer To, infer From> ? Tx<To, From> : never;
 export type Internal<T> = T extends LousyProtocol<infer To, infer From> ? Rx<To, From> : never;

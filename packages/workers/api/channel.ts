@@ -1,7 +1,18 @@
+import { threadId } from "node:worker_threads";
 import { Logger } from "@typeberry/logger";
 import { check } from "@typeberry/utils";
 import type { Port } from "./port.js";
-import type { HandlerKey, Handlers, LousyProtocol, MessageCodecs, Rx, SenderKey, Senders, Tx } from "./types.js";
+import type {
+  Destroy,
+  HandlerKey,
+  Handlers,
+  LousyProtocol,
+  MessageCodecs,
+  Rx,
+  SenderKey,
+  Senders,
+  Tx,
+} from "./types.js";
 
 const logger = Logger.new(import.meta.filename, "workers");
 
@@ -21,7 +32,7 @@ export class Channel {
     return Channel.new({ name, toWorker: fromWorker, fromWorker: toWorker }, port);
   }
 
-  static new<To, From>(protocol: LousyProtocol<To, From>, port: Port): Handlers<To> & Senders<From> {
+  static new<To, From>(protocol: LousyProtocol<To, From>, port: Port): Handlers<To> & Senders<From> & Destroy {
     const channel = new Channel(port);
     // biome-ignore lint/suspicious/noExplicitAny: we dynamically add methods, so that's expected
     const untyped = channel as any;
@@ -76,9 +87,11 @@ export class Channel {
       // listen to request incoming to worker
       this.port.on(key, val.request, async ({ responseId, data }) => {
         try {
+          console.log(`[${threadId}] handling ${key}. Responseid: ${responseId}`);
           // handle them
           const response = await handler(data);
 
+          console.log(`[${threadId}] sending response: ${responseId}`);
           // and send response back on dedicated event
           this.port.postMessage(responseId, val.response, {
             responseId,
@@ -97,6 +110,7 @@ export class Channel {
       this.nextResponseId++;
       const responseId = `${key}:${this.nextResponseId}`;
 
+      console.log(`[${threadId}] will wait for ${key}`);
       return new Promise((resolve, reject) => {
         this.pendingPromises.add(reject);
         // attach response listener first
@@ -104,6 +118,7 @@ export class Channel {
           // we got response, so will resolve
           this.pendingPromises.delete(reject);
 
+          console.log(`[${threadId}] got ${key}`);
           resolve(msg.data);
         });
 
@@ -114,6 +129,10 @@ export class Channel {
         });
       });
     };
+  }
+
+  destroy() {
+    this.port.close();
   }
 }
 

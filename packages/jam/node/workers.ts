@@ -19,7 +19,10 @@ export async function spawnImporterWorker(config: LmdbWorkerConfig<importer.Impo
     importer: api,
     finish: async () => {
       await api.sendFinish();
+      api.destroy();
+      console.log("waiting for worker to finish");
       await workerFinished;
+      console.log("worker done");
     },
   };
 }
@@ -35,6 +38,7 @@ export async function startImporterDirect(
     importer: api,
     finish: async () => {
       await api.sendFinish();
+      api.destroy();
       await importerFinish;
     },
   };
@@ -52,6 +56,7 @@ export async function spawnNetworkWorker(config: LmdbWorkerConfig<jamNetwork.Net
     network: api,
     finish: async () => {
       await api.sendFinish();
+      api.destroy();
       await workerFinished;
     },
   };
@@ -68,6 +73,7 @@ export async function startNetwork(
     network: api,
     finish: async () => {
       await api.sendFinish();
+      api.destroy();
       await networkFinish;
     },
   };
@@ -80,6 +86,7 @@ export async function spawnBlockGeneratorWorker(config: LmdbWorkerConfig) {
     generator: api,
     finish: async () => {
       await api.sendFinish();
+      api.destroy();
       await workerFinished;
     },
   };
@@ -93,6 +100,7 @@ export async function startBlockGenerator(config: DirectWorkerConfig): ReturnTyp
     generator: api,
     finish: async () => {
       await api.sendFinish();
+      api.destroy();
       await finish;
     },
   };

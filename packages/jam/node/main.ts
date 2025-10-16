@@ -107,6 +107,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
       return importer.sendGetBestStateRootHash();
     },
     async close() {
+      logger.log`[main] ☠️ Closing the importer`;
       await closeImporter();
       logger.log`[main] ☠️  Closing the extensions`;
       closeExtensions();
