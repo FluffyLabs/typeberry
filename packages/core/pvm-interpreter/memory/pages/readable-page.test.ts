@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { OK, Result } from "@typeberry/utils";
+import { deepEqual, OK, Result } from "@typeberry/utils";
 import { PageFault } from "../errors.js";
 import { tryAsMemoryIndex } from "../memory-index.js";
 import { tryAsPageIndex, tryAsPageNumber } from "./page-utils.js";
@@ -49,6 +49,9 @@ describe("ReadablePage", () => {
 
     const storeResult = readablePage.storeFrom(storeIndex, new Uint8Array());
 
-    assert.deepStrictEqual(storeResult, Result.error(PageFault.fromPageNumber(0, true)));
+    deepEqual(
+      storeResult,
+      Result.error(PageFault.fromPageNumber(0, true), () => "Page fault: attempted to write to read-only page at 0"),
+    );
   });
 });

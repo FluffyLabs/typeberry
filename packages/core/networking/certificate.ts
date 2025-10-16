@@ -40,7 +40,10 @@ export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<Pee
   // Must present exactly one cert
   if (certs.length !== 1) {
     logger.log`Rejecting peer: expected exactly one certificate, got: ${certs.length}`;
-    return Result.error(VerifyCertError.NoCertificate);
+    return Result.error(
+      VerifyCertError.NoCertificate,
+      () => `Certificate validation failed: expected exactly one certificate, got ${certs.length}`,
+    );
   }
 
   // Parse with Node's X509Certificate (accepts PEM or DER)
@@ -49,14 +52,20 @@ export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<Pee
   // Must be Ed25519 key
   if (xc.publicKey.asymmetricKeyType !== CURVE_NAME.toLowerCase()) {
     logger.log`Rejecting peer using non-ed25519 certificate: ${xc.publicKey.asymmetricKeyType}`;
-    return Result.error(VerifyCertError.NotEd25519);
+    return Result.error(
+      VerifyCertError.NotEd25519,
+      () => `Certificate validation failed: expected Ed25519 key, got ${xc.publicKey.asymmetricKeyType}`,
+    );
   }
 
   // Extract raw public key via JWK export
   const jwk = xc.publicKey.export({ format: "jwk" });
   if (jwk.kty !== KEY_TYPE || jwk.crv !== CURVE_NAME) {
     logger.log`Public key type mismatch: ${jwk.kty}, ${jwk.crv}`;
-    return Result.error(VerifyCertError.PublicKeyTypeMismatch);
+    return Result.error(
+      VerifyCertError.PublicKeyTypeMismatch,
+      () => `Certificate validation failed: public key type mismatch (kty: ${jwk.kty}, crv: ${jwk.crv})`,
+    );
   }
 
   // SAN must be exactly 'e'+base32(rawPub)
@@ -65,13 +74,16 @@ export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<Pee
   const m = sanField.match(/DNS:([^,]+)/);
   if (m === null || m[1] !== expectedSan) {
     logger.log`AltName mismatch. Expected: '${expectedSan}', got: '${m?.[1]}'`;
-    return Result.error(VerifyCertError.AltNameMismatch);
+    return Result.error(
+      VerifyCertError.AltNameMismatch,
+      () => `Certificate validation failed: altName mismatch (expected: ${expectedSan}, got: ${m?.[1] ?? "none"})`,
+    );
   }
 
   const key = Buffer.from(jwk.x ?? "", "base64url");
 
   if (!xc.verify(xc.publicKey)) {
-    return Result.error(VerifyCertError.IncorrectSignature);
+    return Result.error(VerifyCertError.IncorrectSignature, () => "Certificate validation failed: incorrect signature");
   }
 
   const publicKey = Bytes.fromBlob(new Uint8Array(key), ED25519_KEY_BYTES);

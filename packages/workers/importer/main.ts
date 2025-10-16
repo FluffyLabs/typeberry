@@ -50,7 +50,8 @@ export async function main(config: Config, comms: ImporterInternal) {
   comms.setOnImportBlock(async (block) => {
     const res = await importer.importBlock(block, omitSealVerification);
     if (res.isError) {
-      return Result.error(resultToString(res));
+      const errMsg = resultToString(res);
+      return Result.error(errMsg, () => errMsg);
     }
 
     await comms.sendBestHeaderAnnouncement(res.ok);

@@ -120,7 +120,7 @@ export async function runPreImagesTest(testContent: PreImagesTest) {
   const preimages = new Preimages(preState, blake2b);
   const result = preimages.integrate(testContent.input);
 
-  deepEqual(result, testOutputToResult(testContent.output), { ignore: ["ok"] });
+  deepEqual(result, testOutputToResult(testContent.output), { ignore: ["ok", "details"] });
   if (result.isOk) {
     preState.applyUpdate(result.ok);
   }
@@ -166,8 +166,8 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry, blake2b: Bla
 
 function testOutputToResult(testOutput: Output): ReturnType<Preimages["integrate"]> {
   return testOutput.err !== undefined
-    ? Result.error(testOutput.err)
+    ? Result.error(testOutput.err, () => `Preimages integration failed: ${testOutput.err}`)
     : Result.ok({
-        preimages: [],
+        preimages: new Map(),
       });
 }

@@ -29,7 +29,8 @@ const importBlockResultCodec = <T extends OpaqueHash>(hashName: string) =>
       }
       if (kind === 1) {
         const error = d.bytesBlob();
-        return Result.error(error.asText());
+        const errorMsg = error.asText();
+        return Result.error(errorMsg, () => errorMsg);
       }
 
       throw new Error(`Invalid Result: ${kind}`);

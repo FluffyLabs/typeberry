@@ -390,6 +390,16 @@ export class OnChain {
     const { statistics, ...statisticsRest } = statisticsUpdate;
     assertEmpty(statisticsRest);
 
+    // Concat accumulatePreimages updates with preimages
+    for (const [serviceId, accPreimageUpdates] of accumulatePreimages.entries()) {
+      const preimagesUpdates = preimages.get(serviceId);
+      if (preimagesUpdates === undefined) {
+        preimages.set(serviceId, accPreimageUpdates);
+      } else {
+        preimages.set(serviceId, preimagesUpdates.concat(accPreimageUpdates));
+      }
+    }
+
     return Result.ok({
       ...(maybeAuthorizationQueues !== undefined ? { authQueues: maybeAuthorizationQueues } : {}),
       ...(maybeDesignatedValidatorData !== undefined ? { designatedValidatorData: maybeDesignatedValidatorData } : {}),
@@ -411,7 +421,7 @@ export class OnChain {
       recentlyAccumulated,
       accumulationOutputLog,
       ...servicesUpdate,
-      preimages: preimages.concat(accumulatePreimages),
+      preimages,
     });
   }
 
@@ -433,11 +443,14 @@ function checkOffendersMatch(
   headerOffendersMark: Ed25519Key[],
 ): Result<OK, OFFENDERS_ERROR> {
   if (offendersMark.size !== headerOffendersMark.length) {
-    return Result.error(OFFENDERS_ERROR, `Length mismatch: ${offendersMark.size} vs ${headerOffendersMark.length}`);
+    return Result.error(
+      OFFENDERS_ERROR,
+      () => `Length mismatch: ${offendersMark.size} vs ${headerOffendersMark.length}`,
+    );
   }
   for (const key of headerOffendersMark) {
     if (!offendersMark.has(key)) {
-      return Result.error(OFFENDERS_ERROR, `Missing key: ${key}`);
+      return Result.error(OFFENDERS_ERROR, () => `Missing key: ${key}`);
     }
   }
 

@@ -57,7 +57,7 @@ async function verifySeal(
   );
 
   if (sealResult[RESULT_INDEX] === ResultValues.Error) {
-    return Result.error(null);
+    return Result.error(null, () => "Bandersnatch VRF seal verification failed");
   }
 
   return Result.ok(Bytes.fromBlob(sealResult.subarray(1), HASH_SIZE).asOpaque());
@@ -94,7 +94,7 @@ async function getRingCommitmentNoCache(
   const commitmentResult = await bandersnatch.getRingCommitment(keys.raw);
 
   if (commitmentResult[RESULT_INDEX] === ResultValues.Error) {
-    return Result.error(null);
+    return Result.error(null, () => "Bandersnatch ring commitment calculation failed");
   }
 
   return Result.ok(Bytes.fromBlob(commitmentResult.subarray(1), BANDERSNATCH_RING_ROOT_BYTES).asOpaque());

@@ -100,15 +100,15 @@ class Output {
     if (out.err !== undefined) {
       switch (out.err) {
         case AssurancesErrorCode.BAD_ATTESTATION_PARENT:
-          return Result.error(AssurancesError.InvalidAnchor);
+          return Result.error(AssurancesError.InvalidAnchor, () => "Invalid anchor: bad attestation parent");
         case AssurancesErrorCode.BAD_VALIDATOR_INDEX:
-          return Result.error(AssurancesError.InvalidValidatorIndex);
+          return Result.error(AssurancesError.InvalidValidatorIndex, () => "Invalid validator index");
         case AssurancesErrorCode.CORE_NOT_ENGAGED:
-          return Result.error(AssurancesError.NoReportPending);
+          return Result.error(AssurancesError.NoReportPending, () => "No report pending: core not engaged");
         case AssurancesErrorCode.BAD_SIGNATURE:
-          return Result.error(AssurancesError.InvalidSignature);
+          return Result.error(AssurancesError.InvalidSignature, () => "Invalid signature");
         case AssurancesErrorCode.NOT_SORTED_OR_UNIQUE_ASSURERS:
-          return Result.error(AssurancesError.InvalidOrder);
+          return Result.error(AssurancesError.InvalidOrder, () => "Invalid order: assurers not sorted or unique");
         default:
           throw new Error(`Unhandled output error: ${out.err}`);
       }

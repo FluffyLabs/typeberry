@@ -62,7 +62,8 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
       if (res.isOk) {
         return res;
       }
-      return Result.error(resultToString(res));
+      const errMsg = resultToString(res);
+      return Result.error(errMsg, () => errMsg);
     },
     async getStateEntries(hash: HeaderHash) {
       return importer.getStateEntries(hash);

@@ -128,8 +128,8 @@ class FuzzHandler implements v1.FuzzMessageHandler {
     if (res.isOk) {
       return res;
     }
-    logger.log`Rejecting block with error: ${res.error}. ${res.details}`;
-    return Result.error(v1.ErrorMessage.create({ message: res.error }));
+    logger.log`Rejecting block with error: ${res.error}. ${res.details()}`;
+    return Result.error(v1.ErrorMessage.create({ message: res.error }), res.details);
   }
 
   async getPeerInfo(value: v1.PeerInfo): Promise<v1.PeerInfo> {

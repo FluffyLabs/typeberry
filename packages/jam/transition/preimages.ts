@@ -1,4 +1,4 @@
-import type { TimeSlot } from "@typeberry/block";
+import type { ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage.js";
 import type { Blake2b } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
@@ -44,12 +44,15 @@ export class Preimages {
         prevPreimage.requester > currPreimage.requester ||
         currPreimage.blob.compare(prevPreimage.blob).isLessOrEqual()
       ) {
-        return Result.error(PreimagesErrorCode.PreimagesNotSortedUnique);
+        return Result.error(
+          PreimagesErrorCode.PreimagesNotSortedUnique,
+          () => `Preimages not sorted/unique at index ${i}`,
+        );
       }
     }
 
     const { preimages, slot } = input;
-    const pendingChanges: UpdatePreimage[] = [];
+    const pendingChanges = new Map<ServiceId, UpdatePreimage[]>();
 
     // select preimages for integration
     for (const preimage of preimages) {
@@ -58,7 +61,7 @@ export class Preimages {
 
       const service = this.state.getService(requester);
       if (service === null) {
-        return Result.error(PreimagesErrorCode.AccountNotFound);
+        return Result.error(PreimagesErrorCode.AccountNotFound, () => `Service not found: ${requester}`);
       }
 
       const hasPreimage = service.hasPreimage(hash);
@@ -66,17 +69,22 @@ export class Preimages {
       // https://graypaper.fluffylabs.dev/#/5f542d7/181800181900
       // https://graypaper.fluffylabs.dev/#/5f542d7/116f0011a500
       if (hasPreimage || slots === null || !LookupHistoryItem.isRequested(slots)) {
-        return Result.error(PreimagesErrorCode.PreimageUnneeded);
+        return Result.error(
+          PreimagesErrorCode.PreimageUnneeded,
+          () =>
+            `Preimage unneeded: requester=${requester}, hash=${hash}, hasPreimage=${hasPreimage}, isRequested=${slots !== null && LookupHistoryItem.isRequested(slots)}`,
+        );
       }
 
       // https://graypaper.fluffylabs.dev/#/5f542d7/18c00018f300
-      pendingChanges.push(
+      const updates = pendingChanges.get(requester) ?? [];
+      updates.push(
         UpdatePreimage.provide({
-          serviceId: requester,
           preimage: PreimageItem.create({ hash, blob }),
           slot,
         }),
       );
+      pendingChanges.set(requester, updates);
     }
 
     return Result.ok({

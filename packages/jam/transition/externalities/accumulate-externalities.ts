@@ -54,7 +54,6 @@ import {
   tryAsLookupHistorySlots,
   tryAsPerCore,
   UpdatePreimage,
-  UpdateService,
   type ValidatorData,
 } from "@typeberry/state";
 import { assertNever, Compatibility, check, GpVersion, OK, Result } from "@typeberry/utils";
@@ -200,10 +199,10 @@ export class AccumulateExternalities
       const len = existingPreimage.slots.length;
       // https://graypaper.fluffylabs.dev/#/9a08063/380901380901?v=0.6.6
       if (len === PreimageStatusKind.Requested) {
-        return Result.error(RequestPreimageError.AlreadyRequested);
+        return Result.error(RequestPreimageError.AlreadyRequested, () => `Preimage already requested: hash=${hash}`);
       }
       if (len === PreimageStatusKind.Available || len === PreimageStatusKind.Reavailable) {
-        return Result.error(RequestPreimageError.AlreadyAvailable);
+        return Result.error(RequestPreimageError.AlreadyAvailable, () => `Preimage already available: hash=${hash}`);
       }
 
       // TODO [ToDr] Not sure if we should update the service info in that case,
@@ -236,16 +235,16 @@ export class AccumulateExternalities
     if (existingPreimage === null) {
       // https://graypaper.fluffylabs.dev/#/9a08063/38a60038a600?v=0.6.6
       this.updatedState.updatePreimage(
+        this.currentServiceId,
         UpdatePreimage.updateOrAdd({
-          serviceId: this.currentServiceId,
           lookupHistory: new LookupHistoryItem(hash, clampedLength, tryAsLookupHistorySlots([])),
         }),
       );
     } else {
       /** https://graypaper.fluffylabs.dev/#/9a08063/38ca0038ca00?v=0.6.6 */
       this.updatedState.updatePreimage(
+        this.currentServiceId,
         UpdatePreimage.updateOrAdd({
-          serviceId: this.currentServiceId,
           lookupHistory: new LookupHistoryItem(
             hash,
             clampedLength,
@@ -262,7 +261,7 @@ export class AccumulateExternalities
     const serviceId = this.currentServiceId;
     const status = this.updatedState.getLookupHistory(this.currentTimeslot, this.currentServiceId, hash, length);
     if (status === null) {
-      return Result.error(ForgetPreimageError.NotFound);
+      return Result.error(ForgetPreimageError.NotFound, () => `Preimage not found: hash=${hash}, length=${length}`);
     }
 
     const s = slotsToPreimageStatus(status.slots);
@@ -278,11 +277,11 @@ export class AccumulateExternalities
     if (s.status === PreimageStatusKind.Requested) {
       const res = updateStorageUtilisation();
       if (res.isError) {
-        return Result.error(ForgetPreimageError.StorageUtilisationError);
+        return Result.error(ForgetPreimageError.StorageUtilisationError, res.details);
       }
       this.updatedState.updatePreimage(
+        serviceId,
         UpdatePreimage.remove({
-          serviceId,
           hash: status.hash,
           length: status.length,
         }),
@@ -297,11 +296,11 @@ export class AccumulateExternalities
       if (y < t - this.chainSpec.preimageExpungePeriod) {
         const res = updateStorageUtilisation();
         if (res.isError) {
-          return Result.error(ForgetPreimageError.StorageUtilisationError);
+          return Result.error(ForgetPreimageError.StorageUtilisationError, res.details);
         }
         this.updatedState.updatePreimage(
+          serviceId,
           UpdatePreimage.remove({
-            serviceId,
             hash: status.hash,
             length: status.length,
           }),
@@ -309,14 +308,17 @@ export class AccumulateExternalities
         return Result.ok(OK);
       }
 
-      return Result.error(ForgetPreimageError.NotExpired);
+      return Result.error(
+        ForgetPreimageError.NotExpired,
+        () => `Preimage not expired: y=${y}, timeslot=${t}, period=${this.chainSpec.preimageExpungePeriod}`,
+      );
     }
 
     // https://graypaper.fluffylabs.dev/#/9a08063/38c80138c801?v=0.6.6
     if (s.status === PreimageStatusKind.Available) {
       this.updatedState.updatePreimage(
+        serviceId,
         UpdatePreimage.updateOrAdd({
-          serviceId,
           lookupHistory: new LookupHistoryItem(status.hash, status.length, tryAsLookupHistorySlots([s.data[0], t])),
         }),
       );
@@ -328,8 +330,8 @@ export class AccumulateExternalities
       const y = s.data[1];
       if (y < t - this.chainSpec.preimageExpungePeriod) {
         this.updatedState.updatePreimage(
+          serviceId,
           UpdatePreimage.updateOrAdd({
-            serviceId,
             lookupHistory: new LookupHistoryItem(status.hash, status.length, tryAsLookupHistorySlots([s.data[2], t])),
           }),
         );
@@ -337,7 +339,10 @@ export class AccumulateExternalities
         return Result.ok(OK);
       }
 
-      return Result.error(ForgetPreimageError.NotExpired);
+      return Result.error(
+        ForgetPreimageError.NotExpired,
+        () => `Preimage not expired: y=${y}, timeslot=${t}, period=${this.chainSpec.preimageExpungePeriod}`,
+      );
     }
 
     assertNever(s);
@@ -353,12 +358,12 @@ export class AccumulateExternalities
     const destination = this.getServiceInfo(destinationId);
     /** https://graypaper.fluffylabs.dev/#/9a08063/370401370401?v=0.6.6 */
     if (destination === null || destinationId === null) {
-      return Result.error(TransferError.DestinationNotFound);
+      return Result.error(TransferError.DestinationNotFound, () => `Destination service not found: ${destinationId}`);
     }
 
     /** https://graypaper.fluffylabs.dev/#/9a08063/371301371301?v=0.6.6 */
     if (gas < destination.onTransferMinGas) {
-      return Result.error(TransferError.GasTooLow);
+      return Result.error(TransferError.GasTooLow, () => `Gas ${gas} below minimum ${destination.onTransferMinGas}`);
     }
 
     /** https://graypaper.fluffylabs.dev/#/9a08063/371b01371b01?v=0.6.6 */
@@ -369,7 +374,10 @@ export class AccumulateExternalities
       source.gratisStorage,
     );
     if (newBalance < thresholdBalance) {
-      return Result.error(TransferError.BalanceBelowThreshold);
+      return Result.error(
+        TransferError.BalanceBelowThreshold,
+        () => `Balance ${newBalance} below threshold ${thresholdBalance}`,
+      );
     }
 
     // outgoing transfer
@@ -412,7 +420,10 @@ export class AccumulateExternalities
     // check if we are priviledged to set gratis storage
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/369203369603?v=0.6.7
     if (gratisStorage !== tryAsU64(0) && this.currentServiceId !== this.updatedState.getPrivilegedServices().manager) {
-      return Result.error(NewServiceError.UnprivilegedService);
+      return Result.error(
+        NewServiceError.UnprivilegedService,
+        () => `Service ${this.currentServiceId} not privileged to set gratis storage`,
+      );
     }
 
     // check if we have enough balance
@@ -426,7 +437,11 @@ export class AccumulateExternalities
     );
     const balanceLeftForCurrent = currentService.balance - thresholdForNew;
     if (balanceLeftForCurrent < thresholdForCurrent || bytes.overflow) {
-      return Result.error(NewServiceError.InsufficientFunds);
+      return Result.error(
+        NewServiceError.InsufficientFunds,
+        () =>
+          `Insufficient funds: balance=${currentService.balance}, required=${thresholdForNew}, overflow=${bytes.overflow}`,
+      );
     }
 
     // `a`: https://graypaper.fluffylabs.dev/#/ab2cdbd/366b02366d02?v=0.7.2
@@ -459,17 +474,14 @@ export class AccumulateExternalities
         // NOTE: It's safe to cast to `Number` here, bcs here service ID cannot be bigger than 2**16
         const newServiceId = tryAsServiceId(Number(wantedServiceId));
         if (this.getServiceInfo(newServiceId) !== null) {
-          return Result.error(NewServiceError.RegistrarServiceIdAlreadyTaken);
+          return Result.error(
+            NewServiceError.RegistrarServiceIdAlreadyTaken,
+            () => `Service ID ${newServiceId} already taken`,
+          );
         }
         // add the new service with selected ID
         // https://graypaper.fluffylabs.dev/#/ab2cdbd/36be0336c003?v=0.7.2
-        this.updatedState.stateUpdate.services.servicesUpdates.push(
-          UpdateService.create({
-            serviceId: newServiceId,
-            serviceInfo: newAccount,
-            lookupHistory: newLookupItem,
-          }),
-        );
+        this.updatedState.createService(newServiceId, newAccount, newLookupItem);
         // update the balance of current service
         // https://graypaper.fluffylabs.dev/#/ab2cdbd/36c20336c403?v=0.7.2
         this.updatedState.updateServiceInfo(this.currentServiceId, updatedCurrentAccount);
@@ -482,14 +494,9 @@ export class AccumulateExternalities
     const newServiceId = this.nextNewServiceId;
 
     // add the new service
-    // https://graypaper.fluffylabs.dev/#/ab2cdbd/36e70336e903?v=0.7.2
-    this.updatedState.stateUpdate.services.servicesUpdates.push(
-      UpdateService.create({
-        serviceId: newServiceId,
-        serviceInfo: newAccount,
-        lookupHistory: newLookupItem,
-      }),
-    );
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/36cb0236cb02?v=0.6.7
+    this.updatedState.createService(newServiceId, newAccount, newLookupItem);
+
     // update the balance of current service
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/36ec0336ee03?v=0.7.2
     this.updatedState.updateServiceInfo(this.currentServiceId, updatedCurrentAccount);
@@ -521,7 +528,10 @@ export class AccumulateExternalities
 
     if (currentDelegator !== this.currentServiceId) {
       logger.trace`Current service id (${this.currentServiceId}) is not a validators manager. (expected: ${currentDelegator}) and cannot update validators data. Ignoring`;
-      return Result.error(UnprivilegedError);
+      return Result.error(
+        UnprivilegedError,
+        () => `Service ${this.currentServiceId} is not delegator (expected: ${currentDelegator})`,
+      );
     }
 
     this.updatedState.stateUpdate.validatorsData = validatorsData;
@@ -545,12 +555,18 @@ export class AccumulateExternalities
 
     if (currentAssigners !== this.currentServiceId) {
       logger.trace`Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentAssigners}) and cannot update authorization queue.`;
-      return Result.error(UpdatePrivilegesError.UnprivilegedService);
+      return Result.error(
+        UpdatePrivilegesError.UnprivilegedService,
+        () => `Service ${this.currentServiceId} not assigner for core ${coreIndex} (expected: ${currentAssigners})`,
+      );
     }
 
     if (assigners === null && Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
       logger.trace`The new auth manager is not a valid service id.`;
-      return Result.error(UpdatePrivilegesError.InvalidServiceId);
+      return Result.error(
+        UpdatePrivilegesError.InvalidServiceId,
+        () => `New auth manager is null for core ${coreIndex}`,
+      );
     }
 
     this.updatedState.stateUpdate.authorizationQueues.set(coreIndex, authQueue);
@@ -599,13 +615,16 @@ export class AccumulateExternalities
 
     if (Compatibility.isLessThan(GpVersion.V0_7_1)) {
       if (!isManager) {
-        return Result.error(UpdatePrivilegesError.UnprivilegedService);
+        return Result.error(
+          UpdatePrivilegesError.UnprivilegedService,
+          () => `Service ${this.currentServiceId} is not manager`,
+        );
       }
 
       if (manager === null || delegator === null) {
         return Result.error(
           UpdatePrivilegesError.InvalidServiceId,
-          "Either manager or delegator is not a valid service id.",
+          () => "Either manager or delegator is not a valid service id.",
         );
       }
 
@@ -627,7 +646,7 @@ export class AccumulateExternalities
     if (manager === null || delegator === null || registrar === null) {
       return Result.error(
         UpdatePrivilegesError.InvalidServiceId,
-        "Either manager or delegator or registrar is not a valid service id.",
+        () => "Either manager or delegator or registrar is not a valid service id.",
       );
     }
 
@@ -679,7 +698,7 @@ export class AccumulateExternalities
     // TODO [ToDr] what about newly created services?
     const service = serviceId === null ? null : this.updatedState.state.getService(serviceId);
     if (service === null || serviceId === null) {
-      return Result.error(ProvidePreimageError.ServiceNotFound);
+      return Result.error(ProvidePreimageError.ServiceNotFound, () => `Service not found: ${serviceId}`);
     }
 
     // calculating the hash
@@ -693,19 +712,25 @@ export class AccumulateExternalities
       tryAsU64(preimage.length),
     );
     if (stateLookup === null || !LookupHistoryItem.isRequested(stateLookup)) {
-      return Result.error(ProvidePreimageError.WasNotRequested);
+      return Result.error(
+        ProvidePreimageError.WasNotRequested,
+        () => `Preimage was not requested: hash=${preimageHash}, service=${serviceId}`,
+      );
     }
 
     // checking already provided preimages
     const hasPreimage = this.updatedState.hasPreimage(serviceId, preimageHash);
     if (hasPreimage) {
-      return Result.error(ProvidePreimageError.AlreadyProvided);
+      return Result.error(
+        ProvidePreimageError.AlreadyProvided,
+        () => `Preimage already provided: hash=${preimageHash}, service=${serviceId}`,
+      );
     }
 
     // setting up the new preimage
     this.updatedState.updatePreimage(
+      serviceId,
       UpdatePreimage.provide({
-        serviceId,
         preimage: PreimageItem.create({
           hash: preimageHash,
           blob: preimage,
@@ -721,7 +746,7 @@ export class AccumulateExternalities
     const service = this.getServiceInfo(destination);
 
     if (service === null || destination === null) {
-      return Result.error(EjectError.InvalidService, "Service missing");
+      return Result.error(EjectError.InvalidService, () => "Service missing");
     }
 
     const currentService = this.getCurrentServiceInfo();
@@ -730,12 +755,12 @@ export class AccumulateExternalities
     const expectedCodeHash = Bytes.zero(HASH_SIZE).asOpaque<CodeHash>();
     writeServiceIdAsLeBytes(this.currentServiceId, expectedCodeHash.raw);
     if (!service.codeHash.isEqualTo(expectedCodeHash)) {
-      return Result.error(EjectError.InvalidService, "Invalid code hash");
+      return Result.error(EjectError.InvalidService, () => "Invalid code hash");
     }
 
     // make sure the service only has required number of storage items?
     if (service.storageUtilisationCount !== REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT) {
-      return Result.error(EjectError.InvalidPreimage, "Too many storage items");
+      return Result.error(EjectError.InvalidPreimage, () => "Too many storage items");
     }
 
     // storage items length
@@ -746,14 +771,14 @@ export class AccumulateExternalities
     // check if we have a preimage with the entire storage.
     const [isPreviousCodeExpired, errorReason] = this.isPreviousCodeExpired(destination, previousCodeHash, l);
     if (!isPreviousCodeExpired) {
-      return Result.error(EjectError.InvalidPreimage, `Previous code available: ${errorReason}`);
+      return Result.error(EjectError.InvalidPreimage, () => `Previous code available: ${errorReason}`);
     }
 
     // compute new balance of the service.
     const newBalance = sumU64(currentService.balance, service.balance);
     // TODO [ToDr] what to do in case of overflow?
     if (newBalance.overflow) {
-      return Result.error(EjectError.InvalidService, "Balance overflow");
+      return Result.error(EjectError.InvalidService, () => "Balance overflow");
     }
 
     // update current service.
@@ -765,14 +790,14 @@ export class AccumulateExternalities
       }),
     );
     // and finally add an ejected service.
-    this.updatedState.stateUpdate.services.servicesRemoved.push(destination);
+    this.updatedState.stateUpdate.services.removed.push(destination);
 
     // take care of the code preimage and its lookup history
     // Safe, because we know the preimage is valid, and it's the code of the service, which is bounded by maximal service code size anyway (much smaller than 2**32 bytes).
     const preimageLength = tryAsU32(Number(l));
-    this.updatedState.stateUpdate.services.preimages.push(
-      UpdatePreimage.remove({ serviceId: destination, hash: previousCodeHash, length: preimageLength }),
-    );
+    const preimages = this.updatedState.stateUpdate.services.preimages.get(destination) ?? [];
+    preimages.push(UpdatePreimage.remove({ hash: previousCodeHash, length: preimageLength }));
+    this.updatedState.stateUpdate.services.preimages.set(destination, preimages);
 
     return Result.ok(OK);
   }
