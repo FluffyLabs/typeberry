@@ -95,24 +95,26 @@ describe("LMDB States database", () => {
         registrar: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? tryAsServiceId(4) : tryAsServiceId(MAX_VALUE),
         autoAccumulateServices: [],
       }),
-      servicesUpdates: [
-        UpdateService.create({
-          serviceId: tryAsServiceId(1),
-          serviceInfo: ServiceAccountInfo.create({
-            codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
-            balance: tryAsU64(1_000_000),
-            accumulateMinGas: tryAsServiceGas(10_000),
-            onTransferMinGas: tryAsServiceGas(5_000),
-            storageUtilisationBytes: tryAsU64(1_000),
-            gratisStorage: tryAsU64(0),
-            storageUtilisationCount: tryAsU32(1),
-            created: tryAsTimeSlot(0),
-            lastAccumulation: tryAsTimeSlot(0),
-            parentService: tryAsServiceId(0),
+      updated: new Map([
+        [
+          tryAsServiceId(1),
+          UpdateService.create({
+            serviceInfo: ServiceAccountInfo.create({
+              codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
+              balance: tryAsU64(1_000_000),
+              accumulateMinGas: tryAsServiceGas(10_000),
+              onTransferMinGas: tryAsServiceGas(5_000),
+              storageUtilisationBytes: tryAsU64(1_000),
+              gratisStorage: tryAsU64(0),
+              storageUtilisationCount: tryAsU32(1),
+              created: tryAsTimeSlot(0),
+              lastAccumulation: tryAsTimeSlot(0),
+              parentService: tryAsServiceId(0),
+            }),
+            lookupHistory,
           }),
-          lookupHistory,
-        }),
-      ],
+        ],
+      ]),
     };
 
     // when
