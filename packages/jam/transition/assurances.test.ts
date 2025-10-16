@@ -184,7 +184,7 @@ describe("Assurances", () => {
         isOk: false,
         isError: true,
         error: AssurancesError.InvalidSignature,
-        details: "invalid signatures at 0",
+        details: () => "invalid signatures at 0",
       },
       { context: "result" },
     );
@@ -230,7 +230,7 @@ describe("Assurances", () => {
         isOk: false,
         isError: true,
         error: AssurancesError.InvalidValidatorIndex,
-        details: "",
+        details: () => "Invalid validator index: 1023",
       },
       { context: "result" },
     );
@@ -282,7 +282,7 @@ describe("Assurances", () => {
         isOk: false,
         isError: true,
         error: AssurancesError.InvalidOrder,
-        details: "order: expected: 2, got: 0",
+        details: () => "order: expected: 2, got: 0",
       },
       { context: "result" },
     );

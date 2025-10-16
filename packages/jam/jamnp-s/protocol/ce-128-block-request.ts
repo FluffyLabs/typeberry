@@ -169,7 +169,10 @@ export function handleGetBlockSequence(
 
   const startBlock = getBlockView(startHash);
   if (startBlock === null) {
-    return Result.error(BlockSequenceError.NoStartBlock);
+    return Result.error(
+      BlockSequenceError.NoStartBlock,
+      () => `Block sequence error: start block ${startHash} not found`,
+    );
   }
 
   if (direction === Direction.AscExcl) {
@@ -182,7 +185,10 @@ export function handleGetBlockSequence(
       const currentHeader = blocks.getHeader(currentHash);
       // some errornuous situation, we didn't really reach the block?
       if (currentHeader === null || currentHeader.timeSlotIndex.materialize() < startIndex) {
-        return Result.error(BlockSequenceError.BlockOnFork);
+        return Result.error(
+          BlockSequenceError.BlockOnFork,
+          () => `Block sequence error: start block ${startHash} appears to be on a fork`,
+        );
       }
       // we have everything we need, let's return it now
       if (startHash.isEqualTo(currentHash)) {

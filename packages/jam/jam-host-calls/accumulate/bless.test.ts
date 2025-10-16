@@ -218,7 +218,10 @@ describe("HostCalls: Bless", () => {
 
   it("should return HUH when service is unprivileged", async () => {
     const accumulate = new PartialStateMock();
-    accumulate.privilegedServicesResponse = Result.error(UpdatePrivilegesError.UnprivilegedService);
+    accumulate.privilegedServicesResponse = Result.error(
+      UpdatePrivilegesError.UnprivilegedService,
+      () => "Test: unprivileged service attempting bless",
+    );
     const serviceId = tryAsServiceId(11_000);
     const bless = new Bless(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasEntires();
@@ -236,7 +239,10 @@ describe("HostCalls: Bless", () => {
 
   it("should return WHO if given manager is invalid", async () => {
     const accumulate = new PartialStateMock();
-    accumulate.privilegedServicesResponse = Result.error(UpdatePrivilegesError.InvalidServiceId);
+    accumulate.privilegedServicesResponse = Result.error(
+      UpdatePrivilegesError.InvalidServiceId,
+      () => "Test: invalid manager service ID for bless",
+    );
     const serviceId = tryAsServiceId(11_000);
     const bless = new Bless(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasEntires();
@@ -254,7 +260,10 @@ describe("HostCalls: Bless", () => {
 
   it("should return WHO if given validator is invalid", async () => {
     const accumulate = new PartialStateMock();
-    accumulate.privilegedServicesResponse = Result.error(UpdatePrivilegesError.InvalidServiceId);
+    accumulate.privilegedServicesResponse = Result.error(
+      UpdatePrivilegesError.InvalidServiceId,
+      () => "Test: invalid validator service ID for bless",
+    );
     const serviceId = tryAsServiceId(11_000);
     const bless = new Bless(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasEntires();
@@ -272,7 +281,10 @@ describe("HostCalls: Bless", () => {
 
   itPost071("should return WHO if given registrar is invalid", async () => {
     const accumulate = new PartialStateMock();
-    accumulate.privilegedServicesResponse = Result.error(UpdatePrivilegesError.InvalidServiceId);
+    accumulate.privilegedServicesResponse = Result.error(
+      UpdatePrivilegesError.InvalidServiceId,
+      () => "Test: invalid registrar service ID for bless",
+    );
     const serviceId = tryAsServiceId(11_000);
     const bless = new Bless(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasEntires();

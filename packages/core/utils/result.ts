@@ -13,7 +13,7 @@ export type ErrorResult<Error> = {
   isOk: false;
   isError: true;
   error: Error;
-  details: string;
+  details: () => string;
 };
 
 /**
@@ -74,7 +74,7 @@ export function resultToString<Ok, Error>(res: Result<Ok, Error>) {
   if (res.isOk) {
     return `OK: ${typeof res.ok === "symbol" ? res.ok.toString() : res.ok}`;
   }
-  return `${res.details}\nError: ${maybeTaggedErrorToString(res.error)}`;
+  return `${res.details()}\nError: ${maybeTaggedErrorToString(res.error)}`;
 }
 
 /** An indication of two possible outcomes returned from a function. */
@@ -90,7 +90,7 @@ export const Result = {
   },
 
   /** Create new [`Result`] with `Error` status. */
-  error: <Error>(error: Error, details = ""): ErrorResult<Error> => {
+  error: <Error>(error: Error, details: () => string): ErrorResult<Error> => {
     check`${error !== undefined} 'Error' type cannot be undefined.`;
     return {
       isOk: false,

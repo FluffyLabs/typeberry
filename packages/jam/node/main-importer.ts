@@ -46,7 +46,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
       if (res !== null && res !== undefined) {
         return Decoder.decodeObject(importBlockResultCodec, res);
       }
-      return Result.error("");
+      return Result.error("invalid response", () => "Importer: import block response was null or undefined");
     },
     async getStateEntries(hash: HeaderHash) {
       return importer.getStateEntries(hash);

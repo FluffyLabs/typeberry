@@ -298,7 +298,7 @@ export class InMemoryState extends WithDebug implements State, WithStateView, En
         if (service === undefined) {
           return Result.error(
             UpdateError.NoService,
-            `Attempting to update storage of non-existing service: ${serviceId}`,
+            () => `Attempting to update storage of non-existing service: ${serviceId}`,
           );
         }
 
@@ -329,7 +329,7 @@ export class InMemoryState extends WithDebug implements State, WithStateView, En
       if (service === undefined) {
         return Result.error(
           UpdateError.NoService,
-          `Attempting to update preimage of non-existing service: ${serviceId}`,
+          () => `Attempting to update preimage of non-existing service: ${serviceId}`,
         );
       }
       for (const update of updates) {
@@ -339,7 +339,7 @@ export class InMemoryState extends WithDebug implements State, WithStateView, En
           if (service.data.preimages.has(preimage.hash)) {
             return Result.error(
               UpdateError.PreimageExists,
-              `Overwriting existing preimage at ${serviceId}: ${preimage}`,
+              () => `Overwriting existing preimage at ${serviceId}: ${preimage}`,
             );
           }
           service.data.preimages.set(preimage.hash, preimage);
@@ -388,7 +388,7 @@ export class InMemoryState extends WithDebug implements State, WithStateView, En
       if (kind === UpdateServiceKind.Create) {
         const { lookupHistory } = update.action;
         if (this.services.has(serviceId)) {
-          return Result.error(UpdateError.DuplicateService, `${serviceId} already exists!`);
+          return Result.error(UpdateError.DuplicateService, () => `${serviceId} already exists!`);
         }
         this.services.set(
           serviceId,
@@ -404,7 +404,7 @@ export class InMemoryState extends WithDebug implements State, WithStateView, En
       } else if (kind === UpdateServiceKind.Update) {
         const existingService = this.services.get(serviceId);
         if (existingService === undefined) {
-          return Result.error(UpdateError.NoService, `Cannot update ${serviceId} because it does not exist.`);
+          return Result.error(UpdateError.NoService, () => `Cannot update ${serviceId} because it does not exist.`);
         }
         existingService.data.info = account;
       } else {

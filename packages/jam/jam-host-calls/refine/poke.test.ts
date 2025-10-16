@@ -73,7 +73,9 @@ describe("HostCalls: Poke", () => {
   });
 
   it("should return WHO if machine does not exist", async () => {
-    const { poke, registers, memory } = prepareTest(Result.error(PeekPokeError.NoMachine));
+    const { poke, registers, memory } = prepareTest(
+      Result.error(PeekPokeError.NoMachine, () => "Test: error occurred"),
+    );
 
     // when
     const result = await poke.execute(gas, registers, memory);
@@ -84,7 +86,9 @@ describe("HostCalls: Poke", () => {
   });
 
   it("should return OOB if there is a page fault on machine side", async () => {
-    const { poke, registers, memory } = prepareTest(Result.error(PeekPokeError.DestinationPageFault));
+    const { poke, registers, memory } = prepareTest(
+      Result.error(PeekPokeError.DestinationPageFault, () => "Test: error occurred"),
+    );
 
     // when
     const result = await poke.execute(gas, registers, memory);
@@ -95,7 +99,9 @@ describe("HostCalls: Poke", () => {
   });
 
   it("should panic if there is a page fault on source side", async () => {
-    const { poke, registers, memory } = prepareTest(Result.error(PeekPokeError.SourcePageFault));
+    const { poke, registers, memory } = prepareTest(
+      Result.error(PeekPokeError.SourcePageFault, () => "Test: error occurred"),
+    );
 
     // when
     const result = await poke.execute(gas, registers, memory);

@@ -79,7 +79,10 @@ describe("HostCalls: Solicit", () => {
     const currentServiceId = tryAsServiceId(10_000);
     const solicit = new Solicit(currentServiceId, accumulate);
 
-    accumulate.requestPreimageResponse = Result.error(RequestPreimageError.AlreadyRequested);
+    accumulate.requestPreimageResponse = Result.error(
+      RequestPreimageError.AlreadyRequested,
+      () => "Test: preimage already requested for solicit",
+    );
     const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU64(4_096));
 
     // when
@@ -95,7 +98,10 @@ describe("HostCalls: Solicit", () => {
     const currentServiceId = tryAsServiceId(10_000);
     const solicit = new Solicit(currentServiceId, accumulate);
 
-    accumulate.requestPreimageResponse = Result.error(RequestPreimageError.AlreadyAvailable);
+    accumulate.requestPreimageResponse = Result.error(
+      RequestPreimageError.AlreadyAvailable,
+      () => "Test: preimage already available for solicit",
+    );
     const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU64(4_096));
 
     // when
@@ -111,7 +117,10 @@ describe("HostCalls: Solicit", () => {
     const currentServiceId = tryAsServiceId(10_000);
     const solicit = new Solicit(currentServiceId, accumulate);
 
-    accumulate.requestPreimageResponse = Result.error(RequestPreimageError.InsufficientFunds);
+    accumulate.requestPreimageResponse = Result.error(
+      RequestPreimageError.InsufficientFunds,
+      () => "Test: insufficient funds for solicit",
+    );
     const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU64(4_096));
 
     // when
