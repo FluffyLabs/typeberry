@@ -1,7 +1,7 @@
 import { MessageChannel, type MessagePort, parentPort, Worker } from "node:worker_threads";
 import type { Decode, Encode } from "@typeberry/codec";
 import { Listener } from "@typeberry/listener";
-import { Logger } from "@typeberry/logger";
+import { Level, Logger } from "@typeberry/logger";
 import { assertNever } from "@typeberry/utils";
 import { Channel } from "@typeberry/workers-api";
 import type { Api, Internal, LousyProtocol } from "@typeberry/workers-api/types.js";
@@ -111,6 +111,9 @@ export async function initWorker<To, From, Params>(
   comms: Internal<typeof protocol>;
   threadComms: Listener<ThreadComms>;
 }> {
+  // configure logger inside a worker thread
+  Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
+
   logger.trace`Worker ${protocol.name} starting.`;
 
   return new Promise((resolve, reject) => {
