@@ -2,9 +2,11 @@
 
 import { Bootnode } from "@typeberry/config";
 import { loadConfig } from "@typeberry/config-node";
+import { ed25519 } from "@typeberry/crypto";
 import { deriveEd25519SecretKey } from "@typeberry/crypto/key-derivation.js";
 import { Blake2b } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
+import { altNameRaw } from "@typeberry/networking";
 import { exportBlocks, importBlocks, JamConfig, main, mainFuzz } from "@typeberry/node";
 import { asOpaqueType, workspacePathFix } from "@typeberry/utils";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
@@ -36,7 +38,7 @@ running.catch((e) => {
   process.exit(-1);
 });
 
-function prepareConfigFile(args: Arguments, blake2b: Blake2b): JamConfig {
+async function prepareConfigFile(args: Arguments, blake2b: Blake2b): Promise<JamConfig> {
   const { nodeName: defaultNodeName } = args.args;
   const nodeConfig = loadConfig(args.args.configPath);
   const nodeName = args.command === Command.Dev ? devNodeName(defaultNodeName, args.args.index) : defaultNodeName;
@@ -45,11 +47,16 @@ function prepareConfigFile(args: Arguments, blake2b: Blake2b): JamConfig {
 
   const devBootnodes =
     args.command === Command.Dev
-      ? Array.from({ length: 5 }).map((_, idx) => {
-          const name = devNodeName(defaultNodeName, idx + 1);
-          const port = devPort(idx + 1);
-          return new Bootnode(asOpaqueType(name), "127.0.0.1", port);
-        })
+      ? await Promise.all(
+          Array.from({ length: 5 }).map(async (_, idx) => {
+            const name = devNodeName(defaultNodeName, idx + 1);
+            const seed = devNetworkingSeed(blake2b, name);
+            const port = devPort(idx + 1);
+            // Derive the peer ID from the public key using the same method as in certificate.ts
+            const peerId = altNameRaw((await ed25519.privateKey(seed)).pubKey);
+            return new Bootnode(asOpaqueType(peerId), "127.0.0.1", port);
+          }),
+        )
       : [];
 
   return JamConfig.new({
@@ -57,7 +64,7 @@ function prepareConfigFile(args: Arguments, blake2b: Blake2b): JamConfig {
     nodeName,
     nodeConfig,
     networkConfig: {
-      key: devNetworkingKey(blake2b, nodeName),
+      key: devNetworkingSeed(blake2b, nodeName),
       host: "127.0.0.1",
       port: devPort(devPortShift),
       bootnodes: devBootnodes.concat(nodeConfig.chainSpec.bootnodes ?? []),
@@ -67,7 +74,7 @@ function prepareConfigFile(args: Arguments, blake2b: Blake2b): JamConfig {
 
 async function startNode(args: Arguments, withRelPath: (p: string) => string) {
   const blake2b = await Blake2b.createHasher();
-  const jamNodeConfig = prepareConfigFile(args, blake2b);
+  const jamNodeConfig = await prepareConfigFile(args, blake2b);
   // Start fuzz-target
   if (args.command === Command.FuzzTarget) {
     const version = args.args.version;
@@ -104,7 +111,7 @@ function devPort(idx: number) {
   return 12345 + idx;
 }
 
-function devNetworkingKey(blake2b: Blake2b, name: string) {
+function devNetworkingSeed(blake2b: Blake2b, name: string) {
   // NOTE [ToDr] in the future we should probably read the networking key
   // from some file or a database, since we want it to be consistent between runs.
   // For now, for easier testability, we use a deterministic seed.
