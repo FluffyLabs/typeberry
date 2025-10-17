@@ -33,6 +33,12 @@ export type Options = {
   protocols: string[];
 };
 
+enum CloseReason {
+  PeerIdMismatch = 0,
+  DuplicateConnection = 1,
+  ConnectionFromOurself = 2,
+}
+
 export class Quic {
   /** Setup QUIC socket and start listening for connections. */
   static async setup({ host, port, protocols, key }: Options): Promise<QuicNetwork> {
@@ -94,13 +100,13 @@ export class Quic {
 
       if (lastConnectedPeer.info.key.isEqualTo(key.pubKey)) {
         logger.log`🛜 Rejecting connection from ourself from ${conn.remoteHost}:${conn.remotePort}`;
-        await conn.stop();
+        await conn.stop({ isApp: true, errorCode: CloseReason.ConnectionFromOurself });
         return;
       }
 
       if (peers.isConnected(lastConnectedPeer.info.id)) {
         logger.log`🛜 Rejecting duplicate connection with peer ${lastConnectedPeer.info.id} from ${conn.remoteHost}:${conn.remotePort}`;
-        await conn.stop();
+        await conn.stop({ isApp: true, errorCode: CloseReason.DuplicateConnection });
         return;
       }
 
@@ -112,45 +118,51 @@ export class Quic {
 
     // connecting to a peer
     async function dial(peer: PeerAddress, options: DialOptions): Promise<QuicPeer> {
-      const peerDetails = peerVerification();
-      const clientLater = QUICClient.createQUICClient(
-        {
-          socket: socket,
-          host: peer.host,
-          port: peer.port,
-          crypto: getQuicClientCrypto(),
-          config: {
-            ...config,
-            verifyCallback: peerDetails.verifyCallback,
+      return doDial();
+
+      async function doDial() {
+        const peerDetails = peerVerification();
+        const clientLater = QUICClient.createQUICClient(
+          {
+            socket: socket,
+            host: peer.host,
+            port: peer.port,
+            crypto: getQuicClientCrypto(),
+            config: {
+              ...config,
+              verifyCallback: peerDetails.verifyCallback,
+            },
+            logger: quicLogger.getChild("client"),
           },
-          logger: quicLogger.getChild("client"),
-        },
-        {
-          signal: options.signal,
-        },
-      );
-      const client = await clientLater;
-
-      addEventListener(client, events.EventQUICClientClose, () => {
-        logger.log`⚰️ Client connection closed.`;
-      });
-
-      addEventListener(client, events.EventQUICClientError, (error) => {
-        logger.error`🔴 Client error: ${error.detail}`;
-      });
-
-      if (peerDetails.info === null) {
-        throw new Error("Client connected, but there is no peer details!");
-      }
-
-      if (options.verifyName !== undefined && options.verifyName !== peerDetails.info.id) {
-        throw new Error(
-          `Client connected, but the id didn't match. Expected: ${options.verifyName}, got: ${peerDetails.info.id}`,
+          {
+            signal: options.signal,
+          },
         );
-      }
+        const client = await clientLater;
 
-      logger.log`🤝 Client handshake with: ${peer.host}:${peer.port}`;
-      return newPeer(client.connection, peerDetails.info);
+        if (peerDetails.info === null) {
+          await client.destroy({ isApp: true, errorCode: CloseReason.PeerIdMismatch });
+          throw new Error("Client connected, but there is no peer details!");
+        }
+
+        if (options.verifyName !== undefined && options.verifyName !== peerDetails.info.id) {
+          await client.destroy({ isApp: true, errorCode: CloseReason.PeerIdMismatch });
+          throw new Error(
+            `Client connected, but the id didn't match. Expected: ${options.verifyName}, got: ${peerDetails.info.id}`,
+          );
+        }
+
+        addEventListener(client, events.EventQUICClientClose, () => {
+          logger.log`⚰️ Client connection closed.`;
+        });
+
+        addEventListener(client, events.EventQUICClientError, (error) => {
+          logger.error`🔴 Client error: ${error.detail}`;
+        });
+
+        logger.log`🤝 Client handshake with: ${peer.host}:${peer.port}`;
+        return newPeer(client.connection, peerDetails.info);
+      }
     }
 
     function newPeer(conn: QUICConnection, peerInfo: PeerInfo) {
