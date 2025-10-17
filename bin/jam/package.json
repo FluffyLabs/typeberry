@@ -8,8 +8,10 @@
     "@typeberry/bytes": "*",
     "@typeberry/config": "*",
     "@typeberry/config-node": "*",
+    "@typeberry/crypto": "*",
     "@typeberry/hash": "*",
     "@typeberry/logger": "*",
+    "@typeberry/networking": "*",
     "@typeberry/node": "*",
     "@typeberry/numbers": "*",
     "@typeberry/utils": "*",
@@ -17,9 +19,10 @@
   },
   "scripts": {
     "start": "NODE_ENV=development tsx ./index.ts",
+    "inspect": "NODE_ENV=development tsx --inspect ./index.ts",
     "build": "./build-for-npm.sh",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
-    "test:e2e": "tsx --test test/e2e.ts"
+    "test:e2e": "JAM_LOG=trace tsx --test test/e2e.ts"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

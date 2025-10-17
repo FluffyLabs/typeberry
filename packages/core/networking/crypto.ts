@@ -49,7 +49,7 @@ export function getQuicClientCrypto(): QUICClientCrypto {
 
 function toArrayBuffer(data: Uint8Array): ArrayBuffer {
   if (data.buffer instanceof ArrayBuffer) {
-    return data.buffer;
+    return data.buffer.slice(data.byteOffset, data.byteOffset + data.length);
   }
   const buffer = new ArrayBuffer(data.length);
   const copy = new Uint8Array(buffer);
