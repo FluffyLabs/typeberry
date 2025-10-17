@@ -1,11 +1,12 @@
 // biome-ignore-all lint/suspicious/noConsole: bin file
 
+import { Bootnode } from "@typeberry/config";
 import { loadConfig } from "@typeberry/config-node";
 import { deriveEd25519SecretKey } from "@typeberry/crypto/key-derivation.js";
 import { Blake2b } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { exportBlocks, importBlocks, JamConfig, main, mainFuzz } from "@typeberry/node";
-import { workspacePathFix } from "@typeberry/utils";
+import { asOpaqueType, workspacePathFix } from "@typeberry/utils";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 
 export * from "./args.js";
@@ -36,28 +37,30 @@ running.catch((e) => {
 });
 
 function prepareConfigFile(args: Arguments, blake2b: Blake2b): JamConfig {
+  const { nodeName: defaultNodeName } = args.args;
   const nodeConfig = loadConfig(args.args.configPath);
-  const nodeName = args.command === Command.Dev ? `${args.args.nodeName}-${args.args.index}` : args.args.nodeName;
+  const nodeName = args.command === Command.Dev ? devNodeName(defaultNodeName, args.args.index) : defaultNodeName;
 
-  const portShift = args.command === Command.Dev ? args.args.index : 0;
-  const networkingKey = (() => {
-    // NOTE [ToDr] in the future we should probably read the networking key
-    // from some file or a database, since we want it to be consistent between runs.
-    // For now, for easier testability, we use a deterministic seed.
-    const seed = blake2b.hashString(nodeName);
-    const key = deriveEd25519SecretKey(seed.asOpaque(), blake2b);
-    return key;
-  })();
+  const devPortShift = args.command === Command.Dev ? args.args.index : 0;
+
+  const devBootnodes =
+    args.command === Command.Dev
+      ? Array.from({ length: 5 }).map((_, idx) => {
+          const name = devNodeName(defaultNodeName, idx + 1);
+          const port = devPort(idx + 1);
+          return new Bootnode(asOpaqueType(name), "127.0.0.1", port);
+        })
+      : [];
 
   return JamConfig.new({
     isAuthoring: args.command === Command.Dev,
     nodeName,
     nodeConfig,
     networkConfig: {
-      key: networkingKey,
+      key: devNetworkingKey(blake2b, nodeName),
       host: "127.0.0.1",
-      port: 12345 + portShift,
-      bootnodes: nodeConfig.chainSpec.bootnodes ?? [],
+      port: devPort(devPortShift),
+      bootnodes: devBootnodes.concat(nodeConfig.chainSpec.bootnodes ?? []),
     },
   });
 }
@@ -91,4 +94,21 @@ async function startNode(args: Arguments, withRelPath: (p: string) => string) {
 
   // Run regular node.
   return main(jamNodeConfig, withRelPath);
+}
+
+function devNodeName(defaultNodeName: string, idx: number) {
+  return `${defaultNodeName}-${idx}`;
+}
+
+function devPort(idx: number) {
+  return 12345 + idx;
+}
+
+function devNetworkingKey(blake2b: Blake2b, name: string) {
+  // NOTE [ToDr] in the future we should probably read the networking key
+  // from some file or a database, since we want it to be consistent between runs.
+  // For now, for easier testability, we use a deterministic seed.
+  const seed = blake2b.hashString(name);
+  const key = deriveEd25519SecretKey(seed.asOpaque(), blake2b);
+  return key;
 }

@@ -33,6 +33,12 @@ export type Options = {
   protocols: string[];
 };
 
+enum CloseReason {
+  PeerIdMismatch = 0,
+  DuplicateConnection = 1,
+  ConnectionFromOurself = 2,
+}
+
 export class Quic {
   /** Setup QUIC socket and start listening for connections. */
   static async setup({ host, port, protocols, key }: Options): Promise<QuicNetwork> {
@@ -94,13 +100,13 @@ export class Quic {
 
       if (lastConnectedPeer.info.key.isEqualTo(key.pubKey)) {
         logger.log`🛜 Rejecting connection from ourself from ${conn.remoteHost}:${conn.remotePort}`;
-        await conn.stop();
+        await conn.stop({ isApp: true, errorCode: CloseReason.ConnectionFromOurself });
         return;
       }
 
       if (peers.isConnected(lastConnectedPeer.info.id)) {
         logger.log`🛜 Rejecting duplicate connection with peer ${lastConnectedPeer.info.id} from ${conn.remoteHost}:${conn.remotePort}`;
-        await conn.stop();
+        await conn.stop({ isApp: true, errorCode: CloseReason.DuplicateConnection });
         return;
       }
 
@@ -110,26 +116,9 @@ export class Quic {
       await conn.start();
     });
 
-    // allow only one dial to be occuring at the time
-    // TODO [ToDr] investigate: it seems that there is some issue with multiple
-    // `QUICClients` being created?
-    let currentDial: Promise<QuicPeer> | null = null;
     // connecting to a peer
     async function dial(peer: PeerAddress, options: DialOptions): Promise<QuicPeer> {
-      if (currentDial !== null) {
-        await currentDial;
-        return dial(peer, options);
-      }
-
-      currentDial = (async () => {
-        try {
-          return await doDial();
-        } finally {
-          currentDial = null;
-        }
-      })();
-
-      return currentDial;
+      return doDial();
 
       async function doDial() {
         const peerDetails = peerVerification();
@@ -151,6 +140,18 @@ export class Quic {
         );
         const client = await clientLater;
 
+        if (peerDetails.info === null) {
+          await client.destroy({ isApp: true, errorCode: CloseReason.PeerIdMismatch });
+          throw new Error("Client connected, but there is no peer details!");
+        }
+
+        if (options.verifyName !== undefined && options.verifyName !== peerDetails.info.id) {
+          await client.destroy({ isApp: true, errorCode: CloseReason.PeerIdMismatch });
+          throw new Error(
+            `Client connected, but the id didn't match. Expected: ${options.verifyName}, got: ${peerDetails.info.id}`,
+          );
+        }
+
         addEventListener(client, events.EventQUICClientClose, () => {
           logger.log`⚰️ Client connection closed.`;
         });
@@ -158,16 +159,6 @@ export class Quic {
         addEventListener(client, events.EventQUICClientError, (error) => {
           logger.error`🔴 Client error: ${error.detail}`;
         });
-
-        if (peerDetails.info === null) {
-          throw new Error("Client connected, but there is no peer details!");
-        }
-
-        if (options.verifyName !== undefined && options.verifyName !== peerDetails.info.id) {
-          throw new Error(
-            `Client connected, but the id didn't match. Expected: ${options.verifyName}, got: ${peerDetails.info.id}`,
-          );
-        }
 
         logger.log`🤝 Client handshake with: ${peer.host}:${peer.port}`;
         return newPeer(client.connection, peerDetails.info);

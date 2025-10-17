@@ -89,8 +89,8 @@ async function terminate(jamProcess: ChildProcess | null) {
 }
 
 async function start(options: { devIndex: number | null } = { devIndex: 1 }) {
-  const args = options.devIndex === null ? ["--", "--config=dev"] : ["dev", `${options.devIndex}`];
-  const spawned = spawn("bash", ["-c", ["npm", "start", ...args].join(" ")], {
+  const args = options.devIndex === null ? ["--", "--config=dev", "--name=test"] : ["dev", `${options.devIndex}`];
+  const spawned = spawn("npm", ["start", ...args], {
     cwd: process.cwd(),
   });
   const timeout = setTimeout(() => {
