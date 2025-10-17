@@ -36,7 +36,7 @@ test("JAM Node network connection", { timeout: TEST_TIMEOUT }, async () => {
     const proc1 = listenForBestBlocks("dev-2", jamProcess1, () => true);
 
     // wait for specific output on the console of the second node (should sync)
-    const proc2 = listenForBestBlocks("dev-3", jamProcess2, (blockNum) => blockNum > TARGET_BLOCK);
+    const proc2 = listenForBestBlocks("test", jamProcess2, (blockNum) => blockNum > TARGET_BLOCK);
 
     await proc1;
     await proc2;
