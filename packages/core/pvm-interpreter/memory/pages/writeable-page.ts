@@ -37,7 +37,10 @@ export class WriteablePage extends MemoryPage {
   loadInto(result: Uint8Array, startIndex: PageIndex, length: number): Result<OK, PageFault> {
     const endIndex = startIndex + length;
     if (endIndex > PAGE_SIZE) {
-      return Result.error(PageFault.fromMemoryIndex(this.start + PAGE_SIZE));
+      return Result.error(
+        PageFault.fromMemoryIndex(this.start + PAGE_SIZE),
+        () => `Page fault: read beyond page boundary at ${this.start + PAGE_SIZE}`,
+      );
     }
 
     const bytes = this.view.subarray(startIndex, endIndex);

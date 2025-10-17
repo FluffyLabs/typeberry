@@ -28,7 +28,7 @@ describe("Reports.verifyReportsBasic", () => {
       isOk: false,
       isError: true,
       error: ReportsError.TooManyDependencies,
-      details: "Report at 0 has too many dependencies. Got 9 + 0, max: 8",
+      details: () => "Report at 0 has too many dependencies. Got 9 + 0, max: 8",
     });
   });
 
@@ -47,7 +47,7 @@ describe("Reports.verifyReportsBasic", () => {
       isOk: false,
       isError: true,
       error: ReportsError.WorkReportTooBig,
-      details: "Work report at 0 too big. Got 0 + 49153, max: 49152",
+      details: () => "Work report at 0 too big. Got 0 + 49153, max: 49152",
     });
   });
 

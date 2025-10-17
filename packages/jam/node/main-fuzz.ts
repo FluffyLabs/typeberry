@@ -45,7 +45,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
     chainSpec,
     importBlock: async (blockView: BlockView): Promise<Result<StateRootHash, string>> => {
       if (runningNode === null) {
-        return Result.error("node not running");
+        return Result.error("node not running", () => "Fuzzer: node not running when importing block");
       }
       const importResult = await runningNode.importBlock(blockView);
       return importResult;

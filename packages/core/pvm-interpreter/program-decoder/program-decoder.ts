@@ -65,7 +65,7 @@ export class ProgramDecoder {
       return Result.ok(new ProgramDecoder(program));
     } catch (e) {
       logger.error`Invalid program: ${e}`;
-      return Result.error(ProgramDecoderError.InvalidProgramError);
+      return Result.error(ProgramDecoderError.InvalidProgramError, () => `Program decoder error: ${e}`);
     }
   }
 }

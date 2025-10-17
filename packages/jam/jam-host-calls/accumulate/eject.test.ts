@@ -11,7 +11,7 @@ import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
-import { OK, Result } from "@typeberry/utils";
+import { deepEqual, OK, Result } from "@typeberry/utils";
 import { EjectError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
@@ -88,7 +88,10 @@ describe("HostCalls: Eject", () => {
     const eject = new Eject(serviceId, accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
-    accumulate.ejectReturnValue = Result.error(EjectError.InvalidService);
+    accumulate.ejectReturnValue = Result.error(
+      EjectError.InvalidService,
+      () => "Test: destination service does not exist for eject",
+    );
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
 
@@ -99,7 +102,10 @@ describe("HostCalls: Eject", () => {
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
     assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, hash]]);
-    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.InvalidService));
+    deepEqual(
+      accumulate.ejectReturnValue,
+      Result.error(EjectError.InvalidService, () => "Test: destination service does not exist for eject"),
+    );
   });
 
   it("should fail if destination and source are the same", async () => {
@@ -126,7 +132,10 @@ describe("HostCalls: Eject", () => {
     const eject = new Eject(serviceId, accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
-    accumulate.ejectReturnValue = Result.error(EjectError.InvalidPreimage);
+    accumulate.ejectReturnValue = Result.error(
+      EjectError.InvalidPreimage,
+      () => "Test: no available preimage for eject",
+    );
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
 
@@ -137,7 +146,10 @@ describe("HostCalls: Eject", () => {
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
     assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, hash]]);
-    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.InvalidPreimage));
+    deepEqual(
+      accumulate.ejectReturnValue,
+      Result.error(EjectError.InvalidPreimage, () => "Test: no available preimage for eject"),
+    );
   });
 
   it("should fail if preimage is too old", async () => {
@@ -146,7 +158,7 @@ describe("HostCalls: Eject", () => {
     const eject = new Eject(serviceId, accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
-    accumulate.ejectReturnValue = Result.error(EjectError.InvalidPreimage);
+    accumulate.ejectReturnValue = Result.error(EjectError.InvalidPreimage, () => "Test: preimage is too old for eject");
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
 
@@ -157,6 +169,9 @@ describe("HostCalls: Eject", () => {
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
     assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, hash]]);
-    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.InvalidPreimage));
+    deepEqual(
+      accumulate.ejectReturnValue,
+      Result.error(EjectError.InvalidPreimage, () => "Test: preimage is too old for eject"),
+    );
   });
 });
