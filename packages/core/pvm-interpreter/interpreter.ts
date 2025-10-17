@@ -6,6 +6,7 @@ import {
   type IHostCallMemory,
   type IHostCallRegisters,
 } from "@typeberry/pvm-host-calls";
+import { type Gas, type GasCounter, Status, tryAsBigGas, tryAsGas } from "@typeberry/pvm-interface";
 import { Program } from "@typeberry/pvm-program";
 import { ArgsDecoder } from "./args-decoder/args-decoder.js";
 import { createResults } from "./args-decoder/args-decoding-results.js";
@@ -13,7 +14,7 @@ import { ArgumentType } from "./args-decoder/argument-type.js";
 import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-type-map.js";
 import { assemblify } from "./assemblify.js";
 import { BasicBlocks } from "./basic-blocks/index.js";
-import { type Gas, type GasCounter, gasCounter, tryAsBigGas, tryAsGas } from "./gas.js";
+import { gasCounter } from "./gas.js";
 import { Instruction } from "./instruction.js";
 import { instructionGasMap } from "./instruction-gas-map.js";
 import { InstructionResult } from "./instruction-result.js";
@@ -56,7 +57,6 @@ import { Mask } from "./program-decoder/mask.js";
 import { ProgramDecoder } from "./program-decoder/program-decoder.js";
 import { Registers } from "./registers.js";
 import { Result } from "./result.js";
-import { Status } from "./status.js";
 
 type InterpreterOptions = {
   useSbrkGas?: boolean;

@@ -1,24 +1,18 @@
 import { instantiate } from "@fluffylabs/anan-as/raw";
 import { Decoder } from "@typeberry/codec";
-import { tryAsU32, type U64 } from "@typeberry/numbers";
-import type { IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
-import {
-  type Gas,
-  type GasCounter,
-  gasCounter,
-  Status,
-  tryAsBigGas,
-  tryAsGas,
-  tryAsMemoryIndex,
-} from "@typeberry/pvm-interpreter";
+import { tryAsU32, type U32, type U64 } from "@typeberry/numbers";
+import type { IHostCallMemory } from "@typeberry/pvm-host-calls";
+import { type Gas, type GasCounter, type IRegisters, Status, tryAsBigGas, tryAsGas } from "@typeberry/pvm-interface";
 import { type OutOfBounds, PageFault } from "@typeberry/pvm-interpreter/memory/errors.js";
+import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { OK, Result } from "@typeberry/utils";
 import { load } from "assemblyscript-loader";
 import type { AnanasAPI } from "./api.js";
 
+// Max u32 value
 const INF_STEPS = 2 ** 32 - 1;
 
-class AnanasRegisters implements IHostCallRegisters {
+class AnanasRegisters implements IRegisters {
   constructor(private readonly instance: AnanasAPI) {}
 
   get(registerIndex: number): U64 {
@@ -71,15 +65,18 @@ class AnanasGasCounter implements GasCounter {
   }
 
   sub(g: Gas): boolean {
-    const newGas = gasCounter(this.get());
-    const result = newGas.sub(g);
-    this.set(newGas.get());
-    return result;
+    const result = this.instance.getGasLeft() - (g as bigint);
+    if (result >= 0n) {
+      this.instance.setGasLeft(result);
+      return false;
+    }
+    this.instance.setGasLeft(0n);
+    return true;
   }
 }
 
 export class AnanasInterpreter {
-  private initialGas = gasCounter(tryAsGas(0n));
+  private initialGas = 0n;
   private registers: AnanasRegisters;
   private memory: AnanasMemory;
   private gas: AnanasGasCounter;
@@ -96,32 +93,32 @@ export class AnanasInterpreter {
     return new AnanasInterpreter(instance);
   }
 
-  resetJam(program: Uint8Array, args: Uint8Array, pc: number, gas: Gas) {
+  resetJam(program: Uint8Array, args: Uint8Array, pc: number, gas: Gas): void {
     const programArr = lowerBytes(program);
     const argsArr = lowerBytes(args);
-    this.initialGas = gasCounter(gas);
-    this.instance.resetJAM(programArr, pc, BigInt(gas), argsArr, true);
+    this.initialGas = gas as bigint;
+    this.instance.resetJAM(programArr, pc, this.initialGas, argsArr, true);
   }
 
-  runProgram() {
+  runProgram(): void {
     // NOTE Setting max value u32 in nNextSteps making ananas running until finished
     // without comming back and forth between JS <-> WASM
     while (this.instance.nSteps(INF_STEPS)) {}
   }
 
-  getStatus() {
+  getStatus(): Status {
     const status = this.instance.getStatus();
     if (status < 0) {
       return Status.OK;
     }
-    return status;
+    return status as Status;
   }
 
-  getPC() {
+  getPC(): number {
     return this.instance.getProgramCounter();
   }
 
-  getExitParam() {
+  getExitParam(): U32 | null {
     const param = this.instance.getExitArg();
     if (param === 0) {
       return null;
@@ -134,16 +131,16 @@ export class AnanasInterpreter {
   }
 
   getGasConsumed(): Gas {
-    const gasConsumed = tryAsBigGas(this.initialGas.get()) - tryAsBigGas(this.gas.get());
+    const gasConsumed = this.initialGas - (this.gas.get() as bigint);
 
     if (gasConsumed < 0) {
-      return this.initialGas.get();
+      return tryAsBigGas(this.initialGas);
     }
 
     return tryAsBigGas(gasConsumed);
   }
 
-  getRegisters(): IHostCallRegisters {
+  getRegisters(): IRegisters {
     return this.registers;
   }
 
