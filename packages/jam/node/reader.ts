@@ -81,8 +81,8 @@ function* readCodecBlocks(file: string, chainSpec: ChainSpec): Generator<BlockVi
     let bytesDecoded = 0;
 
     try {
+      const decoder = Decoder.fromBlob(buffer.subarray(0, offset + bytesRead), chainSpec);
       while (true) {
-        const decoder = Decoder.fromBlob(buffer.slice(bytesDecoded, offset + bytesRead), chainSpec);
         yield decoder.object(Block.Codec.View);
         bytesDecoded += decoder.bytesRead();
       }
