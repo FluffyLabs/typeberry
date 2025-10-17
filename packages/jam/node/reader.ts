@@ -89,7 +89,6 @@ function* readCodecBlocks(file: string, chainSpec: ChainSpec): Generator<BlockVi
         }
       } catch (e) {
         if (!(e instanceof EndOfDataError)) {
-          fs.closeSync(fileDescriptor);
           throw e;
         }
       }
