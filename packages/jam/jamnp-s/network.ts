@@ -21,7 +21,8 @@ export async function setup(
   bootnodes: Bootnode[],
   spec: ChainSpec,
   blocks: BlocksDb,
-  onNewBlocks: (blocks: BlockView[]) => void,
+  // TODO [ToDr] handle back pressure?
+  onNewBlocks: (blocks: BlockView[]) => Promise<void>,
 ) {
   const blake2b = await Blake2b.createHasher();
   const genesisFirstBytes = genesisHash.toString().substring(2, 10);

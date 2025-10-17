@@ -1,12 +1,8 @@
 {
-  "name": "@typeberry/state-machine",
+  "name": "@typeberry/listener",
   "version": "0.2.0",
-  "description": "Utilities to help manage state-machine-like services and communication. ",
+  "description": "Typed event-emitter and listener.",
   "main": "index.ts",
-  "dependencies": {
-    "@typeberry/logger": "*",
-    "@typeberry/utils": "*"
-  },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },

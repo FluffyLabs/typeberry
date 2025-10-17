@@ -1,0 +1,19 @@
+{
+  "name": "@typeberry/workers-api",
+  "version": "0.2.0",
+  "description": "Abstract workers' API utilities.",
+  "main": "index.ts",
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "dependencies": {
+    "@typeberry/codec": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/listener": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/utils": "*"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0",
+  "type": "module"
+}

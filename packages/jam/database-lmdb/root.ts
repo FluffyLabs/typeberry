@@ -21,7 +21,7 @@ export class LmdbRoot {
   }
 
   /** Close the database and all sub-databases. */
-  close() {
-    return this.db.close();
+  async close() {
+    await this.db.close();
   }
 }

@@ -1,20 +1,21 @@
 import type { HeaderHash } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import { ce129, up0 } from "@typeberry/jamnp-s";
-import type { Listener } from "@typeberry/state-machine";
+import type { Listener } from "@typeberry/listener";
 import type { TrieNode } from "@typeberry/trie/nodes.js";
 import { startIpcServer } from "../server.js";
 import { JamnpIpcHandler } from "./handler.js";
 
 /** An IPC endpoint exposing network-like messaging protocol. */
 export function startJamnpIpcServer(
+  nodeName: string,
   chainSpec: ChainSpec,
   announcements: Listener<up0.Announcement>,
   getHandshake: () => up0.Handshake,
   getBoundaryNodes: (hash: HeaderHash, startKey: ce129.Key, endKey: ce129.Key) => TrieNode[],
   getKeyValuePairs: (hash: HeaderHash, startKey: ce129.Key, endKey: ce129.Key) => ce129.KeyValuePair[],
 ) {
-  return startIpcServer("typeberry-jamnp", (sender) => {
+  return startIpcServer(`typeberry-jamnp-${nodeName}`, (sender) => {
     const handler = new JamnpIpcHandler(sender);
     // Send block announcements
     const listener = (announcement: unknown) => {

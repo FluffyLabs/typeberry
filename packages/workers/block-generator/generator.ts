@@ -1,13 +1,12 @@
 import { Block, Header, type HeaderHash, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
-import { Extrinsic } from "@typeberry/block/block.js";
+import { type BlockView, Extrinsic } from "@typeberry/block/block.js";
 import { DisputesExtrinsic } from "@typeberry/block/disputes.js";
-import { Bytes, type BytesBlob } from "@typeberry/bytes";
+import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_VRF_SIGNATURE_BYTES } from "@typeberry/crypto";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
-import type { Blake2b } from "@typeberry/hash";
-import type { KeccakHasher } from "@typeberry/hash/keccak.js";
+import type { Blake2b, keccak } from "@typeberry/hash";
 import type { State } from "@typeberry/state";
 import { TransitionHasher } from "@typeberry/transition";
 import { asOpaqueType } from "@typeberry/utils";
@@ -19,7 +18,7 @@ export class Generator {
 
   constructor(
     public readonly chainSpec: ChainSpec,
-    public readonly keccakHasher: KeccakHasher,
+    public readonly keccakHasher: keccak.KeccakHasher,
     public readonly blake2b: Blake2b,
     private readonly blocks: BlocksDb,
     private readonly states: StatesDb,
@@ -54,10 +53,11 @@ export class Generator {
     };
   }
 
-  async nextEncodedBlock(): Promise<BytesBlob> {
+  async nextBlockView(): Promise<BlockView> {
     const newBlock = await this.nextBlock();
     const encoded = Encoder.encodeObject(Block.Codec, newBlock, this.chainSpec);
-    return encoded;
+    const view = Decoder.decodeObject(Block.Codec.View, encoded, this.chainSpec);
+    return view;
   }
 
   async nextBlock() {

@@ -10,10 +10,12 @@ Contains fundamental packages that provide low-level functionality and utilities
 - **bytes** - Byte manipulation utilities
 - **codec** - Encoding/decoding functionality
 - **collections** - Data structure utilities
+- **concurrent** - Concurrency utilities and primitives
 - **crypto** - Cryptographic functions and utilities
 - **erasure-coding** - Error correction and erasure coding
 - **hash** - Hashing algorithms and utilities
 - **json-parser** - JSON parsing functionality
+- **listener** - Event listener utilities
 - **logger** - Basic logging utilities
 - **mmr** - Merkle Mountain Range implementation
 - **networking** - Network-related utilities
@@ -25,7 +27,6 @@ Contains fundamental packages that provide low-level functionality and utilities
 - **pvm-program** - PVM program utilities
 - **pvm-spi-decoder** - PVM SPI decoder
 - **shuffling** - Shuffling algorithms
-- **state-machine** - State machine implementations
 - **trie** - Trie data structure implementation
 - **utils** - General purpose utilities
 
@@ -38,6 +39,7 @@ Contains JAM (Join-Accumulate Machine) specific packages:
 - **config-node** - Node-specific JAM configuration
 - **database** - Database abstractions for JAM
 - **database-lmdb** - LMDB database implementation
+- **fuzz-proto** - Fuzzing protocol implementation
 - **jam-host-calls** - JAM-specific host calls
 - **jamnp-s** - JAM network protocol implementation
 - **node** - JAM node implementation
@@ -63,8 +65,9 @@ for the JAM client to work, yet might add some extra functionality:
 ### `workers/`
 Worker-related packages for background processing:
 
+- **api** - API worker utilities
+- **api-node** - Node-specific API worker
 - **block-generator** - Block generation worker
-- **generic** - Generic worker utilities
 - **importer** - Data import worker
 - **jam-network** - JAM network worker
 

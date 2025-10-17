@@ -3,7 +3,15 @@ import { BytesBlob } from "@typeberry/bytes";
 import { SortedSet, TruncatedHashDictionary } from "@typeberry/collections";
 import type { Blake2b } from "@typeberry/hash";
 import { type SerializedStateBackend, StateEntries, type StateKey } from "@typeberry/state-merkleization";
-import { InMemoryTrie, type LeafNode, leafComparator, NodeType, TRIE_NODE_BYTES, TrieNode } from "@typeberry/trie";
+import {
+  InMemoryTrie,
+  type LeafNode,
+  leafComparator,
+  NodeType,
+  TRIE_NODE_BYTES,
+  TrieNode,
+  type ValueHash,
+} from "@typeberry/trie";
 import { getBlake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { assertNever, Result } from "@typeberry/utils";
 
@@ -20,7 +28,7 @@ export interface ValuesDb {
    * Missing value is considered an irrecoverable error, so the implementations
    * are free to throw if that happens.
    */
-  get(key: Uint8Array): Uint8Array;
+  get(key: ValueHash): Uint8Array;
 }
 
 /**
@@ -53,15 +61,20 @@ export class LeafDb implements SerializedStateBackend {
     return Result.ok(new LeafDb(leaves, db));
   }
 
+  /** Create leaf db from sorted set of leaves. */
+  static fromLeaves(leaves: SortedSet<LeafNode>, db: ValuesDb): LeafDb {
+    return new LeafDb(leaves, db);
+  }
+
   /** A mapping between an embedded value or db lookup key. */
   private readonly lookup: TruncatedHashDictionary<StateKey, Lookup>;
 
   private constructor(
-    public readonly leaves: SortedSet<LeafNode>,
+    public readonly leafs: SortedSet<LeafNode>,
     public readonly db: ValuesDb,
   ) {
     this.lookup = TruncatedHashDictionary.fromEntries(
-      leaves.array.map((leaf) => {
+      leafs.array.map((leaf) => {
         const key: StateKey = leaf.getKey().asOpaque();
         const value: Lookup = leaf.hasEmbeddedValue()
           ? {
@@ -70,7 +83,7 @@ export class LeafDb implements SerializedStateBackend {
             }
           : {
               kind: LookupKind.DbKey,
-              key: leaf.getValueHash().raw,
+              key: leaf.getValueHash(),
             };
         return [key, value];
       }),
@@ -96,7 +109,7 @@ export class LeafDb implements SerializedStateBackend {
 
   getStateRoot(blake2b: Blake2b): StateRootHash {
     const blake2bTrieHasher = getBlake2bTrieHasher(blake2b);
-    return InMemoryTrie.computeStateRoot(blake2bTrieHasher, this.leaves).asOpaque();
+    return InMemoryTrie.computeStateRoot(blake2bTrieHasher, this.leafs).asOpaque();
   }
 
   intoStateEntries(): StateEntries {
@@ -130,5 +143,5 @@ type Lookup =
     }
   | {
       kind: LookupKind.DbKey;
-      key: Uint8Array;
+      key: ValueHash;
     };

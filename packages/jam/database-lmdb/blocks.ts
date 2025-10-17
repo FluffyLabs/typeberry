@@ -21,9 +21,9 @@ const BEST_BLOCK = "best hash and posterior state root";
 // in a single `Uint8Array` JAM-encoded. That could then
 // be efficiently transferred between threads.
 export class LmdbBlocks implements BlocksDb {
-  readonly extrinsics: SubDb;
-  readonly headers: SubDb;
-  readonly postStateRoots: SubDb;
+  private readonly extrinsics: SubDb;
+  private readonly headers: SubDb;
+  private readonly postStateRoots: SubDb;
 
   constructor(
     private readonly chainSpec: ChainSpec,
@@ -89,5 +89,9 @@ export class LmdbBlocks implements BlocksDb {
       return null;
     }
     return Decoder.decodeObject(Extrinsic.Codec.View, data, this.chainSpec);
+  }
+
+  async close() {
+    await Promise.all([this.headers.close(), this.extrinsics.close(), this.postStateRoots.close()]);
   }
 }

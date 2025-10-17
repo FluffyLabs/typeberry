@@ -77,6 +77,15 @@ export namespace codec {
     };
   })();
 
+  /** Zero-size `void` value. */
+  export const nothing = Descriptor.new<void>(
+    "void",
+    { bytes: 0, isExact: true },
+    (_e, _v) => {},
+    (_d) => {},
+    (_s) => {},
+  );
+
   /** Variable-length U32. */
   export const varU32 = Descriptor.new<U32>(
     "var_u32",
