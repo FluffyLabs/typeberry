@@ -15,15 +15,15 @@ const instructions = pvm.printProgram();
 let i = 0;
 while (pvm.nextStep() === Status.OK) {
   console.info(`Instruction ${i}: ${instructions[i]}`);
-  console.info(`Registers: ${pvm.getRegisters().getAllU64()}`);
+  console.info(`Registers: ${pvm.getRawRegisters().getAllU64()}`);
   console.info(`Status: ${pvm.getStatus()}`);
-  console.info(`Gas: ${pvm.getGas()}`);
+  console.info(`Gas: ${pvm.getGasCounter().get()}`);
   console.info(`Gas: ${pvm.getPC()}`);
   console.info();
   i++;
 }
 console.info(`Instruction ${i}: ${instructions[i]}`);
-console.info(`Registers: ${pvm.getRegisters().getAllU64()}`);
+console.info(`Registers: ${pvm.getRawRegisters().getAllU64()}`);
 console.info(`Status: ${pvm.getStatus()}`);
-console.info(`Gas: ${pvm.getGas()}`);
+console.info(`Gas: ${pvm.getGasCounter().get()}`);
 console.info(`Gas: ${pvm.getPC()}`);

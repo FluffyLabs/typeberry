@@ -1,5 +1,11 @@
 import { Logger } from "@typeberry/logger";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
+import {
+  HostCallMemory,
+  HostCallRegisters,
+  type IHostCallMemory,
+  type IHostCallRegisters,
+} from "@typeberry/pvm-host-calls";
 import { Program } from "@typeberry/pvm-program";
 import { ArgsDecoder } from "./args-decoder/args-decoder.js";
 import { createResults } from "./args-decoder/args-decoding-results.js";
@@ -7,11 +13,11 @@ import { ArgumentType } from "./args-decoder/argument-type.js";
 import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-type-map.js";
 import { assemblify } from "./assemblify.js";
 import { BasicBlocks } from "./basic-blocks/index.js";
-import { type Gas, gasCounter, tryAsBigGas, tryAsGas } from "./gas.js";
+import { type Gas, type GasCounter, gasCounter, tryAsBigGas, tryAsGas } from "./gas.js";
 import { Instruction } from "./instruction.js";
 import { instructionGasMap } from "./instruction-gas-map.js";
 import { InstructionResult } from "./instruction-result.js";
-import { Memory, type MemoryIndex } from "./memory/index.js";
+import { Memory } from "./memory/index.js";
 import { PAGE_SIZE } from "./memory/memory-consts.js";
 import { alignToPageSize } from "./memory/memory-utils.js";
 import { tryAsPageNumber } from "./memory/pages/page-utils.js";
@@ -284,7 +290,11 @@ export class Interpreter {
     return this.status;
   }
 
-  getRegisters() {
+  getRegisters(): IHostCallRegisters {
+    return new HostCallRegisters(this.registers);
+  }
+
+  getRawRegisters() {
     return this.registers;
   }
 
@@ -296,16 +306,8 @@ export class Interpreter {
     this.pc = nextPc;
   }
 
-  getGas(): Gas {
-    return this.gas.get();
-  }
-
-  setGas(gas: Gas) {
-    this.gas = gasCounter(gas);
-  }
-
-  subGas(gas: Gas) {
-    return this.gas.sub(gas);
+  getGasCounter(): GasCounter {
+    return this.gas;
   }
 
   getGasConsumed(): Gas {
@@ -327,15 +329,11 @@ export class Interpreter {
     return p !== null ? tryAsU32(p) : p;
   }
 
-  storeFrom(address: MemoryIndex, bytes: Uint8Array) {
-    return this.memory.storeFrom(address, bytes);
+  getMemory(): IHostCallMemory {
+    return new HostCallMemory(this.memory);
   }
 
-  loadInto(value: Uint8Array, address: MemoryIndex) {
-    return this.memory.loadInto(value, address);
-  }
-
-  getMemory() {
+  getRawMemory() {
     return this.memory;
   }
 

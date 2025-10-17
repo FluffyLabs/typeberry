@@ -4,10 +4,11 @@
   "description": "A Anan-as PVM implementation.",
   "main": "index.ts",
   "dependencies": {
-    "anan-as": "github:DrEverr/anan-as#build-2",
+    "@fluffylabs/anan-as": "^1.0.0",
     "@typeberry/numbers": "*",
     "@typeberry/pvm-interpreter": "*",
-    "@typeberry/utils": "*"
+    "@typeberry/utils": "*",
+    "assemblyscript-loader": "^0.3.0"
   },
   "scripts": {
     "start": "tsx ./bin.ts",

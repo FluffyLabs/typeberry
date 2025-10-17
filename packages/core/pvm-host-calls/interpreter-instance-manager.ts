@@ -4,8 +4,9 @@ import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
 
 type ResolveFn = (pvm: Interpreter | AnanasInterpreter) => void;
 
+// TODO [MaSo] Delete this
 export class InterpreterInstanceManager {
-  private instances: (Interpreter | AnanasInterpreter)[] = [];
+  private instances: (Interpreter | Promise<AnanasInterpreter>)[] = [];
   private waitingQueue: ResolveFn[] = [];
 
   constructor(noOfPvmInstances: number, interpreter: PVMInterpreter = PVMInterpreter.Default) {
@@ -19,7 +20,7 @@ export class InterpreterInstanceManager {
           );
           break;
         case PVMInterpreter.Ananas:
-          this.instances.push(new AnanasInterpreter());
+          this.instances.push(AnanasInterpreter.new());
           break;
         case PVMInterpreter.DefaultAnanas:
           this.instances.push(
@@ -27,7 +28,7 @@ export class InterpreterInstanceManager {
               useSbrkGas: false,
             }),
           );
-          this.instances.push(new AnanasInterpreter());
+          this.instances.push(AnanasInterpreter.new());
           break;
       }
     }
