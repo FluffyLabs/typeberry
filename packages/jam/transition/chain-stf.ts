@@ -445,11 +445,14 @@ function checkOffendersMatch(
   headerOffendersMark: Ed25519Key[],
 ): Result<OK, OFFENDERS_ERROR> {
   if (offendersMark.size !== headerOffendersMark.length) {
-    return Result.error(OFFENDERS_ERROR, `Length mismatch: ${offendersMark.size} vs ${headerOffendersMark.length}`);
+    return Result.error(
+      OFFENDERS_ERROR,
+      () => `Length mismatch: ${offendersMark.size} vs ${headerOffendersMark.length}`,
+    );
   }
   for (const key of headerOffendersMark) {
     if (!offendersMark.has(key)) {
-      return Result.error(OFFENDERS_ERROR, `Missing key: ${key}`);
+      return Result.error(OFFENDERS_ERROR, () => `Missing key: ${key}`);
     }
   }
 

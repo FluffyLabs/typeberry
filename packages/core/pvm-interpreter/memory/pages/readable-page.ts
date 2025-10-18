@@ -15,7 +15,10 @@ export class ReadablePage extends MemoryPage {
   loadInto(result: Uint8Array, startIndex: PageIndex, length: number): Result<OK, PageFault> {
     const endIndex = startIndex + length;
     if (endIndex > PAGE_SIZE) {
-      return Result.error(PageFault.fromMemoryIndex(this.start + PAGE_SIZE));
+      return Result.error(
+        PageFault.fromMemoryIndex(this.start + PAGE_SIZE),
+        () => `Page fault: read beyond page boundary at ${this.start + PAGE_SIZE}`,
+      );
     }
 
     const bytes = this.data.subarray(startIndex, endIndex);
@@ -27,7 +30,10 @@ export class ReadablePage extends MemoryPage {
   }
 
   storeFrom(_address: PageIndex, _data: Uint8Array): Result<OK, PageFault> {
-    return Result.error(PageFault.fromMemoryIndex(this.start, true));
+    return Result.error(
+      PageFault.fromMemoryIndex(this.start, true),
+      () => `Page fault: attempted to write to read-only page at ${this.start}`,
+    );
   }
 
   setData(pageIndex: PageIndex, data: Uint8Array) {

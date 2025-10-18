@@ -37,7 +37,7 @@ export class LeafDb implements SerializedStateBackend {
     if (blob.length % TRIE_NODE_BYTES !== 0) {
       return Result.error(
         LeafDbError.InvalidLeafData,
-        `${blob.length} is not a multiply of ${TRIE_NODE_BYTES}: ${blob}`,
+        () => `${blob.length} is not a multiply of ${TRIE_NODE_BYTES}: ${blob}`,
       );
     }
 
@@ -45,7 +45,7 @@ export class LeafDb implements SerializedStateBackend {
     for (const nodeData of blob.chunks(TRIE_NODE_BYTES)) {
       const node = new TrieNode(nodeData.raw);
       if (node.getNodeType() === NodeType.Branch) {
-        return Result.error(LeafDbError.InvalidLeafData, `Branch node detected: ${nodeData}`);
+        return Result.error(LeafDbError.InvalidLeafData, () => `Branch node detected: ${nodeData}`);
       }
       leaves.insert(node.asLeafNode());
     }

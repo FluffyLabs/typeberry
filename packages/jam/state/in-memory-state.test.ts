@@ -122,7 +122,10 @@ describe("InMemoryState", () => {
       ]),
     });
 
-    assert.deepEqual(result, Result.error(UpdateError.DuplicateService, "1 already exists!"));
+    deepEqual(
+      result,
+      Result.error(UpdateError.DuplicateService, () => "1 already exists!"),
+    );
   });
 
   it("should update storage of an existing service", () => {
@@ -204,9 +207,9 @@ describe("InMemoryState", () => {
       ]),
     });
 
-    assert.deepEqual(
+    deepEqual(
       result,
-      Result.error(UpdateError.NoService, `Attempting to update storage of non-existing service: ${serviceId}`),
+      Result.error(UpdateError.NoService, () => `Attempting to update storage of non-existing service: ${serviceId}`),
     );
   });
 
@@ -483,9 +486,9 @@ describe("InMemoryState", () => {
       ]),
     });
 
-    assert.deepEqual(
+    deepEqual(
       result,
-      Result.error(UpdateError.PreimageExists, `Overwriting existing preimage at ${serviceId}: ${preimage}`),
+      Result.error(UpdateError.PreimageExists, () => `Overwriting existing preimage at ${serviceId}: ${preimage}`),
     );
   });
 

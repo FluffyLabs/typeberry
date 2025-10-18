@@ -222,7 +222,7 @@ class TestReportsResult {
       };
 
       if (map[test.err] !== undefined) {
-        return Result.error(map[test.err]);
+        return Result.error(map[test.err], () => `Reports validation failed: ${test.err}`);
       }
       throw new Error(`Unknown expected reports error code: "${test.err}"`);
     }

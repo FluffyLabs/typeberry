@@ -105,7 +105,10 @@ export class Importer {
     if (!this.currentHash.isEqualTo(parentHash)) {
       const state = this.states.getState(parentHash);
       if (state === null) {
-        const e = Result.error(BlockVerifierError.StateRootNotFound);
+        const e = Result.error(
+          BlockVerifierError.StateRootNotFound,
+          () => `State not found for parent block ${parentHash}`,
+        );
         if (!e.isError) {
           throw new Error("unreachable, just adding to make compiler happy");
         }

@@ -79,7 +79,10 @@ describe("HostCalls: Solicit", () => {
     const serviceId = tryAsServiceId(10_000);
     const forget = new Forget(serviceId, accumulate);
 
-    accumulate.forgetPreimageResponse = Result.error(ForgetPreimageError.NotFound);
+    accumulate.forgetPreimageResponse = Result.error(
+      ForgetPreimageError.NotFound,
+      () => "Test: preimage not found for forget",
+    );
     const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU64(4_096));
 
     // when

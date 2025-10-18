@@ -87,7 +87,10 @@ describe("HostCalls: New", () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);
-    accumulate.newServiceResponse = Result.error(NewServiceError.InsufficientFunds);
+    accumulate.newServiceResponse = Result.error(
+      NewServiceError.InsufficientFunds,
+      () => "Test: insufficient funds for new service",
+    );
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),
@@ -130,7 +133,10 @@ describe("HostCalls: New", () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);
-    accumulate.newServiceResponse = Result.error(NewServiceError.UnprivilegedService);
+    accumulate.newServiceResponse = Result.error(
+      NewServiceError.UnprivilegedService,
+      () => "Test: unprivileged service trying to set gratis storage",
+    );
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),
@@ -201,7 +207,10 @@ describe("HostCalls: New", () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10);
     const n = new New(serviceId, accumulate);
-    accumulate.newServiceResponse = Result.error(NewServiceError.RegistrarServiceIdAlreadyTaken);
+    accumulate.newServiceResponse = Result.error(
+      NewServiceError.RegistrarServiceIdAlreadyTaken,
+      () => "Test: service ID already taken",
+    );
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),

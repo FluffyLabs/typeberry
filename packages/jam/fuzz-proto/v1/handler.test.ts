@@ -223,7 +223,9 @@ describe("FuzzV1Target Handler", () => {
         value: expectedError,
       };
 
-      mockMessageHandler.importBlock.mock.mockImplementation(async () => Result.error(expectedError));
+      mockMessageHandler.importBlock.mock.mockImplementation(async () =>
+        Result.error(expectedError, () => "Test: ImportBlock error"),
+      );
 
       const fuzzTarget = new FuzzTarget(mockMessageHandler, mockSender, spec);
       await completeHandshake(mockMessageHandler, mockSender, fuzzTarget);

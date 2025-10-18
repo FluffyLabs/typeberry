@@ -118,7 +118,13 @@ describe("HostCalls: Pages", () => {
   });
 
   it("Should return WHO when machine is unknown", async () => {
-    const { pages, registers } = prepareTest(Result.error(PagesError.NoMachine), 1, 10_000, 5, 0);
+    const { pages, registers } = prepareTest(
+      Result.error(PagesError.NoMachine, () => "Test: error occurred"),
+      1,
+      10_000,
+      5,
+      0,
+    );
 
     // when
     await pages.execute(gas, registers);
@@ -129,7 +135,13 @@ describe("HostCalls: Pages", () => {
 
   it("Should return WHO when provided unknown type request but machine does not exist", async () => {
     // intentionally setting no machine here.
-    const { pages, registers } = prepareTest(Result.error(PagesError.NoMachine), 10_000, 10_000, 5, 16);
+    const { pages, registers } = prepareTest(
+      Result.error(PagesError.NoMachine, () => "Test: error occurred"),
+      10_000,
+      10_000,
+      5,
+      16,
+    );
 
     // when
     await pages.execute(gas, registers);
@@ -139,7 +151,13 @@ describe("HostCalls: Pages", () => {
   });
 
   it("Should return HUH when provided unknown type request and machine exist", async () => {
-    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidOperation), 10_000, 12, 5, 16);
+    const { pages, registers } = prepareTest(
+      Result.error(PagesError.InvalidOperation, () => "Test: error occurred"),
+      10_000,
+      12,
+      5,
+      16,
+    );
 
     // when
     await pages.execute(gas, registers);
@@ -149,7 +167,13 @@ describe("HostCalls: Pages", () => {
   });
 
   it("Should return HUH when page is too low", async () => {
-    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 12, 5, 0);
+    const { pages, registers } = prepareTest(
+      Result.error(PagesError.InvalidPage, () => "Test: error occurred"),
+      10_000,
+      12,
+      5,
+      0,
+    );
 
     // when
     await pages.execute(gas, registers);
@@ -159,7 +183,13 @@ describe("HostCalls: Pages", () => {
   });
 
   it("Should return HUH when page is too large", async () => {
-    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 2 ** 32 - 1, 12_000, 2);
+    const { pages, registers } = prepareTest(
+      Result.error(PagesError.InvalidPage, () => "Test: error occurred"),
+      10_000,
+      2 ** 32 - 1,
+      12_000,
+      2,
+    );
 
     // when
     await pages.execute(gas, registers);
@@ -169,7 +199,13 @@ describe("HostCalls: Pages", () => {
   });
 
   it("Should return HUH when page is too large 2", async () => {
-    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 2 ** 20 - 5, 5, 3);
+    const { pages, registers } = prepareTest(
+      Result.error(PagesError.InvalidPage, () => "Test: error occurred"),
+      10_000,
+      2 ** 20 - 5,
+      5,
+      3,
+    );
 
     // when
     await pages.execute(gas, registers);
@@ -179,7 +215,13 @@ describe("HostCalls: Pages", () => {
   });
 
   it("Should return HUH when attempting to preserve memory of uninitialized page", async () => {
-    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 10_000, 5, 3);
+    const { pages, registers } = prepareTest(
+      Result.error(PagesError.InvalidPage, () => "Test: error occurred"),
+      10_000,
+      10_000,
+      5,
+      3,
+    );
 
     // when
     await pages.execute(gas, registers);
@@ -189,7 +231,13 @@ describe("HostCalls: Pages", () => {
   });
 
   it("Should return HUH when attempting to preserve memory of uninitialized page 2", async () => {
-    const { pages, registers } = prepareTest(Result.error(PagesError.InvalidPage), 10_000, 10_000, 5, 4);
+    const { pages, registers } = prepareTest(
+      Result.error(PagesError.InvalidPage, () => "Test: error occurred"),
+      10_000,
+      10_000,
+      5,
+      4,
+    );
 
     // when
     await pages.execute(gas, registers);

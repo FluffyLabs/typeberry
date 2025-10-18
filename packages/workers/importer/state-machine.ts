@@ -59,7 +59,7 @@ export const importBlockResultCodec = codec.custom<Result<StateRootHash, string>
     }
     if (kind === 1) {
       const error = d.bytesBlob();
-      return Result.error(error.asText());
+      return Result.error(error.asText(), () => error.asText());
     }
 
     throw new Error(`Invalid Result: ${kind}`);
@@ -110,7 +110,7 @@ export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
   sendBlock(port: TypedChannel, block: Uint8Array) {
     // TODO [ToDr] How to make a better API to pass this binary data around?
     // Currently we don't guarantee that the underlying buffer is actually `ArrayBuffer`.
-    port.sendSignal("block", block, [block.buffer as ArrayBuffer]);
+    port.sendSignal("block", block, []);
   }
 
   async importBlock(port: TypedChannel, block: Uint8Array): Promise<Result<StateRootHash, string>> {
@@ -118,7 +118,7 @@ export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
     if (res instanceof Uint8Array) {
       return Decoder.decodeObject(importBlockResultCodec, res);
     }
-    return Result.error("Invalid worker response.");
+    return Result.error("Invalid worker response.", () => "Invalid worker response: expected Uint8Array");
   }
 
   async getStateEntries(port: TypedChannel, hash: Uint8Array): Promise<StateEntries | null> {
@@ -247,12 +247,12 @@ export class ImporterReady extends State<"ready(importer)", Finished, WorkerConf
         if (res.isOk) {
           response = Result.ok(this.importer.getBestStateRootHash() ?? ZERO_HASH.asOpaque());
         } else {
-          response = Result.error(resultToString(res));
+          response = Result.error(resultToString(res), () => resultToString(res));
         }
       } catch (e) {
         logger.error`Failed to import block: ${e}`;
         logger.error`${e instanceof Error ? e.stack : ""}`;
-        response = Result.error(`${e}`);
+        response = Result.error(`${e}`, () => `${e}`);
       }
       const encoded = Encoder.encodeObject(importBlockResultCodec, response);
       return {

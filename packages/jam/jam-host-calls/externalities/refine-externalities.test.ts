@@ -89,7 +89,7 @@ export class TestRefineExt implements RefineExternalities {
     // check if the code is valid
     const program = ProgramDecoder.deblob(code.raw);
     if (program.isError) {
-      return Promise.resolve(Result.error(program.error));
+      return Promise.resolve(Result.error(program.error, () => "Test: error occurred"));
     }
 
     const val = this.machineStartData.get(code, programCounter);
@@ -138,7 +138,7 @@ export class TestRefineExt implements RefineExternalities {
   ): Promise<Result<MachineResult, NoMachineError>> {
     const machine = this.machineInvokeData.get(machineIndex);
     if (machine === undefined) {
-      return Result.error(NoMachineError, `Machine not found. Call to machineInvoke with: ${machineIndex}`);
+      return Result.error(NoMachineError, () => `Machine not found. Call to machineInvoke with: ${machineIndex}`);
     }
     // run machine with given gas and registers
     const machineInvokeResult = await machine.run(gas, registers);

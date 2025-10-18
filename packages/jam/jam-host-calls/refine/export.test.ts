@@ -96,7 +96,10 @@ describe("HostCalls: Export", () => {
     exp.currentServiceId = tryAsServiceId(10_000);
     const segment: Segment = Bytes.fill(SEGMENT_BYTES, 15).asOpaque();
     const { registers, memory } = prepareRegsAndMemory(segment);
-    refine.exportSegmentData.set(Result.error(SegmentExportError), segment);
+    refine.exportSegmentData.set(
+      Result.error(SegmentExportError, () => "Test: error occurred"),
+      segment,
+    );
 
     // when
     const result = await exp.execute(gas, registers, memory);

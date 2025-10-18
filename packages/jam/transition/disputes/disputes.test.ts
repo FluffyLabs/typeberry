@@ -67,7 +67,10 @@ describe("Disputes", () => {
     const result = await disputes.transition(disputesExtrinsic);
     const ok = result.isOk ? Array.from(result.ok.offendersMark) : undefined;
 
-    assert.strictEqual(`${resultToString(result)}`, "\nError: bad_validator_index");
+    assert.strictEqual(
+      `${resultToString(result)}`,
+      "Bad validator index in signature verification: 65000\nError: bad_validator_index",
+    );
     assert.strictEqual(ok, undefined);
   });
 
