@@ -1,13 +1,3 @@
-export {
-  type BigGas,
-  type Gas,
-  type GasCounter,
-  gasCounter,
-  type SmallGas,
-  tryAsBigGas,
-  tryAsGas,
-  tryAsSmallGas,
-} from "./gas.js";
 export * from "./interpreter.js";
 export {
   Memory,

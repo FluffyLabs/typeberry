@@ -1,12 +1,20 @@
 import { Logger } from "@typeberry/logger";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
+import {
+  HostCallMemory,
+  HostCallRegisters,
+  type IHostCallMemory,
+  type IHostCallRegisters,
+} from "@typeberry/pvm-host-calls";
+import { type Gas, type GasCounter, Status, tryAsBigGas, tryAsGas } from "@typeberry/pvm-interface";
+import { Program } from "@typeberry/pvm-program";
 import { ArgsDecoder } from "./args-decoder/args-decoder.js";
 import { createResults } from "./args-decoder/args-decoding-results.js";
 import { ArgumentType } from "./args-decoder/argument-type.js";
 import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-type-map.js";
 import { assemblify } from "./assemblify.js";
 import { BasicBlocks } from "./basic-blocks/index.js";
-import { type Gas, type GasCounter, gasCounter, tryAsBigGas, tryAsGas } from "./gas.js";
+import { gasCounter } from "./gas.js";
 import { Instruction } from "./instruction.js";
 import { instructionGasMap } from "./instruction-gas-map.js";
 import { InstructionResult } from "./instruction-result.js";
@@ -49,7 +57,6 @@ import { Mask } from "./program-decoder/mask.js";
 import { ProgramDecoder } from "./program-decoder/program-decoder.js";
 import { Registers } from "./registers.js";
 import { Result } from "./result.js";
-import { Status } from "./status.js";
 
 type InterpreterOptions = {
   useSbrkGas?: boolean;
@@ -128,7 +135,12 @@ export class Interpreter {
     this.oneRegOneExtImmDispatcher = new OneRegOneExtImmDispatcher(loadOps);
   }
 
-  reset(rawProgram: Uint8Array, pc: number, gas: Gas, maybeRegisters?: Registers, maybeMemory?: Memory) {
+  resetJam(program: Uint8Array, args: Uint8Array, pc: number, gas: Gas) {
+    const p = Program.fromSpi(program, args, true);
+    this.resetGeneric(p.code, pc, gas, p.registers, p.memory);
+  }
+
+  resetGeneric(rawProgram: Uint8Array, pc: number, gas: Gas, maybeRegisters?: Registers, maybeMemory?: Memory) {
     const programDecoder = new ProgramDecoder(rawProgram);
     this.code = programDecoder.getCode();
     this.mask = programDecoder.getMask();
@@ -159,7 +171,7 @@ export class Interpreter {
     const p = assemblify(this.code, this.mask);
     // biome-ignore lint/suspicious/noConsole: We do want to print that.
     console.table(p);
-    return p;
+    return p.join(";\n");
   }
 
   runProgram() {
@@ -278,7 +290,11 @@ export class Interpreter {
     return this.status;
   }
 
-  getRegisters() {
+  getRegisters(): IHostCallRegisters {
+    return new HostCallRegisters(this.registers);
+  }
+
+  getRawRegisters() {
     return this.registers;
   }
 
@@ -290,8 +306,8 @@ export class Interpreter {
     this.pc = nextPc;
   }
 
-  getGas(): Gas {
-    return this.gas.get();
+  getGasCounter(): GasCounter {
+    return this.gas;
   }
 
   getGasConsumed(): Gas {
@@ -304,10 +320,6 @@ export class Interpreter {
     return tryAsBigGas(gasConsumed);
   }
 
-  getGasCounter(): GasCounter {
-    return this.gas;
-  }
-
   getStatus() {
     return this.status;
   }
@@ -317,7 +329,11 @@ export class Interpreter {
     return p !== null ? tryAsU32(p) : p;
   }
 
-  getMemory() {
+  getMemory(): IHostCallMemory {
+    return new HostCallMemory(this.memory);
+  }
+
+  getRawMemory() {
     return this.memory;
   }
 

@@ -1,7 +1,7 @@
 /**
- * Inner status codes for the PVM
+ * Result codes for the PVM execution.
  *
- * https://graypaper.fluffylabs.dev/#/85129da/2cae022cae02?v=0.6.3
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/2e43002e4300?v=0.7.2
  */
 export enum Status {
   OK = 255,

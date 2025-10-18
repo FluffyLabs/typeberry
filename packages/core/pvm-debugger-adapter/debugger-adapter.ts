@@ -18,11 +18,11 @@ export class DebuggerAdapter {
   }
 
   resetGeneric(rawProgram: Uint8Array, flatRegisters: Uint8Array, initialGas: bigint) {
-    this.pvm.reset(rawProgram, 0, tryAsGas(initialGas), new Registers(flatRegisters));
+    this.pvm.resetGeneric(rawProgram, 0, tryAsGas(initialGas), new Registers(flatRegisters));
   }
 
   reset(rawProgram: Uint8Array, pc: number, gas: bigint, maybeRegisters?: Registers, maybeMemory?: Memory) {
-    this.pvm.reset(rawProgram, pc, tryAsGas(gas), maybeRegisters, maybeMemory);
+    this.pvm.resetGeneric(rawProgram, pc, tryAsGas(gas), maybeRegisters, maybeMemory);
   }
 
   getPageDump(pageNumber: number): null | Uint8Array {
@@ -45,7 +45,7 @@ export class DebuggerAdapter {
   }
 
   setMemory(address: number, value: Uint8Array) {
-    this.pvm.getMemory().storeFrom(tryAsMemoryIndex(address), value);
+    this.pvm.getRawMemory().storeFrom(tryAsMemoryIndex(address), value);
   }
 
   getExitArg(): number {
@@ -72,11 +72,11 @@ export class DebuggerAdapter {
   }
 
   getRegisters(): BigUint64Array {
-    return this.pvm.getRegisters().getAllU64();
+    return this.pvm.getRawRegisters().getAllU64();
   }
 
   setRegisters(registers: Uint8Array) {
-    this.pvm.getRegisters().copyFrom(new Registers(registers));
+    this.pvm.getRawRegisters().copyFrom(new Registers(registers));
   }
 
   getProgramCounter(): number {
@@ -88,7 +88,7 @@ export class DebuggerAdapter {
   }
 
   getGasLeft(): bigint {
-    return BigInt(this.pvm.getGas());
+    return BigInt(this.pvm.getGasCounter().get());
   }
 
   setGasLeft(gas: bigint) {

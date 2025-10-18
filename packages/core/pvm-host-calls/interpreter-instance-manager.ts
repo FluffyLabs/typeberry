@@ -1,22 +1,40 @@
+import { PVMInterpreter } from "@typeberry/config-node";
 import { Interpreter } from "@typeberry/pvm-interpreter";
+import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
 
-type ResolveFn = (pvm: Interpreter) => void;
+type ResolveFn = (pvm: Interpreter | AnanasInterpreter) => void;
 
+// TODO [MaSo] Delete this
 export class InterpreterInstanceManager {
-  private instances: Interpreter[] = [];
+  private instances: (Interpreter | Promise<AnanasInterpreter>)[] = [];
   private waitingQueue: ResolveFn[] = [];
 
-  constructor(noOfPvmInstances: number) {
+  constructor(noOfPvmInstances: number, interpreter: PVMInterpreter = PVMInterpreter.Default) {
     for (let i = 0; i < noOfPvmInstances; i++) {
-      this.instances.push(
-        new Interpreter({
-          useSbrkGas: false,
-        }),
-      );
+      switch (interpreter) {
+        case PVMInterpreter.Default:
+          this.instances.push(
+            new Interpreter({
+              useSbrkGas: false,
+            }),
+          );
+          break;
+        case PVMInterpreter.Ananas:
+          this.instances.push(AnanasInterpreter.new());
+          break;
+        case PVMInterpreter.DefaultAnanas:
+          this.instances.push(
+            new Interpreter({
+              useSbrkGas: false,
+            }),
+          );
+          this.instances.push(AnanasInterpreter.new());
+          break;
+      }
     }
   }
 
-  async getInstance(): Promise<Interpreter> {
+  async getInstance(): Promise<Interpreter | AnanasInterpreter> {
     const instance = this.instances.pop();
     if (instance !== undefined) {
       return Promise.resolve(instance);
@@ -26,7 +44,7 @@ export class InterpreterInstanceManager {
     });
   }
 
-  releaseInstance(pvm: Interpreter) {
+  releaseInstance(pvm: Interpreter | AnanasInterpreter) {
     const waiting = this.waitingQueue.shift();
     if (waiting !== undefined) {
       return waiting(pvm);

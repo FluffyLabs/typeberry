@@ -1,12 +1,9 @@
-import type { Interpreter, Memory } from "@typeberry/pvm-interpreter";
+import type { Interpreter } from "@typeberry/pvm-interpreter";
 import type { Gas } from "@typeberry/pvm-interpreter/gas.js";
-import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import type { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
+import type { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
 import { assertNever, check, safeAllocUint8Array } from "@typeberry/utils";
 import { PvmExecution, tryAsHostCallIndex } from "./host-call-handler.js";
-import { HostCallMemory } from "./host-call-memory.js";
-import { HostCallRegisters } from "./host-call-registers.js";
 import type { HostCallsManager } from "./host-calls-manager.js";
 import type { InterpreterInstanceManager } from "./interpreter-instance-manager.js";
 
@@ -44,21 +41,20 @@ export class HostCalls {
     private hostCalls: HostCallsManager,
   ) {}
 
-  private getReturnValue(status: Status, pvmInstance: Interpreter): ReturnValue {
+  private getReturnValue(status: Status, pvmInstance: Interpreter | AnanasInterpreter): ReturnValue {
     const gasConsumed = pvmInstance.getGasConsumed();
     if (status === Status.OOG) {
       return ReturnValue.fromStatus(gasConsumed, status);
     }
 
     if (status === Status.HALT) {
-      const memory = pvmInstance.getMemory();
       const regs = pvmInstance.getRegisters();
-      const maybeAddress = regs.getLowerU32(7);
-      const maybeLength = regs.getLowerU32(8);
-
-      const result = safeAllocUint8Array(maybeLength);
-      const startAddress = tryAsMemoryIndex(maybeAddress);
-      const loadResult = memory.loadInto(result, startAddress);
+      const memory = pvmInstance.getMemory();
+      const address = regs.get(7);
+      const length = regs.get(8);
+      // NOTE IDK if it's safe, it's dirty quick code
+      const result = safeAllocUint8Array(Number(length));
+      const loadResult = memory.loadInto(result, address);
 
       if (loadResult.isError) {
         return ReturnValue.fromMemorySlice(gasConsumed, new Uint8Array());
@@ -70,7 +66,7 @@ export class HostCalls {
     return ReturnValue.fromStatus(gasConsumed, Status.PANIC);
   }
 
-  private async execute(pvmInstance: Interpreter) {
+  private async execute(pvmInstance: Interpreter | AnanasInterpreter) {
     pvmInstance.runProgram();
     for (;;) {
       let status = pvmInstance.getStatus();
@@ -82,31 +78,31 @@ export class HostCalls {
         "We know that the exit param is not null, because the status is 'Status.HOST'
       `;
       const hostCallIndex = pvmInstance.getExitParam() ?? -1;
-      const gas = pvmInstance.getGasCounter();
-      const regs = new HostCallRegisters(pvmInstance.getRegisters());
-      const memory = new HostCallMemory(pvmInstance.getMemory());
+      const regs = pvmInstance.getRegisters();
+      const memory = pvmInstance.getMemory();
       const index = tryAsHostCallIndex(hostCallIndex);
 
       const hostCall = this.hostCalls.get(index);
-      const gasBefore = gas.get();
+      const gasCounter = pvmInstance.getGasCounter();
+      const gasBefore = gasCounter.get();
       // NOTE: `basicGasCost(regs)` function is for compatibility reasons: pre GP 0.7.2
       const basicGasCost =
         typeof hostCall.basicGasCost === "number" ? hostCall.basicGasCost : hostCall.basicGasCost(regs);
-      const underflow = gas.sub(basicGasCost);
+      const underflow = gasCounter.sub(basicGasCost);
 
       const pcLog = `[PC: ${pvmInstance.getPC()}]`;
       if (underflow) {
-        this.hostCalls.traceHostCall(`${pcLog} OOG`, index, hostCall, regs, gas.get());
+        this.hostCalls.traceHostCall(`${pcLog} OOG`, index, hostCall, regs, gasCounter.get());
         return ReturnValue.fromStatus(pvmInstance.getGasConsumed(), Status.OOG);
       }
       this.hostCalls.traceHostCall(`${pcLog} Invoking`, index, hostCall, regs, gasBefore);
-      const result = await hostCall.execute(gas, regs, memory);
+      const result = await hostCall.execute(gasCounter, regs, memory);
       this.hostCalls.traceHostCall(
         result === undefined ? `${pcLog} Result` : `${pcLog} Status(${PvmExecution[result]})`,
         index,
         hostCall,
         regs,
-        gas.get(),
+        gasCounter.get(),
       );
 
       if (result === PvmExecution.Halt) {
@@ -134,15 +130,10 @@ export class HostCalls {
     }
   }
 
-  async runProgram(
-    rawProgram: Uint8Array,
-    initialPc: number,
-    initialGas: Gas,
-    maybeRegisters?: Registers,
-    maybeMemory?: Memory,
-  ): Promise<ReturnValue> {
+  async runProgram(program: Uint8Array, args: Uint8Array, initialPc: number, initialGas: Gas): Promise<ReturnValue> {
     const pvmInstance = await this.pvmInstanceManager.getInstance();
-    pvmInstance.reset(rawProgram, initialPc, initialGas, maybeRegisters, maybeMemory);
+    //console.log`${pvmInstance.printProgram(program)}`;
+    pvmInstance.resetJam(program, args, initialPc, initialGas);
     try {
       return await this.execute(pvmInstance);
     } finally {

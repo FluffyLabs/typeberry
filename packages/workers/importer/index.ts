@@ -27,7 +27,7 @@ export async function createImporter(config: WorkerConfig) {
   const blocks = new LmdbBlocks(config.chainSpec, lmdb);
   const states = new LmdbStates(config.chainSpec, await blake2b, lmdb);
   const hasher = new TransitionHasher(config.chainSpec, await keccakHasher, await blake2b);
-  const importer = new Importer(config.chainSpec, hasher, logger, blocks, states);
+  const importer = new Importer(config.chainSpec, hasher, config.pvm, logger, blocks, states);
   return {
     lmdb,
     importer,

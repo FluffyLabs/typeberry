@@ -35,6 +35,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
 
   logger.info`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
   logger.info`🎸 Starting node: ${config.nodeName}.`;
+  logger.info`🖥️ Interpreter: ${config.nodeInterpreter}.`;
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
   const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
@@ -53,7 +54,12 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   const closeExtensions = initializeExtensions({ chainSpec, bestHeader });
 
   // Start block importer
-  const workerConfig = new WorkerConfig(chainSpec, dbPath, config.node.authorship.omitSealVerification);
+  const workerConfig = new WorkerConfig(
+    chainSpec,
+    dbPath,
+    config.nodeInterpreter,
+    config.node.authorship.omitSealVerification,
+  );
   const importerReady = importerInit.transition((state, port) => {
     return state.sendConfig(port, workerConfig);
   });

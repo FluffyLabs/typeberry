@@ -1,16 +1,14 @@
 {
-  "name": "@typeberry/pvm-interpreter",
-  "version": "0.2.0",
-  "description": "A PVM implementation based on the Gray Paper.",
+  "name": "@typeberry/pvm-interpreter-ananas",
+  "version": "0.1.3",
+  "description": "A Anan-as PVM implementation.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/bytes": "*",
-    "@typeberry/codec": "*",
-    "@typeberry/logger": "*",
+    "@fluffylabs/anan-as": "^1.0.0",
     "@typeberry/numbers": "*",
     "@typeberry/pvm-interface": "*",
-    "@typeberry/pvm-program": "*",
-    "@typeberry/utils": "*"
+    "@typeberry/utils": "*",
+    "assemblyscript-loader": "^0.3.0"
   },
   "scripts": {
     "start": "tsx ./bin.ts",

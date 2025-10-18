@@ -1,3 +1,4 @@
+import type { PVMInterpreter } from "@typeberry/config-node";
 import { ChainSpec } from "./chain-spec.js";
 
 /**
@@ -12,13 +13,14 @@ export class WorkerConfig {
    * between workers using JAM codec maybe?
    */
   static reInit(config: unknown) {
-    const { chainSpec, dbPath, omitSealVerification } = config as WorkerConfig;
-    return new WorkerConfig(new ChainSpec(chainSpec), dbPath, omitSealVerification);
+    const { chainSpec, dbPath, omitSealVerification, pvm } = config as WorkerConfig;
+    return new WorkerConfig(new ChainSpec(chainSpec), dbPath, pvm, omitSealVerification);
   }
 
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly dbPath: string,
+    public readonly pvm: PVMInterpreter,
     public readonly omitSealVerification: boolean = false,
   ) {}
 }
