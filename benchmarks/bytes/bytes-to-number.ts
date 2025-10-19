@@ -2,27 +2,30 @@ import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { Bytes } from "@typeberry/bytes";
 
-const HASH_SIZE = 4;
+const HASH_SIZE = 6;
 const ARRAY_SIZE = 10_000;
 
-function isEqualTo<T extends number>(
-  that: { data: Bytes<T>; view: DataView },
-  other: { data: Bytes<T>; view: DataView },
-) {
-  const len = that.data.length;
-  if (len !== other.data.length) {
-    return false;
+function bytesAsU48WithoutBitOps(bytes: Uint8Array): number {
+  const len = bytes.length;
+
+  let value = 0;
+  for (let i = 0; i < len; i++) {
+    value = value * 256 + bytes[i];
   }
 
-  const a = that.view;
-  const b = other.view;
-  for (let i = 0; i < len; i += 4) {
-    if (a.getUint32(i) !== b.getUint32(i)) {
-      return false;
-    }
+  return value * 8 + len;
+}
+
+function bytesAsU48WithBitOps(bytes: Uint8Array): number {
+  const len = bytes.length;
+
+  let value = bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24);
+
+  for (let i = 4; i < bytes.length; i++) {
+    value = value * 256 + bytes[i];
   }
 
-  return true;
+  return value * 8 + len;
 }
 
 function generateHash<T extends number>(len: T): Bytes<T> {
@@ -45,32 +48,22 @@ function generateArrayOfHashes<T extends number>(size: number, hashLen: T): Byte
 const arr = generateArrayOfHashes(ARRAY_SIZE, HASH_SIZE);
 
 /**
- * Comparing Uint32 at a time MIGHT BE slightly faster in some
- * edge cases only if the data view is created eagerly!
- * and not worth the gains.
+ * Comparing conversion 6 bytes into U48 number using two functions:
+ * - ugly one that converts 4 bytes into U32 firstly using bit operations and then 2 bytes using math operations
+ * - a bit prettier one that convers all bytes using math operations
  */
 export default function run() {
   return suite(
-    "Bytes / comparison",
-    add("Comparing Uint32 bytes", () => {
-      const withView = arr.map((v) => ({
-        data: v,
-        view: new DataView(v.raw.buffer, v.raw.byteOffset),
-      }));
+    "Bytes into number comparison",
+    add("Conversion with bitops ", () => {
       return () => {
-        const x = withView[arr.length - 1];
-        for (const y of withView) {
-          isEqualTo(x, y);
-        }
+        arr.map((x) => bytesAsU48WithBitOps(x.raw));
       };
     }),
 
-    add("Comparing raw bytes", () => {
+    add("Conversion without bitops ", () => {
       return () => {
-        const x = arr[arr.length - 1];
-        for (const y of arr) {
-          x.isEqualTo(y);
-        }
+        arr.map((x) => bytesAsU48WithoutBitOps(x.raw));
       };
     }),
 
