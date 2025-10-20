@@ -41,6 +41,9 @@ export async function main(config: Config, comms: ImporterInternal) {
   logger.info`📥 Importer starting`;
 
   const { omitSealVerification } = config.workerParams;
+  if (omitSealVerification) {
+    logger.warn`⚠️  WARNING: running without seal verification! Use only for dev stuff!⚠️ `;
+  }
   const { importer, db } = await createImporter(config);
 
   const finishPromise = new Promise<void>((resolve) => {

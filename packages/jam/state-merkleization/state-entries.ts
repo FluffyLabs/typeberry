@@ -69,6 +69,18 @@ export class StateEntries {
     return Object.fromEntries(this.entries);
   }
 
+  /** Dump state entries to JSON string (format compatible with stf vectors). */
+  toString() {
+    return JSON.stringify(
+      Array.from(this.entries.entries()).map(([key, value]) => ({
+        key,
+        value,
+      })),
+      null,
+      2,
+    );
+  }
+
   [Symbol.iterator]() {
     return this.entries[Symbol.iterator]();
   }
