@@ -1,7 +1,5 @@
 import { EventEmitter } from "node:events";
 
-// TODO [ToDr] This maybe should be it's own package?
-
 const EVENT = Symbol();
 const EVENT_DONE = Symbol();
 
@@ -37,5 +35,15 @@ export class Listener<T> {
     this.emitter.emit(EVENT_DONE);
     this.emitter.removeAllListeners(EVENT);
     this.emitter.removeAllListeners(EVENT_DONE);
+  }
+
+  /** Return a callback that will emit events. */
+  callbackHandler(): (req: T) => Promise<void> {
+    return async (req) => {
+      // to avoid deadlocks and since we don't care about that signal,
+      // we simply return the response immediately and process the emitting
+      // later
+      setImmediate(() => this.emit(req));
+    };
   }
 }

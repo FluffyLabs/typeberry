@@ -1,6 +1,7 @@
 import { loadConfig, NODE_DEFAULTS } from "@typeberry/config-node";
+import { LmdbRoot } from "@typeberry/database-lmdb";
 import { Blake2b } from "@typeberry/hash";
-import { getChainSpec, openDatabase } from "@typeberry/node";
+import { getChainSpec, getDatabasePath } from "@typeberry/node";
 import { workspacePathFix } from "@typeberry/utils";
 import minimist from "minimist";
 import { methods } from "./src/method-loader.js";
@@ -22,16 +23,18 @@ export async function main(args: string[]) {
   const port = Number.parseInt(argv.port, 10);
   const config = loadConfig(argv.config);
   const spec = getChainSpec(config.flavor);
-  const { rootDb } = openDatabase(
+  if (config.databaseBasePath === undefined) {
+    throw new Error("RPC server requires a LMDB database path.");
+  }
+
+  const { dbPath } = getDatabasePath(
     blake2b,
     argv.nodeName,
     config.chainSpec.genesisHeader,
-    withRelPath(`${config.databaseBasePath}`),
-    {
-      readOnly: true,
-    },
+    withRelPath(config.databaseBasePath),
   );
 
+  const rootDb = new LmdbRoot(dbPath, true);
   const server = new RpcServer(port, rootDb, spec, blake2b, methods);
 
   process.on("SIGINT", async () => {
