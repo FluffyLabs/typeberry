@@ -112,9 +112,9 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
       logger.log`[main] ☠️  Closing the extensions`;
       closeExtensions();
       logger.log`[main] ☠️  Closing the authorship module`;
-      closeAuthorship();
+      await closeAuthorship();
       logger.log`[main] ☠️  Closing the networking module`;
-      closeNetwork();
+      await closeNetwork();
       logger.log`[main] 🛢️ Closing the database`;
       await rootDb.close();
       logger.info`[main] ✅ Done.`;

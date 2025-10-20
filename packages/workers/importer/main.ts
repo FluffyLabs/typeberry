@@ -72,7 +72,7 @@ export async function main(config: Config, comms: ImporterInternal) {
 
   // await finish signal
   await finishPromise;
-  importer.close();
+  await importer.close();
   logger.info`📥 Importer finished. Closing channel.`;
   await db.close();
   comms.destroy();
