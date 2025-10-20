@@ -1,12 +1,7 @@
 import { Logger } from "@typeberry/logger";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
-import {
-  HostCallMemory,
-  HostCallRegisters,
-  type IHostCallMemory,
-  type IHostCallRegisters,
-} from "@typeberry/pvm-host-calls";
-import { type Gas, type GasCounter, Status, tryAsBigGas, tryAsGas } from "@typeberry/pvm-interface";
+import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
+import { type Gas, type IGasCounter, type IMemory, type IRegisters, Status, tryAsGas } from "@typeberry/pvm-interface";
 import { Program } from "@typeberry/pvm-program";
 import { ArgsDecoder } from "./args-decoder/args-decoder.js";
 import { createResults } from "./args-decoder/args-decoding-results.js";
@@ -71,7 +66,6 @@ export class Interpreter {
   private mask = Mask.empty();
   private pc = 0;
   private gas = gasCounter(tryAsGas(0));
-  private initialGas = gasCounter(tryAsGas(0));
   private argsDecoder: ArgsDecoder;
   private threeRegsDispatcher: ThreeRegsDispatcher;
   private twoRegsOneImmDispatcher: TwoRegsOneImmDispatcher;
@@ -148,7 +142,6 @@ export class Interpreter {
 
     this.pc = pc;
     this.gas = gasCounter(gas);
-    this.initialGas = gasCounter(gas);
     this.status = Status.OK;
     this.argsDecoder.reset(this.code, this.mask);
     this.basicBlocks.reset(this.code, this.mask);
@@ -290,7 +283,7 @@ export class Interpreter {
     return this.status;
   }
 
-  getRegisters(): IHostCallRegisters {
+  getRegisters(): IRegisters {
     return new HostCallRegisters(this.registers);
   }
 
@@ -306,18 +299,8 @@ export class Interpreter {
     this.pc = nextPc;
   }
 
-  getGasCounter(): GasCounter {
+  getGasCounter(): IGasCounter {
     return this.gas;
-  }
-
-  getGasConsumed(): Gas {
-    const gasConsumed = tryAsBigGas(this.initialGas.get()) - tryAsBigGas(this.gas.get());
-
-    if (gasConsumed < 0) {
-      return this.initialGas.get();
-    }
-
-    return tryAsBigGas(gasConsumed);
   }
 
   getStatus() {
@@ -329,7 +312,7 @@ export class Interpreter {
     return p !== null ? tryAsU32(p) : p;
   }
 
-  getMemory(): IHostCallMemory {
+  getMemory(): IMemory {
     return new HostCallMemory(this.memory);
   }
 

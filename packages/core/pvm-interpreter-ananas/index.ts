@@ -1,10 +1,16 @@
 import { instantiate } from "@fluffylabs/anan-as/raw";
 import { Decoder } from "@typeberry/codec";
 import { tryAsU32, type U32, type U64 } from "@typeberry/numbers";
-import type { IHostCallMemory } from "@typeberry/pvm-host-calls";
-import { type Gas, type GasCounter, type IRegisters, Status, tryAsBigGas, tryAsGas } from "@typeberry/pvm-interface";
-import { type OutOfBounds, PageFault } from "@typeberry/pvm-interpreter/memory/errors.js";
-import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
+import {
+  type Gas,
+  type IGasCounter,
+  type IMemory,
+  type IRegisters,
+  type PageFault,
+  Status,
+  tryAsBigGas,
+  tryAsGas,
+} from "@typeberry/pvm-interface";
 import { OK, Result } from "@typeberry/utils";
 import { load } from "assemblyscript-loader";
 import type { AnanasAPI } from "./api.js";
@@ -30,30 +36,35 @@ class AnanasRegisters implements IRegisters {
   }
 }
 
-class AnanasMemory implements IHostCallMemory {
+class AnanasMemory implements IMemory {
   constructor(private readonly instance: AnanasAPI) {}
 
-  loadInto(result: Uint8Array, address: U64): Result<OK, PageFault | OutOfBounds> {
+  storeFrom(address: U32, bytes: Uint8Array): Result<OK, PageFault> {
+    try {
+      this.instance.setMemory(address, bytes);
+    } catch {
+      return Result.error({ address }, () => "Memory is inaccessible!");
+    }
+    return Result.ok(OK);
+  }
+
+  loadInto(address: U32, result: Uint8Array): Result<OK, PageFault> {
     if (result.length === 0) {
       return Result.ok(OK);
     }
     const addr = tryAsU32(Number(address));
     const newResult = this.instance.getMemory(addr, result.length);
     if (newResult.length === 0) {
-      return Result.error(PageFault.fromMemoryIndex(tryAsMemoryIndex(addr)));
+      return Result.error({ address: addr }, () => "Memory is inaccessible!");
     }
     result.set(newResult);
     return Result.ok(OK);
   }
-
-  storeFrom(address: U64, bytes: Uint8Array): Result<OK, PageFault | OutOfBounds> {
-    const addr = tryAsU32(Number(address));
-    this.instance.setMemory(addr, bytes);
-    return Result.ok(OK);
-  }
 }
 
-class AnanasGasCounter implements GasCounter {
+class AnanasGasCounter implements IGasCounter {
+  initialGas: Gas = tryAsGas(0n);
+
   constructor(private readonly instance: AnanasAPI) {}
 
   get(): Gas {
@@ -73,10 +84,19 @@ class AnanasGasCounter implements GasCounter {
     this.instance.setGasLeft(0n);
     return true;
   }
+
+  used(): Gas {
+    const gasConsumed = (this.initialGas as bigint) - (this.get() as bigint);
+
+    if (gasConsumed < 0) {
+      return this.initialGas;
+    }
+
+    return tryAsBigGas(gasConsumed);
+  }
 }
 
 export class AnanasInterpreter {
-  private initialGas = 0n;
   private registers: AnanasRegisters;
   private memory: AnanasMemory;
   private gas: AnanasGasCounter;
@@ -96,8 +116,8 @@ export class AnanasInterpreter {
   resetJam(program: Uint8Array, args: Uint8Array, pc: number, gas: Gas): void {
     const programArr = lowerBytes(program);
     const argsArr = lowerBytes(args);
-    this.initialGas = gas as bigint;
-    this.instance.resetJAM(programArr, pc, this.initialGas, argsArr, true);
+    this.gas.initialGas = gas;
+    this.instance.resetJAM(programArr, pc, gas as bigint, argsArr, true);
   }
 
   runProgram(): void {
@@ -120,31 +140,21 @@ export class AnanasInterpreter {
 
   getExitParam(): U32 | null {
     const param = this.instance.getExitArg();
-    if (param === 0) {
+    if (param < 0) {
       return null;
     }
     return tryAsU32(param);
   }
 
-  getGasCounter(): GasCounter {
+  getGasCounter(): IGasCounter {
     return this.gas;
-  }
-
-  getGasConsumed(): Gas {
-    const gasConsumed = this.initialGas - (this.gas.get() as bigint);
-
-    if (gasConsumed < 0) {
-      return tryAsBigGas(this.initialGas);
-    }
-
-    return tryAsBigGas(gasConsumed);
   }
 
   getRegisters(): IRegisters {
     return this.registers;
   }
 
-  getMemory(): IHostCallMemory {
+  getMemory(): IMemory {
     return this.memory;
   }
 }

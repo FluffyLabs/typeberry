@@ -1,4 +1,4 @@
-import { MEMORY_SIZE } from "./memory-consts.js";
+import { MEMORY_SIZE } from "@typeberry/pvm-interface";
 import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index.js";
 import { getStartPageIndex, getStartPageIndexFromPageNumber } from "./memory-utils.js";
 import { tryAsPageNumber } from "./pages/page-utils.js";

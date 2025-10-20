@@ -1,6 +1,6 @@
+import { tryAsU32 } from "@typeberry/numbers";
+import { type Gas, MAX_MEMORY_INDEX, Status } from "@typeberry/pvm-interface";
 import type { Interpreter } from "@typeberry/pvm-interpreter";
-import type { Gas } from "@typeberry/pvm-interpreter/gas.js";
-import { Status } from "@typeberry/pvm-interpreter/status.js";
 import type { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
 import { assertNever, check, safeAllocUint8Array } from "@typeberry/utils";
 import { PvmExecution, tryAsHostCallIndex } from "./host-call-handler.js";
@@ -42,7 +42,7 @@ export class HostCalls {
   ) {}
 
   private getReturnValue(status: Status, pvmInstance: Interpreter | AnanasInterpreter): ReturnValue {
-    const gasConsumed = pvmInstance.getGasConsumed();
+    const gasConsumed = pvmInstance.getGasCounter().used();
     if (status === Status.OOG) {
       return ReturnValue.fromStatus(gasConsumed, status);
     }
@@ -52,9 +52,15 @@ export class HostCalls {
       const memory = pvmInstance.getMemory();
       const address = regs.get(7);
       const length = regs.get(8);
-      // NOTE IDK if it's safe, it's dirty quick code
+      if (address > MAX_MEMORY_INDEX || length > MAX_MEMORY_INDEX) {
+        return ReturnValue.fromMemorySlice(gasConsumed, new Uint8Array());
+      }
+
+      // NOTE It's safe to convert bcs we checked if it contains in MAX U32
       const result = safeAllocUint8Array(Number(length));
-      const loadResult = memory.loadInto(result, address);
+
+      // NOTE It's safe to convert bcs we checked if it contains in MAX U32
+      const loadResult = memory.loadInto(tryAsU32(Number(address)), result);
 
       if (loadResult.isError) {
         return ReturnValue.fromMemorySlice(gasConsumed, new Uint8Array());
@@ -93,7 +99,7 @@ export class HostCalls {
       const pcLog = `[PC: ${pvmInstance.getPC()}]`;
       if (underflow) {
         this.hostCalls.traceHostCall(`${pcLog} OOG`, index, hostCall, regs, gasCounter.get());
-        return ReturnValue.fromStatus(pvmInstance.getGasConsumed(), Status.OOG);
+        return ReturnValue.fromStatus(gasCounter.used(), Status.OOG);
       }
       this.hostCalls.traceHostCall(`${pcLog} Invoking`, index, hostCall, regs, gasBefore);
       const result = await hostCall.execute(gasCounter, regs, memory);

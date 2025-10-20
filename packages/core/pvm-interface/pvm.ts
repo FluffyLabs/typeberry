@@ -1,6 +1,6 @@
 import type { U32 } from "@typeberry/numbers";
-import type { IHostCallMemory } from "@typeberry/pvm-host-calls";
-import type { Gas, GasCounter } from "./gas.js";
+import type { Gas, IGasCounter } from "./gas.js";
+import type { IMemory } from "./memory.js";
 import type { IRegisters } from "./registers.js";
 import type { Status } from "./status.js";
 
@@ -15,12 +15,10 @@ export interface IPVMInterpreter {
 
   getExitParam(): U32 | null;
 
-  getGasCounter(): GasCounter;
-
-  getGasConsumed(): Gas;
+  getGasCounter(): IGasCounter;
 
   getRegisters(): IRegisters;
 
   // TODO [MaSo] Make local interface
-  getMemory(): IHostCallMemory;
+  getMemory(): IMemory;
 }

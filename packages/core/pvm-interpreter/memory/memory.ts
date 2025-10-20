@@ -1,8 +1,9 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
+import { MAX_MEMORY_INDEX } from "@typeberry/pvm-interface";
 import { OK, Result } from "@typeberry/utils";
 import { OutOfMemory, PageFault } from "./errors.js";
-import { MAX_MEMORY_INDEX, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts.js";
+import { PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts.js";
 import { type MemoryIndex, type SbrkIndex, tryAsSbrkIndex } from "./memory-index.js";
 import { MemoryRange, RESERVED_MEMORY_RANGE } from "./memory-range.js";
 import { alignToPageSize, getPageNumber } from "./memory-utils.js";
