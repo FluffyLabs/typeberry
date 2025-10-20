@@ -180,7 +180,7 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     decode: StateTransition.Codec,
     json: () => StateTransition.fromJson,
     process: {
-      options: ["as-pre-state", "as-post-state", "as-fuzz-message"],
+      options: ["as-pre-state", "as-post-state", "as-fuzz-message", "as-block"],
       run(spec: ChainSpec, data: unknown, option: string, blake2b) {
         const test = data as StateTransition;
         if (option === "as-pre-state") {
@@ -192,6 +192,13 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
         if (option === "as-post-state") {
           return looseType({
             value: stateFromKeyvals(spec, blake2b, test.post_state),
+          });
+        }
+
+        if (option === "as-block") {
+          return looseType({
+            encode: Block.Codec,
+            value: test.block,
           });
         }
 
