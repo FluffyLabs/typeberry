@@ -2,10 +2,10 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import { tryAsU64 } from "@typeberry/numbers";
+import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
-import { Registers } from "@typeberry/pvm-interpreter";
-import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
+import { tryAsGas } from "@typeberry/pvm-interface";
+import { gasCounter, Registers } from "@typeberry/pvm-interpreter";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
@@ -67,7 +67,7 @@ function prepareRegsAndMemory(
     memory: new HostCallMemory(memory),
     readResult: () => {
       const result = new Uint8Array(valueLength - valueOffset);
-      assert.deepStrictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)), Result.ok(OK));
+      assert.deepStrictEqual(memory.loadInto(tryAsU32(memStart), result), Result.ok(OK));
       return BytesBlob.blobFrom(result);
     },
   };

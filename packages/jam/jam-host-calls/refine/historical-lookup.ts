@@ -9,7 +9,7 @@ import {
   traceRegisters,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import type { RefineExternalities } from "../externalities/refine-externalities.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -31,7 +31,7 @@ export class HistoricalLookup implements HostCallHandler {
   constructor(private readonly refine: RefineExternalities) {}
 
   async execute(
-    _gas: GasCounter,
+    _gas: IGasCounter,
     regs: IHostCallRegisters,
     memory: IHostCallMemory,
   ): Promise<PvmExecution | undefined> {

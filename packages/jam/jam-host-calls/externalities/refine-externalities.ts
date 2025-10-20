@@ -2,10 +2,9 @@ import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
 import { tryAsU64, type U64 } from "@typeberry/numbers";
-import type { IHostCallMemory } from "@typeberry/pvm-host-calls";
-import type { BigGas, Registers } from "@typeberry/pvm-interpreter";
+import type { IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import { type BigGas, Status } from "@typeberry/pvm-interface";
 import type { ProgramDecoderError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder.js";
-import { Status } from "@typeberry/pvm-interpreter/status.js";
 import { asOpaqueType, type OK, type Opaque, type Result } from "@typeberry/utils";
 
 /**
@@ -23,7 +22,7 @@ export type MachineId = Opaque<U64, "MachineId[u64]">;
 export const tryAsMachineId = (v: number | bigint): MachineId => asOpaqueType(tryAsU64(v));
 
 export class MachineInstance {
-  async run(gas: BigGas, registers: Registers): Promise<MachineResult> {
+  async run(gas: BigGas, registers: IHostCallRegisters): Promise<MachineResult> {
     return {
       result: {
         status: Status.OK,
@@ -51,7 +50,7 @@ export type MachineStatus =
 export type MachineResult = {
   result: MachineStatus;
   gas: BigGas;
-  registers: Registers;
+  registers: IHostCallRegisters;
 };
 
 /** Types of possbile operations to request by Pages host call. */
@@ -142,7 +141,7 @@ export interface RefineExternalities {
   machineInvoke(
     machineIndex: MachineId,
     gas: BigGas,
-    registers: Registers,
+    registers: IHostCallRegisters,
   ): Promise<Result<MachineResult, NoMachineError>>;
 
   /**

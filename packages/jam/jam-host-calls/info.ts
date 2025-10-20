@@ -5,7 +5,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { minU64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
 import { logger } from "./logger.js";
@@ -54,7 +54,7 @@ export class Info implements HostCallHandler {
   ) {}
 
   async execute(
-    _gas: GasCounter,
+    _gas: IGasCounter,
     regs: IHostCallRegisters,
     memory: IHostCallMemory,
   ): Promise<undefined | PvmExecution> {

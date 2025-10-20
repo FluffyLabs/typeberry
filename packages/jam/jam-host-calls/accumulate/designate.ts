@@ -3,7 +3,7 @@ import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { ValidatorData } from "@typeberry/state";
 import { safeAllocUint8Array } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
@@ -30,7 +30,7 @@ export class Designate implements HostCallHandler {
   ) {}
 
   async execute(
-    _gas: GasCounter,
+    _gas: IGasCounter,
     regs: IHostCallRegisters,
     memory: IHostCallMemory,
   ): Promise<undefined | PvmExecution> {

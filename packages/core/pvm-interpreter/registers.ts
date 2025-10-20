@@ -1,3 +1,5 @@
+import { tryAsU64, type U64 } from "@typeberry/numbers";
+import type { IRegisters } from "@typeberry/pvm-interface";
 import { asOpaqueType, check, type Opaque, safeAllocUint8Array } from "@typeberry/utils";
 
 export const NO_OF_REGISTERS = 13;
@@ -10,7 +12,7 @@ export const tryAsRegisterIndex = (index: number): RegisterIndex => {
   return asOpaqueType(index);
 };
 
-export class Registers {
+export class Registers implements IRegisters {
   private asSigned: BigInt64Array;
   private asUnsigned: BigUint64Array;
 
@@ -18,6 +20,18 @@ export class Registers {
     check`${bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT} Invalid size of registers array.`;
     this.asSigned = new BigInt64Array(bytes.buffer, bytes.byteOffset);
     this.asUnsigned = new BigUint64Array(bytes.buffer, bytes.byteOffset);
+  }
+
+  set(registerIndex: number, value: U64): void {
+    this.setU64(registerIndex, value);
+  }
+
+  get(registerIndex: number): U64 {
+    return tryAsU64(this.getU64(registerIndex));
+  }
+
+  getEncoded() {
+    return this.bytes;
   }
 
   static fromBytes(bytes: Uint8Array) {
@@ -28,10 +42,6 @@ export class Registers {
   getBytesAsLittleEndian(index: number, len: number) {
     const offset = index << REGISTER_SIZE_SHIFT;
     return this.bytes.subarray(offset, offset + len);
-  }
-
-  getAllBytesAsLittleEndian() {
-    return this.bytes;
   }
 
   copyFrom(regs: Registers | BigUint64Array) {

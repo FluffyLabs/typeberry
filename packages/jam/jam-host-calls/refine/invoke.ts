@@ -9,9 +9,9 @@ import {
   traceRegisters,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
-import { type GasCounter, Registers, tryAsBigGas, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { type IGasCounter, Status, tryAsBigGas, tryAsSmallGas } from "@typeberry/pvm-interface";
+import { Registers } from "@typeberry/pvm-interpreter";
 import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers.js";
-import { Status } from "@typeberry/pvm-interpreter/status.js";
 import { check, resultToString } from "@typeberry/utils";
 import { type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { logger } from "../logger.js";
@@ -40,7 +40,7 @@ export class Invoke implements HostCallHandler {
   constructor(private readonly refine: RefineExternalities) {}
 
   async execute(
-    _gas: GasCounter,
+    _gas: IGasCounter,
     regs: IHostCallRegisters,
     memory: IHostCallMemory,
   ): Promise<PvmExecution | undefined> {
@@ -86,7 +86,7 @@ export class Invoke implements HostCallHandler {
     // save the result to the destination memory
     const resultData = Encoder.encodeObject(gasAndRegistersCodec, {
       gas: machineState.gas,
-      registers: Bytes.fromBlob(machineState.registers.getAllBytesAsLittleEndian(), NO_OF_REGISTERS * 8),
+      registers: Bytes.fromBlob(machineState.registers.getEncoded(), NO_OF_REGISTERS * 8),
     });
 
     // this fault does not need to be handled, because we've ensured it's

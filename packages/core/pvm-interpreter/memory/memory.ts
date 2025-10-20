@@ -1,10 +1,11 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
-import { MAX_MEMORY_INDEX } from "@typeberry/pvm-interface";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
+import { type IMemory, type PageFault as InretpreterPageFault, MAX_MEMORY_INDEX } from "@typeberry/pvm-interface";
 import { OK, Result } from "@typeberry/utils";
 import { OutOfMemory, PageFault } from "./errors.js";
 import { PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts.js";
-import { type MemoryIndex, type SbrkIndex, tryAsSbrkIndex } from "./memory-index.js";
+import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index.js";
 import { MemoryRange, RESERVED_MEMORY_RANGE } from "./memory-range.js";
 import { alignToPageSize, getPageNumber } from "./memory-utils.js";
 import { PageRange } from "./page-range.js";
@@ -25,7 +26,7 @@ enum AccessType {
 
 const logger = Logger.new(import.meta.filename, "pvm:mem");
 
-export class Memory {
+export class Memory implements IMemory {
   static fromInitialMemory(initialMemoryState: InitialMemoryState) {
     return new Memory(
       initialMemoryState?.sbrkIndex,
@@ -56,16 +57,18 @@ export class Memory {
     this.memory = memory.memory;
   }
 
-  storeFrom(address: MemoryIndex, bytes: Uint8Array): Result<OK, PageFault> {
+  storeFrom(rawAddress: U32, bytes: Uint8Array): Result<OK, InretpreterPageFault> {
     if (bytes.length === 0) {
       return Result.ok(OK);
     }
+
+    const address = tryAsMemoryIndex(rawAddress);
 
     logger.insane`MEM[${address}] <- ${BytesBlob.blobFrom(bytes)}`;
     const pagesResult = this.getPages(address, bytes.length, AccessType.WRITE);
 
     if (pagesResult.isError) {
-      return Result.error(pagesResult.error, pagesResult.details);
+      return Result.error({ address: tryAsU32(pagesResult.error.address) }, pagesResult.details);
     }
 
     const pages = pagesResult.ok;
@@ -128,15 +131,17 @@ export class Memory {
    *
    * Returns `null` if the data was read successfully or `PageFault` otherwise.
    */
-  loadInto(result: Uint8Array, startAddress: MemoryIndex): Result<OK, PageFault> {
+  loadInto(rawAddress: U32, result: Uint8Array): Result<OK, InretpreterPageFault> {
     if (result.length === 0) {
       return Result.ok(OK);
     }
 
+    const startAddress = tryAsMemoryIndex(rawAddress);
+
     const pagesResult = this.getPages(startAddress, result.length, AccessType.READ);
 
     if (pagesResult.isError) {
-      return Result.error(pagesResult.error, pagesResult.details);
+      return Result.error({ address: tryAsU32(pagesResult.error.address) }, pagesResult.details);
     }
 
     const pages = pagesResult.ok;

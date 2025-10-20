@@ -2,7 +2,8 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
-import { gasCounter, MemoryBuilder, Registers, tryAsGas } from "@typeberry/pvm-interpreter";
+import { tryAsGas } from "@typeberry/pvm-interface";
+import { gasCounter, MemoryBuilder, Registers } from "@typeberry/pvm-interpreter";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { Result } from "@typeberry/utils";
 import {

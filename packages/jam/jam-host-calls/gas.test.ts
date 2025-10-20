@@ -2,7 +2,8 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { HostCallRegisters } from "@typeberry/pvm-host-calls";
-import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
+import { tryAsGas } from "@typeberry/pvm-interface";
+import { gasCounter } from "@typeberry/pvm-interpreter";
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { GasHostCall } from "./gas.js";
 

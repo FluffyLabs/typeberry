@@ -4,10 +4,10 @@ import { tryAsServiceId } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { tryAsU64, type U64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
-import { gasCounter, MemoryBuilder, Registers, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
+import { Status, tryAsGas } from "@typeberry/pvm-interface";
+import { gasCounter, MemoryBuilder, Registers, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { RESERVED_NUMBER_OF_PAGES } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { Status } from "@typeberry/pvm-interpreter/status.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import {
   type MachineId,

@@ -34,6 +34,10 @@ class AnanasRegisters implements IRegisters {
     view.setBigUint64(registerIndex * 8, value, true);
     this.instance.setRegisters(lowerBytes(regs));
   }
+
+  getEncoded(): Uint8Array {
+    return this.instance.getRegisters();
+  }
 }
 
 class AnanasMemory implements IMemory {

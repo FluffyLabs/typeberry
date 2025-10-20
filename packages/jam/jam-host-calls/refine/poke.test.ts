@@ -3,14 +3,8 @@ import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
-import {
-  gasCounter,
-  MemoryBuilder,
-  Registers,
-  tryAsGas,
-  tryAsMemoryIndex,
-  tryAsSbrkIndex,
-} from "@typeberry/pvm-interpreter";
+import { tryAsGas } from "@typeberry/pvm-interface";
+import { gasCounter, MemoryBuilder, Registers, tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter";
 import { OK, Result } from "@typeberry/utils";
 import { type MachineId, PeekPokeError, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";

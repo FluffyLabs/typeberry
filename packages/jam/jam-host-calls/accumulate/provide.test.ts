@@ -4,14 +4,8 @@ import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
-import {
-  gasCounter,
-  MemoryBuilder,
-  Registers,
-  tryAsGas,
-  tryAsMemoryIndex,
-  tryAsSbrkIndex,
-} from "@typeberry/pvm-interpreter";
+import { tryAsGas } from "@typeberry/pvm-interface";
+import { gasCounter, MemoryBuilder, Registers, tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { deepEqual, Result } from "@typeberry/utils";
 import { ProvidePreimageError } from "../externalities/partial-state.js";

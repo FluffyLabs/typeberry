@@ -1,6 +1,5 @@
 import { Logger } from "@typeberry/logger";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
-import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type Gas, type IGasCounter, type IMemory, type IRegisters, Status, tryAsGas } from "@typeberry/pvm-interface";
 import { Program } from "@typeberry/pvm-program";
 import { ArgsDecoder } from "./args-decoder/args-decoder.js";
@@ -284,7 +283,7 @@ export class Interpreter {
   }
 
   getRegisters(): IRegisters {
-    return new HostCallRegisters(this.registers);
+    return this.registers;
   }
 
   getRawRegisters() {
@@ -313,7 +312,7 @@ export class Interpreter {
   }
 
   getMemory(): IMemory {
-    return new HostCallMemory(this.memory);
+    return this.memory;
   }
 
   getRawMemory() {

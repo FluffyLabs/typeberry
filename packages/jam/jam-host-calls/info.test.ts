@@ -5,8 +5,8 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
-import { Registers } from "@typeberry/pvm-interpreter";
-import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
+import { tryAsGas } from "@typeberry/pvm-interface";
+import { gasCounter, Registers } from "@typeberry/pvm-interpreter";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
@@ -37,7 +37,7 @@ function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = serviceA
 
   const readRaw = () => {
     const result = new Uint8Array(Number(registers.get(LEN_REG)));
-    assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)).isOk, true);
+    assert.strictEqual(memory.loadInto(tryAsU32(memStart), result).isOk, true);
     return BytesBlob.blobFrom(result);
   };
   return {

@@ -1,3 +1,4 @@
+export { gasCounter } from "./gas.js";
 export * from "./interpreter.js";
 export {
   Memory,
