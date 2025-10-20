@@ -14,18 +14,20 @@
     "@typeberry/config-node": "*",
     "@typeberry/configs": "*",
     "@typeberry/crypto": "*",
-    "@typeberry/database-lmdb": "*",
     "@typeberry/ext-ipc": "*",
     "@typeberry/fuzz-proto": "*",
     "@typeberry/hash": "*",
     "@typeberry/importer": "*",
     "@typeberry/jam-network": "*",
     "@typeberry/json-parser": "*",
+    "@typeberry/listener": "*",
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
     "@typeberry/state-json": "*",
     "@typeberry/state-merkleization": "*",
-    "@typeberry/utils": "*"
+    "@typeberry/utils": "*",
+    "@typeberry/workers-api": "*",
+    "@typeberry/workers-api-node": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

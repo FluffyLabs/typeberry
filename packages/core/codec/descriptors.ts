@@ -1,7 +1,7 @@
 import { type BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { tryAsU32, type U8, type U16, type U32, type U64 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
-import type { Decoder } from "./decoder.js";
+import { type Decoder, EndOfDataError } from "./decoder.js";
 import {
   type ClassConstructor,
   type CodecRecord,
@@ -76,6 +76,15 @@ export namespace codec {
       return ret;
     };
   })();
+
+  /** Zero-size `void` value. */
+  export const nothing = Descriptor.new<void>(
+    "void",
+    { bytes: 0, isExact: true },
+    (_e, _v) => {},
+    (_d) => {},
+    (_s) => {},
+  );
 
   /** Variable-length U32. */
   export const varU32 = Descriptor.new<U32>(
@@ -544,6 +553,9 @@ export function forEachDescriptor<T>(
       try {
         f(k, descriptors[k]);
       } catch (e) {
+        if (e instanceof EndOfDataError) {
+          throw new EndOfDataError(`${key}: ${e}`);
+        }
         throw new Error(`${key}: ${e}`);
       }
     }

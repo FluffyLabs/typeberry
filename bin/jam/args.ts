@@ -10,7 +10,7 @@ Usage:
   jam [options]
   jam [options] dev <dev-validator-index>
   jam [options] import <bin-or-json-blocks>
-  jam [options] export <output-directory>
+  jam [options] export <output-directory-or-file>
   jam [options] [--version=1] fuzz-target [socket-path=/tmp/jam_target.sock]
 
 Options:
@@ -66,7 +66,7 @@ export type Arguments =
   | CommandArgs<
       Command.Export,
       SharedOptions & {
-        outputDir: string;
+        output: string;
       }
     >;
 
@@ -152,8 +152,8 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
     }
     case Command.Export: {
       const data = parseSharedOptions(args, withRelPath);
-      const outputDir = args._.shift();
-      if (outputDir === undefined) {
+      const output = args._.shift();
+      if (output === undefined) {
         throw new Error("Missing output directory.");
       }
       assertNoMoreArgs(args);
@@ -161,7 +161,7 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
         command: Command.Export,
         args: {
           ...data,
-          outputDir: withRelPath(outputDir),
+          output: withRelPath(output),
         },
       };
     }

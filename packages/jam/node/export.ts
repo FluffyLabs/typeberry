@@ -4,32 +4,52 @@ import type { HeaderHash } from "@typeberry/block";
 import { Block as BlockCodec } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
-import { LmdbBlocks } from "@typeberry/database-lmdb";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import { getChainSpec, openDatabase } from "./common.js";
+import { LmdbWorkerConfig } from "@typeberry/workers-api-node";
+import { getChainSpec, getDatabasePath } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 
-export async function exportBlocks(jamNodeConfig: JamConfig, outputDir: string, withRelPath: (p: string) => string) {
+export async function exportBlocks(jamNodeConfig: JamConfig, output: string, withRelPath: (p: string) => string) {
   const logger = Logger.new(import.meta.filename, "export");
+  const concat = output.endsWith(".bin");
 
-  logger.info`📤 Exporting blocks to ${outputDir}`;
+  if (concat) {
+    logger.info`📤 Exporting blocks to ${output} (concatenated)`;
 
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
+    if (fs.existsSync(output)) {
+      fs.unlinkSync(output);
+    }
+  } else {
+    logger.info`📤 Exporting blocks to ${output}`;
+
+    if (!fs.existsSync(output)) {
+      fs.mkdirSync(output, { recursive: true });
+    }
+  }
+
+  if (jamNodeConfig.node.databaseBasePath === undefined) {
+    logger.info`📖 Running with in-memory database. Nothing to do...`;
+    return;
   }
 
   const blake2b = await Blake2b.createHasher();
   const chainSpec = getChainSpec(jamNodeConfig.node.flavor);
-  const { rootDb } = openDatabase(
+  const { dbPath } = getDatabasePath(
     blake2b,
     jamNodeConfig.nodeName,
     jamNodeConfig.node.chainSpec.genesisHeader,
     withRelPath(jamNodeConfig.node.databaseBasePath),
-    { readOnly: true },
   );
+  const config = LmdbWorkerConfig.new({
+    chainSpec,
+    blake2b,
+    dbPath,
+    workerParams: undefined,
+  });
 
-  const blocks = new LmdbBlocks(chainSpec, rootDb);
+  const rootDb = config.openDatabase();
+  const blocks = rootDb.getBlocksDb();
 
   logger.info`📖 Gathering blocks...`;
 
@@ -60,20 +80,24 @@ export async function exportBlocks(jamNodeConfig: JamConfig, outputDir: string, 
       throw new Error(`❌ Block ${currentHash} could not be read from the database.`);
     }
 
-    const filename = `${header.timeSlotIndex.materialize().toString().padStart(8, "0")}.bin`;
-    const filepath = path.join(outputDir, filename);
-
     const block = BlockCodec.create({
       header: header.materialize(),
       extrinsic: extrinsic.materialize(),
     });
     const encodedBlock = Encoder.encodeObject(BlockCodec.Codec, block, chainSpec);
 
-    fs.writeFileSync(filepath, encodedBlock.raw);
-    logger.log`✅ Exported block ${i + 1}/${hashes.length}: ${filename}`;
+    if (concat) {
+      fs.appendFileSync(output, encodedBlock.raw);
+      logger.log`✅ Exported block ${i + 1}/${hashes.length}`;
+    } else {
+      const filename = `${header.timeSlotIndex.materialize().toString().padStart(8, "0")}.bin`;
+      const filepath = path.join(output, filename);
+      fs.writeFileSync(filepath, encodedBlock.raw);
+      logger.log`✅ Exported block ${i + 1}/${hashes.length}: ${filename}`;
+    }
   }
 
   await rootDb.close();
 
-  logger.info`🫡 Export completed successfully: ${hashes.length} blocks exported to ${outputDir}`;
+  logger.info`🫡 Export completed successfully: ${hashes.length} blocks exported to ${output}`;
 }
