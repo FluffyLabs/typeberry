@@ -11,7 +11,7 @@ import {
 } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
 import { sumU64, tryAsU32 } from "@typeberry/numbers";
-import { tryAsGas } from "@typeberry/pvm-interpreter";
+import { tryAsGas } from "@typeberry/pvm-interface";
 import { ServiceAccountInfo, type ServicesUpdate, type State } from "@typeberry/state";
 import { check, Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";

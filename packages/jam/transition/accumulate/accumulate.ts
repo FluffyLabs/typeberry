@@ -21,8 +21,7 @@ import {
 } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
 import { sumU64, tryAsU32, type U32 } from "@typeberry/numbers";
-import { tryAsGas } from "@typeberry/pvm-interpreter";
-import { Status } from "@typeberry/pvm-interpreter/status.js";
+import { Status, tryAsGas } from "@typeberry/pvm-interface";
 import {
   type AccumulationOutput,
   type AutoAccumulate,

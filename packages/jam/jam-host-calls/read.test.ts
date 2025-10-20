@@ -67,7 +67,7 @@ function prepareRegsAndMemory(
     memory: new HostCallMemory(memory),
     readResult: () => {
       const result = new Uint8Array(valueLength - valueOffset);
-      assert.deepStrictEqual(memory.loadInto(tryAsU32(memStart), result), Result.ok(OK));
+      assert.deepStrictEqual(memory.get(tryAsU32(memStart), result), Result.ok(OK));
       return BytesBlob.blobFrom(result);
     },
   };

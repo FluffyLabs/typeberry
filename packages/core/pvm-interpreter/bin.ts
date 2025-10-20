@@ -1,4 +1,4 @@
-import { tryAsGas } from "./gas.js";
+import { tryAsGas } from "@typeberry/pvm-interface";
 import { Interpreter } from "./index.js";
 
 const program = new Uint8Array([

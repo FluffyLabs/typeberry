@@ -1,4 +1,4 @@
-import { tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
+import { tryAsGas } from "@typeberry/pvm-interface";
 import { HostCalls } from "./host-calls.js";
 import { HostCallsManager, NoopMissing } from "./host-calls-manager.js";
 import { InterpreterInstanceManager } from "./interpreter-instance-manager.js";

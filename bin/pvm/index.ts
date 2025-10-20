@@ -1,7 +1,7 @@
 // biome-ignore-all lint/suspicious/noConsole: bin file
 
-import { Interpreter, tryAsGas } from "@typeberry/pvm-interpreter";
-import { Status } from "@typeberry/pvm-interpreter/status.js";
+import { Status, tryAsGas } from "@typeberry/pvm-interface";
+import { Interpreter } from "@typeberry/pvm-interpreter";
 
 const pvm = new Interpreter();
 

@@ -10,8 +10,8 @@ export type PageFault = {
 
 export interface IMemory {
   /** Store bytes into memory at given address. */
-  storeFrom(address: U32, bytes: Uint8Array): Result<OK, PageFault>;
+  set(address: U32, bytes: Uint8Array): Result<OK, PageFault>;
 
   /** Load bytes from memory from given address into given buffer. */
-  loadInto(address: U32, result: Uint8Array): Result<OK, PageFault>;
+  get(address: U32, result: Uint8Array): Result<OK, PageFault>;
 }

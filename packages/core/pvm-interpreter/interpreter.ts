@@ -1,6 +1,14 @@
 import { Logger } from "@typeberry/logger";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
-import { type Gas, type IGasCounter, type IMemory, type IRegisters, Status, tryAsGas } from "@typeberry/pvm-interface";
+import {
+  type Gas,
+  type IGasCounter,
+  type IMemory,
+  type IPVMInterpreter,
+  type IRegisters,
+  Status,
+  tryAsGas,
+} from "@typeberry/pvm-interface";
 import { Program } from "@typeberry/pvm-program";
 import { ArgsDecoder } from "./args-decoder/args-decoder.js";
 import { createResults } from "./args-decoder/args-decoding-results.js";
@@ -58,7 +66,7 @@ type InterpreterOptions = {
 
 const logger = Logger.new(import.meta.filename, "pvm");
 
-export class Interpreter {
+export class Interpreter implements IPVMInterpreter {
   private readonly useSbrkGas: boolean;
   private registers = new Registers();
   private code: Uint8Array = new Uint8Array();
@@ -126,6 +134,10 @@ export class Interpreter {
     this.twoRegsTwoImmsDispatcher = new TwoRegsTwoImmsDispatcher(loadOps, dynamicJumpOps);
     this.oneImmDispatcher = new OneImmDispatcher(hostCallOps);
     this.oneRegOneExtImmDispatcher = new OneRegOneExtImmDispatcher(loadOps);
+  }
+
+  static async new(options: InterpreterOptions = { useSbrkGas: false }) {
+    return new Interpreter(options);
   }
 
   resetJam(program: Uint8Array, args: Uint8Array, pc: number, gas: Gas) {
@@ -315,7 +327,7 @@ export class Interpreter {
     return this.memory;
   }
 
-  getRawMemory() {
+  getRawMemory(): Memory {
     return this.memory;
   }
 

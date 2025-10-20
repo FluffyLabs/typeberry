@@ -29,7 +29,7 @@ import { Missing } from "@typeberry/jam-host-calls/missing.js";
 import { type AccountsRead, Read } from "@typeberry/jam-host-calls/read.js";
 import { type AccountsWrite, Write } from "@typeberry/jam-host-calls/write.js";
 import { type HostCallHandler, HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
-import type { Gas } from "@typeberry/pvm-interpreter";
+import type { Gas } from "@typeberry/pvm-interface";
 
 const ACCUMULATE_HOST_CALL_CLASSES = [
   Bless,

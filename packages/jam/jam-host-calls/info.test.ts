@@ -37,7 +37,7 @@ function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = serviceA
 
   const readRaw = () => {
     const result = new Uint8Array(Number(registers.get(LEN_REG)));
-    assert.strictEqual(memory.loadInto(tryAsU32(memStart), result).isOk, true);
+    assert.strictEqual(memory.get(tryAsU32(memStart), result).isOk, true);
     return BytesBlob.blobFrom(result);
   };
   return {

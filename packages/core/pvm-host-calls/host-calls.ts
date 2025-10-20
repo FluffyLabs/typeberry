@@ -1,7 +1,5 @@
 import { tryAsU32 } from "@typeberry/numbers";
-import { type Gas, MAX_MEMORY_INDEX, Status } from "@typeberry/pvm-interface";
-import type { Interpreter } from "@typeberry/pvm-interpreter";
-import type { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
+import { type Gas, type IPVMInterpreter, MAX_MEMORY_INDEX, Status } from "@typeberry/pvm-interface";
 import { assertNever, check, safeAllocUint8Array } from "@typeberry/utils";
 import { PvmExecution, tryAsHostCallIndex } from "./host-call-handler.js";
 import { HostCallMemory } from "./host-call-memory.js";
@@ -42,7 +40,7 @@ export class HostCalls {
     private hostCalls: HostCallsManager,
   ) {}
 
-  private getReturnValue(status: Status, pvmInstance: Interpreter | AnanasInterpreter): ReturnValue {
+  private getReturnValue(status: Status, pvmInstance: IPVMInterpreter): ReturnValue {
     const gasConsumed = pvmInstance.getGasCounter().used();
     if (status === Status.OOG) {
       return ReturnValue.fromStatus(gasConsumed, status);
@@ -61,7 +59,7 @@ export class HostCalls {
       const result = safeAllocUint8Array(Number(length));
 
       // NOTE It's safe to convert bcs we checked if it contains in MAX U32
-      const loadResult = memory.loadInto(tryAsU32(Number(address)), result);
+      const loadResult = memory.get(tryAsU32(Number(address)), result);
 
       if (loadResult.isError) {
         return ReturnValue.fromMemorySlice(gasConsumed, new Uint8Array());
@@ -73,7 +71,7 @@ export class HostCalls {
     return ReturnValue.fromStatus(gasConsumed, Status.PANIC);
   }
 
-  private async execute(pvmInstance: Interpreter | AnanasInterpreter) {
+  private async execute(pvmInstance: IPVMInterpreter) {
     pvmInstance.runProgram();
     for (;;) {
       let status = pvmInstance.getStatus();
@@ -138,13 +136,15 @@ export class HostCalls {
   }
 
   async runProgram(program: Uint8Array, args: Uint8Array, initialPc: number, initialGas: Gas): Promise<ReturnValue> {
-    const pvmInstance = await this.pvmInstanceManager.getInstance();
+    // TODO [MaSo] Instance Manager should be deleted anyway.
+    const pvmInstancePromise = this.pvmInstanceManager.getInstance();
+    const pvmInstance = await pvmInstancePromise;
     //console.log`${pvmInstance.printProgram(program)}`;
     pvmInstance.resetJam(program, args, initialPc, initialGas);
     try {
       return await this.execute(pvmInstance);
     } finally {
-      this.pvmInstanceManager.releaseInstance(pvmInstance);
+      this.pvmInstanceManager.releaseInstance(pvmInstancePromise);
     }
   }
 }

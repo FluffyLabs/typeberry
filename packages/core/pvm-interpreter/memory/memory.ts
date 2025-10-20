@@ -43,6 +43,26 @@ export class Memory implements IMemory {
     private memory = new Map<PageNumber, MemoryPage>(),
   ) {}
 
+  set(address: U32, bytes: Uint8Array): Result<OK, InretpreterPageFault> {
+    const result = this.storeFrom(tryAsMemoryIndex(address), bytes);
+
+    if (result.isError) {
+      return Result.error({ address: tryAsU32(result.error.address) }, result.details);
+    }
+
+    return result;
+  }
+
+  get(address: U32, output: Uint8Array): Result<OK, InretpreterPageFault> {
+    const result = this.loadInto(output, tryAsMemoryIndex(address));
+
+    if (result.isError) {
+      return Result.error({ address: tryAsU32(result.error.address) }, result.details);
+    }
+
+    return result;
+  }
+
   reset() {
     this.sbrkIndex = tryAsSbrkIndex(RESERVED_MEMORY_RANGE.end);
     this.virtualSbrkIndex = tryAsSbrkIndex(RESERVED_MEMORY_RANGE.end);
@@ -57,18 +77,16 @@ export class Memory implements IMemory {
     this.memory = memory.memory;
   }
 
-  storeFrom(rawAddress: U32, bytes: Uint8Array): Result<OK, InretpreterPageFault> {
+  storeFrom(address: MemoryIndex, bytes: Uint8Array): Result<OK, PageFault> {
     if (bytes.length === 0) {
       return Result.ok(OK);
     }
-
-    const address = tryAsMemoryIndex(rawAddress);
 
     logger.insane`MEM[${address}] <- ${BytesBlob.blobFrom(bytes)}`;
     const pagesResult = this.getPages(address, bytes.length, AccessType.WRITE);
 
     if (pagesResult.isError) {
-      return Result.error({ address: tryAsU32(pagesResult.error.address) }, pagesResult.details);
+      return Result.error(pagesResult.error, pagesResult.details);
     }
 
     const pages = pagesResult.ok;
@@ -131,17 +149,15 @@ export class Memory implements IMemory {
    *
    * Returns `null` if the data was read successfully or `PageFault` otherwise.
    */
-  loadInto(rawAddress: U32, result: Uint8Array): Result<OK, InretpreterPageFault> {
+  loadInto(result: Uint8Array, startAddress: MemoryIndex): Result<OK, PageFault> {
     if (result.length === 0) {
       return Result.ok(OK);
     }
 
-    const startAddress = tryAsMemoryIndex(rawAddress);
-
     const pagesResult = this.getPages(startAddress, result.length, AccessType.READ);
 
     if (pagesResult.isError) {
-      return Result.error({ address: tryAsU32(pagesResult.error.address) }, pagesResult.details);
+      return Result.error(pagesResult.error, pagesResult.details);
     }
 
     const pages = pagesResult.ok;

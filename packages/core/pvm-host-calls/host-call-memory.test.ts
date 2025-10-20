@@ -1,8 +1,8 @@
 import { beforeEach, describe, it } from "node:test";
-import { tryAsU64 } from "@typeberry/numbers";
+import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { MEMORY_SIZE } from "@typeberry/pvm-interface";
 import { Memory } from "@typeberry/pvm-interpreter";
-import { OutOfBounds, PageFault } from "@typeberry/pvm-interpreter/memory/errors.js";
-import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
+import { OutOfBounds } from "@typeberry/pvm-interpreter/memory/errors.js";
 import { deepEqual, OK, Result } from "@typeberry/utils";
 import { HostCallMemory } from "./host-call-memory.js";
 
@@ -33,7 +33,7 @@ describe("HostCallMemory", () => {
 
       deepEqual(
         result,
-        Result.error(PageFault.fromPageNumber(0, true), () => "Page fault: attempted to access reserved page 0"),
+        Result.error({ address: tryAsU32(0) }, () => "Page fault: attempted to access reserved page 0"),
       );
     });
 
@@ -86,7 +86,7 @@ describe("HostCallMemory", () => {
 
       deepEqual(
         result,
-        Result.error(PageFault.fromPageNumber(0, true), () => "Page fault: attempted to access reserved page 0"),
+        Result.error({ address: tryAsU32(0) }, () => "Page fault: attempted to access reserved page 0"),
       );
     });
 

@@ -52,7 +52,7 @@ function prepareRegsAndMemory(
     memory: new HostCallMemory(memory),
     readResult: () => {
       const result = new Uint8Array(destinationLength);
-      assert.strictEqual(memory.loadInto(tryAsU32(memStart), result).isOk, true);
+      assert.strictEqual(memory.get(tryAsU32(memStart), result).isOk, true);
       return BytesBlob.blobFrom(result);
     },
   };

@@ -43,7 +43,7 @@ class AnanasRegisters implements IRegisters {
 class AnanasMemory implements IMemory {
   constructor(private readonly instance: AnanasAPI) {}
 
-  storeFrom(address: U32, bytes: Uint8Array): Result<OK, PageFault> {
+  set(address: U32, bytes: Uint8Array): Result<OK, PageFault> {
     try {
       this.instance.setMemory(address, bytes);
     } catch {
@@ -52,7 +52,7 @@ class AnanasMemory implements IMemory {
     return Result.ok(OK);
   }
 
-  loadInto(address: U32, result: Uint8Array): Result<OK, PageFault> {
+  get(address: U32, result: Uint8Array): Result<OK, PageFault> {
     if (result.length === 0) {
       return Result.ok(OK);
     }

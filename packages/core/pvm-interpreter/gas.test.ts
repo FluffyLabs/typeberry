@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { gasCounter, tryAsBigGas } from "./gas.js";
+import { tryAsBigGas } from "@typeberry/pvm-interface";
+import { gasCounter } from "./gas.js";
 
 describe("GasCounterU64", () => {
   it("should return false if there is no underflow", () => {
