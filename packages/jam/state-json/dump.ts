@@ -1,5 +1,10 @@
-import { type EntropyHash, type PerEpochBlock, tryAsPerEpochBlock, tryAsServiceGas } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
+import {
+  type EntropyHash,
+  type PerEpochBlock,
+  tryAsPerEpochBlock,
+  tryAsServiceGas,
+  tryAsServiceId,
+} from "@typeberry/block";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { fromJson } from "@typeberry/block-json";
 import { Bytes } from "@typeberry/bytes";
@@ -9,14 +14,17 @@ import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js"
 import { json } from "@typeberry/json-parser";
 import {
   type AccumulationOutput,
+  AUTHORIZATION_QUEUE_SIZE,
   accumulationOutputComparator,
   type InMemoryService,
   InMemoryState,
+  MAX_AUTH_POOL_SIZE,
   PrivilegedServices,
-  RecentBlocksHistory,
+  RecentBlocks,
   type State,
   tryAsPerCore,
 } from "@typeberry/state";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { JsonService } from "./accounts.js";
 import { accumulationOutput } from "./accumulation-output.js";
 import { availabilityAssignmentFromJson } from "./availability-assignment.js";
@@ -47,8 +55,9 @@ type JsonStateDump = {
   tau: State["timeslot"];
   chi: {
     chi_m: PrivilegedServices["manager"];
-    chi_a: PrivilegedServices["authManager"];
-    chi_v: PrivilegedServices["validatorsManager"];
+    chi_a: PrivilegedServices["assigners"];
+    chi_v: PrivilegedServices["delegator"];
+    chi_r?: PrivilegedServices["registrar"];
     chi_g: PrivilegedServices["autoAccumulateServices"] | null;
   };
   pi: JsonStatisticsData;
@@ -81,6 +90,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
         chi_m: "number",
         chi_a: json.array("number"),
         chi_v: "number",
+        chi_r: json.optional("number"),
         chi_g: json.nullable(
           json.array({
             service: "number",
@@ -113,7 +123,10 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
       theta,
       accounts,
     }): InMemoryState => {
-      return InMemoryState.create({
+      if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && chi.chi_r === undefined) {
+        throw new Error("Registrar is required in Privileges GP ^0.7.1");
+      }
+      return InMemoryState.new(spec, {
         authPools: tryAsPerCore(
           alpha.map((perCore) => {
             if (perCore.length > MAX_AUTH_POOL_SIZE) {
@@ -132,7 +145,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           }),
           spec,
         ),
-        recentBlocks: beta ?? RecentBlocksHistory.empty(),
+        recentBlocks: beta ?? RecentBlocks.empty(),
         nextValidatorData: gamma.gamma_k,
         epochRoot: gamma.gamma_z,
         sealingKeySeries: TicketsOrKeys.toSafroleSealingKeys(gamma.gamma_s, spec),
@@ -146,8 +159,9 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
         timeslot: tau,
         privilegedServices: PrivilegedServices.create({
           manager: chi.chi_m,
-          authManager: chi.chi_a,
-          validatorsManager: chi.chi_v,
+          assigners: chi.chi_a,
+          delegator: chi.chi_v,
+          registrar: chi.chi_r ?? tryAsServiceId(2 ** 32 - 1),
           autoAccumulateServices: chi.chi_g ?? [],
         }),
         statistics: JsonStatisticsData.toStatisticsData(spec, pi),

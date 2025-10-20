@@ -7,6 +7,7 @@ import { SortedSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { MAX_VALUE } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import {
   InMemoryState,
   LookupHistoryItem,
@@ -21,7 +22,7 @@ import { StateEntries } from "@typeberry/state-merkleization";
 import { InMemoryTrie, leafComparator } from "@typeberry/trie";
 import { getBlake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import type { TrieHasher } from "@typeberry/trie/nodesDb.js";
-import { deepEqual, OK, Result } from "@typeberry/utils";
+import { Compatibility, deepEqual, GpVersion, OK, Result } from "@typeberry/utils";
 import { LmdbRoot } from "./root.js";
 import { LmdbStates } from "./states.js";
 
@@ -61,21 +62,21 @@ describe("LMDB States database", () => {
     const emptyRoot = serialized.getRootHash(blake2b);
 
     // when
-    const res = await states.insertState(headerHash, serialized);
+    const res = await states.insertInitialState(headerHash, serialized);
     deepEqual(res, Result.ok(OK));
     const newState = states.getState(headerHash);
     assert.ok(newState !== null);
     const newRoot = await states.getStateRoot(newState);
 
     assert.deepStrictEqual(`${newRoot}`, `${emptyRoot}`);
-    deepEqual(InMemoryState.copyFrom(newState, new Map()), emptyState);
+    deepEqual(InMemoryState.copyFrom(spec, newState, new Map()), emptyState);
   });
 
   it("should update the state", async () => {
     const root = new LmdbRoot(tmpDir);
     const states = new LmdbStates(spec, blake2b, root);
     const state = InMemoryState.empty(spec);
-    await states.insertState(headerHash, StateEntries.serializeInMemory(spec, blake2b, state));
+    await states.insertInitialState(headerHash, StateEntries.serializeInMemory(spec, blake2b, state));
     const newState = states.getState(headerHash);
     assert.ok(newState !== null);
     const headerHash2: HeaderHash = Bytes.fill(HASH_SIZE, 2).asOpaque();
@@ -89,28 +90,31 @@ describe("LMDB States database", () => {
       timeslot: tryAsTimeSlot(15),
       privilegedServices: PrivilegedServices.create({
         manager: tryAsServiceId(1),
-        authManager: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(2)), spec),
-        validatorsManager: tryAsServiceId(3),
+        assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(2)), spec),
+        delegator: tryAsServiceId(3),
+        registrar: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? tryAsServiceId(4) : tryAsServiceId(MAX_VALUE),
         autoAccumulateServices: [],
       }),
-      servicesUpdates: [
-        UpdateService.create({
-          serviceId: tryAsServiceId(1),
-          serviceInfo: ServiceAccountInfo.create({
-            codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
-            balance: tryAsU64(1_000_000),
-            accumulateMinGas: tryAsServiceGas(10_000),
-            onTransferMinGas: tryAsServiceGas(5_000),
-            storageUtilisationBytes: tryAsU64(1_000),
-            gratisStorage: tryAsU64(0),
-            storageUtilisationCount: tryAsU32(1),
-            created: tryAsTimeSlot(0),
-            lastAccumulation: tryAsTimeSlot(0),
-            parentService: tryAsServiceId(0),
+      updated: new Map([
+        [
+          tryAsServiceId(1),
+          UpdateService.create({
+            serviceInfo: ServiceAccountInfo.create({
+              codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
+              balance: tryAsU64(1_000_000),
+              accumulateMinGas: tryAsServiceGas(10_000),
+              onTransferMinGas: tryAsServiceGas(5_000),
+              storageUtilisationBytes: tryAsU64(1_000),
+              gratisStorage: tryAsU64(0),
+              storageUtilisationCount: tryAsU32(1),
+              created: tryAsTimeSlot(0),
+              lastAccumulation: tryAsTimeSlot(0),
+              parentService: tryAsServiceId(0),
+            }),
+            lookupHistory,
           }),
-          lookupHistory,
-        }),
-      ],
+        ],
+      ]),
     };
 
     // when
@@ -127,6 +131,7 @@ describe("LMDB States database", () => {
 
     deepEqual(
       InMemoryState.copyFrom(
+        spec,
         updatedState,
         new Map([
           [
@@ -185,7 +190,7 @@ describe("LMDB States database", () => {
     const initialRoot = serialized.getRootHash(blake2b);
 
     // when
-    const res = await states.insertState(headerHash, serialized);
+    const res = await states.insertInitialState(headerHash, serialized);
     deepEqual(res, Result.ok(OK));
     const newState = states.getState(headerHash);
     assert.ok(newState !== null);
@@ -193,7 +198,7 @@ describe("LMDB States database", () => {
 
     assert.deepStrictEqual(`${newRoot}`, `${initialRoot}`);
     deepEqual(
-      InMemoryState.copyFrom(newState, new Map([[initialService.serviceId, initialService.getEntries()]])),
+      InMemoryState.copyFrom(spec, newState, new Map([[initialService.serviceId, initialService.getEntries()]])),
       initialState,
     );
   });
@@ -206,7 +211,7 @@ describe("LMDB States database", () => {
     if (initialService === undefined) {
       throw new Error("Expected service in test state!");
     }
-    await states.insertState(headerHash, StateEntries.serializeInMemory(spec, blake2b, state));
+    await states.insertInitialState(headerHash, StateEntries.serializeInMemory(spec, blake2b, state));
     const newState = states.getState(headerHash);
     assert.ok(newState !== null);
     const headerHash2: HeaderHash = Bytes.fill(HASH_SIZE, 2).asOpaque();
@@ -227,7 +232,7 @@ describe("LMDB States database", () => {
     const updatedStateRoot = await states.getStateRoot(updatedState);
 
     deepEqual(
-      InMemoryState.copyFrom(updatedState, new Map([[initialService.serviceId, initialService.getEntries()]])),
+      InMemoryState.copyFrom(spec, updatedState, new Map([[initialService.serviceId, initialService.getEntries()]])),
       state,
     );
     assert.strictEqual(

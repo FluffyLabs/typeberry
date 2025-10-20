@@ -6,6 +6,7 @@ import {
   type TimeSlot,
   tryAsPerEpochBlock,
   tryAsServiceGas,
+  tryAsServiceId,
 } from "@typeberry/block";
 import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
@@ -15,12 +16,17 @@ import type { ChainSpec } from "@typeberry/config";
 import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { InMemoryService } from "@typeberry/state";
-import { AutoAccumulate, InMemoryState, PrivilegedServices, tryAsPerCore } from "@typeberry/state";
-import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
+import {
+  AutoAccumulate,
+  InMemoryState,
+  NotYetAccumulatedReport,
+  PrivilegedServices,
+  tryAsPerCore,
+} from "@typeberry/state";
 import { JsonService } from "@typeberry/state-json/accounts.js";
 import { AccumulateOutput } from "@typeberry/transition/accumulate/accumulate-output.js";
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
-import { deepEqual, Result } from "@typeberry/utils";
+import { Compatibility, deepEqual, GpVersion, Result } from "@typeberry/utils";
 import { getChainSpec } from "./spec.js";
 
 class Input {
@@ -50,6 +56,7 @@ class TestState {
         bless: "number",
         assign: json.array("number"),
         designate: "number",
+        register: json.optional("number"),
         always_acc: json.array({
           id: "number",
           gas: json.fromNumber((x) => tryAsServiceGas(x)),
@@ -68,6 +75,7 @@ class TestState {
     bless: ServiceId;
     assign: ServiceId[];
     designate: ServiceId;
+    register?: ServiceId;
     always_acc: { id: ServiceId; gas: ServiceGas }[];
   };
   accounts!: InMemoryService[];
@@ -76,6 +84,9 @@ class TestState {
     { accounts, slot, ready_queue, accumulated, privileges }: TestState,
     chainSpec: ChainSpec,
   ): InMemoryState {
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && privileges.register === undefined) {
+      throw new Error("Privileges from version 0.7.1 must have `register` field!");
+    }
     return InMemoryState.partial(chainSpec, {
       timeslot: slot,
       accumulationQueue: tryAsPerEpochBlock(
@@ -92,8 +103,9 @@ class TestState {
       ),
       privilegedServices: PrivilegedServices.create({
         manager: privileges.bless,
-        authManager: tryAsPerCore(privileges.assign, chainSpec),
-        validatorsManager: privileges.designate,
+        assigners: tryAsPerCore(privileges.assign, chainSpec),
+        delegator: privileges.designate,
+        registrar: privileges.register ?? tryAsServiceId(2 ** 32 - 1),
         autoAccumulateServices: privileges.always_acc.map(({ gas, id }) =>
           AutoAccumulate.create({ gasLimit: gas, service: id }),
         ),

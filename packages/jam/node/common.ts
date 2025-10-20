@@ -1,9 +1,17 @@
-import { Block, type BlockView, emptyBlock, Header, type HeaderHash, type TimeSlot } from "@typeberry/block";
+import {
+  Block,
+  type BlockView,
+  emptyBlock,
+  Header,
+  type HeaderHash,
+  reencodeAsView,
+  type TimeSlot,
+} from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Decoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type JipChainSpec, KnownChainSpec } from "@typeberry/config-node";
-import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
+import type { BlocksDb, RootDb, SerializedStatesDb } from "@typeberry/database";
 import { type Blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { SerializedState, StateEntries } from "@typeberry/state-merkleization";
@@ -22,28 +30,21 @@ export function getChainSpec(name: KnownChainSpec) {
   throw new Error(`Unknown chain spec: ${name}. Possible options: ${[KnownChainSpec.Full, KnownChainSpec.Tiny]}`);
 }
 
-export function openDatabase(
+export function getDatabasePath(
   blake2b: Blake2b,
   nodeName: string,
   genesisHeader: BytesBlob,
   databaseBasePath: string,
-  { readOnly = false }: { readOnly?: boolean } = {},
 ) {
   const nodeNameHash = blake2b.hashString(nodeName).toString().substring(2, 10);
   const genesisHeaderHash = blake2b.hashBytes(genesisHeader).asOpaque<HeaderHash>();
   const genesisHeaderHashNibbles = genesisHeaderHash.toString().substring(2, 10);
 
   const dbPath = `${databaseBasePath}/${nodeNameHash}/${genesisHeaderHashNibbles}`;
-  logger.info`🛢️ Opening database at ${dbPath}`;
-  try {
-    return {
-      dbPath,
-      rootDb: new LmdbRoot(dbPath, readOnly),
-      genesisHeaderHash,
-    };
-  } catch (e) {
-    throw new Error(`Unable to open database at ${dbPath}: ${e}`);
-  }
+  return {
+    dbPath,
+    genesisHeaderHash,
+  };
 }
 
 /**
@@ -55,12 +56,12 @@ export async function initializeDatabase(
   spec: ChainSpec,
   blake2b: Blake2b,
   genesisHeaderHash: HeaderHash,
-  rootDb: LmdbRoot,
+  rootDb: RootDb<BlocksDb, SerializedStatesDb>,
   config: JipChainSpec,
   ancestry: [HeaderHash, TimeSlot][],
 ): Promise<void> {
-  const blocks = new LmdbBlocks(spec, rootDb);
-  const states = new LmdbStates(spec, blake2b, rootDb);
+  const blocks = rootDb.getBlocksDb();
+  const states = rootDb.getStatesDb();
 
   const header = blocks.getBestHeaderHash();
   const state = blocks.getPostStateRoot(header);
@@ -72,7 +73,6 @@ export async function initializeDatabase(
     state !== null && !state.isEqualTo(Bytes.zero(HASH_SIZE)) && !header.isEqualTo(Bytes.zero(HASH_SIZE));
 
   if (isDbInitialized) {
-    await rootDb.db.close();
     return;
   }
 
@@ -81,7 +81,7 @@ export async function initializeDatabase(
   const genesisHeader = Decoder.decodeObject(Header.Codec, config.genesisHeader, spec);
   const genesisExtrinsic = emptyBlock().extrinsic;
   const genesisBlock = Block.create({ header: genesisHeader, extrinsic: genesisExtrinsic });
-  const blockView = blockAsView(genesisBlock, spec);
+  const blockView = reencodeAsView(Block.Codec, genesisBlock, spec);
   logger.log`🧬 Writing genesis block #${genesisHeader.timeSlotIndex}: ${genesisHeaderHash}`;
 
   const { genesisStateSerialized, genesisStateRootHash } = loadGenesisState(spec, blake2b, config.genesisState);
@@ -90,14 +90,11 @@ export async function initializeDatabase(
   await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(genesisHeaderHash, blockView));
   // insert fake blocks for ancestry data
   for (const [hash, slot] of ancestry) {
-    await blocks.insertBlock(new WithHash(hash, blockAsView(emptyBlock(slot), spec)));
+    await blocks.insertBlock(new WithHash(hash, reencodeAsView(Block.Codec, emptyBlock(slot), spec)));
   }
-  await states.insertState(genesisHeaderHash, genesisStateSerialized);
+  await states.insertInitialState(genesisHeaderHash, genesisStateSerialized);
   await blocks.setPostStateRoot(genesisHeaderHash, genesisStateRootHash);
   await blocks.setBestHeaderHash(genesisHeaderHash);
-
-  // close the DB
-  await rootDb.db.close();
 }
 
 function loadGenesisState(spec: ChainSpec, blake2b: Blake2b, data: JipChainSpec["genesisState"]) {
@@ -112,7 +109,4 @@ function loadGenesisState(spec: ChainSpec, blake2b: Blake2b, data: JipChainSpec[
     genesisStateSerialized: stateEntries,
     genesisStateRootHash,
   };
-}
-function blockAsView(block: Block, spec: ChainSpec): BlockView {
-  return Decoder.decodeObject(Block.Codec.View, Encoder.encodeObject(Block.Codec, block, spec), spec);
 }

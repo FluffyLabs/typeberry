@@ -70,6 +70,29 @@ describe("CLI", () => {
     });
   });
 
+  it("should parse export command and add rel path to output path", () => {
+    const args = parse(["export", "./output"]);
+
+    deepEqual(args, {
+      command: Command.Export,
+      args: {
+        ...defaultOptions,
+        output: ".././output",
+      },
+    });
+  });
+
+  it("should throw on missing output path", () => {
+    assert.throws(
+      () => {
+        const _args = parse(["export"]);
+      },
+      {
+        message: "Missing output directory.",
+      },
+    );
+  });
+
   it("should parse dev-validator index", () => {
     const args = parse(["dev", "0xa"]);
 

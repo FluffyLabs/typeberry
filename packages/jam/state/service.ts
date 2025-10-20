@@ -9,7 +9,7 @@ import {
 } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, codec, Descriptor, type SizeHint } from "@typeberry/codec";
+import { type CodecRecord, codec, type DescribedBy, Descriptor, type SizeHint } from "@typeberry/codec";
 import { asKnownSize, type KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU64, type U32, type U64 } from "@typeberry/numbers";
@@ -47,6 +47,31 @@ export const ignoreValueWithDefault = <T>(defaultValue: T) =>
     (_e, _v) => {},
     (_d) => defaultValue,
     (_s) => {},
+  );
+
+/** Encode and decode object with leading version number. */
+export const codecWithVersion = <T>(val: Descriptor<T>): Descriptor<T> =>
+  Descriptor.new<T>(
+    "withVersion",
+    {
+      bytes: val.sizeHint.bytes + 8,
+      isExact: false,
+    },
+    (e, v) => {
+      e.varU64(0n);
+      val.encode(e, v);
+    },
+    (d) => {
+      const version = d.varU64();
+      if (version !== 0n) {
+        throw new Error("Non-zero version is not supported!");
+      }
+      return val.decode(d);
+    },
+    (s) => {
+      s.varU64();
+      val.skip(s);
+    },
   );
 
 /**
@@ -127,6 +152,8 @@ export class ServiceAccountInfo extends WithDebug {
     super();
   }
 }
+
+export type ServiceAccountInfoView = DescribedBy<typeof ServiceAccountInfo.Codec.View>;
 
 export class PreimageItem extends WithDebug {
   static Codec = codec.Class(PreimageItem, {

@@ -1,8 +1,9 @@
 import { type ServiceGas, type ServiceId, tryAsPerValidator, tryAsServiceGas } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import type { U16, U32 } from "@typeberry/numbers";
+import { tryAsU32, type U16, type U32 } from "@typeberry/numbers";
 import { CoreStatistics, ServiceStatistics, StatisticsData, tryAsPerCore, ValidatorStatistics } from "@typeberry/state";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 
 export class JsonValidatorStatistics {
   static fromJson = json.object<JsonValidatorStatistics, ValidatorStatistics>(
@@ -83,8 +84,12 @@ class JsonServiceStatistics {
       extrinsic_count: "number",
       accumulate_count: "number",
       accumulate_gas_used: json.fromNumber(tryAsServiceGas),
-      on_transfers_count: "number",
-      on_transfers_gas_used: json.fromNumber(tryAsServiceGas),
+      ...(Compatibility.isLessThan(GpVersion.V0_7_1)
+        ? {
+            on_transfers_count: "number",
+            on_transfers_gas_used: json.fromNumber(tryAsServiceGas),
+          }
+        : {}),
     },
     ({
       provided_count,
@@ -111,8 +116,8 @@ class JsonServiceStatistics {
         extrinsicCount: extrinsic_count,
         accumulateCount: accumulate_count,
         accumulateGasUsed: accumulate_gas_used,
-        onTransfersCount: on_transfers_count,
-        onTransfersGasUsed: on_transfers_gas_used,
+        onTransfersCount: on_transfers_count ?? tryAsU32(0),
+        onTransfersGasUsed: on_transfers_gas_used ?? tryAsServiceGas(0),
       });
     },
   );
@@ -127,8 +132,8 @@ class JsonServiceStatistics {
   extrinsic_count!: U16;
   accumulate_count!: U32;
   accumulate_gas_used!: ServiceGas;
-  on_transfers_count!: U32;
-  on_transfers_gas_used!: ServiceGas;
+  on_transfers_count?: U32;
+  on_transfers_gas_used?: ServiceGas;
 }
 
 export type ServiceStatisticsEntry = {

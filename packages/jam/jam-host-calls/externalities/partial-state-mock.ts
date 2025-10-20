@@ -7,13 +7,11 @@ import {
   tryAsServiceGas,
   tryAsServiceId,
 } from "@typeberry/block";
-import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
-import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
-import type { PerCore, ValidatorData } from "@typeberry/state";
+import type { AuthorizationQueue, PerCore, ValidatorData } from "@typeberry/state";
 import { Compatibility, GpVersion, OK, Result } from "@typeberry/utils";
 import {
   type EjectError,
@@ -82,7 +80,7 @@ export class PartialStateMock implements PartialState {
     memo: Bytes<TRANSFER_MEMO_BYTES>,
   ): Result<OK, TransferError> {
     if (destination === null) {
-      return Result.error(TransferError.DestinationNotFound);
+      return Result.error(TransferError.DestinationNotFound, () => "Mock: destination is null for transfer");
     }
     if (!Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) || this.transferReturnValue.isOk) {
       this.transferData.push([destination, amount, suppliedGas, memo]);
@@ -98,8 +96,9 @@ export class PartialStateMock implements PartialState {
     gas: ServiceGas,
     balance: ServiceGas,
     gratisStorage: U64,
+    serviceId: U64,
   ): Result<ServiceId, NewServiceError> {
-    this.newServiceCalled.push([codeHash, codeLength, gas, balance, gratisStorage]);
+    this.newServiceCalled.push([codeHash, codeLength, gas, balance, gratisStorage, serviceId]);
     return this.newServiceResponse;
   }
 
@@ -122,21 +121,22 @@ export class PartialStateMock implements PartialState {
     m: ServiceId | null,
     a: PerCore<ServiceId>,
     v: ServiceId | null,
+    r: ServiceId | null,
     g: [ServiceId, ServiceGas][],
   ): Result<OK, UpdatePrivilegesError> {
     if (this.privilegedServicesResponse.isOk) {
-      this.privilegedServices.push([m, a, v, g]);
+      this.privilegedServices.push([m, a, v, r, g]);
     }
     return this.privilegedServicesResponse;
   }
 
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
-    authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
-    authManager: ServiceId | null,
+    authQueue: AuthorizationQueue,
+    assigner: ServiceId | null,
   ): Result<OK, UpdatePrivilegesError> {
     if (this.authQueueResponse.isOk) {
-      this.authQueue.push([coreIndex, authQueue, authManager]);
+      this.authQueue.push([coreIndex, authQueue, assigner]);
     }
     return this.authQueueResponse;
   }
@@ -147,7 +147,7 @@ export class PartialStateMock implements PartialState {
 
   providePreimage(service: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {
     if (service === null) {
-      return Result.error(ProvidePreimageError.ServiceNotFound);
+      return Result.error(ProvidePreimageError.ServiceNotFound, () => "Mock: service is null for providePreimage");
     }
     this.providePreimageData.push([service, preimage]);
     return this.providePreimageResponse;

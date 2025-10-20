@@ -1,3 +1,4 @@
+export { altNameRaw } from "./certificate.js";
 export * from "./message.js";
 export * from "./network.js";
 export * from "./peers.js";

@@ -3,7 +3,8 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
-import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
+import type { IHostCallMemory } from "@typeberry/pvm-host-calls";
+import type { BigGas, Registers } from "@typeberry/pvm-interpreter";
 import {
   ProgramDecoder,
   type ProgramDecoderError,
@@ -88,7 +89,7 @@ export class TestRefineExt implements RefineExternalities {
     // check if the code is valid
     const program = ProgramDecoder.deblob(code.raw);
     if (program.isError) {
-      return Promise.resolve(Result.error(program.error));
+      return Promise.resolve(Result.error(program.error, () => "Test: error occurred"));
     }
 
     const val = this.machineStartData.get(code, programCounter);
@@ -103,7 +104,7 @@ export class TestRefineExt implements RefineExternalities {
     destinationStart: U64,
     sourceStart: U64,
     length: U64,
-    destination: Memory,
+    destination: IHostCallMemory,
   ): Promise<Result<OK, PeekPokeError>> {
     const val = this.machinePeekData.get(machineIndex, destinationStart, sourceStart, length, destination);
     if (val === undefined) {
@@ -119,7 +120,7 @@ export class TestRefineExt implements RefineExternalities {
     sourceStart: U64,
     destinationStart: U64,
     length: U64,
-    source: Memory,
+    source: IHostCallMemory,
   ): Promise<Result<OK, PeekPokeError>> {
     const val = this.machinePokeData.get(machineIndex, sourceStart, destinationStart, length, source);
     if (val === undefined) {
@@ -137,7 +138,7 @@ export class TestRefineExt implements RefineExternalities {
   ): Promise<Result<MachineResult, NoMachineError>> {
     const machine = this.machineInvokeData.get(machineIndex);
     if (machine === undefined) {
-      return Result.error(NoMachineError, `Machine not found. Call to machineInvoke with: ${machineIndex}`);
+      return Result.error(NoMachineError, () => `Machine not found. Call to machineInvoke with: ${machineIndex}`);
     }
     // run machine with given gas and registers
     const machineInvokeResult = await machine.run(gas, registers);

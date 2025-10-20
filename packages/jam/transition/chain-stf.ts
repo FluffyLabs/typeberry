@@ -12,10 +12,11 @@ import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
-import type { ServicesUpdate, State } from "@typeberry/state";
+import type { ServicesUpdate, State, WithStateView } from "@typeberry/state";
 import {
   assertEmpty,
   Compatibility,
+  check,
   type ErrorResult,
   GpVersion,
   measure,
@@ -141,7 +142,7 @@ export class OnChain {
 
   constructor(
     public readonly chainSpec: ChainSpec,
-    public readonly state: State,
+    public readonly state: State & WithStateView,
     blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
   ) {
@@ -353,6 +354,8 @@ export class OnChain {
       transferStatistics = transferStatisticsFromDeferredTransfers;
       servicesUpdate = servicesUpdateFromDeferredTransfers;
       assertEmpty(deferredTransfersRest);
+    } else {
+      check`${pendingTransfers.length === 0} All transfers should be already accumulated.`;
     }
 
     const accumulateRoot = await this.accumulateOutput.transition({ accumulationOutputLog });
@@ -387,6 +390,16 @@ export class OnChain {
     const { statistics, ...statisticsRest } = statisticsUpdate;
     assertEmpty(statisticsRest);
 
+    // Concat accumulatePreimages updates with preimages
+    for (const [serviceId, accPreimageUpdates] of accumulatePreimages.entries()) {
+      const preimagesUpdates = preimages.get(serviceId);
+      if (preimagesUpdates === undefined) {
+        preimages.set(serviceId, accPreimageUpdates);
+      } else {
+        preimages.set(serviceId, preimagesUpdates.concat(accPreimageUpdates));
+      }
+    }
+
     return Result.ok({
       ...(maybeAuthorizationQueues !== undefined ? { authQueues: maybeAuthorizationQueues } : {}),
       ...(maybeDesignatedValidatorData !== undefined ? { designatedValidatorData: maybeDesignatedValidatorData } : {}),
@@ -408,7 +421,7 @@ export class OnChain {
       recentlyAccumulated,
       accumulationOutputLog,
       ...servicesUpdate,
-      preimages: preimages.concat(accumulatePreimages),
+      preimages,
     });
   }
 
@@ -430,11 +443,14 @@ function checkOffendersMatch(
   headerOffendersMark: Ed25519Key[],
 ): Result<OK, OFFENDERS_ERROR> {
   if (offendersMark.size !== headerOffendersMark.length) {
-    return Result.error(OFFENDERS_ERROR, `Length mismatch: ${offendersMark.size} vs ${headerOffendersMark.length}`);
+    return Result.error(
+      OFFENDERS_ERROR,
+      () => `Length mismatch: ${offendersMark.size} vs ${headerOffendersMark.length}`,
+    );
   }
   for (const key of headerOffendersMark) {
     if (!offendersMark.has(key)) {
-      return Result.error(OFFENDERS_ERROR, `Missing key: ${key}`);
+      return Result.error(OFFENDERS_ERROR, () => `Missing key: ${key}`);
     }
   }
 

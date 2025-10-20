@@ -1,3 +1,4 @@
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { MAX_NUMBER_OF_WORK_ITEMS } from "./work-package.js";
 
 /**
@@ -10,7 +11,7 @@ import { MAX_NUMBER_OF_WORK_ITEMS } from "./work-package.js";
  * here are only temporarily for convenience. When we figure out better names
  * and places for these this file will be eradicated.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/413000413000
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/442300442300?v=0.7.2
  */
 
 /** `G_I`: The gas allocated to invoke a work-package’s Is-Authorized logic. */
@@ -34,8 +35,8 @@ export const T = 128;
 /** `W_A`: The maximum size of is-authorized code in octets. */
 export const W_A = 64_000;
 
-/** `W_B`: The maximum size of an encoded work-package with extrinsic data and imports. */
-export const W_B = 13_794_305;
+/** `W_B`: The maximum size of the concatenated variable-size blobs, extrinsics and imported segments of a work-package, in octets */
+export const W_B = Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) ? 13_791_360 : 13_794_305;
 
 /** `W_C`: The maximum size of service code in octets. */
 export const W_C = 4_000_000;
@@ -55,17 +56,17 @@ export const W_X = 3_072;
 // TODO [ToDr] Not sure where these should live yet :(
 
 /**
+ * `S`: The minimum public service index.
+ * Services of indices below these may only be created by the Registrar.
+ *
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/447a00447a00?v=0.7.2
+ */
+export const MIN_PUBLIC_SERVICE_INDEX = 2 ** 16;
+
+/**
  * `J`: The maximum sum of dependency items in a work-report.
  *
  * https://graypaper.fluffylabs.dev/#/5f542d7/416a00416a00?v=0.6.2
  */
 export const MAX_REPORT_DEPENDENCIES = 8;
 export type MAX_REPORT_DEPENDENCIES = typeof MAX_REPORT_DEPENDENCIES;
-
-/** `Q`: Size of the authorization queue. */
-export const AUTHORIZATION_QUEUE_SIZE = Q;
-export type AUTHORIZATION_QUEUE_SIZE = typeof AUTHORIZATION_QUEUE_SIZE;
-
-/** `O`: Maximal authorization pool size. */
-export const MAX_AUTH_POOL_SIZE = O;
-export type MAX_AUTH_POOL_SIZE = typeof MAX_AUTH_POOL_SIZE;

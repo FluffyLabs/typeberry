@@ -42,13 +42,7 @@ export class Peek implements HostCallHandler {
     // `z`: memory length
     const length = regs.get(10);
 
-    const peekResult = await this.refine.machinePeekFrom(
-      machineIndex,
-      destinationStart,
-      sourceStart,
-      length,
-      memory.getMemory(),
-    );
+    const peekResult = await this.refine.machinePeekFrom(machineIndex, destinationStart, sourceStart, length, memory);
     logger.trace`PEEK(${machineIndex}, ${destinationStart}, ${sourceStart}, ${length}) <- ${resultToString(peekResult)}`;
 
     if (peekResult.isOk) {

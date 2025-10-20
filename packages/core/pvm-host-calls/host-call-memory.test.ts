@@ -1,4 +1,3 @@
-import assert from "node:assert";
 import { beforeEach, describe, it } from "node:test";
 import { tryAsU64 } from "@typeberry/numbers";
 import { Memory } from "@typeberry/pvm-interpreter";
@@ -32,8 +31,10 @@ describe("HostCallMemory", () => {
 
       const result = hostCallMemory.storeFrom(address, bytes);
 
-      assert.strictEqual(result.isError, true);
-      assert(result.error instanceof PageFault);
+      deepEqual(
+        result,
+        Result.error(PageFault.fromPageNumber(0, true), () => "Page fault: attempted to access reserved page 0"),
+      );
     });
 
     it("should return OutOfBounds error when address + length exceeds MEMORY_SIZE", () => {
@@ -42,17 +43,28 @@ describe("HostCallMemory", () => {
 
       const result = hostCallMemory.storeFrom(address, bytes);
 
-      assert.strictEqual(result.isError, true);
-      if (result.isError) {
-        assert(result.error instanceof OutOfBounds);
-      }
+      deepEqual(
+        result,
+        Result.error(
+          new OutOfBounds(),
+          () => "Memory access out of bounds: address 4294967294 + length 3 exceeds memory size",
+        ),
+      );
     });
 
     it("should throw when address exceeds MAX_MEMORY_INDEX", () => {
       const address = tryAsU64(MEMORY_SIZE);
       const bytes = new Uint8Array([1, 2, 3]);
 
-      assert.deepEqual(hostCallMemory.storeFrom(address, bytes), Result.error(new OutOfBounds()));
+      const res = hostCallMemory.storeFrom(address, bytes);
+
+      deepEqual(
+        res,
+        Result.error(
+          new OutOfBounds(),
+          () => "Memory access out of bounds: address 4294967296 + length 3 exceeds memory size",
+        ),
+      );
     });
   });
 
@@ -72,35 +84,40 @@ describe("HostCallMemory", () => {
 
       const result = hostCallMemory.loadInto(bytes, address);
 
-      assert.strictEqual(result.isError, true);
-      assert(result.error instanceof PageFault);
+      deepEqual(
+        result,
+        Result.error(PageFault.fromPageNumber(0, true), () => "Page fault: attempted to access reserved page 0"),
+      );
     });
 
     it("should return OutOfBounds error when address + length exceeds MEMORY_SIZE", () => {
       const address = tryAsU64(MEMORY_SIZE - 2);
       const result = new Uint8Array(3);
 
-      const loadResult = hostCallMemory.loadInto(result, address);
+      const res = hostCallMemory.loadInto(result, address);
 
-      assert.strictEqual(loadResult.isError, true);
-      if (loadResult.isError) {
-        assert(loadResult.error instanceof OutOfBounds);
-      }
+      deepEqual(
+        res,
+        Result.error(
+          new OutOfBounds(),
+          () => "Memory access out of bounds: address 4294967294 + length 3 exceeds memory size",
+        ),
+      );
     });
 
     it("should throw when address exceeds MAX_MEMORY_INDEX", () => {
       const address = tryAsU64(MEMORY_SIZE);
       const result = new Uint8Array([1, 2, 3]);
 
-      assert.deepEqual(hostCallMemory.loadInto(result, address), Result.error(new OutOfBounds()));
-    });
-  });
+      const res = hostCallMemory.loadInto(result, address);
 
-  describe("getMemory", () => {
-    it("should return the underlying memory instance", () => {
-      const result = hostCallMemory.getMemory();
-
-      assert.strictEqual(result, memory);
+      deepEqual(
+        res,
+        Result.error(
+          new OutOfBounds(),
+          () => "Memory access out of bounds: address 4294967296 + length 3 exceeds memory size",
+        ),
+      );
     });
   });
 });

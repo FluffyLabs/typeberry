@@ -181,7 +181,7 @@ describe("HostCalls: Transfer", () => {
 
     // when
     gas.sub(basicGasCost);
-    accumulate.transferReturnValue = Result.error(TransferError.GasTooLow);
+    accumulate.transferReturnValue = Result.error(TransferError.GasTooLow, () => "Test: gas too low for transfer");
     await transfer.execute(gas, registers, memory);
 
     // then
@@ -214,7 +214,10 @@ describe("HostCalls: Transfer", () => {
 
     // when
     gas.sub(basicGasCost);
-    accumulate.transferReturnValue = Result.error(TransferError.BalanceBelowThreshold);
+    accumulate.transferReturnValue = Result.error(
+      TransferError.BalanceBelowThreshold,
+      () => "Test: balance below threshold for transfer",
+    );
     await transfer.execute(gas, registers, memory);
 
     // then
@@ -247,7 +250,10 @@ describe("HostCalls: Transfer", () => {
 
     // when
     gas.sub(basicGasCost);
-    accumulate.transferReturnValue = Result.error(TransferError.DestinationNotFound);
+    accumulate.transferReturnValue = Result.error(
+      TransferError.DestinationNotFound,
+      () => "Test: destination not found for transfer",
+    );
     await transfer.execute(gas, registers, memory);
 
     // then

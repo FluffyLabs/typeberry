@@ -1,0 +1,12 @@
+{
+  "name": "@typeberry/listener",
+  "version": "0.2.0",
+  "description": "Typed event-emitter and listener.",
+  "main": "index.ts",
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0",
+  "type": "module"
+}

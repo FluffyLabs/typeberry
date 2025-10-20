@@ -7,7 +7,6 @@ import { OK, Result } from "@typeberry/utils";
 export interface IHostCallMemory {
   storeFrom(address: U64, bytes: Uint8Array): Result<OK, PageFault | OutOfBounds>;
   loadInto(result: Uint8Array, startAddress: U64): Result<OK, PageFault | OutOfBounds>;
-  getMemory(): Memory;
 }
 
 export class HostCallMemory implements IHostCallMemory {
@@ -19,7 +18,10 @@ export class HostCallMemory implements IHostCallMemory {
     }
 
     if (address + tryAsU64(bytes.length) > MEMORY_SIZE) {
-      return Result.error(new OutOfBounds());
+      return Result.error(
+        new OutOfBounds(),
+        () => `Memory access out of bounds: address ${address} + length ${bytes.length} exceeds memory size`,
+      );
     }
 
     return this.memory.storeFrom(tryAsMemoryIndex(Number(address)), bytes);
@@ -31,13 +33,12 @@ export class HostCallMemory implements IHostCallMemory {
     }
 
     if (startAddress + tryAsU64(result.length) > MEMORY_SIZE) {
-      return Result.error(new OutOfBounds());
+      return Result.error(
+        new OutOfBounds(),
+        () => `Memory access out of bounds: address ${startAddress} + length ${result.length} exceeds memory size`,
+      );
     }
 
     return this.memory.loadInto(result, tryAsMemoryIndex(Number(startAddress)));
-  }
-
-  getMemory(): Memory {
-    return this.memory;
   }
 }

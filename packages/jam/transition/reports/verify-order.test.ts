@@ -28,7 +28,7 @@ describe("Reports.verifyReportsOrder", () => {
       isOk: false,
       isError: true,
       error: ReportsError.OutOfOrderGuarantee,
-      details: "Core indices of work reports are not unique or in order. Got: 0, expected at least: 2",
+      details: () => "Core indices of work reports are not unique or in order. Got: 0, expected at least: 2",
     });
   });
 
@@ -47,7 +47,7 @@ describe("Reports.verifyReportsOrder", () => {
       isOk: false,
       isError: true,
       error: ReportsError.BadCoreIndex,
-      details: "Invalid core index. Got: 3, max: 2",
+      details: () => "Invalid core index. Got: 3, max: 2",
     });
   });
 });

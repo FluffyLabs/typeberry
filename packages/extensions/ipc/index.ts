@@ -12,15 +12,16 @@ import type { ChainSpec } from "@typeberry/config";
 import { v1 } from "@typeberry/fuzz-proto";
 import { HASH_SIZE, type WithHash } from "@typeberry/hash";
 import { ce129, up0 } from "@typeberry/jamnp-s";
+import { Listener } from "@typeberry/listener";
 import { Logger } from "@typeberry/logger";
 import { tryAsU32 } from "@typeberry/numbers";
-import { Listener } from "@typeberry/state-machine";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { assertNever, Result } from "@typeberry/utils";
 import { startJamnpIpcServer } from "./jamnp/server.js";
 import { startIpcServer } from "./server.js";
 
 export interface ExtensionApi {
+  nodeName: string;
   chainSpec: ChainSpec;
   bestHeader: Listener<WithHash<HeaderHash, HeaderView>>;
 }
@@ -81,7 +82,14 @@ function startJamnpExtension(api: ExtensionApi) {
     return [new ce129.KeyValuePair(startKey, value)];
   };
 
-  return startJamnpIpcServer(api.chainSpec, announcements, getHandshake, getBoundaryNodes, getKeyValuePairs);
+  return startJamnpIpcServer(
+    api.nodeName,
+    api.chainSpec,
+    announcements,
+    getHandshake,
+    getBoundaryNodes,
+    getKeyValuePairs,
+  );
 }
 
 const logger = Logger.new(import.meta.filename, "ext-ipc");
@@ -120,8 +128,8 @@ class FuzzHandler implements v1.FuzzMessageHandler {
     if (res.isOk) {
       return res;
     }
-    logger.log`Rejecting block with error: ${res.error}. ${res.details}`;
-    return Result.error(v1.ErrorMessage.create({ message: res.error }));
+    logger.log`Rejecting block with error: ${res.error}. ${res.details()}`;
+    return Result.error(v1.ErrorMessage.create({ message: res.error }), res.details);
   }
 
   async getPeerInfo(value: v1.PeerInfo): Promise<v1.PeerInfo> {

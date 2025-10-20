@@ -1,11 +1,10 @@
 import type { CodeHash, CoreIndex, PerValidator, ServiceGas, ServiceId, TimeSlot } from "@typeberry/block";
-import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants.js";
+import { W_T } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
-import type { FixedSizeArray } from "@typeberry/collections";
-import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
+import type { OpaqueHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
-import type { LookupHistorySlots, PerCore, ValidatorData } from "@typeberry/state";
+import type { AuthorizationQueue, LookupHistorySlots, PerCore, ValidatorData } from "@typeberry/state";
 import type { OK, Result } from "@typeberry/utils";
 
 /** Size of the transfer memo. */
@@ -151,6 +150,8 @@ export enum NewServiceError {
   InsufficientFunds = 0,
   /** Service is not privileged to set gratis storage. */
   UnprivilegedService = 1,
+  /** Registrar attempting to create a service with already existing id. */
+  RegistrarServiceIdAlreadyTaken = 2,
 }
 
 export enum UpdatePrivilegesError {
@@ -216,14 +217,18 @@ export interface PartialState {
   ): Result<OK, TransferError>;
 
   /**
-   * Create a new service with given codeHash, length, gas, allowance and gratisStorage.
+   * Create a new service with given codeHash, length, gas, allowance, gratisStorage and wantedServiceId.
    *
-   * Returns a newly assigned id of that service.
-   * https://graypaper.fluffylabs.dev/#/7e6ff6a/2f4c022f4c02?v=0.6.7
+   * Returns a newly assigned id
+   * or `wantedServiceId` if it's lower than `S`
+   * and parent of that service is `Registrar`.
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/2fa9042fc304?v=0.7.2
    *
    * An error can be returned in case the account does not
    * have the required balance
-   * or tries to set gratis storage without being privileged.
+   * or tries to set gratis storage without being `Manager`
+   * or `Registrar` tries to set service id thats already taken.
    */
   newService(
     codeHash: CodeHash,
@@ -231,6 +236,7 @@ export interface PartialState {
     gas: ServiceGas,
     allowance: ServiceGas,
     gratisStorage: U64,
+    wantedServiceId: U64,
   ): Result<ServiceId, NewServiceError>;
 
   /** Upgrade code of currently running service. */
@@ -251,8 +257,8 @@ export interface PartialState {
   /** Update authorization queue for given core and authorize a service for this core. */
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
-    authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
-    authManager: ServiceId | null,
+    authQueue: AuthorizationQueue,
+    assigner: ServiceId | null,
   ): Result<OK, UpdatePrivilegesError>;
 
   /**
@@ -261,14 +267,16 @@ export interface PartialState {
    * `m`: manager service (can change privileged services)
    * `a`: manages authorization queue
    * `v`: manages validator keys
-   * `g`: collection of serviceId -> gas that auto-accumulate every block
+   * `r`: manages create new services in protected id range.
+   * `z`: collection of serviceId -> gas that auto-accumulate every block
    *
    */
   updatePrivilegedServices(
     m: ServiceId | null,
     a: PerCore<ServiceId>,
     v: ServiceId | null,
-    g: [ServiceId, ServiceGas][],
+    r: ServiceId | null,
+    z: [ServiceId, ServiceGas][],
   ): Result<OK, UpdatePrivilegesError>;
 
   /** Yield accumulation trie result hash. */

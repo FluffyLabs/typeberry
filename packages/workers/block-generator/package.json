@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/block-generator",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "A test block generator simulating blocks received over the network.",
   "main": "index.ts",
   "dependencies": {
@@ -11,14 +11,13 @@
     "@typeberry/config": "*",
     "@typeberry/crypto": "*",
     "@typeberry/database": "*",
-    "@typeberry/database-lmdb": "*",
-    "@typeberry/generic-worker": "*",
     "@typeberry/hash": "*",
     "@typeberry/logger": "*",
-    "@typeberry/state-machine": "*",
     "@typeberry/state-merkleization": "*",
     "@typeberry/transition": "*",
-    "@typeberry/utils": "*"
+    "@typeberry/utils": "*",
+    "@typeberry/workers-api": "*",
+    "@typeberry/workers-api-node": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

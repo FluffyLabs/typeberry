@@ -1,6 +1,5 @@
 import {
   type EntropyHash,
-  type PerEpochBlock,
   type PerValidator,
   type ServiceId,
   type TimeSlot,
@@ -10,9 +9,8 @@ import {
   tryAsTimeSlot,
   type WorkReportHash,
 } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE, type MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
+import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import type { Ticket } from "@typeberry/block/tickets.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { codec } from "@typeberry/codec";
@@ -21,7 +19,6 @@ import {
   FixedSizeArray,
   HashDictionary,
   HashSet,
-  type ImmutableHashSet,
   type KnownSizeArray,
   SortedArray,
   SortedSet,
@@ -31,14 +28,18 @@ import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519K
 import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
+import { MAX_VALUE } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import { asOpaqueType, assertNever, check, OK, Result, WithDebug } from "@typeberry/utils";
 import { type AccumulationOutput, accumulationOutputComparator } from "./accumulation-output.js";
+import type { AccumulationQueue } from "./accumulation-queue.js";
 import type { AvailabilityAssignment } from "./assurances.js";
+import { AUTHORIZATION_QUEUE_SIZE, type AuthorizationPool, type AuthorizationQueue } from "./auth.js";
 import { type PerCore, tryAsPerCore } from "./common.js";
 import { DisputesRecords, hashComparator } from "./disputes.js";
-import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
+import { InMemoryStateView } from "./in-memory-state-view.js";
 import { PrivilegedServices } from "./privileged-services.js";
-import { RecentBlocksHistory } from "./recent-blocks.js";
+import { RecentBlocks } from "./recent-blocks.js";
+import type { RecentlyAccumulated } from "./recently-accumulated.js";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "./safrole-data.js";
 import {
   LookupHistoryItem,
@@ -59,6 +60,7 @@ import {
   type UpdateStorage,
   UpdateStorageKind,
 } from "./state-update.js";
+import type { StateView, WithStateView } from "./state-view.js";
 import { CoreStatistics, StatisticsData, ValidatorStatistics } from "./statistics.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "./validator-data.js";
 
@@ -178,10 +180,10 @@ export class InMemoryService extends WithDebug implements Service {
 /**
  * A special version of state, stored fully in-memory.
  */
-export class InMemoryState extends WithDebug implements State, EnumerableState {
+export class InMemoryState extends WithDebug implements State, WithStateView, EnumerableState {
   /** Create a new `InMemoryState` by providing all required fields. */
-  static create(state: InMemoryStateFields) {
-    return new InMemoryState(state);
+  static new(chainSpec: ChainSpec, state: InMemoryStateFields) {
+    return new InMemoryState(chainSpec, state);
   }
 
   /**
@@ -199,7 +201,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
   /**
    * Create a new `InMemoryState` from some other state object.
    */
-  static copyFrom(other: State, servicesData: Map<ServiceId, ServiceEntries>) {
+  static copyFrom(chainSpec: ChainSpec, other: State, servicesData: Map<ServiceId, ServiceEntries>) {
     const services = new Map<ServiceId, InMemoryService>();
     for (const [id, entries] of servicesData.entries()) {
       const service = other.getService(id);
@@ -210,7 +212,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       services.set(id, inMemService);
     }
 
-    return InMemoryState.create({
+    return InMemoryState.new(chainSpec, {
       availabilityAssignment: other.availabilityAssignment,
       accumulationQueue: other.accumulationQueue,
       designatedValidatorData: other.designatedValidatorData,
@@ -255,13 +257,13 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
    * Modify the state and apply a single state update.
    */
   applyUpdate(update: Partial<State & ServicesUpdate>): Result<OK, UpdateError> {
-    const { servicesRemoved, servicesUpdates, preimages, storage, ...rest } = update;
+    const { removed, created: _, updated, preimages, storage, ...rest } = update;
     // just assign all other variables
     Object.assign(this, rest);
 
     // and update the services state
     let result: Result<OK, UpdateError>;
-    result = this.updateServices(servicesUpdates);
+    result = this.updateServices(updated);
     if (result.isError) {
       return result;
     }
@@ -273,7 +275,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     if (result.isError) {
       return result;
     }
-    this.removeServices(servicesRemoved);
+    this.removeServices(removed);
 
     return Result.ok(OK);
   }
@@ -285,93 +287,108 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     }
   }
 
-  private updateStorage(storage: UpdateStorage[] | undefined): Result<OK, UpdateError> {
-    for (const { serviceId, action } of storage ?? []) {
-      const { kind } = action;
-      const service = this.services.get(serviceId);
-      if (service === undefined) {
-        return Result.error(
-          UpdateError.NoService,
-          `Attempting to update storage of non-existing service: ${serviceId}`,
-        );
-      }
+  private updateStorage(storageUpdates: Map<ServiceId, UpdateStorage[]> | undefined): Result<OK, UpdateError> {
+    if (storageUpdates === undefined) {
+      return Result.ok(OK);
+    }
+    for (const [serviceId, updates] of storageUpdates.entries()) {
+      for (const update of updates) {
+        const { kind } = update.action;
+        const service = this.services.get(serviceId);
+        if (service === undefined) {
+          return Result.error(
+            UpdateError.NoService,
+            () => `Attempting to update storage of non-existing service: ${serviceId}`,
+          );
+        }
 
-      if (kind === UpdateStorageKind.Set) {
-        const { key, value } = action.storage;
-        service.data.storage.set(key.toString(), StorageItem.create({ key, value }));
-      } else if (kind === UpdateStorageKind.Remove) {
-        const { key } = action;
-        check`
+        if (kind === UpdateStorageKind.Set) {
+          const { key, value } = update.action.storage;
+          service.data.storage.set(key.toString(), StorageItem.create({ key, value }));
+        } else if (kind === UpdateStorageKind.Remove) {
+          const { key } = update.action;
+          check`
           ${service.data.storage.has(key.toString())}
-          Attempting to remove non-existing storage item at ${serviceId}: ${action.key}
+          Attempting to remove non-existing storage item at ${serviceId}: ${update.action.key}
         `;
-        service.data.storage.delete(key.toString());
-      } else {
-        assertNever(kind);
+          service.data.storage.delete(key.toString());
+        } else {
+          assertNever(kind);
+        }
       }
     }
-
     return Result.ok(OK);
   }
 
-  private updatePreimages(preimages: UpdatePreimage[] | undefined): Result<OK, UpdateError> {
-    for (const { serviceId, action } of preimages ?? []) {
+  private updatePreimages(preimagesUpdates: Map<ServiceId, UpdatePreimage[]> | undefined): Result<OK, UpdateError> {
+    if (preimagesUpdates === undefined) {
+      return Result.ok(OK);
+    }
+    for (const [serviceId, updates] of preimagesUpdates.entries()) {
       const service = this.services.get(serviceId);
       if (service === undefined) {
         return Result.error(
           UpdateError.NoService,
-          `Attempting to update preimage of non-existing service: ${serviceId}`,
+          () => `Attempting to update preimage of non-existing service: ${serviceId}`,
         );
       }
-      const { kind } = action;
-      if (kind === UpdatePreimageKind.Provide) {
-        const { preimage, slot } = action;
-        if (service.data.preimages.has(preimage.hash)) {
-          return Result.error(UpdateError.PreimageExists, `Overwriting existing preimage at ${serviceId}: ${preimage}`);
-        }
-        service.data.preimages.set(preimage.hash, preimage);
-        if (slot !== null) {
-          const lookupHistory = service.data.lookupHistory.get(preimage.hash);
-          const length = tryAsU32(preimage.blob.length);
-          const lookup = new LookupHistoryItem(preimage.hash, length, tryAsLookupHistorySlots([slot]));
-          if (lookupHistory === undefined) {
-            // no lookup history for that preimage at all (edge case, should be requested)
-            service.data.lookupHistory.set(preimage.hash, [lookup]);
-          } else {
-            // insert or replace exiting entry
-            const index = lookupHistory.map((x) => x.length).indexOf(length);
-            lookupHistory.splice(index, index === -1 ? 0 : 1, lookup);
+      for (const update of updates) {
+        const { kind } = update.action;
+        if (kind === UpdatePreimageKind.Provide) {
+          const { preimage, slot } = update.action;
+          if (service.data.preimages.has(preimage.hash)) {
+            return Result.error(
+              UpdateError.PreimageExists,
+              () => `Overwriting existing preimage at ${serviceId}: ${preimage}`,
+            );
           }
+          service.data.preimages.set(preimage.hash, preimage);
+          if (slot !== null) {
+            const lookupHistory = service.data.lookupHistory.get(preimage.hash);
+            const length = tryAsU32(preimage.blob.length);
+            const lookup = new LookupHistoryItem(preimage.hash, length, tryAsLookupHistorySlots([slot]));
+            if (lookupHistory === undefined) {
+              // no lookup history for that preimage at all (edge case, should be requested)
+              service.data.lookupHistory.set(preimage.hash, [lookup]);
+            } else {
+              // insert or replace exiting entry
+              const index = lookupHistory.map((x) => x.length).indexOf(length);
+              lookupHistory.splice(index, index === -1 ? 0 : 1, lookup);
+            }
+          }
+        } else if (kind === UpdatePreimageKind.Remove) {
+          const { hash, length } = update.action;
+          service.data.preimages.delete(hash);
+          const history = service.data.lookupHistory.get(hash) ?? [];
+          const idx = history.map((x) => x.length).indexOf(length);
+          if (idx !== -1) {
+            history.splice(idx, 1);
+          }
+        } else if (kind === UpdatePreimageKind.UpdateOrAdd) {
+          const { item } = update.action;
+          const history = service.data.lookupHistory.get(item.hash) ?? [];
+          const existingIdx = history.map((x) => x.length).indexOf(item.length);
+          const removeCount = existingIdx === -1 ? 0 : 1;
+          history.splice(existingIdx, removeCount, item);
+          service.data.lookupHistory.set(item.hash, history);
+        } else {
+          assertNever(kind);
         }
-      } else if (kind === UpdatePreimageKind.Remove) {
-        const { hash, length } = action;
-        service.data.preimages.delete(hash);
-        const history = service.data.lookupHistory.get(hash) ?? [];
-        const idx = history.map((x) => x.length).indexOf(length);
-        if (idx !== -1) {
-          history.splice(idx, 1);
-        }
-      } else if (kind === UpdatePreimageKind.UpdateOrAdd) {
-        const { item } = action;
-        const history = service.data.lookupHistory.get(item.hash) ?? [];
-        const existingIdx = history.map((x) => x.length).indexOf(item.length);
-        const removeCount = existingIdx === -1 ? 0 : 1;
-        history.splice(existingIdx, removeCount, item);
-        service.data.lookupHistory.set(item.hash, history);
-      } else {
-        assertNever(kind);
       }
     }
     return Result.ok(OK);
   }
 
-  private updateServices(servicesUpdates?: UpdateService[]): Result<OK, UpdateError> {
-    for (const { serviceId, action } of servicesUpdates ?? []) {
-      const { kind, account } = action;
+  private updateServices(servicesUpdates: Map<ServiceId, UpdateService> | undefined): Result<OK, UpdateError> {
+    if (servicesUpdates === undefined) {
+      return Result.ok(OK);
+    }
+    for (const [serviceId, update] of servicesUpdates.entries()) {
+      const { kind, account } = update.action;
       if (kind === UpdateServiceKind.Create) {
-        const { lookupHistory } = action;
+        const { lookupHistory } = update.action;
         if (this.services.has(serviceId)) {
-          return Result.error(UpdateError.DuplicateService, `${serviceId} already exists!`);
+          return Result.error(UpdateError.DuplicateService, () => `${serviceId} already exists!`);
         }
         this.services.set(
           serviceId,
@@ -387,7 +404,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       } else if (kind === UpdateServiceKind.Update) {
         const existingService = this.services.get(serviceId);
         if (existingService === undefined) {
-          return Result.error(UpdateError.NoService, `Cannot update ${serviceId} because it does not exist.`);
+          return Result.error(UpdateError.NoService, () => `Cannot update ${serviceId} because it does not exist.`);
         }
         existingService.data.info = account;
       } else {
@@ -405,12 +422,12 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
   disputesRecords: DisputesRecords;
   timeslot: TimeSlot;
   entropy: FixedSizeArray<EntropyHash, ENTROPY_ENTRIES>;
-  authPools: PerCore<KnownSizeArray<AuthorizerHash, `At most ${typeof MAX_AUTH_POOL_SIZE}`>>;
-  authQueues: PerCore<FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>>;
-  recentBlocks: RecentBlocksHistory;
+  authPools: PerCore<AuthorizationPool>;
+  authQueues: PerCore<AuthorizationQueue>;
+  recentBlocks: RecentBlocks;
   statistics: StatisticsData;
-  accumulationQueue: PerEpochBlock<readonly NotYetAccumulatedReport[]>;
-  recentlyAccumulated: PerEpochBlock<ImmutableHashSet<WorkPackageHash>>;
+  accumulationQueue: AccumulationQueue;
+  recentlyAccumulated: RecentlyAccumulated;
   ticketsAccumulator: KnownSizeArray<Ticket, "0...EpochLength">;
   sealingKeySeries: SafroleSealingKeys;
   epochRoot: BandersnatchRingRoot;
@@ -426,7 +443,10 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     return this.services.get(id) ?? null;
   }
 
-  private constructor(s: InMemoryStateFields) {
+  protected constructor(
+    private readonly chainSpec: ChainSpec,
+    s: InMemoryStateFields,
+  ) {
     super();
     this.availabilityAssignment = s.availabilityAssignment;
     this.designatedValidatorData = s.designatedValidatorData;
@@ -450,11 +470,15 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     this.services = s.services;
   }
 
+  view(): StateView {
+    return new InMemoryStateView(this.chainSpec, this);
+  }
+
   /**
    * Create an empty and possibly incoherent `InMemoryState`.
    */
   static empty(spec: ChainSpec) {
-    return new InMemoryState({
+    return new InMemoryState(spec, {
       availabilityAssignment: tryAsPerCore(
         Array.from({ length: spec.coresCount }, () => null),
         spec,
@@ -521,7 +545,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
         ),
         spec,
       ),
-      recentBlocks: RecentBlocksHistory.empty(),
+      recentBlocks: RecentBlocks.empty(),
       statistics: StatisticsData.create({
         current: tryAsPerValidator(
           Array.from({ length: spec.validatorsCount }, () => ValidatorStatistics.empty()),
@@ -555,8 +579,9 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
       privilegedServices: PrivilegedServices.create({
         manager: tryAsServiceId(0),
-        authManager: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
-        validatorsManager: tryAsServiceId(0),
+        assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
+        delegator: tryAsServiceId(0),
+        registrar: tryAsServiceId(MAX_VALUE),
         autoAccumulateServices: [],
       }),
       accumulationOutputLog: SortedArray.fromArray(accumulationOutputComparator, []),

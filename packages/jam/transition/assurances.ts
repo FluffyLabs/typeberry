@@ -92,13 +92,16 @@ export class Assurances {
     for (const assurance of assurances) {
       const { anchor, validatorIndex, bitfield } = assurance;
       if (!anchor.isEqualTo(input.parentHash)) {
-        return Result.error(AssurancesError.InvalidAnchor, `anchor: expected: ${input.parentHash}, got ${anchor}`);
+        return Result.error(
+          AssurancesError.InvalidAnchor,
+          () => `anchor: expected: ${input.parentHash}, got ${anchor}`,
+        );
       }
 
       if (prevValidatorIndex >= validatorIndex) {
         return Result.error(
           AssurancesError.InvalidOrder,
-          `order: expected: ${prevValidatorIndex + 1}, got: ${validatorIndex}`,
+          () => `order: expected: ${prevValidatorIndex + 1}, got: ${validatorIndex}`,
         );
       }
       prevValidatorIndex = assurance.validatorIndex;
@@ -125,7 +128,10 @@ export class Assurances {
        * https://graypaper.fluffylabs.dev/#/579bd12/14e90014ea00
        */
       if (noOfAssurances > 0 && !isReportPending) {
-        return Result.error(AssurancesError.NoReportPending, `no report pending for core ${c} yet we got an assurance`);
+        return Result.error(
+          AssurancesError.NoReportPending,
+          () => `no report pending for core ${c} yet we got an assurance`,
+        );
       }
 
       /**
@@ -176,7 +182,10 @@ export class Assurances {
       const v = assurance.view();
       const key = validatorData[v.validatorIndex.materialize()];
       if (key === undefined) {
-        return Result.error(AssurancesError.InvalidValidatorIndex);
+        return Result.error(
+          AssurancesError.InvalidValidatorIndex,
+          () => `Invalid validator index: ${v.validatorIndex.materialize()}`,
+        );
       }
       signatures.push({
         signature: v.signature.materialize(),
@@ -192,7 +201,7 @@ export class Assurances {
         (acc, isValid, idx) => (isValid ? acc : acc.concat(idx)),
         [] as number[],
       );
-      return Result.error(AssurancesError.InvalidSignature, `invalid signatures at ${invalidIndices.join(", ")}`);
+      return Result.error(AssurancesError.InvalidSignature, () => `invalid signatures at ${invalidIndices.join(", ")}`);
     }
 
     return Result.ok(OK);

@@ -234,7 +234,7 @@ export class Safrole {
       });
     }
 
-    return Result.error(SafroleErrorCode.IncorrectData);
+    return Result.error(SafroleErrorCode.IncorrectData, () => "Safrole: failed to get epoch root for validator keys");
   }
 
   /**
@@ -346,11 +346,11 @@ export class Safrole {
     for (let i = 1; i < ticketsLength; i++) {
       const order = tickets[i - 1].id.compare(tickets[i].id);
       if (order.isEqual()) {
-        return Result.error(SafroleErrorCode.DuplicateTicket);
+        return Result.error(SafroleErrorCode.DuplicateTicket, () => `Safrole: duplicate ticket found at index ${i}`);
       }
 
       if (order.isGreater()) {
-        return Result.error(SafroleErrorCode.BadTicketOrder);
+        return Result.error(SafroleErrorCode.BadTicketOrder, () => `Safrole: bad ticket order at index ${i}`);
       }
     }
 
@@ -394,7 +394,7 @@ export class Safrole {
     }));
 
     if (!verificationResult.every((x) => x.isValid)) {
-      return Result.error(SafroleErrorCode.BadTicketProof);
+      return Result.error(SafroleErrorCode.BadTicketProof, () => "Safrole: invalid ticket proof in extrinsic");
     }
 
     /**
@@ -402,10 +402,9 @@ export class Safrole {
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/0fe4000fe400
      */
-
     const ticketsVerifcationResult = this.verifyTickets(tickets);
     if (ticketsVerifcationResult.isError) {
-      return Result.error(ticketsVerifcationResult.error);
+      return Result.error(ticketsVerifcationResult.error, ticketsVerifcationResult.details);
     }
 
     if (this.isEpochChanged(timeslot)) {
@@ -417,7 +416,10 @@ export class Safrole {
     const mergedTickets = SortedSet.fromTwoSortedCollections(ticketsFromState, ticketsFromExtrinsic);
 
     if (ticketsFromState.length + ticketsFromExtrinsic.length !== mergedTickets.length) {
-      return Result.error(SafroleErrorCode.DuplicateTicket);
+      return Result.error(
+        SafroleErrorCode.DuplicateTicket,
+        () => "Safrole: duplicate ticket when merging state and extrinsic tickets",
+      );
     }
 
     /**
@@ -500,21 +502,27 @@ export class Safrole {
 
   async transition(input: Input): Promise<Result<OkResult, SafroleErrorCode>> {
     if (this.state.timeslot >= input.slot) {
-      return Result.error(SafroleErrorCode.BadSlot);
+      return Result.error(
+        SafroleErrorCode.BadSlot,
+        () => `Safrole: bad slot, state timeslot ${this.state.timeslot} >= input slot ${input.slot}`,
+      );
     }
 
     if (!this.isExtrinsicLengthValid(input.slot, input.extrinsic)) {
-      return Result.error(SafroleErrorCode.UnexpectedTicket);
+      return Result.error(
+        SafroleErrorCode.UnexpectedTicket,
+        () => `Safrole: unexpected ticket, invalid extrinsic length ${input.extrinsic.length}`,
+      );
     }
 
     if (!this.areTicketAttemptsValid(input.extrinsic)) {
-      return Result.error(SafroleErrorCode.BadTicketAttempt);
+      return Result.error(SafroleErrorCode.BadTicketAttempt, () => "Safrole: bad ticket attempt value in extrinsic");
     }
 
     const validatorKeysResult = await this.getValidatorKeys(input.slot, input.punishSet);
 
     if (validatorKeysResult.isError) {
-      return Result.error(validatorKeysResult.error);
+      return Result.error(validatorKeysResult.error, validatorKeysResult.details);
     }
 
     const { nextValidatorData, currentValidatorData, previousValidatorData, epochRoot } = validatorKeysResult.ok;
@@ -529,7 +537,7 @@ export class Safrole {
     );
 
     if (newTicketsAccumulatorResult.isError) {
-      return Result.error(newTicketsAccumulatorResult.error);
+      return Result.error(newTicketsAccumulatorResult.error, newTicketsAccumulatorResult.details);
     }
 
     const stateUpdate = {
@@ -587,7 +595,7 @@ function compareWithEncoding<T, D extends DescriptorRecord<T>>(
   if (actual === null || expected === null) {
     // if one of them is `null`, both need to be.
     if (actual !== expected) {
-      return Result.error(error, `${SafroleErrorCode[error]} Expected: ${expected}, got: ${actual}`);
+      return Result.error(error, () => `${SafroleErrorCode[error]} Expected: ${expected}, got: ${actual}`);
     }
     return Result.ok(OK);
   }
@@ -595,7 +603,7 @@ function compareWithEncoding<T, D extends DescriptorRecord<T>>(
   // compare the literal encoding.
   const encoded = Encoder.encodeObject(codec, actual, chainSpec);
   if (!encoded.isEqualTo(expected.encoded())) {
-    return Result.error(error, `${SafroleErrorCode[error]} Expected: ${expected.encoded()}, got: ${encoded}`);
+    return Result.error(error, () => `${SafroleErrorCode[error]} Expected: ${expected.encoded()}, got: ${encoded}`);
   }
 
   return Result.ok(OK);

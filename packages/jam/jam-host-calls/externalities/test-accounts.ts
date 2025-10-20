@@ -45,7 +45,7 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
 
   write(hash: StorageKey, data: BytesBlob | null): Result<number | null, "full"> {
     if (this.isStorageFull()) {
-      return Result.error("full");
+      return Result.error("full", () => "Test accounts: storage is full");
     }
 
     const prev = this.storage.get(this.serviceId, hash);

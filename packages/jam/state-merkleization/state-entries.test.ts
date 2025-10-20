@@ -56,14 +56,14 @@ describe("State Serialization", () => {
     const state = SerializedState.fromStateEntries(spec, blake2b, serialized);
     assert.deepStrictEqual(state.authPools, authPools);
 
-    let expectedRoot: string;
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)) {
-      expectedRoot = "0xcf33ddfb0987283f7614652d7eb4d3509e5efd93466a4b28ab4865cc912a66e1";
-    } else if (Compatibility.is(GpVersion.V0_6_7)) {
-      expectedRoot = "0xa6354341d3c232456ec5cdd4fd84daf474d7083ebc4de180363e656c6e62a704";
-    } else {
-      expectedRoot = "0xb075c9dacc6df40a4ac189b6573e9a0d35f2744a759b1ce0d51a272bab3bea5f";
-    }
+    const expectedRoot = Compatibility.selectIfGreaterOrEqual({
+      fallback: "0xb075c9dacc6df40a4ac189b6573e9a0d35f2744a759b1ce0d51a272bab3bea5f",
+      versions: {
+        [GpVersion.V0_6_7]: "0xa6354341d3c232456ec5cdd4fd84daf474d7083ebc4de180363e656c6e62a704",
+        [GpVersion.V0_7_0]: "0xcf33ddfb0987283f7614652d7eb4d3509e5efd93466a4b28ab4865cc912a66e1",
+        [GpVersion.V0_7_1]: "0xf1dff0f8d8d5470aa6fc381d07e644f5b2f7a32bf06a7cf1dc664fe4b6298402",
+      },
+    });
 
     assert.strictEqual(serialized.getRootHash(blake2b).toString(), expectedRoot);
   });

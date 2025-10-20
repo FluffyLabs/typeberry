@@ -10,7 +10,7 @@ import { HashSet } from "@typeberry/collections/hash-set.js";
 import { Logger } from "@typeberry/logger";
 import type { U32 } from "@typeberry/numbers";
 import type { State } from "@typeberry/state";
-import { type BlockState, RecentBlocksHistory } from "@typeberry/state/recent-blocks.js";
+import type { BlockState } from "@typeberry/state/recent-blocks.js";
 import { OK, Result } from "@typeberry/utils";
 import type { RecentHistoryStateUpdate } from "../recent-history.js";
 import { ReportsError } from "./error.js";
@@ -54,7 +54,7 @@ export function verifyContextualValidity(
     for (const result of guarantee.report.results) {
       const service = state.getService(result.serviceId);
       if (service === null) {
-        return Result.error(ReportsError.BadServiceId, `No service with id: ${result.serviceId}`);
+        return Result.error(ReportsError.BadServiceId, () => `No service with id: ${result.serviceId}`);
       }
 
       // check service code hash
@@ -62,7 +62,8 @@ export function verifyContextualValidity(
       if (!result.codeHash.isEqualTo(service.getInfo().codeHash)) {
         return Result.error(
           ReportsError.BadCodeHash,
-          `Service (${result.serviceId}) code hash mismatch. Got: ${result.codeHash}, expected: ${service.getInfo().codeHash}`,
+          () =>
+            `Service (${result.serviceId}) code hash mismatch. Got: ${result.codeHash}, expected: ${service.getInfo().codeHash}`,
         );
       }
     }
@@ -75,7 +76,7 @@ export function verifyContextualValidity(
    * https://graypaper.fluffylabs.dev/#/5f542d7/151f01152101
    */
   if (currentWorkPackages.size !== input.guarantees.length) {
-    return Result.error(ReportsError.DuplicatePackage, "Duplicate work package detected.");
+    return Result.error(ReportsError.DuplicatePackage, () => "Duplicate work package detected.");
   }
 
   const minLookupSlot = Math.max(0, input.slot - maxLookupAnchorAge);
@@ -127,7 +128,8 @@ export function verifyContextualValidity(
       if (root === undefined || !root.segmentTreeRoot.isEqualTo(lookup.segmentTreeRoot)) {
         return Result.error(
           ReportsError.SegmentRootLookupInvalid,
-          `Mismatching segment tree root for package ${lookup.workPackageHash}. Got: ${lookup.segmentTreeRoot}, expected: ${root?.segmentTreeRoot}`,
+          () =>
+            `Mismatching segment tree root for package ${lookup.workPackageHash}. Got: ${lookup.segmentTreeRoot}, expected: ${root?.segmentTreeRoot}`,
         );
       }
     }
@@ -159,23 +161,27 @@ function verifyRefineContexts(
      */
     const recentBlock = recentBlocks.get(context.anchor);
     if (recentBlock === undefined) {
-      return Result.error(ReportsError.AnchorNotRecent, `Anchor block ${context.anchor} not found in recent blocks.`);
+      return Result.error(
+        ReportsError.AnchorNotRecent,
+        () => `Anchor block ${context.anchor} not found in recent blocks.`,
+      );
     }
 
     // check state root
     if (!recentBlock.postStateRoot.isEqualTo(context.stateRoot)) {
       return Result.error(
         ReportsError.BadStateRoot,
-        `Anchor state root mismatch. Got: ${context.stateRoot}, expected: ${recentBlock.postStateRoot}.`,
+        () => `Anchor state root mismatch. Got: ${context.stateRoot}, expected: ${recentBlock.postStateRoot}.`,
       );
     }
 
     // check beefy root
-    const beefyRoot = RecentBlocksHistory.accumulationResult(recentBlock);
+    const beefyRoot = recentBlock.accumulationResult;
     if (!beefyRoot.isEqualTo(context.beefyRoot)) {
       return Result.error(
         ReportsError.BadBeefyMmrRoot,
-        `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${beefyRoot}. Anchor: ${recentBlock.headerHash}`,
+        () =>
+          `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${beefyRoot}. Anchor: ${recentBlock.headerHash}`,
       );
     }
 
@@ -188,7 +194,7 @@ function verifyRefineContexts(
     if (context.lookupAnchorSlot < minLookupSlot) {
       return Result.error(
         ReportsError.SegmentRootLookupInvalid,
-        `Lookup anchor slot's too old. Got: ${context.lookupAnchorSlot}, minimal: ${minLookupSlot}`,
+        () => `Lookup anchor slot's too old. Got: ${context.lookupAnchorSlot}, minimal: ${minLookupSlot}`,
       );
     }
 
@@ -209,7 +215,8 @@ function verifyRefineContexts(
       } else {
         return Result.error(
           ReportsError.SegmentRootLookupInvalid,
-          `Lookup anchor is not found in chain. Hash: ${context.lookupAnchor} (slot: ${context.lookupAnchorSlot})`,
+          () =>
+            `Lookup anchor is not found in chain. Hash: ${context.lookupAnchor} (slot: ${context.lookupAnchorSlot})`,
         );
       }
     }
@@ -252,7 +259,7 @@ function verifyDependencies({
 
       return Result.error(
         isSegmentRoot ? ReportsError.SegmentRootLookupInvalid : ReportsError.DependencyMissing,
-        `Missing work package ${preReqHash} in current extrinsic or recent history.`,
+        () => `Missing work package ${preReqHash} in current extrinsic or recent history.`,
       );
     }
 
@@ -315,7 +322,7 @@ function verifyWorkPackagesUniqueness(
   for (const packageHash of intersection) {
     return Result.error(
       ReportsError.DuplicatePackage,
-      `The same work package hash found in the pipeline (workPackageHash: ${packageHash})`,
+      () => `The same work package hash found in the pipeline (workPackageHash: ${packageHash})`,
     );
   }
 

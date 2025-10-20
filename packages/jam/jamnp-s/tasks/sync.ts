@@ -210,6 +210,7 @@ export class SyncTask {
   }
 
   /** Broadcast header we have seen or produced to our peers. */
+  // TODO [ToDr] consider returning promise for backpressure
   broadcastHeader(header: WithHash<HeaderHash, HeaderView>) {
     const slot = header.data.timeSlotIndex.materialize();
     const annoucement = up0.Announcement.create({

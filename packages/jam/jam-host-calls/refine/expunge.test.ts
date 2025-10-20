@@ -61,7 +61,7 @@ describe("HostCalls: Expunge", () => {
   });
 
   it("should return WHO if machine unknown", async () => {
-    const { expunge, registers } = prepareTest(Result.error(NoMachineError));
+    const { expunge, registers } = prepareTest(Result.error(NoMachineError, () => "Test: error occurred"));
 
     // when
     const result = await expunge.execute(gas, registers);

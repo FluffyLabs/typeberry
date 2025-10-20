@@ -2,6 +2,7 @@ import { type ServiceId, tryAsTimeSlot } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { type Decode, Decoder } from "@typeberry/codec";
+import { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { Blake2b } from "@typeberry/hash";
 import { type U32, u32AsLeBytes } from "@typeberry/numbers";
@@ -14,20 +15,12 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
+import type { StateView, WithStateView } from "@typeberry/state/state-view.js";
 import { asOpaqueType, Compatibility, GpVersion, safeAllocUint8Array, TEST_COMPARE_USING } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
 import { serialize } from "./serialize.js";
+import { type SerializedStateBackend, SerializedStateView } from "./serialized-state-view.js";
 import type { StateEntries } from "./state-entries.js";
-
-/**
- * Abstraction over some backend containing serialized state entries.
- *
- * This may or may not be backed by some on-disk database or can be just stored in memory.
- */
-export interface SerializedStateBackend {
-  /** Retrieve given state key. */
-  get(key: StateKey): BytesBlob | null;
-}
 
 /**
  * State object which reads it's entries from some backend.
@@ -38,7 +31,7 @@ export interface SerializedStateBackend {
  * in the backend layer, so it MAY fail during runtime.
  */
 export class SerializedState<T extends SerializedStateBackend = SerializedStateBackend>
-  implements State, EnumerableState
+  implements State, WithStateView, EnumerableState
 {
   /** Create a state-like object from collection of serialized entries. */
   static fromStateEntries(spec: ChainSpec, blake2b: Blake2b, state: StateEntries, recentServices: ServiceId[] = []) {
@@ -55,12 +48,15 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
     return new SerializedState(spec, blake2b, db, recentServices);
   }
 
+  private dataCache: HashDictionary<StateKey, unknown> = HashDictionary.new();
+  private viewCache: HashDictionary<StateKey, unknown> = HashDictionary.new();
+
   private constructor(
     private readonly spec: ChainSpec,
     private readonly blake2b: Blake2b,
     public backend: T,
     /** Best-effort list of recently active services. */
-    private readonly _recentServiceIds: ServiceId[],
+    private readonly recentlyUsedServices: ServiceId[],
   ) {}
 
   /** Comparing the serialized states, just means comparing their backends. */
@@ -68,14 +64,21 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
     return this.backend;
   }
 
+  /** Return a non-decoding version of the state. */
+  view(): StateView {
+    return new SerializedStateView(this.spec, this.backend, this.recentlyUsedServices, this.viewCache);
+  }
+
   // TODO [ToDr] Temporary method to update the state,
   // without changing references.
   public updateBackend(newBackend: T) {
     this.backend = newBackend;
+    this.dataCache = HashDictionary.new();
+    this.viewCache = HashDictionary.new();
   }
 
   recentServiceIds(): readonly ServiceId[] {
-    return this._recentServiceIds;
+    return this.recentlyUsedServices;
   }
 
   getService(id: ServiceId): SerializedService | null {
@@ -84,27 +87,33 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
       return null;
     }
 
-    if (!this._recentServiceIds.includes(id)) {
-      this._recentServiceIds.push(id);
+    if (!this.recentlyUsedServices.includes(id)) {
+      this.recentlyUsedServices.push(id);
     }
 
     return new SerializedService(this.blake2b, id, serviceData, (key) => this.retrieveOptional(key));
   }
 
-  private retrieve<T>({ key, Codec }: KeyAndCodec<T>, description: string): T {
-    const bytes = this.backend.get(key);
-    if (bytes === null) {
-      throw new Error(`Required state entry for ${description} is missing!. Accessing key: ${key}`);
+  private retrieve<T>(k: KeyAndCodec<T>, description: string): T {
+    const data = this.retrieveOptional(k);
+    if (data === undefined) {
+      throw new Error(`Required state entry for ${description} is missing!. Accessing key: ${k.key}`);
     }
-    return Decoder.decodeObject(Codec, bytes, this.spec);
+    return data;
   }
 
   private retrieveOptional<T>({ key, Codec }: KeyAndCodec<T>): T | undefined {
+    const cached = this.dataCache.get(key);
+    if (cached !== undefined) {
+      return cached as T;
+    }
     const bytes = this.backend.get(key);
     if (bytes === null) {
       return undefined;
     }
-    return Decoder.decodeObject(Codec, bytes, this.spec);
+    const data = Decoder.decodeObject(Codec, bytes, this.spec);
+    this.dataCache.set(key, data);
+    return data;
   }
 
   get availabilityAssignment(): State["availabilityAssignment"] {

@@ -3,9 +3,7 @@ import {
   encodeUnsealedHeader,
   type HeaderView,
   type PerEpochBlock,
-  type PerValidator,
   type TimeSlot,
-  type ValidatorIndex,
 } from "@typeberry/block";
 import type { Ticket } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
@@ -60,7 +58,10 @@ export class SafroleSeal {
     );
 
     if (entropySourceResult.isError) {
-      return Result.error(SafroleSealError.IncorrectEntropySource);
+      return Result.error(
+        SafroleSealError.IncorrectEntropySource,
+        () => "Safrole: incorrect entropy source in header seal",
+      );
     }
 
     return Result.ok(entropySourceResult.ok);
@@ -71,12 +72,14 @@ export class SafroleSeal {
     state: SafroleSealState,
   ): Promise<Result<EntropyHash, SafroleSealError>> {
     // we use transitioned keys already
-    const validators = state.currentValidatorData;
     const validatorIndex = headerView.bandersnatchBlockAuthorIndex.materialize();
+    const authorKeys = state.currentValidatorData.at(validatorIndex);
 
-    const authorKey = validators[validatorIndex];
-    if (authorKey === undefined) {
-      return Result.error(SafroleSealError.InvalidValidatorIndex);
+    if (authorKeys === undefined) {
+      return Result.error(
+        SafroleSealError.InvalidValidatorIndex,
+        () => `Safrole: invalid validator index ${validatorIndex}`,
+      );
     }
 
     const timeSlot = headerView.timeSlotIndex.materialize();
@@ -84,25 +87,10 @@ export class SafroleSeal {
     const entropy = state.currentEntropy;
 
     if (sealingKeys.kind === SafroleSealingKeysKind.Tickets) {
-      return await this.verifySealWithTicket(
-        sealingKeys.tickets,
-        timeSlot,
-        entropy,
-        validators,
-        validatorIndex,
-        headerView,
-      );
+      return await this.verifySealWithTicket(sealingKeys.tickets, timeSlot, entropy, authorKeys, headerView);
     }
 
-    return await this.verifySealWithKeys(
-      sealingKeys.keys,
-      authorKey,
-      timeSlot,
-      entropy,
-      validators,
-      validatorIndex,
-      headerView,
-    );
+    return await this.verifySealWithKeys(sealingKeys.keys, timeSlot, entropy, authorKeys, headerView);
   }
 
   /** Regular (non-fallback) mode of Safrole. */
@@ -110,15 +98,14 @@ export class SafroleSeal {
     tickets: PerEpochBlock<Ticket>,
     timeSlot: TimeSlot,
     entropy: EntropyHash,
-    validators: PerValidator<ValidatorData>,
-    validatorIndex: ValidatorIndex,
+    validatorData: ValidatorData,
     headerView: HeaderView,
   ): Promise<Result<EntropyHash, SafroleSealError>> {
     const index = timeSlot % tickets.length;
-    const { id, attempt } = tickets[index];
-    const payload = BytesBlob.blobFromParts(JAM_TICKET_SEAL, entropy.raw, new Uint8Array([attempt]));
+    const ticket = tickets.at(index);
+    const payload = BytesBlob.blobFromParts(JAM_TICKET_SEAL, entropy.raw, new Uint8Array([ticket?.attempt ?? 0]));
     // verify seal correctness
-    const authorKey = validators.at(validatorIndex)?.bandersnatch;
+    const authorKey = validatorData.bandersnatch;
     const result = await bandersnatchVrf.verifySeal(
       await this.bandersnatch,
       authorKey ?? BANDERSNATCH_ZERO_KEY,
@@ -128,11 +115,14 @@ export class SafroleSeal {
     );
 
     if (result.isError) {
-      return Result.error(SafroleSealError.IncorrectSeal);
+      return Result.error(SafroleSealError.IncorrectSeal, () => "Safrole: incorrect seal with ticket");
     }
 
-    if (!id.isEqualTo(result.ok)) {
-      return Result.error(SafroleSealError.InvalidTicket);
+    if (ticket === undefined || !ticket.id.isEqualTo(result.ok)) {
+      return Result.error(
+        SafroleSealError.InvalidTicket,
+        () => `Safrole: invalid ticket, expected ${ticket?.id} got ${result.ok}`,
+      );
     }
 
     return Result.ok(result.ok);
@@ -141,35 +131,33 @@ export class SafroleSeal {
   /** Fallback mode of Safrole. */
   async verifySealWithKeys(
     keys: PerEpochBlock<BandersnatchKey>,
-    authorKey: ValidatorData,
     timeSlot: TimeSlot,
     entropy: EntropyHash,
-    validators: PerValidator<ValidatorData>,
-    validatorIndex: ValidatorIndex,
+    authorKey: ValidatorData,
     headerView: HeaderView,
   ): Promise<Result<EntropyHash, SafroleSealError>> {
     const index = timeSlot % keys.length;
-    const sealingKey = keys[index];
-    if (!sealingKey.isEqualTo(authorKey.bandersnatch)) {
+    const sealingKey = keys.at(index);
+    const authorBandersnatchKey = authorKey.bandersnatch;
+    if (sealingKey === undefined || !sealingKey.isEqualTo(authorBandersnatchKey)) {
       return Result.error(
         SafroleSealError.InvalidValidator,
-        `Invalid Validator. Expected: ${sealingKey}, got: ${authorKey.bandersnatch}`,
+        () => `Invalid Validator. Expected: ${sealingKey}, got: ${authorKey.bandersnatch}`,
       );
     }
 
     // verify seal correctness
     const payload = BytesBlob.blobFromParts(JAM_FALLBACK_SEAL, entropy.raw);
-    const blockAuthorKey = validators.at(validatorIndex)?.bandersnatch;
     const result = await bandersnatchVrf.verifySeal(
       await this.bandersnatch,
-      blockAuthorKey ?? BANDERSNATCH_ZERO_KEY,
+      authorBandersnatchKey,
       headerView.seal.materialize(),
       payload,
       encodeUnsealedHeader(headerView),
     );
 
     if (result.isError) {
-      return Result.error(SafroleSealError.IncorrectSeal);
+      return Result.error(SafroleSealError.IncorrectSeal, () => "Safrole: incorrect seal with keys");
     }
 
     return Result.ok(result.ok);

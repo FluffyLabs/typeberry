@@ -378,6 +378,7 @@
     "chi_m": 0,
     "chi_a": [0, 0],
     "chi_v": 0,
+    "chi_r": 0,
     "chi_g": null
   },
   "pi": {
@@ -513,6 +514,7 @@
       "id": 0,
       "data": {
         "service": {
+          "version": 0,
           "code_hash": "0x15f8485e3a88e86182e63280720d5ec9892578f0e577fb1bcdda5cf497950815",
           "balance": 10000000000,
           "min_item_gas": 100,

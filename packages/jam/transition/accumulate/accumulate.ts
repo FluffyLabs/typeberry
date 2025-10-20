@@ -19,7 +19,7 @@ import {
   PartiallyUpdatedState,
 } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
-import { tryAsU32, type U32 } from "@typeberry/numbers";
+import { sumU64, tryAsU32, type U32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
 import {
@@ -27,12 +27,12 @@ import {
   type AutoAccumulate,
   accumulationOutputComparator,
   hashComparator,
+  type NotYetAccumulatedReport,
   PrivilegedServices,
   ServiceAccountInfo,
   type ServicesUpdate,
   tryAsPerCore,
 } from "@typeberry/state";
-import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { assertEmpty, Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/index.js";
@@ -123,39 +123,45 @@ export class Accumulate {
     operands: Operand[],
     gas: ServiceGas,
     entropy: EntropyHash,
-    inputStateUpdate: AccumulationStateUpdate,
+    updatedState: PartiallyUpdatedState,
   ): Promise<Result<InvocationResult, PvmInvocationError>> {
-    const service = this.state.getService(serviceId);
-    if (service === null) {
+    const serviceInfo = updatedState.getServiceInfo(serviceId);
+    if (serviceInfo === null) {
       logger.log`Service with id ${serviceId} not found.`;
-      return Result.error(PvmInvocationError.NoService);
+      return Result.error(PvmInvocationError.NoService, () => `Accumulate: service ${serviceId} not found`);
     }
 
-    const codeHash = service.getInfo().codeHash;
+    const codeHash = serviceInfo.codeHash;
     // TODO [ToDr] Should we check that the preimage is still available?
-    const code = service.getPreimage(codeHash.asOpaque());
+    const code = updatedState.getPreimage(serviceId, codeHash.asOpaque());
 
     if (code === null) {
       logger.log`Code with hash ${codeHash} not found for service ${serviceId}.`;
-      return Result.error(PvmInvocationError.NoPreimage);
+      return Result.error(
+        PvmInvocationError.NoPreimage,
+        () => `Accumulate: code with hash ${codeHash} not found for service ${serviceId}`,
+      );
     }
 
     if (code.length > W_C) {
       logger.log`Code with hash ${codeHash} is too long for service ${serviceId}.`;
-      return Result.error(PvmInvocationError.PreimageTooLong);
+      return Result.error(
+        PvmInvocationError.PreimageTooLong,
+        () => `Accumulate: code length ${code.length} exceeds max ${W_C} for service ${serviceId}`,
+      );
     }
 
     const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec, this.blake2b);
     const partialState = new AccumulateExternalities(
       this.chainSpec,
       this.blake2b,
-      new PartiallyUpdatedState(this.state, inputStateUpdate),
+      updatedState,
       serviceId,
       nextServiceId,
       slot,
     );
 
-    const fetchExternalities = Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
+    const fetchExternalities = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
       ? FetchExternalities.createForAccumulate({ entropy, transfers, operands }, this.chainSpec)
       : FetchExternalities.createForPre071Accumulate({ entropy, operands }, this.chainSpec);
 
@@ -224,6 +230,25 @@ export class Accumulate {
   ) {
     logger.log`Accumulating service ${serviceId}, transfers: ${transfers.length} operands: ${operands.length} at slot: ${slot}.`;
 
+    const updatedState = new PartiallyUpdatedState(this.state, inputStateUpdate);
+
+    // update service balance from incoming transfers
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
+      const serviceInfo = updatedState.getServiceInfo(serviceId);
+      if (serviceInfo !== null) {
+        // update the balance from incoming tranfsers
+        const newBalance = sumU64(serviceInfo.balance, ...transfers.map((item) => item.amount));
+
+        if (newBalance.overflow) {
+          logger.log`Accumulation failed because of overflowing balance ${serviceId}.`;
+          return { stateUpdate: null, consumedGas: 0n };
+        }
+
+        const newInfo = ServiceAccountInfo.create({ ...serviceInfo, balance: newBalance.value });
+        updatedState.updateServiceInfo(serviceId, newInfo);
+      }
+    }
+
     const result = await this.pvmAccumulateInvocation(
       slot,
       serviceId,
@@ -231,13 +256,15 @@ export class Accumulate {
       operands,
       gasCost,
       entropy,
-      inputStateUpdate,
+      updatedState,
     );
 
     if (result.isError) {
-      // https://graypaper.fluffylabs.dev/#/7e6ff6a/2fb6012fb601?v=0.6.7
+      // https://graypaper.fluffylabs.dev/#/ab2cdbd/2fc9032fc903?v=0.7.2
       logger.log`Accumulation failed for ${serviceId}.`;
-      return { stateUpdate: null, consumedGas: 0n };
+      // even though accumulation failed, we still need to make sure that
+      // incoming transfers updated the balance, hence we pass state update here
+      return { stateUpdate: updatedState.stateUpdate, consumedGas: 0n };
     }
 
     logger.log`Accumulation successful for ${serviceId}. Consumed: ${result.ok.consumedGas}`;
@@ -345,7 +372,7 @@ export class Accumulate {
       state: stateAfterParallelAcc,
       ...rest
     } = await this.accumulateInParallel(accumulateData, slot, entropy, statistics, stateUpdate);
-    const newTransfers = stateAfterParallelAcc.transfers;
+    const newTransfers = stateAfterParallelAcc.takeTransfers();
     assertEmpty(rest);
 
     // NOTE [ToDr] recursive invocation
@@ -398,10 +425,11 @@ export class Accumulate {
 
     for (const serviceId of serviceIds) {
       const checkpoint = AccumulationStateUpdate.copyFrom(currentState);
+      const operands = accumulateData.getOperands(serviceId);
       const { consumedGas, stateUpdate } = await this.accumulateSingleService(
         serviceId,
         accumulateData.getTransfers(serviceId),
-        accumulateData.getOperands(serviceId),
+        operands,
         accumulateData.getGasCost(serviceId),
         slot,
         entropy,
@@ -410,19 +438,28 @@ export class Accumulate {
 
       gasCost = tryAsServiceGas(gasCost + consumedGas);
 
+      // https://graypaper.fluffylabs.dev/#/ab2cdbd/193b05193b05?v=0.7.2
       const serviceStatistics = statistics.get(serviceId) ?? { count: tryAsU32(0), gasUsed: tryAsServiceGas(0) };
-      serviceStatistics.count = tryAsU32(serviceStatistics.count + accumulateData.getReportsLength(serviceId));
-      serviceStatistics.gasUsed = tryAsServiceGas(serviceStatistics.gasUsed + consumedGas);
-      statistics.set(serviceId, serviceStatistics);
+      const count = accumulateData.getReportsLength(serviceId);
+
+      // [0.7.1]: do not update statistics, if the service only had incoming transfers
+      if (
+        (Compatibility.isLessThan(GpVersion.V0_7_2) && count > 0) ||
+        (Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) && (count > 0 || consumedGas > 0n))
+      ) {
+        serviceStatistics.count = tryAsU32(serviceStatistics.count + count);
+        serviceStatistics.gasUsed = tryAsServiceGas(serviceStatistics.gasUsed + consumedGas);
+        statistics.set(serviceId, serviceStatistics);
+      }
       currentState = stateUpdate === null ? checkpoint : stateUpdate;
 
       if (Compatibility.is(GpVersion.V0_7_0) && serviceId === currentManager) {
-        const newV = currentState.privilegedServices?.validatorsManager;
+        const newV = currentState.privilegedServices?.delegator;
         if (currentState.privilegedServices !== null && newV !== undefined && serviceIds.includes(newV)) {
-          logger.info`Entering completely incorrect code that probably reverts validatorsManager change. This is valid in 0.7.0 only and incorrect in 0.7.1+`;
+          logger.info`Entering completely incorrect code that probably reverts delegator change. This is valid in 0.7.0 only and incorrect in 0.7.1+`;
           // Since serviceIds already contains newV, this service gets accumulated twice.
           // To avoid double-counting, we skip stats and gas cost tracking here.
-          // We need this accumulation to get the correct `validatorsManager`
+          // We need this accumulation to get the correct `delegator`
           const { stateUpdate } = await this.accumulateSingleService(
             newV,
             [],
@@ -433,11 +470,10 @@ export class Accumulate {
             checkpoint,
           );
 
-          const correctV =
-            stateUpdate?.privilegedServices?.validatorsManager ?? this.state.privilegedServices.validatorsManager;
+          const correctV = stateUpdate?.privilegedServices?.delegator ?? this.state.privilegedServices.delegator;
           currentState.privilegedServices = PrivilegedServices.create({
             ...currentState.privilegedServices,
-            validatorsManager: correctV,
+            delegator: correctV,
           });
         }
       }
@@ -469,9 +505,10 @@ export class Accumulate {
     const accumulationQueue = this.state.accumulationQueue.slice();
     accumulationQueue[phaseIndex] = pruneQueue(toAccumulateLater, accumulatedSet);
 
+    const timeslot = this.state.timeslot;
     for (let i = 1; i < epochLength; i++) {
       const queueIndex = (phaseIndex + epochLength - i) % epochLength;
-      if (i < slot - this.state.timeslot) {
+      if (i < slot - timeslot) {
         accumulationQueue[queueIndex] = [];
       } else {
         accumulationQueue[queueIndex] = pruneQueue(accumulationQueue[queueIndex], accumulatedSet);
@@ -486,6 +523,7 @@ export class Accumulate {
       const info = partialStateUpdate.getServiceInfo(serviceId);
       if (info === null) {
         // NOTE If there is no service, we dont update it.
+        logger.log`Skipping update of ${serviceId}, because we have no service info.`;
         continue;
       }
       // δ‡
@@ -516,6 +554,18 @@ export class Accumulate {
     );
 
     return tryAsServiceGas(gasLimit);
+  }
+
+  /**
+   * Detects the very unlikely situation where multiple services are created with the same ID.
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/30f20330f403?v=0.7.2
+   *
+   * NOTE: This is public only for testing purposes and should not be used outside of accumulation.
+   */
+  public hasDuplicatedServiceIdCreated(createdIds: ServiceId[]): boolean {
+    const uniqueIds = new Set(createdIds);
+    return uniqueIds.size !== createdIds.length;
   }
 
   async transition({ reports, slot, entropy }: AccumulateInput): Promise<Result<AccumulateResult, ACCUMULATION_ERROR>> {
@@ -570,6 +620,11 @@ export class Accumulate {
       ...stateUpdateRest
     } = state;
     assertEmpty(stateUpdateRest);
+
+    if (this.hasDuplicatedServiceIdCreated(services.created)) {
+      logger.trace`Duplicated Service creation detected. Block is invalid.`;
+      return Result.error(ACCUMULATION_ERROR, () => "Accumulate: duplicate service created");
+    }
 
     const accStateUpdate = this.getAccumulationStateUpdate(
       accumulated.toArray(),

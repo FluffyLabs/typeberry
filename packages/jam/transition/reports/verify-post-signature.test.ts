@@ -28,7 +28,7 @@ describe("Reports.verifyPostSignatureChecks", () => {
       isOk: false,
       isError: true,
       error: ReportsError.CoreEngaged,
-      details: "Report pending availability at core: 0",
+      details: () => "Report pending availability at core: 0",
     });
   });
 
@@ -48,7 +48,7 @@ describe("Reports.verifyPostSignatureChecks", () => {
       isOk: false,
       isError: true,
       error: ReportsError.CoreUnauthorized,
-      details:
+      details: () =>
         "Authorizer hash not found in the pool of core 0: 0x022e5e165cc8bd586404257f5cd6f5a31177b5c951eb076c7c10174f90006eef",
     });
   });
@@ -69,7 +69,7 @@ describe("Reports.verifyPostSignatureChecks", () => {
       isOk: false,
       isError: true,
       error: ReportsError.BadServiceId,
-      details: "No service with id: 129",
+      details: () => "No service with id: 129",
     });
   });
 
@@ -91,7 +91,7 @@ describe("Reports.verifyPostSignatureChecks", () => {
       isOk: false,
       isError: true,
       error: ReportsError.ServiceItemGasTooLow,
-      details: "Service (129) gas is less than minimal. Got: 120, expected at least: 10000",
+      details: () => "Service (129) gas is less than minimal. Got: 120, expected at least: 10000",
     });
   });
 
@@ -119,7 +119,7 @@ describe("Reports.verifyPostSignatureChecks", () => {
       isOk: false,
       isError: true,
       error: ReportsError.WorkReportGasTooHigh,
-      details: "Total gas too high. Got: 10000001 (ovfl: false), maximal: 10000000",
+      details: () => "Total gas too high. Got: 10000001 (ovfl: false), maximal: 10000000",
     });
   });
 });

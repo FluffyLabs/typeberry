@@ -1,7 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type CoreIndex, tryAsCoreIndex, tryAsServiceId } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
@@ -14,6 +13,7 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
+import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
@@ -29,14 +29,14 @@ const AUTH_MANAGER_REG = 9;
 function prepareRegsAndMemory(
   coreIndex: CoreIndex,
   authQueue: Blake2bHash[],
-  { skipAuthQueue = false, authManager = null }: { skipAuthQueue?: boolean; authManager?: bigint | number | null } = {},
+  { skipAuthQueue = false, assigners = null }: { skipAuthQueue?: boolean; assigners?: bigint | number | null } = {},
 ) {
   const memStart = 2 ** 16;
   const registers = new HostCallRegisters(new Registers());
   registers.set(CORE_INDEX_REG, tryAsU64(coreIndex));
   registers.set(AUTH_QUEUE_START_REG, tryAsU64(memStart));
-  if (authManager !== null) {
-    registers.set(AUTH_MANAGER_REG, tryAsU64(authManager));
+  if (assigners !== null) {
+    registers.set(AUTH_MANAGER_REG, tryAsU64(assigners));
   }
 
   const builder = new MemoryBuilder();
@@ -136,10 +136,13 @@ describe("HostCalls: Assign", () => {
 
   it("should return an error when current service is unprivileged", async () => {
     const accumulate = new PartialStateMock();
-    accumulate.authQueueResponse = Result.error(UpdatePrivilegesError.UnprivilegedService);
+    accumulate.authQueueResponse = Result.error(
+      UpdatePrivilegesError.UnprivilegedService,
+      () => "Test: unprivileged service attempting assign",
+    );
     const serviceId = tryAsServiceId(10_000);
     const assign = new Assign(serviceId, accumulate, tinyChainSpec);
-    const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { authManager: 0 });
+    const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { assigners: 0 });
 
     // when
     const result = await assign.execute(gas, registers, memory);
@@ -152,10 +155,13 @@ describe("HostCalls: Assign", () => {
 
   it("should return an error when auth manager is invalid", async () => {
     const accumulate = new PartialStateMock();
-    accumulate.authQueueResponse = Result.error(UpdatePrivilegesError.InvalidServiceId);
+    accumulate.authQueueResponse = Result.error(
+      UpdatePrivilegesError.InvalidServiceId,
+      () => "Test: invalid service ID for assign",
+    );
     const serviceId = tryAsServiceId(10_000);
     const assign = new Assign(serviceId, accumulate, tinyChainSpec);
-    const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { authManager: null });
+    const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { assigners: null });
 
     // when
     const result = await assign.execute(gas, registers, memory);

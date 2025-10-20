@@ -35,9 +35,9 @@ function looseType<T>(output: ProcessOutput<T>): ProcessOutput<unknown> {
 export type SupportedType = {
   name: string;
   // biome-ignore lint/suspicious/noExplicitAny: We need to handle any possible output
-  encode?: Encode<any>;
+  encode?: Encode<any> | ((spec: ChainSpec) => Encode<any>);
   // biome-ignore lint/suspicious/noExplicitAny: We need to handle any possible output
-  decode?: Decode<any>;
+  decode?: Decode<any> | ((spec: ChainSpec) => Decode<any>);
   // biome-ignore lint/suspicious/noExplicitAny: We need to handle any possible output
   json?: (spec: ChainSpec) => FromJson<any>;
   process?: {
@@ -180,7 +180,7 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     decode: StateTransition.Codec,
     json: () => StateTransition.fromJson,
     process: {
-      options: ["as-pre-state", "as-post-state", "as-fuzz-message"],
+      options: ["as-pre-state", "as-post-state", "as-fuzz-message", "as-block"],
       run(spec: ChainSpec, data: unknown, option: string, blake2b) {
         const test = data as StateTransition;
         if (option === "as-pre-state") {
@@ -192,6 +192,13 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
         if (option === "as-post-state") {
           return looseType({
             value: stateFromKeyvals(spec, blake2b, test.post_state),
+          });
+        }
+
+        if (option === "as-block") {
+          return looseType({
+            encode: Block.Codec,
+            value: test.block,
           });
         }
 

@@ -25,7 +25,8 @@ export function verifyReportsBasic(input: GuaranteesExtrinsicView): Result<OK, R
     if (noOfPrerequisites + noOfSegmentRootLookups > MAX_REPORT_DEPENDENCIES) {
       return Result.error(
         ReportsError.TooManyDependencies,
-        `Report at ${reportView.coreIndex.materialize()} has too many dependencies. Got ${noOfPrerequisites} + ${noOfSegmentRootLookups}, max: ${MAX_REPORT_DEPENDENCIES}`,
+        () =>
+          `Report at ${reportView.coreIndex.materialize()} has too many dependencies. Got ${noOfPrerequisites} + ${noOfSegmentRootLookups}, max: ${MAX_REPORT_DEPENDENCIES}`,
       );
     }
 
@@ -48,7 +49,8 @@ export function verifyReportsBasic(input: GuaranteesExtrinsicView): Result<OK, R
     if (authOutputSize + totalOutputsSize > MAX_WORK_REPORT_SIZE_BYTES) {
       return Result.error(
         ReportsError.WorkReportTooBig,
-        `Work report at ${reportView.coreIndex.materialize()} too big. Got ${authOutputSize} + ${totalOutputsSize}, max: ${MAX_WORK_REPORT_SIZE_BYTES}`,
+        () =>
+          `Work report at ${reportView.coreIndex.materialize()} too big. Got ${authOutputSize} + ${totalOutputsSize}, max: ${MAX_WORK_REPORT_SIZE_BYTES}`,
       );
     }
   }
