@@ -1,8 +1,7 @@
 import fs from "node:fs";
 import { Block, type BlockView } from "@typeberry/block";
 import { blockFromJson } from "@typeberry/block-json";
-import { BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Decoder, Encoder, EndOfDataError } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { parseFromJson } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
@@ -23,12 +22,15 @@ export type BlocksImporterConfig = {
 export const importBlocks = async (node: NodeApi, blocksToImport: string[]) => {
   const logger = Logger.new(import.meta.filename, "jam");
 
-  logger.info`📖 Reading ${blocksToImport.length} blocks`;
+  logger.info`📖 Reading blocks from ${blocksToImport.length} files`;
 
-  const reader = startBlocksReader({
-    files: blocksToImport,
-    chainSpec: node.chainSpec,
-  });
+  const reader = startBlocksReader(
+    {
+      files: blocksToImport,
+      chainSpec: node.chainSpec,
+    },
+    logger,
+  );
   for (const block of reader) {
     logger.log`📖 Importing block: #${block.header.view().timeSlotIndex.materialize()}`;
     const res = await node.importBlock(block);
@@ -41,22 +43,63 @@ export const importBlocks = async (node: NodeApi, blocksToImport: string[]) => {
   return await node.close();
 };
 
-export function* startBlocksReader(options: BlocksImporterConfig) {
+export function* startBlocksReader(options: BlocksImporterConfig, logger: Logger) {
   const { chainSpec } = options;
   for (const file of options.files) {
     const isJsonFile = isJson(file);
 
-    const block = isJsonFile ? readJsonBlock(file, chainSpec) : readCodecBlock(file, chainSpec);
-    yield block;
+    logger.log`📖 Reading ${file}...`;
+
+    if (isJsonFile) {
+      yield readJsonBlock(file, chainSpec);
+    } else {
+      yield* readCodecBlocks(file, chainSpec);
+    }
   }
 }
 
 const isJson = (f: string) => f.endsWith(".json");
 
-function readCodecBlock(file: string, chainSpec: ChainSpec): BlockView {
-  const codecData = fs.readFileSync(file);
-  const bytes = BytesBlob.blobFrom(new Uint8Array(codecData));
-  return Decoder.decodeObject(Block.Codec.View, bytes, chainSpec);
+function* readCodecBlocks(file: string, chainSpec: ChainSpec): Generator<BlockView> {
+  const fileDescriptor = fs.openSync(file, "r");
+  try {
+    const bufferSize = 14 * 1024 * 1024; // should be at least max block length - https://graypaper.fluffylabs.dev/#/ab2cdbd/1b13001b1300?v=0.7.2
+    const buffer = new Uint8Array(bufferSize);
+    let offset = 0;
+    let bytesRead = 0;
+    let bytesRequested = bufferSize;
+
+    const getNextChunk = () => {
+      try {
+        bytesRead = fs.readSync(fileDescriptor, buffer, offset, bytesRequested, null);
+      } catch (_) {
+        return false;
+      }
+      return bytesRead > 0;
+    };
+
+    while (getNextChunk()) {
+      let bytesDecoded = 0;
+
+      try {
+        const decoder = Decoder.fromBlob(buffer.subarray(0, offset + bytesRead), chainSpec);
+        while (true) {
+          yield decoder.object(Block.Codec.View);
+          bytesDecoded = decoder.bytesRead();
+        }
+      } catch (e) {
+        if (!(e instanceof EndOfDataError)) {
+          throw e;
+        }
+      }
+
+      bytesRequested = bytesDecoded;
+      buffer.set(buffer.subarray(bytesDecoded, offset + bytesRead), 0);
+      offset = offset + bytesRead - bytesDecoded;
+    }
+  } finally {
+    fs.closeSync(fileDescriptor);
+  }
 }
 
 function readJsonBlock(file: string, chainSpec: ChainSpec): BlockView {
