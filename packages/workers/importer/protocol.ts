@@ -59,7 +59,7 @@ export const protocol = createProtocol("importer", {
     },
     importBlock: {
       request: Block.Codec.View,
-      response: importBlockResultCodec("HeaderHash"),
+      response: importBlockResultCodec<HeaderHash>("HeaderHash"),
     },
     finish: {
       request: codec.nothing,
