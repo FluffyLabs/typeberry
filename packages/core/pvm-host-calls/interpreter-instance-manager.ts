@@ -10,10 +10,10 @@ export class InterpreterInstanceManager {
   private instances: Promise<IPVMInterpreter>[] = [];
   private waitingQueue: ResolveFn[] = [];
 
-  constructor(noOfPvmInstances: number, interpreter: PVMInterpreter = PVMInterpreter.Default) {
+  constructor(noOfPvmInstances: number, interpreter: PVMInterpreter = PVMInterpreter.BuildIn) {
     for (let i = 0; i < noOfPvmInstances; i++) {
       switch (interpreter) {
-        case PVMInterpreter.Default:
+        case PVMInterpreter.BuildIn:
           this.instances.push(
             Interpreter.new({
               useSbrkGas: false,
@@ -23,7 +23,7 @@ export class InterpreterInstanceManager {
         case PVMInterpreter.Ananas:
           this.instances.push(AnanasInterpreter.new());
           break;
-        case PVMInterpreter.DefaultAnanas:
+        case PVMInterpreter.BuildinAnanas:
           this.instances.push(
             Interpreter.new({
               useSbrkGas: false,

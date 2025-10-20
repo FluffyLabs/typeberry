@@ -14,6 +14,7 @@
     "@typeberry/hash": "*",
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
+    "@typeberry/config-node": "*",
     "@typeberry/ordering": "*",
     "@typeberry/state-merkleization": "*",
     "@typeberry/transition": "*",

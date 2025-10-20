@@ -19,6 +19,7 @@
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
     "@typeberry/pvm-interpreter": "*",
+    "@typeberry/pvm-interface": "*",
     "@typeberry/safrole": "*",
     "@typeberry/shuffling": "*",
     "@typeberry/state": "*",

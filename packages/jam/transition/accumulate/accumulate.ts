@@ -86,7 +86,7 @@ export class Accumulate {
     public readonly chainSpec: ChainSpec,
     public readonly blake2b: Blake2b,
     public readonly state: AccumulateState,
-    public readonly pvmInterpreter: PVMInterpreter = PVMInterpreter.Default,
+    public readonly pvmInterpreter: PVMInterpreter = PVMInterpreter.BuildIn,
   ) {}
 
   /**

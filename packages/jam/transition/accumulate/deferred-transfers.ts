@@ -55,7 +55,7 @@ export class DeferredTransfers {
     public readonly chainSpec: ChainSpec,
     public readonly blake2b: Blake2b,
     private readonly state: DeferredTransfersState,
-    private readonly pvmInterpreter: PVMInterpreter = PVMInterpreter.Default,
+    private readonly pvmInterpreter: PVMInterpreter = PVMInterpreter.BuildIn,
   ) {}
 
   async transition({

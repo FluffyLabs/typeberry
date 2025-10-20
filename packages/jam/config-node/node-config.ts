@@ -18,17 +18,17 @@ export const DEFAULT_CONFIG = "default";
 /** Implemented PVM Interpreters to choose from. */
 export enum PVMInterpreter {
   /** Built-in aka. Typeberry. */
-  Default = "default",
+  BuildIn = "buildin",
   /** Ananas 🍍. */
   Ananas = "ananas",
   /** Both. */
-  DefaultAnanas = "defaultananas",
+  BuildinAnanas = "buildinananas",
 }
 
 export const NODE_DEFAULTS = {
   name: isBrowser() ? "browser" : os.hostname(),
   config: DEFAULT_CONFIG,
-  pvm: PVMInterpreter.Default,
+  pvm: PVMInterpreter.BuildIn,
 };
 
 /** Chain spec chooser. */

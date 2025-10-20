@@ -51,6 +51,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   const importerConfig = LmdbWorkerConfig.new({
     ...baseConfig,
     workerParams: ImporterConfig.create({
+      interpreter: config.nodeInterpreter,
       omitSealVerification: config.node.authorship.omitSealVerification,
     }),
   });
