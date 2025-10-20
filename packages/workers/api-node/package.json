@@ -1,0 +1,24 @@
+{
+  "name": "@typeberry/workers-api-node",
+  "version": "0.1.3",
+  "description": "Node.js implementation of the workers API.",
+  "main": "index.ts",
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "dependencies": {
+    "@typeberry/codec": "*",
+    "@typeberry/config": "*",
+    "@typeberry/database": "*",
+    "@typeberry/database-lmdb": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/listener": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*",
+    "@typeberry/workers-api": "*"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0",
+  "type": "module"
+}

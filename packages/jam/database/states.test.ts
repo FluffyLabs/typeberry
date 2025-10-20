@@ -12,7 +12,7 @@ describe("InMemoryState", () => {
     const root = Bytes.parseBytes(TEST_STATE_ROOT, HASH_SIZE).asOpaque();
     deepEqual(db.getState(root), null);
 
-    await db.insertState(root, testState());
+    await db.insertInitialState(root, testState());
 
     deepEqual(db.getState(root), testState());
   });

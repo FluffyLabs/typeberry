@@ -1,22 +1,20 @@
 import { isMainThread } from "node:worker_threads";
-
 import type { BlockView, HeaderHash, HeaderView, StateRootHash } from "@typeberry/block";
-import { type ChainSpec, WorkerConfig } from "@typeberry/config";
+import type { ChainSpec } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
-import type { Finished, MainInit } from "@typeberry/generic-worker";
 import { Blake2b, type WithHash } from "@typeberry/hash";
-import type { MainReady } from "@typeberry/importer/state-machine.js";
-import * as blockImporter from "@typeberry/importer/worker.js";
-import { NetworkWorkerConfig } from "@typeberry/jam-network/state-machine.js";
-import type { Listener, MessageChannelStateMachine } from "@typeberry/state-machine";
+import { type ImporterApi, ImporterConfig } from "@typeberry/importer";
+import { NetworkingConfig } from "@typeberry/jam-network";
+import { Listener } from "@typeberry/listener";
+import { tryAsU16 } from "@typeberry/numbers";
 import type { StateEntries } from "@typeberry/state-merkleization";
-import { CURRENT_SUITE, CURRENT_VERSION, type Result } from "@typeberry/utils";
-import { startBlockGenerator } from "./author.js";
-import { getChainSpec, initializeDatabase, logger, openDatabase } from "./common.js";
+import { CURRENT_SUITE, CURRENT_VERSION, Result } from "@typeberry/utils";
+import { LmdbWorkerConfig } from "@typeberry/workers-api-node";
+import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import { initializeExtensions } from "./extensions.js";
 import type { JamConfig, NetworkConfig } from "./jam-config.js";
-import { startNetwork } from "./network.js";
 import packageJson from "./package.json" with { type: "json" };
+import { spawnBlockGeneratorWorker, spawnImporterWorker, spawnNetworkWorker } from "./workers.js";
 
 export type NodeApi = {
   chainSpec: ChainSpec;
@@ -37,64 +35,86 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   logger.info`🎸 Starting node: ${config.nodeName}.`;
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
-  const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
+  if (config.node.databaseBasePath === undefined) {
+    throw new Error("Running with in-memory database is not supported yet.");
+  }
+
+  const { dbPath, genesisHeaderHash } = getDatabasePath(
     blake2b,
     config.nodeName,
     config.node.chainSpec.genesisHeader,
     withRelPath(config.node.databaseBasePath),
   );
 
-  // Initialize the database with genesis state and block if there isn't one.
-  await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
+  const baseConfig = { chainSpec, blake2b, dbPath };
+  const importerConfig = LmdbWorkerConfig.new({
+    ...baseConfig,
+    workerParams: ImporterConfig.create({
+      omitSealVerification: config.node.authorship.omitSealVerification,
+    }),
+  });
 
-  // Start extensions
-  const importerInit = await blockImporter.spawnWorker();
-  const bestHeader = importerInit.getState<MainReady>("ready(main)").onBestBlock;
-  const closeExtensions = initializeExtensions({ chainSpec, bestHeader });
+  // Initialize the database with genesis state and block if there isn't one.
+  logger.info`🛢️ Opening database at ${dbPath}`;
+  const rootDb = importerConfig.openDatabase({ readonly: false });
+  await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
+  // NOTE [ToDr] even though, we should be closing the database here,
+  // it seems that opening it in the main thread for writing, and later
+  // in the importer thread, causes issues. Everything works fine though,
+  // if we DO NOT close the database (I guess it's process-shared?)
+  // await rootDb.close();
 
   // Start block importer
-  const workerConfig = new WorkerConfig(chainSpec, dbPath, config.node.authorship.omitSealVerification);
-  const importerReady = importerInit.transition((state, port) => {
-    return state.sendConfig(port, workerConfig);
-  });
+  const { importer, finish: closeImporter } = await spawnImporterWorker(importerConfig);
+  const bestHeader = new Listener<WithHash<HeaderHash, HeaderView>>();
+  importer.setOnBestHeaderAnnouncement(bestHeader.callbackHandler());
+
+  // Start extensions
+  const closeExtensions = initializeExtensions({ chainSpec, bestHeader, nodeName: config.nodeName });
 
   // Authorship initialization.
   // 1. load validator keys (bandersnatch, ed25519, bls)
   // 2. allow the validator to specify metadata.
   // 3. if we have validator keys, we should start the authorship module.
-  const closeAuthorship = await initAuthorship(importerReady, config.isAuthoring, workerConfig);
+  const closeAuthorship = await initAuthorship(
+    importer,
+    config.isAuthoring,
+    LmdbWorkerConfig.new({ ...baseConfig, workerParams: undefined }),
+  );
 
   // Networking initialization
-  const closeNetwork = await initNetwork(importerReady, workerConfig, genesisHeaderHash, config.network, bestHeader);
+  const closeNetwork = await initNetwork(
+    importer,
+    LmdbWorkerConfig.new({ ...baseConfig, workerParams: undefined }),
+    genesisHeaderHash,
+    config.network,
+    bestHeader,
+  );
 
   const api: NodeApi = {
     chainSpec,
     async importBlock(block: BlockView) {
-      return await importerReady.execute(async (importer, port) => {
-        return importer.importBlock(port, block.encoded().raw);
-      });
+      const res = await importer.sendImportBlock(block);
+      if (res.isOk) {
+        return Result.ok(await importer.sendGetBestStateRootHash());
+      }
+      return res;
     },
     async getStateEntries(hash: HeaderHash) {
-      return await importerReady.execute(async (importer, port) => {
-        return importer.getStateEntries(port, hash.raw);
-      });
+      return importer.sendGetStateEntries(hash);
     },
     async getBestStateRootHash() {
-      return await importerReady.execute(async (importer, port) => {
-        return importer.getBestStateRootHash(port);
-      });
+      return importer.sendGetBestStateRootHash();
     },
     async close() {
-      const importerFinished = importerReady.transition<Finished>((importer, port) => {
-        return importer.finish(port);
-      });
-      await importerFinished.currentState().waitForWorkerToFinish();
+      logger.log`[main] ☠️ Closing the importer`;
+      await closeImporter();
       logger.log`[main] ☠️  Closing the extensions`;
       closeExtensions();
       logger.log`[main] ☠️  Closing the authorship module`;
-      closeAuthorship();
+      await closeAuthorship();
       logger.log`[main] ☠️  Closing the networking module`;
-      closeNetwork();
+      await closeNetwork();
       logger.log`[main] 🛢️ Closing the database`;
       await rootDb.close();
       logger.info`[main] ✅ Done.`;
@@ -104,30 +124,27 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   return api;
 }
 
-type ImporterReady = MessageChannelStateMachine<MainReady, Finished | MainReady | MainInit<MainReady>>;
-
-const initAuthorship = async (importerReady: ImporterReady, isAuthoring: boolean, config: WorkerConfig) => {
+const initAuthorship = async (importer: ImporterApi, isAuthoring: boolean, config: LmdbWorkerConfig) => {
   if (!isAuthoring) {
     logger.log`✍️  Authorship off: disabled`;
     return () => Promise.resolve();
   }
 
   logger.info`✍️  Starting block generator.`;
-  const { generator, finish } = await startBlockGenerator(config);
+  const { generator, finish } = await spawnBlockGeneratorWorker(config);
+
   // relay blocks from generator to importer
-  importerReady.doUntil<Finished>("finished", async (importer, port) => {
-    generator.currentState().onBlock.on((b) => {
-      logger.log`✍️  Produced block. Size: [${b.length}]`;
-      importer.sendBlock(port, b);
-    });
+  generator.setOnBlock(async (block) => {
+    logger.log`✍️  Produced block at ${block.header.view().timeSlotIndex.materialize()}`;
+    await importer.sendImportBlock(block);
   });
 
   return finish;
 };
 
 const initNetwork = async (
-  importerReady: ImporterReady,
-  workerConfig: WorkerConfig,
+  importer: ImporterApi,
+  baseConfig: LmdbWorkerConfig,
   genesisHeaderHash: HeaderHash,
   networkConfig: NetworkConfig | null,
   bestHeader: Listener<WithHash<HeaderHash, HeaderView>>,
@@ -139,31 +156,29 @@ const initNetwork = async (
 
   const { key, host, port, bootnodes } = networkConfig;
 
-  const { network, finish } = await startNetwork(
-    NetworkWorkerConfig.new({
-      genericConfig: workerConfig,
-      genesisHeaderHash,
-      key,
-      host,
-      port,
-      bootnodes: bootnodes.map((node) => node.toString()),
+  const { network, finish } = await spawnNetworkWorker(
+    LmdbWorkerConfig.new({
+      ...baseConfig,
+      workerParams: NetworkingConfig.create({
+        genesisHeaderHash,
+        key,
+        host,
+        port: tryAsU16(port),
+        bootnodes: bootnodes.map((node) => node.toString()),
+      }),
     }),
   );
 
-  // relay blocks from networking to importer?
-  importerReady.doUntil("finished", async (importer, port) => {
-    network.currentState().onNewBlocks.on((newBlocks) => {
-      for (const block of newBlocks) {
-        importer.sendBlock(port, block.encoded().raw);
-      }
-    });
+  // relay blocks from networking to importer
+  network.setOnBlocks(async (newBlocks) => {
+    for (const block of newBlocks) {
+      await importer.sendImportBlock(block);
+    }
   });
 
   // relay newly imported headers to trigger network announcements
-  network.doUntil("finished", async (network, port) => {
-    bestHeader.on((header) => {
-      network.announceHeader(port, header);
-    });
+  bestHeader.on((header) => {
+    network.sendNewHeader(header);
   });
 
   return finish;
