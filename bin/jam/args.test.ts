@@ -70,19 +70,19 @@ describe("CLI", () => {
     });
   });
 
-  it("should parse export command and add rel path to output directory", () => {
-    const args = parse(["export", "./output-dir"]);
+  it("should parse export command and add rel path to output path", () => {
+    const args = parse(["export", "./output"]);
 
     deepEqual(args, {
       command: Command.Export,
       args: {
         ...defaultOptions,
-        outputDir: ".././output-dir",
+        output: ".././output",
       },
     });
   });
 
-  it("should throw on missing output directory", () => {
+  it("should throw on missing output path", () => {
     assert.throws(
       () => {
         const _args = parse(["export"]);
