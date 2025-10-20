@@ -114,7 +114,7 @@ export class MainReady extends State<"ready(main)", Finished, WorkerConfig> {
   }
 
   async importBlock(port: TypedChannel, block: Uint8Array): Promise<Result<StateRootHash, string>> {
-    const res: Uint8Array | null = await port.sendRequest("importBlock", block, [block.buffer as ArrayBuffer]);
+    const res: Uint8Array | null = await port.sendRequest("importBlock", block, []);
     if (res instanceof Uint8Array) {
       return Decoder.decodeObject(importBlockResultCodec, res);
     }
