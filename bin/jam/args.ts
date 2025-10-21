@@ -85,7 +85,12 @@ function parseSharedOptions(
   const { pvm } = parseStringOption(
     args,
     "pvm",
-    (v) => (Object.values(PVMBackend).includes(v as PVMBackend) ? (v as PVMBackend) : NODE_DEFAULTS.pvm),
+    (v) => {
+      if (Object.values(PVMBackend).includes(v as PVMBackend)) {
+        return v as PVMBackend;
+      }
+      throw Error();
+    },
     NODE_DEFAULTS.pvm,
   );
 

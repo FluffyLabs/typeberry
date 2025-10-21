@@ -95,13 +95,15 @@ describe("CLI", () => {
     });
   });
 
-  it("should revert to default pvm option if provided unimplemented one", () => {
-    const args = parse(["--pvm=unimplemented"]);
-
-    deepEqual(args, {
-      command: Command.Run,
-      args: defaultOptions,
-    });
+  it("should throw on missing pvm option", () => {
+    assert.throws(
+      () => {
+        const _args = parse(["--pvm=unimplemented"]);
+      },
+      {
+        message: "Invalid value 'unimplemented' for option 'pvm': Error",
+      },
+    );
   });
 
   it("should throw on missing output path", () => {
