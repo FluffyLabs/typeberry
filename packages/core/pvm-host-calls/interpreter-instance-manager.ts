@@ -1,4 +1,4 @@
-import { PVMInterpreter } from "@typeberry/config-node";
+import { PVMBackend } from "@typeberry/config-node";
 import type { IPVMInterpreter } from "@typeberry/pvm-interface";
 import { Interpreter } from "@typeberry/pvm-interpreter";
 import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
@@ -10,20 +10,20 @@ export class InterpreterInstanceManager {
   private instances: Promise<IPVMInterpreter>[] = [];
   private waitingQueue: ResolveFn[] = [];
 
-  constructor(noOfPvmInstances: number, interpreter: PVMInterpreter = PVMInterpreter.BuildIn) {
+  constructor(noOfPvmInstances: number, interpreter: PVMBackend = PVMBackend.BuildIn) {
     for (let i = 0; i < noOfPvmInstances; i++) {
       switch (interpreter) {
-        case PVMInterpreter.BuildIn:
+        case PVMBackend.BuildIn:
           this.instances.push(
             Interpreter.new({
               useSbrkGas: false,
             }),
           );
           break;
-        case PVMInterpreter.Ananas:
+        case PVMBackend.Ananas:
           this.instances.push(AnanasInterpreter.new());
           break;
-        case PVMInterpreter.BuildinAnanas:
+        case PVMBackend.BuildinAnanas:
           this.instances.push(
             Interpreter.new({
               useSbrkGas: false,

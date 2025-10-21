@@ -31,7 +31,7 @@ export function getFuzzDetails() {
 
 export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) => string) {
   logger.info`💨 Fuzzer V${fuzzConfig.version} starting up.`;
-  logger.info`🖥️ Interpreter: ${fuzzConfig.jamNodeConfig.nodeInterpreter}.`;
+  logger.info`🖥️ Interpreter: ${fuzzConfig.jamNodeConfig.nodeBackend}.`;
 
   const { jamNodeConfig: config } = fuzzConfig;
 

@@ -1,7 +1,7 @@
 import { Block, type HeaderHash, headerViewWithHashCodec, type StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { PVMInterpreter } from "@typeberry/config-node";
+import { PVMBackend } from "@typeberry/config-node";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU8, tryAsU32 } from "@typeberry/numbers";
 import { StateEntries } from "@typeberry/state-merkleization";
@@ -81,14 +81,14 @@ export type ImporterApi = Api<typeof protocol>;
 export class ImporterConfig {
   static Codec = codec.Class(ImporterConfig, {
     omitSealVerification: codec.bool,
-    interpreter: codec.u8.convert(
+    pvm: codec.u8.convert(
       (i) => {
         switch (i) {
-          case PVMInterpreter.BuildIn:
+          case PVMBackend.BuildIn:
             return tryAsU8(0);
-          case PVMInterpreter.Ananas:
+          case PVMBackend.Ananas:
             return tryAsU8(1);
-          case PVMInterpreter.BuildinAnanas:
+          case PVMBackend.BuildinAnanas:
             return tryAsU8(2);
           default:
             assertNever(i);
@@ -97,11 +97,11 @@ export class ImporterConfig {
       (o) => {
         switch (o) {
           case 0:
-            return PVMInterpreter.BuildIn;
+            return PVMBackend.BuildIn;
           case 1:
-            return PVMInterpreter.Ananas;
+            return PVMBackend.Ananas;
           case 2:
-            return PVMInterpreter.BuildinAnanas;
+            return PVMBackend.BuildinAnanas;
           default:
             throw new Error(`Unimplemented interpreter of index ${o}`);
         }
@@ -109,12 +109,12 @@ export class ImporterConfig {
     ),
   });
 
-  static create({ omitSealVerification, interpreter }: CodecRecord<ImporterConfig>) {
-    return new ImporterConfig(omitSealVerification, interpreter);
+  static create({ omitSealVerification, pvm }: CodecRecord<ImporterConfig>) {
+    return new ImporterConfig(omitSealVerification, pvm);
   }
 
   private constructor(
     public readonly omitSealVerification: boolean,
-    public readonly interpreter: PVMInterpreter,
+    public readonly pvm: PVMBackend,
   ) {}
 }

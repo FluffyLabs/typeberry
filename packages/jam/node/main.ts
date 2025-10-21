@@ -33,7 +33,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
 
   logger.info`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
   logger.info`🎸 Starting node: ${config.nodeName}.`;
-  logger.info`🖥️ Interpreter: ${config.nodeInterpreter}.`;
+  logger.info`🖥️ Interpreter: ${config.nodeBackend}.`;
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
   if (config.node.databaseBasePath === undefined) {
@@ -51,7 +51,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   const importerConfig = LmdbWorkerConfig.new({
     ...baseConfig,
     workerParams: ImporterConfig.create({
-      interpreter: config.nodeInterpreter,
+      interpreter: config.nodeBackend,
       omitSealVerification: config.node.authorship.omitSealVerification,
     }),
   });

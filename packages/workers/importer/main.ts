@@ -18,7 +18,7 @@ type Config = WorkerConfig<ImporterConfig, BlocksDb, StatesDb<SerializedState<Le
 export async function createImporter(config: Config) {
   const chainSpec = config.chainSpec;
   const db = config.openDatabase({ readonly: false });
-  const interpreter = config.workerParams.interpreter;
+  const interpreter = config.workerParams.pvm;
   const blocks = db.getBlocksDb();
   const states = db.getStatesDb();
 
@@ -42,9 +42,6 @@ export async function main(config: Config, comms: ImporterInternal) {
   logger.info`📥 Importer starting`;
 
   const { omitSealVerification } = config.workerParams;
-  if (omitSealVerification) {
-    logger.warn`⚠️  WARNING: running without seal verification! Use only for dev stuff!⚠️ `;
-  }
   const { importer, db } = await createImporter(config);
 
   const finishPromise = new Promise<void>((resolve) => {

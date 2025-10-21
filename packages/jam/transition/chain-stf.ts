@@ -3,7 +3,7 @@ import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { asKnownSize, HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { PVMInterpreter } from "@typeberry/config-node";
+import { PVMBackend } from "@typeberry/config-node";
 import type { Ed25519Key } from "@typeberry/crypto";
 import type { BlocksDb } from "@typeberry/database";
 import { Disputes, type DisputesStateUpdate } from "@typeberry/disputes";
@@ -146,7 +146,7 @@ export class OnChain {
     public readonly state: State & WithStateView,
     blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
-    interpreter: PVMInterpreter = PVMInterpreter.BuildIn,
+    pvm: PVMBackend = PVMBackend.BuildIn,
   ) {
     const bandersnatch = BandernsatchWasm.new();
     this.statistics = new Statistics(chainSpec, state);
@@ -160,9 +160,9 @@ export class OnChain {
 
     this.reports = new Reports(chainSpec, hasher.blake2b, state, new DbHeaderChain(blocks));
     this.assurances = new Assurances(chainSpec, state, hasher.blake2b);
-    this.accumulate = new Accumulate(chainSpec, hasher.blake2b, state, interpreter);
+    this.accumulate = new Accumulate(chainSpec, hasher.blake2b, state, pvm);
     this.accumulateOutput = new AccumulateOutput();
-    this.deferredTransfers = new DeferredTransfers(chainSpec, hasher.blake2b, state, interpreter);
+    this.deferredTransfers = new DeferredTransfers(chainSpec, hasher.blake2b, state, pvm);
     this.preimages = new Preimages(state, hasher.blake2b);
 
     this.authorization = new Authorization(chainSpec, state);

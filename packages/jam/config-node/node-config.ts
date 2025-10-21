@@ -16,19 +16,22 @@ export const DEV_CONFIG = "dev";
 export const DEFAULT_CONFIG = "default";
 
 /** Implemented PVM Interpreters to choose from. */
-export enum PVMInterpreter {
-  /** Built-in aka. Typeberry. */
+export enum PVMBackend {
+  /** Built-in aka. Typeberry 🫐 interpreter. */
   BuildIn = "buildin",
-  /** Ananas 🍍. */
+  /** Ananas 🍍 interpreter. */
   Ananas = "ananas",
-  /** Both. */
+  /**
+   * Both 🫐 & 🍍 interpreters.
+   * TODO [MaSo] run both in parallel.
+   */
   BuildinAnanas = "buildinananas",
 }
 
 export const NODE_DEFAULTS = {
   name: isBrowser() ? "browser" : os.hostname(),
   config: DEFAULT_CONFIG,
-  pvm: PVMInterpreter.BuildIn,
+  pvm: PVMBackend.BuildIn,
 };
 
 /** Chain spec chooser. */

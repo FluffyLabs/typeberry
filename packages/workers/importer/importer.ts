@@ -1,6 +1,6 @@
 import { type BlockView, type HeaderHash, type HeaderView, type StateRootHash, tryAsTimeSlot } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
-import type { PVMInterpreter } from "@typeberry/config-node";
+import type { PVMBackend } from "@typeberry/config-node";
 import type { BlocksDb, LeafDb, StatesDb, StateUpdateError } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";
@@ -37,7 +37,7 @@ export class Importer {
 
   constructor(
     spec: ChainSpec,
-    interpreter: PVMInterpreter,
+    pvm: PVMBackend,
     private readonly hasher: TransitionHasher,
     private readonly logger: Logger,
     private readonly blocks: BlocksDb,
@@ -50,7 +50,7 @@ export class Importer {
     }
 
     this.verifier = new BlockVerifier(hasher, blocks);
-    this.stf = new OnChain(spec, state, blocks, hasher, interpreter);
+    this.stf = new OnChain(spec, state, blocks, hasher, pvm);
     this.state = state;
     this.currentHash = currentBestHeaderHash;
     this.prepareForNextEpoch();
