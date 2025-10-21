@@ -20,6 +20,7 @@ import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize, FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
+import { PVMBackend } from "@typeberry/config-node";
 import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
@@ -35,6 +36,8 @@ import {
 import { deepEqual, resultToString } from "@typeberry/utils";
 import { Accumulate } from "./accumulate.js";
 import type { AccumulateInput, AccumulateState } from "./accumulate-state.js";
+
+const PVM_BACKEND = PVMBackend.BuildIn;
 
 let blake2b: Blake2b;
 
@@ -189,7 +192,7 @@ describe("accumulate", () => {
       accumulationQueue: tryAsPerEpochBlock([[], [], [], [], [], [], [], [], [], [], [], []], tinyChainSpec),
     });
     const expectedOutput: AccumulationOutput[] = [];
-    const accumulate = new Accumulate(tinyChainSpec, blake2b, state);
+    const accumulate = new Accumulate(tinyChainSpec, blake2b, state, PVM_BACKEND);
 
     // when
     const output = await accumulate.transition(input);
@@ -292,7 +295,7 @@ describe("accumulate", () => {
       ),
     });
 
-    const accumulate = new Accumulate(tinyChainSpec, blake2b, state);
+    const accumulate = new Accumulate(tinyChainSpec, blake2b, state, PVM_BACKEND);
 
     const mod = 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8;
     const offset = MIN_PUBLIC_SERVICE_INDEX;

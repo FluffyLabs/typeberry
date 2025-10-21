@@ -12,7 +12,7 @@ import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import { ArrayView, HashSet, SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { PVMBackend } from "@typeberry/config-node";
+import type { PVMBackend } from "@typeberry/config-node";
 import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
 import type { PendingTransfer } from "@typeberry/jam-host-calls";
 import {
@@ -86,7 +86,7 @@ export class Accumulate {
     public readonly chainSpec: ChainSpec,
     public readonly blake2b: Blake2b,
     public readonly state: AccumulateState,
-    public readonly pvm: PVMBackend = PVMBackend.BuildIn,
+    public readonly pvm: PVMBackend,
   ) {}
 
   /**
@@ -172,13 +172,7 @@ export class Accumulate {
       fetchExternalities,
     };
 
-    const executor = PvmExecutor.createAccumulateExecutor(
-      serviceId,
-      code,
-      externalities,
-      this.chainSpec,
-      this.pvm,
-    );
+    const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec, this.pvm);
     const invocationArgs = Encoder.encodeObject(ARGS_CODEC, {
       slot,
       serviceId,

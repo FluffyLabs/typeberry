@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { instantiate } from "@fluffylabs/anan-as/raw";
 import { Decoder } from "@typeberry/codec";
 import { tryAsU32, type U32, type U64 } from "@typeberry/numbers";
@@ -12,7 +14,6 @@ import {
   tryAsGas,
 } from "@typeberry/pvm-interface";
 import { OK, Result } from "@typeberry/utils";
-import { load } from "assemblyscript-loader";
 import type { AnanasAPI } from "./api.js";
 
 // Max u32 value
@@ -116,8 +117,17 @@ export class AnanasInterpreter {
   }
 
   static async new() {
-    const wasmModule = await load("../../../node_modules/@fluffylabs/anan-as/build/release.wasm");
-    const instance: AnanasAPI = await instantiate(wasmModule, { env: {} });
+    const wasmPath = fileURLToPath(new URL("./node_modules/@fluffylabs/anan-as/build/release.wasm", import.meta.url));
+    const wasmBuffer = await readFile(wasmPath);
+    const wasmModule = await WebAssembly.compile(wasmBuffer);
+    const instance: AnanasAPI = await instantiate(wasmModule, {
+      env: {
+        abort: () => {
+          throw new Error("Abort called from WASM");
+        },
+        seed: () => Math.random(),
+      },
+    });
     return new AnanasInterpreter(instance);
   }
 

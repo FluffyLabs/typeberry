@@ -10,6 +10,7 @@
     "@typeberry/codec": "*",
     "@typeberry/collections": "*",
     "@typeberry/config": "*",
+    "@typeberry/config-node": "*",
     "@typeberry/crypto": "*",
     "@typeberry/database": "*",
     "@typeberry/disputes": "*",

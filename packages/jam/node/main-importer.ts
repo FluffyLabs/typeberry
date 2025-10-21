@@ -35,7 +35,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
           chainSpec,
           blake2b,
           workerParams: {
-            interpreter: config.nodeBackend,
+            pvm: config.nodeBackend,
             omitSealVerification,
           },
         })
@@ -44,7 +44,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
           blake2b,
           dbPath,
           workerParams: {
-            interpreter: config.nodeBackend,
+            pvm: config.nodeBackend,
             omitSealVerification,
           },
         });

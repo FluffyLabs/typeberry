@@ -36,15 +36,7 @@ export class JamConfig {
     networkConfig?: NetworkConfig | null;
     ancestry?: [HeaderHash, TimeSlot][];
   }) {
-    return new JamConfig(
-      isAuthoring ?? false,
-      nodeName,
-      nodeConfig,
-      nodeBackend,
-      devConfig,
-      networkConfig,
-      ancestry,
-    );
+    return new JamConfig(isAuthoring ?? false, nodeName, nodeConfig, nodeBackend, devConfig, networkConfig, ancestry);
   }
 
   private constructor(
