@@ -30,8 +30,13 @@ export class Registers implements IRegisters {
     return tryAsU64(this.getU64(registerIndex));
   }
 
-  getEncoded() {
+  getAllEncoded(): Uint8Array {
     return this.bytes;
+  }
+
+  setAllFromBytes(bytes: Uint8Array): void {
+    this.asSigned = new BigInt64Array(bytes.buffer, bytes.byteOffset);
+    this.asUnsigned = new BigUint64Array(bytes.buffer, bytes.byteOffset);
   }
 
   static fromBytes(bytes: Uint8Array) {

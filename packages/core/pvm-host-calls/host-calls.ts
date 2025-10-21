@@ -3,6 +3,7 @@ import { type Gas, type IPVMInterpreter, MAX_MEMORY_INDEX, Status } from "@typeb
 import { assertNever, check, safeAllocUint8Array } from "@typeberry/utils";
 import { PvmExecution, tryAsHostCallIndex } from "./host-call-handler.js";
 import { HostCallMemory } from "./host-call-memory.js";
+import { HostCallRegisters } from "./host-call-registers.js";
 import type { HostCallsManager } from "./host-calls-manager.js";
 import type { InterpreterInstanceManager } from "./interpreter-instance-manager.js";
 
@@ -83,7 +84,7 @@ export class HostCalls {
         "We know that the exit param is not null, because the status is 'Status.HOST'
       `;
       const hostCallIndex = pvmInstance.getExitParam() ?? -1;
-      const regs = pvmInstance.getRegisters();
+      const regs = new HostCallRegisters(pvmInstance.getRegisters());
       const memory = new HostCallMemory(pvmInstance.getMemory());
       const index = tryAsHostCallIndex(hostCallIndex);
 

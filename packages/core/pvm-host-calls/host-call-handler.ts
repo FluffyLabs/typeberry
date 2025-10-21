@@ -1,8 +1,9 @@
 import { tryAsU32, type U32 } from "@typeberry/numbers";
-import type { Gas, IGasCounter, IRegisters, SmallGas } from "@typeberry/pvm-interface";
+import type { Gas, IGasCounter, SmallGas } from "@typeberry/pvm-interface";
 import { type RegisterIndex, tryAsRegisterIndex } from "@typeberry/pvm-interpreter/registers.js";
 import { asOpaqueType, type Opaque } from "@typeberry/utils";
 import type { IHostCallMemory } from "./host-call-memory.js";
+import type { IHostCallRegisters } from "./host-call-registers.js";
 
 /** Strictly-typed host call index. */
 export type HostCallIndex = Opaque<U32, "HostCallIndex[U32]">;
@@ -35,7 +36,7 @@ export interface HostCallHandler {
    *
    * NOTE: `((reg: IHostCallRegisters) => Gas)` function is for compatibility reasons: pre GP 0.7.2
    */
-  readonly basicGasCost: SmallGas | ((reg: IRegisters) => Gas);
+  readonly basicGasCost: SmallGas | ((reg: IHostCallRegisters) => Gas);
 
   /** Currently executing service id. */
   readonly currentServiceId: U32;
@@ -48,5 +49,5 @@ export interface HostCallHandler {
    *
    * NOTE the call is ALLOWED and expected to modify registers and memory.
    */
-  execute(gas: IGasCounter, regs: IRegisters, memory: IHostCallMemory): Promise<undefined | PvmExecution>;
+  execute(gas: IGasCounter, regs: IHostCallRegisters, memory: IHostCallMemory): Promise<undefined | PvmExecution>;
 }

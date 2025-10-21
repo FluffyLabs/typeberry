@@ -3,6 +3,7 @@ import { codec, Decoder, Encoder, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,
+  HostCallRegisters,
   type IHostCallMemory,
   type IHostCallRegisters,
   PvmExecution,
@@ -70,7 +71,7 @@ export class Invoke implements HostCallHandler {
     // `g`
     const gasCost = tryAsBigGas(gasRegisters.gas);
     // `w`
-    const registers = Registers.fromBytes(gasRegisters.registers.raw);
+    const registers = new HostCallRegisters(Registers.fromBytes(gasRegisters.registers.raw));
 
     // try run the machine
     const state = await this.refine.machineInvoke(machineIndex, gasCost, registers);

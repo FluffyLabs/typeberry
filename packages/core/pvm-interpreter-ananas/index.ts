@@ -35,8 +35,12 @@ class AnanasRegisters implements IRegisters {
     this.instance.setRegisters(lowerBytes(regs));
   }
 
-  getEncoded(): Uint8Array {
+  getAllEncoded(): Uint8Array {
     return this.instance.getRegisters();
+  }
+
+  setAllFromBytes(bytes: Uint8Array): void {
+    this.instance.setRegisters(lowerBytes(bytes));
   }
 }
 

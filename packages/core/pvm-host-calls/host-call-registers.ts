@@ -20,6 +20,6 @@ export class HostCallRegisters implements IHostCallRegisters {
   }
 
   getEncoded(): Uint8Array {
-    return this.registers.getEncoded();
+    return this.registers.getAllEncoded();
   }
 }
