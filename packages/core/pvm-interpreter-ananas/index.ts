@@ -85,7 +85,7 @@ class AnanasGasCounter implements IGasCounter {
   }
 
   sub(g: Gas): boolean {
-    const result = this.instance.getGasLeft() - (g as bigint);
+    const result = this.instance.getGasLeft() - BigInt(g as number | bigint);
     if (result >= 0n) {
       this.instance.setGasLeft(result);
       return false;
