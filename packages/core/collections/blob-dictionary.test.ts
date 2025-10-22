@@ -16,7 +16,7 @@ describe("Blob dictionary", () => {
 
         assert.strictEqual(dict.has(key), false);
 
-        dict.internalSet(key, val);
+        dict.set(key, val);
 
         assert.strictEqual(dict.has(key), true);
 
@@ -33,8 +33,8 @@ describe("Blob dictionary", () => {
 
         assert.strictEqual(dict.has(key), false);
 
-        dict.internalSet(key, val1);
-        dict.internalSet(key, val2);
+        dict.set(key, val1);
+        dict.set(key, val2);
 
         const result = dict.get(key);
 
@@ -48,7 +48,7 @@ describe("Blob dictionary", () => {
 
         assert.strictEqual(dict.has(key), false);
 
-        dict.internalSet(key, val);
+        dict.set(key, val);
 
         assert.strictEqual(dict.has(key), true);
 
@@ -64,7 +64,7 @@ describe("Blob dictionary", () => {
 
         assert.strictEqual(dict.has(key), false);
 
-        dict.internalSet(key, val);
+        dict.set(key, val);
 
         assert.strictEqual(dict.has(key), true);
 
@@ -89,7 +89,7 @@ describe("Blob dictionary", () => {
         const dict = BlobDictionary.new(3);
 
         for (const [key, val] of entries) {
-          dict.internalSet(key, val);
+          dict.set(key, val);
         }
 
         for (const [key, val] of entries) {
@@ -112,8 +112,8 @@ describe("Blob dictionary", () => {
 
       it("should return true/false for keys present in the dictionary", () => {
         const dict = BlobDictionary.new(treshold);
-        dict.internalSet(key(1), "Hello World!");
-        dict.internalSet(key(2), "Hello!");
+        dict.set(key(1), "Hello World!");
+        dict.set(key(2), "Hello!");
 
         assert.deepStrictEqual(dict.has(key(0)), false);
         assert.deepStrictEqual(dict.has(key(1)), true);
@@ -123,8 +123,8 @@ describe("Blob dictionary", () => {
 
       it("should set and get some values", () => {
         const dict = BlobDictionary.new(treshold);
-        dict.internalSet(key(1), "Hello World!");
-        dict.internalSet(key(2), "Hello!");
+        dict.set(key(1), "Hello World!");
+        dict.set(key(2), "Hello!");
 
         assert.deepStrictEqual(dict.get(key(0)), undefined);
         assert.deepStrictEqual(dict.get(key(1)), "Hello World!");
@@ -134,8 +134,8 @@ describe("Blob dictionary", () => {
 
       it("should remove some values", () => {
         const dict = BlobDictionary.new(treshold);
-        dict.internalSet(key(1), "Hello World!");
-        dict.internalSet(key(2), "Hello!");
+        dict.set(key(1), "Hello World!");
+        dict.set(key(2), "Hello!");
         assert.deepStrictEqual(dict.has(key(1)), true);
         assert.deepStrictEqual(dict.has(key(2)), true);
 
@@ -151,8 +151,8 @@ describe("Blob dictionary", () => {
 
       it("should iterate over values", () => {
         const dict = BlobDictionary.new(treshold);
-        dict.internalSet(key(1), "Hello World!");
-        dict.internalSet(key(2), "Hello!");
+        dict.set(key(1), "Hello World!");
+        dict.set(key(2), "Hello!");
 
         const values = Array.from(dict.values());
 
@@ -161,8 +161,8 @@ describe("Blob dictionary", () => {
 
       it("should iterate over keys", () => {
         const dict = BlobDictionary.new(treshold);
-        dict.internalSet(key(1), "Hello World!");
-        dict.internalSet(key(2), "Hello!");
+        dict.set(key(1), "Hello World!");
+        dict.set(key(2), "Hello!");
 
         const keys = Array.from(dict.keys());
 
@@ -171,8 +171,8 @@ describe("Blob dictionary", () => {
 
       it("should iterate over entries", () => {
         const dict = BlobDictionary.new(treshold);
-        dict.internalSet(key(1), "Hello World!");
-        dict.internalSet(key(2), "Hello!");
+        dict.set(key(1), "Hello World!");
+        dict.set(key(2), "Hello!");
 
         const values = Array.from(dict);
 
