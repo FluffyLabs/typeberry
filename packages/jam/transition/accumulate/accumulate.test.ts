@@ -37,8 +37,6 @@ import { deepEqual, resultToString } from "@typeberry/utils";
 import { Accumulate } from "./accumulate.js";
 import type { AccumulateInput, AccumulateState } from "./accumulate-state.js";
 
-const PVM_BACKEND = PVMBackend.BuildIn;
-
 let blake2b: Blake2b;
 
 before(async () => {
@@ -49,7 +47,8 @@ type TestServiceInfo = {
   lastAccumulation?: TimeSlot;
 };
 
-describe("accumulate", () => {
+[PVMBackend.BuildIn, PVMBackend.Ananas].forEach((backend) => {
+  describe(`accumulate with ${backend}`, () => {
   // based on tiny/enqueue_and_unlock_chain_wraps-5.json
   it("should do correct state transition", async () => {
     const entropy = hashFromString<EntropyHash>("0xae85d6635e9ae539d0846b911ec86a27fe000f619b78bcac8a74b77e36f6dbcf");
@@ -192,7 +191,7 @@ describe("accumulate", () => {
       accumulationQueue: tryAsPerEpochBlock([[], [], [], [], [], [], [], [], [], [], [], []], tinyChainSpec),
     });
     const expectedOutput: AccumulationOutput[] = [];
-    const accumulate = new Accumulate(tinyChainSpec, blake2b, state, PVM_BACKEND);
+    const accumulate = new Accumulate(tinyChainSpec, blake2b, state, backend);
 
     // when
     const output = await accumulate.transition(input);
@@ -295,7 +294,7 @@ describe("accumulate", () => {
       ),
     });
 
-    const accumulate = new Accumulate(tinyChainSpec, blake2b, state, PVM_BACKEND);
+    const accumulate = new Accumulate(tinyChainSpec, blake2b, state, backend);
 
     const mod = 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8;
     const offset = MIN_PUBLIC_SERVICE_INDEX;
@@ -314,6 +313,7 @@ describe("accumulate", () => {
     // create duplication
     createdIds.push(tryAsServiceId(0));
     assert.ok(accumulate.hasDuplicatedServiceIdCreated(createdIds), "Should detect duplicated service id!");
+  });
   });
 });
 
