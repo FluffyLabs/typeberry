@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
+import { HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
 import { TruncatedHashDictionary } from "./truncated-hash-dictionary.js";
 
 describe("TruncatedHashDictionary", () => {
@@ -241,7 +241,6 @@ describe("TruncatedHashDictionary", () => {
       ]);
 
       const entries = Array.from(dict.entries());
-      console.log(entries);
       assert.deepStrictEqual(entries.length, 2);
       assert.deepStrictEqual(entries[0][0].toString(), truncatedKey12.toString());
       assert.deepStrictEqual(entries[0][1], "value2");
