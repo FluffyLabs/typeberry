@@ -89,7 +89,7 @@ function parseSharedOptions(
       if (Object.values(PVMBackend).includes(v as PVMBackend)) {
         return v as PVMBackend;
       }
-      throw Error();
+      throw Error(`Use one of ${Object.values(PVMBackend).join(", ")}`);
     },
     NODE_DEFAULTS.pvm,
   );

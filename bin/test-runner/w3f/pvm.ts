@@ -62,6 +62,7 @@ export class PvmTest {
   "expected-page-fault-address"?: number;
 }
 
+// TODO [MaSo] Test also on Ananas 🍍
 export async function runPvmTest(testContent: PvmTest) {
   const initialMemory = testContent["initial-memory"];
   const pageMap = testContent["initial-page-map"];
@@ -116,9 +117,9 @@ export async function runPvmTest(testContent: PvmTest) {
   pvm.resetGeneric(testContent.program, testContent["initial-pc"], tryAsGas(testContent["initial-gas"]), regs, memory);
   pvm.runProgram();
 
-  assert.strictEqual(pvm.getGasCounter().get(), BigInt(testContent["expected-gas"]));
+  assert.strictEqual(pvm.getGas().get(), BigInt(testContent["expected-gas"]));
   assert.strictEqual(pvm.getPC(), testContent["expected-pc"]);
-  assert.deepStrictEqual(pvm.getRawRegisters().getAllU64(), testContent["expected-regs"]);
+  assert.deepStrictEqual(pvm.getRegisters().getAllU64(), testContent["expected-regs"]);
 
   const testStatus = mapPvmStatus(pvm.getStatus());
   const exitParam = pvm.getExitParam();

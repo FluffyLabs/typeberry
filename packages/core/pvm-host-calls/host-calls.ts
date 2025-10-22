@@ -42,7 +42,7 @@ export class HostCalls {
   ) {}
 
   private getReturnValue(status: Status, pvmInstance: IPVMInterpreter): ReturnValue {
-    const gasConsumed = pvmInstance.getGasCounter().used();
+    const gasConsumed = pvmInstance.getGas().used();
     if (status === Status.OOG) {
       return ReturnValue.fromStatus(gasConsumed, status);
     }
@@ -84,31 +84,31 @@ export class HostCalls {
         "We know that the exit param is not null, because the status is 'Status.HOST'
       `;
       const hostCallIndex = pvmInstance.getExitParam() ?? -1;
+      const gas = pvmInstance.getGas();
       const regs = new HostCallRegisters(pvmInstance.getRegisters());
       const memory = new HostCallMemory(pvmInstance.getMemory());
       const index = tryAsHostCallIndex(hostCallIndex);
 
       const hostCall = this.hostCalls.get(index);
-      const gasCounter = pvmInstance.getGasCounter();
-      const gasBefore = gasCounter.get();
+      const gasBefore = gas.get();
       // NOTE: `basicGasCost(regs)` function is for compatibility reasons: pre GP 0.7.2
       const basicGasCost =
         typeof hostCall.basicGasCost === "number" ? hostCall.basicGasCost : hostCall.basicGasCost(regs);
-      const underflow = gasCounter.sub(basicGasCost);
+      const underflow = gas.sub(basicGasCost);
 
       const pcLog = `[PC: ${pvmInstance.getPC()}]`;
       if (underflow) {
-        this.hostCalls.traceHostCall(`${pcLog} OOG`, index, hostCall, regs, gasCounter.get());
-        return ReturnValue.fromStatus(gasCounter.used(), Status.OOG);
+        this.hostCalls.traceHostCall(`${pcLog} OOG`, index, hostCall, regs, gas.get());
+        return ReturnValue.fromStatus(gas.used(), Status.OOG);
       }
       this.hostCalls.traceHostCall(`${pcLog} Invoking`, index, hostCall, regs, gasBefore);
-      const result = await hostCall.execute(gasCounter, regs, memory);
+      const result = await hostCall.execute(gas, regs, memory);
       this.hostCalls.traceHostCall(
         result === undefined ? `${pcLog} Result` : `${pcLog} Status(${PvmExecution[result]})`,
         index,
         hostCall,
         regs,
-        gasCounter.get(),
+        gas.get(),
       );
 
       if (result === PvmExecution.Halt) {
@@ -137,7 +137,7 @@ export class HostCalls {
   }
 
   async runProgram(program: Uint8Array, args: Uint8Array, initialPc: number, initialGas: Gas): Promise<ReturnValue> {
-    // TODO [MaSo] Instance Manager should be deleted anyway.
+    // TODO [MaSo] Instance Manager should be deleted.
     const pvmInstancePromise = this.pvmInstanceManager.getInstance();
     const pvmInstance = await pvmInstancePromise;
     //console.log`${pvmInstance.printProgram(program)}`;

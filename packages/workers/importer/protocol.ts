@@ -84,11 +84,11 @@ export class ImporterConfig {
     pvm: codec.u8.convert(
       (i) => {
         switch (i) {
-          case PVMBackend.BuildIn:
+          case PVMBackend.BuiltIn:
             return tryAsU8(0);
           case PVMBackend.Ananas:
             return tryAsU8(1);
-          case PVMBackend.BuildinAnanas:
+          case PVMBackend.BuiltinAnanas:
             return tryAsU8(2);
           default:
             assertNever(i);
@@ -97,11 +97,11 @@ export class ImporterConfig {
       (o) => {
         switch (o) {
           case 0:
-            return PVMBackend.BuildIn;
+            return PVMBackend.BuiltIn;
           case 1:
             return PVMBackend.Ananas;
           case 2:
-            return PVMBackend.BuildinAnanas;
+            return PVMBackend.BuiltinAnanas;
           default:
             throw new Error(`Unimplemented interpreter of index ${o}`);
         }

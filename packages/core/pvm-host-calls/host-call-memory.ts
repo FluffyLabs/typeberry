@@ -8,7 +8,6 @@ export interface IHostCallMemory {
   loadInto(output: Uint8Array, address: U64): Result<OK, PageFault | OutOfBounds>;
 }
 
-// TODO [MaSo] Delte in favor of IMemory + add util for HC to safly change U64 reg value to U32 Address
 export class HostCallMemory implements IHostCallMemory {
   constructor(private readonly memory: IMemory) {}
 
@@ -24,16 +23,8 @@ export class HostCallMemory implements IHostCallMemory {
       );
     }
 
-    // NOTE It's ok to convert to number, bcs addres + bytes.lenght must be smaller than MAX U32
-    const addr = tryAsU32(Number(address));
-
-    const result = this.memory.set(addr, bytes);
-
-    if (result.isOk) {
-      return Result.ok(OK);
-    }
-
-    return Result.error({ address: addr }, result.details);
+    // NOTE It's ok to converts to number, bcs addres + bytes.lenght must be smaller than MAX U32
+    return this.memory.set(tryAsU32(Number(address)), bytes);
   }
 
   loadInto(output: Uint8Array, address: U64): Result<OK, PageFault | OutOfBounds> {
@@ -49,14 +40,6 @@ export class HostCallMemory implements IHostCallMemory {
     }
 
     // NOTE It's ok to convert to number, bcs addres + bytes.lenght must be smaller than MAX U32
-    const addr = tryAsU32(Number(address));
-
-    const result = this.memory.get(addr, output);
-
-    if (result.isOk) {
-      return Result.ok(OK);
-    }
-
-    return Result.error({ address: addr }, result.details);
+    return this.memory.get(tryAsU32(Number(address)), output);
   }
 }

@@ -175,7 +175,7 @@ export class Interpreter implements IPVMInterpreter {
     const p = assemblify(this.code, this.mask);
     // biome-ignore lint/suspicious/noConsole: We do want to print that.
     console.table(p);
-    return p.join(";\n");
+    return p;
   }
 
   runProgram() {
@@ -294,11 +294,7 @@ export class Interpreter implements IPVMInterpreter {
     return this.status;
   }
 
-  getRegisters(): IRegisters {
-    return this.registers;
-  }
-
-  getRawRegisters() {
+  getRegisters(): Registers {
     return this.registers;
   }
 
@@ -310,7 +306,7 @@ export class Interpreter implements IPVMInterpreter {
     this.pc = nextPc;
   }
 
-  getGasCounter(): IGasCounter {
+  getGas(): IGasCounter {
     return this.gas;
   }
 
@@ -323,11 +319,7 @@ export class Interpreter implements IPVMInterpreter {
     return p !== null ? tryAsU32(p) : p;
   }
 
-  getMemory(): IMemory {
-    return this.memory;
-  }
-
-  getRawMemory(): Memory {
+  getMemory(): Memory {
     return this.memory;
   }
 

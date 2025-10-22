@@ -2,6 +2,7 @@ import { PVMBackend } from "@typeberry/config-node";
 import type { IPVMInterpreter } from "@typeberry/pvm-interface";
 import { Interpreter } from "@typeberry/pvm-interpreter";
 import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
+import { assertNever } from "@typeberry/utils";
 
 type ResolveFn = (pvm: Promise<IPVMInterpreter>) => void;
 
@@ -10,10 +11,10 @@ export class InterpreterInstanceManager {
   private instances: Promise<IPVMInterpreter>[] = [];
   private waitingQueue: ResolveFn[] = [];
 
-  constructor(noOfPvmInstances: number, interpreter: PVMBackend = PVMBackend.BuildIn) {
+  constructor(noOfPvmInstances: number, interpreter: PVMBackend = PVMBackend.BuiltIn) {
     for (let i = 0; i < noOfPvmInstances; i++) {
       switch (interpreter) {
-        case PVMBackend.BuildIn:
+        case PVMBackend.BuiltIn:
           this.instances.push(
             Interpreter.new({
               useSbrkGas: false,
@@ -23,14 +24,8 @@ export class InterpreterInstanceManager {
         case PVMBackend.Ananas:
           this.instances.push(AnanasInterpreter.new());
           break;
-        case PVMBackend.BuildinAnanas:
-          this.instances.push(
-            Interpreter.new({
-              useSbrkGas: false,
-            }),
-          );
-          this.instances.push(AnanasInterpreter.new());
-          break;
+        default:
+          assertNever(interpreter);
       }
     }
   }

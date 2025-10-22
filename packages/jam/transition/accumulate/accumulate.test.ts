@@ -37,7 +37,7 @@ import { deepEqual, resultToString } from "@typeberry/utils";
 import { Accumulate } from "./accumulate.js";
 import type { AccumulateInput, AccumulateState } from "./accumulate-state.js";
 
-const PVM_BACKEND = PVMBackend.BuildIn;
+const PVM_BACKEND = PVMBackend.BuiltIn;
 
 let blake2b: Blake2b;
 

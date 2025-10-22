@@ -146,7 +146,7 @@ export class OnChain {
     public readonly state: State & WithStateView,
     blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
-    pvm: PVMBackend = PVMBackend.BuildIn,
+    pvm: PVMBackend = PVMBackend.BuiltIn,
   ) {
     const bandersnatch = BandernsatchWasm.new();
     this.statistics = new Statistics(chainSpec, state);

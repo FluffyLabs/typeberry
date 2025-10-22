@@ -153,19 +153,24 @@ export async function runAccumulateTest(test: AccumulateTest, path: string) {
    */
   const entropy = test.pre_state.entropy;
 
-  const state = TestState.toAccumulateState(test.pre_state as TestState, chainSpec);
-  const accumulate = new Accumulate(chainSpec, await Blake2b.createHasher(), state, PVMBackend.BuildIn);
-  const accumulateOutput = new AccumulateOutput();
-  const result = await accumulate.transition({ ...test.input, entropy });
-
-  if (result.isError) {
-    assert.fail(`Expected successfull accumulation, got: ${result}`);
-  }
-  const accumulateRoot = await accumulateOutput.transition({ accumulationOutputLog: result.ok.accumulationOutputLog });
-  state.applyUpdate(result.ok.stateUpdate);
-
   const post_state = TestState.toAccumulateState(test.post_state as TestState, chainSpec);
 
-  deepEqual(state, post_state);
-  deepEqual(accumulateRoot, test.output.ok);
+  const pvms = Object.values(PVMBackend);
+
+  for (const pvm of pvms) {
+    console.log`Testing : ${pvm}`;
+    const state = TestState.toAccumulateState(test.pre_state as TestState, chainSpec);
+    const accumulate = new Accumulate(chainSpec, await Blake2b.createHasher(), state, pvm);
+    const accumulateOutput = new AccumulateOutput();
+    const result = await accumulate.transition({ ...test.input, entropy });
+    if (result.isError) {
+      assert.fail(`Expected successfull accumulation for Ananas, got: ${result}`);
+    }
+    const accumulateRoot = await accumulateOutput.transition({
+      accumulationOutputLog: result.ok.accumulationOutputLog,
+    });
+    state.applyUpdate(result.ok.stateUpdate);
+    deepEqual(state, post_state);
+    deepEqual(accumulateRoot, test.output.ok);
+  }
 }

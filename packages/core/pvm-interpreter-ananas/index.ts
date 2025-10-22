@@ -43,6 +43,11 @@ class AnanasRegisters implements IRegisters {
   setAllFromBytes(bytes: Uint8Array): void {
     this.instance.setRegisters(lowerBytes(bytes));
   }
+
+  getAllU64(): BigUint64Array {
+    const bytes = this.getAllEncoded();
+    return new BigUint64Array(bytes.buffer, bytes.byteOffset);
+  }
 }
 
 class AnanasMemory implements IMemory {
@@ -120,12 +125,11 @@ export class AnanasInterpreter {
     const wasmPath = fileURLToPath(new URL("./node_modules/@fluffylabs/anan-as/build/release.wasm", import.meta.url));
     const wasmBuffer = await readFile(wasmPath);
     const wasmModule = await WebAssembly.compile(wasmBuffer);
-    const instance: AnanasAPI = await instantiate(wasmModule, {
+    const instance = await instantiate(wasmModule, {
       env: {
         abort: () => {
           throw new Error("Abort called from WASM");
         },
-        seed: () => Math.random(),
       },
     });
     return new AnanasInterpreter(instance);
@@ -136,6 +140,19 @@ export class AnanasInterpreter {
     const argsArr = lowerBytes(args);
     this.gas.initialGas = gas;
     this.instance.resetJAM(programArr, pc, gas as bigint, argsArr, true);
+  }
+
+  resetGeneric(program: Uint8Array, _pc: number, gas: Gas): void {
+    const programArr = lowerBytes(program);
+    const emptyRegisters = Array(13 * 8).fill(0);
+    const pageMap = new Uint8Array();
+    const chunks = new Uint8Array();
+    this.gas.initialGas = gas;
+    this.instance.resetGenericWithMemory(programArr, emptyRegisters, pageMap, chunks, BigInt(gas), false);
+  }
+
+  nextStep(): boolean {
+    return this.instance.nextStep();
   }
 
   runProgram(): void {
@@ -157,22 +174,18 @@ export class AnanasInterpreter {
   }
 
   getExitParam(): U32 | null {
-    const param = this.instance.getExitArg();
-    if (param < 0) {
-      return null;
-    }
-    return tryAsU32(param);
+    return tryAsU32(this.instance.getExitArg());
   }
 
-  getGasCounter(): IGasCounter {
+  getGas(): AnanasGasCounter {
     return this.gas;
   }
 
-  getRegisters(): IRegisters {
+  getRegisters(): AnanasRegisters {
     return this.registers;
   }
 
-  getMemory(): IMemory {
+  getMemory(): AnanasMemory {
     return this.memory;
   }
 }

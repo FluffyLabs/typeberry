@@ -101,7 +101,7 @@ describe("CLI", () => {
         const _args = parse(["--pvm=unimplemented"]);
       },
       {
-        message: "Invalid value 'unimplemented' for option 'pvm': Error",
+        message: "Invalid value 'unimplemented' for option 'pvm': Error: Use one of builtin, ananas, builtinananas",
       },
     );
   });

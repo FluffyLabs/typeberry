@@ -44,23 +44,11 @@ export class Memory implements IMemory {
   ) {}
 
   set(address: U32, bytes: Uint8Array): Result<OK, InretpreterPageFault> {
-    const result = this.storeFrom(tryAsMemoryIndex(address), bytes);
-
-    if (result.isError) {
-      return Result.error({ address: tryAsU32(result.error.address) }, result.details);
-    }
-
-    return result;
+    return this.storeFrom(tryAsMemoryIndex(address), bytes);
   }
 
   get(address: U32, output: Uint8Array): Result<OK, InretpreterPageFault> {
-    const result = this.loadInto(output, tryAsMemoryIndex(address));
-
-    if (result.isError) {
-      return Result.error({ address: tryAsU32(result.error.address) }, result.details);
-    }
-
-    return result;
+    return this.loadInto(output, tryAsMemoryIndex(address));
   }
 
   reset() {
