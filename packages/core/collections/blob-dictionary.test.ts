@@ -7,12 +7,12 @@ import { BlobDictionary } from "./blob-dictionary.js";
 const TRESHOLDS = [0, 5, 10];
 
 describe("Blob dictionary", () => {
-  for (const treshold of TRESHOLDS) {
-    describe(`BlobDictionary(${treshold})`, () => {
+  for (const threshold of TRESHOLDS) {
+    describe(`BlobDictionary(${threshold})`, () => {
       it("should add item to BlobDictionary and then return it", () => {
         const key = BytesBlob.parseBlob("0x123456789abcdef123456789abcdef123456789abcdef123456789abcdef");
         const val = { a: 1 };
-        const dict = BlobDictionary.new(treshold);
+        const dict = BlobDictionary.new(threshold);
 
         assert.strictEqual(dict.has(key), false);
 
@@ -29,7 +29,7 @@ describe("Blob dictionary", () => {
         const key = BytesBlob.parseBlob("0x123456789abcdef123456789abcdef123456789abcdef123456789abcdef");
         const val1 = { a: 1 };
         const val2 = { a: 2 };
-        const dict = BlobDictionary.new(treshold);
+        const dict = BlobDictionary.new(threshold);
 
         assert.strictEqual(dict.has(key), false);
 
@@ -44,7 +44,7 @@ describe("Blob dictionary", () => {
       it("should add item to BlobDictionary and then remove it", () => {
         const key = BytesBlob.parseBlob("0x123456789abcdef123456789abcdef123456789abcdef123456789abcdef");
         const val = { a: 1 };
-        const dict = BlobDictionary.new(treshold);
+        const dict = BlobDictionary.new(threshold);
 
         assert.strictEqual(dict.has(key), false);
 
@@ -60,7 +60,7 @@ describe("Blob dictionary", () => {
       it("should add empty blob as key", () => {
         const key = BytesBlob.empty();
         const val = { a: 1 };
-        const dict = BlobDictionary.new(treshold);
+        const dict = BlobDictionary.new(threshold);
 
         assert.strictEqual(dict.has(key), false);
 
@@ -86,7 +86,7 @@ describe("Blob dictionary", () => {
           [BytesBlob.parseBlob("0x112233445566778899aabbccddeef9"), { index: 9 }] as const,
         ];
 
-        const dict = BlobDictionary.new(3);
+        const dict = BlobDictionary.new(threshold);
 
         for (const [key, val] of entries) {
           dict.set(key, val);
@@ -111,7 +111,7 @@ describe("Blob dictionary", () => {
       }
 
       it("should return true/false for keys present in the dictionary", () => {
-        const dict = BlobDictionary.new(treshold);
+        const dict = BlobDictionary.new(threshold);
         dict.set(key(1), "Hello World!");
         dict.set(key(2), "Hello!");
 
@@ -122,7 +122,7 @@ describe("Blob dictionary", () => {
       });
 
       it("should set and get some values", () => {
-        const dict = BlobDictionary.new(treshold);
+        const dict = BlobDictionary.new(threshold);
         dict.set(key(1), "Hello World!");
         dict.set(key(2), "Hello!");
 
@@ -133,7 +133,7 @@ describe("Blob dictionary", () => {
       });
 
       it("should remove some values", () => {
-        const dict = BlobDictionary.new(treshold);
+        const dict = BlobDictionary.new(threshold);
         dict.set(key(1), "Hello World!");
         dict.set(key(2), "Hello!");
         assert.deepStrictEqual(dict.has(key(1)), true);
@@ -150,7 +150,7 @@ describe("Blob dictionary", () => {
       });
 
       it("should iterate over values", () => {
-        const dict = BlobDictionary.new(treshold);
+        const dict = BlobDictionary.new(threshold);
         dict.set(key(1), "Hello World!");
         dict.set(key(2), "Hello!");
 
@@ -160,7 +160,7 @@ describe("Blob dictionary", () => {
       });
 
       it("should iterate over keys", () => {
-        const dict = BlobDictionary.new(treshold);
+        const dict = BlobDictionary.new(threshold);
         dict.set(key(1), "Hello World!");
         dict.set(key(2), "Hello!");
 
@@ -170,7 +170,7 @@ describe("Blob dictionary", () => {
       });
 
       it("should iterate over entries", () => {
-        const dict = BlobDictionary.new(treshold);
+        const dict = BlobDictionary.new(threshold);
         dict.set(key(1), "Hello World!");
         dict.set(key(2), "Hello!");
 

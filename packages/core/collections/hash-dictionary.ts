@@ -11,10 +11,10 @@ export interface ImmutableHashDictionary<K extends OpaqueHash, V> extends Iterab
   get(key: K): V | undefined;
 
   /** Iterator over keys of the dictionary. */
-  keys(): Generator<K>;
+  keys(): Iterator<K>;
 
   /** Iterator over values of the dictionary. */
-  values(): Generator<V>;
+  values(): Iterator<V>;
 
   /** Returns an array of the map's values, sorted by their corresponding keys */
   toSortedArray(compare: Comparator<K>): V[];
@@ -100,4 +100,13 @@ export interface ImmutableHashDictionary<K extends OpaqueHash, V> extends Iterab
 //     return this.map.delete(key.toString());
 //   }
 // }
-export { BlobDictionary as HashDictionary } from "./blob-dictionary.js";
+import { BlobDictionary } from "./blob-dictionary.js";
+
+export class HashDictionary<K extends OpaqueHash, V>
+  extends BlobDictionary<K, V>
+  implements ImmutableHashDictionary<K, V>
+{
+  constructor() {
+    super(5);
+  }
+}

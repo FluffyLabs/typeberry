@@ -1,14 +1,16 @@
 import { BytesBlob } from "@typeberry/bytes";
-import { assertNever, check, WithDebug } from "@typeberry/utils";
+import type { Comparator } from "@typeberry/ordering";
+import { asOpaqueType, assertNever, check, type Opaque, WithDebug } from "@typeberry/utils";
 
 const CHUNK_SIZE = 6;
+type CHUNK_SIZE = typeof CHUNK_SIZE;
 
-export interface Keyable extends BytesBlob {}
+export type Keyable = BytesBlob;
 
 export function bytesAsU48(bytes: Uint8Array): number {
   const len = bytes.length;
 
-  check`${len <= 6} Length has to be <= 6, got: ${len}`;
+  check`${len <= CHUNK_SIZE} Length has to be <= ${CHUNK_SIZE}, got: ${len}`;
 
   let value = 0;
 
@@ -19,135 +21,144 @@ export function bytesAsU48(bytes: Uint8Array): number {
   return value * 8 + len;
 }
 
-class MapNode<V> {
-  key?: Keyable | undefined;
-  value?: V | undefined;
-  children: Map<number, MapNode<V> | ListNode<V>> = new Map();
+type KeyChunk = Opaque<BytesBlob, `up to ${CHUNK_SIZE} bytes`>;
+type U48 = number;
+type SubKey<K extends Keyable> = BytesBlob;
+type OriginalKeyRef<K> = K;
+
+type Leaf<K extends Keyable, V> = {
+  key: K;
+  value: V;
+};
+
+class Node<K extends Keyable, V, C = MapChildren<K, V> | ListChildren<K, V>> {
+  convertListChildrenToMap() {
+    if (!(this.children instanceof ListChildren)) {
+      return;
+    }
+    this.children = MapChildren.fromListNode<K, V>(this.children) as C;
+  }
+
+  static withList<K extends Keyable, V>(): Node<K, V, ListChildren<K, V>> {
+    return new Node(undefined, ListChildren.new());
+  }
+
+  static withMap<K extends Keyable, V>(): Node<K, V, MapChildren<K, V>> {
+    return new Node(undefined, MapChildren.new());
+  }
+
+  private constructor(
+    private leaf: Leaf<K, V> | undefined,
+    public children: C,
+  ) {}
+
+  getLeaf(): Leaf<K, V> | undefined {
+    return this.leaf;
+  }
+
+  remove(key: K): Leaf<K, V> | null {
+    if (this.leaf === undefined) {
+      return null;
+    }
+
+    const removedLeaf = this.leaf;
+    this.leaf = undefined;
+    return removedLeaf;
+  }
+
+  set(key: K, value: V): Leaf<K, V> | null {
+    if (this.leaf === undefined) {
+      this.leaf = { key, value };
+      return this.leaf;
+    }
+    this.leaf.value = value;
+    return null;
+  }
+}
+
+class MapChildren<K extends Keyable, V> {
+  children: Map<U48, Node<K, V>> = new Map();
 
   private constructor() {}
 
-  static new<V>(): MapNode<V> {
-    return new MapNode<V>();
+  static new<K extends Keyable, V>(): MapChildren<K, V> {
+    return new MapChildren<K, V>();
   }
 
-  static fromListNode<T>(node: ListNode<T>): MapNode<T> {
-    const mapNode = new MapNode<T>();
+  static fromListNode<K extends Keyable, T>(node: ListChildren<K, T>): MapChildren<K, T> {
+    const mapNode = new MapChildren<K, T>();
 
-    mapNode.key = node.key;
-    mapNode.value = node.value;
-
-    for (const [key, originalKey, value] of node.children) {
-      const currentKey = BytesBlob.blobFrom(key.raw.subarray(0, CHUNK_SIZE));
+    for (const [key, leaf] of node.children) {
+      const currentKeyChunk: KeyChunk = asOpaqueType(BytesBlob.blobFrom(key.raw.subarray(0, CHUNK_SIZE)));
       const subKey = BytesBlob.blobFrom(key.raw.subarray(CHUNK_SIZE));
-      const child = (mapNode.getChild(currentKey) as ListNode<T>) ?? ListNode.new<T>();
 
-      if (subKey.length > 0) {
-        child.pushOrReplace(subKey, originalKey, value);
-      } else {
-        child.setValue(originalKey, value);
-      }
-
-      mapNode.setChild(currentKey, child);
+      const child = mapNode.getChild(currentKeyChunk) ?? Node.withList<K, T>();
+      const children = child?.children as ListChildren<K, T>;
+      children.insert(subKey, leaf);
+      mapNode.setChild(currentKeyChunk, child);
     }
 
     return mapNode;
   }
 
-  getChild(keyChunk: Keyable) {
+  getChild(keyChunk: KeyChunk) {
     const chunkAsNumber = bytesAsU48(keyChunk.raw);
     return this.children.get(chunkAsNumber);
   }
 
-  setChild(keyChunk: Keyable, node: MapNode<V> | ListNode<V>) {
+  setChild(keyChunk: KeyChunk, node: Node<K, V>) {
     const chunkAsNumber = bytesAsU48(keyChunk.raw);
     this.children.set(chunkAsNumber, node);
   }
-
-  setValue(key: Keyable, value: V | undefined) {
-    const currentValue = this.value;
-    this.value = value;
-
-    if (currentValue !== undefined && value === undefined) {
-      return OperationKind.Remove;
-    }
-    if (currentValue === undefined && value !== undefined) {
-      this.key = key;
-      return OperationKind.Add;
-    }
-
-    return OperationKind.Override;
-  }
 }
 
-enum OperationKind {
-  Remove = -1,
-  Override = 0,
-  Add = 1,
-}
-export class ListNode<V> {
-  value?: V | undefined;
-  key?: Keyable | undefined;
-  children: [Keyable, Keyable, V | undefined][] = [];
+export class ListChildren<K extends Keyable, V> {
+  children: [SubKey<K>, Leaf<K, V>][] = [];
 
   private constructor() {}
 
-  find(key: Keyable) {
+  find(key: SubKey<K>): Leaf<K, V> | null {
     const result = this.children.find((item) => item[0].isEqualTo(key));
     if (result !== undefined) {
-      return result[2];
+      return result[1];
     }
+    return null;
   }
 
-  pushOrReplace(
-    key: Keyable,
-    originalKey: Keyable,
-    value: V | undefined,
-  ): { kind: OperationKind; originalKey: Keyable } {
+  remove(key: SubKey<K>): Leaf<K, V> | null {
+    const existingIndex = this.children.findIndex((item) => item[0].isEqualTo(key));
+    if (existingIndex >= 0) {
+      const ret = this.children.splice(existingIndex, 1);
+      return ret[0][1];
+    }
+    return null;
+  }
+
+  insert(key: SubKey<K>, leaf: Leaf<K, V>): Leaf<K, V> | null {
     const existingIndex = this.children.findIndex((item) => item[0].isEqualTo(key));
     if (existingIndex >= 0) {
       const existing = this.children[existingIndex];
-      const currentValue = existing[2];
-      existing[2] = value;
-      if (currentValue !== undefined && value === undefined) {
-        this.children.splice(existingIndex, 1);
-        return { kind: OperationKind.Remove, originalKey: existing[1] };
-      }
-
-      return { kind: OperationKind.Override, originalKey: existing[1] };
+      existing[1].value = leaf.value;
+      return null;
     }
 
-    this.children.push([key, originalKey, value]);
-    return { kind: OperationKind.Add, originalKey };
+    this.children.push([key, leaf]);
+    return leaf;
   }
 
-  setValue(key: Keyable, value: V | undefined) {
-    const currentValue = this.value;
-    this.value = value;
-
-    if (currentValue !== undefined && value === undefined) {
-      return OperationKind.Remove;
-    }
-    if (currentValue === undefined && value !== undefined) {
-      this.key = key;
-      return OperationKind.Add;
-    }
-
-    return OperationKind.Override;
-  }
-
-  static new<V>() {
-    return new ListNode<V>();
+  static new<K extends Keyable, V>() {
+    return new ListChildren<K, V>();
   }
 }
 
-type Node<V> = ListNode<V> | MapNode<V>;
-type MaybeNode<V> = Node<V> | undefined;
+// type Node<K extends Keyable, V> = ListNode<K, V> | MapNode<K, V>;
+type MaybeNode<K extends Keyable, V> = Node<K, V> | undefined;
 
 export class BlobDictionary<K extends Keyable, V> extends WithDebug {
-  private root: Node<V> = MapNode.new<V>();
-  private keyvals: Map<Keyable, V> = new Map();
+  private root: Node<K, V> = Node.withList();
+  private keyvals: Map<K, Leaf<K, V>> = new Map();
 
-  private constructor(private mapNodeThreshold: number) {
+  protected constructor(private mapNodeThreshold: number) {
     super();
   }
 
@@ -159,95 +170,95 @@ export class BlobDictionary<K extends Keyable, V> extends WithDebug {
     return new BlobDictionary<K, V>(mapNodeThreshold);
   }
 
-  private internalSet(key: K, value: V | undefined): OperationKind {
-    let node: MaybeNode<V> = this.root;
+  private internalSet(key: K, value: V | undefined): Leaf<K, V> | null {
+    let node: Node<K, V> = this.root;
     const keyChunkGenerator = key.chunks(CHUNK_SIZE);
     let depth = 0;
 
-    while (node instanceof MapNode) {
-      const keyChunk = keyChunkGenerator.next().value;
-      if (keyChunk === undefined) {
-        break;
+    for (;;) {
+      const maybeKeyChunk = keyChunkGenerator.next().value;
+      if (maybeKeyChunk === undefined) {
+        if (value === undefined) {
+          return node.remove(key);
+        }
+        return node.set(key, value);
+      }
+
+      const keyChunk: KeyChunk = asOpaqueType(maybeKeyChunk);
+
+      if (node.children instanceof ListChildren) {
+        const subkey = BytesBlob.blobFrom(key.raw.subarray(CHUNK_SIZE * depth));
+        const leaf = value !== undefined ? node.children.insert(subkey, { key, value }) : node.children.remove(subkey);
+
+        if (subkey.length > CHUNK_SIZE && node.children.children.length > this.mapNodeThreshold) {
+          node.convertListChildrenToMap();
+        }
+        return leaf;
       }
 
       depth += 1;
-      const maybeNode = node.getChild(keyChunk);
 
-      if (maybeNode instanceof MapNode) {
-        node = maybeNode;
-      } else if (maybeNode instanceof ListNode) {
-        if (maybeNode.children.length >= this.mapNodeThreshold) {
-          const mapNode: MapNode<V> = MapNode.fromListNode(maybeNode);
-          node.setChild(keyChunk, mapNode);
-          node = mapNode;
-        } else {
+      const children = node.children;
+      if (children instanceof ListChildren) {
+        throw new Error("We handle list node earlier. If we fall through, we know it's for the `Map` case.");
+      }
+
+      if (children instanceof MapChildren) {
+        const maybeNode = children.getChild(keyChunk);
+
+        if (maybeNode !== undefined) {
+          // simply go one level deeper
           node = maybeNode;
-        }
-      } else {
-        const newNode = ListNode.new<V>();
-        node.setChild(keyChunk, newNode);
-        node = newNode;
-      }
-    }
+        } else {
+          // we are trying to remove an item, but it does not exist
+          if (value === undefined) {
+            return null;
+          }
 
-    if (node instanceof MapNode) {
-      const operation = node.setValue(key, value);
-      this.updateKeyVals(operation, node.key ?? key, value);
-      return operation;
-    }
-    if (node instanceof ListNode) {
-      const subkey = BytesBlob.blobFrom(key.raw.subarray(CHUNK_SIZE * depth));
-      if (subkey.length > 0) {
-        const { kind, originalKey } = node.pushOrReplace(subkey, key, value);
-        this.updateKeyVals(kind, originalKey, value);
-        return kind;
+          // no more child nodes, we insert a new one.
+          const newNode = Node.withList<K, V>();
+          children.setChild(keyChunk, newNode);
+          node = newNode;
+        }
+        continue;
       }
-      const operation = node.setValue(key, value);
-      this.updateKeyVals(operation, node.key ?? key, value);
-      return operation;
+
+      assertNever(children);
     }
-    assertNever(node);
   }
 
   set(key: K, value: V): void {
-    this.internalSet(key, value);
-  }
-
-  private updateKeyVals(operation: OperationKind, key: Keyable, value: V | undefined) {
-    if (operation === OperationKind.Add && value !== undefined) {
-      this.keyvals.set(key, value);
-    } else if (operation === OperationKind.Override && value !== undefined) {
-      this.keyvals.set(key, value);
-    } else {
-      this.keyvals.delete(key);
+    const leaf = this.internalSet(key, value);
+    if (leaf !== null) {
+      this.keyvals.set(leaf.key, leaf);
     }
   }
 
   get(key: K): V | undefined {
-    let node: MaybeNode<V> = this.root;
+    let node: MaybeNode<K, V> = this.root;
     const pathChunksGenerator = key.chunks(CHUNK_SIZE);
     let depth = 0;
 
-    while (node instanceof MapNode) {
-      const pathChunk = pathChunksGenerator.next().value;
-      if (pathChunk === undefined) {
-        break;
-      }
-      node = node.getChild(pathChunk);
-      depth += 1;
-    }
+    while (node !== undefined) {
+      const maybePathChunk = pathChunksGenerator.next().value;
 
-    if (node instanceof MapNode) {
-      return node.value;
-    }
-
-    if (node instanceof ListNode) {
-      const keyOffset = depth * CHUNK_SIZE;
-      if (keyOffset >= key.length) {
-        return node.value;
+      if (node.children instanceof ListChildren) {
+        const subkey = BytesBlob.blobFrom(key.raw.subarray(depth * CHUNK_SIZE));
+        const child = node.children.find(subkey);
+        if (child !== null) {
+          return child.value;
+        }
       }
-      const subkey = BytesBlob.blobFrom(key.raw.subarray(depth * CHUNK_SIZE));
-      return node.find(subkey);
+
+      if (maybePathChunk === undefined) {
+        return node.getLeaf()?.value;
+      }
+
+      if (node.children instanceof MapChildren) {
+        const pathChunk: KeyChunk = asOpaqueType(maybePathChunk);
+        node = node.children.getChild(pathChunk);
+        depth += 1;
+      }
     }
 
     return undefined;
@@ -258,24 +269,32 @@ export class BlobDictionary<K extends Keyable, V> extends WithDebug {
   }
 
   delete(key: K): boolean {
-    const result = this.internalSet(key, undefined);
-    return result === OperationKind.Remove;
+    const leaf = this.internalSet(key, undefined);
+    if (leaf !== null) {
+      this.keyvals.delete(leaf.key);
+      return true;
+    }
+    return false;
   }
 
-  keys() {
+  keys(): Iterator<K> & Iterable<K> {
     return this.keyvals.keys();
   }
 
-  values() {
-    return this.keyvals.values();
+  *values(): Iterator<V> & Iterable<V> {
+    for (const leaf of this.keyvals.values()) {
+      yield leaf.value;
+    }
   }
 
-  entries() {
-    return this.keyvals.entries();
+  *entries(): Iterator<[K, V]> & Iterable<[K, V]> {
+    for (const leaf of this.keyvals.values()) {
+      yield [leaf.key, leaf.value];
+    }
   }
 
-  [Symbol.iterator]() {
-    return this.keyvals.entries();
+  [Symbol.iterator](): Iterator<[K, V]> & Iterable<[K, V]> {
+    return this.entries();
   }
 
   /** Create a new hash dictionary from given entires array. */
@@ -285,5 +304,11 @@ export class BlobDictionary<K extends Keyable, V> extends WithDebug {
       dict.set(key, value);
     }
     return dict;
+  }
+
+  toSortedArray(compare: Comparator<K>): V[] {
+    const vals: [K, V][] = Array.from(this);
+    vals.sort((a, b) => compare(a[0], b[0]).value);
+    return vals.map((x) => x[1]);
   }
 }
