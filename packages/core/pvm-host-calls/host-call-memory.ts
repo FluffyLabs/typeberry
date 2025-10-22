@@ -24,7 +24,7 @@ export class HostCallMemory implements IHostCallMemory {
       );
     }
 
-    // NOTE It's ok to convert to number, bcs addres + bytes.lenght must be smaller than MAX U32
+    // NOTE It's ok to convert to number, bcs we check earlier that address + bytes.length is smaller than MAX_U32
     const addr = tryAsU32(Number(address));
 
     const result = this.memory.set(addr, bytes);
