@@ -353,7 +353,7 @@ describe("Trie", () => {
 
     deepEqual(leaves.map((x) => x.getKey().toString()).sort(), initialLeaves.map((x) => x.getKey().toString()).sort());
     assert.deepStrictEqual(`${actual.getRootHash()}`, `${trie.getRootHash()}`);
-    assert.deepStrictEqual(actual.nodes, trie.nodes);
+    assert.deepStrictEqual(Array.from(actual.nodes.leaves()), Array.from(trie.nodes.leaves()));
   });
 
   it("Test vector 9", () => {

@@ -33,15 +33,18 @@ class MapNode<V> {
   static fromListNode<T>(node: ListNode<T>): MapNode<T> {
     const mapNode = new MapNode<T>();
 
-    for (const [key, value] of node.children) {
+    mapNode.key = node.key;
+    mapNode.value = node.value;
+
+    for (const [key, originalKey, value] of node.children) {
       const currentKey = BytesBlob.blobFrom(key.raw.subarray(0, CHUNK_SIZE));
       const subKey = BytesBlob.blobFrom(key.raw.subarray(CHUNK_SIZE));
       const child = (mapNode.getChild(currentKey) as ListNode<T>) ?? ListNode.new<T>();
 
       if (subKey.length > 0) {
-        child.pushOrReplace(subKey, value);
+        child.pushOrReplace(subKey, originalKey, value);
       } else {
-        child.value = value;
+        child.setValue(originalKey, value);
       }
 
       mapNode.setChild(currentKey, child);
@@ -60,18 +63,18 @@ class MapNode<V> {
     this.children.set(chunkAsNumber, node);
   }
 
-  setValue(key: Keyable, value: V) {
-    this.key = key;
-    if (this.value !== undefined && value === undefined) {
-      this.value = value;
+  setValue(key: Keyable, value: V | undefined) {
+    const currentValue = this.value;
+    this.value = value;
+
+    if (currentValue !== undefined && value === undefined) {
       return OperationKind.Remove;
     }
-    if (this.value === undefined && value !== undefined) {
-      this.value = value;
+    if (currentValue === undefined && value !== undefined) {
+      this.key = key;
       return OperationKind.Add;
     }
 
-    this.value = value;
     return OperationKind.Override;
   }
 }
@@ -84,43 +87,51 @@ enum OperationKind {
 export class ListNode<V> {
   value?: V | undefined;
   key?: Keyable | undefined;
-  children: [Keyable, V][] = [];
+  children: [Keyable, Keyable, V | undefined][] = [];
 
   private constructor() {}
 
   find(key: Keyable) {
     const result = this.children.find((item) => item[0].isEqualTo(key));
     if (result !== undefined) {
-      return result[1];
+      return result[2];
     }
   }
 
-  pushOrReplace(key: Keyable, value: V): OperationKind {
-    const existing = this.children.find((item) => item[0].isEqualTo(key));
-    if (existing !== undefined) {
-      existing[1] = value;
-      if (existing[1] !== undefined && value === undefined) {
-        return OperationKind.Remove;
+  pushOrReplace(
+    key: Keyable,
+    originalKey: Keyable,
+    value: V | undefined,
+  ): { kind: OperationKind; originalKey: Keyable } {
+    const existingIndex = this.children.findIndex((item) => item[0].isEqualTo(key));
+    if (existingIndex >= 0) {
+      const existing = this.children[existingIndex];
+      const currentValue = existing[2];
+      existing[2] = value;
+      if (currentValue !== undefined && value === undefined) {
+        this.children.splice(existingIndex, 1);
+        return { kind: OperationKind.Remove, originalKey: existing[1] };
       }
 
-      return OperationKind.Override;
+      return { kind: OperationKind.Override, originalKey: existing[1] };
     }
-    this.children.push([key, value]);
-    return OperationKind.Add;
+
+    this.children.push([key, originalKey, value]);
+    return { kind: OperationKind.Add, originalKey };
   }
 
-  setValue(key: Keyable, value: V) {
-    this.key = key;
-    if (this.value !== undefined && value === undefined) {
-      this.value = value;
+  setValue(key: Keyable, value: V | undefined) {
+    const currentValue = this.value;
+    this.value = value;
+
+    if (currentValue !== undefined && value === undefined) {
       return OperationKind.Remove;
     }
-    if (this.value === undefined && value !== undefined) {
-      this.value = value;
+    if (currentValue === undefined && value !== undefined) {
+      this.key = key;
       return OperationKind.Add;
     }
 
-    this.value = value;
     return OperationKind.Override;
   }
 
@@ -148,7 +159,7 @@ export class BlobDictionary<K extends Keyable, V> extends WithDebug {
     return new BlobDictionary<K, V>(mapNodeThreshold);
   }
 
-  set(key: K, value: V): void {
+  private internalSet(key: K, value: V | undefined): OperationKind {
     let node: MaybeNode<V> = this.root;
     const keyChunkGenerator = key.chunks(CHUNK_SIZE);
     let depth = 0;
@@ -182,19 +193,30 @@ export class BlobDictionary<K extends Keyable, V> extends WithDebug {
     if (node instanceof MapNode) {
       const operation = node.setValue(key, value);
       this.updateKeyVals(operation, node.key ?? key, value);
-    } else if (node instanceof ListNode) {
-      const subkey = BytesBlob.blobFrom(key.raw.subarray(CHUNK_SIZE * depth));
-      const operation = subkey.length > 0 ? node.pushOrReplace(subkey, value) : node.setValue(key, value);
-      this.updateKeyVals(operation, node.key ?? key, value);
-    } else {
-      assertNever(node);
+      return operation;
     }
+    if (node instanceof ListNode) {
+      const subkey = BytesBlob.blobFrom(key.raw.subarray(CHUNK_SIZE * depth));
+      if (subkey.length > 0) {
+        const { kind, originalKey } = node.pushOrReplace(subkey, key, value);
+        this.updateKeyVals(kind, originalKey, value);
+        return kind;
+      }
+      const operation = node.setValue(key, value);
+      this.updateKeyVals(operation, node.key ?? key, value);
+      return operation;
+    }
+    assertNever(node);
   }
 
-  private updateKeyVals(operation: OperationKind, key: Keyable, value: V) {
-    if (operation === OperationKind.Add) {
+  set(key: K, value: V): void {
+    this.internalSet(key, value);
+  }
+
+  private updateKeyVals(operation: OperationKind, key: Keyable, value: V | undefined) {
+    if (operation === OperationKind.Add && value !== undefined) {
       this.keyvals.set(key, value);
-    } else if (operation === OperationKind.Override) {
+    } else if (operation === OperationKind.Override && value !== undefined) {
       this.keyvals.set(key, value);
     } else {
       this.keyvals.delete(key);
@@ -235,8 +257,9 @@ export class BlobDictionary<K extends Keyable, V> extends WithDebug {
     return this.get(key) !== undefined;
   }
 
-  delete(key: K): void {
-    this.set(key, undefined as V);
+  delete(key: K): boolean {
+    const result = this.internalSet(key, undefined);
+    return result === OperationKind.Remove;
   }
 
   keys() {
@@ -245,6 +268,10 @@ export class BlobDictionary<K extends Keyable, V> extends WithDebug {
 
   values() {
     return this.keyvals.values();
+  }
+
+  entries() {
+    return this.keyvals.entries();
   }
 
   [Symbol.iterator]() {
