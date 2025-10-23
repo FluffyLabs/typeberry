@@ -130,17 +130,16 @@ export function loadConfig(config: string[], withRelPath: (p: string) => string)
   }
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: processing raw json objects
-function deepMerge(target: any, source: any, ignoreKeys: string[] = []) {
+function deepMerge(target: AnyJsonObject, source: AnyJsonObject, ignoreKeys: string[] = []) {
   for (const key in source) {
     if (ignoreKeys.includes(key)) {
       continue;
     }
-    if (key in source && typeof source[key] === "object" && !Array.isArray(source[key])) {
+    if (typeof source[key] === "object" && !Array.isArray(source[key])) {
       if (!(key in target)) {
         target[key] = {};
       }
-      deepMerge(target[key], source[key], ignoreKeys);
+      deepMerge(target[key] as AnyJsonObject, source[key] as AnyJsonObject, ignoreKeys);
     } else {
       target[key] = source[key];
     }
