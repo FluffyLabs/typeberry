@@ -4,10 +4,10 @@ import type { HeaderHash } from "@typeberry/block";
 import { Block as BlockCodec } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
-import { LmdbBlocks } from "@typeberry/database-lmdb";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import { getChainSpec, openDatabase } from "./common.js";
+import { LmdbWorkerConfig } from "@typeberry/workers-api-node";
+import { getChainSpec, getDatabasePath } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 
 export async function exportBlocks(jamNodeConfig: JamConfig, output: string, withRelPath: (p: string) => string) {
@@ -28,17 +28,28 @@ export async function exportBlocks(jamNodeConfig: JamConfig, output: string, wit
     }
   }
 
+  if (jamNodeConfig.node.databaseBasePath === undefined) {
+    logger.info`📖 Running with in-memory database. Nothing to do...`;
+    return;
+  }
+
   const blake2b = await Blake2b.createHasher();
   const chainSpec = getChainSpec(jamNodeConfig.node.flavor);
-  const { rootDb } = openDatabase(
+  const { dbPath } = getDatabasePath(
     blake2b,
     jamNodeConfig.nodeName,
     jamNodeConfig.node.chainSpec.genesisHeader,
     withRelPath(jamNodeConfig.node.databaseBasePath),
-    { readOnly: true },
   );
+  const config = LmdbWorkerConfig.new({
+    chainSpec,
+    blake2b,
+    dbPath,
+    workerParams: undefined,
+  });
 
-  const blocks = new LmdbBlocks(chainSpec, rootDb);
+  const rootDb = config.openDatabase();
+  const blocks = rootDb.getBlocksDb();
 
   logger.info`📖 Gathering blocks...`;
 

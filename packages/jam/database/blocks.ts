@@ -25,6 +25,8 @@ export interface BlocksDb {
    * NOTE: this is not extrinsic hash!
    */
   getExtrinsic(hash: HeaderHash): ExtrinsicView | null;
+  /** Close the database and free resources. */
+  close(): Promise<void>;
 }
 
 /** In-memory (non-persistent) blocks database. */
@@ -83,4 +85,6 @@ export class InMemoryBlocks implements BlocksDb {
   getExtrinsic(hash: HeaderHash): ExtrinsicView | null {
     return this.extrinsicsByHeaderHash.get(hash) ?? null;
   }
+
+  async close() {}
 }

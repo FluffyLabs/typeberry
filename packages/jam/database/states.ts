@@ -1,12 +1,9 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
-import type { BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { Blake2b } from "@typeberry/hash";
-import { type InMemoryState, type ServicesUpdate, type State, UpdateError } from "@typeberry/state";
+import { InMemoryState, type ServicesUpdate, type State, UpdateError } from "@typeberry/state";
 import { StateEntries } from "@typeberry/state-merkleization";
-import { inMemoryStateCodec } from "@typeberry/state-merkleization/in-memory-state-codec.js";
 import { assertNever, OK, Result } from "@typeberry/utils";
 
 /** A potential error that occured during state update. */
@@ -16,6 +13,13 @@ export enum StateUpdateError {
   /** There was an error committing the changes. */
   Commit = 1,
 }
+
+/** Interface to initialize states db. Typically used in conjunction with `StatesDb`. */
+export interface InitStatesDb<T = State> {
+  /** Insert a pre-defined initial state directly into the database. */
+  insertInitialState(headerHash: HeaderHash, initialState: T): Promise<Result<OK, StateUpdateError>>;
+}
+
 /**
  * Interface for accessing states stored in the database.
  *
@@ -41,12 +45,18 @@ export interface StatesDb<T extends State = State> {
 
   /** Retrieve posterior state of given header. */
   getState(header: HeaderHash): T | null;
+
+  /** Close the database and free resources. */
+  close(): Promise<void>;
 }
 
 export class InMemoryStates implements StatesDb<InMemoryState> {
-  private readonly db: HashDictionary<HeaderHash, BytesBlob> = HashDictionary.new();
+  private readonly db: HashDictionary<HeaderHash, InMemoryState> = HashDictionary.new();
+  private readonly blake2b: Promise<Blake2b>;
 
-  constructor(private readonly spec: ChainSpec) {}
+  constructor(private readonly spec: ChainSpec) {
+    this.blake2b = Blake2b.createHasher();
+  }
 
   async updateAndSetState(
     headerHash: HeaderHash,
@@ -55,7 +65,7 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
   ): Promise<Result<OK, StateUpdateError>> {
     const res = state.applyUpdate(update);
     if (res.isOk) {
-      return await this.insertState(headerHash, state);
+      return await this.insertInitialState(headerHash, state);
     }
 
     switch (res.error) {
@@ -69,23 +79,25 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
   }
 
   async getStateRoot(state: InMemoryState): Promise<StateRootHash> {
-    const blake2b = await Blake2b.createHasher();
+    const blake2b = await this.blake2b;
     return StateEntries.serializeInMemory(this.spec, blake2b, state).getRootHash(blake2b);
   }
 
   /** Insert a full state into the database. */
-  async insertState(headerHash: HeaderHash, state: InMemoryState): Promise<Result<OK, StateUpdateError>> {
-    const encoded = Encoder.encodeObject(inMemoryStateCodec(this.spec), state, this.spec);
-    this.db.set(headerHash, encoded);
+  async insertInitialState(headerHash: HeaderHash, state: InMemoryState): Promise<Result<OK, StateUpdateError>> {
+    const copy = InMemoryState.copyFrom(this.spec, state, state.intoServicesData());
+    this.db.set(headerHash, copy);
     return Result.ok(OK);
   }
 
   getState(headerHash: HeaderHash): InMemoryState | null {
-    const encodedState = this.db.get(headerHash);
-    if (encodedState === undefined) {
+    const state = this.db.get(headerHash);
+    if (state === undefined) {
       return null;
     }
 
-    return Decoder.decodeObject(inMemoryStateCodec(this.spec), encodedState, this.spec);
+    return InMemoryState.copyFrom(this.spec, state, state.intoServicesData());
   }
+
+  async close() {}
 }

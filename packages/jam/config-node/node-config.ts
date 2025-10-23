@@ -48,7 +48,7 @@ export class NodeConfiguration {
       version: "number",
       flavor: knownChainSpecFromJson,
       chain_spec: JipChainSpec.fromJson,
-      database_base_path: "string",
+      database_base_path: json.optional("string"),
       authorship: AuthorshipOptions.fromJson,
     },
     NodeConfiguration.new,
@@ -58,7 +58,7 @@ export class NodeConfiguration {
     if (version !== 1) {
       throw new Error("Only version=1 config is supported.");
     }
-    return new NodeConfiguration($schema, version, flavor, chain_spec, database_base_path, authorship);
+    return new NodeConfiguration($schema, version, flavor, chain_spec, database_base_path ?? undefined, authorship);
   }
 
   private constructor(
@@ -66,7 +66,8 @@ export class NodeConfiguration {
     public readonly version: number,
     public readonly flavor: KnownChainSpec,
     public readonly chainSpec: JipChainSpec,
-    public readonly databaseBasePath: string,
+    /** If database path is not provided, we load an in-memory db. */
+    public readonly databaseBasePath: string | undefined,
     public readonly authorship: AuthorshipOptions,
   ) {}
 }
