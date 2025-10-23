@@ -5,8 +5,6 @@ import { asOpaqueType, assertNever, check, type Opaque, WithDebug } from "@typeb
 const CHUNK_SIZE = 6;
 type CHUNK_SIZE = typeof CHUNK_SIZE;
 
-export type Keyable = BytesBlob;
-
 /**
  * A function to transform a bytes chunk (up to 6 bytes into U48 number)
  *
@@ -29,15 +27,15 @@ export function bytesAsU48(bytes: Uint8Array): number {
 
 type KeyChunk = Opaque<BytesBlob, `up to ${CHUNK_SIZE} bytes`>;
 type U48 = number;
-type SubKey<_K extends Keyable> = BytesBlob;
+type SubKey<_K extends BytesBlob> = BytesBlob;
 type OriginalKeyRef<K> = K;
 
-type Leaf<K extends Keyable, V> = {
+type Leaf<K extends BytesBlob, V> = {
   key: OriginalKeyRef<K>;
   value: V;
 };
 
-class Node<K extends Keyable, V, C = MapChildren<K, V> | ListChildren<K, V>> {
+class Node<K extends BytesBlob, V, C = MapChildren<K, V> | ListChildren<K, V>> {
   convertListChildrenToMap() {
     if (!(this.children instanceof ListChildren)) {
       return;
@@ -45,11 +43,11 @@ class Node<K extends Keyable, V, C = MapChildren<K, V> | ListChildren<K, V>> {
     this.children = MapChildren.fromListNode<K, V>(this.children) as C;
   }
 
-  static withList<K extends Keyable, V>(): Node<K, V, ListChildren<K, V>> {
+  static withList<K extends BytesBlob, V>(): Node<K, V, ListChildren<K, V>> {
     return new Node(undefined, ListChildren.new());
   }
 
-  static withMap<K extends Keyable, V>(): Node<K, V, MapChildren<K, V>> {
+  static withMap<K extends BytesBlob, V>(): Node<K, V, MapChildren<K, V>> {
     return new Node(undefined, MapChildren.new());
   }
 
@@ -82,16 +80,16 @@ class Node<K extends Keyable, V, C = MapChildren<K, V> | ListChildren<K, V>> {
   }
 }
 
-class MapChildren<K extends Keyable, V> {
+class MapChildren<K extends BytesBlob, V> {
   children: Map<U48, Node<K, V>> = new Map();
 
   private constructor() {}
 
-  static new<K extends Keyable, V>(): MapChildren<K, V> {
+  static new<K extends BytesBlob, V>(): MapChildren<K, V> {
     return new MapChildren<K, V>();
   }
 
-  static fromListNode<K extends Keyable, T>(node: ListChildren<K, T>): MapChildren<K, T> {
+  static fromListNode<K extends BytesBlob, T>(node: ListChildren<K, T>): MapChildren<K, T> {
     const mapNode = new MapChildren<K, T>();
 
     for (const [key, leaf] of node.children) {
@@ -119,7 +117,7 @@ class MapChildren<K extends Keyable, V> {
 }
 
 /** A map which uses byte blobs as keys */
-export class ListChildren<K extends Keyable, V> {
+export class ListChildren<K extends BytesBlob, V> {
   children: [SubKey<K>, Leaf<K, V>][] = [];
 
   private constructor() {}
@@ -153,14 +151,14 @@ export class ListChildren<K extends Keyable, V> {
     return leaf;
   }
 
-  static new<K extends Keyable, V>() {
+  static new<K extends BytesBlob, V>() {
     return new ListChildren<K, V>();
   }
 }
 
-type MaybeNode<K extends Keyable, V> = Node<K, V> | undefined;
+type MaybeNode<K extends BytesBlob, V> = Node<K, V> | undefined;
 
-export class BlobDictionary<K extends Keyable, V> extends WithDebug {
+export class BlobDictionary<K extends BytesBlob, V> extends WithDebug {
   private root: Node<K, V> = Node.withList();
   private keyvals: Map<K, Leaf<K, V>> = new Map();
 
@@ -173,7 +171,7 @@ export class BlobDictionary<K extends Keyable, V> extends WithDebug {
   }
 
   /** Create an empty blob dictionary */
-  static new<K extends Keyable, V>(mapNodeThreshold = 0) {
+  static new<K extends BytesBlob, V>(mapNodeThreshold = 0) {
     return new BlobDictionary<K, V>(mapNodeThreshold);
   }
 
@@ -305,7 +303,7 @@ export class BlobDictionary<K extends Keyable, V> extends WithDebug {
   }
 
   /** Create a new blob dictionary from given entires array. */
-  static fromEntries<K extends Keyable, V>(entries: [K, V][]): BlobDictionary<K, V> {
+  static fromEntries<K extends BytesBlob, V>(entries: [K, V][]): BlobDictionary<K, V> {
     const dict = BlobDictionary.new<K, V>();
     for (const [key, value] of entries) {
       dict.set(key, value);

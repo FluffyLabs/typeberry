@@ -1,4 +1,3 @@
-import type { Keyable } from "@typeberry/collections/blob-dictionary.js";
 import { type Comparator, Ordering } from "@typeberry/ordering";
 import {
   asOpaqueType,
@@ -16,7 +15,7 @@ import {
  * The structure is used as convenience wrapper for [`Uint8Array`],
  * especially if the data is coming from a hex-encoded string.
  */
-export class BytesBlob implements Keyable {
+export class BytesBlob {
   [TEST_COMPARE_USING]() {
     return this.toString();
   }
