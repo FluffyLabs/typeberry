@@ -7,6 +7,12 @@ type CHUNK_SIZE = typeof CHUNK_SIZE;
 
 export type Keyable = BytesBlob;
 
+/**
+ * A function to transform a bytes chunk (up to 6 bytes into U48 number)
+ *
+ * Note that it uses 3 additional bits to store length(`value * 8 + len;`),
+ * It is needed to distinguish shorter chunks that have 0s at the end, for example: [1, 2] and [1, 2, 0]
+ * */
 export function bytesAsU48(bytes: Uint8Array): number {
   const len = bytes.length;
 
@@ -23,11 +29,11 @@ export function bytesAsU48(bytes: Uint8Array): number {
 
 type KeyChunk = Opaque<BytesBlob, `up to ${CHUNK_SIZE} bytes`>;
 type U48 = number;
-type SubKey<K extends Keyable> = BytesBlob;
+type SubKey<_K extends Keyable> = BytesBlob;
 type OriginalKeyRef<K> = K;
 
 type Leaf<K extends Keyable, V> = {
-  key: K;
+  key: OriginalKeyRef<K>;
   value: V;
 };
 
@@ -56,7 +62,7 @@ class Node<K extends Keyable, V, C = MapChildren<K, V> | ListChildren<K, V>> {
     return this.leaf;
   }
 
-  remove(key: K): Leaf<K, V> | null {
+  remove(_key: K): Leaf<K, V> | null {
     if (this.leaf === undefined) {
       return null;
     }
@@ -112,6 +118,7 @@ class MapChildren<K extends Keyable, V> {
   }
 }
 
+/** A map which uses byte blobs as keys */
 export class ListChildren<K extends Keyable, V> {
   children: [SubKey<K>, Leaf<K, V>][] = [];
 
@@ -151,7 +158,6 @@ export class ListChildren<K extends Keyable, V> {
   }
 }
 
-// type Node<K extends Keyable, V> = ListNode<K, V> | MapNode<K, V>;
 type MaybeNode<K extends Keyable, V> = Node<K, V> | undefined;
 
 export class BlobDictionary<K extends Keyable, V> extends WithDebug {
@@ -166,6 +172,7 @@ export class BlobDictionary<K extends Keyable, V> extends WithDebug {
     return this.keyvals.size;
   }
 
+  /** Create an empty blob dictionary */
   static new<K extends Keyable, V>(mapNodeThreshold = 0) {
     return new BlobDictionary<K, V>(mapNodeThreshold);
   }
@@ -297,7 +304,7 @@ export class BlobDictionary<K extends Keyable, V> extends WithDebug {
     return this.entries();
   }
 
-  /** Create a new hash dictionary from given entires array. */
+  /** Create a new blob dictionary from given entires array. */
   static fromEntries<K extends Keyable, V>(entries: [K, V][]): BlobDictionary<K, V> {
     const dict = BlobDictionary.new<K, V>();
     for (const [key, value] of entries) {
@@ -306,6 +313,7 @@ export class BlobDictionary<K extends Keyable, V> extends WithDebug {
     return dict;
   }
 
+  /** Create a new sorted array from the blob dictionary */
   toSortedArray(compare: Comparator<K>): V[] {
     const vals: [K, V][] = Array.from(this);
     vals.sort((a, b) => compare(a[0], b[0]).value);
