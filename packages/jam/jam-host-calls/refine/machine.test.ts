@@ -5,7 +5,7 @@ import { BytesBlob } from "@typeberry/bytes";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { tryAsGas } from "@typeberry/pvm-interface";
-import { gasCounter, MemoryBuilder, Registers, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
+import { emptyRegistersBuffer, gasCounter, MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { type ProgramCounter, tryAsMachineId, tryAsProgramCounter } from "../externalities/refine-externalities.js";
@@ -21,7 +21,7 @@ const PC_REG = 9;
 
 function prepareRegsAndMemory(code: BytesBlob, pc: ProgramCounter, { skipCode = false }: { skipCode?: boolean } = {}) {
   const memStart = 2 ** 20;
-  const registers = new HostCallRegisters(new Registers());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   registers.set(CODE_START_REG, tryAsU64(memStart));
   registers.set(CODE_LEN_REG, tryAsU64(code.length));
   registers.set(PC_REG, pc);
@@ -30,10 +30,10 @@ function prepareRegsAndMemory(code: BytesBlob, pc: ProgramCounter, { skipCode = 
   if (!skipCode) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), code.raw);
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
+  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
-    memory: new HostCallMemory(memory),
+    memory,
   };
 }
 

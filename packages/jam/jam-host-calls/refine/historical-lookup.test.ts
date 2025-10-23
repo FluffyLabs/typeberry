@@ -3,13 +3,13 @@ import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
-import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { tryAsGas } from "@typeberry/pvm-interface";
-import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
+import { createEmptyRegistersBuffer } from "@typeberry/pvm-interpreter/registers.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../results.js";
@@ -32,7 +32,7 @@ function prepareRegsAndMemory(
 ) {
   const hashAddress = 2 ** 16;
   const memStart = 2 ** 20;
-  const registers = new HostCallRegisters(new Registers());
+  const registers = new HostCallRegisters(createEmptyRegistersBuffer());
   registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
   registers.set(HASH_START_REG, tryAsU64(hashAddress));
   registers.set(DEST_START_REG, tryAsU64(memStart));
@@ -46,13 +46,13 @@ function prepareRegsAndMemory(
   if (writableMemory) {
     builder.setWriteablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE));
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
+  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
-    memory: new HostCallMemory(memory),
+    memory,
     readResult: () => {
       const result = new Uint8Array(destinationLength);
-      assert.strictEqual(memory.get(tryAsU32(memStart), result).isOk, true);
+      assert.strictEqual(memory.loadInto(result, tryAsU64(memStart)).isOk, true);
       return BytesBlob.blobFrom(result);
     },
   };

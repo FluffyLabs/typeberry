@@ -1,14 +1,6 @@
 import { Logger } from "@typeberry/logger";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
-import {
-  type Gas,
-  type IGasCounter,
-  type IMemory,
-  type IPVMInterpreter,
-  type IRegisters,
-  Status,
-  tryAsGas,
-} from "@typeberry/pvm-interface";
+import { type Gas, type IPvmInterpreter, Status, tryAsGas } from "@typeberry/pvm-interface";
 import { Program } from "@typeberry/pvm-program";
 import { ArgsDecoder } from "./args-decoder/args-decoder.js";
 import { createResults } from "./args-decoder/args-decoding-results.js";
@@ -66,13 +58,14 @@ type InterpreterOptions = {
 
 const logger = Logger.new(import.meta.filename, "pvm");
 
-export class Interpreter implements IPVMInterpreter {
+export class Interpreter implements IPvmInterpreter {
   private readonly useSbrkGas: boolean;
-  private registers = new Registers();
+  readonly registers = new Registers();
+  readonly memory = new Memory();
+  readonly gas = gasCounter(tryAsGas(0));
   private code: Uint8Array = new Uint8Array();
   private mask = Mask.empty();
   private pc = 0;
-  private gas = gasCounter(tryAsGas(0));
   private argsDecoder: ArgsDecoder;
   private threeRegsDispatcher: ThreeRegsDispatcher;
   private twoRegsOneImmDispatcher: TwoRegsOneImmDispatcher;
@@ -82,7 +75,6 @@ export class Interpreter implements IPVMInterpreter {
   private oneOffsetDispatcher: OneOffsetDispatcher;
   private oneRegOneImmDispatcher: OneRegOneImmDispatcher;
   private instructionResult = new InstructionResult();
-  private memory = new Memory();
   private twoImmsDispatcher: TwoImmsDispatcher;
   private oneRegTwoImmsDispatcher: OneRegTwoImmsDispatcher;
   private noArgsDispatcher: NoArgsDispatcher;
@@ -152,7 +144,7 @@ export class Interpreter implements IPVMInterpreter {
     this.jumpTable.copyFrom(programDecoder.getJumpTable());
 
     this.pc = pc;
-    this.gas = gasCounter(gas);
+    this.gas.initialGas = gas;
     this.status = Status.OK;
     this.argsDecoder.reset(this.code, this.mask);
     this.basicBlocks.reset(this.code, this.mask);
@@ -294,20 +286,12 @@ export class Interpreter implements IPVMInterpreter {
     return this.status;
   }
 
-  getRegisters(): Registers {
-    return this.registers;
-  }
-
   getPC() {
     return this.pc;
   }
 
   setNextPC(nextPc: number) {
     this.pc = nextPc;
-  }
-
-  getGas(): IGasCounter {
-    return this.gas;
   }
 
   getStatus() {
@@ -317,10 +301,6 @@ export class Interpreter implements IPVMInterpreter {
   getExitParam(): null | U32 {
     const p = this.instructionResult.exitParam;
     return p !== null ? tryAsU32(p) : p;
-  }
-
-  getMemory(): Memory {
-    return this.memory;
   }
 
   getMemoryPage(pageNumber: number): null | Uint8Array {

@@ -2,9 +2,15 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { tryAsU64, type U64 } from "@typeberry/numbers";
-import { HostCallRegisters } from "@typeberry/pvm-host-calls";
+import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { tryAsGas } from "@typeberry/pvm-interface";
-import { gasCounter, MemoryBuilder, Registers, tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter";
+import {
+  emptyRegistersBuffer,
+  gasCounter,
+  MemoryBuilder,
+  tryAsMemoryIndex,
+  tryAsSbrkIndex,
+} from "@typeberry/pvm-interpreter";
 import { OK, Result } from "@typeberry/utils";
 import {
   type MachineId,
@@ -20,14 +26,14 @@ const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 
 function prepareRegsAndMemory(machineId: MachineId, pageStart: U64, pageCount: U64, requestType: U64) {
-  const registers = new HostCallRegisters(new Registers());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   registers.set(7, machineId);
   registers.set(8, pageStart);
   registers.set(9, pageCount);
   registers.set(10, requestType);
 
   const builder = new MemoryBuilder();
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
+  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
 
   return {
     registers,

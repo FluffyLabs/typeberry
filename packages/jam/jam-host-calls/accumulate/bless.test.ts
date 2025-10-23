@@ -6,12 +6,12 @@ import { tinyChainSpec } from "@typeberry/config";
 import { tryAsU64, type U64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { tryAsGas } from "@typeberry/pvm-interface";
-import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { MAX_VALUE, MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
+import { createEmptyRegistersBuffer } from "@typeberry/pvm-interpreter/registers.js";
 import { codecPerCore, type PerCore, tryAsPerCore } from "@typeberry/state";
 import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
@@ -55,7 +55,7 @@ function prepareRegsAndMemory(
 ) {
   const memAuthStart = 2 ** 24;
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(new Registers());
+  const registers = new HostCallRegisters(createEmptyRegistersBuffer());
   registers.set(MANAGER_REG, manager ?? tryAsU64(5));
   registers.set(AUTHORIZATION_REG, tryAsU64(memAuthStart));
   registers.set(VALIDATOR_REG, validator ?? tryAsU64(20));
@@ -81,10 +81,10 @@ function prepareRegsAndMemory(
     builder.setReadablePages(tryAsMemoryIndex(memAuthStart), tryAsMemoryIndex(memAuthStart + PAGE_SIZE), dataAuth.raw);
   }
 
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
+  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
-    memory: new HostCallMemory(memory),
+    memory,
   };
 }
 describe("HostCalls: Bless", () => {

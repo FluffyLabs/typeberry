@@ -11,7 +11,6 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, Status, tryAsBigGas, tryAsSmallGas } from "@typeberry/pvm-interface";
-import { Registers } from "@typeberry/pvm-interpreter";
 import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers.js";
 import { check, resultToString } from "@typeberry/utils";
 import { type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
@@ -71,7 +70,7 @@ export class Invoke implements HostCallHandler {
     // `g`
     const gasCost = tryAsBigGas(gasRegisters.gas);
     // `w`
-    const registers = new HostCallRegisters(Registers.fromBytes(gasRegisters.registers.raw));
+    const registers = new HostCallRegisters(gasRegisters.registers.raw);
 
     // try run the machine
     const state = await this.refine.machineInvoke(machineIndex, gasCost, registers);

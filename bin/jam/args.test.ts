@@ -96,12 +96,13 @@ describe("CLI", () => {
   });
 
   it("should throw on missing pvm option", () => {
+    const pvms = Object.values(PVMBackend).join(", ");
     assert.throws(
       () => {
         const _args = parse(["--pvm=unimplemented"]);
       },
       {
-        message: "Invalid value 'unimplemented' for option 'pvm': Error: Use one of builtin, ananas, builtinananas",
+        message: "Invalid value 'unimplemented' for option 'pvm': Error: Use one of " + pvms,
       },
     );
   });

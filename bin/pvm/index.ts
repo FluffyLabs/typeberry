@@ -9,7 +9,7 @@ const program = new Uint8Array([
   230, 174, 73, 44, 0, 0, 0, 0, 178, 230, 174, 120, 73, 85, 65, 2, 4,
 ]);
 
-const pvmTb = new Interpreter({ useSbrkGas: true});
+const pvmTb = new Interpreter({ useSbrkGas: true });
 const pvmAnanas = await AnanasInterpreter.new();
 
 pvmTb.resetGeneric(program, 0, tryAsGas(200n));
@@ -23,22 +23,26 @@ let tb = Status.OK;
 
 while (ananas || tb === Status.OK) {
   console.info(`Instruction ${i}: ${instructions[i]}`);
-  console.info(`🫐 Registers: ${pvmTb.getRegisters().getAllU64()}`);
-  console.info(`🍍 Registers: ${pvmAnanas.getRegisters().getAllU64()}`);
+  console.info(`🫐 Registers: ${pvmTb.registers.getAllU64()}`);
+  console.info(`🍍 Registers: ${pvmAnanas.registers.getAllU64()}`);
   console.info(`Status: 🫐 ${pvmTb.getStatus()} | 🍍 ${pvmAnanas.getStatus()}`);
-  console.info(`Gas: 🫐 ${pvmTb.getGas().get()}| 🍍 ${pvmAnanas.getGas().get()}`);
+  console.info(`Gas: 🫐 ${pvmTb.gas.get()}| 🍍 ${pvmAnanas.gas.get()}`);
   console.info(`PC: 🫐 ${pvmTb.getPC()} | 🍍 ${pvmAnanas.getPC()}`);
   console.info();
   i++;
-  if (tb === Status.OK) tb = pvmTb.nextStep();
-  if (ananas) ananas = pvmAnanas.nextStep();
+  if (tb === Status.OK) {
+    tb = pvmTb.nextStep();
+  }
+  if (ananas) {
+    ananas = pvmAnanas.nextStep();
+  }
 }
 
 console.info(`Instruction ${i}: ${instructions[i]}`);
-console.info(`🫐 Registers: ${pvmTb.getRegisters().getAllU64()}`);
-console.info(`🍍 Registers: ${pvmAnanas.getRegisters().getAllU64()}`);
+console.info(`🫐 Registers: ${pvmTb.registers.getAllU64()}`);
+console.info(`🍍 Registers: ${pvmAnanas.registers.getAllU64()}`);
 console.info(`Status: 🫐 ${pvmTb.getStatus()} | 🍍 ${pvmAnanas.getStatus()}`);
 // TODO [MaSo] Check why they not finished with same gas.
-console.info(`Gas: 🫐 ${pvmTb.getGas().get()}| 🍍 ${pvmAnanas.getGas().get()}`);
+console.info(`Gas: 🫐 ${pvmTb.gas.get()}| 🍍 ${pvmAnanas.gas.get()}`);
 console.info(`PC: 🫐 ${pvmTb.getPC()} | 🍍 ${pvmAnanas.getPC()}`);
 console.info();

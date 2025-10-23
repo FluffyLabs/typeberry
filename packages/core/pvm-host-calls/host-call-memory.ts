@@ -24,7 +24,7 @@ export class HostCallMemory implements IHostCallMemory {
     }
 
     // NOTE It's ok to convert to number, bcs we check earlier that address + bytes.length is smaller than MAX_U32
-    return this.memory.set(tryAsU32(Number(address)), bytes);
+    return this.memory.store(tryAsU32(Number(address)), bytes);
   }
 
   loadInto(output: Uint8Array, address: U64): Result<OK, PageFault | OutOfBounds> {
@@ -40,6 +40,6 @@ export class HostCallMemory implements IHostCallMemory {
     }
 
     // NOTE It's ok to convert to number, bcs we check earlier that address + bytes.length is smaller than MAX_U32
-    return this.memory.get(tryAsU32(Number(address)), output);
+    return this.memory.read(tryAsU32(Number(address)), output);
   }
 }

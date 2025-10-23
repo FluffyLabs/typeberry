@@ -88,8 +88,6 @@ export class ImporterConfig {
             return tryAsU8(0);
           case PVMBackend.Ananas:
             return tryAsU8(1);
-          case PVMBackend.BuiltinAnanas:
-            return tryAsU8(2);
           default:
             assertNever(i);
         }
@@ -100,8 +98,6 @@ export class ImporterConfig {
             return PVMBackend.BuiltIn;
           case 1:
             return PVMBackend.Ananas;
-          case 2:
-            return PVMBackend.BuiltinAnanas;
           default:
             throw new Error(`Unimplemented interpreter of index ${o}`);
         }

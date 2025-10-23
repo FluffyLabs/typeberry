@@ -5,6 +5,7 @@
   "main": "index.ts",
   "dependencies": {
     "@typeberry/pvm-interpreter": "*",
+    "@typeberry/pvm-interpreter-ananas": "*",
     "@typeberry/pvm-interface": "*"
   },
   "scripts": {

@@ -117,9 +117,9 @@ export async function runPvmTest(testContent: PvmTest) {
   pvm.resetGeneric(testContent.program, testContent["initial-pc"], tryAsGas(testContent["initial-gas"]), regs, memory);
   pvm.runProgram();
 
-  assert.strictEqual(pvm.getGas().get(), BigInt(testContent["expected-gas"]));
+  assert.strictEqual(pvm.gas.get(), BigInt(testContent["expected-gas"]));
   assert.strictEqual(pvm.getPC(), testContent["expected-pc"]);
-  assert.deepStrictEqual(pvm.getRegisters().getAllU64(), testContent["expected-regs"]);
+  assert.deepStrictEqual(pvm.registers.getAllU64(), testContent["expected-regs"]);
 
   const testStatus = mapPvmStatus(pvm.getStatus());
   const exitParam = pvm.getExitParam();

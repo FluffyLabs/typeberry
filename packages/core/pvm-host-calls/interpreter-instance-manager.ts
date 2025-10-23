@@ -1,14 +1,14 @@
 import { PVMBackend } from "@typeberry/config-node";
-import type { IPVMInterpreter } from "@typeberry/pvm-interface";
+import type { IPvmInterpreter } from "@typeberry/pvm-interface";
 import { Interpreter } from "@typeberry/pvm-interpreter";
 import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
 import { assertNever } from "@typeberry/utils";
 
-type ResolveFn = (pvm: Promise<IPVMInterpreter>) => void;
+type ResolveFn = (pvm: Promise<IPvmInterpreter>) => void;
 
 // TODO [MaSo] Delete this
 export class InterpreterInstanceManager {
-  private instances: Promise<IPVMInterpreter>[] = [];
+  private instances: Promise<IPvmInterpreter>[] = [];
   private waitingQueue: ResolveFn[] = [];
 
   constructor(noOfPvmInstances: number, interpreter: PVMBackend = PVMBackend.BuiltIn) {
@@ -30,7 +30,7 @@ export class InterpreterInstanceManager {
     }
   }
 
-  async getInstance(): Promise<IPVMInterpreter> {
+  async getInstance(): Promise<IPvmInterpreter> {
     const instance = this.instances.pop();
     if (instance !== undefined) {
       return Promise.resolve(instance);
@@ -40,7 +40,7 @@ export class InterpreterInstanceManager {
     });
   }
 
-  releaseInstance(pvm: Promise<IPVMInterpreter>) {
+  releaseInstance(pvm: Promise<IPvmInterpreter>) {
     const waiting = this.waitingQueue.shift();
     if (waiting !== undefined) {
       return waiting(pvm);

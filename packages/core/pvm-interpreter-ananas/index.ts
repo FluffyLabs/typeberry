@@ -1,12 +1,12 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { instantiate } from "@fluffylabs/anan-as/raw";
-import { Decoder } from "@typeberry/codec";
-import { tryAsU32, type U32, type U64 } from "@typeberry/numbers";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
 import {
   type Gas,
   type IGasCounter,
   type IMemory,
+  type IPvmInterpreter,
   type IRegisters,
   type PageFault,
   Status,
@@ -21,20 +21,6 @@ const INF_STEPS = 2 ** 32 - 1;
 
 class AnanasRegisters implements IRegisters {
   constructor(private readonly instance: AnanasAPI) {}
-
-  get(registerIndex: number): U64 {
-    const regs: Uint8Array = this.instance.getRegisters();
-    const decoder = Decoder.fromBlob(regs);
-    decoder.skip(registerIndex * 8);
-    return decoder.u64();
-  }
-
-  set(registerIndex: number, value: U64): void {
-    const regs: Uint8Array = this.instance.getRegisters();
-    const view = new DataView(regs.buffer);
-    view.setBigUint64(registerIndex * 8, value, true);
-    this.instance.setRegisters(lowerBytes(regs));
-  }
 
   getAllEncoded(): Uint8Array {
     return this.instance.getRegisters();
@@ -53,7 +39,7 @@ class AnanasRegisters implements IRegisters {
 class AnanasMemory implements IMemory {
   constructor(private readonly instance: AnanasAPI) {}
 
-  set(address: U32, bytes: Uint8Array): Result<OK, PageFault> {
+  store(address: U32, bytes: Uint8Array): Result<OK, PageFault> {
     try {
       this.instance.setMemory(address, bytes);
     } catch {
@@ -62,7 +48,7 @@ class AnanasMemory implements IMemory {
     return Result.ok(OK);
   }
 
-  get(address: U32, result: Uint8Array): Result<OK, PageFault> {
+  read(address: U32, result: Uint8Array): Result<OK, PageFault> {
     if (result.length === 0) {
       return Result.ok(OK);
     }
@@ -110,10 +96,10 @@ class AnanasGasCounter implements IGasCounter {
   }
 }
 
-export class AnanasInterpreter {
-  private registers: AnanasRegisters;
-  private memory: AnanasMemory;
-  private gas: AnanasGasCounter;
+export class AnanasInterpreter implements IPvmInterpreter {
+  readonly registers: AnanasRegisters;
+  readonly memory: AnanasMemory;
+  readonly gas: AnanasGasCounter;
 
   private constructor(private readonly instance: AnanasAPI) {
     this.registers = new AnanasRegisters(instance);
@@ -175,18 +161,6 @@ export class AnanasInterpreter {
 
   getExitParam(): U32 | null {
     return tryAsU32(this.instance.getExitArg());
-  }
-
-  getGas(): AnanasGasCounter {
-    return this.gas;
-  }
-
-  getRegisters(): AnanasRegisters {
-    return this.registers;
-  }
-
-  getMemory(): AnanasMemory {
-    return this.memory;
   }
 }
 

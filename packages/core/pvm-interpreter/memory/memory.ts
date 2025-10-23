@@ -1,6 +1,6 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
-import { tryAsU32, type U32 } from "@typeberry/numbers";
+import type { U32 } from "@typeberry/numbers";
 import { type IMemory, type PageFault as InretpreterPageFault, MAX_MEMORY_INDEX } from "@typeberry/pvm-interface";
 import { OK, Result } from "@typeberry/utils";
 import { OutOfMemory, PageFault } from "./errors.js";
@@ -43,11 +43,11 @@ export class Memory implements IMemory {
     private memory = new Map<PageNumber, MemoryPage>(),
   ) {}
 
-  set(address: U32, bytes: Uint8Array): Result<OK, InretpreterPageFault> {
+  store(address: U32, bytes: Uint8Array): Result<OK, InretpreterPageFault> {
     return this.storeFrom(tryAsMemoryIndex(address), bytes);
   }
 
-  get(address: U32, output: Uint8Array): Result<OK, InretpreterPageFault> {
+  read(address: U32, output: Uint8Array): Result<OK, InretpreterPageFault> {
     return this.loadInto(output, tryAsMemoryIndex(address));
   }
 

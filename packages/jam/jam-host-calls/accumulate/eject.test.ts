@@ -10,7 +10,7 @@ import { MemoryBuilder } from "@typeberry/pvm-interpreter";
 import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { Registers } from "@typeberry/pvm-interpreter/registers.js";
+import { createEmptyRegistersBuffer } from "@typeberry/pvm-interpreter/registers.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { deepEqual, OK, Result } from "@typeberry/utils";
 import { EjectError } from "../externalities/partial-state.js";
@@ -28,7 +28,7 @@ function prepareRegsAndMemory(
   { skipHash = false }: { skipHash?: boolean } = {},
 ) {
   const hashStart = 2 ** 16;
-  const registers = new HostCallRegisters(new Registers());
+  const registers = new HostCallRegisters(createEmptyRegistersBuffer());
   registers.set(SOURCE_REG, tryAsU64(source));
   registers.set(HASH_START_REG, tryAsU64(hashStart));
 
@@ -37,10 +37,10 @@ function prepareRegsAndMemory(
     builder.setReadablePages(tryAsMemoryIndex(hashStart), tryAsMemoryIndex(hashStart + PAGE_SIZE), hash.raw);
   }
 
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
+  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
-    memory: new HostCallMemory(memory),
+    memory,
   };
 }
 

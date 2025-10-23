@@ -1,8 +1,8 @@
-import { MEMORY_SIZE, PageFault as InterpreterPageFault } from "@typeberry/pvm-interface";
-import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index.js";
+import { tryAsU32, type U32 } from "@typeberry/numbers";
+import { type PageFault as InterpreterPageFault, MEMORY_SIZE } from "@typeberry/pvm-interface";
+import { tryAsMemoryIndex } from "./memory-index.js";
 import { getStartPageIndex, getStartPageIndexFromPageNumber } from "./memory-utils.js";
 import { tryAsPageNumber } from "./pages/page-utils.js";
-import { tryAsU32, U32 } from "@typeberry/numbers";
 
 export class PageFault implements InterpreterPageFault {
   private constructor(

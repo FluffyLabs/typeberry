@@ -24,7 +24,7 @@ export const tryAsGas = (v: number | bigint): Gas =>
  */
 export interface IGasCounter {
   /** Set during initialization of GasCounter. */
-  readonly initialGas: Gas;
+  initialGas: Gas;
 
   /** Return remaining gas. */
   get(): Gas;

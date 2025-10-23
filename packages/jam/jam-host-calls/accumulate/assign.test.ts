@@ -9,10 +9,10 @@ import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { tryAsGas } from "@typeberry/pvm-interface";
-import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
+import { createEmptyRegistersBuffer } from "@typeberry/pvm-interpreter/registers.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
@@ -33,7 +33,7 @@ function prepareRegsAndMemory(
   { skipAuthQueue = false, assigners = null }: { skipAuthQueue?: boolean; assigners?: bigint | number | null } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(new Registers());
+  const registers = new HostCallRegisters(createEmptyRegistersBuffer());
   registers.set(CORE_INDEX_REG, tryAsU64(coreIndex));
   registers.set(AUTH_QUEUE_START_REG, tryAsU64(memStart));
   if (assigners !== null) {
@@ -53,10 +53,10 @@ function prepareRegsAndMemory(
   if (!skipAuthQueue) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
+  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
-    memory: new HostCallMemory(memory),
+    memory,
   };
 }
 

@@ -1,5 +1,5 @@
 import { beforeEach, describe, it } from "node:test";
-import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
 import { MEMORY_SIZE } from "@typeberry/pvm-interface";
 import { Memory } from "@typeberry/pvm-interpreter";
 import { OutOfBounds, PageFault } from "@typeberry/pvm-interpreter/memory/errors.js";

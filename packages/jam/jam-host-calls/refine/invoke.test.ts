@@ -5,7 +5,7 @@ import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { tryAsU64, type U64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Status, tryAsGas } from "@typeberry/pvm-interface";
-import { gasCounter, MemoryBuilder, Registers, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
+import { emptyRegistersBuffer, gasCounter, MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { RESERVED_NUMBER_OF_PAGES } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
@@ -33,15 +33,15 @@ function prepareRegsAndMemory(
   data: BytesBlob,
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
-  const registers = new HostCallRegisters(new Registers());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   registers.set(MACHINE_INDEX_REG, machineIndex);
   registers.set(DEST_REG, tryAsU64(destinationStart));
 
-  const memory = prepareMemory(data, destinationStart, PAGE_SIZE, { registerMemory });
+  const memory = new HostCallMemory(prepareMemory(data, destinationStart, PAGE_SIZE, { registerMemory }));
 
   return {
     registers,
-    memory: new HostCallMemory(memory),
+    memory,
   };
 }
 

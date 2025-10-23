@@ -1,5 +1,4 @@
-import { tryAsU32 } from "@typeberry/numbers";
-import { type Gas, type IPVMInterpreter, MAX_MEMORY_INDEX, Status } from "@typeberry/pvm-interface";
+import { type Gas, type IPvmInterpreter, MAX_MEMORY_INDEX, Status } from "@typeberry/pvm-interface";
 import { assertNever, check, safeAllocUint8Array } from "@typeberry/utils";
 import { PvmExecution, tryAsHostCallIndex } from "./host-call-handler.js";
 import { HostCallMemory } from "./host-call-memory.js";
@@ -41,26 +40,25 @@ export class HostCalls {
     private hostCalls: HostCallsManager,
   ) {}
 
-  private getReturnValue(status: Status, pvmInstance: IPVMInterpreter): ReturnValue {
-    const gasConsumed = pvmInstance.getGas().used();
+  private getReturnValue(status: Status, pvmInstance: IPvmInterpreter): ReturnValue {
+    const gasConsumed = pvmInstance.gas.used();
     if (status === Status.OOG) {
       return ReturnValue.fromStatus(gasConsumed, status);
     }
 
     if (status === Status.HALT) {
-      const regs = pvmInstance.getRegisters();
-      const memory = pvmInstance.getMemory();
+      const regs = new HostCallRegisters(pvmInstance.registers.getAllEncoded());
+      const memory = new HostCallMemory(pvmInstance.memory);
       const address = regs.get(7);
       const length = regs.get(8);
-      if (address > MAX_MEMORY_INDEX || length > MAX_MEMORY_INDEX) {
+      if (length > MAX_MEMORY_INDEX) {
         return ReturnValue.fromMemorySlice(gasConsumed, new Uint8Array());
       }
 
       // NOTE It's safe to convert bcs we checked if it contains in MAX U32
       const result = safeAllocUint8Array(Number(length));
 
-      // NOTE It's safe to convert bcs we checked if it contains in MAX U32
-      const loadResult = memory.get(tryAsU32(Number(address)), result);
+      const loadResult = memory.loadInto(result, address);
 
       if (loadResult.isError) {
         return ReturnValue.fromMemorySlice(gasConsumed, new Uint8Array());
@@ -72,7 +70,7 @@ export class HostCalls {
     return ReturnValue.fromStatus(gasConsumed, Status.PANIC);
   }
 
-  private async execute(pvmInstance: IPVMInterpreter) {
+  private async execute(pvmInstance: IPvmInterpreter) {
     pvmInstance.runProgram();
     for (;;) {
       let status = pvmInstance.getStatus();
@@ -84,9 +82,9 @@ export class HostCalls {
         "We know that the exit param is not null, because the status is 'Status.HOST'
       `;
       const hostCallIndex = pvmInstance.getExitParam() ?? -1;
-      const gas = pvmInstance.getGas();
-      const regs = new HostCallRegisters(pvmInstance.getRegisters());
-      const memory = new HostCallMemory(pvmInstance.getMemory());
+      const gas = pvmInstance.gas;
+      const regs = new HostCallRegisters(pvmInstance.registers.getAllEncoded());
+      const memory = new HostCallMemory(pvmInstance.memory);
       const index = tryAsHostCallIndex(hostCallIndex);
 
       const hostCall = this.hostCalls.get(index);
@@ -110,6 +108,7 @@ export class HostCalls {
         regs,
         gas.get(),
       );
+      pvmInstance.registers.setAllFromBytes(regs.getEncoded());
 
       if (result === PvmExecution.Halt) {
         status = Status.HALT;

@@ -6,7 +6,7 @@ import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { tryAsGas } from "@typeberry/pvm-interface";
-import { gasCounter, Registers } from "@typeberry/pvm-interpreter";
+import { emptyRegistersBuffer, gasCounter } from "@typeberry/pvm-interpreter";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
@@ -26,23 +26,23 @@ const serviceAccountInfoSize = tryAsExactBytes(codecServiceAccountInfoWithThresh
 function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = serviceAccountInfoSize) {
   const pageStart = 2 ** 16;
   const memStart = pageStart + PAGE_SIZE - accountInfoLength - 1;
-  const registers = new HostCallRegisters(new Registers());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
   registers.set(DEST_START_REG, tryAsU64(memStart));
   registers.set(LEN_REG, tryAsU64(serviceAccountInfoSize));
 
   const builder = new MemoryBuilder();
   builder.setWriteablePages(tryAsMemoryIndex(pageStart), tryAsMemoryIndex(pageStart + PAGE_SIZE));
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
+  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
 
   const readRaw = () => {
     const result = new Uint8Array(Number(registers.get(LEN_REG)));
-    assert.strictEqual(memory.get(tryAsU32(memStart), result).isOk, true);
+    assert.strictEqual(memory.loadInto(result, tryAsU64(memStart)).isOk, true);
     return BytesBlob.blobFrom(result);
   };
   return {
     registers,
-    memory: new HostCallMemory(memory),
+    memory,
     readRaw,
     readInfo: () => {
       const data = readRaw();

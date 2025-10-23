@@ -12,7 +12,7 @@ import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { Registers } from "@typeberry/pvm-interpreter/registers.js";
+import { createEmptyRegistersBuffer } from "@typeberry/pvm-interpreter/registers.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import { UnprivilegedError } from "../externalities/partial-state.js";
@@ -29,7 +29,7 @@ function prepareRegsAndMemory(
   { skipValidators = false }: { skipValidators?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(new Registers());
+  const registers = new HostCallRegisters(createEmptyRegistersBuffer());
   registers.set(VALIDATORS_DATA_START_REG, tryAsU64(memStart));
 
   const builder = new MemoryBuilder();
@@ -52,10 +52,10 @@ function prepareRegsAndMemory(
   if (!skipValidators) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
+  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers: registers,
-    memory: new HostCallMemory(memory),
+    memory,
   };
 }
 

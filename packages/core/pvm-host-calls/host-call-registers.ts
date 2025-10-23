@@ -1,5 +1,4 @@
 import { tryAsU64, type U64 } from "@typeberry/numbers";
-import type { IRegisters } from "@typeberry/pvm-interface/registers.js";
 
 export interface IHostCallRegisters {
   get(registerIndex: number): U64;
@@ -7,19 +6,21 @@ export interface IHostCallRegisters {
   getEncoded(): Uint8Array;
 }
 
-// TODO [MaSo] Delte in favor of IRegister
 export class HostCallRegisters implements IHostCallRegisters {
-  constructor(private readonly registers: IRegisters) {}
+  private readonly registers: BigUint64Array;
+  constructor(private readonly bytes: Uint8Array) {
+    this.registers = new BigUint64Array(bytes.buffer, bytes.byteOffset);
+  }
 
   get(registerIndex: number): U64 {
-    return tryAsU64(this.registers.get(registerIndex));
+    return tryAsU64(this.registers[registerIndex]);
   }
 
   set(registerIndex: number, value: U64) {
-    this.registers.set(registerIndex, value);
+    this.registers[registerIndex] = value;
   }
 
   getEncoded(): Uint8Array {
-    return this.registers.getAllEncoded();
+    return this.bytes;
   }
 }
