@@ -1,7 +1,7 @@
 import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { Bytes } from "@typeberry/bytes";
-import { HashDictionary } from "@typeberry/collections";
+import { StringHashDictionary } from "@typeberry/collections";
 import { BlobDictionary } from "@typeberry/collections/blob-dictionary.js";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 
@@ -21,7 +21,7 @@ export default function run() {
     "Comparing set operation in two hash dicts",
 
     add("HashDictionary", () => {
-      const map = HashDictionary.new<OpaqueHash, number>();
+      const map = StringHashDictionary.new<OpaqueHash, number>();
 
       return () => {
         for (let k = 0; k < NO_OF_KEYS; k += 1) {
