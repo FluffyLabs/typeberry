@@ -1,7 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { parseFromJson } from "@typeberry/json-parser";
+import { workspacePathFix } from "@typeberry/utils";
 import { KnownChainSpec, loadConfig, NodeConfiguration } from "./node-config.js";
+
+const withRelPath = workspacePathFix(`${import.meta.dirname}/../..`);
 
 const NODE_CONFIG_TEST = {
   $schema: "https://typeberry.dev/schemas/config-v1.schema.json",
@@ -70,6 +73,6 @@ describe("Importing Node Configuration: Error Handling", () => {
 
 describe("Load dev config", () => {
   it("should load dev config without crashing", () => {
-    loadConfig("dev");
+    loadConfig(["dev"], withRelPath);
   });
 });

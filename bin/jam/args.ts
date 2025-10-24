@@ -36,7 +36,7 @@ export enum Command {
 
 export type SharedOptions = {
   nodeName: string;
-  configPath: string;
+  config: string[];
 };
 
 export type Arguments =
@@ -67,22 +67,18 @@ export type Arguments =
       }
     >;
 
-function parseSharedOptions(
-  args: minimist.ParsedArgs,
-  withRelPath: (v: string) => string,
-  defaultConfig: typeof DEV_CONFIG | typeof NODE_DEFAULTS.config = NODE_DEFAULTS.config,
-): SharedOptions {
+function parseSharedOptions(args: minimist.ParsedArgs, defaultConfig: string[] = NODE_DEFAULTS.config): SharedOptions {
   const { name } = parseStringOption(args, "name", (v) => v, NODE_DEFAULTS.name);
-  const { config } = parseStringOption(
+  const { config } = parseValueOptionAsArray(
     args,
     "config",
-    (v) => (v === DEV_CONFIG || v === DEFAULT_CONFIG ? v : withRelPath(v)),
+    "string",
+    (v: string) => (v === "" ? null : v),
     defaultConfig,
   );
-
   return {
     nodeName: name,
-    configPath: config,
+    config,
   };
 }
 
@@ -96,12 +92,12 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
 
   switch (command) {
     case Command.Run: {
-      const data = parseSharedOptions(args, withRelPath);
+      const data = parseSharedOptions(args);
       assertNoMoreArgs(args);
       return { command: Command.Run, args: data };
     }
     case Command.Dev: {
-      const data = parseSharedOptions(args, withRelPath, DEV_CONFIG);
+      const data = parseSharedOptions(args, [DEV_CONFIG]);
       const index = args._.shift();
       if (index === undefined) {
         throw new Error("Missing dev-validator index.");
@@ -114,7 +110,7 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
       return { command: Command.Dev, args: { ...data, index: numIndex } };
     }
     case Command.FuzzTarget: {
-      const data = parseSharedOptions(args, withRelPath);
+      const data = parseSharedOptions(args);
       const { version } = parseValueOption(args, "version", "number", parseFuzzVersion, 1);
       const socket = args._.shift() ?? null;
       assertNoMoreArgs(args);
@@ -128,7 +124,7 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
       };
     }
     case Command.Import: {
-      const data = parseSharedOptions(args, withRelPath);
+      const data = parseSharedOptions(args);
       const files = args._.map((f) => withRelPath(f));
       args._ = [];
       assertNoMoreArgs(args);
@@ -141,7 +137,7 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
       };
     }
     case Command.Export: {
-      const data = parseSharedOptions(args, withRelPath);
+      const data = parseSharedOptions(args);
       const output = args._.shift();
       if (output === undefined) {
         throw new Error("Missing output directory.");
@@ -173,6 +169,41 @@ function parseStringOption<S extends string, T>(
   return parseValueOption(args, option, "string", parser, defaultValue);
 }
 
+function parseValueOptionAsArray<X, S extends string, T>(
+  args: minimist.ParsedArgs,
+  option: S,
+  typeOfX: "number" | "string",
+  parser: (v: X) => T | null,
+  defaultValue: T[],
+): Record<S, T[]> {
+  if (args[option] === undefined) {
+    return {
+      [option]: defaultValue,
+    } as Record<S, T[]>;
+  }
+
+  const vals: unknown[] = Array.isArray(args[option]) ? args[option] : [args[option]];
+
+  delete args[option];
+
+  const parsedVals: T[] = vals.reduce((result: T[], val: unknown) => {
+    const valType = typeof val;
+    if (valType !== typeOfX) {
+      console.log("valType", valType);
+      throw new Error(`Option '--${option}' requires an argument of type: ${typeOfX}, got: ${valType}.`);
+    }
+    const parsed = parser(val as X);
+    if (parsed !== null) {
+      result.push(parsed);
+    }
+    return result;
+  }, []);
+
+  return {
+    [option]: parsedVals.length > 0 ? parsedVals : defaultValue,
+  } as Record<S, T[]>;
+}
+
 function parseValueOption<X, S extends string, T>(
   args: minimist.ParsedArgs,
   option: S,
@@ -185,6 +216,10 @@ function parseValueOption<X, S extends string, T>(
     return {
       [option]: defaultValue,
     } as Record<S, T>;
+  }
+
+  if (Array.isArray(val)) {
+    throw new Error(`Option '--${option}' has been specified more than once. Only one value was expected.`);
   }
 
   delete args[option];

@@ -38,9 +38,13 @@ running.catch((e) => {
   process.exit(-1);
 });
 
-async function prepareConfigFile(args: Arguments, blake2b: Blake2b): Promise<JamConfig> {
+async function prepareConfigFile(
+  args: Arguments,
+  blake2b: Blake2b,
+  withRelPath: (p: string) => string,
+): Promise<JamConfig> {
   const { nodeName: defaultNodeName } = args.args;
-  const nodeConfig = loadConfig(args.args.configPath);
+  const nodeConfig = loadConfig(args.args.config, withRelPath);
   const nodeName = args.command === Command.Dev ? devNodeName(defaultNodeName, args.args.index) : defaultNodeName;
 
   const devPortShift = args.command === Command.Dev ? args.args.index : 0;
@@ -74,7 +78,7 @@ async function prepareConfigFile(args: Arguments, blake2b: Blake2b): Promise<Jam
 
 async function startNode(args: Arguments, withRelPath: (p: string) => string) {
   const blake2b = await Blake2b.createHasher();
-  const jamNodeConfig = await prepareConfigFile(args, blake2b);
+  const jamNodeConfig = await prepareConfigFile(args, blake2b, withRelPath);
   // Start fuzz-target
   if (args.command === Command.FuzzTarget) {
     const version = args.args.version;

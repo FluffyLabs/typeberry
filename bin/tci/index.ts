@@ -22,7 +22,7 @@ export async function main(args: string[]) {
   let config: node.JamConfig;
   try {
     argv = parseArgs(args);
-    config = createJamConfig(argv);
+    config = createJamConfig(argv, withRelPath);
   } catch (e) {
     console.error(`\n${e}\n`);
     console.info(HELP);
@@ -31,8 +31,8 @@ export async function main(args: string[]) {
   node.main(config, withRelPath);
 }
 
-export function createJamConfig(argv: CommonArguments): node.JamConfig {
-  let nodeConfig = loadConfig(NODE_DEFAULTS.config);
+export function createJamConfig(argv: CommonArguments, withRelPath: (p: string) => string): node.JamConfig {
+  let nodeConfig = loadConfig(NODE_DEFAULTS.config, withRelPath);
   let devConfig: node.DevConfig = {
     ...node.DEFAULT_DEV_CONFIG,
   };
