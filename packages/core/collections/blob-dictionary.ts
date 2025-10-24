@@ -159,22 +159,98 @@ type MaybeNode<K extends BytesBlob, V> = Node<K, V> | undefined;
 
 /** A map which uses byte blobs as keys */
 export class BlobDictionary<K extends BytesBlob, V> extends WithDebug {
+  /**
+   * The root node of the dictionary.
+   *
+   * This is the main internal data structure that organizes entries
+   * in a tree-like fashion (array-based nodes up to `mapNodeThreshold`,
+   * map-based nodes beyond it). All insertions, updates, and deletions
+   * operate through this structure.
+   */
   private root: Node<K, V> = Node.withList();
+
+  /**
+   * Auxiliary map that stores references to the original keys and their values.
+   *
+   * - Overriding a value in the main structure does not replace the original key reference.
+   * - Used for efficient iteration over `keys()`, `values()`, `entries()`, and computing `size`.
+   */
   private keyvals: Map<K, Leaf<K, V>> = new Map();
 
+  /**
+   * Protected constructor used internally by `BlobDictionary.new`
+   * and `BlobDictionary.fromEntries`.
+   *
+   * This enforces controlled instantiation — users should create instances
+   * through the provided static factory methods instead of calling the
+   * constructor directly.
+   *
+   * @param mapNodeThreshold - The threshold that determines when the dictionary
+   * switches from using an array-based (`ListChildren`) node to a map-based (`MapChildren`) node for storing entries.
+   */
   protected constructor(private mapNodeThreshold: number) {
     super();
   }
 
+  /**
+   * Returns the number of entries in the dictionary.
+   *
+   * The count is derived from the auxiliary `keyvals` map, which stores
+   * all original key references and their associated values. This ensures
+   * that the `size` reflects the actual number of entries, independent of
+   * internal overrides in the main `root` structure.
+   *
+   * @returns The total number of entries in the dictionary.
+   */
   get size(): number {
     return this.keyvals.size;
   }
 
-  /** Create an empty blob dictionary */
+  /**
+   * Creates an empty `BlobDictionary`.
+   *
+   * @param mapNodeThreshold - The threshold that determines when the dictionary
+   * switches from using an array-based (`ListChildren`) node to a map-based (`MapChildren`) node for storing entries.
+   * Defaults to `0`.
+   *
+   * @returns A new, empty `BlobDictionary` instance.
+   */
   static new<K extends BytesBlob, V>(mapNodeThreshold = 0) {
     return new BlobDictionary<K, V>(mapNodeThreshold);
   }
 
+  /**
+   * Creates a new `BlobDictionary` initialized with the given entries.
+   *
+   * @param entries - An array of `[key, value]` pairs used to populate the dictionary.
+   * @param mapNodeThreshold - The threshold that determines when the dictionary
+   * switches from using an array-based (`ListChildren`) node to a map-based (`MapChildren`) node for storing entries.
+   * Defaults to `0`.
+   *
+   * @returns A new `BlobDictionary` containing the provided entries.
+   */
+  static fromEntries<K extends BytesBlob, V>(entries: [K, V][], mapNodeThreshold?: number): BlobDictionary<K, V> {
+    const dict = BlobDictionary.new<K, V>(mapNodeThreshold);
+    for (const [key, value] of entries) {
+      dict.set(key, value);
+    }
+    return dict;
+  }
+  /**
+   * Internal helper that inserts, updates or deletes an entry in the dictionary.
+   *
+   * Behaviour details:
+   * - Passing `undefined` as `value` indicates a deletion. (E.g. `delete` uses `internalSet(key, undefined)`.)
+   * - When an add (new entry) or a delete actually changes the structure, the method returns the affected leaf node.
+   * - When the call only overrides an existing value (no structural add/delete), the method returns `null`.
+   *
+   * This method is intended for internal use by the dictionary implementation and allows `undefined` as a
+   * sentinel value to signal removals.
+   *
+   * @param key - The key to insert, update or remove.
+   * @param value - The value to associate with the key, or `undefined` to remove the key.
+   * @returns The leaf node created or removed on add/delete, or `null` if the operation only overwrote an existing value.
+   */
   private internalSet(key: K, value: V | undefined): Leaf<K, V> | null {
     let node: Node<K, V> = this.root;
     const keyChunkGenerator = key.chunks(CHUNK_SIZE);
@@ -232,6 +308,16 @@ export class BlobDictionary<K extends BytesBlob, V> extends WithDebug {
     }
   }
 
+  /**
+   * Adds a new entry to the dictionary or updates the value of an existing key.
+   *
+   * If an entry with the given key already exists, its value is replaced
+   * with the new one.
+   *
+   * @param key - The key to add or update in the dictionary.
+   * @param value - The value to associate with the specified key.
+   * @returns Nothing (`void`).
+   */
   set(key: K, value: V): void {
     const leaf = this.internalSet(key, value);
     if (leaf !== null) {
@@ -239,6 +325,14 @@ export class BlobDictionary<K extends BytesBlob, V> extends WithDebug {
     }
   }
 
+  /**
+   * Retrieves the value associated with the given key from the dictionary.
+   *
+   * If the key does not exist, this method returns `undefined`.
+   *
+   * @param key - The key whose associated value should be retrieved.
+   * @returns The value associated with the specified key, or `undefined` if the key is not present.
+   */
   get(key: K): V | undefined {
     let node: MaybeNode<K, V> = this.root;
     const pathChunksGenerator = key.chunks(CHUNK_SIZE);
@@ -269,10 +363,44 @@ export class BlobDictionary<K extends BytesBlob, V> extends WithDebug {
     return undefined;
   }
 
+  /**
+   * Checks whether the dictionary contains an entry for the given key.
+   *
+   * ⚠️ **Note:** Avoid using `has(...)` together with `get(...)` in a pattern like this:
+   *
+   * ```ts
+   * if (dict.has(key)) {
+   *   const value = dict.get(key);
+   *   ...
+   * }
+   * ```
+   *
+   * This approach performs two lookups for the same key.
+   *
+   * Instead, prefer the following pattern, which retrieves the value once:
+   *
+   * ```ts
+   * const value = dict.get(key);
+   * if (value !== undefined) {
+   *   ...
+   * }
+   * ```
+   *
+   * @param key - The key to check for.
+   * @returns `true` if the dictionary contains an entry for the given key, otherwise `false`.
+   */
   has(key: K): boolean {
     return this.get(key) !== undefined;
   }
 
+  /**
+   * Removes an entry with the specified key from the dictionary.
+   *
+   * Internally, this calls {@link internalSet} with `undefined` to mark the entry as deleted.
+   *
+   * @param key - The key of the entry to remove.
+   * @returns `true` if an entry was removed (i.e. the key existed), otherwise `false`.
+   */
   delete(key: K): boolean {
     const leaf = this.internalSet(key, undefined);
     if (leaf !== null) {
@@ -282,39 +410,75 @@ export class BlobDictionary<K extends BytesBlob, V> extends WithDebug {
     return false;
   }
 
+  /**
+   * Returns an iterator over the keys in the dictionary.
+   *
+   * The iterator yields each key in insertion order.
+   *
+   * @returns An iterator over all keys in the dictionary.
+   */
   keys(): Iterator<K> & Iterable<K> {
     return this.keyvals.keys();
   }
 
+  /**
+   * Returns an iterator over the values in the dictionary.
+   *
+   * The iterator yields each value in insertion order.
+   *
+   * @returns An iterator over all values in the dictionary.
+   */
   *values(): Iterator<V> & Iterable<V> {
     for (const leaf of this.keyvals.values()) {
       yield leaf.value;
     }
   }
 
+  /**
+   * Returns an iterator over the `[key, value]` pairs in the dictionary.
+   *
+   * The iterator yields entries in insertion order.
+   *
+   * @returns An iterator over `[key, value]` tuples for each entry in the dictionary.
+   */
   *entries(): Iterator<[K, V]> & Iterable<[K, V]> {
     for (const leaf of this.keyvals.values()) {
       yield [leaf.key, leaf.value];
     }
   }
 
+  /**
+   * Default iterator for the dictionary.
+   *
+   * Equivalent to calling {@link entries}.
+   * Enables iteration with `for...of`:
+   *
+   * ```ts
+   * for (const [key, value] of dict) {
+   *   ...
+   * }
+   * ```
+   *
+   * @returns An iterator over `[key, value]` pairs.
+   */
   [Symbol.iterator](): Iterator<[K, V]> & Iterable<[K, V]> {
     return this.entries();
   }
 
-  /** Create a new blob dictionary from given entires array. */
-  static fromEntries<K extends BytesBlob, V>(entries: [K, V][], mapNodeThreshold?: number): BlobDictionary<K, V> {
-    const dict = BlobDictionary.new<K, V>(mapNodeThreshold);
-    for (const [key, value] of entries) {
-      dict.set(key, value);
-    }
-    return dict;
-  }
-
-  /** Create a new sorted array from the blob dictionary */
-  toSortedArray(compare: Comparator<K>): V[] {
+  /**
+   * Creates a new sorted array of values, ordered by their corresponding keys.
+   *
+   * Iterates over all entries in the dictionary and sorts them according
+   * to the provided comparator function applied to the keys.
+   *
+   * @param comparator - A comparator function that can compare two keys.
+   *
+   * @returns A new array containing all values from the dictionary,
+   * sorted according to their keys.
+   */
+  toSortedArray(comparator: Comparator<K>): V[] {
     const vals: [K, V][] = Array.from(this);
-    vals.sort((a, b) => compare(a[0], b[0]).value);
+    vals.sort((a, b) => comparator(a[0], b[0]).value);
     return vals.map((x) => x[1]);
   }
 }
