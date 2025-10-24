@@ -10,7 +10,7 @@ describe("CLI", () => {
   const parse = (args: string[]) => parseArgs(args, (v) => `../${v}`);
   const defaultOptions: SharedOptions = {
     nodeName: NODE_DEFAULTS.name,
-    configPath: NODE_DEFAULTS.config,
+    config: NODE_DEFAULTS.config,
   };
 
   it("should start with default arguments", () => {
@@ -41,7 +41,7 @@ describe("CLI", () => {
       command: Command.Run,
       args: {
         ...defaultOptions,
-        configPath: ".././config.json",
+        config: [".././config.json"],
       },
     });
   });
@@ -53,7 +53,7 @@ describe("CLI", () => {
       command: Command.Run,
       args: {
         ...defaultOptions,
-        configPath: "dev",
+        config: ["dev"],
       },
     });
   });
@@ -100,7 +100,7 @@ describe("CLI", () => {
       command: Command.Dev,
       args: {
         ...defaultOptions,
-        configPath: "dev",
+        config: ["dev"],
         index: tryAsU16(10),
       },
     });

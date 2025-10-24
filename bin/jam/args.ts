@@ -67,13 +67,9 @@ export type Arguments =
       }
     >;
 
-function parseSharedOptions(
-  args: minimist.ParsedArgs,
-  defaultConfig: typeof DEV_CONFIG | typeof NODE_DEFAULTS.config = NODE_DEFAULTS.config,
-): SharedOptions {
+function parseSharedOptions(args: minimist.ParsedArgs, defaultConfig: string[] = NODE_DEFAULTS.config): SharedOptions {
   const { name } = parseStringOption(args, "name", (v) => v, NODE_DEFAULTS.name);
   const { config } = parseValueOptionAsArray(args, "config", "string", (v: string) => v, defaultConfig);
-
   return {
     nodeName: name,
     config,
@@ -95,7 +91,7 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
       return { command: Command.Run, args: data };
     }
     case Command.Dev: {
-      const data = parseSharedOptions(args, DEV_CONFIG);
+      const data = parseSharedOptions(args, [DEV_CONFIG]);
       const index = args._.shift();
       if (index === undefined) {
         throw new Error("Missing dev-validator index.");
@@ -172,23 +168,33 @@ function parseValueOptionAsArray<X, S extends string, T>(
   option: S,
   typeOfX: "number" | "string",
   parser: (v: X) => T | null,
-  defaultValue: T,
+  defaultValue: T[],
 ): Record<S, T[]> {
-  const vals: minimist.ParsedArgs[keyof minimist.ParsedArgs] = Array.isArray(args[option])
-    ? args[option]
-    : [args[option]];
+  if (args[option] === undefined) {
+    return {
+      [option]: defaultValue,
+    } as Record<S, T[]>;
+  }
+
+  const vals: unknown[] = Array.isArray(args[option]) ? args[option] : [args[option]];
 
   delete args[option];
 
-  const parsedVals: T[] = [];
-  for (const val of vals) {
-    parsedVals.push(
-      parseValueOption({ [option]: val } as minimist.ParsedArgs, option, typeOfX, parser, defaultValue)[option],
-    );
-  }
+  const parsedVals: T[] = vals.reduce((result: T[], val: unknown) => {
+    const valType = typeof val;
+    if (valType !== typeOfX) {
+      console.log("valType", valType);
+      throw new Error(`Option '--${option}' requires an argument of type: ${typeOfX}, got: ${valType}.`);
+    }
+    const parsed = parser(val as X);
+    if (parsed !== null) {
+      result.push(parsed);
+    }
+    return result;
+  }, []);
 
   return {
-    [option]: parsedVals,
+    [option]: parsedVals.length > 0 ? parsedVals : defaultValue,
   } as Record<S, T[]>;
 }
 

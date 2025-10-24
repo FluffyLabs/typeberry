@@ -10,7 +10,7 @@ Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 const withRelPath = workspacePathFix(`${import.meta.dirname}/../../..`);
 
 async function main() {
-  const nodeConfig = loadConfig(`${import.meta.dirname}/e2e.config.json`);
+  const nodeConfig = loadConfig([`${import.meta.dirname}/e2e.config.json`], withRelPath);
   const jamConfig = JamConfig.new({ nodeName: NODE_DEFAULTS.name, nodeConfig });
   try {
     const api = await node(jamConfig, withRelPath);

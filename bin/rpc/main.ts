@@ -21,7 +21,7 @@ export async function main(args: string[]) {
 
   const blake2b = await Blake2b.createHasher();
   const port = Number.parseInt(argv.port, 10);
-  const config = loadConfig(argv.config);
+  const config = loadConfig(argv.config, withRelPath);
   const spec = getChainSpec(config.flavor);
   if (config.databaseBasePath === undefined) {
     throw new Error("RPC server requires a LMDB database path.");

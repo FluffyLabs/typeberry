@@ -19,7 +19,7 @@ const IGNORE_KEYS = ["$schema"];
 
 export const NODE_DEFAULTS = {
   name: isBrowser() ? "browser" : os.hostname(),
-  config: DEFAULT_CONFIG,
+  config: [DEFAULT_CONFIG],
 };
 
 /** Chain spec chooser. */
@@ -197,7 +197,7 @@ function processQuery(input: AnyJsonObject, query: string, withRelPath: (p: stri
       const part = pathParts[i];
       if (i === pathParts.length - 1) {
         if (merge) {
-          target[part] = deepMerge(target[part], parsedValue);
+          target[part] = deepMerge(target[part] as AnyJsonObject, parsedValue);
         } else {
           target[part] = parsedValue;
         }
