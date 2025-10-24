@@ -69,7 +69,13 @@ export type Arguments =
 
 function parseSharedOptions(args: minimist.ParsedArgs, defaultConfig: string[] = NODE_DEFAULTS.config): SharedOptions {
   const { name } = parseStringOption(args, "name", (v) => v, NODE_DEFAULTS.name);
-  const { config } = parseValueOptionAsArray(args, "config", "string", (v: string) => v, defaultConfig);
+  const { config } = parseValueOptionAsArray(
+    args,
+    "config",
+    "string",
+    (v: string) => (v === "" ? null : v),
+    defaultConfig,
+  );
   return {
     nodeName: name,
     config,

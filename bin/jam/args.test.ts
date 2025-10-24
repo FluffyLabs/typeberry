@@ -34,19 +34,19 @@ describe("CLI", () => {
     });
   });
 
-  it("should parse config option", () => {
+  it("should parse single config option as array", () => {
     const args = parse(["--config=./config.json"]);
 
     deepEqual(args, {
       command: Command.Run,
       args: {
         ...defaultOptions,
-        config: [".././config.json"],
+        config: ["./config.json"],
       },
     });
   });
 
-  it("should parse dev config option", () => {
+  it("should parse dev config option as array", () => {
     const args = parse(["--config=dev"]);
 
     deepEqual(args, {
@@ -56,6 +56,28 @@ describe("CLI", () => {
         config: ["dev"],
       },
     });
+  });
+
+  it("should parse multiple config options as array", () => {
+    const args = parse(["--config=dev", "--config=./config.json"]);
+    deepEqual(args, {
+      command: Command.Run,
+      args: {
+        ...defaultOptions,
+        config: ["dev", "./config.json"],
+      },
+    });
+  });
+
+  it("should throw an error when one of config options is not a string", () => {
+    assert.throws(
+      () => {
+        parse(["--config=dev", "--config=1"]);
+      },
+      {
+        message: "Option '--config' requires an argument of type: string, got: number.",
+      },
+    );
   });
 
   it("should parse import command and add rel path to files", () => {

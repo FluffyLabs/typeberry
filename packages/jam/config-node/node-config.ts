@@ -102,7 +102,7 @@ export function loadConfig(config: string[], withRelPath: (p: string) => string)
       deepMerge(mergedJson, parsed, IGNORE_KEYS);
     } catch {
       // if not, try to load as file
-      if (fs.existsSync(withRelPath(config[i]))) {
+      if (fs.existsSync(withRelPath(config[i])) && fs.statSync(withRelPath(config[i])).isFile()) {
         try {
           const configFile = fs.readFileSync(withRelPath(config[i]), "utf8");
           const parsed = JSON.parse(configFile);
@@ -169,7 +169,7 @@ function processQuery(input: AnyJsonObject, query: string, withRelPath: (p: stri
     }
 
     let parsedValue: AnyJsonObject;
-    if (fs.existsSync(withRelPath(value))) {
+    if (fs.existsSync(withRelPath(value)) && fs.statSync(withRelPath(value)).isFile()) {
       try {
         const configFile = fs.readFileSync(withRelPath(value), "utf8");
         const parsed = JSON.parse(configFile);
