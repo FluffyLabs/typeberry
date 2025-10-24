@@ -70,20 +70,22 @@ namespace entrypoint {
 export class PvmExecutor {
   private readonly pvm: PvmHostCallExtension;
   private hostCalls: HostCalls;
-  private pvmInstanceManager;
 
   private constructor(
     private serviceCode: BytesBlob,
     hostCallHandlers: HostCallHandler[],
     private entrypoint: ProgramCounter,
-    pvm: PVMBackend,
+    pvmInstanceManager: PvmInstanceManager,
   ) {
-    this.pvmInstanceManager = PvmInstanceManager.new(4, pvm);
     this.hostCalls = new HostCalls({
       missing: new Missing(),
       handlers: hostCallHandlers,
     });
-    this.pvm = new PvmHostCallExtension(this.pvmInstanceManager, this.hostCalls);
+    this.pvm = new PvmHostCallExtension(pvmInstanceManager, this.hostCalls);
+  }
+
+  private static async prepareBackend(pvm: PVMBackend) {
+    return PvmInstanceManager.new(4, pvm);
   }
 
   /** Prepare accumulation host call handlers */
@@ -135,7 +137,7 @@ export class PvmExecutor {
   }
 
   /** A utility function that can be used to prepare accumulate executor */
-  static createAccumulateExecutor(
+  static async createAccumulateExecutor(
     serviceId: ServiceId,
     serviceCode: BytesBlob,
     externalities: AccumulateHostCallExternalities,
@@ -143,17 +145,19 @@ export class PvmExecutor {
     pvm: PVMBackend,
   ) {
     const hostCallHandlers = PvmExecutor.prepareAccumulateHostCalls(serviceId, externalities, chainSpec);
-    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ACCUMULATE, pvm);
+    const instances = await PvmExecutor.prepareBackend(pvm);
+    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ACCUMULATE, instances);
   }
 
   /** A utility function that can be used to prepare on transfer executor */
-  static createOnTransferExecutor(
+  static async createOnTransferExecutor(
     serviceId: ServiceId,
     serviceCode: BytesBlob,
     externalities: OnTransferHostCallExternalities,
     pvm: PVMBackend,
   ) {
     const hostCallHandlers = PvmExecutor.prepareOnTransferHostCalls(serviceId, externalities);
-    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ON_TRANSFER, pvm);
+    const instances = await PvmExecutor.prepareBackend(pvm);
+    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ON_TRANSFER, instances);
   }
 }

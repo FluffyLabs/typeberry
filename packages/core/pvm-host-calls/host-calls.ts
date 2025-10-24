@@ -36,7 +36,7 @@ class ReturnValue {
 }
 export class HostCalls {
   constructor(
-    private pvmInstanceManager: Promise<InterpreterInstanceManager>,
+    private pvmInstanceManager: InterpreterInstanceManager,
     private hostCalls: HostCallsManager,
   ) {}
 
@@ -136,14 +136,12 @@ export class HostCalls {
   }
 
   async runProgram(program: Uint8Array, args: Uint8Array, initialPc: number, initialGas: Gas): Promise<ReturnValue> {
-    const manager = await this.pvmInstanceManager;
-    const pvmInstance = await manager.getInstance();
-    //console.log`${pvmInstance.printProgram(program)}`;
+    const pvmInstance = await this.pvmInstanceManager.getInstance();
     pvmInstance.resetJam(program, args, initialPc, initialGas);
     try {
       return await this.execute(pvmInstance);
     } finally {
-      manager.releaseInstance(pvmInstance);
+      this.pvmInstanceManager.releaseInstance(pvmInstance);
     }
   }
 }

@@ -121,7 +121,7 @@ export class DeferredTransfers {
           logger.trace`Skipping ON_TRANSFER execution for service ${serviceId} because code is too long`;
         }
       } else {
-        const executor = PvmExecutor.createOnTransferExecutor(
+        const executor = await PvmExecutor.createOnTransferExecutor(
           serviceId,
           code,
           { partialState, fetchExternalities },

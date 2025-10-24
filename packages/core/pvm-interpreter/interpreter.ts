@@ -62,7 +62,7 @@ export class Interpreter implements IPvmInterpreter {
   private readonly useSbrkGas: boolean;
   readonly registers = new Registers();
   readonly memory = new Memory();
-  readonly gas = gasCounter(tryAsGas(0));
+  gas = gasCounter(tryAsGas(0));
   private code: Uint8Array = new Uint8Array();
   private mask = Mask.empty();
   private pc = 0;
@@ -128,10 +128,6 @@ export class Interpreter implements IPvmInterpreter {
     this.oneRegOneExtImmDispatcher = new OneRegOneExtImmDispatcher(loadOps);
   }
 
-  static async new(options: InterpreterOptions = { useSbrkGas: false }) {
-    return new Interpreter(options);
-  }
-
   resetJam(program: Uint8Array, args: Uint8Array, pc: number, gas: Gas) {
     const p = Program.fromSpi(program, args, true);
     this.resetGeneric(p.code, pc, gas, p.registers, p.memory);
@@ -144,7 +140,7 @@ export class Interpreter implements IPvmInterpreter {
     this.jumpTable.copyFrom(programDecoder.getJumpTable());
 
     this.pc = pc;
-    this.gas.initialGas = gas;
+    this.gas = gasCounter(gas);
     this.status = Status.OK;
     this.argsDecoder.reset(this.code, this.mask);
     this.basicBlocks.reset(this.code, this.mask);

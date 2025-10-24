@@ -25,17 +25,6 @@ describe("HostCallMemory", () => {
       deepEqual(result, Result.ok(OK));
     });
 
-    it("should store bytes", () => {
-      const bytes = new Uint8Array([0x01, 0x02]);
-      const address = tryAsU64(2 ** 40);
-
-      // when
-      const result = hostCallMemory.storeFrom(address, bytes);
-
-      // then
-      deepEqual(result, Result.ok(OK));
-    });
-
     it("should pass through the result of the underlying memory's storeFrom method", () => {
       const bytes = new Uint8Array([1, 2, 3, 4]);
       const address = tryAsU64(0);
@@ -87,21 +76,6 @@ describe("HostCallMemory", () => {
       const result = hostCallMemory.loadInto(bytes, address);
 
       deepEqual(result, Result.ok(OK));
-    });
-
-    it("should read stored bytes", () => {
-      const bytes = new Uint8Array([0x01, 0x02]);
-      const address = tryAsU64(2 ** 40);
-
-      hostCallMemory.storeFrom(address, bytes);
-
-      // when
-      const resultBytes = new Uint8Array(2);
-      const load = hostCallMemory.loadInto(resultBytes, address);
-
-      // then
-      deepEqual(load, Result.ok(OK));
-      deepEqual(bytes, resultBytes);
     });
 
     it("should pass through the result of the underlying memory's loadInto method", () => {

@@ -171,7 +171,14 @@ export class Accumulate {
       fetchExternalities,
     };
 
-    const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec, this.pvm);
+    const executor = await PvmExecutor.createAccumulateExecutor(
+      serviceId,
+      code,
+      externalities,
+      this.chainSpec,
+      this.pvm,
+    );
+
     const invocationArgs = Encoder.encodeObject(ARGS_CODEC, {
       slot,
       serviceId,
