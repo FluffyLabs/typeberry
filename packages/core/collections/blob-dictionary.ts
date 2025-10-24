@@ -2,120 +2,6 @@ import { BytesBlob } from "@typeberry/bytes";
 import type { Comparator } from "@typeberry/ordering";
 import { asOpaqueType, assertNever, check, type Opaque, TEST_COMPARE_USING, WithDebug } from "@typeberry/utils";
 
-const CHUNK_SIZE = 6;
-type CHUNK_SIZE = typeof CHUNK_SIZE;
-
-/**
- * A function to transform a bytes chunk (up to 6 bytes into U48 number)
- *
- * Note that it uses 3 additional bits to store length(`value * 8 + len;`),
- * It is needed to distinguish shorter chunks that have 0s at the end, for example: [1, 2] and [1, 2, 0]
- * */
-export function bytesAsU48(bytes: Uint8Array): number {
-  const len = bytes.length;
-
-  check`${len <= CHUNK_SIZE} Length has to be <= ${CHUNK_SIZE}, got: ${len}`;
-
-  let value = bytes[3] | (bytes[2] << 8) | (bytes[1] << 16) | (bytes[0] << 24);
-
-  for (let i = 4; i < bytes.length; i++) {
-    value = value * 256 + bytes[i];
-  }
-
-  return value * 8 + len;
-}
-
-type KeyChunk = Opaque<BytesBlob, `up to ${CHUNK_SIZE} bytes`>;
-type U48 = number;
-type SubKey<_K extends BytesBlob> = BytesBlob;
-type OriginalKeyRef<K> = K;
-
-type Leaf<K extends BytesBlob, V> = {
-  key: OriginalKeyRef<K>;
-  value: V;
-};
-
-class Node<K extends BytesBlob, V, C = MapChildren<K, V> | ListChildren<K, V>> {
-  convertListChildrenToMap() {
-    if (!(this.children instanceof ListChildren)) {
-      return;
-    }
-    this.children = MapChildren.fromListNode<K, V>(this.children) as C;
-  }
-
-  static withList<K extends BytesBlob, V>(): Node<K, V, ListChildren<K, V>> {
-    return new Node(undefined, ListChildren.new());
-  }
-
-  static withMap<K extends BytesBlob, V>(): Node<K, V, MapChildren<K, V>> {
-    return new Node(undefined, MapChildren.new());
-  }
-
-  private constructor(
-    private leaf: Leaf<K, V> | undefined,
-    public children: C,
-  ) {}
-
-  getLeaf(): Leaf<K, V> | undefined {
-    return this.leaf;
-  }
-
-  remove(_key: K): Leaf<K, V> | null {
-    if (this.leaf === undefined) {
-      return null;
-    }
-
-    const removedLeaf = this.leaf;
-    this.leaf = undefined;
-    return removedLeaf;
-  }
-
-  set(key: K, value: V): Leaf<K, V> | null {
-    if (this.leaf === undefined) {
-      this.leaf = { key, value };
-      return this.leaf;
-    }
-    this.leaf.value = value;
-    return null;
-  }
-}
-
-class MapChildren<K extends BytesBlob, V> {
-  children: Map<U48, Node<K, V>> = new Map();
-
-  private constructor() {}
-
-  static new<K extends BytesBlob, V>(): MapChildren<K, V> {
-    return new MapChildren<K, V>();
-  }
-
-  static fromListNode<K extends BytesBlob, T>(node: ListChildren<K, T>): MapChildren<K, T> {
-    const mapNode = new MapChildren<K, T>();
-
-    for (const [key, leaf] of node.children) {
-      const currentKeyChunk: KeyChunk = asOpaqueType(BytesBlob.blobFrom(key.raw.subarray(0, CHUNK_SIZE)));
-      const subKey = BytesBlob.blobFrom(key.raw.subarray(CHUNK_SIZE));
-
-      const child = mapNode.getChild(currentKeyChunk) ?? Node.withList<K, T>();
-      const children = child?.children as ListChildren<K, T>;
-      children.insert(subKey, leaf);
-      mapNode.setChild(currentKeyChunk, child);
-    }
-
-    return mapNode;
-  }
-
-  getChild(keyChunk: KeyChunk) {
-    const chunkAsNumber = bytesAsU48(keyChunk.raw);
-    return this.children.get(chunkAsNumber);
-  }
-
-  setChild(keyChunk: KeyChunk, node: Node<K, V>) {
-    const chunkAsNumber = bytesAsU48(keyChunk.raw);
-    this.children.set(chunkAsNumber, node);
-  }
-}
-
 export class ListChildren<K extends BytesBlob, V> {
   children: [SubKey<K>, Leaf<K, V>][] = [];
 
@@ -486,5 +372,119 @@ export class BlobDictionary<K extends BytesBlob, V> extends WithDebug {
     const vals: [K, V][] = Array.from(this);
     vals.sort((a, b) => comparator(a[0], b[0]).value);
     return vals.map((x) => x[1]);
+  }
+}
+
+const CHUNK_SIZE = 6;
+type CHUNK_SIZE = typeof CHUNK_SIZE;
+
+/**
+ * A function to transform a bytes chunk (up to 6 bytes into U48 number)
+ *
+ * Note that it uses 3 additional bits to store length(`value * 8 + len;`),
+ * It is needed to distinguish shorter chunks that have 0s at the end, for example: [1, 2] and [1, 2, 0]
+ * */
+export function bytesAsU48(bytes: Uint8Array): number {
+  const len = bytes.length;
+
+  check`${len <= CHUNK_SIZE} Length has to be <= ${CHUNK_SIZE}, got: ${len}`;
+
+  let value = bytes[3] | (bytes[2] << 8) | (bytes[1] << 16) | (bytes[0] << 24);
+
+  for (let i = 4; i < bytes.length; i++) {
+    value = value * 256 + bytes[i];
+  }
+
+  return value * 8 + len;
+}
+
+type KeyChunk = Opaque<BytesBlob, `up to ${CHUNK_SIZE} bytes`>;
+type U48 = number;
+type SubKey<_K extends BytesBlob> = BytesBlob;
+type OriginalKeyRef<K> = K;
+
+type Leaf<K extends BytesBlob, V> = {
+  key: OriginalKeyRef<K>;
+  value: V;
+};
+
+class Node<K extends BytesBlob, V, C = MapChildren<K, V> | ListChildren<K, V>> {
+  convertListChildrenToMap() {
+    if (!(this.children instanceof ListChildren)) {
+      return;
+    }
+    this.children = MapChildren.fromListNode<K, V>(this.children) as C;
+  }
+
+  static withList<K extends BytesBlob, V>(): Node<K, V, ListChildren<K, V>> {
+    return new Node(undefined, ListChildren.new());
+  }
+
+  static withMap<K extends BytesBlob, V>(): Node<K, V, MapChildren<K, V>> {
+    return new Node(undefined, MapChildren.new());
+  }
+
+  private constructor(
+    private leaf: Leaf<K, V> | undefined,
+    public children: C,
+  ) {}
+
+  getLeaf(): Leaf<K, V> | undefined {
+    return this.leaf;
+  }
+
+  remove(_key: K): Leaf<K, V> | null {
+    if (this.leaf === undefined) {
+      return null;
+    }
+
+    const removedLeaf = this.leaf;
+    this.leaf = undefined;
+    return removedLeaf;
+  }
+
+  set(key: K, value: V): Leaf<K, V> | null {
+    if (this.leaf === undefined) {
+      this.leaf = { key, value };
+      return this.leaf;
+    }
+    this.leaf.value = value;
+    return null;
+  }
+}
+
+class MapChildren<K extends BytesBlob, V> {
+  children: Map<U48, Node<K, V>> = new Map();
+
+  private constructor() {}
+
+  static new<K extends BytesBlob, V>(): MapChildren<K, V> {
+    return new MapChildren<K, V>();
+  }
+
+  static fromListNode<K extends BytesBlob, T>(node: ListChildren<K, T>): MapChildren<K, T> {
+    const mapNode = new MapChildren<K, T>();
+
+    for (const [key, leaf] of node.children) {
+      const currentKeyChunk: KeyChunk = asOpaqueType(BytesBlob.blobFrom(key.raw.subarray(0, CHUNK_SIZE)));
+      const subKey = BytesBlob.blobFrom(key.raw.subarray(CHUNK_SIZE));
+
+      const child = mapNode.getChild(currentKeyChunk) ?? Node.withList<K, T>();
+      const children = child?.children as ListChildren<K, T>;
+      children.insert(subKey, leaf);
+      mapNode.setChild(currentKeyChunk, child);
+    }
+
+    return mapNode;
+  }
+
+  getChild(keyChunk: KeyChunk) {
+    const chunkAsNumber = bytesAsU48(keyChunk.raw);
+    return this.children.get(chunkAsNumber);
+  }
+
+  setChild(keyChunk: KeyChunk, node: Node<K, V>) {
+    const chunkAsNumber = bytesAsU48(keyChunk.raw);
+    this.children.set(chunkAsNumber, node);
   }
 }
