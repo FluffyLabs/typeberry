@@ -1,6 +1,5 @@
 import { type BlockView, type HeaderHash, type HeaderView, type StateRootHash, tryAsTimeSlot } from "@typeberry/block";
-import type { ChainSpec } from "@typeberry/config";
-import type { PVMBackend } from "@typeberry/config-node";
+import type { ChainSpec, PVMBackend } from "@typeberry/config";
 import type { BlocksDb, LeafDb, StatesDb, StateUpdateError } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";

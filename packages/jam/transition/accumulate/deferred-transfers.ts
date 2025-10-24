@@ -1,8 +1,7 @@
 import { type EntropyHash, type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
 import { W_C } from "@typeberry/block/gp-constants.js";
 import { codec, Encoder } from "@typeberry/codec";
-import type { ChainSpec } from "@typeberry/config";
-import type { PVMBackend } from "@typeberry/config-node";
+import type { ChainSpec, PVMBackend } from "@typeberry/config";
 import type { Blake2b } from "@typeberry/hash";
 import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import {

@@ -19,8 +19,7 @@ import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize, FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
-import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
-import { PVMBackend } from "@typeberry/config-node";
+import { type ChainSpec, PVMBackend, tinyChainSpec } from "@typeberry/config";
 import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {

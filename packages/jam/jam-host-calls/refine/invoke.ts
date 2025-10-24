@@ -10,8 +10,14 @@ import {
   traceRegisters,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
-import { type IGasCounter, Status, tryAsBigGas, tryAsSmallGas } from "@typeberry/pvm-interface";
-import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers.js";
+import {
+  type IGasCounter,
+  NO_OF_REGISTERS,
+  REGISTER_BYTE_SIZE,
+  Status,
+  tryAsBigGas,
+  tryAsSmallGas,
+} from "@typeberry/pvm-interface";
 import { check, resultToString } from "@typeberry/utils";
 import { type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { logger } from "../logger.js";
@@ -22,7 +28,7 @@ const IN_OUT_REG_1 = 7;
 const IN_OUT_REG_2 = 8;
 const gasAndRegistersCodec = codec.object({
   gas: codec.i64,
-  registers: codec.bytes(NO_OF_REGISTERS * 8),
+  registers: codec.bytes(NO_OF_REGISTERS * REGISTER_BYTE_SIZE),
 });
 const GAS_REGISTERS_SIZE = tryAsExactBytes(gasAndRegistersCodec.sizeHint);
 

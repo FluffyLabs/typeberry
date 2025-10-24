@@ -1,7 +1,7 @@
 import { Block, type HeaderHash, headerViewWithHashCodec, type StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { PVMBackend } from "@typeberry/config-node";
+import { PVMBackend } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU8, tryAsU32 } from "@typeberry/numbers";
 import { StateEntries } from "@typeberry/state-merkleization";

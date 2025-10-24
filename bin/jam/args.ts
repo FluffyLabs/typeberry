@@ -1,4 +1,5 @@
-import { DEFAULT_CONFIG, DEV_CONFIG, NODE_DEFAULTS, PVMBackend } from "@typeberry/config-node";
+import { PVMBackend } from "@typeberry/config";
+import { DEFAULT_CONFIG, DEV_CONFIG, NODE_DEFAULTS } from "@typeberry/config-node";
 import { isU16, type U16 } from "@typeberry/numbers";
 import minimist from "minimist";
 import packageJson from "./package.json" with { type: "json" };

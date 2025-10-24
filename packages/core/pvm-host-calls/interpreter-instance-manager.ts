@@ -1,4 +1,4 @@
-import { PVMBackend } from "@typeberry/config-node";
+import { PVMBackend } from "@typeberry/config";
 import type { IPvmInterpreter } from "@typeberry/pvm-interface";
 import { Interpreter } from "@typeberry/pvm-interpreter";
 import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";

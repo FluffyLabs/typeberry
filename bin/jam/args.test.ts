@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-
-import { NODE_DEFAULTS, PVMBackend } from "@typeberry/config-node";
+import { PVMBackend } from "@typeberry/config";
+import { NODE_DEFAULTS } from "@typeberry/config-node";
 import { tryAsU16 } from "@typeberry/numbers";
 import { deepEqual } from "@typeberry/utils";
 import { Command, parseArgs, type SharedOptions } from "./args.js";
@@ -102,7 +102,7 @@ describe("CLI", () => {
         const _args = parse(["--pvm=unimplemented"]);
       },
       {
-        message: "Invalid value 'unimplemented' for option 'pvm': Error: Use one of " + pvms,
+        message: `Invalid value 'unimplemented' for option 'pvm': Error: Use one of ${pvms}`,
       },
     );
   });

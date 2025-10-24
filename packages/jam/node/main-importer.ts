@@ -17,7 +17,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
 
   logger.info`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
   logger.info`🎸 Starting importer: ${config.nodeName}.`;
-  logger.info`🖥️ Interpreter: ${config.nodeBackend}.`;
+  logger.info`🖥️ PVM Backend: ${config.pvmBackend}.`;
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
   const omitSealVerification = false;
@@ -35,7 +35,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
           chainSpec,
           blake2b,
           workerParams: {
-            pvm: config.nodeBackend,
+            pvm: config.pvmBackend,
             omitSealVerification,
           },
         })
@@ -44,7 +44,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
           blake2b,
           dbPath,
           workerParams: {
-            pvm: config.nodeBackend,
+            pvm: config.pvmBackend,
             omitSealVerification,
           },
         });

@@ -5,8 +5,8 @@ import {
   tryAsValidatorIndex,
   type ValidatorIndex,
 } from "@typeberry/block";
-import type { Bootnode } from "@typeberry/config";
-import type { NodeConfiguration, PVMBackend } from "@typeberry/config-node";
+import type { Bootnode, PVMBackend } from "@typeberry/config";
+import type { NodeConfiguration } from "@typeberry/config-node";
 import type { Ed25519SecretSeed, KeySeed } from "@typeberry/crypto/key-derivation.js";
 
 export const DEFAULT_DEV_CONFIG = {
@@ -46,8 +46,8 @@ export class JamConfig {
     public readonly nodeName: string,
     /** Node starting configuration. */
     public readonly node: NodeConfiguration,
-    /** Interpreter. */
-    public readonly nodeBackend: PVMBackend,
+    /** PVM execution engine. */
+    public readonly pvmBackend: PVMBackend,
     /** Developer specific configuration. */
     public readonly dev: DevConfig | null,
     /** Networking options. */

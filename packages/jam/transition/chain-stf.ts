@@ -2,8 +2,7 @@ import type { BlockView, CoreIndex, EntropyHash, HeaderHash, ServiceId, TimeSlot
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { asKnownSize, HashSet } from "@typeberry/collections";
-import type { ChainSpec } from "@typeberry/config";
-import { PVMBackend } from "@typeberry/config-node";
+import { type ChainSpec, PVMBackend } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import type { BlocksDb } from "@typeberry/database";
 import { Disputes, type DisputesStateUpdate } from "@typeberry/disputes";

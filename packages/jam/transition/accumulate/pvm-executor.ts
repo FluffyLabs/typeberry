@@ -1,7 +1,6 @@
 import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
-import type { ChainSpec } from "@typeberry/config";
-import type { PVMBackend } from "@typeberry/config-node";
+import type { ChainSpec, PVMBackend } from "@typeberry/config";
 import { Assign } from "@typeberry/jam-host-calls/accumulate/assign.js";
 import { Bless } from "@typeberry/jam-host-calls/accumulate/bless.js";
 import { Checkpoint } from "@typeberry/jam-host-calls/accumulate/checkpoint.js";

@@ -8,13 +8,17 @@ import {
   type IMemory,
   type IPvmInterpreter,
   type IRegisters,
+  NO_OF_REGISTERS,
   type PageFault,
+  REGISTER_BYTE_SIZE,
   Status,
   tryAsBigGas,
   tryAsGas,
 } from "@typeberry/pvm-interface";
-import { OK, Result } from "@typeberry/utils";
+import { check, OK, Result } from "@typeberry/utils";
 import type { AnanasAPI } from "./api.js";
+
+const WASM_MODULE = import.meta.resolve("@fluffylabs/anan-as/release-mini.wasm");
 
 // Max u32 value
 const INF_STEPS = 2 ** 32 - 1;
@@ -27,6 +31,7 @@ class AnanasRegisters implements IRegisters {
   }
 
   setAllFromBytes(bytes: Uint8Array): void {
+    check`${bytes.length === NO_OF_REGISTERS * REGISTER_BYTE_SIZE} Incorrect size of input registers. Got: ${bytes.length}, need: ${NO_OF_REGISTERS * REGISTER_BYTE_SIZE}`;
     this.instance.setRegisters(lowerBytes(bytes));
   }
 
@@ -40,15 +45,18 @@ class AnanasMemory implements IMemory {
   constructor(private readonly instance: AnanasAPI) {}
 
   store(address: U32, bytes: Uint8Array): Result<OK, PageFault> {
-    try {
-      this.instance.setMemory(address, bytes);
-    } catch {
-      return Result.error({ address }, () => "Memory is inaccessible!");
-    }
+    // TODO [MaSo] catch returned value (boolean) and produce error or ok
+    //
+    // if (this.instance.setMemory(address, bytes)) {
+    //   return Result.ok(OK);
+    // }
+    // return Result.error({ address }, () => "Memory is inaccessible!");
+    this.instance.setMemory(address, bytes);
     return Result.ok(OK);
   }
 
   read(address: U32, result: Uint8Array): Result<OK, PageFault> {
+    // TODO [MaSo] catch returned value (Uint8Array | null) and produce error or ok
     if (result.length === 0) {
       return Result.ok(OK);
     }
@@ -76,7 +84,7 @@ class AnanasGasCounter implements IGasCounter {
   }
 
   sub(g: Gas): boolean {
-    const result = this.instance.getGasLeft() - BigInt(g as number | bigint);
+    const result = this.instance.getGasLeft() - BigInt(g);
     if (result >= 0n) {
       this.instance.setGasLeft(result);
       return false;
@@ -86,7 +94,7 @@ class AnanasGasCounter implements IGasCounter {
   }
 
   used(): Gas {
-    const gasConsumed = (this.initialGas as bigint) - (this.get() as bigint);
+    const gasConsumed = BigInt(this.initialGas) - BigInt(this.get());
 
     if (gasConsumed < 0) {
       return this.initialGas;
@@ -108,7 +116,7 @@ export class AnanasInterpreter implements IPvmInterpreter {
   }
 
   static async new() {
-    const wasmPath = fileURLToPath(new URL("./node_modules/@fluffylabs/anan-as/build/release.wasm", import.meta.url));
+    const wasmPath = fileURLToPath(new URL(WASM_MODULE, import.meta.url));
     const wasmBuffer = await readFile(wasmPath);
     const wasmModule = await WebAssembly.compile(wasmBuffer);
     const instance = await instantiate(wasmModule, {
@@ -125,7 +133,7 @@ export class AnanasInterpreter implements IPvmInterpreter {
     const programArr = lowerBytes(program);
     const argsArr = lowerBytes(args);
     this.gas.initialGas = gas;
-    this.instance.resetJAM(programArr, pc, gas as bigint, argsArr, true);
+    this.instance.resetJAM(programArr, pc, BigInt(gas), argsArr, true);
   }
 
   resetGeneric(program: Uint8Array, _pc: number, gas: Gas): void {
