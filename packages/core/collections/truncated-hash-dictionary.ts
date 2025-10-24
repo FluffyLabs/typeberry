@@ -2,7 +2,6 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE, type OpaqueHash, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
 import { TEST_COMPARE_USING } from "@typeberry/utils";
 import { BlobDictionary } from "./blob-dictionary.js";
-import type { HashDictionary } from "./hash-dictionary.js";
 
 type HashWithZeroedBit<T extends OpaqueHash> = T;
 
@@ -20,17 +19,17 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
    * Each key will be copied and have the last byte replace with a 0.
    */
   static fromEntries<T extends OpaqueHash, V>(
-    // entries: [T, V][],
     entries: Iterable<[T | TruncatedHash, V] | readonly [T | TruncatedHash, V]>,
   ): TruncatedHashDictionary<T, V> {
     return new TruncatedHashDictionary(
       BlobDictionary.fromEntries<T, V>(
         Array.from(entries).map(([key, value]) => [getTruncatedKey(key).asOpaque(), value]),
+        5,
       ),
     );
   }
 
-  private constructor(private readonly dict: HashDictionary<HashWithZeroedBit<T>, V>) {}
+  private constructor(private readonly dict: BlobDictionary<HashWithZeroedBit<T>, V>) {}
 
   [TEST_COMPARE_USING]() {
     return this.dict;
@@ -43,7 +42,6 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
 
   /** Retrieve a value that matches the key on `TRUNCATED_HASH_SIZE`. */
   get(key: T | TruncatedHash): V | undefined {
-    // this.truncatedKey.raw.set(fullKey.raw.subarray(0, TRUNCATED_HASH_SIZE));
     const truncatedKey = getTruncatedKey(key);
     return this.dict.get(truncatedKey.asOpaque());
   }

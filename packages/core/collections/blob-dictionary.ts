@@ -303,8 +303,8 @@ export class BlobDictionary<K extends BytesBlob, V> extends WithDebug {
   }
 
   /** Create a new blob dictionary from given entires array. */
-  static fromEntries<K extends BytesBlob, V>(entries: [K, V][]): BlobDictionary<K, V> {
-    const dict = BlobDictionary.new<K, V>();
+  static fromEntries<K extends BytesBlob, V>(entries: [K, V][], mapNodeThreshold?: number): BlobDictionary<K, V> {
+    const dict = BlobDictionary.new<K, V>(mapNodeThreshold);
     for (const [key, value] of entries) {
       dict.set(key, value);
     }
