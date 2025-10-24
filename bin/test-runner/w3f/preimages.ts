@@ -1,4 +1,3 @@
-import assert from "node:assert";
 import { type TimeSlot, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage.js";
 import { fromJson, preimagesExtrinsicFromJson } from "@typeberry/block-json";
@@ -124,7 +123,7 @@ export async function runPreImagesTest(testContent: PreImagesTest) {
   if (result.isOk) {
     preState.applyUpdate(result.ok);
   }
-  assert.deepEqual(preState, postState);
+  deepEqual(preState, postState);
 }
 
 function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry, blake2b: Blake2b): InMemoryService {

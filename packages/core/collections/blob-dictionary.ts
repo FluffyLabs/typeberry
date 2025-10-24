@@ -1,6 +1,6 @@
 import { BytesBlob } from "@typeberry/bytes";
 import type { Comparator } from "@typeberry/ordering";
-import { asOpaqueType, assertNever, check, type Opaque, WithDebug } from "@typeberry/utils";
+import { asOpaqueType, assertNever, check, type Opaque, TEST_COMPARE_USING, WithDebug } from "@typeberry/utils";
 
 const CHUNK_SIZE = 6;
 type CHUNK_SIZE = typeof CHUNK_SIZE;
@@ -16,7 +16,7 @@ export function bytesAsU48(bytes: Uint8Array): number {
 
   check`${len <= CHUNK_SIZE} Length has to be <= ${CHUNK_SIZE}, got: ${len}`;
 
-  let value = bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24);
+  let value = bytes[3] | (bytes[2] << 8) | (bytes[1] << 16) | (bytes[0] << 24);
 
   for (let i = 4; i < bytes.length; i++) {
     value = value * 256 + bytes[i];
@@ -204,6 +204,12 @@ export class BlobDictionary<K extends BytesBlob, V> extends WithDebug {
    */
   get size(): number {
     return this.keyvals.size;
+  }
+
+  [TEST_COMPARE_USING]() {
+    const vals: [K, V][] = Array.from(this);
+    vals.sort((a, b) => a[0].compare(b[0]).value);
+    return vals;
   }
 
   /**

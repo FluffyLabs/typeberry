@@ -19,7 +19,7 @@ function bytesAsU48WithoutBitOps(bytes: Uint8Array): number {
 function bytesAsU48WithBitOps(bytes: Uint8Array): number {
   const len = bytes.length;
 
-  let value = bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24);
+  let value = bytes[3] | (bytes[2] << 8) | (bytes[1] << 16) | (bytes[0] << 24);
 
   for (let i = 4; i < bytes.length; i++) {
     value = value * 256 + bytes[i];
