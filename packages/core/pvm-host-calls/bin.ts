@@ -1,10 +1,11 @@
+import { PVMBackend } from "@typeberry/config";
 import { tryAsGas } from "@typeberry/pvm-interface";
 import { HostCalls } from "./host-calls.js";
 import { HostCallsManager, NoopMissing } from "./host-calls-manager.js";
 import { InterpreterInstanceManager } from "./interpreter-instance-manager.js";
 
 const hostCalls = new HostCallsManager({ missing: new NoopMissing(), handlers: [] });
-const pvmInstanceManager = new InterpreterInstanceManager(1);
+const pvmInstanceManager = InterpreterInstanceManager.new(1, PVMBackend.BuiltIn);
 const pvmHostCallExtension = new HostCalls(pvmInstanceManager, hostCalls);
 
 const program = new Uint8Array([

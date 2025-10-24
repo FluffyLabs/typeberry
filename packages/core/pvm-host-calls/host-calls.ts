@@ -36,7 +36,7 @@ class ReturnValue {
 }
 export class HostCalls {
   constructor(
-    private pvmInstanceManager: InterpreterInstanceManager,
+    private pvmInstanceManager: Promise<InterpreterInstanceManager>,
     private hostCalls: HostCallsManager,
   ) {}
 
@@ -136,15 +136,14 @@ export class HostCalls {
   }
 
   async runProgram(program: Uint8Array, args: Uint8Array, initialPc: number, initialGas: Gas): Promise<ReturnValue> {
-    // TODO [MaSo] Instance Manager should be deleted.
-    const pvmInstancePromise = this.pvmInstanceManager.getInstance();
-    const pvmInstance = await pvmInstancePromise;
+    const manager = await this.pvmInstanceManager;
+    const pvmInstance = await manager.getInstance();
     //console.log`${pvmInstance.printProgram(program)}`;
     pvmInstance.resetJam(program, args, initialPc, initialGas);
     try {
       return await this.execute(pvmInstance);
     } finally {
-      this.pvmInstanceManager.releaseInstance(pvmInstancePromise);
+      manager.releaseInstance(pvmInstance);
     }
   }
 }

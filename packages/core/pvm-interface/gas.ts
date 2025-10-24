@@ -35,6 +35,10 @@ export interface IGasCounter {
   /** Returns true if there was an underflow. */
   sub(g: Gas): boolean;
 
-  /** Calculates used gas since creation of GasCounter. */
+  /**
+   * Calculates used gas since creation of GasCounter.
+   *
+   * NOTE: Capped to `initialGas`.
+   */
   used(): Gas;
 }

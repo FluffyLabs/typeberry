@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { Registers } from "./registers.js";
 
 const U32_BYTES = 4;
+const U64_BYTES = 8;
 
 describe("Registers", () => {
   describe("loading values", () => {
@@ -83,6 +84,60 @@ describe("Registers", () => {
       regs.setU32(1, num);
 
       assert.deepStrictEqual(regs.getBytesAsLittleEndian(1, U32_BYTES), expectedBytes);
+    });
+  });
+
+  describe("Implemented IRegister", () => {
+    it("should correctly get all registers into bytes encoded", () => {
+      const regs = new Registers();
+
+      const num = 0xef_cd_ab_89_67_45_23_01n;
+      const bytesReg = new Uint8Array([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]);
+      const fill = new Uint8Array(12 * U64_BYTES).fill(0); // we set 1st register so we fill remaining 12 with 0
+      const expected = new Uint8Array([...bytesReg, ...fill]);
+
+      regs.setU64(0, num);
+
+      // when
+      const encodedAllRegisters = regs.getAllEncoded();
+
+      // then
+      assert.deepStrictEqual(encodedAllRegisters.length, expected.length);
+      assert.deepStrictEqual(encodedAllRegisters, expected);
+    });
+
+    it("should correctly set all registers from bytes encoded", () => {
+      const regs = new Registers();
+
+      const bytesReg = new Uint8Array([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]);
+      const fill = new Uint8Array(12 * U64_BYTES).fill(0); // we set 1st register so we fill remaining 12 with 0
+      const bytes = new Uint8Array([...bytesReg, ...fill]);
+
+      const expected = 0xef_cd_ab_89_67_45_23_01n;
+
+      regs.setAllFromBytes(bytes);
+
+      const reg = regs.getU64(0);
+
+      assert.deepStrictEqual(reg, expected);
+    });
+
+    it("should throw when trying to set all registers from bytes encoded with incorrect size", () => {
+      const regs = new Registers();
+
+      const bytesReg = new Uint8Array([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]);
+      const fill = new Uint8Array(12 * U64_BYTES).fill(0); // we set 1st register so we fill remaining 12 with 0
+      const bytes = new Uint8Array([...bytesReg, ...fill, 0x00]);
+
+      // too many
+      assert.throws(() => {
+        regs.setAllFromBytes(bytes);
+      });
+
+      // too little
+      assert.throws(() => {
+        regs.setAllFromBytes(fill);
+      });
     });
   });
 });
