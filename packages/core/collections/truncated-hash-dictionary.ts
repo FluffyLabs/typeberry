@@ -32,7 +32,7 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
   private constructor(private readonly dict: BlobDictionary<HashWithZeroedBit<T>, V>) {}
 
   [TEST_COMPARE_USING]() {
-    return this.dict;
+    return Array.from(this.dict);
   }
 
   /** Return number of items in the dictionary. */

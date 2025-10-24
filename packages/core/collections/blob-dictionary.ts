@@ -116,7 +116,6 @@ class MapChildren<K extends BytesBlob, V> {
   }
 }
 
-/** A map which uses byte blobs as keys */
 export class ListChildren<K extends BytesBlob, V> {
   children: [SubKey<K>, Leaf<K, V>][] = [];
 
@@ -158,6 +157,7 @@ export class ListChildren<K extends BytesBlob, V> {
 
 type MaybeNode<K extends BytesBlob, V> = Node<K, V> | undefined;
 
+/** A map which uses byte blobs as keys */
 export class BlobDictionary<K extends BytesBlob, V> extends WithDebug {
   private root: Node<K, V> = Node.withList();
   private keyvals: Map<K, Leaf<K, V>> = new Map();
