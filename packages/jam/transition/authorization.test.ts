@@ -6,7 +6,7 @@ import { asKnownSize } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsPerCore } from "@typeberry/state";
+import { MAX_AUTH_POOL_SIZE, tryAsPerCore } from "@typeberry/state";
 import { deepEqual } from "@typeberry/utils";
 import { Authorization, type AuthorizationInput, type AuthorizationState } from "./authorization.js";
 import { copyAndUpdateState } from "./test.utils.js";
@@ -31,22 +31,22 @@ const used = (...data: [number, AuthorizerHash][]) => {
 };
 
 describe("Authorization", () => {
-  // it("should perform a transition with empty state", async () => {
-  //   const authorization = new Authorization(tinyChainSpec, {
-  //     authPools: authPools([], []),
-  //     authQueues: authQueues([h(1)], [h(1)]),
-  //   });
+  it("should perform a transition with empty state", async () => {
+    const authorization = new Authorization(tinyChainSpec, {
+      authPools: authPools([], []),
+      authQueues: authQueues([h(1)], [h(1)]),
+    });
 
-  //   const input: AuthorizationInput = {
-  //     slot: tryAsTimeSlot(0),
-  //     used: used(),
-  //   };
-  //   const stateUpdate = authorization.transition(input);
-  //   const state = copyAndUpdateState(authorization.state, stateUpdate);
+    const input: AuthorizationInput = {
+      slot: tryAsTimeSlot(0),
+      used: used(),
+    };
+    const stateUpdate = authorization.transition(input);
+    const state = copyAndUpdateState(authorization.state, stateUpdate);
 
-  //   deepEqual(state.authPools, authPools([h(1)], [h(1)]), { context: "pools" });
-  //   deepEqual(state.authQueues, authQueues([h(1)], [h(1)]), { context: "queues" });
-  // });
+    deepEqual(state.authPools, authPools([h(1)], [h(1)]), { context: "pools" });
+    deepEqual(state.authQueues, authQueues([h(1)], [h(1)]), { context: "queues" });
+  });
 
   it("should perform a transition and remove existing entries", async () => {
     const authorization = new Authorization(tinyChainSpec, {
@@ -65,27 +65,27 @@ describe("Authorization", () => {
     deepEqual(state.authQueues, authQueues([h(1)], [h(1)]), { context: "queues" });
   });
 
-  // it("should perform a transition and keep last items in pool", async () => {
-  //   const authorization = new Authorization(tinyChainSpec, {
-  //     authPools: authPools(
-  //       Array(MAX_AUTH_POOL_SIZE + 1)
-  //         .fill(0)
-  //         .map((_, idx) => h(idx)),
-  //       [h(2), h(3), h(2)],
-  //     ),
-  //     authQueues: authQueues([h(10), h(11)], [h(1), h(2)]),
-  //   });
+  it("should perform a transition and keep last items in pool", async () => {
+    const authorization = new Authorization(tinyChainSpec, {
+      authPools: authPools(
+        Array(MAX_AUTH_POOL_SIZE + 1)
+          .fill(0)
+          .map((_, idx) => h(idx)),
+        [h(2), h(3), h(2)],
+      ),
+      authQueues: authQueues([h(10), h(11)], [h(1), h(2)]),
+    });
 
-  //   const input: AuthorizationInput = {
-  //     slot: tryAsTimeSlot(1),
-  //     used: used([0, h(13)], [1, h(2)]),
-  //   };
-  //   const stateUpdate = authorization.transition(input);
-  //   const state = copyAndUpdateState(authorization.state, stateUpdate);
+    const input: AuthorizationInput = {
+      slot: tryAsTimeSlot(1),
+      used: used([0, h(13)], [1, h(2)]),
+    };
+    const stateUpdate = authorization.transition(input);
+    const state = copyAndUpdateState(authorization.state, stateUpdate);
 
-  //   deepEqual(state.authPools, authPools([h(2), h(3), h(4), h(5), h(6), h(7), h(8), h(11)], [h(3), h(2), h(2)]), {
-  //     context: "pools",
-  //   });
-  //   deepEqual(state.authQueues, authQueues([h(10), h(11)], [h(1), h(2)]), { context: "queues" });
-  // });
+    deepEqual(state.authPools, authPools([h(2), h(3), h(4), h(5), h(6), h(7), h(8), h(11)], [h(3), h(2), h(2)]), {
+      context: "pools",
+    });
+    deepEqual(state.authQueues, authQueues([h(10), h(11)], [h(1), h(2)]), { context: "queues" });
+  });
 });
