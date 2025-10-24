@@ -16,9 +16,9 @@ export function bytesAsU48(bytes: Uint8Array): number {
 
   check`${len <= CHUNK_SIZE} Length has to be <= ${CHUNK_SIZE}, got: ${len}`;
 
-  let value = 0;
+  let value = bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24);
 
-  for (let i = 0; i < len; i++) {
+  for (let i = 4; i < bytes.length; i++) {
     value = value * 256 + bytes[i];
   }
 
