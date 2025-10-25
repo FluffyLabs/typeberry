@@ -117,15 +117,16 @@ export type AnanasAPI = {
    * assembly/api-debugger/getMemory
    * @param address `u32`
    * @param length `u32`
-   * @returns `~lib/typedarray/Uint8Array`
+   * @returns `~lib/typedarray/Uint8Array | null`
    */
-  getMemory(address: number, length: number): Uint8Array;
+  getMemory(address: number, length: number): Uint8Array | null;
   /**
    * assembly/api-debugger/setMemory
    * @param address `u32`
    * @param data `~lib/typedarray/Uint8Array`
+   * @returns `bool`
    */
-  setMemory(address: number, data: Uint8Array): void;
+  setMemory(address: number, data: Uint8Array): boolean;
   /**
    * assembly/api-utils/getGasCosts
    * @param input `~lib/array/Array<u8>`

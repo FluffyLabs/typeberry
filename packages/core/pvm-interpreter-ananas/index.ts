@@ -4,6 +4,7 @@ import { instantiate } from "@fluffylabs/anan-as/raw";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
 import {
   type Gas,
+  getPageStartAddress,
   type IGasCounter,
   type IMemory,
   type IPvmInterpreter,
@@ -45,27 +46,21 @@ class AnanasMemory implements IMemory {
   constructor(private readonly instance: AnanasAPI) {}
 
   store(address: U32, bytes: Uint8Array): Result<OK, PageFault> {
-    // TODO [MaSo] catch returned value (boolean) and produce error or ok
-    //
-    // if (this.instance.setMemory(address, bytes)) {
-    //   return Result.ok(OK);
-    // }
-    // return Result.error({ address }, () => "Memory is inaccessible!");
-    this.instance.setMemory(address, bytes);
-    return Result.ok(OK);
+    if (this.instance.setMemory(address, bytes)) {
+      return Result.ok(OK);
+    }
+    return Result.error({ address: getPageStartAddress(address) }, () => "Memory is unwritable!");
   }
 
   read(address: U32, result: Uint8Array): Result<OK, PageFault> {
-    // TODO [MaSo] catch returned value (Uint8Array | null) and produce error or ok
     if (result.length === 0) {
       return Result.ok(OK);
     }
-    const addr = tryAsU32(Number(address));
-    const newResult = this.instance.getMemory(addr, result.length);
-    if (newResult.length === 0) {
-      return Result.error({ address: addr }, () => "Memory is inaccessible!");
+    const newResult = this.instance.getMemory(address, result.length);
+    if (newResult === null) {
+      return Result.error({ address: getPageStartAddress(address) }, () => "Memory is inaccessible!");
     }
-    result.set(newResult);
+    result.set(newResult, 0);
     return Result.ok(OK);
   }
 }
