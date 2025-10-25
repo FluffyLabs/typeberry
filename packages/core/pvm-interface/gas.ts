@@ -23,13 +23,24 @@ export const tryAsGas = (v: number | bigint): Gas =>
  * It can be optimized to use numbers instead of bigint in case of small gas.
  */
 export interface IGasCounter {
-  /** Set during initialization of GasCounter. */
+  /**
+   * Set during initialization of GasCounter.
+   *
+   * NOTE: Needed to calculate `used()` gas.
+   */
   initialGas: Gas;
 
   /** Return remaining gas. */
   get(): Gas;
 
-  /** Overwrite remaining gas. Prefer sub method instead. */
+  /**
+   * Overwrite remaining gas.
+   *
+   * NOTE: Could cause `used()` gas calculation to be incorrect.
+   *
+   * @see
+   * Prefer sub method instead.
+   */
   set(g: Gas): void;
 
   /** Returns true if there was an underflow. */

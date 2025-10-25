@@ -12,7 +12,7 @@ import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import { asKnownSize, HashSet } from "@typeberry/collections";
-import { type ChainSpec, PVMBackend } from "@typeberry/config";
+import { type ChainSpec, PvmBackend } from "@typeberry/config";
 import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { InMemoryService } from "@typeberry/state";
@@ -142,13 +142,13 @@ export class AccumulateTest {
 }
 
 export async function runAccumulateTest(test: AccumulateTest, path: string) {
-  await runAccumulateInternal(test, path, PVMBackend.BuiltIn);
+  await runAccumulateInternal(test, path, PvmBackend.BuiltIn);
   // TODO [MaSo] running separate passes the test, running both at the same time fails.
   //
   //await runAccumulateInternal(test, path, PVMBackend.Ananas);
 }
 
-async function runAccumulateInternal(test: AccumulateTest, path: string, pvm: PVMBackend) {
+async function runAccumulateInternal(test: AccumulateTest, path: string, pvm: PvmBackend) {
   const chainSpec = getChainSpec(path);
   /**
    * entropy has to be moved to input because state is incompatibile -

@@ -8,6 +8,7 @@ export type PageFault = {
   address: U32;
 };
 
+/** Allows store and read segments of memory. */
 export interface IMemory {
   /** Store bytes into memory at given address. */
   store(address: U32, bytes: Uint8Array): Result<OK, PageFault>;

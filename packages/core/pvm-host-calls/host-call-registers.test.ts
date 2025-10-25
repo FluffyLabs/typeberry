@@ -20,7 +20,7 @@ describe("HostCallRegisters", () => {
       const registers = new Registers();
       const hostCallRegisters = new HostCallRegisters(registers.getAllEncoded());
       hostCallRegisters.set(0, tryAsU64(0xffff_ffff_ffff_fffdn));
-      registers.setAllFromBytes(hostCallRegisters.getEncoded());
+      registers.setAllEncoded(hostCallRegisters.getEncoded());
       assert.strictEqual(registers.getU64(0), tryAsU64(0xffff_ffff_ffff_fffdn));
     });
   });

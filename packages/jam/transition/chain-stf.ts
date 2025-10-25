@@ -2,7 +2,7 @@ import type { BlockView, CoreIndex, EntropyHash, HeaderHash, ServiceId, TimeSlot
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { asKnownSize, HashSet } from "@typeberry/collections";
-import { type ChainSpec, PVMBackend } from "@typeberry/config";
+import { type ChainSpec, PvmBackend } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import type { BlocksDb } from "@typeberry/database";
 import { Disputes, type DisputesStateUpdate } from "@typeberry/disputes";
@@ -145,7 +145,7 @@ export class OnChain {
     public readonly state: State & WithStateView,
     blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
-    pvm: PVMBackend = PVMBackend.BuiltIn,
+    pvm: PvmBackend = PvmBackend.BuiltIn,
   ) {
     const bandersnatch = BandernsatchWasm.new();
     this.statistics = new Statistics(chainSpec, state);

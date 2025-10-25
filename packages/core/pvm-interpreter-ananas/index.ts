@@ -30,7 +30,7 @@ class AnanasRegisters implements IRegisters {
     return this.instance.getRegisters();
   }
 
-  setAllFromBytes(bytes: Uint8Array): void {
+  setAllEncoded(bytes: Uint8Array): void {
     check`${bytes.length === NO_OF_REGISTERS * REGISTER_BYTE_SIZE} Incorrect size of input registers. Got: ${bytes.length}, need: ${NO_OF_REGISTERS * REGISTER_BYTE_SIZE}`;
     this.instance.setRegisters(lowerBytes(bytes));
   }

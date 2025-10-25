@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import type { JsonObject } from "@typeberry/block-json";
-import { PVMBackend } from "@typeberry/config";
+import { PvmBackend } from "@typeberry/config";
 import { configs } from "@typeberry/configs";
 import { type FromJson, json, parseFromJson } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
@@ -19,7 +19,7 @@ export const DEFAULT_CONFIG = "default";
 export const NODE_DEFAULTS = {
   name: isBrowser() ? "browser" : os.hostname(),
   config: DEFAULT_CONFIG,
-  pvm: PVMBackend.Ananas, // TODO [MaSo] Change to BuiltIn
+  pvm: PvmBackend.Ananas, // TODO [MaSo] Change to BuiltIn
 };
 
 /** Chain spec chooser. */

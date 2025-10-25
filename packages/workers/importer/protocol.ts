@@ -1,11 +1,11 @@
 import { Block, type HeaderHash, headerViewWithHashCodec, type StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { PVMBackend } from "@typeberry/config";
+import type { PvmBackend } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU8, tryAsU32 } from "@typeberry/numbers";
 import { StateEntries } from "@typeberry/state-merkleization";
-import { assertNever, Result } from "@typeberry/utils";
+import { Result } from "@typeberry/utils";
 import { type Api, createProtocol, type Internal } from "@typeberry/workers-api";
 
 const importBlockResultCodec = <T extends OpaqueHash>(hashName: string) =>
@@ -82,26 +82,8 @@ export class ImporterConfig {
   static Codec = codec.Class(ImporterConfig, {
     omitSealVerification: codec.bool,
     pvm: codec.u8.convert(
-      (i) => {
-        switch (i) {
-          case PVMBackend.BuiltIn:
-            return tryAsU8(0);
-          case PVMBackend.Ananas:
-            return tryAsU8(1);
-          default:
-            assertNever(i);
-        }
-      },
-      (o) => {
-        switch (o) {
-          case 0:
-            return PVMBackend.BuiltIn;
-          case 1:
-            return PVMBackend.Ananas;
-          default:
-            throw new Error(`Unimplemented interpreter of index ${o}`);
-        }
-      },
+      (i) => tryAsU8(i),
+      (o) => o as PvmBackend,
     ),
   });
 
@@ -111,6 +93,6 @@ export class ImporterConfig {
 
   private constructor(
     public readonly omitSealVerification: boolean,
-    public readonly pvm: PVMBackend,
+    public readonly pvm: PvmBackend,
   ) {}
 }

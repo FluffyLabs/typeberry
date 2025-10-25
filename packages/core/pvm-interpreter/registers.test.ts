@@ -115,7 +115,7 @@ describe("Registers", () => {
 
       const expected = 0xef_cd_ab_89_67_45_23_01n;
 
-      regs.setAllFromBytes(bytes);
+      regs.setAllEncoded(bytes);
 
       const reg = regs.getU64(0);
 
@@ -131,12 +131,12 @@ describe("Registers", () => {
 
       // too many
       assert.throws(() => {
-        regs.setAllFromBytes(bytes);
+        regs.setAllEncoded(bytes);
       });
 
       // too little
       assert.throws(() => {
-        regs.setAllFromBytes(fill);
+        regs.setAllEncoded(fill);
       });
     });
   });

@@ -1,4 +1,4 @@
-import { PVMBackend } from "@typeberry/config";
+import { type PvmBackend, PvmBackendNames } from "@typeberry/config";
 import { DEFAULT_CONFIG, DEV_CONFIG, NODE_DEFAULTS } from "@typeberry/config-node";
 import { isU16, type U16 } from "@typeberry/numbers";
 import minimist from "minimist";
@@ -19,7 +19,7 @@ Options:
                         [default: ${NODE_DEFAULTS.name}]
   --config              Path to a config file or one of: ['${DEV_CONFIG}', '${DEFAULT_CONFIG}'].
                         [default: ${NODE_DEFAULTS.config}]
-  --pvm                 PVM Backend, one of: [${Object.values(PVMBackend).join(", ")}].
+  --pvm                 PVM Backend, one of: [${PvmBackendNames.join(", ")}].
                         [default: ${NODE_DEFAULTS.pvm}]
 `;
 
@@ -40,7 +40,7 @@ export enum Command {
 export type SharedOptions = {
   nodeName: string;
   configPath: string;
-  pvm: PVMBackend;
+  pvm: PvmBackend;
 };
 
 export type Arguments =
@@ -87,10 +87,11 @@ function parseSharedOptions(
     args,
     "pvm",
     (v) => {
-      if (Object.values(PVMBackend).includes(v as PVMBackend)) {
-        return v as PVMBackend;
+      const pvm = PvmBackendNames.indexOf(v);
+      if (pvm >= 0) {
+        return pvm as PvmBackend;
       }
-      throw Error(`Use one of ${Object.values(PVMBackend).join(", ")}`);
+      throw Error(`Use one of ${PvmBackendNames.join(", ")}`);
     },
     NODE_DEFAULTS.pvm,
   );

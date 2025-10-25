@@ -19,7 +19,7 @@ import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize, FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
-import { type ChainSpec, PVMBackend, tinyChainSpec } from "@typeberry/config";
+import { type ChainSpec, PvmBackend, tinyChainSpec } from "@typeberry/config";
 import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
@@ -36,7 +36,7 @@ import { deepEqual, resultToString } from "@typeberry/utils";
 import { Accumulate } from "./accumulate.js";
 import type { AccumulateInput, AccumulateState } from "./accumulate-state.js";
 
-const PVM_BACKEND = PVMBackend.BuiltIn;
+const PVM_BACKEND = PvmBackend.BuiltIn;
 
 let blake2b: Blake2b;
 

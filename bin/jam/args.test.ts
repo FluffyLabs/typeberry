@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { PVMBackend } from "@typeberry/config";
+import { PvmBackend, PvmBackendNames } from "@typeberry/config";
 import { NODE_DEFAULTS } from "@typeberry/config-node";
 import { tryAsU16 } from "@typeberry/numbers";
 import { deepEqual } from "@typeberry/utils";
@@ -90,13 +90,13 @@ describe("CLI", () => {
       command: Command.Run,
       args: {
         ...defaultOptions,
-        pvm: PVMBackend.Ananas,
+        pvm: PvmBackend.Ananas,
       },
     });
   });
 
   it("should throw on missing pvm option", () => {
-    const pvms = Object.values(PVMBackend).join(", ");
+    const pvms = PvmBackendNames.join(", ");
     assert.throws(
       () => {
         const _args = parse(["--pvm=unimplemented"]);

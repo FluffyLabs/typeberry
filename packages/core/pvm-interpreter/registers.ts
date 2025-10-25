@@ -1,5 +1,5 @@
 import { tryAsU64, type U64 } from "@typeberry/numbers";
-import { NO_OF_REGISTERS } from "@typeberry/pvm-interface";
+import { type IRegisters, NO_OF_REGISTERS } from "@typeberry/pvm-interface";
 import { asOpaqueType, check, type Opaque, safeAllocUint8Array } from "@typeberry/utils";
 
 const REGISTER_SIZE_SHIFT = 3; // x << 3 === x * 8
@@ -15,7 +15,7 @@ export const tryAsRegisterIndex = (index: number): RegisterIndex => {
   return asOpaqueType(index);
 };
 
-export class Registers {
+export class Registers implements IRegisters {
   private asSigned: BigInt64Array;
   private asUnsigned: BigUint64Array;
 
@@ -37,7 +37,7 @@ export class Registers {
     return this.bytes;
   }
 
-  setAllFromBytes(bytes: Uint8Array): void {
+  setAllEncoded(bytes: Uint8Array): void {
     check`${bytes.length === this.bytes.length} Incorrect size of input registers. Got: ${bytes.length}, need: ${this.bytes.length}`;
     this.bytes.set(bytes, 0);
   }

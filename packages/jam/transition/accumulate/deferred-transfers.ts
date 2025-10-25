@@ -1,7 +1,7 @@
 import { type EntropyHash, type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
 import { W_C } from "@typeberry/block/gp-constants.js";
 import { codec, Encoder } from "@typeberry/codec";
-import type { ChainSpec, PVMBackend } from "@typeberry/config";
+import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import type { Blake2b } from "@typeberry/hash";
 import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import {
@@ -54,7 +54,7 @@ export class DeferredTransfers {
     public readonly chainSpec: ChainSpec,
     public readonly blake2b: Blake2b,
     private readonly state: DeferredTransfersState,
-    private readonly pvm: PVMBackend,
+    private readonly pvm: PvmBackend,
   ) {}
 
   async transition({

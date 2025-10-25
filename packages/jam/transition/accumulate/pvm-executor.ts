@@ -1,6 +1,6 @@
 import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
-import type { ChainSpec, PVMBackend } from "@typeberry/config";
+import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import { Assign } from "@typeberry/jam-host-calls/accumulate/assign.js";
 import { Bless } from "@typeberry/jam-host-calls/accumulate/bless.js";
 import { Checkpoint } from "@typeberry/jam-host-calls/accumulate/checkpoint.js";
@@ -84,7 +84,7 @@ export class PvmExecutor {
     this.pvm = new PvmHostCallExtension(pvmInstanceManager, this.hostCalls);
   }
 
-  private static async prepareBackend(pvm: PVMBackend) {
+  private static async prepareBackend(pvm: PvmBackend) {
     return PvmInstanceManager.new(4, pvm);
   }
 
@@ -142,7 +142,7 @@ export class PvmExecutor {
     serviceCode: BytesBlob,
     externalities: AccumulateHostCallExternalities,
     chainSpec: ChainSpec,
-    pvm: PVMBackend,
+    pvm: PvmBackend,
   ) {
     const hostCallHandlers = PvmExecutor.prepareAccumulateHostCalls(serviceId, externalities, chainSpec);
     const instances = await PvmExecutor.prepareBackend(pvm);
@@ -154,7 +154,7 @@ export class PvmExecutor {
     serviceId: ServiceId,
     serviceCode: BytesBlob,
     externalities: OnTransferHostCallExternalities,
-    pvm: PVMBackend,
+    pvm: PvmBackend,
   ) {
     const hostCallHandlers = PvmExecutor.prepareOnTransferHostCalls(serviceId, externalities);
     const instances = await PvmExecutor.prepareBackend(pvm);

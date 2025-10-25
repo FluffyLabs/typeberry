@@ -1,4 +1,4 @@
-import { type Gas, type IPvmInterpreter, MAX_MEMORY_INDEX, Status } from "@typeberry/pvm-interface";
+import { type Gas, type IPvmInterpreter, Status } from "@typeberry/pvm-interface";
 import { assertNever, check, safeAllocUint8Array } from "@typeberry/utils";
 import { PvmExecution, tryAsHostCallIndex } from "./host-call-handler.js";
 import { HostCallMemory } from "./host-call-memory.js";
@@ -50,13 +50,10 @@ export class HostCalls {
       const regs = new HostCallRegisters(pvmInstance.registers.getAllEncoded());
       const memory = new HostCallMemory(pvmInstance.memory);
       const address = regs.get(7);
-      const length = regs.get(8);
-      if (length > MAX_MEMORY_INDEX) {
-        return ReturnValue.fromMemorySlice(gasConsumed, new Uint8Array());
-      }
+      // We "cut out" higher 32-bits.
+      const length = regs.getLowerU32(8);
 
-      // NOTE It's safe to convert bcs we checked if it contains in MAX U32
-      const result = safeAllocUint8Array(Number(length));
+      const result = safeAllocUint8Array(length);
 
       const loadResult = memory.loadInto(result, address);
 
@@ -108,7 +105,7 @@ export class HostCalls {
         regs,
         gas.get(),
       );
-      pvmInstance.registers.setAllFromBytes(regs.getEncoded());
+      pvmInstance.registers.setAllEncoded(regs.getEncoded());
 
       if (result === PvmExecution.Halt) {
         status = Status.HALT;

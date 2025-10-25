@@ -1,6 +1,6 @@
 import { beforeEach, describe, it } from "node:test";
 import { tryAsU64 } from "@typeberry/numbers";
-import { MEMORY_SIZE } from "@typeberry/pvm-interface";
+import { MAX_MEMORY_INDEX, MEMORY_SIZE } from "@typeberry/pvm-interface";
 import { Memory } from "@typeberry/pvm-interpreter";
 import { OutOfBounds, PageFault } from "@typeberry/pvm-interpreter/memory/errors.js";
 import { deepEqual, OK, Result } from "@typeberry/utils";
@@ -52,18 +52,15 @@ describe("HostCallMemory", () => {
       );
     });
 
-    it("should throw when address exceeds MAX_MEMORY_INDEX", () => {
-      const address = tryAsU64(MEMORY_SIZE);
+    it("should wrap address when exceeds MAX_MEMORY_INDEX and throw", () => {
+      const address = tryAsU64(MAX_MEMORY_INDEX + 1);
       const bytes = new Uint8Array([1, 2, 3]);
 
       const res = hostCallMemory.storeFrom(address, bytes);
 
       deepEqual(
         res,
-        Result.error(
-          new OutOfBounds(),
-          () => "Memory access out of bounds: address 4294967296 + length 3 exceeds memory size",
-        ),
+        Result.error(PageFault.fromMemoryIndex(0, true), () => "Page fault: attempted to access reserved page 0"),
       );
     });
   });
@@ -105,18 +102,15 @@ describe("HostCallMemory", () => {
       );
     });
 
-    it("should throw when address exceeds MAX_MEMORY_INDEX", () => {
-      const address = tryAsU64(MEMORY_SIZE);
+    it("should wrap address when exceeds MAX_MEMORY_INDEX and throw", () => {
+      const address = tryAsU64(MAX_MEMORY_INDEX + 1);
       const result = new Uint8Array([1, 2, 3]);
 
       const res = hostCallMemory.loadInto(result, address);
 
       deepEqual(
         res,
-        Result.error(
-          new OutOfBounds(),
-          () => "Memory access out of bounds: address 4294967296 + length 3 exceeds memory size",
-        ),
+        Result.error(PageFault.fromMemoryIndex(0, true), () => "Page fault: attempted to access reserved page 0"),
       );
     });
   });
