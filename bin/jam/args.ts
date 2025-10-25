@@ -20,7 +20,7 @@ Options:
   --config              Path to a config file or one of: ['${DEV_CONFIG}', '${DEFAULT_CONFIG}'].
                         [default: ${NODE_DEFAULTS.config}]
   --pvm                 PVM Backend, one of: [${PvmBackendNames.join(", ")}].
-                        [default: ${NODE_DEFAULTS.pvm}]
+                        [default: ${PvmBackendNames[NODE_DEFAULTS.pvm]}]
 `;
 
 /** Command to execute. */
