@@ -18,7 +18,7 @@ rm -rf $DIST_FOLDER/*
 
 
 # Build the main binary
-BUILD="npx @vercel/ncc build -a -s -e lmdb -e @matrixai/quic -e @fluffylabs/anan-as -e tsx/esm/api"
+BUILD="npx @vercel/ncc build -a -s -e lmdb -e @matrixai/quic -e tsx/esm/api"
 $BUILD ./bin/jam/index.ts -o $DIST_FOLDER
 
 # Fix un-compiled worker files to point to the ones we will compile manually.
@@ -80,8 +80,7 @@ cat > ./package.json << EOF
   },
   "dependencies": {
     "lmdb": "3.1.3",
-    "@matrixai/quic": "2.0.9",
-    "@fluffylabs/anan-as": "1.0.0-a9b8141"
+    "@matrixai/quic": "2.0.9"
   },
   "homepage": "https://typeberry.dev",
   "author": "Fluffy Labs <hello@fluffylabs.dev>",
