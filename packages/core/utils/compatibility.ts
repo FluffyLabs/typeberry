@@ -1,8 +1,7 @@
 export enum GpVersion {
-  V0_6_7 = "0.6.7",
   V0_7_0 = "0.7.0",
   V0_7_1 = "0.7.1",
-  V0_7_2 = "0.7.2-preview",
+  V0_7_2 = "0.7.2",
 }
 
 export enum TestSuite {
@@ -11,44 +10,38 @@ export enum TestSuite {
 }
 
 export const DEFAULT_SUITE = TestSuite.W3F_DAVXY;
-export const DEFAULT_VERSION = GpVersion.V0_7_1;
+export const DEFAULT_VERSION = GpVersion.V0_7_2;
 
 const env = typeof process === "undefined" ? {} : process.env;
 export let CURRENT_VERSION = parseCurrentVersion(env.GP_VERSION) ?? DEFAULT_VERSION;
 export let CURRENT_SUITE = parseCurrentSuite(env.TEST_SUITE) ?? DEFAULT_SUITE;
 
-const ALL_VERSIONS_IN_ORDER = [GpVersion.V0_6_7, GpVersion.V0_7_0, GpVersion.V0_7_1, GpVersion.V0_7_2];
+const ALL_VERSIONS_IN_ORDER = [GpVersion.V0_7_0, GpVersion.V0_7_1, GpVersion.V0_7_2];
 
 function parseCurrentVersion(env?: string): GpVersion | undefined {
   if (env === undefined) {
     return undefined;
   }
-  switch (env) {
-    case GpVersion.V0_6_7:
-    case GpVersion.V0_7_0:
-    case GpVersion.V0_7_1:
-    case GpVersion.V0_7_2:
-      return env;
-    default:
-      throw new Error(
-        `Configured environment variable GP_VERSION is unknown: '${env}'. Use one of: ${ALL_VERSIONS_IN_ORDER}`,
-      );
+  const version = env as GpVersion;
+  if (!Object.values(GpVersion).includes(version)) {
+    throw new Error(
+      `Configured environment variable GP_VERSION is unknown: '${env}'. Use one of: ${ALL_VERSIONS_IN_ORDER}`,
+    );
   }
+  return version;
 }
 
 function parseCurrentSuite(env?: string): TestSuite | undefined {
   if (env === undefined) {
     return undefined;
   }
-  switch (env) {
-    case TestSuite.W3F_DAVXY:
-    case TestSuite.JAMDUNA:
-      return env;
-    default:
-      throw new Error(
-        `Configured environment variable TEST_SUITE is unknown: '${env}'. Use one of: ${Object.values(TestSuite)}`,
-      );
+  const suite = env as TestSuite;
+  if (!Object.values(TestSuite).includes(suite)) {
+    throw new Error(
+      `Configured environment variable TEST_SUITE is unknown: '${env}'. Use one of: ${Object.values(TestSuite)}`,
+    );
   }
+  return suite;
 }
 
 export class Compatibility {

@@ -22,7 +22,7 @@ import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/crypto/bandersnatch.js";
 import { Blake2b, HASH_SIZE, keccak } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { asOpaqueType, Compatibility, deepEqual, GpVersion } from "@typeberry/utils";
+import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { TransitionHasher } from "./hasher.js";
 
 describe("TransitionHasher", () => {
@@ -152,9 +152,7 @@ describe("TransitionHasher", () => {
         guarantees: asOpaqueType(guarantees),
       });
       const expectedResult: ExtrinsicHash = Bytes.parseBytes(
-        Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
-          ? "0xfc365cc4a1e5fffac3bf9a0189fc8fca444b9c5dff670b6b3ad4e4b6d925551c"
-          : "0xea2f2f4282c914664973aedb8c4d4ce87d79b00f8e848c8c6b7829831dd13fa3",
+        "0xfc365cc4a1e5fffac3bf9a0189fc8fca444b9c5dff670b6b3ad4e4b6d925551c",
         HASH_SIZE,
       ).asOpaque();
 

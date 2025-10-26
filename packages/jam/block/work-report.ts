@@ -3,7 +3,7 @@ import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { isU16, tryAsU32, type U16, type U32 } from "@typeberry/numbers";
-import { Compatibility, GpVersion, WithDebug } from "@typeberry/utils";
+import { WithDebug } from "@typeberry/utils";
 import { type CoreIndex, type ServiceGas, tryAsCoreIndex } from "./common.js";
 import {
   type AuthorizerHash,
@@ -102,52 +102,26 @@ export class WorkReportNoCodec extends WithDebug {
   }
 }
 
-const WorkReportCodec = codec.Class(WorkReportNoCodec, {
-  workPackageSpec: WorkPackageSpec.Codec,
-  context: RefineContext.Codec,
-  coreIndex: codec.varU32.convert(
-    (o) => tryAsU32(o),
-    (i) => {
-      if (!isU16(i)) {
-        throw new Error(`Core index exceeds U16: ${i}`);
-      }
-      return tryAsCoreIndex(i);
-    },
-  ),
-  authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
-  authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
-  authorizationOutput: codec.blob,
-  segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
-  results: codec.sequenceVarLen(WorkResult.Codec).convert(
-    (x) => x,
-    (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
-  ),
-});
-
-const WorkReportCodecPre070 = codec.Class(WorkReportNoCodec, {
-  workPackageSpec: WorkPackageSpec.Codec,
-  context: RefineContext.Codec,
-  coreIndex: codec.varU32.convert(
-    (o) => tryAsU32(o),
-    (i) => {
-      if (!isU16(i)) {
-        throw new Error(`Core index exceeds U16: ${i}`);
-      }
-      return tryAsCoreIndex(i);
-    },
-  ),
-  authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
-  authorizationOutput: codec.blob,
-  segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
-  results: codec.sequenceVarLen(WorkResult.Codec).convert(
-    (x) => x,
-    (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
-  ),
-  authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
-});
-
 export class WorkReport extends WorkReportNoCodec {
-  static Codec: typeof WorkReportCodec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
-    ? WorkReportCodec
-    : WorkReportCodecPre070;
+  static Codec = codec.Class(WorkReportNoCodec, {
+    workPackageSpec: WorkPackageSpec.Codec,
+    context: RefineContext.Codec,
+    coreIndex: codec.varU32.convert(
+      (o) => tryAsU32(o),
+      (i) => {
+        if (!isU16(i)) {
+          throw new Error(`Core index exceeds U16: ${i}`);
+        }
+        return tryAsCoreIndex(i);
+      },
+    ),
+    authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
+    authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
+    authorizationOutput: codec.blob,
+    segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
+    results: codec.sequenceVarLen(WorkResult.Codec).convert(
+      (x) => x,
+      (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+    ),
+  });
 }

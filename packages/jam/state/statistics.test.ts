@@ -2,19 +2,18 @@ import { describe, it } from "node:test";
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
-import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
+import { Compatibility, TestSuite } from "@typeberry/utils";
 import { StatisticsData } from "./statistics.js";
 
 describe("Statistics", () => {
-  const doit = Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_7) ? it : it.skip;
-
-  doit("should decode statistics data 1 with no error", () => {
+  // TODO [MaSo] Tests only for 0.6.7: which is not supported.
+  it.skip("should decode statistics data 1 with no error", () => {
     const spec = tinyChainSpec;
 
     Decoder.decodeObject(StatisticsData.Codec, BytesBlob.parseBlob(STATISTICS1), spec);
   });
 
-  doit("should decode statistics data 2", () => {
+  it.skip("should decode statistics data 2", () => {
     const spec = tinyChainSpec;
     Compatibility.overrideSuite(TestSuite.JAMDUNA);
 
