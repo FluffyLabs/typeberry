@@ -8,12 +8,12 @@ import { tryAsGas } from "@typeberry/pvm-interface";
 import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { createEmptyRegistersBuffer } from "@typeberry/pvm-interpreter/registers.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { Result } from "@typeberry/utils";
 import { SegmentExportError } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../results.js";
+import { emptyRegistersBuffer } from "../utils.js";
 import { Export } from "./export.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -27,7 +27,7 @@ function prepareRegsAndMemory(
   { skipSegment = false }: { skipSegment?: boolean } = {},
 ) {
   const memStart = 2 ** 23;
-  const registers = new HostCallRegisters(createEmptyRegistersBuffer());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   registers.set(SEGMENT_START_REG, tryAsU64(memStart));
   registers.set(SEGMENT_LENGTH_REG, tryAsU64(segmentLength));
 

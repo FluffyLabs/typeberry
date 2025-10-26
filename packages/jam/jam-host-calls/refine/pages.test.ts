@@ -4,13 +4,7 @@ import { tryAsServiceId } from "@typeberry/block";
 import { tryAsU64, type U64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { tryAsGas } from "@typeberry/pvm-interface";
-import {
-  emptyRegistersBuffer,
-  gasCounter,
-  MemoryBuilder,
-  tryAsMemoryIndex,
-  tryAsSbrkIndex,
-} from "@typeberry/pvm-interpreter";
+import { gasCounter, MemoryBuilder, tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter";
 import { OK, Result } from "@typeberry/utils";
 import {
   type MachineId,
@@ -20,6 +14,7 @@ import {
 } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../results.js";
+import { emptyRegistersBuffer } from "../utils.js";
 import { Pages } from "./pages.js";
 
 const gas = gasCounter(tryAsGas(0));

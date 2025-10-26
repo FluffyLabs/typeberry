@@ -12,12 +12,12 @@ import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { createEmptyRegistersBuffer } from "@typeberry/pvm-interpreter/registers.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import { UnprivilegedError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
+import { emptyRegistersBuffer } from "../utils.js";
 import { Designate } from "./designate.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -29,7 +29,7 @@ function prepareRegsAndMemory(
   { skipValidators = false }: { skipValidators?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(createEmptyRegistersBuffer());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   registers.set(VALIDATORS_DATA_START_REG, tryAsU64(memStart));
 
   const builder = new MemoryBuilder();

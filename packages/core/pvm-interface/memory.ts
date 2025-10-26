@@ -10,7 +10,7 @@ export type PageFault = {
   address: U32;
 };
 
-export function getPageStartAddress(address: U32) {
+export function getPageStartAddress(address: U32): U32 {
   return tryAsU32((address >>> PAGE_SIZE_SHIFT) << PAGE_SIZE_SHIFT);
 }
 

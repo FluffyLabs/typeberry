@@ -4,9 +4,9 @@
   "description": "PVM program runner.",
   "main": "index.ts",
   "dependencies": {
+    "@typeberry/pvm-interface": "*",
     "@typeberry/pvm-interpreter": "*",
-    "@typeberry/pvm-interpreter-ananas": "*",
-    "@typeberry/pvm-interface": "*"
+    "@typeberry/pvm-interpreter-ananas": "*"
   },
   "scripts": {
     "start": "tsx ./index.ts",

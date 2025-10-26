@@ -6,13 +6,14 @@ import { Blake2b, type Blake2bHash } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { tryAsGas } from "@typeberry/pvm-interface";
-import { emptyRegistersBuffer, gasCounter } from "@typeberry/pvm-interpreter";
+import { gasCounter } from "@typeberry/pvm-interpreter";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { TestAccounts } from "./externalities/test-accounts.js";
 import { Lookup } from "./lookup.js";
 import { HostCallResult } from "./results.js";
+import { emptyRegistersBuffer } from "./utils.js";
 
 let blake2b: Blake2b;
 let HASH: Blake2bHash;

@@ -5,7 +5,6 @@ import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { tryAsGas } from "@typeberry/pvm-interface";
 import { gasCounter, MemoryBuilder } from "@typeberry/pvm-interpreter";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { createEmptyRegistersBuffer } from "@typeberry/pvm-interpreter/registers.js";
 import { Result } from "@typeberry/utils";
 import {
   type MachineId,
@@ -16,13 +15,14 @@ import {
 } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../results.js";
+import { emptyRegistersBuffer } from "../utils.js";
 import { Expunge } from "./expunge.js";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 
 function prepareRegsAndMemory(machineId: MachineId) {
-  const registers = new HostCallRegisters(createEmptyRegistersBuffer());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   registers.set(7, machineId);
 
   const builder = new MemoryBuilder();

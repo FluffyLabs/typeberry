@@ -11,12 +11,12 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { MAX_VALUE, MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
-import { createEmptyRegistersBuffer } from "@typeberry/pvm-interpreter/registers.js";
 import { codecPerCore, type PerCore, tryAsPerCore } from "@typeberry/state";
 import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
+import { emptyRegistersBuffer } from "../utils.js";
 import { Bless } from "./bless.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -55,7 +55,7 @@ function prepareRegsAndMemory(
 ) {
   const memAuthStart = 2 ** 24;
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(createEmptyRegistersBuffer());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   registers.set(MANAGER_REG, manager ?? tryAsU64(5));
   registers.set(AUTHORIZATION_REG, tryAsU64(memAuthStart));
   registers.set(VALIDATOR_REG, validator ?? tryAsU64(20));

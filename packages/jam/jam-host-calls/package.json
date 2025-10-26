@@ -14,8 +14,8 @@
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
     "@typeberry/pvm-host-calls": "*",
-    "@typeberry/pvm-interpreter": "*",
     "@typeberry/pvm-interface": "*",
+    "@typeberry/pvm-interpreter": "*",
     "@typeberry/state": "*",
     "@typeberry/utils": "*"
   },

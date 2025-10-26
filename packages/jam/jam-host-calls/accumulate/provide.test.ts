@@ -7,11 +7,11 @@ import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-
 import { tryAsGas } from "@typeberry/pvm-interface";
 import { gasCounter, MemoryBuilder, tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
-import { createEmptyRegistersBuffer } from "@typeberry/pvm-interpreter/registers.js";
 import { deepEqual, Result } from "@typeberry/utils";
 import { ProvidePreimageError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
+import { emptyRegistersBuffer } from "../utils.js";
 import { Provide } from "./provide.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -25,7 +25,7 @@ function prepareRegsAndMemory(
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
   const preimageStart = 2 ** 16;
-  const registers = new HostCallRegisters(createEmptyRegistersBuffer());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   registers.set(RESULT_REG, tryAsU64(service));
   registers.set(PREIMAGE_START_REG, tryAsU64(preimageStart));
   registers.set(LENGTH_REG, tryAsU64(preimage.length));

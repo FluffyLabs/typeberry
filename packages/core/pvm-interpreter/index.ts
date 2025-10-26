@@ -8,4 +8,4 @@ export {
   tryAsMemoryIndex,
   tryAsSbrkIndex,
 } from "./memory/index.js";
-export { createEmptyRegistersBuffer as emptyRegistersBuffer, Registers } from "./registers.js";
+export { Registers } from "./registers.js";

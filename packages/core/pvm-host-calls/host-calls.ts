@@ -50,7 +50,6 @@ export class HostCalls {
       const regs = new HostCallRegisters(pvmInstance.registers.getAllEncoded());
       const memory = new HostCallMemory(pvmInstance.memory);
       const address = regs.get(7);
-      // We "cut out" higher 32-bits.
       const length = regs.getLowerU32(8);
 
       const result = safeAllocUint8Array(length);

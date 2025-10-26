@@ -9,12 +9,12 @@ import { MemoryBuilder } from "@typeberry/pvm-interpreter";
 import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { createEmptyRegistersBuffer } from "@typeberry/pvm-interpreter/registers.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { TRANSFER_MEMO_BYTES, TransferError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
+import { emptyRegistersBuffer } from "../utils.js";
 import { Transfer } from "./transfer.js";
 
 const RESULT_REG = 7;
@@ -31,7 +31,7 @@ function prepareRegsAndMemory(
   { skipMemo = false }: { skipMemo?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(createEmptyRegistersBuffer());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   registers.set(DESTINATION_REG, tryAsU64(destination));
   registers.set(AMOUNT_REG, amount);
   registers.set(ON_TRANSFER_GAS_REG, gas);

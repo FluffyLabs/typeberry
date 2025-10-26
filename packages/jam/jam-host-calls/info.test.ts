@@ -6,7 +6,7 @@ import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { tryAsGas } from "@typeberry/pvm-interface";
-import { emptyRegistersBuffer, gasCounter } from "@typeberry/pvm-interpreter";
+import { gasCounter } from "@typeberry/pvm-interpreter";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
@@ -14,6 +14,7 @@ import { ServiceAccountInfo } from "@typeberry/state";
 import { TestAccounts } from "./externalities/test-accounts.js";
 import { codecServiceAccountInfoWithThresholdBalance, Info, LEN_REG } from "./info.js";
 import { HostCallResult } from "./results.js";
+import { emptyRegistersBuffer } from "./utils.js";
 
 const SERVICE_ID_REG = 7;
 const RESULT_REG = SERVICE_ID_REG;
