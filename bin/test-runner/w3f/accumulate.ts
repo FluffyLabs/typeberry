@@ -158,9 +158,9 @@ async function runAccumulateInternal(test: AccumulateTest, path: string, pvm: Pv
    */
   const entropy = test.pre_state.entropy;
 
-  const post_state = TestState.toAccumulateState(test.post_state as TestState, chainSpec);
+  const post_state = TestState.toAccumulateState(test.post_state, chainSpec);
 
-  const state = TestState.toAccumulateState(test.pre_state as TestState, chainSpec);
+  const state = TestState.toAccumulateState(test.pre_state, chainSpec);
   const accumulate = new Accumulate(chainSpec, await Blake2b.createHasher(), state, pvm);
   const accumulateOutput = new AccumulateOutput();
   const result = await accumulate.transition({ ...test.input, entropy });

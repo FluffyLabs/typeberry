@@ -5,7 +5,7 @@ import { HostCallsManager, NoopMissing } from "./host-calls-manager.js";
 import { InterpreterInstanceManager } from "./interpreter-instance-manager.js";
 
 const hostCalls = new HostCallsManager({ missing: new NoopMissing(), handlers: [] });
-const pvmInstanceManager = await InterpreterInstanceManager.new(1, PvmBackend.BuiltIn);
+const pvmInstanceManager = await InterpreterInstanceManager.new(PvmBackend.BuiltIn);
 const pvmHostCallExtension = new HostCalls(pvmInstanceManager, hostCalls);
 
 const program = new Uint8Array([

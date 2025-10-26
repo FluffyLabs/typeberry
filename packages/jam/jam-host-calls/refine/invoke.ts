@@ -87,7 +87,7 @@ export class Invoke implements HostCallHandler {
     // save the result to the destination memory
     const resultData = Encoder.encodeObject(gasAndRegistersCodec, {
       gas: machineState.gas,
-      registers: Bytes.fromBlob(machineState.registers.getEncoded(), NO_OF_REGISTERS * 8),
+      registers: Bytes.fromBlob(machineState.registers.getEncoded(), NO_OF_REGISTERS * REGISTER_BYTE_SIZE),
     });
 
     // this fault does not need to be handled, because we've ensured it's

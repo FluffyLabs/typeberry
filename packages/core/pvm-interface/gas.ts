@@ -49,7 +49,9 @@ export interface IGasCounter {
   /**
    * Calculates used gas since creation of GasCounter.
    *
-   * NOTE: Capped to `initialGas`.
+   * The interface does not handle negative or more than `initialGas` values.
+   *
+   * NOTE: We can use at most `initialGas` and as little as `0`.
    */
   used(): Gas;
 }

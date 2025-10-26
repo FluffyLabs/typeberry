@@ -63,7 +63,7 @@ async function prepareConfigFile(args: Arguments, blake2b: Blake2b): Promise<Jam
     isAuthoring: args.command === Command.Dev,
     nodeName,
     nodeConfig,
-    nodeBackend: args.args.pvm,
+    pvmBackend: args.args.pvm,
     networkConfig: {
       key: devNetworkingSeed(blake2b, nodeName),
       host: "127.0.0.1",

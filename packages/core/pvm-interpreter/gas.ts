@@ -34,6 +34,7 @@ class GasCounterU64 implements IGasCounter {
   used(): Gas {
     const gasConsumed = tryAsU64(this.initialGas) - this.gas;
 
+    // In we have less than zero left we assume that all gas has been consumed.
     if (gasConsumed < 0) {
       return this.initialGas;
     }

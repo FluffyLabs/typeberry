@@ -12,23 +12,21 @@ export class InterpreterInstanceManager {
 
   private constructor(private readonly instances: IPvmInterpreter[]) {}
 
-  static async new(noOfPvmInstances: number, interpreter: PvmBackend): Promise<InterpreterInstanceManager> {
+  static async new(interpreter: PvmBackend): Promise<InterpreterInstanceManager> {
     const instances: IPvmInterpreter[] = [];
-    for (let i = 0; i < noOfPvmInstances; i++) {
-      switch (interpreter) {
-        case PvmBackend.BuiltIn:
-          instances.push(
-            new Interpreter({
-              useSbrkGas: false,
-            }),
-          );
-          break;
-        case PvmBackend.Ananas:
-          instances.push(await AnanasInterpreter.new());
-          break;
-        default:
-          assertNever(interpreter);
-      }
+    switch (interpreter) {
+      case PvmBackend.BuiltIn:
+        instances.push(
+          new Interpreter({
+            useSbrkGas: false,
+          }),
+        );
+        break;
+      case PvmBackend.Ananas:
+        instances.push(await AnanasInterpreter.new());
+        break;
+      default:
+        assertNever(interpreter);
     }
     return new InterpreterInstanceManager(instances);
   }

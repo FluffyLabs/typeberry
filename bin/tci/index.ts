@@ -84,7 +84,7 @@ export function createJamConfig(argv: CommonArguments): node.JamConfig {
     nodeName: NODE_DEFAULTS.name,
     nodeConfig,
     devConfig,
-    nodeBackend: NODE_DEFAULTS.pvm,
+    pvmBackend: NODE_DEFAULTS.pvm,
   });
 }
 

@@ -23,7 +23,7 @@ export class JamConfig {
     isAuthoring,
     nodeName,
     nodeConfig,
-    nodeBackend,
+    pvmBackend,
     devConfig = null,
     networkConfig = null,
     ancestry = [],
@@ -31,12 +31,12 @@ export class JamConfig {
     isAuthoring?: boolean;
     nodeName: string;
     nodeConfig: NodeConfiguration;
-    nodeBackend: PvmBackend;
+    pvmBackend: PvmBackend;
     devConfig?: DevConfig | null;
     networkConfig?: NetworkConfig | null;
     ancestry?: [HeaderHash, TimeSlot][];
   }) {
-    return new JamConfig(isAuthoring ?? false, nodeName, nodeConfig, nodeBackend, devConfig, networkConfig, ancestry);
+    return new JamConfig(isAuthoring ?? false, nodeName, nodeConfig, pvmBackend, devConfig, networkConfig, ancestry);
   }
 
   private constructor(

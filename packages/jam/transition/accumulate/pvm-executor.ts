@@ -85,7 +85,7 @@ export class PvmExecutor {
   }
 
   private static async prepareBackend(pvm: PvmBackend) {
-    return PvmInstanceManager.new(4, pvm);
+    return PvmInstanceManager.new(pvm);
   }
 
   /** Prepare accumulation host call handlers */

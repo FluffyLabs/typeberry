@@ -1,7 +1,7 @@
 import { Block, type HeaderHash, headerViewWithHashCodec, type StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import type { PvmBackend } from "@typeberry/config";
+import { PvmBackend } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU8, tryAsU32 } from "@typeberry/numbers";
 import { StateEntries } from "@typeberry/state-merkleization";
@@ -83,7 +83,15 @@ export class ImporterConfig {
     omitSealVerification: codec.bool,
     pvm: codec.u8.convert(
       (i) => tryAsU8(i),
-      (o) => o as PvmBackend,
+      (o) => {
+        if (o === PvmBackend.BuiltIn) {
+          return PvmBackend.BuiltIn;
+        }
+        if (o === PvmBackend.Ananas) {
+          return PvmBackend.Ananas;
+        }
+        throw new Error(`Invalid PvmBackend: ${o}`);
+      },
     ),
   });
 

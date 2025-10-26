@@ -95,7 +95,7 @@ describe("CLI", () => {
     });
   });
 
-  it("should throw on missing pvm option", () => {
+  it("should throw on invalid pvm option", () => {
     const pvms = PvmBackendNames.join(", ");
     assert.throws(
       () => {

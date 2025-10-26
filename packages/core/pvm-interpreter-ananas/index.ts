@@ -78,7 +78,7 @@ class AnanasGasCounter implements IGasCounter {
   }
 
   set(g: Gas): void {
-    this.instance.setGasLeft(g as bigint);
+    this.instance.setGasLeft(BigInt(g));
   }
 
   sub(g: Gas): boolean {
@@ -158,7 +158,8 @@ export class AnanasInterpreter implements IPvmInterpreter {
     if (status < 0) {
       return Status.OK;
     }
-    return status as Status;
+    check`${Status[status] !== undefined} Invalid status returned: ${status}`;
+    return status;
   }
 
   getPC(): number {
