@@ -8,7 +8,7 @@ import {
   type PvmExecution,
   tryAsHostCallIndex,
 } from "./host-call-handler.js";
-import type { IHostCallRegisters } from "./host-call-registers.js";
+import type { HostCallRegisters } from "./host-call-registers.js";
 
 const logger = Logger.new(import.meta.filename, "host-calls-pvm");
 
@@ -41,7 +41,7 @@ export class HostCallsManager {
     context: string,
     hostCallIndex: HostCallIndex,
     hostCallHandler: HostCallHandler,
-    registers: IHostCallRegisters,
+    registers: HostCallRegisters,
     gas: Gas,
   ) {
     const { currentServiceId } = hostCallHandler;

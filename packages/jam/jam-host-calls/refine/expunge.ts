@@ -1,6 +1,6 @@
 import {
   type HostCallHandler,
-  type IHostCallRegisters,
+  type HostCallRegisters,
   type PvmExecution,
   traceRegisters,
   tryAsHostCallIndex,
@@ -27,7 +27,7 @@ export class Expunge implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(_gas: IGasCounter, regs: IHostCallRegisters): Promise<PvmExecution | undefined> {
+  async execute(_gas: IGasCounter, regs: HostCallRegisters): Promise<PvmExecution | undefined> {
     // `n`: machine index
     const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG));
 

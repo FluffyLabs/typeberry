@@ -2,7 +2,7 @@ import { type ServiceGas, type ServiceId, tryAsServiceGas, tryAsServiceId } from
 import { codec, Decoder, tryAsExactBytes } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU64 } from "@typeberry/numbers";
-import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { tryAsPerCore } from "@typeberry/state";
@@ -43,11 +43,7 @@ export class Bless implements HostCallHandler {
     private readonly chainSpec: ChainSpec,
   ) {}
 
-  async execute(
-    _gas: IGasCounter,
-    regs: IHostCallRegisters,
-    memory: IHostCallMemory,
-  ): Promise<undefined | PvmExecution> {
+  async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `m`: manager service (can change privileged services)
     const manager = getServiceId(regs.get(IN_OUT_REG));
     // `a`: manages authorization queue

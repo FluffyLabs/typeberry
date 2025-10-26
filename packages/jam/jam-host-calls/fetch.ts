@@ -1,7 +1,7 @@
 import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { minU64, tryAsU64, type U32, type U64 } from "@typeberry/numbers";
-import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { Compatibility, GpVersion } from "@typeberry/utils";
@@ -253,11 +253,7 @@ export class Fetch implements HostCallHandler {
     private readonly fetch: IFetchExternalities,
   ) {}
 
-  async execute(
-    _gas: IGasCounter,
-    regs: IHostCallRegisters,
-    memory: IHostCallMemory,
-  ): Promise<undefined | PvmExecution> {
+  async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     const fetchKindU64 = regs.get(10);
     const kind = clampU64ToU32(fetchKindU64);
     const value = this.getValue(kind, regs);
@@ -285,7 +281,7 @@ export class Fetch implements HostCallHandler {
     regs.set(IN_OUT_REG, value === null ? HostCallResult.NONE : valueLength);
   }
 
-  private getValue(kind: U32, regs: IHostCallRegisters): BytesBlob | null {
+  private getValue(kind: U32, regs: HostCallRegisters): BytesBlob | null {
     if (kind === FetchKind.Constants) {
       return this.fetch.constants();
     }

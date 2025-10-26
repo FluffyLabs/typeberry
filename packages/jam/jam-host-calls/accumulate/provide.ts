@@ -2,8 +2,8 @@ import type { ServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import {
   type HostCallHandler,
-  type IHostCallMemory,
-  type IHostCallRegisters,
+  type HostCallMemory,
+  type HostCallRegisters,
   PvmExecution,
   traceRegisters,
   tryAsHostCallIndex,
@@ -32,7 +32,7 @@ export class Provide implements HostCallHandler {
     private readonly partialState: PartialState,
   ) {}
 
-  async execute(_gas: IGasCounter, regs: IHostCallRegisters, memory: IHostCallMemory) {
+  async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory) {
     // `s`
     const serviceId = getServiceIdOrCurrent(IN_OUT_REG, regs, this.currentServiceId);
 

@@ -2,7 +2,7 @@ import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
 import { tryAsU64, type U64 } from "@typeberry/numbers";
-import type { IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type BigGas, Status } from "@typeberry/pvm-interface";
 import type { ProgramDecoderError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder.js";
 import { asOpaqueType, type OK, type Opaque, type Result } from "@typeberry/utils";
@@ -22,7 +22,7 @@ export type MachineId = Opaque<U64, "MachineId[u64]">;
 export const tryAsMachineId = (v: number | bigint): MachineId => asOpaqueType(tryAsU64(v));
 
 export class MachineInstance {
-  async run(gas: BigGas, registers: IHostCallRegisters): Promise<MachineResult> {
+  async run(gas: BigGas, registers: HostCallRegisters): Promise<MachineResult> {
     return {
       result: {
         status: Status.OK,
@@ -50,7 +50,7 @@ export type MachineStatus =
 export type MachineResult = {
   result: MachineStatus;
   gas: BigGas;
-  registers: IHostCallRegisters;
+  registers: HostCallRegisters;
 };
 
 /** Types of possbile operations to request by Pages host call. */
@@ -122,7 +122,7 @@ export interface RefineExternalities {
     destinationStart: U64,
     sourceStart: U64,
     length: U64,
-    destination: IHostCallMemory,
+    destination: HostCallMemory,
   ): Promise<Result<OK, PeekPokeError>>;
 
   /** Write a fragment of memory into `machineIndex` from given source memory. */
@@ -131,7 +131,7 @@ export interface RefineExternalities {
     sourceStart: U64,
     destinationStart: U64,
     length: U64,
-    source: IHostCallMemory,
+    source: HostCallMemory,
   ): Promise<Result<OK, PeekPokeError>>;
 
   /** Start an inner PVM instance with given entry point and starting code. */
@@ -141,7 +141,7 @@ export interface RefineExternalities {
   machineInvoke(
     machineIndex: MachineId,
     gas: BigGas,
-    registers: IHostCallRegisters,
+    registers: HostCallRegisters,
   ): Promise<Result<MachineResult, NoMachineError>>;
 
   /**

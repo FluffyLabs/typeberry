@@ -1,7 +1,7 @@
 import { type ServiceId, tryAsPerValidator } from "@typeberry/block";
 import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { ValidatorData } from "@typeberry/state";
@@ -29,11 +29,7 @@ export class Designate implements HostCallHandler {
     private readonly chainSpec: ChainSpec,
   ) {}
 
-  async execute(
-    _gas: IGasCounter,
-    regs: IHostCallRegisters,
-    memory: IHostCallMemory,
-  ): Promise<undefined | PvmExecution> {
+  async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `o`
     const validatorsStart = regs.get(IN_OUT_REG);
 

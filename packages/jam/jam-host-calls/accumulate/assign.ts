@@ -3,7 +3,7 @@ import { codec, Decoder } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/state";
@@ -31,11 +31,7 @@ export class Assign implements HostCallHandler {
     private readonly chainSpec: ChainSpec,
   ) {}
 
-  async execute(
-    _gas: IGasCounter,
-    regs: IHostCallRegisters,
-    memory: IHostCallMemory,
-  ): Promise<undefined | PvmExecution> {
+  async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // c
     const maybeCoreIndex = regs.get(IN_OUT_REG);
     // o

@@ -3,9 +3,8 @@ import { codec, Decoder, Encoder, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,
+  type HostCallMemory,
   HostCallRegisters,
-  type IHostCallMemory,
-  type IHostCallRegisters,
   PvmExecution,
   traceRegisters,
   tryAsHostCallIndex,
@@ -45,11 +44,7 @@ export class Invoke implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(
-    _gas: IGasCounter,
-    regs: IHostCallRegisters,
-    memory: IHostCallMemory,
-  ): Promise<PvmExecution | undefined> {
+  async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
     // `n`: machine index
     const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG_1));
     // `o`: destination memory start (local)

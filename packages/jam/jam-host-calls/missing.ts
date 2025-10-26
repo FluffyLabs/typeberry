@@ -1,7 +1,7 @@
 import {
   type HostCallHandler,
-  type IHostCallMemory,
-  type IHostCallRegisters,
+  type HostCallMemory,
+  type HostCallRegisters,
   type PvmExecution,
   traceRegisters,
   tryAsHostCallIndex,
@@ -16,7 +16,7 @@ export class Missing implements HostCallHandler {
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(7);
 
-  execute(_gas: IGasCounter, regs: IHostCallRegisters, _memory: IHostCallMemory): Promise<PvmExecution | undefined> {
+  execute(_gas: IGasCounter, regs: HostCallRegisters, _memory: HostCallMemory): Promise<PvmExecution | undefined> {
     regs.set(7, HostCallResult.WHAT);
     return Promise.resolve(undefined);
   }

@@ -3,7 +3,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
-import type { IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type BigGas, Status } from "@typeberry/pvm-interface";
 import {
   ProgramDecoder,
@@ -103,7 +103,7 @@ export class TestRefineExt implements RefineExternalities {
     destinationStart: U64,
     sourceStart: U64,
     length: U64,
-    destination: IHostCallMemory,
+    destination: HostCallMemory,
   ): Promise<Result<OK, PeekPokeError>> {
     const val = this.machinePeekData.get(machineIndex, destinationStart, sourceStart, length, destination);
     if (val === undefined) {
@@ -119,7 +119,7 @@ export class TestRefineExt implements RefineExternalities {
     sourceStart: U64,
     destinationStart: U64,
     length: U64,
-    source: IHostCallMemory,
+    source: HostCallMemory,
   ): Promise<Result<OK, PeekPokeError>> {
     const val = this.machinePokeData.get(machineIndex, sourceStart, destinationStart, length, source);
     if (val === undefined) {
@@ -133,7 +133,7 @@ export class TestRefineExt implements RefineExternalities {
   async machineInvoke(
     machineIndex: MachineId,
     gas: BigGas,
-    registers: IHostCallRegisters,
+    registers: HostCallRegisters,
   ): Promise<Result<MachineResult, NoMachineError>> {
     const machine = this.machineInvokeData.get(machineIndex);
     if (machine === undefined) {

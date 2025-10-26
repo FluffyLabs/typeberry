@@ -3,8 +3,8 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import {
   type HostCallHandler,
-  type IHostCallMemory,
-  type IHostCallRegisters,
+  type HostCallMemory,
+  type HostCallRegisters,
   PvmExecution,
   traceRegisters,
   tryAsHostCallIndex,
@@ -31,11 +31,7 @@ export class Yield implements HostCallHandler {
     private readonly partialState: PartialState,
   ) {}
 
-  async execute(
-    _gas: IGasCounter,
-    regs: IHostCallRegisters,
-    memory: IHostCallMemory,
-  ): Promise<PvmExecution | undefined> {
+  async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
     // `o`
     const hashStart = regs.get(IN_OUT_REG);
 

@@ -1,5 +1,5 @@
 import type { ServiceId } from "@typeberry/block";
-import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { safeAllocUint8Array } from "@typeberry/utils";
@@ -21,7 +21,7 @@ export class LogHostCall implements HostCallHandler {
 
   constructor(public readonly currentServiceId: ServiceId) {}
 
-  execute(_gas: IGasCounter, regs: IHostCallRegisters, memory: IHostCallMemory): Promise<undefined | PvmExecution> {
+  execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     const lvl = regs.get(7);
     const targetStart = regs.get(8);
     const targetLength = regs.get(9);

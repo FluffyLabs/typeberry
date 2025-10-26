@@ -3,7 +3,7 @@ export * as bytes from "@typeberry/bytes";
 export * as hash from "@typeberry/hash";
 export * from "@typeberry/jam-host-calls";
 export * as numbers from "@typeberry/numbers";
-export { HostCallMemory, HostCallRegisters, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+export { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 export { NO_OF_REGISTERS } from "@typeberry/pvm-interface/registers.js";
 export * as interpreter from "@typeberry/pvm-interpreter";
 export { Args, ArgsDecoder } from "@typeberry/pvm-interpreter/args-decoder/args-decoder.js";
