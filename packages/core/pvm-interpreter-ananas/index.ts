@@ -17,22 +17,25 @@ import {
   tryAsGas,
 } from "@typeberry/pvm-interface";
 import { check, OK, Result } from "@typeberry/utils";
-import type { AnanasAPI } from "./api.js";
 
-const WASM_MODULE = import.meta.resolve("@fluffylabs/anan-as/release-mini.wasm");
+type Ananas = Awaited<ReturnType<typeof instantiate>>;
+
+const WASM_MODULE = import.meta.resolve("@fluffylabs/anan-as/release-stub.wasm");
 
 // Max u32 value
 const INF_STEPS = 2 ** 32 - 1;
 
 class AnanasRegisters implements IRegisters {
-  constructor(private readonly instance: AnanasAPI) {}
+  constructor(private readonly instance: Ananas) {}
 
   getAllEncoded(): Uint8Array {
     return this.instance.getRegisters();
   }
 
   setAllEncoded(bytes: Uint8Array): void {
-    check`${bytes.length === NO_OF_REGISTERS * REGISTER_BYTE_SIZE} Incorrect size of input registers. Got: ${bytes.length}, need: ${NO_OF_REGISTERS * REGISTER_BYTE_SIZE}`;
+    check`${bytes.length === NO_OF_REGISTERS * REGISTER_BYTE_SIZE}
+          Incorrect size of input registers. Got: ${bytes.length},
+          need: ${NO_OF_REGISTERS * REGISTER_BYTE_SIZE}`;
     this.instance.setRegisters(lowerBytes(bytes));
   }
 
@@ -43,7 +46,7 @@ class AnanasRegisters implements IRegisters {
 }
 
 class AnanasMemory implements IMemory {
-  constructor(private readonly instance: AnanasAPI) {}
+  constructor(private readonly instance: Ananas) {}
 
   store(address: U32, bytes: Uint8Array): Result<OK, PageFault> {
     if (this.instance.setMemory(address, bytes)) {
@@ -68,7 +71,7 @@ class AnanasMemory implements IMemory {
 class AnanasGasCounter implements IGasCounter {
   initialGas: Gas = tryAsGas(0n);
 
-  constructor(private readonly instance: AnanasAPI) {}
+  constructor(private readonly instance: Ananas) {}
 
   get(): Gas {
     return tryAsGas(this.instance.getGasLeft());
@@ -104,7 +107,7 @@ export class AnanasInterpreter implements IPvmInterpreter {
   readonly memory: AnanasMemory;
   readonly gas: AnanasGasCounter;
 
-  private constructor(private readonly instance: AnanasAPI) {
+  private constructor(private readonly instance: Ananas) {
     this.registers = new AnanasRegisters(instance);
     this.memory = new AnanasMemory(instance);
     this.gas = new AnanasGasCounter(instance);
