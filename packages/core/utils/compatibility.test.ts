@@ -48,7 +48,7 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
     Compatibility.override(gpVersion);
 
     const record = {
-      [GpVersion.V0_7_1]: "low",
+      [GpVersion.V0_7_0]: "low",
       [GpVersion.V0_7_2]: "high"
     };
 
@@ -62,6 +62,7 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
     Compatibility.override(gpVersion);
 
     const record = {
+      [GpVersion.V0_7_0]: "low",
       [GpVersion.V0_7_1]: "mid",
       [GpVersion.V0_7_2]: "high",
     };
@@ -72,12 +73,13 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
   });
 
   it("Should return highest value that is greater or equal current value", () => {
-    const gpVersion = GpVersion.V0_7_1;
+    const gpVersion = GpVersion.V0_7_2;
     Compatibility.override(gpVersion);
 
     const record = {
-      [GpVersion.V0_7_0]: "mid",
-      [GpVersion.V0_7_1]: "high",
+      [GpVersion.V0_7_0]: "low",
+      [GpVersion.V0_7_1]: "mid",
+      [GpVersion.V0_7_2]: "high",
     };
 
     const result = Compatibility.selectIfGreaterOrEqual({ fallback: "default", versions: record });
