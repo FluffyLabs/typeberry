@@ -11,7 +11,7 @@ import type { WorkReport } from "@typeberry/block/work-report.js";
 import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import { ArrayView, HashSet, SortedArray } from "@typeberry/collections";
-import type { ChainSpec } from "@typeberry/config";
+import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
 import type { PendingTransfer } from "@typeberry/jam-host-calls";
 import {
@@ -20,8 +20,7 @@ import {
 } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
 import { sumU64, tryAsU32, type U32 } from "@typeberry/numbers";
-import { tryAsGas } from "@typeberry/pvm-interpreter";
-import { Status } from "@typeberry/pvm-interpreter/status.js";
+import { Status, tryAsGas } from "@typeberry/pvm-interface";
 import {
   type AccumulationOutput,
   type AutoAccumulate,
@@ -86,6 +85,7 @@ export class Accumulate {
     public readonly chainSpec: ChainSpec,
     public readonly blake2b: Blake2b,
     public readonly state: AccumulateState,
+    public readonly pvm: PvmBackend,
   ) {}
 
   /**
@@ -171,7 +171,14 @@ export class Accumulate {
       fetchExternalities,
     };
 
-    const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);
+    const executor = await PvmExecutor.createAccumulateExecutor(
+      serviceId,
+      code,
+      externalities,
+      this.chainSpec,
+      this.pvm,
+    );
+
     const invocationArgs = Encoder.encodeObject(ARGS_CODEC, {
       slot,
       serviceId,

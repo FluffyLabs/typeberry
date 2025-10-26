@@ -1,5 +1,5 @@
 import { tryAsU32, type U32 } from "@typeberry/numbers";
-import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import type { Gas, IGasCounter, SmallGas } from "@typeberry/pvm-interface";
 import { type RegisterIndex, tryAsRegisterIndex } from "@typeberry/pvm-interpreter/registers.js";
 import { asOpaqueType, type Opaque } from "@typeberry/utils";
 import type { IHostCallMemory } from "./host-call-memory.js";
@@ -49,5 +49,5 @@ export interface HostCallHandler {
    *
    * NOTE the call is ALLOWED and expected to modify registers and memory.
    */
-  execute(gas: GasCounter, regs: IHostCallRegisters, memory: IHostCallMemory): Promise<undefined | PvmExecution>;
+  execute(gas: IGasCounter, regs: IHostCallRegisters, memory: IHostCallMemory): Promise<undefined | PvmExecution>;
 }

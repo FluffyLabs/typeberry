@@ -1,6 +1,6 @@
 import { Logger } from "@typeberry/logger";
 import { tryAsU32 } from "@typeberry/numbers";
-import { type Gas, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { type Gas, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { check } from "@typeberry/utils";
 import {
   type HostCallHandler,

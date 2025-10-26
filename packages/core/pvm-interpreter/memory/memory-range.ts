@@ -1,4 +1,5 @@
-import { MEMORY_SIZE, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts.js";
+import { MEMORY_SIZE } from "@typeberry/pvm-interface";
+import { PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts.js";
 import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index.js";
 
 /**

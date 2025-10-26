@@ -1,44 +1,65 @@
-import { tryAsU64, type U64 } from "@typeberry/numbers";
-import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
-import { OutOfBounds, type PageFault } from "@typeberry/pvm-interpreter/memory/errors.js";
-import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
+import { tryAsU32, type U64 } from "@typeberry/numbers";
+import { type IMemory, MEMORY_SIZE, type PageFault } from "@typeberry/pvm-interface";
+import { OutOfBounds } from "@typeberry/pvm-interpreter/memory/errors.js";
 import { OK, Result } from "@typeberry/utils";
 
 export interface IHostCallMemory {
-  storeFrom(address: U64, bytes: Uint8Array): Result<OK, PageFault | OutOfBounds>;
-  loadInto(result: Uint8Array, startAddress: U64): Result<OK, PageFault | OutOfBounds>;
+  /**
+   * Save some bytes into memory under given address.
+   *
+   * NOTE: Given address is U64 (pure register value),
+   * but we use only lower 32-bits.
+   */
+  storeFrom(regAddress: U64, bytes: Uint8Array): Result<OK, PageFault | OutOfBounds>;
+  /**
+   * Read some bytes from memory under given address.
+   *
+   * NOTE: Given address is U64 (pure register value),
+   * but we use only lower 32-bits.
+   */
+  loadInto(output: Uint8Array, regAddress: U64): Result<OK, PageFault | OutOfBounds>;
 }
 
 export class HostCallMemory implements IHostCallMemory {
-  constructor(private readonly memory: Memory) {}
+  constructor(private readonly memory: IMemory) {}
 
-  storeFrom(address: U64, bytes: Uint8Array): Result<OK, PageFault | OutOfBounds> {
+  storeFrom(regAddress: U64, bytes: Uint8Array): Result<OK, PageFault | OutOfBounds> {
     if (bytes.length === 0) {
       return Result.ok(OK);
     }
 
-    if (address + tryAsU64(bytes.length) > MEMORY_SIZE) {
+    // NOTE: We always take lower 32 bits from register value.
+    //
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/25ed0025ed00?v=0.7.2
+    const address = tryAsU32(Number(regAddress & 0xffff_ffffn));
+
+    if (address + bytes.length > MEMORY_SIZE) {
       return Result.error(
         new OutOfBounds(),
         () => `Memory access out of bounds: address ${address} + length ${bytes.length} exceeds memory size`,
       );
     }
 
-    return this.memory.storeFrom(tryAsMemoryIndex(Number(address)), bytes);
+    return this.memory.store(address, bytes);
   }
 
-  loadInto(result: Uint8Array, startAddress: U64): Result<OK, PageFault | OutOfBounds> {
-    if (result.length === 0) {
+  loadInto(output: Uint8Array, regAddress: U64): Result<OK, PageFault | OutOfBounds> {
+    if (output.length === 0) {
       return Result.ok(OK);
     }
 
-    if (startAddress + tryAsU64(result.length) > MEMORY_SIZE) {
+    // NOTE: We always take lower 32 bits from register value.
+    //
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/25ed0025ed00?v=0.7.2
+    const address = tryAsU32(Number(regAddress & 0xffff_ffffn));
+
+    if (address + output.length > MEMORY_SIZE) {
       return Result.error(
         new OutOfBounds(),
-        () => `Memory access out of bounds: address ${startAddress} + length ${result.length} exceeds memory size`,
+        () => `Memory access out of bounds: address ${address} + length ${output.length} exceeds memory size`,
       );
     }
 
-    return this.memory.loadInto(result, tryAsMemoryIndex(Number(startAddress)));
+    return this.memory.read(address, output);
   }
 }

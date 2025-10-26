@@ -18,11 +18,12 @@ type Config = WorkerConfig<ImporterConfig, BlocksDb, StatesDb<SerializedState<Le
 export async function createImporter(config: Config) {
   const chainSpec = config.chainSpec;
   const db = config.openDatabase({ readonly: false });
+  const interpreter = config.workerParams.pvm;
   const blocks = db.getBlocksDb();
   const states = db.getStatesDb();
 
   const hasher = new TransitionHasher(chainSpec, await keccakHasher, await blake2b);
-  const importer = new Importer(chainSpec, hasher, logger, blocks, states);
+  const importer = new Importer(chainSpec, interpreter, hasher, logger, blocks, states);
 
   return {
     importer,

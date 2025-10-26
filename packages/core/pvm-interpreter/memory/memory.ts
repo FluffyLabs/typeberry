@@ -1,9 +1,11 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
+import type { U32 } from "@typeberry/numbers";
+import { type IMemory, type PageFault as InretpreterPageFault, MAX_MEMORY_INDEX } from "@typeberry/pvm-interface";
 import { OK, Result } from "@typeberry/utils";
 import { OutOfMemory, PageFault } from "./errors.js";
-import { MAX_MEMORY_INDEX, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts.js";
-import { type MemoryIndex, type SbrkIndex, tryAsSbrkIndex } from "./memory-index.js";
+import { PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts.js";
+import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index.js";
 import { MemoryRange, RESERVED_MEMORY_RANGE } from "./memory-range.js";
 import { alignToPageSize, getPageNumber } from "./memory-utils.js";
 import { PageRange } from "./page-range.js";
@@ -24,7 +26,7 @@ enum AccessType {
 
 const logger = Logger.new(import.meta.filename, "pvm:mem");
 
-export class Memory {
+export class Memory implements IMemory {
   static fromInitialMemory(initialMemoryState: InitialMemoryState) {
     return new Memory(
       initialMemoryState?.sbrkIndex,
@@ -40,6 +42,14 @@ export class Memory {
     private endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX),
     private memory = new Map<PageNumber, MemoryPage>(),
   ) {}
+
+  store(address: U32, bytes: Uint8Array): Result<OK, InretpreterPageFault> {
+    return this.storeFrom(tryAsMemoryIndex(address), bytes);
+  }
+
+  read(address: U32, output: Uint8Array): Result<OK, InretpreterPageFault> {
+    return this.loadInto(output, tryAsMemoryIndex(address));
+  }
 
   reset() {
     this.sbrkIndex = tryAsSbrkIndex(RESERVED_MEMORY_RANGE.end);

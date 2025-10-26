@@ -10,7 +10,7 @@ import {
   traceRegisters,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { type PartialState, PreimageStatusKind } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -35,7 +35,7 @@ export class Query implements HostCallHandler {
   ) {}
 
   async execute(
-    _gas: GasCounter,
+    _gas: IGasCounter,
     regs: IHostCallRegisters,
     memory: IHostCallMemory,
   ): Promise<PvmExecution | undefined> {

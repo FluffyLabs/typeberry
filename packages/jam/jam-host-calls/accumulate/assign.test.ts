@@ -8,8 +8,8 @@ import { tinyChainSpec } from "@typeberry/config";
 import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
-import { Registers } from "@typeberry/pvm-interpreter";
-import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
+import { tryAsGas } from "@typeberry/pvm-interface";
+import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
@@ -18,6 +18,7 @@ import { Result } from "@typeberry/utils";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
+import { emptyRegistersBuffer } from "../utils.js";
 import { Assign } from "./assign.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -32,7 +33,7 @@ function prepareRegsAndMemory(
   { skipAuthQueue = false, assigners = null }: { skipAuthQueue?: boolean; assigners?: bigint | number | null } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(new Registers());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   registers.set(CORE_INDEX_REG, tryAsU64(coreIndex));
   registers.set(AUTH_QUEUE_START_REG, tryAsU64(memStart));
   if (assigners !== null) {
@@ -52,10 +53,10 @@ function prepareRegsAndMemory(
   if (!skipAuthQueue) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
+  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
-    memory: new HostCallMemory(memory),
+    memory,
   };
 }
 

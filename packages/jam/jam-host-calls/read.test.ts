@@ -4,8 +4,8 @@ import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
-import { Registers } from "@typeberry/pvm-interpreter";
-import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
+import { tryAsGas } from "@typeberry/pvm-interface";
+import { gasCounter } from "@typeberry/pvm-interpreter";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
@@ -13,6 +13,7 @@ import { asOpaqueType, OK, Result } from "@typeberry/utils";
 import { TestAccounts } from "./externalities/test-accounts.js";
 import { Read } from "./read.js";
 import { HostCallResult } from "./results.js";
+import { emptyRegistersBuffer } from "./utils.js";
 
 const gas = gasCounter(tryAsGas(0));
 const SERVICE_ID_REG = 7;
@@ -42,7 +43,7 @@ function prepareRegsAndMemory(
 ) {
   const keyAddress = 2 ** 20;
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(new Registers());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   if (serviceId !== undefined) {
     registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
   } else {
@@ -61,13 +62,13 @@ function prepareRegsAndMemory(
   if (!skipValue) {
     builder.setWriteablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE));
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
+  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
-    memory: new HostCallMemory(memory),
+    memory,
     readResult: () => {
       const result = new Uint8Array(valueLength - valueOffset);
-      assert.deepStrictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)), Result.ok(OK));
+      assert.deepStrictEqual(memory.loadInto(result, tryAsU64(memStart)), Result.ok(OK));
       return BytesBlob.blobFrom(result);
     },
   };

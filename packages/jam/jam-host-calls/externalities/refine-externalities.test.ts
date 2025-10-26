@@ -3,13 +3,12 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
-import type { IHostCallMemory } from "@typeberry/pvm-host-calls";
-import type { BigGas, Registers } from "@typeberry/pvm-interpreter";
+import type { IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import { type BigGas, Status } from "@typeberry/pvm-interface";
 import {
   ProgramDecoder,
   type ProgramDecoderError,
 } from "@typeberry/pvm-interpreter/program-decoder/program-decoder.js";
-import { Status } from "@typeberry/pvm-interpreter/status.js";
 import { type OK, Result } from "@typeberry/utils";
 import {
   type MachineId,
@@ -134,7 +133,7 @@ export class TestRefineExt implements RefineExternalities {
   async machineInvoke(
     machineIndex: MachineId,
     gas: BigGas,
-    registers: Registers,
+    registers: IHostCallRegisters,
   ): Promise<Result<MachineResult, NoMachineError>> {
     const machine = this.machineInvokeData.get(machineIndex);
     if (machine === undefined) {

@@ -6,20 +6,21 @@ import { Registers } from "@typeberry/pvm-interpreter";
 import { HostCallRegisters } from "./host-call-registers.js";
 
 describe("HostCallRegisters", () => {
-  describe("get", () => {
+  describe("getAllEncoded", () => {
     it("reads a u64 value from the underlying registers", () => {
       const registers = new Registers();
       registers.setU64(0, tryAsU64(0xffff_ffff_ffff_fffdn));
-      const hostCallRegisters = new HostCallRegisters(registers);
+      const hostCallRegisters = new HostCallRegisters(registers.getAllEncoded());
       assert.strictEqual(hostCallRegisters.get(0), tryAsU64(0xffff_ffff_ffff_fffdn));
     });
   });
 
-  describe("set", () => {
+  describe("setAllEncoded", () => {
     it("writes a u64 value to the underlying registers", () => {
       const registers = new Registers();
-      const hostCallRegisters = new HostCallRegisters(registers);
+      const hostCallRegisters = new HostCallRegisters(registers.getAllEncoded());
       hostCallRegisters.set(0, tryAsU64(0xffff_ffff_ffff_fffdn));
+      registers.setAllEncoded(hostCallRegisters.getEncoded());
       assert.strictEqual(registers.getU64(0), tryAsU64(0xffff_ffff_ffff_fffdn));
     });
   });

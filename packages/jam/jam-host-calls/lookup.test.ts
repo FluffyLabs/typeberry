@@ -5,14 +5,15 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Blake2b, type Blake2bHash } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
-import { Registers } from "@typeberry/pvm-interpreter";
-import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
+import { tryAsGas } from "@typeberry/pvm-interface";
+import { gasCounter } from "@typeberry/pvm-interpreter";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { TestAccounts } from "./externalities/test-accounts.js";
 import { Lookup } from "./lookup.js";
 import { HostCallResult } from "./results.js";
+import { emptyRegistersBuffer } from "./utils.js";
 
 let blake2b: Blake2b;
 let HASH: Blake2bHash;
@@ -45,7 +46,7 @@ function prepareRegsAndMemory(
     preimageLength = 0,
   }: { skipKey?: boolean; skipValue?: boolean; preimageOffset?: number; preimageLength?: number } = {},
 ) {
-  const registers = new HostCallRegisters(new Registers());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
   registers.set(HASH_ADDRESS_REG, tryAsU64(PREIMAGE_HASH_ADDRESS));
   registers.set(DEST_ADDRESS_REG, tryAsU64(DESTINATION_MEM_ADDRESS));
@@ -66,10 +67,10 @@ function prepareRegsAndMemory(
       tryAsMemoryIndex(DESTINATION_MEM_ADDRESS + PAGE_SIZE),
     );
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
+  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
-    memory: new HostCallMemory(memory),
+    memory,
   };
 }
 

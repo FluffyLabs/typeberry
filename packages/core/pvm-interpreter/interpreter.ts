@@ -1,12 +1,14 @@
 import { Logger } from "@typeberry/logger";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
+import { type Gas, type IPvmInterpreter, Status, tryAsGas } from "@typeberry/pvm-interface";
+import { Program } from "@typeberry/pvm-program";
 import { ArgsDecoder } from "./args-decoder/args-decoder.js";
 import { createResults } from "./args-decoder/args-decoding-results.js";
 import { ArgumentType } from "./args-decoder/argument-type.js";
 import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-type-map.js";
 import { assemblify } from "./assemblify.js";
 import { BasicBlocks } from "./basic-blocks/index.js";
-import { type Gas, type GasCounter, gasCounter, tryAsBigGas, tryAsGas } from "./gas.js";
+import { gasCounter } from "./gas.js";
 import { Instruction } from "./instruction.js";
 import { instructionGasMap } from "./instruction-gas-map.js";
 import { InstructionResult } from "./instruction-result.js";
@@ -49,7 +51,6 @@ import { Mask } from "./program-decoder/mask.js";
 import { ProgramDecoder } from "./program-decoder/program-decoder.js";
 import { Registers } from "./registers.js";
 import { Result } from "./result.js";
-import { Status } from "./status.js";
 
 type InterpreterOptions = {
   useSbrkGas?: boolean;
@@ -57,14 +58,14 @@ type InterpreterOptions = {
 
 const logger = Logger.new(import.meta.filename, "pvm");
 
-export class Interpreter {
+export class Interpreter implements IPvmInterpreter {
   private readonly useSbrkGas: boolean;
-  private registers = new Registers();
+  readonly registers = new Registers();
+  readonly memory = new Memory();
+  gas = gasCounter(tryAsGas(0));
   private code: Uint8Array = new Uint8Array();
   private mask = Mask.empty();
   private pc = 0;
-  private gas = gasCounter(tryAsGas(0));
-  private initialGas = gasCounter(tryAsGas(0));
   private argsDecoder: ArgsDecoder;
   private threeRegsDispatcher: ThreeRegsDispatcher;
   private twoRegsOneImmDispatcher: TwoRegsOneImmDispatcher;
@@ -74,7 +75,6 @@ export class Interpreter {
   private oneOffsetDispatcher: OneOffsetDispatcher;
   private oneRegOneImmDispatcher: OneRegOneImmDispatcher;
   private instructionResult = new InstructionResult();
-  private memory = new Memory();
   private twoImmsDispatcher: TwoImmsDispatcher;
   private oneRegTwoImmsDispatcher: OneRegTwoImmsDispatcher;
   private noArgsDispatcher: NoArgsDispatcher;
@@ -128,7 +128,12 @@ export class Interpreter {
     this.oneRegOneExtImmDispatcher = new OneRegOneExtImmDispatcher(loadOps);
   }
 
-  reset(rawProgram: Uint8Array, pc: number, gas: Gas, maybeRegisters?: Registers, maybeMemory?: Memory) {
+  resetJam(program: Uint8Array, args: Uint8Array, pc: number, gas: Gas) {
+    const p = Program.fromSpi(program, args, true);
+    this.resetGeneric(p.code, pc, gas, p.registers, p.memory);
+  }
+
+  resetGeneric(rawProgram: Uint8Array, pc: number, gas: Gas, maybeRegisters?: Registers, maybeMemory?: Memory) {
     const programDecoder = new ProgramDecoder(rawProgram);
     this.code = programDecoder.getCode();
     this.mask = programDecoder.getMask();
@@ -136,7 +141,6 @@ export class Interpreter {
 
     this.pc = pc;
     this.gas = gasCounter(gas);
-    this.initialGas = gasCounter(gas);
     this.status = Status.OK;
     this.argsDecoder.reset(this.code, this.mask);
     this.basicBlocks.reset(this.code, this.mask);
@@ -278,34 +282,12 @@ export class Interpreter {
     return this.status;
   }
 
-  getRegisters() {
-    return this.registers;
-  }
-
   getPC() {
     return this.pc;
   }
 
   setNextPC(nextPc: number) {
     this.pc = nextPc;
-  }
-
-  getGas(): Gas {
-    return this.gas.get();
-  }
-
-  getGasConsumed(): Gas {
-    const gasConsumed = tryAsBigGas(this.initialGas.get()) - tryAsBigGas(this.gas.get());
-
-    if (gasConsumed < 0) {
-      return this.initialGas.get();
-    }
-
-    return tryAsBigGas(gasConsumed);
-  }
-
-  getGasCounter(): GasCounter {
-    return this.gas;
   }
 
   getStatus() {
@@ -315,10 +297,6 @@ export class Interpreter {
   getExitParam(): null | U32 {
     const p = this.instructionResult.exitParam;
     return p !== null ? tryAsU32(p) : p;
-  }
-
-  getMemory() {
-    return this.memory;
   }
 
   getMemoryPage(pageNumber: number): null | Uint8Array {

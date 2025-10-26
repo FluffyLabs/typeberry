@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { MEMORY_SIZE, PAGE_SIZE } from "./memory-consts.js";
+import { MEMORY_SIZE } from "@typeberry/pvm-interface";
+import { PAGE_SIZE } from "./memory-consts.js";
 import { tryAsMemoryIndex } from "./memory-index.js";
 import { MemoryRange } from "./memory-range.js";
 

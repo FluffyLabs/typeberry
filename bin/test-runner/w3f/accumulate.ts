@@ -12,7 +12,7 @@ import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import { asKnownSize, HashSet } from "@typeberry/collections";
-import type { ChainSpec } from "@typeberry/config";
+import { type ChainSpec, PvmBackend, PvmBackendNames } from "@typeberry/config";
 import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { InMemoryService } from "@typeberry/state";
@@ -142,8 +142,14 @@ export class AccumulateTest {
 }
 
 export async function runAccumulateTest(test: AccumulateTest, path: string) {
-  const chainSpec = getChainSpec(path);
+  await runAccumulateInternal(test, path, PvmBackend.BuiltIn);
+  // TODO [MaSo] running separate passes the test, running both at the same time fails.
+  //
+  //await runAccumulateInternal(test, path, PVMBackend.Ananas);
+}
 
+async function runAccumulateInternal(test: AccumulateTest, path: string, pvm: PvmBackend) {
+  const chainSpec = getChainSpec(path);
   /**
    * entropy has to be moved to input because state is incompatibile -
    * in test state we have: `entropy: EntropyHash;`
@@ -152,19 +158,19 @@ export async function runAccumulateTest(test: AccumulateTest, path: string) {
    */
   const entropy = test.pre_state.entropy;
 
-  const state = TestState.toAccumulateState(test.pre_state as TestState, chainSpec);
-  const accumulate = new Accumulate(chainSpec, await Blake2b.createHasher(), state);
-  const accumulateOutput = new AccumulateOutput();
-  const result = await accumulate.transition({ ...test.input, entropy });
-
-  if (result.isError) {
-    assert.fail(`Expected successfull accumulation, got: ${result}`);
-  }
-  const accumulateRoot = await accumulateOutput.transition({ accumulationOutputLog: result.ok.accumulationOutputLog });
-  state.applyUpdate(result.ok.stateUpdate);
-
   const post_state = TestState.toAccumulateState(test.post_state as TestState, chainSpec);
 
+  const state = TestState.toAccumulateState(test.pre_state as TestState, chainSpec);
+  const accumulate = new Accumulate(chainSpec, await Blake2b.createHasher(), state, pvm);
+  const accumulateOutput = new AccumulateOutput();
+  const result = await accumulate.transition({ ...test.input, entropy });
+  if (result.isError) {
+    assert.fail(`Expected successfull accumulation for ${PvmBackendNames[pvm]}, got: ${result}`);
+  }
+  const accumulateRoot = await accumulateOutput.transition({
+    accumulationOutputLog: result.ok.accumulationOutputLog,
+  });
+  state.applyUpdate(result.ok.stateUpdate);
   deepEqual(state, post_state);
   deepEqual(accumulateRoot, test.output.ok);
 }

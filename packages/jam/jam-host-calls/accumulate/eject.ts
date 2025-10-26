@@ -4,7 +4,7 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { assertNever, resultToString } from "@typeberry/utils";
 import { EjectError, type PartialState } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
@@ -29,7 +29,7 @@ export class Eject implements HostCallHandler {
   ) {}
 
   async execute(
-    _gas: GasCounter,
+    _gas: IGasCounter,
     regs: IHostCallRegisters,
     memory: IHostCallMemory,
   ): Promise<undefined | PvmExecution> {

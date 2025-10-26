@@ -4,7 +4,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType, assertNever, Compatibility, GpVersion, safeAllocUint8Array } from "@typeberry/utils";
 import { type PartialState, UpdatePrivilegesError } from "../externalities/partial-state.js";
@@ -44,7 +44,7 @@ export class Bless implements HostCallHandler {
   ) {}
 
   async execute(
-    _gas: GasCounter,
+    _gas: IGasCounter,
     regs: IHostCallRegisters,
     memory: IHostCallMemory,
   ): Promise<undefined | PvmExecution> {

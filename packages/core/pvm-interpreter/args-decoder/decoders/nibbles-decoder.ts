@@ -1,4 +1,4 @@
-import { NO_OF_REGISTERS } from "../../registers.js";
+import { NO_OF_REGISTERS } from "@typeberry/pvm-interface";
 
 const MAX_REGISTER_INDEX = NO_OF_REGISTERS - 1;
 const MAX_LENGTH = 4;

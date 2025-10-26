@@ -4,10 +4,10 @@ import { tryAsServiceId } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { tryAsU64, type U64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
-import { gasCounter, MemoryBuilder, Registers, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
+import { Status, tryAsGas } from "@typeberry/pvm-interface";
+import { gasCounter, MemoryBuilder } from "@typeberry/pvm-interpreter";
 import { RESERVED_NUMBER_OF_PAGES } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
-import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { Status } from "@typeberry/pvm-interpreter/status.js";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import {
   type MachineId,
@@ -17,6 +17,7 @@ import {
 } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../results.js";
+import { emptyRegistersBuffer } from "../utils.js";
 import { Invoke } from "./invoke.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -33,15 +34,15 @@ function prepareRegsAndMemory(
   data: BytesBlob,
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
-  const registers = new HostCallRegisters(new Registers());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   registers.set(MACHINE_INDEX_REG, machineIndex);
   registers.set(DEST_REG, tryAsU64(destinationStart));
 
-  const memory = prepareMemory(data, destinationStart, PAGE_SIZE, { registerMemory });
+  const memory = new HostCallMemory(prepareMemory(data, destinationStart, PAGE_SIZE, { registerMemory }));
 
   return {
     registers,
-    memory: new HostCallMemory(memory),
+    memory,
   };
 }
 

@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-
-import { MAX_MEMORY_INDEX, MEMORY_SIZE, PAGE_SIZE } from "./memory-consts.js";
+import { MAX_MEMORY_INDEX, MEMORY_SIZE } from "@typeberry/pvm-interface";
+import { PAGE_SIZE } from "./memory-consts.js";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index.js";
 import { alignToPageSize, getPageNumber, getStartPageIndex, getStartPageIndexFromPageNumber } from "./memory-utils.js";
 import { tryAsPageNumber } from "./pages/page-utils.js";

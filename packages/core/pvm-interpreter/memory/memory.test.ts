@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-
+import { MAX_MEMORY_INDEX } from "@typeberry/pvm-interface";
 import { deepEqual, OK, Result } from "@typeberry/utils";
 import { PageFault } from "./errors.js";
 import { Memory } from "./memory.js";
-import { MAX_MEMORY_INDEX, MIN_ALLOCATION_LENGTH, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts.js";
+import { MIN_ALLOCATION_LENGTH, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts.js";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index.js";
 import { ReadablePage, WriteablePage } from "./pages/index.js";
 import type { MemoryPage } from "./pages/memory-page.js";
