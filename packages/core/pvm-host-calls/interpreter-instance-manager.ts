@@ -6,7 +6,7 @@ import { assertNever } from "@typeberry/utils";
 
 type ResolveFn = (pvm: IPvmInterpreter) => void;
 
-// TODO [MaSo] Delete this
+// TODO [MaSo] Delete this & also make host calls independent from intepreters.
 export class InterpreterInstanceManager {
   private waitingQueue: ResolveFn[] = [];
 

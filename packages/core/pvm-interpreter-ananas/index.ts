@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { instantiate } from "@fluffylabs/anan-as/raw";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
@@ -20,7 +20,9 @@ import { check, OK, Result } from "@typeberry/utils";
 
 type Ananas = Awaited<ReturnType<typeof instantiate>>;
 
-const WASM_MODULE = import.meta.resolve("@fluffylabs/anan-as/release-mini.wasm");
+// TODO [ToDr] Temporary solution. We need to inline WASM files for the final build.
+const wasmPath = fileURLToPath(new URL(import.meta.resolve("@fluffylabs/anan-as/release-mini.wasm"), import.meta.url));
+const wasmBuffer = readFileSync(wasmPath);
 
 // Max u32 value
 const INF_STEPS = 2 ** 32 - 1;
@@ -114,8 +116,6 @@ export class AnanasInterpreter implements IPvmInterpreter {
   }
 
   static async new() {
-    const wasmPath = fileURLToPath(new URL(WASM_MODULE, import.meta.url));
-    const wasmBuffer = await readFile(wasmPath);
     const wasmModule = await WebAssembly.compile(wasmBuffer);
     const instance = await instantiate(wasmModule, {
       env: {

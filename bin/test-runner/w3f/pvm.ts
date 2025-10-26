@@ -62,7 +62,6 @@ export class PvmTest {
   "expected-page-fault-address"?: number;
 }
 
-// TODO [MaSo] Test also on Ananas 🍍
 export async function runPvmTest(testContent: PvmTest) {
   const initialMemory = testContent["initial-memory"];
   const pageMap = testContent["initial-page-map"];

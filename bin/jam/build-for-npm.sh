@@ -16,9 +16,10 @@ DIST_FOLDER=./dist/jam
 mkdir $DIST_FOLDER || true
 rm -rf $DIST_FOLDER/*
 
-
+# TODO [ToDr] Temporary require anan-as before https://github.com/tomusdrw/anan-as/issues/99
+# is resolved.
 # Build the main binary
-BUILD="npx @vercel/ncc build -a -s -e lmdb -e @matrixai/quic -e tsx/esm/api"
+BUILD="npx @vercel/ncc build -a -s -e lmdb -e @matrixai/quic  @fluffylabs/anan-as -e tsx/esm/api"
 $BUILD ./bin/jam/index.ts -o $DIST_FOLDER
 
 # Fix un-compiled worker files to point to the ones we will compile manually.
@@ -80,7 +81,8 @@ cat > ./package.json << EOF
   },
   "dependencies": {
     "lmdb": "3.1.3",
-    "@matrixai/quic": "2.0.9"
+    "@matrixai/quic": "2.0.9",
+    "@fluffylabs/anan-as": "1.0.0-a9b8141"
   },
   "homepage": "https://typeberry.dev",
   "author": "Fluffy Labs <hello@fluffylabs.dev>",
