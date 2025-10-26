@@ -1,6 +1,6 @@
 import { Logger } from "@typeberry/logger";
 import { tryAsU32 } from "@typeberry/numbers";
-import { type Gas, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { type Gas, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { check } from "@typeberry/utils";
 import {
   type HostCallHandler,
@@ -8,7 +8,7 @@ import {
   type PvmExecution,
   tryAsHostCallIndex,
 } from "./host-call-handler.js";
-import type { IHostCallRegisters } from "./host-call-registers.js";
+import type { HostCallRegisters } from "./host-call-registers.js";
 
 const logger = Logger.new(import.meta.filename, "host-calls-pvm");
 
@@ -41,7 +41,7 @@ export class HostCallsManager {
     context: string,
     hostCallIndex: HostCallIndex,
     hostCallHandler: HostCallHandler,
-    registers: IHostCallRegisters,
+    registers: HostCallRegisters,
     gas: Gas,
   ) {
     const { currentServiceId } = hostCallHandler;

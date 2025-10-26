@@ -3,7 +3,8 @@ export * as bytes from "@typeberry/bytes";
 export * as hash from "@typeberry/hash";
 export * from "@typeberry/jam-host-calls";
 export * as numbers from "@typeberry/numbers";
-export { HostCallMemory, HostCallRegisters, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+export { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
+export { NO_OF_REGISTERS } from "@typeberry/pvm-interface/registers.js";
 export * as interpreter from "@typeberry/pvm-interpreter";
 export { Args, ArgsDecoder } from "@typeberry/pvm-interpreter/args-decoder/args-decoder.js";
 export { createResults } from "@typeberry/pvm-interpreter/args-decoder/args-decoding-results.js";
@@ -15,7 +16,7 @@ export { instructionArgumentTypeMap } from "@typeberry/pvm-interpreter/args-deco
 export { BasicBlocks } from "@typeberry/pvm-interpreter/basic-blocks/index.js";
 export { Mask } from "@typeberry/pvm-interpreter/program-decoder/mask.js";
 export { ProgramDecoder } from "@typeberry/pvm-interpreter/program-decoder/program-decoder.js";
-export { NO_OF_REGISTERS, Registers } from "@typeberry/pvm-interpreter/registers.js";
+export { Registers } from "@typeberry/pvm-interpreter/registers.js";
 export { extractCodeAndMetadata, Program } from "@typeberry/pvm-program";
 export { decodeStandardProgram, MemorySegment, SpiMemory, SpiProgram } from "@typeberry/pvm-spi-decoder";
 export * from "@typeberry/utils/debug.js";

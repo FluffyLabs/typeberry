@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-
+import { PvmBackend, PvmBackendNames } from "@typeberry/config";
 import { NODE_DEFAULTS } from "@typeberry/config-node";
 import { tryAsU16 } from "@typeberry/numbers";
 import { deepEqual } from "@typeberry/utils";
@@ -11,6 +11,7 @@ describe("CLI", () => {
   const defaultOptions: SharedOptions = {
     nodeName: NODE_DEFAULTS.name,
     configPath: NODE_DEFAULTS.config,
+    pvm: NODE_DEFAULTS.pvm,
   };
 
   it("should start with default arguments", () => {
@@ -80,6 +81,30 @@ describe("CLI", () => {
         output: ".././output",
       },
     });
+  });
+
+  it("should parse pvm option", () => {
+    const args = parse(["--pvm=ananas"]);
+
+    deepEqual(args, {
+      command: Command.Run,
+      args: {
+        ...defaultOptions,
+        pvm: PvmBackend.Ananas,
+      },
+    });
+  });
+
+  it("should throw on invalid pvm option", () => {
+    const pvms = PvmBackendNames.join(", ");
+    assert.throws(
+      () => {
+        const _args = parse(["--pvm=unimplemented"]);
+      },
+      {
+        message: `Invalid value 'unimplemented' for option 'pvm': Error: Use one of ${pvms}`,
+      },
+    );
   });
 
   it("should throw on missing output path", () => {

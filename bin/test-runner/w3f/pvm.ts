@@ -1,14 +1,14 @@
 import assert from "node:assert";
 import { fromJson } from "@typeberry/block-json";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { Interpreter, tryAsGas } from "@typeberry/pvm-interpreter";
+import { MAX_MEMORY_INDEX, Status, tryAsGas } from "@typeberry/pvm-interface";
+import { Interpreter } from "@typeberry/pvm-interpreter";
 import { MemoryBuilder } from "@typeberry/pvm-interpreter/memory/index.js";
-import { MAX_MEMORY_INDEX, PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
+import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { getPageNumber } from "@typeberry/pvm-interpreter/memory/memory-utils.js";
 import { type PageNumber, tryAsPageNumber } from "@typeberry/pvm-interpreter/memory/pages/page-utils.js";
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
-import { Status } from "@typeberry/pvm-interpreter/status.js";
 import { safeAllocUint8Array } from "@typeberry/utils";
 
 class MemoryChunkItem {
@@ -113,12 +113,12 @@ export async function runPvmTest(testContent: PvmTest) {
     return "halt";
   };
 
-  pvm.reset(testContent.program, testContent["initial-pc"], tryAsGas(testContent["initial-gas"]), regs, memory);
+  pvm.resetGeneric(testContent.program, testContent["initial-pc"], tryAsGas(testContent["initial-gas"]), regs, memory);
   pvm.runProgram();
 
-  assert.strictEqual(pvm.getGas(), BigInt(testContent["expected-gas"]));
+  assert.strictEqual(pvm.gas.get(), BigInt(testContent["expected-gas"]));
   assert.strictEqual(pvm.getPC(), testContent["expected-pc"]);
-  assert.deepStrictEqual(pvm.getRegisters().getAllU64(), testContent["expected-regs"]);
+  assert.deepStrictEqual(pvm.registers.getAllU64(), testContent["expected-regs"]);
 
   const testStatus = mapPvmStatus(pvm.getStatus());
   const exitParam = pvm.getExitParam();

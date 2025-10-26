@@ -1,8 +1,9 @@
 import { Block, type HeaderHash, headerViewWithHashCodec, type StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
+import { PvmBackend } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { tryAsU32 } from "@typeberry/numbers";
+import { tryAsU8, tryAsU32 } from "@typeberry/numbers";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { Result } from "@typeberry/utils";
 import { type Api, createProtocol, type Internal } from "@typeberry/workers-api";
@@ -80,11 +81,26 @@ export type ImporterApi = Api<typeof protocol>;
 export class ImporterConfig {
   static Codec = codec.Class(ImporterConfig, {
     omitSealVerification: codec.bool,
+    pvm: codec.u8.convert(
+      (i) => tryAsU8(i),
+      (o) => {
+        if (o === PvmBackend.BuiltIn) {
+          return PvmBackend.BuiltIn;
+        }
+        if (o === PvmBackend.Ananas) {
+          return PvmBackend.Ananas;
+        }
+        throw new Error(`Invalid PvmBackend: ${o}`);
+      },
+    ),
   });
 
-  static create({ omitSealVerification }: CodecRecord<ImporterConfig>) {
-    return new ImporterConfig(omitSealVerification);
+  static create({ omitSealVerification, pvm }: CodecRecord<ImporterConfig>) {
+    return new ImporterConfig(omitSealVerification, pvm);
   }
 
-  private constructor(public readonly omitSealVerification: boolean) {}
+  private constructor(
+    public readonly omitSealVerification: boolean,
+    public readonly pvm: PvmBackend,
+  ) {}
 }

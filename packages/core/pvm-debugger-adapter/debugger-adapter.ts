@@ -1,8 +1,7 @@
+import { Status, tryAsGas } from "@typeberry/pvm-interface";
 import { Interpreter, type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
-import { tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
-import { Status } from "@typeberry/pvm-interpreter/status.js";
 import { check, safeAllocUint8Array } from "@typeberry/utils";
 
 export class DebuggerAdapter {
@@ -18,11 +17,11 @@ export class DebuggerAdapter {
   }
 
   resetGeneric(rawProgram: Uint8Array, flatRegisters: Uint8Array, initialGas: bigint) {
-    this.pvm.reset(rawProgram, 0, tryAsGas(initialGas), new Registers(flatRegisters));
+    this.pvm.resetGeneric(rawProgram, 0, tryAsGas(initialGas), new Registers(flatRegisters));
   }
 
   reset(rawProgram: Uint8Array, pc: number, gas: bigint, maybeRegisters?: Registers, maybeMemory?: Memory) {
-    this.pvm.reset(rawProgram, pc, tryAsGas(gas), maybeRegisters, maybeMemory);
+    this.pvm.resetGeneric(rawProgram, pc, tryAsGas(gas), maybeRegisters, maybeMemory);
   }
 
   getPageDump(pageNumber: number): null | Uint8Array {
@@ -45,7 +44,7 @@ export class DebuggerAdapter {
   }
 
   setMemory(address: number, value: Uint8Array) {
-    this.pvm.getMemory().storeFrom(tryAsMemoryIndex(address), value);
+    this.pvm.memory.storeFrom(tryAsMemoryIndex(address), value);
   }
 
   getExitArg(): number {
@@ -72,11 +71,11 @@ export class DebuggerAdapter {
   }
 
   getRegisters(): BigUint64Array {
-    return this.pvm.getRegisters().getAllU64();
+    return this.pvm.registers.getAllU64();
   }
 
   setRegisters(registers: Uint8Array) {
-    this.pvm.getRegisters().copyFrom(new Registers(registers));
+    this.pvm.registers.copyFrom(new Registers(registers));
   }
 
   getProgramCounter(): number {
@@ -88,10 +87,10 @@ export class DebuggerAdapter {
   }
 
   getGasLeft(): bigint {
-    return BigInt(this.pvm.getGas());
+    return BigInt(this.pvm.gas.get());
   }
 
   setGasLeft(gas: bigint) {
-    this.pvm.getGasCounter().set(tryAsGas(gas));
+    this.pvm.gas.set(tryAsGas(gas));
   }
 }

@@ -1,8 +1,8 @@
 import type { ServiceId } from "@typeberry/block";
 import { tryAsU64 } from "@typeberry/numbers";
-import type { HostCallHandler, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { logger } from "./logger.js";
 
 /**
@@ -19,7 +19,7 @@ export class GasHostCall implements HostCallHandler {
 
   constructor(public readonly currentServiceId: ServiceId) {}
 
-  execute(gas: GasCounter, regs: IHostCallRegisters): Promise<undefined | PvmExecution> {
+  execute(gas: IGasCounter, regs: HostCallRegisters): Promise<undefined | PvmExecution> {
     const gasValue = gas.get();
     logger.trace`GAS <- ${gasValue}`;
     regs.set(7, tryAsU64(gasValue));

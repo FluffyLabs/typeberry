@@ -1,7 +1,6 @@
+import { MEMORY_SIZE } from "@typeberry/pvm-interface";
 import { check } from "@typeberry/utils";
 
-export const MAX_MEMORY_INDEX = 0xffff_ffff;
-export const MEMORY_SIZE = MAX_MEMORY_INDEX + 1;
 export const PAGE_SIZE_SHIFT = 12;
 // PAGE_SIZE has to be a power of 2
 export const PAGE_SIZE = 1 << PAGE_SIZE_SHIFT;
