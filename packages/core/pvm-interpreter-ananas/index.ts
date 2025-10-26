@@ -20,7 +20,7 @@ import { check, OK, Result } from "@typeberry/utils";
 
 type Ananas = Awaited<ReturnType<typeof instantiate>>;
 
-const WASM_MODULE = import.meta.resolve("@fluffylabs/anan-as/release-stub.wasm");
+const WASM_MODULE = import.meta.resolve("@fluffylabs/anan-as/release-mini.wasm");
 
 // Max u32 value
 const INF_STEPS = 2 ** 32 - 1;

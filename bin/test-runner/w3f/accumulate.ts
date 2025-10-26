@@ -143,9 +143,10 @@ export class AccumulateTest {
 
 export async function runAccumulateTest(test: AccumulateTest, path: string) {
   await runAccumulateInternal(test, path, PvmBackend.BuiltIn);
-  // TODO [MaSo] running separate passes the test, running both at the same time fails.
-  //
-  //await runAccumulateInternal(test, path, PVMBackend.Ananas);
+}
+
+export async function runAccumulateTestAnanas(test: AccumulateTest, path: string) {
+  await runAccumulateInternal(test, path, PvmBackend.Ananas);
 }
 
 async function runAccumulateInternal(test: AccumulateTest, path: string, pvm: PvmBackend) {
