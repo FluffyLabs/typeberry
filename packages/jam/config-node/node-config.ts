@@ -86,10 +86,10 @@ export function loadConfig(config: string[], withRelPath: (p: string) => string)
 
   if (config[0] === DEV_CONFIG) {
     logger.log`🔧 Applying dev config`;
-    mergedJson = configs.dev;
+    mergedJson = structuredClone(configs.dev);
   } else {
     logger.log`🔧 Applying default config`;
-    mergedJson = configs.default;
+    mergedJson = structuredClone(configs.default);
     if (config[0] !== DEFAULT_CONFIG) {
       startWithSegment = 0; // user didn't request "dev" or "default" so we merge all entries onto "default"
     }
@@ -117,7 +117,7 @@ export function loadConfig(config: string[], withRelPath: (p: string) => string)
         try {
           processQuery(mergedJson, config[i], withRelPath);
         } catch (e) {
-          throw new Error(`🔧 Error while processing '${config[i]}': ${e}`);
+          throw new Error(`Error while processing '${config[i]}': ${e}`);
         }
       }
     }
