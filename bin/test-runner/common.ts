@@ -8,6 +8,8 @@ import util from "node:util";
 import { initWasm } from "@typeberry/crypto";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
+import {Decode, Decoder} from "@typeberry/codec";
+import {ChainSpec, tinyChainSpec} from "@typeberry/config";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 export const logger = Logger.new(import.meta.filename, "test-runner");
@@ -15,15 +17,32 @@ export const logger = Logger.new(import.meta.filename, "test-runner");
 export function runner<T>(
   name: string,
   fromJson: FromJson<T>,
-  run: (test: T, path: string, t: TestContext) => Promise<void>,
+  run: (test: T, path: string, t: TestContext, chainSpec: ChainSpec) => Promise<void>,
+  chainSpec: ChainSpec = tinyChainSpec,
+  fromCodec?: Decode<T>,
 ): Runner<unknown> {
-  return { name, fromJson, run } as Runner<unknown>;
+  return { name, fromJson, fromCodec, run, chainSpec } as Runner<unknown>;
 }
 
 export type Runner<T> = {
   name: string;
   fromJson: FromJson<T>;
-  run: (test: T, path: string, t: TestContext) => Promise<void>;
+  run: (test: T, path: string, t: TestContext, chainSpec: ChainSpec) => Promise<void>;
+  fromCodec?: Decode<T>;
+  chainSpec: ChainSpec;
+};
+
+enum TestFileKind {
+  Binary,
+  JSON,
+};
+
+type TestFile = {
+  kind: TestFileKind.JSON,
+  content: unknown,
+} | {
+  kind: TestFileKind.Binary,
+  content: Uint8Array,
 };
 
 export async function main(
@@ -31,9 +50,11 @@ export async function main(
   initialFiles: string[],
   directoryToScan: string,
   {
+    pattern = '.json',
     accepted,
     ignored,
   }: {
+    pattern?: string,
     accepted?: string[];
     ignored?: string[];
   } = {},
@@ -46,7 +67,7 @@ export async function main(
   let testFiles = initialFiles;
   if (initialFiles.length === 0) {
     // scan the given directory for fallback tests
-    testFiles = await scanDir(relPath, directoryToScan, ".json");
+    testFiles = await scanDir(relPath, directoryToScan, pattern);
   }
 
   logger.info`Preparing tests for ${testFiles.length} files.`;
@@ -58,8 +79,21 @@ export async function main(
       continue;
     }
 
-    const content = await fs.readFile(absolutePath, "utf8");
-    const testJson = JSON.parse(content);
+    let testJson;
+    if (absolutePath.endsWith('.bin')) {
+      const content: Buffer = await fs.readFile(absolutePath);
+      testJson = {
+        kind: TestFileKind.Binary,
+        content: new Uint8Array(content),
+      }
+    } else {
+      const content = await fs.readFile(absolutePath, "utf8");
+      testJson = {
+        kind: TestFileKind.JSON,
+        content: JSON.parse(content),
+      };
+    }
+
     const test = prepareTest(runners, testJson, testFile, absolutePath);
 
     test.shouldSkip = accepted !== undefined && !accepted.some((x) => absolutePath.includes(x));
@@ -134,32 +168,47 @@ type TestAndRunner = {
   test: (ctx: TestContext) => Promise<void>;
 };
 
-function prepareTest(runners: Runner<unknown>[], testContent: unknown, file: string, path: string): TestAndRunner {
+function prepareTest(runners: Runner<unknown>[], testContent: TestFile, file: string, path: string): TestAndRunner {
   const errors: [string, unknown][] = [];
   const handleError = (name: string, e: unknown) => errors.push([name, e]);
 
   // Find the first runner that is able to parse the input data.
-  for (const { name, fromJson, run } of runners) {
+  for (const { name, fromJson, fromCodec, run, chainSpec } of runners) {
     // NOTE: this `if` statement is needed to distinguish between tiny and full chain spec
     // without this `if` some tests (for example statistics) will be run twice
     if (!name.split("/").every((pathPart) => path.includes(pathPart))) {
       continue;
     }
 
-    try {
-      const parsedTest = parseFromJson(testContent, fromJson);
-      return {
-        shouldSkip: false,
-        runner: name,
-        file,
-        test: (ctx) => {
-          logger.log`[${name}] running test from ${file}`;
-          logger.trace` ${util.inspect(parsedTest)}`;
-          return run(parsedTest, path, ctx);
-        },
-      };
-    } catch (e) {
-      handleError(name, e);
+    const createTestDefinition = (parsedTest: unknown): TestAndRunner => ({
+      shouldSkip: false,
+      runner: name,
+      file,
+      test: (ctx) => {
+        logger.log`[${name}] running test from ${file}`;
+        logger.trace` ${util.inspect(parsedTest)}`;
+        return run(parsedTest, path, ctx, chainSpec);
+      },
+    });
+
+    if (testContent.kind === TestFileKind.Binary) {
+      if (fromCodec !== undefined) {
+        try {
+          const parsedTest = Decoder.decodeObject(fromCodec, testContent.content, chainSpec);
+          return createTestDefinition(parsedTest);
+        } catch (e) {
+          handleError(name, e)
+        }
+      } else {
+        handleError(name, new Error(`Missing codec definition for: ${name}`));
+      }
+    } else {
+      try {
+        const parsedTest = parseFromJson(testContent.content, fromJson);
+        return createTestDefinition(parsedTest);
+      } catch (e) {
+        handleError(name, e);
+      }
     }
   }
 

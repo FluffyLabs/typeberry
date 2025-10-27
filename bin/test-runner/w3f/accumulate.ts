@@ -143,9 +143,6 @@ export class AccumulateTest {
 
 export async function runAccumulateTest(test: AccumulateTest, path: string) {
   await runAccumulateInternal(test, path, PvmBackend.BuiltIn);
-}
-
-export async function runAccumulateTestAnanas(test: AccumulateTest, path: string) {
   await runAccumulateInternal(test, path, PvmBackend.Ananas);
 }
 
