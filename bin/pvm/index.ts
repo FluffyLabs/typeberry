@@ -1,29 +1,48 @@
 // biome-ignore-all lint/suspicious/noConsole: bin file
 
-import { Interpreter, tryAsGas } from "@typeberry/pvm-interpreter";
-import { Status } from "@typeberry/pvm-interpreter/status.js";
-
-const pvm = new Interpreter();
+import { Status, tryAsGas } from "@typeberry/pvm-interface";
+import { Interpreter } from "@typeberry/pvm-interpreter";
+import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
 
 const program = new Uint8Array([
   0, 0, 35, 173, 101, 126, 173, 255, 239, 101, 101, 101, 101, 101, 194, 101, 101, 101, 174, 120, 44, 0, 0, 0, 0, 178,
   230, 174, 73, 44, 0, 0, 0, 0, 178, 230, 174, 120, 73, 85, 65, 2, 4,
 ]);
-pvm.reset(program, 0, tryAsGas(200n));
-const instructions = pvm.printProgram();
+
+const pvmTb = new Interpreter({ useSbrkGas: true });
+const pvmAnanas = await AnanasInterpreter.new();
+
+pvmTb.resetGeneric(program, 0, tryAsGas(200n));
+pvmAnanas.resetGeneric(program, 0, tryAsGas(200n));
+
+const instructions = pvmTb.printProgram();
 
 let i = 0;
-while (pvm.nextStep() === Status.OK) {
+let ananas = pvmAnanas.nextStep();
+let tb = Status.OK;
+
+while (ananas || tb === Status.OK) {
   console.info(`Instruction ${i}: ${instructions[i]}`);
-  console.info(`Registers: ${pvm.getRegisters().getAllU64()}`);
-  console.info(`Status: ${pvm.getStatus()}`);
-  console.info(`Gas: ${pvm.getGas()}`);
-  console.info(`Gas: ${pvm.getPC()}`);
+  console.info(`🫐 Registers: ${pvmTb.registers.getAllU64()}`);
+  console.info(`🍍 Registers: ${pvmAnanas.registers.getAllU64()}`);
+  console.info(`Status: 🫐 ${pvmTb.getStatus()} | 🍍 ${pvmAnanas.getStatus()}`);
+  console.info(`Gas: 🫐 ${pvmTb.gas.get()}| 🍍 ${pvmAnanas.gas.get()}`);
+  console.info(`PC: 🫐 ${pvmTb.getPC()} | 🍍 ${pvmAnanas.getPC()}`);
   console.info();
   i++;
+  if (tb === Status.OK) {
+    tb = pvmTb.nextStep();
+  }
+  if (ananas) {
+    ananas = pvmAnanas.nextStep();
+  }
 }
+
 console.info(`Instruction ${i}: ${instructions[i]}`);
-console.info(`Registers: ${pvm.getRegisters().getAllU64()}`);
-console.info(`Status: ${pvm.getStatus()}`);
-console.info(`Gas: ${pvm.getGas()}`);
-console.info(`Gas: ${pvm.getPC()}`);
+console.info(`🫐 Registers: ${pvmTb.registers.getAllU64()}`);
+console.info(`🍍 Registers: ${pvmAnanas.registers.getAllU64()}`);
+console.info(`Status: 🫐 ${pvmTb.getStatus()} | 🍍 ${pvmAnanas.getStatus()}`);
+// TODO [MaSo] Check why they not finished with same gas.
+console.info(`Gas: 🫐 ${pvmTb.gas.get()}| 🍍 ${pvmAnanas.gas.get()}`);
+console.info(`PC: 🫐 ${pvmTb.getPC()} | 🍍 ${pvmAnanas.getPC()}`);
+console.info();

@@ -1,8 +1,8 @@
 import { type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsGas, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { type IGasCounter, tryAsGas, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { assertNever, Compatibility, GpVersion, resultToString } from "@typeberry/utils";
 import { type PartialState, TRANSFER_MEMO_BYTES, TransferError } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
@@ -40,7 +40,7 @@ export class Transfer implements HostCallHandler {
    */
   basicGasCost = Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
     ? tryAsSmallGas(10)
-    : (regs: IHostCallRegisters) => tryAsGas(10n + regs.get(TRANSFER_GAS_FEE_REG));
+    : (regs: HostCallRegisters) => tryAsGas(10n + regs.get(TRANSFER_GAS_FEE_REG));
 
   tracedRegisters = traceRegisters(IN_OUT_REG, AMOUNT_REG, TRANSFER_GAS_FEE_REG, MEMO_START_REG);
 
@@ -49,7 +49,7 @@ export class Transfer implements HostCallHandler {
     private readonly partialState: PartialState,
   ) {}
 
-  async execute(gas: GasCounter, regs: IHostCallRegisters, memory: IHostCallMemory): Promise<undefined | PvmExecution> {
+  async execute(gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `d`: destination
     const destination = getServiceId(regs.get(IN_OUT_REG));
     // `a`: amount

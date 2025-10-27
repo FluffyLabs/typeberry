@@ -2,9 +2,10 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { HostCallRegisters } from "@typeberry/pvm-host-calls";
-import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
-import { Registers } from "@typeberry/pvm-interpreter/registers.js";
+import { tryAsGas } from "@typeberry/pvm-interface";
+import { gasCounter } from "@typeberry/pvm-interpreter";
 import { GasHostCall } from "./gas.js";
+import { emptyRegistersBuffer } from "./utils.js";
 
 const REGISTER = 7;
 
@@ -14,7 +15,7 @@ describe("HostCalls: Gas", () => {
     const gas = new GasHostCall(currentServiceId);
 
     const counter = gasCounter(tryAsGas(10_000));
-    const regs = new HostCallRegisters(new Registers());
+    const regs = new HostCallRegisters(emptyRegistersBuffer());
 
     assert.deepStrictEqual(regs.get(REGISTER), 0n);
 
@@ -30,7 +31,7 @@ describe("HostCalls: Gas", () => {
     const gas = new GasHostCall(currentServiceId);
 
     const counter = gasCounter(tryAsGas(2n ** 64n - 1n));
-    const regs = new HostCallRegisters(new Registers());
+    const regs = new HostCallRegisters(emptyRegistersBuffer());
 
     assert.deepStrictEqual(regs.get(REGISTER), 0n);
 
