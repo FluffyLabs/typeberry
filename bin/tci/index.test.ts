@@ -16,6 +16,7 @@ describe("Typeberry Common Interface: Config", () => {
     nodeName: NODE_DEFAULTS.name,
     nodeConfig: loadConfig(NODE_DEFAULTS.config, withRelPath),
     devConfig: DEFAULT_DEV_CONFIG,
+    pvmBackend: NODE_DEFAULTS.pvm,
   });
   const key = Bytes.fill(SEED_SIZE, 1).asOpaque<PublicKeySeed>();
 

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import type { JsonObject } from "@typeberry/block-json";
+import { PvmBackend } from "@typeberry/config";
 import { configs } from "@typeberry/configs";
 import { type FromJson, json, parseFromJson } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
@@ -20,6 +21,7 @@ const IGNORE_KEYS = ["$schema"];
 export const NODE_DEFAULTS = {
   name: isBrowser() ? "browser" : os.hostname(),
   config: [DEFAULT_CONFIG],
+  pvm: PvmBackend.BuiltIn,
 };
 
 /** Chain spec chooser. */

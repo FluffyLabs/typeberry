@@ -80,7 +80,12 @@ export function createJamConfig(argv: CommonArguments, withRelPath: (p: string) 
     };
   }
 
-  return node.JamConfig.new({ nodeName: NODE_DEFAULTS.name, nodeConfig, devConfig });
+  return node.JamConfig.new({
+    nodeName: NODE_DEFAULTS.name,
+    nodeConfig,
+    devConfig,
+    pvmBackend: NODE_DEFAULTS.pvm,
+  });
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {

@@ -1,4 +1,4 @@
-import { tryAsGas } from "./gas.js";
+import { tryAsGas } from "@typeberry/pvm-interface";
 import { Interpreter } from "./index.js";
 
 const program = new Uint8Array([
@@ -7,6 +7,6 @@ const program = new Uint8Array([
 ]);
 
 const pvm = new Interpreter();
-pvm.reset(program, 0, tryAsGas(1000));
+pvm.resetGeneric(program, 0, tryAsGas(1000));
 pvm.printProgram();
 pvm.runProgram();

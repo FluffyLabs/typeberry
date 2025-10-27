@@ -1,6 +1,5 @@
+import { MAX_MEMORY_INDEX } from "@typeberry/pvm-interface";
 import { asOpaqueType, check, type Opaque } from "@typeberry/utils";
-
-import { MAX_MEMORY_INDEX } from "./memory-consts.js";
 
 export type MemoryIndex = Opaque<number, "memory index">;
 

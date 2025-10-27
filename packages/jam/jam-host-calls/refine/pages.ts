@@ -1,11 +1,11 @@
 import {
   type HostCallHandler,
-  type IHostCallRegisters,
+  type HostCallRegisters,
   type PvmExecution,
   traceRegisters,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { assertNever, resultToString } from "@typeberry/utils";
 import {
   PagesError,
@@ -33,7 +33,7 @@ export class Pages implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(_gas: GasCounter, regs: IHostCallRegisters): Promise<PvmExecution | undefined> {
+  async execute(_gas: IGasCounter, regs: HostCallRegisters): Promise<PvmExecution | undefined> {
     // `n`: machine index
     const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG));
     // `p`: start page

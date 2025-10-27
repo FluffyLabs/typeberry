@@ -67,6 +67,7 @@ async function prepareConfigFile(
     isAuthoring: args.command === Command.Dev,
     nodeName,
     nodeConfig,
+    pvmBackend: args.args.pvm,
     networkConfig: {
       key: devNetworkingSeed(blake2b, nodeName),
       host: "127.0.0.1",
