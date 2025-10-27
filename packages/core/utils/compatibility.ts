@@ -2,7 +2,7 @@ export enum GpVersion {
   V0_6_7 = "0.6.7",
   V0_7_0 = "0.7.0",
   V0_7_1 = "0.7.1",
-  V0_7_2 = "0.7.2-preview",
+  V0_7_2 = "0.7.2",
 }
 
 export enum TestSuite {
@@ -11,7 +11,7 @@ export enum TestSuite {
 }
 
 export const DEFAULT_SUITE = TestSuite.W3F_DAVXY;
-export const DEFAULT_VERSION = GpVersion.V0_7_1;
+export const DEFAULT_VERSION = GpVersion.V0_7_2;
 
 const env = typeof process === "undefined" ? {} : process.env;
 export let CURRENT_VERSION = parseCurrentVersion(env.GP_VERSION) ?? DEFAULT_VERSION;
