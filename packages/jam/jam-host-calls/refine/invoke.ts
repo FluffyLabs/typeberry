@@ -3,15 +3,20 @@ import { codec, Decoder, Encoder, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,
-  type IHostCallMemory,
-  type IHostCallRegisters,
+  type HostCallMemory,
+  HostCallRegisters,
   PvmExecution,
   traceRegisters,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
-import { type GasCounter, Registers, tryAsBigGas, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers.js";
-import { Status } from "@typeberry/pvm-interpreter/status.js";
+import {
+  type IGasCounter,
+  NO_OF_REGISTERS,
+  REGISTER_BYTE_SIZE,
+  Status,
+  tryAsBigGas,
+  tryAsSmallGas,
+} from "@typeberry/pvm-interface";
 import { check, resultToString } from "@typeberry/utils";
 import { type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { logger } from "../logger.js";
@@ -22,7 +27,7 @@ const IN_OUT_REG_1 = 7;
 const IN_OUT_REG_2 = 8;
 const gasAndRegistersCodec = codec.object({
   gas: codec.i64,
-  registers: codec.bytes(NO_OF_REGISTERS * 8),
+  registers: codec.bytes(NO_OF_REGISTERS * REGISTER_BYTE_SIZE),
 });
 const GAS_REGISTERS_SIZE = tryAsExactBytes(gasAndRegistersCodec.sizeHint);
 
@@ -39,11 +44,7 @@ export class Invoke implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(
-    _gas: GasCounter,
-    regs: IHostCallRegisters,
-    memory: IHostCallMemory,
-  ): Promise<PvmExecution | undefined> {
+  async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
     // `n`: machine index
     const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG_1));
     // `o`: destination memory start (local)
@@ -70,7 +71,7 @@ export class Invoke implements HostCallHandler {
     // `g`
     const gasCost = tryAsBigGas(gasRegisters.gas);
     // `w`
-    const registers = Registers.fromBytes(gasRegisters.registers.raw);
+    const registers = new HostCallRegisters(gasRegisters.registers.raw);
 
     // try run the machine
     const state = await this.refine.machineInvoke(machineIndex, gasCost, registers);
@@ -86,7 +87,7 @@ export class Invoke implements HostCallHandler {
     // save the result to the destination memory
     const resultData = Encoder.encodeObject(gasAndRegistersCodec, {
       gas: machineState.gas,
-      registers: Bytes.fromBlob(machineState.registers.getAllBytesAsLittleEndian(), NO_OF_REGISTERS * 8),
+      registers: Bytes.fromBlob(machineState.registers.getEncoded(), NO_OF_REGISTERS * REGISTER_BYTE_SIZE),
     });
 
     // this fault does not need to be handled, because we've ensured it's

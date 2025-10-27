@@ -1,8 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { MAX_MEMORY_INDEX } from "@typeberry/pvm-interface";
 import { InstructionResult } from "../instruction-result.js";
 import { Memory, MemoryBuilder } from "../memory/index.js";
-import { MAX_MEMORY_INDEX, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "../memory/memory-consts.js";
+import { PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "../memory/memory-consts.js";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "../memory/memory-index.js";
 import { Registers } from "../registers.js";
 import { MemoryOps } from "./memory-ops.js";

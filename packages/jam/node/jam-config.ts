@@ -5,7 +5,7 @@ import {
   tryAsValidatorIndex,
   type ValidatorIndex,
 } from "@typeberry/block";
-import type { Bootnode } from "@typeberry/config";
+import type { Bootnode, PvmBackend } from "@typeberry/config";
 import type { NodeConfiguration } from "@typeberry/config-node";
 import type { Ed25519SecretSeed, KeySeed } from "@typeberry/crypto/key-derivation.js";
 
@@ -23,6 +23,7 @@ export class JamConfig {
     isAuthoring,
     nodeName,
     nodeConfig,
+    pvmBackend,
     devConfig = null,
     networkConfig = null,
     ancestry = [],
@@ -30,11 +31,12 @@ export class JamConfig {
     isAuthoring?: boolean;
     nodeName: string;
     nodeConfig: NodeConfiguration;
+    pvmBackend: PvmBackend;
     devConfig?: DevConfig | null;
     networkConfig?: NetworkConfig | null;
     ancestry?: [HeaderHash, TimeSlot][];
   }) {
-    return new JamConfig(isAuthoring ?? false, nodeName, nodeConfig, devConfig, networkConfig, ancestry);
+    return new JamConfig(isAuthoring ?? false, nodeName, nodeConfig, pvmBackend, devConfig, networkConfig, ancestry);
   }
 
   private constructor(
@@ -44,6 +46,8 @@ export class JamConfig {
     public readonly nodeName: string,
     /** Node starting configuration. */
     public readonly node: NodeConfiguration,
+    /** PVM execution engine. */
+    public readonly pvmBackend: PvmBackend,
     /** Developer specific configuration. */
     public readonly dev: DevConfig | null,
     /** Networking options. */

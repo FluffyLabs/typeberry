@@ -4,8 +4,8 @@ import { SEGMENT_BYTES, type Segment, tryAsSegmentIndex, tryAsServiceId } from "
 import { Bytes } from "@typeberry/bytes";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
-import { Registers } from "@typeberry/pvm-interpreter";
-import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
+import { tryAsGas } from "@typeberry/pvm-interface";
+import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
@@ -13,6 +13,7 @@ import { Result } from "@typeberry/utils";
 import { SegmentExportError } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../results.js";
+import { emptyRegistersBuffer } from "../utils.js";
 import { Export } from "./export.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -26,7 +27,7 @@ function prepareRegsAndMemory(
   { skipSegment = false }: { skipSegment?: boolean } = {},
 ) {
   const memStart = 2 ** 23;
-  const registers = new HostCallRegisters(new Registers());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   registers.set(SEGMENT_START_REG, tryAsU64(memStart));
   registers.set(SEGMENT_LENGTH_REG, tryAsU64(segmentLength));
 
@@ -34,10 +35,10 @@ function prepareRegsAndMemory(
   if (!skipSegment) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + 2 * PAGE_SIZE), segment.raw);
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
+  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
-    memory: new HostCallMemory(memory),
+    memory,
   };
 }
 

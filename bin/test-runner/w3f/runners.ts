@@ -14,7 +14,7 @@ import {
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { runner } from "../common.js";
 import { runStateTransition, StateTransition } from "../state-transition/state-transition.js";
-import { AccumulateTest, runAccumulateTest } from "./accumulate.js";
+import { AccumulateTest, runAccumulateTest, runAccumulateTestAnanas } from "./accumulate.js";
 import { AssurancesTestFull, AssurancesTestTiny, runAssurancesTestFull, runAssurancesTestTiny } from "./assurances.js";
 import { AuthorizationsTest, runAuthorizationsTest } from "./authorizations.js";
 import {
@@ -50,6 +50,7 @@ import { runTrieTest, trieTestSuiteFromJson } from "./trie.js";
 
 export const runners = [
   runner("accumulate", AccumulateTest.fromJson, runAccumulateTest),
+  runner("accumulate_ananas", AccumulateTest.fromJson, runAccumulateTestAnanas),
   runner("assurances/tiny", AssurancesTestTiny.fromJson, runAssurancesTestTiny),
   runner("assurances/full", AssurancesTestFull.fromJson, runAssurancesTestFull),
   runner("authorizations", AuthorizationsTest.fromJson, runAuthorizationsTest),
