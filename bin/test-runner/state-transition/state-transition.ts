@@ -8,7 +8,7 @@ import { codec, Decoder, Encoder } from "@typeberry/codec";
 import { ChainSpec, PvmBackend, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { Blake2b, keccak, WithHash } from "@typeberry/hash";
-import { type FromJson, parseFromJson } from "@typeberry/json-parser";
+import type { FromJson } from "@typeberry/json-parser";
 import { tryAsU32 } from "@typeberry/numbers";
 import { serializeStateUpdate } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
@@ -53,7 +53,7 @@ export class StateTransition {
 const keccakHasher = keccak.KeccakHasher.create();
 
 const cachedBlocks = new Map<string, Block[]>();
-function loadBlocks(testPath: string) {
+function loadBlocks(testPath: string, spec: ChainSpec) {
   const dir = path.dirname(testPath);
   const fromCache = cachedBlocks.get(dir);
   if (fromCache !== undefined) {
@@ -62,19 +62,18 @@ function loadBlocks(testPath: string) {
 
   const blocks: Block[] = [];
   for (const file of fs.readdirSync(dir)) {
-    if (!file.endsWith(".json")) {
+    if (!file.endsWith(".bin")) {
       continue;
     }
-    const data = fs.readFileSync(path.join(dir, file), "utf8");
-    const parsed = JSON.parse(data);
+    const data = fs.readFileSync(path.join(dir, file));
     try {
-      if (file.endsWith("genesis.json")) {
-        const content = parseFromJson(parsed, StateTransitionGenesis.fromJson);
-        const genesisBlock = Block.create({ header: content.header, extrinsic: emptyBlock().extrinsic });
+      if (file.endsWith("genesis.bin")) {
+        const genesis = Decoder.decodeObject(StateTransitionGenesis.Codec, data, spec);
+        const genesisBlock = Block.create({ header: genesis.header, extrinsic: emptyBlock().extrinsic });
         blocks.push(genesisBlock);
       } else {
-        const content = parseFromJson(parsed, StateTransition.fromJson);
-        blocks.push(content.block);
+        const block = Decoder.decodeObject(Block.Codec, data, spec);
+        blocks.push(block);
       }
     } catch {
       // some blocks might be invalid, but that's fine. We just ignore them.
@@ -119,7 +118,7 @@ export async function runStateTransition(
   const postStateRoot = postState.backend.getRootHash(blake2b);
 
   const blockView = blockAsView(spec, testContent.block);
-  const allBlocks = loadBlocks(testPath);
+  const allBlocks = loadBlocks(testPath, spec);
   const myBlockIndex = allBlocks.findIndex(
     ({ header }) => header.timeSlotIndex === testContent.block.header.timeSlotIndex,
   );
