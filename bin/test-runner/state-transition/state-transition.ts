@@ -72,8 +72,8 @@ function loadBlocks(testPath: string, spec: ChainSpec) {
         const genesisBlock = Block.create({ header: genesis.header, extrinsic: emptyBlock().extrinsic });
         blocks.push(genesisBlock);
       } else {
-        const block = Decoder.decodeObject(Block.Codec, data, spec);
-        blocks.push(block);
+        const test = Decoder.decodeObject(StateTransition.Codec, data, spec);
+        blocks.push(test.block);
       }
     } catch {
       // some blocks might be invalid, but that's fine. We just ignore them.
