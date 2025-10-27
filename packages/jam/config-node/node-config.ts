@@ -19,7 +19,7 @@ export const DEFAULT_CONFIG = "default";
 export const NODE_DEFAULTS = {
   name: isBrowser() ? "browser" : os.hostname(),
   config: DEFAULT_CONFIG,
-  pvm: PvmBackend.BuiltIn,
+  pvm: PvmBackend.Ananas,
 };
 
 /** Chain spec chooser. */
