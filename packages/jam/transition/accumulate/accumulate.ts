@@ -11,7 +11,7 @@ import type { WorkReport } from "@typeberry/block/work-report.js";
 import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import { ArrayView, HashSet, SortedArray } from "@typeberry/collections";
-import { type ChainSpec, PvmBackend } from "@typeberry/config";
+import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
 import type { PendingTransfer } from "@typeberry/jam-host-calls";
 import {
@@ -235,7 +235,7 @@ export class Accumulate {
     entropy: EntropyHash,
     inputStateUpdate: AccumulationStateUpdate,
   ) {
-    logger.log`Accumulating service ${serviceId}, transfers: ${transfers.length} operands: ${operands.length} at slot: ${slot} (PVM: ${PvmBackend[this.pvm]})`;
+    logger.log`Accumulating service ${serviceId}, transfers: ${transfers.length} operands: ${operands.length} at slot: ${slot}`;
 
     const updatedState = new PartiallyUpdatedState(this.state, inputStateUpdate);
 

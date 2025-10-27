@@ -1,10 +1,6 @@
 import { check } from "@typeberry/utils";
 
-/**
- * TODO [ToDr] This should be `unique symbol`, but for some reason
- * I can't figure out how to build `@typeberry/blocks` package.
- */
-declare const __REPRESENTATION_BYTES__: "REPRESENTATION_BYTES";
+declare const __REPRESENTATION_BYTES__: unique symbol;
 
 type WithBytesRepresentation<Bytes extends number> = {
   readonly [__REPRESENTATION_BYTES__]: Bytes;
