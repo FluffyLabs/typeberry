@@ -43,24 +43,23 @@ export default function run() {
         }
         return () => {
           for (let k = 0; k < NO_OF_KEYS; k += 1) {
-            map.get(LONG_COLLISION_KEYS[k]);
+            map.delete(LONG_COLLISION_KEYS[k]);
           }
         };
       }),
     );
   }
   const longCollisionTestPromise = suite(
-    `Comparing get operation in two hash dicts using long collition keys and BlobDictionary(n: [${MIN_THRESHOLD}: ${MAX_THRESHOLD}))`,
+    `Comparing delete operation in two hash dicts using long collition keys and BlobDictionary(n: [${MIN_THRESHOLD}: ${MAX_THRESHOLD}))`,
 
     add("StringHashDictionary", () => {
       const map = StringHashDictionary.new<OpaqueHash, number>();
       for (let k = 0; k < NO_OF_KEYS; k += 1) {
         map.set(LONG_COLLISION_KEYS[k], k);
       }
-
       return () => {
         for (let k = 0; k < NO_OF_KEYS; k += 1) {
-          map.get(LONG_COLLISION_KEYS[k]);
+          map.delete(LONG_COLLISION_KEYS[k]);
         }
       };
     }),
@@ -84,7 +83,7 @@ export default function run() {
         }
         return () => {
           for (let k = 0; k < NO_OF_KEYS; k += 1) {
-            map.get(HASH_KEYS[k]);
+            map.delete(HASH_KEYS[k]);
           }
         };
       }),
@@ -101,7 +100,7 @@ export default function run() {
       }
       return () => {
         for (let k = 0; k < NO_OF_KEYS; k += 1) {
-          map.get(HASH_KEYS[k]);
+          map.delete(HASH_KEYS[k]);
         }
       };
     }),

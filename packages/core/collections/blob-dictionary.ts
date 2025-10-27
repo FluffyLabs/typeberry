@@ -2,47 +2,6 @@ import { BytesBlob } from "@typeberry/bytes";
 import type { Comparator } from "@typeberry/ordering";
 import { asOpaqueType, assertNever, check, type Opaque, TEST_COMPARE_USING, WithDebug } from "@typeberry/utils";
 
-export class ListChildren<K extends BytesBlob, V> {
-  children: [SubKey<K>, Leaf<K, V>][] = [];
-
-  private constructor() {}
-
-  find(key: SubKey<K>): Leaf<K, V> | null {
-    const result = this.children.find((item) => item[0].isEqualTo(key));
-    if (result !== undefined) {
-      return result[1];
-    }
-    return null;
-  }
-
-  remove(key: SubKey<K>): Leaf<K, V> | null {
-    const existingIndex = this.children.findIndex((item) => item[0].isEqualTo(key));
-    if (existingIndex >= 0) {
-      const ret = this.children.splice(existingIndex, 1);
-      return ret[0][1];
-    }
-    return null;
-  }
-
-  insert(key: SubKey<K>, leaf: Leaf<K, V>): Leaf<K, V> | null {
-    const existingIndex = this.children.findIndex((item) => item[0].isEqualTo(key));
-    if (existingIndex >= 0) {
-      const existing = this.children[existingIndex];
-      existing[1].value = leaf.value;
-      return null;
-    }
-
-    this.children.push([key, leaf]);
-    return leaf;
-  }
-
-  static new<K extends BytesBlob, V>() {
-    return new ListChildren<K, V>();
-  }
-}
-
-type MaybeNode<K extends BytesBlob, V> = Node<K, V> | undefined;
-
 /** A map which uses byte blobs as keys */
 export class BlobDictionary<K extends BytesBlob, V> extends WithDebug {
   /**
@@ -402,31 +361,32 @@ type KeyChunk = Opaque<BytesBlob, `up to ${CHUNK_SIZE} bytes`>;
 type U48 = number;
 type SubKey<_K extends BytesBlob> = BytesBlob;
 type OriginalKeyRef<K> = K;
+type MaybeNode<K extends BytesBlob, V> = Node<K, V> | undefined;
 
 type Leaf<K extends BytesBlob, V> = {
   key: OriginalKeyRef<K>;
   value: V;
 };
 
-class Node<K extends BytesBlob, V, C = MapChildren<K, V> | ListChildren<K, V>> {
+class Node<K extends BytesBlob, V> {
   convertListChildrenToMap() {
     if (!(this.children instanceof ListChildren)) {
       return;
     }
-    this.children = MapChildren.fromListNode<K, V>(this.children) as C;
+    this.children = MapChildren.fromListNode<K, V>(this.children);
   }
 
-  static withList<K extends BytesBlob, V>(): Node<K, V, ListChildren<K, V>> {
+  static withList<K extends BytesBlob, V>(): Node<K, V> {
     return new Node(undefined, ListChildren.new());
   }
 
-  static withMap<K extends BytesBlob, V>(): Node<K, V, MapChildren<K, V>> {
+  static withMap<K extends BytesBlob, V>(): Node<K, V> {
     return new Node(undefined, MapChildren.new());
   }
 
   private constructor(
     private leaf: Leaf<K, V> | undefined,
-    public children: C,
+    public children: MapChildren<K, V> | ListChildren<K, V>,
   ) {}
 
   getLeaf(): Leaf<K, V> | undefined {
@@ -453,6 +413,45 @@ class Node<K extends BytesBlob, V, C = MapChildren<K, V> | ListChildren<K, V>> {
   }
 }
 
+export class ListChildren<K extends BytesBlob, V> {
+  children: [SubKey<K>, Leaf<K, V>][] = [];
+
+  private constructor() {}
+
+  find(key: SubKey<K>): Leaf<K, V> | null {
+    const result = this.children.find((item) => item[0].isEqualTo(key));
+    if (result !== undefined) {
+      return result[1];
+    }
+    return null;
+  }
+
+  remove(key: SubKey<K>): Leaf<K, V> | null {
+    const existingIndex = this.children.findIndex((item) => item[0].isEqualTo(key));
+    if (existingIndex >= 0) {
+      const ret = this.children.splice(existingIndex, 1);
+      return ret[0][1];
+    }
+    return null;
+  }
+
+  insert(key: SubKey<K>, leaf: Leaf<K, V>): Leaf<K, V> | null {
+    const existingIndex = this.children.findIndex((item) => item[0].isEqualTo(key));
+    if (existingIndex >= 0) {
+      const existing = this.children[existingIndex];
+      existing[1].value = leaf.value;
+      return null;
+    }
+
+    this.children.push([key, leaf]);
+    return leaf;
+  }
+
+  static new<K extends BytesBlob, V>() {
+    return new ListChildren<K, V>();
+  }
+}
+
 class MapChildren<K extends BytesBlob, V> {
   children: Map<U48, Node<K, V>> = new Map();
 
@@ -469,10 +468,15 @@ class MapChildren<K extends BytesBlob, V> {
       const currentKeyChunk: KeyChunk = asOpaqueType(BytesBlob.blobFrom(key.raw.subarray(0, CHUNK_SIZE)));
       const subKey = BytesBlob.blobFrom(key.raw.subarray(CHUNK_SIZE));
 
-      const child = mapNode.getChild(currentKeyChunk) ?? Node.withList<K, T>();
-      const children = child?.children as ListChildren<K, T>;
+      let child = mapNode.getChild(currentKeyChunk);
+
+      if (child === undefined) {
+        child = Node.withList<K, T>();
+        mapNode.setChild(currentKeyChunk, child);
+      }
+
+      const children = child.children as ListChildren<K, T>;
       children.insert(subKey, leaf);
-      mapNode.setChild(currentKeyChunk, child);
     }
 
     return mapNode;
