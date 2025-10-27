@@ -14,7 +14,7 @@ import {
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { runner } from "../common.js";
 import { runStateTransition, StateTransition } from "../state-transition/state-transition.js";
-import { AccumulateTest, runAccumulateTest, runAccumulateTestAnanas } from "./accumulate.js";
+import { AccumulateTest, runAccumulateTest } from "./accumulate.js";
 import { AssurancesTestFull, AssurancesTestTiny, runAssurancesTestFull, runAssurancesTestTiny } from "./assurances.js";
 import { AuthorizationsTest, runAuthorizationsTest } from "./authorizations.js";
 import {
@@ -78,7 +78,12 @@ export const runners = [
 function codecRunners(flavor: "tiny" | "full") {
   const spec = flavor === "tiny" ? tinyChainSpec : fullChainSpec;
   return [
-    runner(`codec/${flavor}/assurances_extrinsic`, getAssurancesExtrinsicFromJson(spec), runAssurancesExtrinsicTest, spec),
+    runner(
+      `codec/${flavor}/assurances_extrinsic`,
+      getAssurancesExtrinsicFromJson(spec),
+      runAssurancesExtrinsicTest,
+      spec,
+    ),
     runner(`codec/${flavor}/block`, blockFromJson(spec), runBlockTest, spec),
     runner(`codec/${flavor}/disputes_extrinsic`, disputesExtrinsicFromJson, runDisputesExtrinsicTest, spec),
     runner(`codec/${flavor}/extrinsic`, getExtrinsicFromJson(spec), runExtrinsicTest, spec),

@@ -5,11 +5,11 @@ import * as fs from "node:fs/promises";
 import path from "node:path";
 import test, { type TestContext } from "node:test";
 import util from "node:util";
+import { type Decode, Decoder } from "@typeberry/codec";
+import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
-import {Decode, Decoder} from "@typeberry/codec";
-import {ChainSpec, tinyChainSpec} from "@typeberry/config";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 export const logger = Logger.new(import.meta.filename, "test-runner");
@@ -33,28 +33,30 @@ export type Runner<T> = {
 };
 
 enum TestFileKind {
-  Binary,
-  JSON,
-};
+  Binary = 0,
+  JSON = 1,
+}
 
-type TestFile = {
-  kind: TestFileKind.JSON,
-  content: unknown,
-} | {
-  kind: TestFileKind.Binary,
-  content: Uint8Array,
-};
+type TestFile =
+  | {
+      kind: TestFileKind.JSON;
+      content: unknown;
+    }
+  | {
+      kind: TestFileKind.Binary;
+      content: Uint8Array;
+    };
 
 export async function main(
   runners: Runner<unknown>[],
   initialFiles: string[],
   directoryToScan: string,
   {
-    pattern = '.json',
+    pattern = ".json",
     accepted,
     ignored,
   }: {
-    pattern?: string,
+    pattern?: string;
     accepted?: string[];
     ignored?: string[];
   } = {},
@@ -79,22 +81,22 @@ export async function main(
       continue;
     }
 
-    let testJson;
-    if (absolutePath.endsWith('.bin')) {
+    let testFileContent: TestFile;
+    if (absolutePath.endsWith(".bin")) {
       const content: Buffer = await fs.readFile(absolutePath);
-      testJson = {
+      testFileContent = {
         kind: TestFileKind.Binary,
         content: new Uint8Array(content),
-      }
+      };
     } else {
       const content = await fs.readFile(absolutePath, "utf8");
-      testJson = {
+      testFileContent = {
         kind: TestFileKind.JSON,
         content: JSON.parse(content),
       };
     }
 
-    const test = prepareTest(runners, testJson, testFile, absolutePath);
+    const test = prepareTest(runners, testFileContent, testFile, absolutePath);
 
     test.shouldSkip = accepted !== undefined && !accepted.some((x) => absolutePath.includes(x));
 
@@ -197,7 +199,7 @@ function prepareTest(runners: Runner<unknown>[], testContent: TestFile, file: st
           const parsedTest = Decoder.decodeObject(fromCodec, testContent.content, chainSpec);
           return createTestDefinition(parsedTest);
         } catch (e) {
-          handleError(name, e)
+          handleError(name, e);
         }
       } else {
         handleError(name, new Error(`Missing codec definition for: ${name}`));

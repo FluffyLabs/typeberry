@@ -2,7 +2,7 @@ import { logger, main } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
 main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_071", {
-  pattern: '.bin',
+  pattern: ".bin",
   accepted: ["traces/fuzzy"],
 })
   .then((r) => logger.log`${r}`)
