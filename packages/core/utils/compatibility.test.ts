@@ -49,7 +49,7 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
 
     const record = {
       [GpVersion.V0_7_0]: "low",
-      [GpVersion.V0_7_2]: "high"
+      [GpVersion.V0_7_2]: "high",
     };
 
     const result = Compatibility.selectIfGreaterOrEqual({ fallback: "default", versions: record });
