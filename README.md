@@ -14,8 +14,8 @@ Gray Paper compliance can be controlled via `GP_VERSION` environment variable.
 
 - [x] 0.6.7
 - [x] 0.7.0
-- [ ] 0.7.1 (partial)
-- [ ] 0.7.2 (partial)
+- [x] 0.7.1
+- [x] 0.7.2
 
 JAM Prize requirements
 
@@ -75,7 +75,7 @@ $ docker run typeberry
 $ docker run typeberry --config /app/configs/typeberry-dev.json --node-name my-node
 
 # Run with environment variables (e.g., for logging)
-$ docker run -e JAM_LOG=trace GP_VERSION=0.7.0 typeberry
+$ docker run -e JAM_LOG=trace GP_VERSION=0.7.2 typeberry
 
 # Run with volume mounts for persistent data
 $ docker run -v $(pwd)/database:/app/database typeberry
