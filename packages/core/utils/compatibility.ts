@@ -23,26 +23,28 @@ function parseCurrentVersion(env?: string): GpVersion | undefined {
   if (env === undefined) {
     return undefined;
   }
-  const version = env as GpVersion;
-  if (!Object.values(GpVersion).includes(version)) {
-    throw new Error(
-      `Configured environment variable GP_VERSION is unknown: '${env}'. Use one of: ${ALL_VERSIONS_IN_ORDER}`,
-    );
+  for (const v of Object.values(GpVersion)) {
+    if (env === v) {
+      return v;
+    }
   }
-  return version;
+  throw new Error(
+    `Configured environment variable GP_VERSION is unknown: '${env}'. Use one of: ${ALL_VERSIONS_IN_ORDER}`,
+  );
 }
 
 function parseCurrentSuite(env?: string): TestSuite | undefined {
   if (env === undefined) {
     return undefined;
   }
-  const suite = env as TestSuite;
-  if (!Object.values(TestSuite).includes(suite)) {
-    throw new Error(
-      `Configured environment variable TEST_SUITE is unknown: '${env}'. Use one of: ${Object.values(TestSuite)}`,
-    );
+  for (const s of Object.values(TestSuite)) {
+    if (env === s) {
+      return s;
+    }
   }
-  return suite;
+  throw new Error(
+    `Configured environment variable TEST_SUITE is unknown: '${env}'. Use one of: ${Object.values(TestSuite)}`,
+  );
 }
 
 export class Compatibility {
