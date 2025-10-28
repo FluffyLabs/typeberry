@@ -176,7 +176,7 @@ export class AccumulateData {
         const item = reportsDataByServiceId.get(serviceId) ?? AccumulateDataItem.empty();
         const gas = gasByServiceId.get(serviceId) ?? tryAsServiceGas(0n);
         const { value, overflow } = sumU64(gas, result.gas);
-        const newGas = tryAsServiceGas(overflow ? tryAsServiceGas(MAX_VALUE_U64) : value);
+        const newGas = tryAsServiceGas(overflow ? MAX_VALUE_U64 : value);
         gasByServiceId.set(serviceId, newGas);
 
         /**
