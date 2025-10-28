@@ -14,8 +14,8 @@ import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
+import type { RunOptions } from "../common.js";
 import { loadState, TestState } from "./state-loader.js";
-import {RunOptions} from "../common.js";
 
 export class StateTransitionGenesis {
   static fromJson: FromJson<StateTransitionGenesis> = {
@@ -95,14 +95,14 @@ function blockAsView(spec: ChainSpec, block: Block) {
 // that were run pre-V1 fuzzer version.
 const jamConformance070V0Spec = new ChainSpec({
   ...tinyChainSpec,
-  name: 'jam-conformance-v070v0',
+  name: "jam-conformance-v070v0",
   maxLookupAnchorAge: tryAsU32(14_400),
 });
 
 export async function runStateTransition(
   testContent: StateTransition,
-  variant: "ananas" | "builtin",
   options: RunOptions,
+  variant: "ananas" | "builtin",
 ) {
   const pvm = variant === "ananas" ? PvmBackend.Ananas : PvmBackend.BuiltIn;
   const blake2b = await Blake2b.createHasher();

@@ -107,7 +107,7 @@ export class ChainSpec extends WithDebug {
 
 /** Set of values for "tiny" chain as defined in JAM test vectors. */
 export const tinyChainSpec = new ChainSpec({
-  name: 'tiny',
+  name: "tiny",
   validatorsCount: tryAsU16(6),
   coresCount: tryAsU16(2),
   epochLength: tryAsU32(12),
@@ -130,7 +130,7 @@ export const tinyChainSpec = new ChainSpec({
  * Please note that only validatorsCount and epochLength are "full", the rest is copied from "tiny".
  */
 export const fullChainSpec = new ChainSpec({
-  name: 'full',
+  name: "full",
   validatorsCount: tryAsU16(1023),
   coresCount: tryAsU16(341),
   epochLength: tryAsU32(600),

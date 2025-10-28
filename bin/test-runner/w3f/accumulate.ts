@@ -27,7 +27,7 @@ import { JsonService } from "@typeberry/state-json/accounts.js";
 import { AccumulateOutput } from "@typeberry/transition/accumulate/accumulate-output.js";
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
 import { Compatibility, deepEqual, GpVersion, Result } from "@typeberry/utils";
-import {RunOptions} from "../common.js";
+import type { RunOptions } from "../common.js";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -141,11 +141,10 @@ export class AccumulateTest {
   post_state!: TestState;
 }
 
-
 export async function runAccumulateTest(
   test: AccumulateTest,
-  variant: "ananas" | "builtin",
   { chainSpec }: RunOptions,
+  variant: "ananas" | "builtin",
 ) {
   const pvm = variant === "ananas" ? PvmBackend.Ananas : PvmBackend.BuiltIn;
   /**
