@@ -8,7 +8,7 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_071", {
     "genesis.bin",
     "report.bin",
 
-    "fuzzy/00000004.bin", // storaeg + alot?
+    "fuzzy/00000004.bin", // storage + alot?
     "fuzzy/00000006.bin", // storage + alot?
     "fuzzy/00000008.bin", // storage + alot?
     "fuzzy/00000009.bin", // statistics?
