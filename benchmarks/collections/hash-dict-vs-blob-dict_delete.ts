@@ -69,7 +69,7 @@ export default function run() {
     cycle(),
     complete(),
     configure({}),
-    ...save(import.meta.filename.replace(".ts", "-long-collision-key.ts")),
+    ...save(import.meta.filename),
   );
 
   const hashKeysBlobDictBenchmarks: ReturnType<typeof add>[] = [];
@@ -110,7 +110,7 @@ export default function run() {
     cycle(),
     complete(),
     configure({}),
-    ...save(import.meta.filename.replace(".ts", "-hash-key.ts")),
+    ...save(import.meta.filename),
   );
 
   promises.push(longCollisionTestPromise, hashKeyTestPromise);
