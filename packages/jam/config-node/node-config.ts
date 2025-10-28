@@ -16,8 +16,6 @@ export const DEV_CONFIG = "dev";
 /** Default config file. */
 export const DEFAULT_CONFIG = "default";
 
-const IGNORE_KEYS = ["$schema"];
-
 export const NODE_DEFAULTS = {
   name: isBrowser() ? "browser" : os.hostname(),
   config: [DEFAULT_CONFIG],
@@ -76,23 +74,21 @@ export class NodeConfiguration {
 
 /**
  * We need to properly handle 2 cases:
- *   1) the user only provides overrides (no "dev" or "default" specified) - we assume "default" as base and merge all user-provided entries onto it
- *   2) the user explicitly requests "dev" or "default" and we merge the rest of entries onto that
+ *   1) "dev" or "default" are explicitly requested and we merge the rest of entries onto that
+ *   2) a path to a full json config file is provided, then we merge the remaining entries onto it
  */
 export function loadConfig(config: string[], withRelPath: (p: string) => string): NodeConfiguration {
   logger.log`🔧 Loading config`;
-  let mergedJson: AnyJsonObject;
+  let mergedJson: AnyJsonObject = {};
   let startWithSegment = 1; // "dev" or "default" is the first segment, so we start merging from the second one
 
   if (config[0] === DEV_CONFIG) {
     logger.log`🔧 Applying dev config`;
     mergedJson = structuredClone(configs.dev);
-  } else {
-    logger.log`🔧 Applying default config`;
+  } else if (config[0] === DEFAULT_CONFIG) {
     mergedJson = structuredClone(configs.default);
-    if (config[0] !== DEFAULT_CONFIG) {
-      startWithSegment = 0; // user didn't request "dev" or "default" so we merge all entries onto "default"
-    }
+  } else {
+    startWithSegment = 0; // neither "dev" nor "default" was requested, so we expect the user to provide a full config
   }
 
   for (let i = startWithSegment; i < config.length; i++) {
@@ -101,14 +97,14 @@ export function loadConfig(config: string[], withRelPath: (p: string) => string)
     // try to parse as JSON
     try {
       const parsed = JSON.parse(config[i]);
-      deepMerge(mergedJson, parsed, IGNORE_KEYS);
+      deepMerge(mergedJson, parsed);
     } catch {
       // if not, try to load as file
-      if (fs.existsSync(withRelPath(config[i])) && fs.statSync(withRelPath(config[i])).isFile()) {
+      if (config[i].indexOf("=") === -1 && config[i].endsWith(".json")) {
         try {
           const configFile = fs.readFileSync(withRelPath(config[i]), "utf8");
           const parsed = JSON.parse(configFile);
-          deepMerge(mergedJson, parsed, IGNORE_KEYS);
+          deepMerge(mergedJson, parsed);
         } catch (e) {
           throw new Error(`Unable to load config from ${config[i]}: ${e}`);
         }
@@ -132,16 +128,13 @@ export function loadConfig(config: string[], withRelPath: (p: string) => string)
   }
 }
 
-function deepMerge(target: AnyJsonObject, source: AnyJsonObject, ignoreKeys: string[] = []) {
+function deepMerge(target: AnyJsonObject, source: AnyJsonObject) {
   for (const key in source) {
-    if (ignoreKeys.includes(key)) {
-      continue;
-    }
     if (typeof source[key] === "object" && !Array.isArray(source[key])) {
       if (!(key in target)) {
         target[key] = {};
       }
-      deepMerge(target[key] as AnyJsonObject, source[key] as AnyJsonObject, ignoreKeys);
+      deepMerge(target[key] as AnyJsonObject, source[key] as AnyJsonObject);
     } else {
       target[key] = source[key];
     }
@@ -161,17 +154,17 @@ function processQuery(input: AnyJsonObject, query: string, withRelPath: (p: stri
   const queryParts = query.split("=");
 
   if (queryParts.length === 2) {
-    let [path, value] = queryParts;
+    let [path, value] = queryParts.map((part) => part.trim());
     let merge = false;
 
     // detect += syntax
     if (path.endsWith("+")) {
       merge = true;
-      path = path.slice(0, -1).trim();
+      path = path.slice(0, -1);
     }
 
     let parsedValue: AnyJsonObject;
-    if (fs.existsSync(withRelPath(value)) && fs.statSync(withRelPath(value)).isFile()) {
+    if (value.endsWith(".json")) {
       try {
         const configFile = fs.readFileSync(withRelPath(value), "utf8");
         const parsed = JSON.parse(configFile);

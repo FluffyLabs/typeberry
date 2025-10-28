@@ -17,7 +17,16 @@ Usage:
 Options:
   --name                Override node name. Affects networking key and db location.
                         [default: ${NODE_DEFAULTS.name}]
-  --config              Path to a config file or one of: ['${DEV_CONFIG}', '${DEFAULT_CONFIG}'].
+  --config              Configuration directives. If specified more than once, they are evaluated and merged from left to right.
+                        A configuration directive can be a path to a config file, an inline JSON object, or a pseudo-jq query.
+                        Pseudo-jq queries are a way to modify the config using a subset of jq syntax.
+                        Example: --config=dev --config=.chain_spec+={"bootnodes": []}      -- will modify only the bootnodes property of the chain spec (merge).
+                        Example: --config=dev --config=.chain_spec={"bootnodes": []}       -- will replace the entire chain spec property with the provided JSON object.
+                        Example: --config=dev --config=.chain_spec+=bootnodes.json         -- you may also use JSON files in your queries. This one will merge the contents of bootnodes.json onto the chain spec.
+                        Example: --config=dev --config={"chain_spec": { "bootnodes": [] }} -- will merge the provided JSON object onto the "dev" config.
+                        Example: --config=dev --config=bootnodes.json                      -- will merge the contents of bootnodes.json onto the "dev" config.
+                        Example: --config=custom-config.json                               -- will use the contents of custom-config.json as the config.
+                        On top of that the first (and only the first) directive may be one of ['${DEV_CONFIG}', '${DEFAULT_CONFIG}'] to load the respective pre-defined config.
                         [default: ${NODE_DEFAULTS.config}]
   --pvm                 PVM Backend, one of: [${PvmBackendNames.join(", ")}].
                         [default: ${PvmBackendNames[NODE_DEFAULTS.pvm]}]
@@ -71,7 +80,10 @@ export type Arguments =
       }
     >;
 
-function parseSharedOptions(args: minimist.ParsedArgs, defaultConfig: string[] = NODE_DEFAULTS.config): SharedOptions {
+export function parseSharedOptions(
+  args: minimist.ParsedArgs,
+  defaultConfig: string[] = NODE_DEFAULTS.config,
+): SharedOptions {
   const { name } = parseStringOption(args, "name", (v) => v, NODE_DEFAULTS.name);
   const { config } = parseValueOptionAsArray(
     args,
