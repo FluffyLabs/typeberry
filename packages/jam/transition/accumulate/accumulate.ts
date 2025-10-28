@@ -390,7 +390,7 @@ export class Accumulate {
      */
     const transfersGas = transfers.map((t) => t.gas);
     const { value: newGasLimit, overflow } = sumU64(tryAsServiceGas(gasLimit - gasCost), ...transfersGas);
-    // NOTE [ToDr] https://graypaper.fluffylabs.dev/#/ab2cdbd/172b02172b02?v=0.7.2
+    // NOTE [ToDr] recursive invocation
     const {
       accumulatedReports,
       gasCost: seqGasCost,
