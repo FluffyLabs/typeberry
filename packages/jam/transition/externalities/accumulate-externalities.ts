@@ -151,7 +151,7 @@ export class AccumulateExternalities
     const status = slots === null ? null : slotsToPreimageStatus(slots.slots);
     // The previous code needs to be forgotten and expired.
     if (status?.status !== PreimageStatusKind.Unavailable) {
-      return [false, "wrong status"];
+      return [false, `wrong status: ${status !== null ? PreimageStatusKind[status.status] : null}`];
     }
     const t = this.currentTimeslot;
     const isExpired = status.data[1] < t - this.chainSpec.preimageExpungePeriod;

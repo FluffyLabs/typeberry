@@ -63,7 +63,7 @@ export class RunnerBuilder<T, V> implements Runner<T, V> {
 /** Test runner builder function. */
 export function runner<T, V = never>(path: string, run: RunFunction<T, V>, chainSpecs?: ChainSpec[]) {
   const builder = new RunnerBuilder(path, run);
-  if (chainSpecs) {
+  if (chainSpecs !== undefined) {
     return builder.withChainSpecDetection(chainSpecs);
   }
   return builder;

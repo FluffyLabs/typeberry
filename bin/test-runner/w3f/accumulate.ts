@@ -110,7 +110,7 @@ class TestState {
           AutoAccumulate.create({ gasLimit: gas, service: id }),
         ),
       }),
-      services: new Map(accounts.map((service) => [service.serviceId, service])),
+      services: new Map(accounts.map((service) => [service.serviceId, service.clone()])),
     });
   }
 }
@@ -156,7 +156,6 @@ export async function runAccumulateTest(
   const entropy = test.pre_state.entropy;
 
   const post_state = TestState.toAccumulateState(test.post_state, chainSpec);
-
   const state = TestState.toAccumulateState(test.pre_state, chainSpec);
   const accumulate = new Accumulate(chainSpec, await Blake2b.createHasher(), state, pvm);
   const accumulateOutput = new AccumulateOutput();
