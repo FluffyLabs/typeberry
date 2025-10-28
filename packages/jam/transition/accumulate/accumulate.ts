@@ -385,6 +385,7 @@ export class Accumulate {
 
     /**
      * Gas limit from transfers is added to the next round of accumulation
+     *
      * https://graypaper.fluffylabs.dev/#/ab2cdbd/172b02172b02?v=0.7.2
      */
     const transfersGas = transfers.map((t) => t.gas);
