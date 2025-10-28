@@ -48,7 +48,7 @@ export default function run() {
     );
   }
   const longCollisionTestPromise = suite(
-    `Comparing set operation in two hash dicts using long collition keys and BlobDictionary(n: [${MIN_THRESHOLD}: ${MAX_THRESHOLD}))`,
+    `Comparing set operation in two hash dicts using long collision keys and BlobDictionary(n: [${MIN_THRESHOLD}: ${MAX_THRESHOLD}))`,
 
     add("StringHashDictionary", () => {
       const map = StringHashDictionary.new<OpaqueHash, number>();
