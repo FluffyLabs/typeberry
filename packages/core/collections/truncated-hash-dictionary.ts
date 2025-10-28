@@ -8,6 +8,13 @@ type HashWithZeroedBit<T extends OpaqueHash> = T;
 function getTruncatedKey<T extends OpaqueHash>(key: T | TruncatedHash) {
   return key.length < HASH_SIZE ? key : Bytes.fromBlob(key.raw.subarray(0, TRUNCATED_HASH_SIZE), TRUNCATED_HASH_SIZE);
 }
+
+/**
+ * A value that indicates when `BlobDictionary` transforms Array nodes into Map nodes.
+ * In practice, it doesn't matter much because, in real life, arrays in this structure usually have a length close to 1.
+ */
+const BLOB_DICTIONARY_THRESHOLD = 5;
+
 /**
  * A collection of hash-based keys (likely `StateKey`s) which ignores
  * differences on the last byte.
@@ -24,7 +31,7 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
     return new TruncatedHashDictionary(
       BlobDictionary.fromEntries<T, V>(
         Array.from(entries).map(([key, value]) => [getTruncatedKey(key).asOpaque(), value]),
-        5,
+        BLOB_DICTIONARY_THRESHOLD,
       ),
     );
   }

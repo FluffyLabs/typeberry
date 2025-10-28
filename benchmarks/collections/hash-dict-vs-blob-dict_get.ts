@@ -26,8 +26,8 @@ function hashKey(n: number) {
 
 const LONG_COLLISION_KEYS = Array.from({ length: NO_OF_KEYS }, (_, i) => longCollisionKey(i));
 const HASH_KEYS = Array.from({ length: NO_OF_KEYS }, (_, i) => hashKey(i));
-const MIN_THRESHOLD = 0;
-const MAX_THRESHOLD = 20;
+const MIN_THRESHOLD = 1;
+const MAX_THRESHOLD = 6;
 
 export default function run() {
   const promises: ReturnType<typeof suite>[] = [];

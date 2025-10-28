@@ -106,11 +106,16 @@ export class StringHashDictionary<K extends OpaqueHash, V> implements ImmutableH
 
 import { BlobDictionary } from "./blob-dictionary.js";
 
+/**
+ * A value that indicates when `BlobDictionary` transforms Array nodes into Map nodes.
+ * In practice, it doesn't matter much because, in real life, arrays in this structure usually have a length close to 1.
+ */
+const BLOB_DICTIONARY_THRESHOLD = 5;
 export class HashDictionary<K extends OpaqueHash, V>
   extends BlobDictionary<K, V>
   implements ImmutableHashDictionary<K, V>
 {
   constructor() {
-    super(5);
+    super(BLOB_DICTIONARY_THRESHOLD);
   }
 }
