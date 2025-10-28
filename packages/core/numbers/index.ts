@@ -1,10 +1,11 @@
 import { check } from "@typeberry/utils";
 
-declare const __REPRESENTATION_BYTES__: unique symbol;
+export declare const __REPRESENTATION_BYTES__: unique symbol;
 
-type WithBytesRepresentation<Bytes extends number> = {
+export type WithBytesRepresentation<Bytes extends number> = {
   readonly [__REPRESENTATION_BYTES__]: Bytes;
 };
+
 const asTypedNumber = <T, N extends number>(v: T): T & WithBytesRepresentation<N> =>
   v as T & WithBytesRepresentation<N>;
 
