@@ -31,7 +31,7 @@ export class AccumulateData {
   private readonly gasByServiceId: Map<ServiceId, ServiceGas>;
   private readonly serviceIds: ServiceId[];
 
-  private constructor(
+  constructor(
     reports: ArrayView<WorkReport>,
     transfers: PendingTransfer[],
     autoAccumulateServices: readonly AutoAccumulate[],
