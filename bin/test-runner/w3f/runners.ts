@@ -12,7 +12,7 @@ import {
   workResultFromJson,
 } from "@typeberry/block-json";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import { runner } from "../common.js";
+import { runner, testFile } from "../common.js";
 import { runStateTransition, StateTransition } from "../state-transition/state-transition.js";
 import { AccumulateTest, runAccumulateTest } from "./accumulate.js";
 import { AssurancesTestFull, AssurancesTestTiny, runAssurancesTestFull, runAssurancesTestTiny } from "./assurances.js";
@@ -48,8 +48,17 @@ import { runShufflingTests, shufflingTests } from "./shuffling.js";
 import { runStatisticsTestFull, runStatisticsTestTiny, StatisticsTestFull, StatisticsTestTiny } from "./statistics.js";
 import { runTrieTest, trieTestSuiteFromJson } from "./trie.js";
 
+const pvmVariants: ("ananas" | "builtin")[] = ["ananas", "builtin"];
+
 export const runners = [
-  runner("accumulate", AccumulateTest.fromJson, runAccumulateTest),
+  runner("accumulate/tiny", testFile.json(AccumulateTest.fromJson), runAccumulateTest, {
+    chainSpecs: [tinyChainSpec],
+    variants: pvmVariants,
+  }),
+  runner("accumulate/full", AccumulateTest.fromJson, runAccumulateTest, {
+    chainSpecs: [tinyChainSpec],
+    variants: pvmVariants,
+  }),
   runner("assurances/tiny", AssurancesTestTiny.fromJson, runAssurancesTestTiny, tinyChainSpec),
   runner("assurances/full", AssurancesTestFull.fromJson, runAssurancesTestFull, fullChainSpec),
   runner("authorizations", AuthorizationsTest.fromJson, runAuthorizationsTest),
@@ -73,6 +82,7 @@ export const runners = [
   runner("statistics/full", StatisticsTestFull.fromJson, runStatisticsTestFull, fullChainSpec),
   runner("trie", trieTestSuiteFromJson, runTrieTest),
   runner("traces", StateTransition.fromJson, runStateTransition, tinyChainSpec, StateTransition.Codec),
+  runner("traces", StateTransition.fromJson, runStateTransition, ["ananas", "builtin"]),
 ];
 
 function codecRunners(flavor: "tiny" | "full") {

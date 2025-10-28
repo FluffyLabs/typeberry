@@ -3,7 +3,10 @@ import { runners } from "./w3f/runners.js";
 
 main(runners, process.argv.slice(2), "test-vectors/w3f-fluffy", {
   ignored: [
-    "traces/",
+    "genesis.json",
+    // Ignored - not working correctly in 0.6.7 and we ditched fixing them.
+    "traces/preimages_light/00000070.json",
+    "traces/preimages_light/00000073.json",
     // TODO [ToDr] Erasure coding test vectors need to be updated to GP 0.7.0
     "erasure/",
     // Ignored due to incorrect expected gas

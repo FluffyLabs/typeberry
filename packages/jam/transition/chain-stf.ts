@@ -302,7 +302,7 @@ export class OnChain {
     const { preimages, ...preimagesRest } = preimagesResult.ok;
     assertEmpty(preimagesRest);
 
-    const timerAccumulate = measure("import:accumulate");
+    const timerAccumulate = measure(`import:accumulate (${PvmBackend[this.accumulate.pvm]})`);
     // accumulate
     const accumulateResult = await this.accumulate.transition({
       slot: timeSlot,

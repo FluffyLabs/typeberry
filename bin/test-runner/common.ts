@@ -6,64 +6,102 @@ import path from "node:path";
 import test, { type TestContext } from "node:test";
 import util from "node:util";
 import { type Decode, Decoder } from "@typeberry/codec";
-import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
+import { tinyChainSpec, type ChainSpec } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
+import {check} from "@typeberry/utils";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 export const logger = Logger.new(import.meta.filename, "test-runner");
 
-export function runner<T>(
-  name: string,
-  fromJson: FromJson<T>,
-  run: (test: T, path: string, t: TestContext, chainSpec: ChainSpec) => Promise<void>,
-  chainSpec: ChainSpec = tinyChainSpec,
-  fromCodec?: Decode<T>,
-): Runner<unknown> {
-  return { name, fromJson, fromCodec, run, chainSpec } as Runner<unknown>;
+export function runner<T, V = never>(
+  path: string,
+  parser: testFile.Kind<T>,
+  run: RunFunction<T, V>,
+  {
+    chainSpecs = [tinyChainSpec],
+    variants = [],
+  }: {
+    chainSpecs: ChainSpec[],
+    variants: V[],
+  }
+): Runner<unknown, unknown> {
+  check`${chainSpecs.length > 0} At least one chainspec missing in ${path} runner.`;
+  return { path, parser, run, variants, chainSpecs } as Runner<unknown, unknown>;
 }
 
-export type Runner<T> = {
-  name: string;
-  fromJson: FromJson<T>;
-  run: (test: T, path: string, t: TestContext, chainSpec: ChainSpec) => Promise<void>;
-  fromCodec?: Decode<T>;
+export type RunOptions = {
+  test: TestContext;
   chainSpec: ChainSpec;
+  path: string;
 };
 
-enum TestFileKind {
-  Binary = 0,
-  JSON = 1,
-}
+export type RunFunction<T, V> = (
+  test: T,
+  variant: V,
+  options: RunOptions,
+) => Promise<void>;
 
-type TestFile =
-  | {
-      kind: TestFileKind.JSON;
-      content: unknown;
+export type Runner<T, V> = {
+  path: string;
+  parser: testFile.Kind<T>;
+  run: RunFunction<T, V>;
+  variants: V[];
+  chainSpecs: ChainSpec[];
+};
+
+export namespace testFile {
+  export const JSON = '.json';
+  export type JSON = typeof JSON;
+  export const BIN = '.bin';
+  export type BIN = typeof BIN;
+
+  export type Kind<T> = {
+    kind: JSON;
+    fromJson: FromJson<T>;
+  } | {
+    kind: BIN;
+    codec: Decode<T>;
+  };
+
+  export type Content =
+    | {
+      kind: JSON;
+      content: string;
     }
-  | {
-      kind: TestFileKind.Binary;
+    | {
+      kind: BIN;
       content: Uint8Array;
     };
 
+
+  export function json<T>(fromJson: FromJson<T>): Kind<T> {
+    return { kind: JSON, fromJson };
+  }
+
+  export function bin<T>(codec: Decode<T>): Kind<T> {
+    return { kind: BIN, codec: codec };
+  }
+}
+
 export async function main(
-  runners: Runner<unknown>[],
+  runners: Runner<unknown, unknown>[],
   initialFiles: string[],
   directoryToScan: string,
   {
-    pattern = ".json",
+    pattern = testFile.JSON,
     accepted,
     ignored,
   }: {
-    pattern?: string;
+    pattern?: testFile.JSON | testFile.BIN;
     accepted?: string[];
     ignored?: string[];
   } = {},
 ) {
   await initWasm();
   const relPath = `${import.meta.dirname}/../..`;
-  const tests: TestAndRunner[] = [];
+  const tests: TestAndRunner<unknown>[] = [];
   const ignoredPatterns = ignored ?? [];
 
   let testFiles = initialFiles;
@@ -73,38 +111,38 @@ export async function main(
   }
 
   logger.info`Preparing tests for ${testFiles.length} files.`;
-  for (const testFile of testFiles) {
-    const absolutePath = path.resolve(`${relPath}/${testFile}`);
+  for (const testFilePath of testFiles) {
+    const absolutePath = path.resolve(`${relPath}/${testFilePath}`);
 
     if (ignoredPatterns.some((x) => absolutePath.includes(x))) {
       logger.log`Ignoring: ${absolutePath}`;
       continue;
     }
 
-    let testFileContent: TestFile;
-    if (absolutePath.endsWith(".bin")) {
+    let testFileContent: testFile.Content;
+    if (absolutePath.endsWith(testFile.BIN)) {
       const content: Buffer = await fs.readFile(absolutePath);
       testFileContent = {
-        kind: TestFileKind.Binary,
+        kind: '.bin',
         content: new Uint8Array(content),
       };
     } else {
       const content = await fs.readFile(absolutePath, "utf8");
       testFileContent = {
-        kind: TestFileKind.JSON,
-        content: JSON.parse(content),
+        kind: '.json',
+        content,
       };
     }
 
-    const test = prepareTest(runners, testFileContent, testFile, absolutePath);
-
-    test.shouldSkip = accepted !== undefined && !accepted.some((x) => absolutePath.includes(x));
-
-    tests.push(test);
+    const testVariants = prepareTest(runners, testFileContent, testFilePath, absolutePath);
+    for (const test of testVariants) {
+      test.shouldSkip = accepted !== undefined && !accepted.some((x) => absolutePath.includes(x));
+      tests.push(test);
+    }
   }
 
   // aggregate the tests by their runner.
-  const aggregated = new Map<string, TestAndRunner[]>();
+  const aggregated = new Map<string, TestAndRunner<unknown>[]>();
   for (const test of tests) {
     const sameRunner = aggregated.get(test.runner) ?? [];
     sameRunner.push(test);
@@ -136,10 +174,11 @@ export async function main(
             const runnersBatch = testRunners.slice(i * batchSize, (i + 1) * batchSize);
             for (const runner of runnersBatch) {
               const fileName = runner.file.replace(pathToReplace, "");
+              const testCase = runner.variant !== null ? `[${runner.variant}] ${fileName}` : fileName;
               if (runner.shouldSkip) {
-                test.it.skip(fileName, runner.test);
+                test.it.skip(testCase, runner.test);
               } else {
-                test.it(fileName, { timeout }, runner.test);
+                test.it(testCase, { timeout }, runner.test);
               }
             }
           },
@@ -163,67 +202,103 @@ async function scanDir(relPath: string, dir: string, filePattern: string): Promi
   }
 }
 
-type TestAndRunner = {
+type TestAndRunner<V> = {
   shouldSkip: boolean;
   runner: string;
   file: string;
+  variant: V;
   test: (ctx: TestContext) => Promise<void>;
 };
 
-function prepareTest(runners: Runner<unknown>[], testContent: TestFile, file: string, path: string): TestAndRunner {
+function prepareTest<T, V>(
+  runners: Runner<T, V>[],
+  testContent: testFile.Content,
+  fileName: string,
+  fullPath: string
+): TestAndRunner<V>[] {
   const errors: [string, unknown][] = [];
   const handleError = (name: string, e: unknown) => errors.push([name, e]);
+  // NOTE This is not safe, but if the test does not specify
+  // variants it means it doesn't care about them.
+  const noneVariant = '' as V;
 
   // Find the first runner that is able to parse the input data.
-  for (const { name, fromJson, fromCodec, run, chainSpec } of runners) {
-    // NOTE: this `if` statement is needed to distinguish between tiny and full chain spec
-    // without this `if` some tests (for example statistics) will be run twice
-    if (!name.split("/").every((pathPart) => path.includes(pathPart))) {
+  for (const { path, parser, run, variants, chainSpecs } of runners) {
+    // NOTE: this `if` statement is intended to speed up parsing of the test files
+    // instead of trying each and every runner, we make sure that the absolute
+    // path to the file includes each part of our "test path" definition.
+    if (!path.split("/").every((pathPart) => fullPath.includes(pathPart))) {
       continue;
     }
 
-    const createTestDefinition = (parsedTest: unknown): TestAndRunner => ({
-      shouldSkip: false,
-      runner: name,
-      file,
-      test: (ctx) => {
-        logger.log`[${name}] running test from ${file}`;
-        logger.trace` ${util.inspect(parsedTest)}`;
-        return run(parsedTest, path, ctx, chainSpec);
-      },
-    });
-
-    if (testContent.kind === TestFileKind.Binary) {
-      if (fromCodec !== undefined) {
+    for (const chainSpec of chainSpecs) {
+      if (parser.kind === testFile.BIN && testContent.kind === testFile.BIN) {
         try {
-          const parsedTest = Decoder.decodeObject(fromCodec, testContent.content, chainSpec);
-          return createTestDefinition(parsedTest);
+          const parsedTest = Decoder.decodeObject(parser.codec, testContent.content, chainSpec);
+          return createTestDefinitions(path, run, variants, parsedTest, chainSpec);
         } catch (e) {
-          handleError(name, e);
+          handleError(path, e);
         }
-      } else {
-        handleError(name, new Error(`Missing codec definition for: ${name}`));
       }
-    } else {
-      try {
-        const parsedTest = parseFromJson(testContent.content, fromJson);
-        return createTestDefinition(parsedTest);
-      } catch (e) {
-        handleError(name, e);
+
+      if (parser.kind === testFile.JSON && testContent.kind === testFile.JSON) {
+        try {
+          const parsedTest = parseFromJson(testContent.content, parser.fromJson);
+          return createTestDefinitions(path, run, variants, parsedTest, chainSpec);
+        } catch (e) {
+          handleError(path, e);
+        }
+      }
+
+      if (testContent.kind !== parser.kind) {
+        handleError(path, new Error(`Mismatching parser: got ${parser.kind}, need: ${testContent.kind}`));
       }
     }
   }
 
-  return {
-    shouldSkip: false,
-    runner: "Invalid",
-    file,
-    test: () => {
-      for (const [runner, error] of errors) {
-        logger.error`[${runner}] Parsing error: ${error}`;
-      }
+  return [
+    {
+      shouldSkip: false,
+      runner: "Invalid",
+      file: fileName,
+      variant: noneVariant,
+      test: () => {
+        for (const [runner, error] of errors) {
+          logger.error`[${runner}] Parsing error: ${error}`;
+        }
 
-      fail(`Unrecognized test case in ${file}`);
+        fail(`Unrecognized test case in ${fileName}`);
+      },
     },
+  ];
+
+  function createTestDefinitions(
+    path: string,
+    run: RunFunction<T, V>,
+    variants: V[],
+    parsedTest: T,
+    chainSpec: ChainSpec
+  ) {
+    const results: TestAndRunner<V>[] = [];
+    const possibleVariants: V[] = variants.length === 0 ? [noneVariant] : variants;
+
+    for (const variant of possibleVariants) {
+      results.push({
+        shouldSkip: false,
+        runner: path,
+        file: fileName,
+        variant,
+        test: (ctx) => {
+          logger.log`[${path}:${variant}] running test from ${fileName} (spec: ${chainSpec.name})`;
+          logger.trace` ${util.inspect(parsedTest, true, 2)}`;
+          return run(parsedTest, variant, {
+            test: ctx,
+            path: fullPath,
+            chainSpec,
+          });
+        },
+      });
+    }
+    return results;
   };
 }

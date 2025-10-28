@@ -27,7 +27,7 @@ import { JsonService } from "@typeberry/state-json/accounts.js";
 import { AccumulateOutput } from "@typeberry/transition/accumulate/accumulate-output.js";
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
 import { Compatibility, deepEqual, GpVersion, Result } from "@typeberry/utils";
-import { getChainSpec } from "./spec.js";
+import {RunOptions} from "../common.js";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -141,14 +141,13 @@ export class AccumulateTest {
   post_state!: TestState;
 }
 
-export async function runAccumulateTest(test: AccumulateTest, path: string) {
-  await runAccumulateInternal(test, path, PvmBackend.BuiltIn);
-  // TODO [ToDr] Make them run separately and fix them.
-  // await runAccumulateInternal(test, path, PvmBackend.Ananas);
-}
 
-async function runAccumulateInternal(test: AccumulateTest, path: string, pvm: PvmBackend) {
-  const chainSpec = getChainSpec(path);
+export async function runAccumulateTest(
+  test: AccumulateTest,
+  variant: "ananas" | "builtin",
+  { chainSpec }: RunOptions,
+) {
+  const pvm = variant === "ananas" ? PvmBackend.Ananas : PvmBackend.BuiltIn;
   /**
    * entropy has to be moved to input because state is incompatibile -
    * in test state we have: `entropy: EntropyHash;`
