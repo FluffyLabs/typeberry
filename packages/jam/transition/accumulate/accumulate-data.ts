@@ -68,6 +68,11 @@ export class AccumulateData {
     );
   }
 
+  /**
+   * Calculate the gas limit implied by the selected deferred-transfers, work-reports and gas-privileges.
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/182001183701?v=0.7.2
+   */
   private mergeGasByServiceId(serviceIds: ServiceId[], ...gasByServiceIdMaps: Map<ServiceId, ServiceGas>[]) {
     const gasByServiceId: Map<ServiceId, ServiceGas> = new Map();
 
