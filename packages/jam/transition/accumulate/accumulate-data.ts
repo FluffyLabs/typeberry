@@ -2,9 +2,11 @@ import { type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/blo
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import type { ArrayView } from "@typeberry/collections";
 import type { PendingTransfer } from "@typeberry/jam-host-calls";
-import { tryAsU32, type U32 } from "@typeberry/numbers";
+import { sumU64, tryAsU32, tryAsU64, type U32 } from "@typeberry/numbers";
 import type { AutoAccumulate } from "@typeberry/state";
 import { Operand } from "./operand.js";
+
+const MAX_U64 = tryAsU64(2n ** 64n - 1n);
 
 class AccumulateDataItem {
   private constructor(
@@ -26,10 +28,10 @@ class AccumulateDataItem {
 export class AccumulateData {
   private readonly reportsDataByServiceId: Map<ServiceId, AccumulateDataItem>;
   private readonly transfersByServiceId: Map<ServiceId, PendingTransfer[]>;
-  private readonly gasByServiceId: Map<ServiceId, ServiceGas> = new Map();
+  private readonly gasByServiceId: Map<ServiceId, ServiceGas>;
   private readonly serviceIds: ServiceId[];
 
-  constructor(
+  private constructor(
     reports: ArrayView<WorkReport>,
     transfers: PendingTransfer[],
     autoAccumulateServices: readonly AutoAccumulate[],
@@ -78,7 +80,12 @@ export class AccumulateData {
 
     for (const serviceId of serviceIds) {
       const gas = gasByServiceIdMaps.reduce((gas, map) => {
-        return tryAsServiceGas(gas + (map.get(serviceId) ?? 0n));
+        const valueToAdd = map.get(serviceId) ?? tryAsU64(0n);
+        const { overflow, value } = sumU64(gas, valueToAdd);
+        if (overflow) {
+          return tryAsServiceGas(MAX_U64);
+        }
+        return tryAsServiceGas(value);
       }, tryAsServiceGas(0));
 
       gasByServiceId.set(serviceId, gas);
@@ -108,9 +115,9 @@ export class AccumulateData {
     for (const transfer of transfersToTransform) {
       const serviceId = transfer.destination;
       const transfers = transfersByServiceId.get(serviceId) ?? [];
-      const gas = gasByServiceId.get(serviceId) ?? tryAsServiceGas(0);
-      const newGas = tryAsServiceGas(gas + transfer.gas);
-      gasByServiceId.set(serviceId, newGas);
+      const gas = gasByServiceId.get(serviceId) ?? tryAsServiceGas(0n);
+      const { value, overflow } = sumU64(gas, transfer.gas);
+      gasByServiceId.set(serviceId, tryAsServiceGas(overflow ? MAX_U64 : value));
       transfers.push(transfer);
       transfersByServiceId.set(serviceId, transfers);
       serviceIds.add(serviceId);
@@ -147,14 +154,16 @@ export class AccumulateData {
 
         const item = reportsDataByServiceId.get(serviceId) ?? AccumulateDataItem.empty();
         const gas = gasByServiceId.get(serviceId) ?? tryAsServiceGas(0n);
+        const { value, overflow } = sumU64(gas, result.gas);
+        const newGas = tryAsServiceGas(overflow ? tryAsServiceGas(MAX_U64) : value);
+        gasByServiceId.set(serviceId, newGas);
+
         /**
          * We count the report results and gas cost for each service to update service statistics.
          *
          * https://graypaper.fluffylabs.dev/#/68eaa1f/171e04174a04?v=0.6.4
          */
         item.reportsLength = tryAsU32(item.reportsLength + 1);
-        const newGas = tryAsServiceGas(gas + result.gas);
-        gasByServiceId.set(serviceId, newGas);
         /**
          * Transform report into an operand
          *
