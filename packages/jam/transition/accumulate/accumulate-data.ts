@@ -54,7 +54,7 @@ export class AccumulateData {
     /**
      * Merge service ids from reports, auto-accumulate services and transfers.
      *
-     * https://graypaper.fluffylabs.dev/#/68eaa1f/175f01175f01?v=0.6.4
+     * https://graypaper.fluffylabs.dev/#/ab2cdbd/173803174b03?v=0.7.2
      */
     this.serviceIds = this.mergeServiceIds(
       serviceIdsFromReports,
@@ -62,6 +62,11 @@ export class AccumulateData {
       serviceIdsFromTransfers,
     );
 
+    /**
+     * Merge gas limits from reports, auto-accumulate services and transfers.
+     *
+     * https://graypaper.fluffylabs.dev/#/ab2cdbd/182001183701?v=0.7.2
+     */
     this.gasByServiceId = this.mergeGasByServiceId(
       this.serviceIds,
       autoAccumulateGasByServiceId,
@@ -107,6 +112,12 @@ export class AccumulateData {
     return Array.from(merged);
   }
 
+  /**
+   * Transform the list of pending transfers into:
+   * - map: transfers by service id
+   * - map: gas limit by service id
+   * - set: service ids
+   */
   private transformTransfers(transfersToTransform: PendingTransfer[]) {
     const transfersByServiceId = new Map<ServiceId, PendingTransfer[]>();
     const serviceIds = new Set<ServiceId>();
@@ -126,7 +137,11 @@ export class AccumulateData {
     return { transfersByServiceId, serviceIds, gasByServiceId };
   }
 
-  /** Transform the list of auto-accumulate services into a map by service id. */
+  /**
+   * Transform the list of auto accumulate services into:
+   * - map: gas limit by service id
+   * - set: service ids
+   */
   private transformAutoAccumulateServices(autoAccumulateServices: readonly AutoAccumulate[]) {
     const serviceIds = new Set<ServiceId>();
     const gasByServiceId: Map<ServiceId, ServiceGas> = new Map();
@@ -141,6 +156,13 @@ export class AccumulateData {
 
   /**
    * A function that transform reports into a list of operands and data needed for statistics (gas cost and reports length).
+   */
+
+  /**
+   * Transform the list of reports into:
+   * - map: AccumulateDataItem by service id
+   * - map: gas limit by service id
+   * - set: service ids
    */
   private transformReports(reports: ArrayView<WorkReport>) {
     const reportsDataByServiceId = new Map<ServiceId, AccumulateDataItem>();
@@ -161,13 +183,13 @@ export class AccumulateData {
         /**
          * We count the report results and gas cost for each service to update service statistics.
          *
-         * https://graypaper.fluffylabs.dev/#/68eaa1f/171e04174a04?v=0.6.4
+         * https://graypaper.fluffylabs.dev/#/ab2cdbd/180504182604?v=0.7.2
          */
         item.reportsLength = tryAsU32(item.reportsLength + 1);
         /**
          * Transform report into an operand
          *
-         * https://graypaper.fluffylabs.dev/#/68eaa1f/17bf02176f03?v=0.6.4
+         * https://graypaper.fluffylabs.dev/#/ab2cdbd/185901181402?v=0.7.2
          */
         item.operands.push(
           Operand.new({
@@ -211,7 +233,7 @@ export class AccumulateData {
   /**
    * Returns a list of service ids that should be accumulated.
    *
-   * https://graypaper.fluffylabs.dev/#/68eaa1f/175f01175f01?v=0.6.4
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/173803174a03?v=0.7.2
    */
   getServiceIds(): ServiceId[] {
     return this.serviceIds;
