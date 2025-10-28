@@ -3,7 +3,6 @@ import type { WorkReport } from "@typeberry/block/work-report.js";
 import type { ArrayView } from "@typeberry/collections";
 import type { PendingTransfer } from "@typeberry/jam-host-calls";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
-import type { AutoAccumulate } from "@typeberry/state";
 import { Operand } from "./operand.js";
 
 class AccumulateDataItem {
@@ -27,17 +26,14 @@ class AccumulateDataItem {
 export class AccumulateData {
   private readonly reportsDataByServiceId: Map<ServiceId, AccumulateDataItem>;
   private readonly transfersByServiceId: Map<ServiceId, PendingTransfer[]>;
-  private readonly autoAccumulateServicesByServiceId: Map<ServiceId, AutoAccumulate>;
   private readonly serviceIds: ServiceId[];
 
   constructor(
     reports: ArrayView<WorkReport>,
     transfers: PendingTransfer[],
-    autoAccumulateServices: readonly AutoAccumulate[],
+    private readonly autoAccumulateServicesByServiceId: Map<ServiceId, ServiceGas>,
   ) {
-    const { autoAccumulateServicesByServiceId, serviceIds: serviceIdsFromAutoAccumulate } =
-      this.transformAutoAccumulateServices(autoAccumulateServices);
-    this.autoAccumulateServicesByServiceId = autoAccumulateServicesByServiceId;
+    const serviceIdsFromAutoAccumulate = new Set(autoAccumulateServicesByServiceId.keys());
     const { reportsDataByServiceId, serviceIds: serviceIdsFromReports } = this.transformReports(reports);
     this.reportsDataByServiceId = reportsDataByServiceId;
 
@@ -81,17 +77,6 @@ export class AccumulateData {
     }
 
     return { transfersByServiceId, serviceIds };
-  }
-
-  /** Transform the list of auto-accumulate services into a map by service id. */
-  private transformAutoAccumulateServices(autoAccumulateServices: readonly AutoAccumulate[]) {
-    const serviceIds = new Set<ServiceId>();
-    const autoAccumulateServicesByServiceId = new Map<ServiceId, AutoAccumulate>();
-    for (const autoAccumulate of autoAccumulateServices) {
-      autoAccumulateServicesByServiceId.set(autoAccumulate.service, autoAccumulate);
-      serviceIds.add(autoAccumulate.service);
-    }
-    return { autoAccumulateServicesByServiceId, serviceIds };
   }
 
   /**
@@ -144,9 +129,9 @@ export class AccumulateData {
      */
     for (const serviceId of serviceIds) {
       const item = reportsDataByServiceId.get(serviceId) ?? null;
-      const autoAccumulateService = this.autoAccumulateServicesByServiceId.get(serviceId) ?? null;
-      if (item !== null && autoAccumulateService !== null) {
-        item.gasCost = tryAsServiceGas(item.gasCost + autoAccumulateService.gasLimit);
+      const gasLimit = this.autoAccumulateServicesByServiceId.get(serviceId) ?? null;
+      if (item !== null && gasLimit !== null) {
+        item.gasCost = tryAsServiceGas(item.gasCost + gasLimit);
       }
     }
 

@@ -1,5 +1,5 @@
 import { describe, it } from "node:test";
-import { type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
+import { type ServiceGas, type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { testWorkReportHex } from "@typeberry/block/test-helpers.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
@@ -8,7 +8,6 @@ import { ArrayView } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { PendingTransfer, TRANSFER_MEMO_BYTES } from "@typeberry/jam-host-calls";
 import { tryAsU64 } from "@typeberry/numbers";
-import { AutoAccumulate } from "@typeberry/state";
 import { deepEqual } from "@typeberry/utils";
 import { AccumulateData } from "./accumulate-data.js";
 import { Operand } from "./operand.js";
@@ -28,8 +27,14 @@ const getTransfer = (serviceId: ServiceId) => {
   });
 };
 
-const createAutoAccumulate = (serviceId: number, gasCost = 0n) => {
-  return AutoAccumulate.create({ service: tryAsServiceId(serviceId), gasLimit: tryAsServiceGas(gasCost) });
+const createAutoAccumulate = (autoAccumulateEntries: [number, bigint][]) => {
+  const autoAccumulate = new Map<ServiceId, ServiceGas>();
+
+  for (const [serviceId, gasCost] of autoAccumulateEntries) {
+    autoAccumulate.set(tryAsServiceId(serviceId), tryAsServiceGas(gasCost));
+  }
+
+  return autoAccumulate;
 };
 
 const transformReportToOperands = (report: WorkReport) => {
@@ -58,7 +63,7 @@ describe("AccumulateData", () => {
       const serviceId = tryAsServiceId(129);
       const report = getWorkReport();
       const reports = ArrayView.from([report]);
-      const accumulateData = new AccumulateData(reports, [], []);
+      const accumulateData = new AccumulateData(reports, [], new Map());
       const expectedOperands = transformReportToOperands(report);
 
       const result = accumulateData.getOperands(serviceId);
@@ -72,7 +77,7 @@ describe("AccumulateData", () => {
       const serviceId = tryAsServiceId(129);
       const report = getWorkReport();
       const reports = ArrayView.from([report]);
-      const accumulateData = new AccumulateData(reports, [], []);
+      const accumulateData = new AccumulateData(reports, [], new Map());
       const expectedLength = report.results.length;
 
       const result = accumulateData.getReportsLength(serviceId);
@@ -86,7 +91,7 @@ describe("AccumulateData", () => {
       const serviceId = tryAsServiceId(129);
       const report = getWorkReport();
       const reports = ArrayView.from([report]);
-      const accumulateData = new AccumulateData(reports, [], []);
+      const accumulateData = new AccumulateData(reports, [], new Map());
       const expectedGasCost = report.results.reduce((acc, result) => acc + result.gas, 0n);
 
       const result = accumulateData.getGasCost(serviceId);
@@ -98,7 +103,7 @@ describe("AccumulateData", () => {
       const serviceId = tryAsServiceId(129);
       const report = getWorkReport();
       const autoAccumulateGas = 100n;
-      const autoAccumulateServices = [createAutoAccumulate(129, autoAccumulateGas)];
+      const autoAccumulateServices = createAutoAccumulate([[129, autoAccumulateGas]]);
 
       const reports = ArrayView.from([report]);
       const accumulateData = new AccumulateData(reports, [], autoAccumulateServices);
@@ -112,7 +117,7 @@ describe("AccumulateData", () => {
 
   describe("getServiceIds", () => {
     it("should return empty array when no reports and auto accumulate services", () => {
-      const accumulateData = new AccumulateData(ArrayView.from([]), [], []);
+      const accumulateData = new AccumulateData(ArrayView.from([]), [], new Map());
 
       const result = accumulateData.getServiceIds();
 
@@ -122,7 +127,7 @@ describe("AccumulateData", () => {
     it("should return unique service ids from reports", () => {
       const reports = ArrayView.from([getWorkReport(), getWorkReport()]);
       const expectedServiceIds = [129].map(tryAsServiceId);
-      const accumulateData = new AccumulateData(reports, [], []);
+      const accumulateData = new AccumulateData(reports, [], new Map());
 
       const result = accumulateData.getServiceIds();
 
@@ -130,7 +135,10 @@ describe("AccumulateData", () => {
     });
 
     it("should return unique service ids from auto accumulate services", () => {
-      const autoAccumulateServices = [createAutoAccumulate(129), createAutoAccumulate(129)];
+      const autoAccumulateServices = createAutoAccumulate([
+        [129, 0n],
+        [129, 0n],
+      ]);
       const expectedServiceIds = [129].map(tryAsServiceId);
       const accumulateData = new AccumulateData(ArrayView.from([]), [], autoAccumulateServices);
 
@@ -141,7 +149,7 @@ describe("AccumulateData", () => {
 
     it("should return unique service ids from reports and auto accumulate services", () => {
       const reports = ArrayView.from([getWorkReport()]);
-      const autoAccumulateServices = [createAutoAccumulate(129)];
+      const autoAccumulateServices = createAutoAccumulate([[129, 0n]]);
       const expectedServiceIds = [129].map(tryAsServiceId);
       const accumulateData = new AccumulateData(reports, [], autoAccumulateServices);
 
@@ -156,7 +164,7 @@ describe("AccumulateData", () => {
       const serviceId = tryAsServiceId(129);
       const transfer = getTransfer(serviceId);
       const transfers = [transfer];
-      const accumulateData = new AccumulateData(ArrayView.from([]), transfers, []);
+      const accumulateData = new AccumulateData(ArrayView.from([]), transfers, new Map());
 
       const result = accumulateData.getTransfers(serviceId);
 
@@ -169,7 +177,7 @@ describe("AccumulateData", () => {
       const serviceId = tryAsServiceId(129);
       const report = getWorkReport();
       const reports = ArrayView.from([report]);
-      const accumulateData = new AccumulateData(reports, [], []);
+      const accumulateData = new AccumulateData(reports, [], new Map());
       const expectedOperands = transformReportToOperands(report);
 
       const result = accumulateData.getOperands(serviceId);

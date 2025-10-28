@@ -106,7 +106,7 @@ describe("accumulate-queue", () => {
             assigners: tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(0)), tinyChainSpec),
             delegator: tryAsServiceId(0),
             registrar: tryAsServiceId(0),
-            autoAccumulateServices: [],
+            autoAccumulateServices: new Map(),
           }),
           recentlyAccumulated: tryAsPerEpochBlock(recentlyAccumulated, tinyChainSpec),
           accumulationQueue: tryAsPerEpochBlock(accumulationQueue, tinyChainSpec),

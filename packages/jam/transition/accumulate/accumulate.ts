@@ -23,7 +23,6 @@ import { sumU64, tryAsU32, type U32 } from "@typeberry/numbers";
 import { Status, tryAsGas } from "@typeberry/pvm-interface";
 import {
   type AccumulationOutput,
-  type AutoAccumulate,
   accumulationOutputComparator,
   hashComparator,
   type NotYetAccumulatedReport,
@@ -293,7 +292,7 @@ export class Accumulate {
     entropy: EntropyHash,
     statistics: Map<ServiceId, CountAndGasUsed>,
     stateUpdate: AccumulationStateUpdate,
-    autoAccumulateServices: readonly AutoAccumulate[],
+    autoAccumulateServices: Map<ServiceId, ServiceGas>,
   ): Promise<SequentialAccumulationResult> {
     const i = this.findReportCutoffIndex(gasLimit, reports);
 
@@ -329,7 +328,7 @@ export class Accumulate {
       entropy,
       statistics,
       stateAfterParallelAcc,
-      [],
+      new Map(),
     );
     assertEmpty(seqRest);
 
@@ -356,7 +355,7 @@ export class Accumulate {
     entropy: EntropyHash,
     statistics: Map<ServiceId, CountAndGasUsed>,
     stateUpdate: AccumulationStateUpdate,
-    autoAccumulateServices: readonly AutoAccumulate[],
+    autoAccumulateServices: Map<ServiceId, ServiceGas>,
   ): Promise<SequentialAccumulationResult> {
     const i = this.findReportCutoffIndex(gasLimit, reports);
 
@@ -396,7 +395,7 @@ export class Accumulate {
       entropy,
       statistics,
       stateAfterParallelAcc,
-      [],
+      new Map(),
     );
     assertEmpty(seqRest);
 
@@ -555,7 +554,10 @@ export class Accumulate {
   private getGasLimit() {
     const calculatedGasLimit =
       GAS_TO_INVOKE_WORK_REPORT * BigInt(this.chainSpec.coresCount) +
-      this.state.privilegedServices.autoAccumulateServices.reduce((acc, { gasLimit }) => acc + gasLimit, 0n);
+      Array.from(this.state.privilegedServices.autoAccumulateServices.values()).reduce(
+        (acc, gasLimit) => acc + gasLimit,
+        0n,
+      );
     const gasLimit = tryAsServiceGas(
       this.chainSpec.maxBlockGas > calculatedGasLimit ? this.chainSpec.maxBlockGas : calculatedGasLimit,
     );

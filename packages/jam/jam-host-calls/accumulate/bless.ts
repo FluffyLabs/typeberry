@@ -63,7 +63,7 @@ export class Bless implements HostCallHandler {
      * `z`: array of key-value pairs serviceId -> gas that auto-accumulate every block
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/368100368100?v=0.6.7
      */
-    const autoAccumulateEntries: [ServiceId, ServiceGas][] = [];
+    const autoAccumulate: Map<ServiceId, ServiceGas> = new Map();
     const result = safeAllocUint8Array(tryAsExactBytes(serviceIdAndGasCodec.sizeHint));
     const decoder = Decoder.fromBlob(result);
     let memIndex = sourceStart;
@@ -77,7 +77,7 @@ export class Bless implements HostCallHandler {
       }
 
       const { serviceId, gas } = decoder.object(serviceIdAndGasCodec);
-      autoAccumulateEntries.push([serviceId, gas]);
+      autoAccumulate.set(serviceId, gas);
       // we allow the index to go beyond `MEMORY_SIZE` (i.e. 2**32) and have the next `loadInto` fail with page fault.
       memIndex = tryAsU64(memIndex + tryAsU64(decoder.bytesRead()));
     }
@@ -86,7 +86,7 @@ export class Bless implements HostCallHandler {
     const authorizersDecoder = Decoder.fromBlob(res);
     const memoryReadResult = memory.loadInto(res, authorization);
     if (memoryReadResult.isError) {
-      logger.trace`BLESS(${manager}, ${delegator}, ${registrar}, ${autoAccumulateEntries}) <- PANIC`;
+      logger.trace`BLESS(${manager}, ${delegator}, ${registrar}, ${autoAccumulate}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
@@ -101,11 +101,11 @@ export class Bless implements HostCallHandler {
       authorizers,
       delegator,
       registrar,
-      autoAccumulateEntries,
+      autoAccumulate,
     );
 
     if (updateResult.isOk) {
-      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulateEntries}) <- OK`;
+      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulate}) <- OK`;
       regs.set(IN_OUT_REG, HostCallResult.OK);
       return;
     }
@@ -114,13 +114,13 @@ export class Bless implements HostCallHandler {
 
     // NOTE: `UpdatePrivilegesError.UnprivilegedService` won't happen in 0.7.1+
     if (e === UpdatePrivilegesError.UnprivilegedService) {
-      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulateEntries}) <- HUH`;
+      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulate}) <- HUH`;
       regs.set(IN_OUT_REG, HostCallResult.HUH);
       return;
     }
 
     if (e === UpdatePrivilegesError.InvalidServiceId) {
-      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulateEntries}) <- WHO`;
+      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulate}) <- WHO`;
       regs.set(IN_OUT_REG, HostCallResult.WHO);
       return;
     }

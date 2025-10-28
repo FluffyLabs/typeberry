@@ -44,7 +44,6 @@ import { Logger } from "@typeberry/logger";
 import { maxU64, sumU64, tryAsU32, tryAsU64, type U64 } from "@typeberry/numbers";
 import {
   type AUTHORIZATION_QUEUE_SIZE,
-  AutoAccumulate,
   LookupHistoryItem,
   type PerCore,
   PreimageItem,
@@ -606,7 +605,7 @@ export class AccumulateExternalities
     authorizers: PerCore<ServiceId>,
     delegator: ServiceId | null,
     registrar: ServiceId | null,
-    autoAccumulate: [ServiceId, ServiceGas][],
+    autoAccumulate: Map<ServiceId, ServiceGas>,
   ): Result<OK, UpdatePrivilegesError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
     const current = this.updatedState.getPrivilegedServices();
@@ -633,9 +632,7 @@ export class AccumulateExternalities
         assigners: authorizers,
         delegator: delegator,
         registrar: registrar ?? tryAsServiceId(0),
-        autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) =>
-          AutoAccumulate.create({ service, gasLimit }),
-        ),
+        autoAccumulateServices: autoAccumulate,
       });
 
       return Result.ok(OK);
@@ -672,9 +669,7 @@ export class AccumulateExternalities
 
     const newManager = isManager ? manager : current.manager;
 
-    const newAutoAccumulateServices = isManager
-      ? autoAccumulate.map(([service, gasLimit]) => AutoAccumulate.create({ service, gasLimit }))
-      : current.autoAccumulateServices;
+    const newAutoAccumulateServices = isManager ? autoAccumulate : current.autoAccumulateServices;
 
     // finally update the privileges
     this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
