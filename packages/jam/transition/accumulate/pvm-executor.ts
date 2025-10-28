@@ -1,6 +1,6 @@
 import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
-import type { ChainSpec } from "@typeberry/config";
+import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import { Assign } from "@typeberry/jam-host-calls/accumulate/assign.js";
 import { Bless } from "@typeberry/jam-host-calls/accumulate/bless.js";
 import { Checkpoint } from "@typeberry/jam-host-calls/accumulate/checkpoint.js";
@@ -28,8 +28,7 @@ import { Missing } from "@typeberry/jam-host-calls/missing.js";
 import { type AccountsRead, Read } from "@typeberry/jam-host-calls/read.js";
 import { type AccountsWrite, Write } from "@typeberry/jam-host-calls/write.js";
 import { type HostCallHandler, HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
-import type { Gas } from "@typeberry/pvm-interpreter";
-import { Program } from "@typeberry/pvm-program";
+import type { Gas } from "@typeberry/pvm-interface";
 
 const ACCUMULATE_HOST_CALL_CLASSES = [
   Bless,
@@ -71,18 +70,22 @@ namespace entrypoint {
 export class PvmExecutor {
   private readonly pvm: PvmHostCallExtension;
   private hostCalls: HostCalls;
-  private pvmInstanceManager = new PvmInstanceManager(4);
 
   private constructor(
     private serviceCode: BytesBlob,
     hostCallHandlers: HostCallHandler[],
     private entrypoint: ProgramCounter,
+    pvmInstanceManager: PvmInstanceManager,
   ) {
     this.hostCalls = new HostCalls({
       missing: new Missing(),
       handlers: hostCallHandlers,
     });
-    this.pvm = new PvmHostCallExtension(this.pvmInstanceManager, this.hostCalls);
+    this.pvm = new PvmHostCallExtension(pvmInstanceManager, this.hostCalls);
+  }
+
+  private static async prepareBackend(pvm: PvmBackend) {
+    return PvmInstanceManager.new(pvm);
   }
 
   /** Prepare accumulation host call handlers */
@@ -130,29 +133,31 @@ export class PvmExecutor {
    * @returns `ReturnValue` object that can be a status or memory slice
    */
   async run(args: BytesBlob, gas: Gas) {
-    const program = Program.fromSpi(this.serviceCode.raw, args.raw, true);
-
-    return this.pvm.runProgram(program.code, Number(this.entrypoint), gas, program.registers, program.memory);
+    return this.pvm.runProgram(this.serviceCode.raw, args.raw, Number(this.entrypoint), gas);
   }
 
   /** A utility function that can be used to prepare accumulate executor */
-  static createAccumulateExecutor(
+  static async createAccumulateExecutor(
     serviceId: ServiceId,
     serviceCode: BytesBlob,
     externalities: AccumulateHostCallExternalities,
     chainSpec: ChainSpec,
+    pvm: PvmBackend,
   ) {
     const hostCallHandlers = PvmExecutor.prepareAccumulateHostCalls(serviceId, externalities, chainSpec);
-    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ACCUMULATE);
+    const instances = await PvmExecutor.prepareBackend(pvm);
+    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ACCUMULATE, instances);
   }
 
   /** A utility function that can be used to prepare on transfer executor */
-  static createOnTransferExecutor(
+  static async createOnTransferExecutor(
     serviceId: ServiceId,
     serviceCode: BytesBlob,
     externalities: OnTransferHostCallExternalities,
+    pvm: PvmBackend,
   ) {
     const hostCallHandlers = PvmExecutor.prepareOnTransferHostCalls(serviceId, externalities);
-    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ON_TRANSFER);
+    const instances = await PvmExecutor.prepareBackend(pvm);
+    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ON_TRANSFER, instances);
   }
 }

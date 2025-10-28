@@ -40,6 +40,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm start -w @typeberry/test-runner -- w3f-davxy-071.ts
+      - run: npm start -w @typeberry/test-runner -- w3f-davxy-071-bin.ts
       - name: Display results
         if: always()
         run: cat ./dist/w3f-davxy-071.txt

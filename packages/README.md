@@ -23,7 +23,9 @@ Contains fundamental packages that provide low-level functionality and utilities
 - **ordering** - Ordering and sorting utilities
 - **pvm-debugger-adapter** - PVM debugger adapter
 - **pvm-host-calls** - PVM host call implementations
+- **pvm-interface** - PVM interface definitions
 - **pvm-interpreter** - PVM interpreter functionality
+- **pvm-interpreter-ananas** - Ananas PVM interpreter implementation
 - **pvm-program** - PVM program utilities
 - **pvm-spi-decoder** - PVM SPI decoder
 - **shuffling** - Shuffling algorithms
@@ -41,6 +43,7 @@ Contains JAM (Join-Accumulate Machine) specific packages:
 - **database-lmdb** - LMDB database implementation
 - **fuzz-proto** - Fuzzing protocol implementation
 - **jam-host-calls** - JAM-specific host calls
+- **jamnp-protocol** - JAM network protocol definitions
 - **jamnp-s** - JAM network protocol implementation
 - **node** - JAM node implementation
 - **safrole** - Safrole consensus mechanism

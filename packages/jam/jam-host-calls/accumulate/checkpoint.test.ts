@@ -2,9 +2,10 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { HostCallRegisters } from "@typeberry/pvm-host-calls";
-import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
-import { Registers } from "@typeberry/pvm-interpreter/registers.js";
+import { tryAsGas } from "@typeberry/pvm-interface";
+import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
+import { emptyRegistersBuffer } from "../utils.js";
 import { Checkpoint } from "./checkpoint.js";
 
 const REGISTER = 7;
@@ -16,7 +17,7 @@ describe("HostCalls: Checkpoint", () => {
     const checkpoint = new Checkpoint(serviceId, accumulate);
 
     const counter = gasCounter(tryAsGas(2n ** 42n - 1n));
-    const regs = new HostCallRegisters(new Registers());
+    const regs = new HostCallRegisters(emptyRegistersBuffer());
 
     assert.deepStrictEqual(regs.get(REGISTER), 0n);
     assert.deepStrictEqual(accumulate.checkpointCalled, 0);
