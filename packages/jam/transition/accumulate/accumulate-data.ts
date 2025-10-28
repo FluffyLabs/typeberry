@@ -10,11 +10,10 @@ class AccumulateDataItem {
   private constructor(
     public operands: Operand[],
     public reportsLength: U32,
-    public gasCost: ServiceGas,
   ) {}
 
   static empty() {
-    return new AccumulateDataItem([], tryAsU32(0), tryAsServiceGas(0n));
+    return new AccumulateDataItem([], tryAsU32(0));
   }
 }
 
@@ -27,7 +26,7 @@ class AccumulateDataItem {
 export class AccumulateData {
   private readonly reportsDataByServiceId: Map<ServiceId, AccumulateDataItem>;
   private readonly transfersByServiceId: Map<ServiceId, PendingTransfer[]>;
-  private readonly autoAccumulateServicesByServiceId: Map<ServiceId, AutoAccumulate>;
+  private readonly gasByServiceId: Map<ServiceId, ServiceGas> = new Map();
   private readonly serviceIds: ServiceId[];
 
   constructor(
@@ -35,13 +34,20 @@ export class AccumulateData {
     transfers: PendingTransfer[],
     autoAccumulateServices: readonly AutoAccumulate[],
   ) {
-    const { autoAccumulateServicesByServiceId, serviceIds: serviceIdsFromAutoAccumulate } =
+    const { serviceIds: serviceIdsFromAutoAccumulate, gasByServiceId: autoAccumulateGasByServiceId } =
       this.transformAutoAccumulateServices(autoAccumulateServices);
-    this.autoAccumulateServicesByServiceId = autoAccumulateServicesByServiceId;
-    const { reportsDataByServiceId, serviceIds: serviceIdsFromReports } = this.transformReports(reports);
+    const {
+      reportsDataByServiceId,
+      serviceIds: serviceIdsFromReports,
+      gasByServiceId: reportsGasByServiceId,
+    } = this.transformReports(reports);
     this.reportsDataByServiceId = reportsDataByServiceId;
 
-    const { transfersByServiceId, serviceIds: serviceIdsFromTransfers } = this.transformTransfers(transfers);
+    const {
+      transfersByServiceId,
+      serviceIds: serviceIdsFromTransfers,
+      gasByServiceId: transfersGasByServiceId,
+    } = this.transformTransfers(transfers);
     this.transfersByServiceId = transfersByServiceId;
     /**
      * Merge service ids from reports, auto-accumulate services and transfers.
@@ -53,6 +59,27 @@ export class AccumulateData {
       serviceIdsFromAutoAccumulate,
       serviceIdsFromTransfers,
     );
+
+    this.gasByServiceId = this.mergeGasByServiceId(
+      this.serviceIds,
+      autoAccumulateGasByServiceId,
+      reportsGasByServiceId,
+      transfersGasByServiceId,
+    );
+  }
+
+  private mergeGasByServiceId(serviceIds: ServiceId[], ...gasByServiceIdMaps: Map<ServiceId, ServiceGas>[]) {
+    const gasByServiceId: Map<ServiceId, ServiceGas> = new Map();
+
+    for (const serviceId of serviceIds) {
+      const gas = gasByServiceIdMaps.reduce((gas, map) => {
+        return tryAsServiceGas(gas + (map.get(serviceId) ?? 0n));
+      }, tryAsServiceGas(0));
+
+      gasByServiceId.set(serviceId, gas);
+    }
+
+    return gasByServiceId;
   }
 
   /** Merge two sets of service ids */
@@ -71,27 +98,33 @@ export class AccumulateData {
   private transformTransfers(transfersToTransform: PendingTransfer[]) {
     const transfersByServiceId = new Map<ServiceId, PendingTransfer[]>();
     const serviceIds = new Set<ServiceId>();
+    const gasByServiceId: Map<ServiceId, ServiceGas> = new Map();
 
     for (const transfer of transfersToTransform) {
       const serviceId = transfer.destination;
       const transfers = transfersByServiceId.get(serviceId) ?? [];
+      const gas = gasByServiceId.get(serviceId) ?? tryAsServiceGas(0);
+      const newGas = tryAsServiceGas(gas + transfer.gas);
+      gasByServiceId.set(serviceId, newGas);
       transfers.push(transfer);
       transfersByServiceId.set(serviceId, transfers);
       serviceIds.add(serviceId);
     }
 
-    return { transfersByServiceId, serviceIds };
+    return { transfersByServiceId, serviceIds, gasByServiceId };
   }
 
   /** Transform the list of auto-accumulate services into a map by service id. */
   private transformAutoAccumulateServices(autoAccumulateServices: readonly AutoAccumulate[]) {
     const serviceIds = new Set<ServiceId>();
-    const autoAccumulateServicesByServiceId = new Map<ServiceId, AutoAccumulate>();
+    const gasByServiceId: Map<ServiceId, ServiceGas> = new Map();
+
     for (const autoAccumulate of autoAccumulateServices) {
-      autoAccumulateServicesByServiceId.set(autoAccumulate.service, autoAccumulate);
+      gasByServiceId.set(autoAccumulate.service, autoAccumulate.gasLimit);
       serviceIds.add(autoAccumulate.service);
     }
-    return { autoAccumulateServicesByServiceId, serviceIds };
+
+    return { serviceIds, gasByServiceId };
   }
 
   /**
@@ -99,6 +132,7 @@ export class AccumulateData {
    */
   private transformReports(reports: ArrayView<WorkReport>) {
     const reportsDataByServiceId = new Map<ServiceId, AccumulateDataItem>();
+    const gasByServiceId: Map<ServiceId, ServiceGas> = new Map();
     const serviceIds = new Set<ServiceId>();
 
     for (const report of reports) {
@@ -107,15 +141,15 @@ export class AccumulateData {
         serviceIds.add(serviceId);
 
         const item = reportsDataByServiceId.get(serviceId) ?? AccumulateDataItem.empty();
-
+        const gas = gasByServiceId.get(serviceId) ?? tryAsServiceGas(0n);
         /**
          * We count the report results and gas cost for each service to update service statistics.
          *
          * https://graypaper.fluffylabs.dev/#/68eaa1f/171e04174a04?v=0.6.4
          */
         item.reportsLength = tryAsU32(item.reportsLength + 1);
-        item.gasCost = tryAsServiceGas(item.gasCost + result.gas);
-
+        const newGas = tryAsServiceGas(gas + result.gas);
+        gasByServiceId.set(serviceId, newGas);
         /**
          * Transform report into an operand
          *
@@ -137,20 +171,7 @@ export class AccumulateData {
       }
     }
 
-    /**
-     * Add initial gas cost - it is `U(f_s, 0)` from this formula:
-     *
-     * https://graypaper.fluffylabs.dev/#/68eaa1f/17b00217b002?v=0.6.4
-     */
-    for (const serviceId of serviceIds) {
-      const item = reportsDataByServiceId.get(serviceId) ?? null;
-      const autoAccumulateService = this.autoAccumulateServicesByServiceId.get(serviceId) ?? null;
-      if (item !== null && autoAccumulateService !== null) {
-        item.gasCost = tryAsServiceGas(item.gasCost + autoAccumulateService.gasLimit);
-      }
-    }
-
-    return { reportsDataByServiceId, serviceIds };
+    return { reportsDataByServiceId, serviceIds, gasByServiceId };
   }
 
   /** Returns the list of operands for a given service id */
@@ -170,7 +191,7 @@ export class AccumulateData {
 
   /** Returns the gas cost for a given service id */
   getGasCost(serviceId: ServiceId): ServiceGas {
-    return this.reportsDataByServiceId.get(serviceId)?.gasCost ?? tryAsServiceGas(0n);
+    return this.gasByServiceId.get(serviceId) ?? tryAsServiceGas(0n);
   }
 
   /**
