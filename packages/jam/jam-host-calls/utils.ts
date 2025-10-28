@@ -1,7 +1,8 @@
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { tryAsU32, tryAsU64, type U32, type U64, u32AsLeBytes, u64IntoParts } from "@typeberry/numbers";
-import type { IHostCallRegisters } from "@typeberry/pvm-host-calls";
-import { check } from "@typeberry/utils";
+import type { HostCallRegisters } from "@typeberry/pvm-host-calls";
+import { NO_OF_REGISTERS, REGISTER_BYTE_SIZE } from "@typeberry/pvm-interface";
+import { check, safeAllocUint8Array } from "@typeberry/utils";
 
 const MAX_U32 = tryAsU32(2 ** 32 - 1);
 const MAX_U32_BIG_INT = tryAsU64(MAX_U32);
@@ -10,7 +11,7 @@ export const CURRENT_SERVICE_ID = tryAsServiceId(2 ** 32 - 1);
 
 export function getServiceIdOrCurrent(
   regNumber: number,
-  regs: IHostCallRegisters,
+  regs: HostCallRegisters,
   currentServiceId: ServiceId,
 ): ServiceId | null {
   const regValue = regs.get(regNumber);
@@ -39,4 +40,8 @@ export function writeServiceIdAsLeBytes(serviceId: ServiceId, destination: Uint8
 /** Clamp a U64 to the maximum value of a 32-bit unsigned integer. */
 export function clampU64ToU32(value: U64): U32 {
   return value > MAX_U32_BIG_INT ? MAX_U32 : tryAsU32(Number(value));
+}
+
+export function emptyRegistersBuffer(): Uint8Array {
+  return safeAllocUint8Array(NO_OF_REGISTERS * REGISTER_BYTE_SIZE);
 }

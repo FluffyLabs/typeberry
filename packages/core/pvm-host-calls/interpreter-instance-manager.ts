@@ -1,22 +1,37 @@
+import { PvmBackend } from "@typeberry/config";
+import type { IPvmInterpreter } from "@typeberry/pvm-interface";
 import { Interpreter } from "@typeberry/pvm-interpreter";
+import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
+import { assertNever } from "@typeberry/utils";
 
-type ResolveFn = (pvm: Interpreter) => void;
+type ResolveFn = (pvm: IPvmInterpreter) => void;
 
+// TODO [MaSo] Delete this & also make host calls independent from intepreters.
 export class InterpreterInstanceManager {
-  private instances: Interpreter[] = [];
   private waitingQueue: ResolveFn[] = [];
 
-  constructor(noOfPvmInstances: number) {
-    for (let i = 0; i < noOfPvmInstances; i++) {
-      this.instances.push(
-        new Interpreter({
-          useSbrkGas: false,
-        }),
-      );
+  private constructor(private readonly instances: IPvmInterpreter[]) {}
+
+  static async new(interpreter: PvmBackend): Promise<InterpreterInstanceManager> {
+    const instances: IPvmInterpreter[] = [];
+    switch (interpreter) {
+      case PvmBackend.BuiltIn:
+        instances.push(
+          new Interpreter({
+            useSbrkGas: false,
+          }),
+        );
+        break;
+      case PvmBackend.Ananas:
+        instances.push(await AnanasInterpreter.new());
+        break;
+      default:
+        assertNever(interpreter);
     }
+    return new InterpreterInstanceManager(instances);
   }
 
-  async getInstance(): Promise<Interpreter> {
+  async getInstance(): Promise<IPvmInterpreter> {
     const instance = this.instances.pop();
     if (instance !== undefined) {
       return Promise.resolve(instance);
@@ -26,7 +41,7 @@ export class InterpreterInstanceManager {
     });
   }
 
-  releaseInstance(pvm: Interpreter) {
+  releaseInstance(pvm: IPvmInterpreter) {
     const waiting = this.waitingQueue.shift();
     if (waiting !== undefined) {
       return waiting(pvm);

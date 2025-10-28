@@ -1,4 +1,4 @@
-import { type SmallGas, tryAsSmallGas } from "./gas.js";
+import { type SmallGas, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { Instruction } from "./instruction.js";
 import type { Mask } from "./program-decoder/mask.js";
 
