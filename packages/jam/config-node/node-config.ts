@@ -124,7 +124,10 @@ export function loadConfig(config: string[], withRelPath: (p: string) => string)
   }
 }
 
-function deepMerge(target: AnyJsonObject, source: AnyJsonObject) {
+function deepMerge(target: AnyJsonObject, source: JsonValue): void {
+  if (typeof source !== "object" || source === null || Array.isArray(source)) {
+    throw new Error(`Expected object, got ${source}`);
+  }
   for (const key in source) {
     if (source[key] !== null && typeof source[key] === "object" && !Array.isArray(source[key])) {
       if (!(key in target)) {
@@ -135,7 +138,6 @@ function deepMerge(target: AnyJsonObject, source: AnyJsonObject) {
       target[key] = source[key];
     }
   }
-  return target;
 }
 
 /**
@@ -191,7 +193,7 @@ function processQuery(input: AnyJsonObject, query: string, withRelPath: (p: stri
       }
       if (i === pathParts.length - 1) {
         if (merge) {
-          target[part] = deepMerge(target[part], parsedValue);
+          deepMerge(target[part], parsedValue);
         } else {
           target[part] = parsedValue;
         }
