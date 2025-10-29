@@ -21,6 +21,7 @@ import {
 import { Logger } from "@typeberry/logger";
 import { sumU64, tryAsU32, type U32 } from "@typeberry/numbers";
 import { Status, tryAsGas } from "@typeberry/pvm-interface";
+import { MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import {
   type AccumulationOutput,
   type AutoAccumulate,
@@ -382,6 +383,13 @@ export class Accumulate {
     const newTransfers = stateAfterParallelAcc.takeTransfers();
     assertEmpty(rest);
 
+    /**
+     * Gas limit from transfers is added to the next round of accumulation
+     *
+     * https://graypaper.fluffylabs.dev/#/ab2cdbd/172b02172b02?v=0.7.2
+     */
+    const transfersGas = transfers.map((t) => t.gas);
+    const { value: newGasLimit, overflow } = sumU64(tryAsServiceGas(gasLimit - gasCost), ...transfersGas);
     // NOTE [ToDr] recursive invocation
     const {
       accumulatedReports,
@@ -389,7 +397,7 @@ export class Accumulate {
       state,
       ...seqRest
     } = await this.accumulateSequentially(
-      tryAsServiceGas(gasLimit - gasCost),
+      tryAsServiceGas(overflow ? MAX_VALUE_U64 : newGasLimit),
       reportsToAccumulateSequentially,
       newTransfers,
       slot,
@@ -437,7 +445,7 @@ export class Accumulate {
         serviceId,
         accumulateData.getTransfers(serviceId),
         operands,
-        accumulateData.getGasCost(serviceId),
+        accumulateData.getGasLimit(serviceId),
         slot,
         entropy,
         currentState,
@@ -471,7 +479,7 @@ export class Accumulate {
             newV,
             [],
             accumulateData.getOperands(newV),
-            accumulateData.getGasCost(newV),
+            accumulateData.getGasLimit(newV),
             slot,
             entropy,
             checkpoint,
