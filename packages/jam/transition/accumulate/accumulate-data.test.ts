@@ -94,7 +94,7 @@ describe("AccumulateData", () => {
       const accumulateData = new AccumulateData(reports, [], new Map());
       const expectedGasCost = report.results.reduce((acc, result) => acc + result.gas, 0n);
 
-      const result = accumulateData.getGasCost(serviceId);
+      const result = accumulateData.getGasLimit(serviceId);
 
       deepEqual(result, expectedGasCost);
     });
@@ -109,7 +109,7 @@ describe("AccumulateData", () => {
       const accumulateData = new AccumulateData(reports, [], autoAccumulateServices);
       const expectedGasCost = report.results.reduce((acc, result) => acc + result.gas, 0n) + autoAccumulateGas;
 
-      const result = accumulateData.getGasCost(serviceId);
+      const result = accumulateData.getGasLimit(serviceId);
 
       deepEqual(result, expectedGasCost);
     });
