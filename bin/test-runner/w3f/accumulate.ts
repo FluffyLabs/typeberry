@@ -81,11 +81,7 @@ class TestState {
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && privileges.register === undefined) {
       throw new Error("Privileges from version 0.7.1 must have `register` field!");
     }
-    const autoAccumulateServices = new Map<ServiceId, ServiceGas>();
-
-    for (const { gas, id } of privileges.always_acc) {
-      autoAccumulateServices.set(id, gas);
-    }
+    const autoAccumulateServices = new Map(privileges.always_acc.map(({ gas, id }) => [id, gas]));
 
     return InMemoryState.partial(chainSpec, {
       timeslot: slot,
