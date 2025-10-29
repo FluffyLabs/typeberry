@@ -8,18 +8,10 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_071", {
     "genesis.bin",
     "report.bin",
 
-    "fuzzy/00000008.bin", // service
-    "fuzzy/00000009.bin", // service
-    "fuzzy/00000042.bin", // service
-    "fuzzy/00000068.bin", // service
-    "fuzzy/00000069.bin", // service
-    "fuzzy/00000096.bin", // service
-    "fuzzy/00000097.bin", // service
-    "fuzzy/00000103.bin", // service
-    "fuzzy/00000144.bin", // statistics
-    "fuzzy/00000151.bin", // service
-    "fuzzy/00000181.bin", // service
-    "fuzzy/00000188.bin", // statistics
+    // "fuzzy/00000014.bin", // statistics + alot
+    // "fuzzy/00000016.bin", // statistics + alot
+    // "fuzzy/00000037.bin", // statistics + afew
+    // "fuzzy/00000111.bin", // statistics
   ],
 })
   .then((r) => logger.log`${r}`)

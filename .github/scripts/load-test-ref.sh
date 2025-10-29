@@ -1,4 +1,4 @@
 #!/bin/sh
-REF=8dbee0435e79c6434dd0b56a29c245bbfb3bc63a
+REF=7053b4e242f15b93954eb4b98f978bb125e1ea3a
 
 echo "TEST_VECTORS_REF=$REF" >> "$GITHUB_ENV"
