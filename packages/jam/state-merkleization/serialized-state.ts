@@ -112,7 +112,7 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
       return undefined;
     }
     const data = Decoder.decodeObject(Codec, bytes, this.spec);
-    // this.dataCache.set(key, data);
+    this.dataCache.set(key, data);
     return data;
   }
 
