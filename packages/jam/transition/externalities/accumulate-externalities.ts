@@ -78,7 +78,7 @@ const logger = Logger.new(import.meta.filename, "externalities");
 export class AccumulateExternalities
   implements PartialState, AccountsWrite, AccountsRead, AccountsInfo, AccountsLookup
 {
-  private checkpointedState: AccumulationStateUpdate | null = null;
+  private checkpointedState: AccumulationStateUpdate;
   /** `x_i`: next service id we are going to create. */
   private nextNewServiceId: ServiceId;
 
@@ -91,6 +91,7 @@ export class AccumulateExternalities
     nextNewServiceIdCandidate: ServiceId,
     private readonly currentTimeslot: TimeSlot,
   ) {
+    this.checkpointedState = AccumulationStateUpdate.copyFrom(updatedState.stateUpdate);
     this.nextNewServiceId = this.getNextAvailableServiceId(nextNewServiceIdCandidate);
 
     const service = this.updatedState.getServiceInfo(this.currentServiceId);
@@ -99,8 +100,8 @@ export class AccumulateExternalities
     }
   }
 
-  /** Return the underlying state update and checkpointed state (if any). */
-  getStateUpdates(): [AccumulationStateUpdate, AccumulationStateUpdate | null] {
+  /** Return the underlying state update and checkpointed state. */
+  getStateUpdates(): [AccumulationStateUpdate, AccumulationStateUpdate] {
     return [this.updatedState.stateUpdate, this.checkpointedState];
   }
 

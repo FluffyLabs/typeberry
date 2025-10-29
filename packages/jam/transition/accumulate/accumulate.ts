@@ -460,7 +460,7 @@ export class Accumulate {
       // [0.7.1]: do not update statistics, if the service only had incoming transfers
       if (
         (Compatibility.isLessThan(GpVersion.V0_7_2) && count > 0) ||
-        (Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) && (count > 0 || consumedGas > 0n))
+        (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && (count > 0 || consumedGas > 0n))
       ) {
         serviceStatistics.count = tryAsU32(serviceStatistics.count + count);
         serviceStatistics.gasUsed = tryAsServiceGas(serviceStatistics.gasUsed + consumedGas);
@@ -584,7 +584,7 @@ export class Accumulate {
   }
 
   async transition({ reports, slot, entropy }: AccumulateInput): Promise<Result<AccumulateResult, ACCUMULATION_ERROR>> {
-    const statistics = new Map();
+    const statistics: Map<ServiceId, CountAndGasUsed> = new Map();
     const accumulateQueue = new AccumulateQueue(this.chainSpec, this.state);
     const toAccumulateImmediately = accumulateQueue.getWorkReportsToAccumulateImmediately(reports);
     const toAccumulateLater = accumulateQueue.getWorkReportsToAccumulateLater(reports);
