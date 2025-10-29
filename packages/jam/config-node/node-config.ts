@@ -72,49 +72,45 @@ export class NodeConfiguration {
   ) {}
 }
 
-/**
- * We need to properly handle 2 cases:
- *   1) "dev" or "default" are explicitly requested and we merge the rest of entries onto that
- *   2) a path to a full json config file is provided, then we merge the remaining entries onto it
- */
 export function loadConfig(config: string[], withRelPath: (p: string) => string): NodeConfiguration {
   logger.log`🔧 Loading config`;
   let mergedJson: AnyJsonObject = {};
-  let startWithSegment = 1; // "dev" or "default" is the first segment, so we start merging from the second one
 
-  if (config[0] === DEV_CONFIG) {
-    logger.log`🔧 Applying dev config`;
-    mergedJson = structuredClone(configs.dev);
-  } else if (config[0] === DEFAULT_CONFIG) {
-    mergedJson = structuredClone(configs.default);
-  } else {
-    startWithSegment = 0; // neither "dev" nor "default" was requested, so we expect the user to provide a full config
-  }
+  for (const entry of config) {
+    logger.log`🔧 Applying '${entry}'`;
 
-  for (let i = startWithSegment; i < config.length; i++) {
-    logger.log`🔧 Applying '${config[i]}'`;
+    if (entry === DEV_CONFIG) {
+      mergedJson = structuredClone(configs.dev); // clone to avoid mutating the original config. not doing a merge since dev and default should theoretically replace all properties.
+      continue;
+    }
+
+    if (entry === DEFAULT_CONFIG) {
+      mergedJson = structuredClone(configs.default);
+      continue;
+    }
 
     // try to parse as JSON
     try {
-      const parsed = JSON.parse(config[i]);
+      const parsed = JSON.parse(entry);
       deepMerge(mergedJson, parsed);
-    } catch {
-      // if not, try to load as file
-      if (config[i].indexOf("=") === -1 && config[i].endsWith(".json")) {
-        try {
-          const configFile = fs.readFileSync(withRelPath(config[i]), "utf8");
-          const parsed = JSON.parse(configFile);
-          deepMerge(mergedJson, parsed);
-        } catch (e) {
-          throw new Error(`Unable to load config from ${config[i]}: ${e}`);
-        }
-      } else {
-        // finally try to process as a pseudo-jq query
-        try {
-          processQuery(mergedJson, config[i], withRelPath);
-        } catch (e) {
-          throw new Error(`Error while processing '${config[i]}': ${e}`);
-        }
+      continue;
+    } catch {}
+
+    // if not, try to load as file
+    if (entry.indexOf("=") === -1 && entry.endsWith(".json")) {
+      try {
+        const configFile = fs.readFileSync(withRelPath(entry), "utf8");
+        const parsed = JSON.parse(configFile);
+        deepMerge(mergedJson, parsed);
+      } catch (e) {
+        throw new Error(`Unable to load config from ${entry}: ${e}`);
+      }
+    } else {
+      // finally try to process as a pseudo-jq query
+      try {
+        processQuery(mergedJson, entry, withRelPath);
+      } catch (e) {
+        throw new Error(`Error while processing '${entry}': ${e}`);
       }
     }
   }
