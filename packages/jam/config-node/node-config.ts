@@ -125,15 +125,15 @@ export function loadConfig(config: string[], withRelPath: (p: string) => string)
 }
 
 function deepMerge(target: AnyJsonObject, source: JsonValue): void {
-  if (typeof source !== "object" || source === null || Array.isArray(source)) {
+  if (!isJsonObject(source)) {
     throw new Error(`Expected object, got ${source}`);
   }
   for (const key in source) {
-    if (source[key] !== null && typeof source[key] === "object" && !Array.isArray(source[key])) {
-      if (!(key in target)) {
+    if (isJsonObject(source[key])) {
+      if (!isJsonObject(target[key])) {
         target[key] = {};
       }
-      deepMerge(target[key] as AnyJsonObject, source[key] as AnyJsonObject);
+      deepMerge(target[key], source[key]);
     } else {
       target[key] = source[key];
     }
@@ -161,7 +161,7 @@ function processQuery(input: AnyJsonObject, query: string, withRelPath: (p: stri
       path = path.slice(0, -1);
     }
 
-    let parsedValue: AnyJsonObject;
+    let parsedValue: JsonValue;
     if (value.endsWith(".json")) {
       try {
         const configFile = fs.readFileSync(withRelPath(value), "utf8");
@@ -188,7 +188,7 @@ function processQuery(input: AnyJsonObject, query: string, withRelPath: (p: stri
     let target = input;
     for (let i = 0; i < pathParts.length; i++) {
       const part = pathParts[i];
-      if (typeof target[part] !== "object" || target[part] === null || Array.isArray(target[part])) {
+      if (!isJsonObject(target[part])) {
         target[part] = {};
       }
       if (i === pathParts.length - 1) {
@@ -213,3 +213,7 @@ interface AnyJsonObject {
 }
 
 interface JsonArray extends Array<JsonValue> {}
+
+function isJsonObject(value: JsonValue): value is AnyJsonObject {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
