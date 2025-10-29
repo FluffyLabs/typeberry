@@ -34,7 +34,7 @@ export async function main(args: string[]) {
   let nodeName: string;
 
   const argv = minimist(args, {
-    string: ["port", "nodeName", "config"],
+    string: ["port", "name", "config"],
     boolean: ["help"],
     default: {
       port: DEFAULT_PORT.toString(),

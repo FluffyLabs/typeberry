@@ -218,7 +218,6 @@ function parseValueOptionAsArray<X, S extends string, T>(
   const parsedVals: T[] = vals.reduce((result: T[], val: unknown) => {
     const valType = typeof val;
     if (valType !== typeOfX) {
-      console.log("valType", valType);
       throw new Error(`Option '--${option}' requires an argument of type: ${typeOfX}, got: ${valType}.`);
     }
     const parsed = parser(val as X);

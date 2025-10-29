@@ -126,7 +126,7 @@ export function loadConfig(config: string[], withRelPath: (p: string) => string)
 
 function deepMerge(target: AnyJsonObject, source: AnyJsonObject) {
   for (const key in source) {
-    if (typeof source[key] === "object" && !Array.isArray(source[key])) {
+    if (source[key] !== null && typeof source[key] === "object" && !Array.isArray(source[key])) {
       if (!(key in target)) {
         target[key] = {};
       }
@@ -186,18 +186,18 @@ function processQuery(input: AnyJsonObject, query: string, withRelPath: (p: stri
     let target = input;
     for (let i = 0; i < pathParts.length; i++) {
       const part = pathParts[i];
+      if (typeof target[part] !== "object" || target[part] === null || Array.isArray(target[part])) {
+        target[part] = {};
+      }
       if (i === pathParts.length - 1) {
         if (merge) {
-          target[part] = deepMerge(target[part] as AnyJsonObject, parsedValue);
+          target[part] = deepMerge(target[part], parsedValue);
         } else {
           target[part] = parsedValue;
         }
         return;
       }
-      if (typeof target[part] !== "object") {
-        target[part] = {};
-      }
-      target = target[part] as AnyJsonObject;
+      target = target[part];
     }
   }
 
