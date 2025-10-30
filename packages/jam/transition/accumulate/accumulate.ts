@@ -294,7 +294,7 @@ export class Accumulate {
     statistics: Map<ServiceId, CountAndGasUsed>,
     stateUpdate: AccumulationStateUpdate,
     autoAccumulateServices: Map<ServiceId, ServiceGas>,
-    yieldedRoots: [ServiceId, OpaqueHash][],
+    yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>>,
   ): Promise<SequentialAccumulationResult> {
     const i = this.findReportCutoffIndex(gasLimit, reports);
 
@@ -359,7 +359,7 @@ export class Accumulate {
     statistics: Map<ServiceId, CountAndGasUsed>,
     stateUpdate: AccumulationStateUpdate,
     autoAccumulateServices: Map<ServiceId, ServiceGas>,
-    yieldedRoots: [ServiceId, OpaqueHash][],
+    yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>>,
   ): Promise<SequentialAccumulationResult> {
     const i = this.findReportCutoffIndex(gasLimit, reports);
 
@@ -434,7 +434,7 @@ export class Accumulate {
     entropy: EntropyHash,
     statistics: Map<ServiceId, CountAndGasUsed>,
     inputStateUpdate: AccumulationStateUpdate,
-    yieldedRoots: [ServiceId, OpaqueHash][],
+    yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>>,
   ): Promise<ParallelAccumulationResult> {
     const serviceIds = accumulateData.getServiceIds();
 
@@ -490,9 +490,14 @@ export class Accumulate {
       currentState = stateUpdate === null ? checkpoint : stateUpdate;
 
       const yieldedRoot = currentState.takeYieldedRoot();
-
       if (yieldedRoot !== null) {
-        yieldedRoots.push([serviceId, yieldedRoot]);
+        const rootsSet = yieldedRoots.get(serviceId);
+        if (rootsSet === undefined) {
+          const hashSet = HashSet.from([yieldedRoot]);
+          yieldedRoots.set(serviceId, hashSet);
+        } else {
+          rootsSet.insert(yieldedRoot);
+        }
       }
 
       if (Compatibility.is(GpVersion.V0_7_0) && serviceId === currentManager) {
@@ -615,7 +620,7 @@ export class Accumulate {
 
   async transition({ reports, slot, entropy }: AccumulateInput): Promise<Result<AccumulateResult, ACCUMULATION_ERROR>> {
     const statistics: Map<ServiceId, CountAndGasUsed> = new Map();
-    const yieldedRoots: [ServiceId, OpaqueHash][] = [];
+    const yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>> = new Map();
     const accumulateQueue = new AccumulateQueue(this.chainSpec, this.state);
     const toAccumulateImmediately = accumulateQueue.getWorkReportsToAccumulateImmediately(reports);
     const toAccumulateLater = accumulateQueue.getWorkReportsToAccumulateLater(reports);
@@ -684,9 +689,11 @@ export class Accumulate {
       services,
     );
 
-    const accumulationOutputUnsorted: AccumulationOutput[] = yieldedRoots.map(([serviceId, root]) => {
-      return { serviceId, output: root.asOpaque() };
-    });
+    const accumulationOutputUnsorted: AccumulationOutput[] = Array.from(yieldedRoots).flatMap(([serviceId, roots]) =>
+      Array.from(roots).map((root) => {
+        return { serviceId, output: root };
+      }),
+    );
     const accumulationOutput = SortedArray.fromArray(accumulationOutputComparator, accumulationOutputUnsorted);
     const authQueues = (() => {
       if (authorizationQueues.size === 0) {
