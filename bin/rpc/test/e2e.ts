@@ -13,7 +13,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
   let server: RpcServer;
 
   before(async () => {
-    server = await main(["--config", `${import.meta.dirname}/e2e.config.json`]);
+    server = await main([`--config=${import.meta.dirname}/e2e.config.json`]);
     client = new RpcClient("ws://localhost:19800");
     await client.waitForConnection();
   });
