@@ -691,8 +691,9 @@ export class AccumulateExternalities
 
   providePreimage(serviceId: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {
     // we need to explicitly check if service exists, since it's a different error.
-    // TODO [ToDr] what about newly created services?
-    const service = serviceId === null ? null : this.updatedState.state.getService(serviceId);
+    // we also check if it's in newly created
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/384e03384e03?v=0.7.2
+    const service = serviceId === null ? null : this.updatedState.getServiceInfo(serviceId);
     if (service === null || serviceId === null) {
       return Result.error(ProvidePreimageError.ServiceNotFound, () => `Service not found: ${serviceId}`);
     }

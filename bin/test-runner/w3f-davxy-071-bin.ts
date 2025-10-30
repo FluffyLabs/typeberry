@@ -7,18 +7,11 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_071", {
   ignored: [
     "genesis.bin",
     "report.bin",
-    "fuzzy/00000008.bin", // storage + alot?
-    "fuzzy/00000009.bin", // statistics?
-    "fuzzy/00000042.bin", // recent history?
-    "fuzzy/00000068.bin", // statistics?
-    "fuzzy/00000069.bin", // statistics?
-    "fuzzy/00000096.bin", // statistics?
-    "fuzzy/00000097.bin", // stats + alot?
-    "fuzzy/00000103.bin", // statistics?
-    "fuzzy/00000144.bin", // statistics?
-    "fuzzy/00000151.bin", // history + few
-    "fuzzy/00000181.bin", // history + few
-    "fuzzy/00000188.bin", // statistics?
+
+    "fuzzy/00000014.bin", // statistics + alot
+    "fuzzy/00000016.bin", // statistics + alot
+    "fuzzy/00000037.bin", // statistics + afew
+    "fuzzy/00000111.bin", // statistics
   ],
 })
   .then((r) => logger.log`${r}`)
