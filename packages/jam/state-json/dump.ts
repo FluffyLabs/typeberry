@@ -92,10 +92,10 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
         chi_v: "number",
         chi_r: json.optional("number"),
         chi_g: json.nullable(
-          json.array({
-            service: "number",
-            gasLimit: json.fromNumber((v) => tryAsServiceGas(v)),
-          }),
+          json.map(
+            "number",
+            json.fromNumber((v) => tryAsServiceGas(v)),
+          ),
         ),
       },
       pi: JsonStatisticsData.fromJson,
@@ -162,7 +162,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           assigners: chi.chi_a,
           delegator: chi.chi_v,
           registrar: chi.chi_r ?? tryAsServiceId(2 ** 32 - 1),
-          autoAccumulateServices: chi.chi_g ?? [],
+          autoAccumulateServices: chi.chi_g ?? new Map(),
         }),
         statistics: JsonStatisticsData.toStatisticsData(spec, pi),
         accumulationQueue: omega,

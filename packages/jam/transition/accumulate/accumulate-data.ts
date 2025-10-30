@@ -4,7 +4,6 @@ import type { ArrayView } from "@typeberry/collections";
 import type { PendingTransfer } from "@typeberry/jam-host-calls";
 import { sumU64, tryAsU32, type U32 } from "@typeberry/numbers";
 import { MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
-import type { AutoAccumulate } from "@typeberry/state";
 import { Operand } from "./operand.js";
 
 class AccumulateDataItem {
@@ -27,16 +26,15 @@ class AccumulateDataItem {
 export class AccumulateData {
   private readonly reportsDataByServiceId: Map<ServiceId, AccumulateDataItem>;
   private readonly transfersByServiceId: Map<ServiceId, PendingTransfer[]>;
-  private readonly gasLimitByServiceId: Map<ServiceId, ServiceGas>;
   private readonly serviceIds: ServiceId[];
+  private readonly gasLimitByServiceId: Map<ServiceId, ServiceGas>;
 
   constructor(
     reports: ArrayView<WorkReport>,
     transfers: PendingTransfer[],
-    autoAccumulateServices: readonly AutoAccumulate[],
+    private readonly autoAccumulateServicesByServiceId: Map<ServiceId, ServiceGas>,
   ) {
-    const { serviceIds: serviceIdsFromAutoAccumulate, gasLimitByServiceId: autoAccumulateGasLimitByServiceId } =
-      this.transformAutoAccumulateServices(autoAccumulateServices);
+    const serviceIdsFromAutoAccumulate = new Set(autoAccumulateServicesByServiceId.keys());
     const {
       reportsDataByServiceId,
       serviceIds: serviceIdsFromReports,
@@ -68,7 +66,7 @@ export class AccumulateData {
      */
     this.gasLimitByServiceId = this.mergeGasLimitByServiceId(
       this.serviceIds,
-      autoAccumulateGasLimitByServiceId,
+      autoAccumulateServicesByServiceId,
       reportsGasLimitByServiceId,
       transfersGasLimitByServiceId,
     );
@@ -128,23 +126,6 @@ export class AccumulateData {
     }
 
     return { transfersByServiceId, serviceIds, gasLimitByServiceId };
-  }
-
-  /**
-   * Transform the list of auto accumulate services into:
-   * - map: gas limit by service id
-   * - set: service ids
-   */
-  private transformAutoAccumulateServices(autoAccumulateServices: readonly AutoAccumulate[]) {
-    const serviceIds = new Set<ServiceId>();
-    const gasLimitByServiceId: Map<ServiceId, ServiceGas> = new Map();
-
-    for (const autoAccumulate of autoAccumulateServices) {
-      gasLimitByServiceId.set(autoAccumulate.service, autoAccumulate.gasLimit);
-      serviceIds.add(autoAccumulate.service);
-    }
-
-    return { serviceIds, gasLimitByServiceId };
   }
 
   /**
