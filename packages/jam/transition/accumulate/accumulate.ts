@@ -459,6 +459,9 @@ export class Accumulate {
 
       // [0.7.1]: do not update statistics, if the service only had incoming transfers
       if (
+        // NOTE Davxy’s test vectors prematurely implemented this condition to update statistics.
+        // It’s included here solely to ensure the test vectors pass.
+        // https://github.com/davxy/jam-test-vectors/pull/104
         (Compatibility.isSuite(TestSuite.W3F_DAVXY, GpVersion.V0_7_1) && (count > 0 || consumedGas > 0n)) ||
         (Compatibility.isLessThan(GpVersion.V0_7_2) && count > 0) ||
         (Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) && (count > 0 || consumedGas > 0n))
