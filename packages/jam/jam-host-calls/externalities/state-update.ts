@@ -63,7 +63,7 @@ export class AccumulationStateUpdate {
     /** Pending transfers. */
     public transfers: PendingTransfer[],
     /** Yielded accumulation root. */
-    public readonly yieldedRoots: Map<ServiceId, OpaqueHash> = new Map(),
+    public yieldedRoot: OpaqueHash | null = null,
   ) {}
 
   /** Create new empty state update. */
@@ -102,7 +102,7 @@ export class AccumulationStateUpdate {
       storage: deepCloneMapWithArray(from.services.storage),
     };
     const transfers = [...from.transfers];
-    const update = new AccumulationStateUpdate(serviceUpdates, transfers, new Map(from.yieldedRoots));
+    const update = new AccumulationStateUpdate(serviceUpdates, transfers, from.yieldedRoot);
 
     // update entries
     for (const [k, v] of from.authorizationQueues) {
@@ -127,6 +127,13 @@ export class AccumulationStateUpdate {
     const transfers = this.transfers;
     this.transfers = [];
     return transfers;
+  }
+
+  /** Retrieve and clear yielded root. */
+  takeYieldedRoot() {
+    const yieldedRoot = this.yieldedRoot;
+    this.yieldedRoot = null;
+    return yieldedRoot;
   }
 }
 
@@ -228,6 +235,16 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     hash: PreimageHash,
     length: U64,
   ): LookupHistoryItem | null {
+    const updatedService = this.stateUpdate.services.updated.get(serviceId);
+
+    /** Return lookup history item for newly created service */
+    if (updatedService !== undefined && updatedService.action.kind === UpdateServiceKind.Create) {
+      const lookupHistoryItem = updatedService.action.lookupHistory;
+      if (lookupHistoryItem?.hash.isEqualTo(hash) && length === BigInt(lookupHistoryItem.length)) {
+        return lookupHistoryItem;
+      }
+    }
+
     const preimages = this.stateUpdate.services.preimages.get(serviceId) ?? [];
     // TODO [ToDr] This is most likely wrong. We may have `provide` and `remove` within
     // the same state update. We should however switch to proper "updated state"

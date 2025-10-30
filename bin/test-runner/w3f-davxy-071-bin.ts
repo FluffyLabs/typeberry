@@ -7,9 +7,6 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_071", {
   ignored: [
     "genesis.bin",
     "report.bin",
-
-    "fuzzy/00000014.bin", // statistics + alot
-    "fuzzy/00000016.bin", // statistics + alot
     "fuzzy/00000037.bin", // statistics + afew
     "fuzzy/00000111.bin", // statistics
   ],
