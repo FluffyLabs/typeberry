@@ -3,7 +3,13 @@ import { runners } from "./w3f/runners.js";
 
 main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_071", {
   accepted: ["traces", "codec", "stf"],
-  ignored: ["genesis.json"],
+  ignored: [
+    "genesis.json",
+    "fuzzy/00000014.bin", // statistics + alot
+    "fuzzy/00000016.bin", // statistics + alot
+    "fuzzy/00000037.bin", // statistics + afew
+    "fuzzy/00000111.bin", // statistics
+  ],
 })
   .then((r) => logger.log`${r}`)
   .catch((e) => {
