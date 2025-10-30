@@ -33,7 +33,7 @@ import {
   type ServicesUpdate,
   tryAsPerCore,
 } from "@typeberry/state";
-import { assertEmpty, Compatibility, GpVersion, Result } from "@typeberry/utils";
+import { assertEmpty, Compatibility, GpVersion, Result, TestSuite } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/index.js";
 import type { CountAndGasUsed } from "../statistics.js";
@@ -460,7 +460,8 @@ export class Accumulate {
       // [0.7.1]: do not update statistics, if the service only had incoming transfers
       if (
         (Compatibility.isLessThan(GpVersion.V0_7_2) && count > 0) ||
-        (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && (count > 0 || consumedGas > 0n))
+        ((Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) || Compatibility.isSuite(TestSuite.W3F_DAVXY)) &&
+          (count > 0 || consumedGas > 0n))
       ) {
         serviceStatistics.count = tryAsU32(serviceStatistics.count + count);
         serviceStatistics.gasUsed = tryAsServiceGas(serviceStatistics.gasUsed + consumedGas);
