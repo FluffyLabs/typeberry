@@ -9,7 +9,10 @@ const runners = [
 ].map((x) => x.build());
 
 main(runners, process.argv.slice(2), "test-vectors/javajam", {
-  accepted: ["stf/state_transitions/"],
+  patterns: [".json"],
+  accepted: {
+    ".json": ["stf/state_transitions/"],
+  },
   ignored: ["testnetKeys.json", "stf/blocks/", "erasure_coding/"],
 })
   .then((r) => logger.log`${r}`)

@@ -9,7 +9,10 @@ const runners = [
 ].map((x) => x.build());
 
 main(runners, process.argv.slice(2), "test-vectors/jamduna_067", {
-  accepted: ["traces/"],
+  patterns: [".json"],
+  accepted: {
+    ".json": ["traces/"],
+  },
   ignored: [],
 })
   .then((r) => logger.log`${r}`)

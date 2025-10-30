@@ -2,6 +2,7 @@ import { logger, main } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
 main(runners, process.argv.slice(2), "test-vectors/w3f-fluffy", {
+  patterns: [".json"],
   ignored: [
     "genesis.json",
     // invalid tests
