@@ -276,7 +276,7 @@ export interface PartialState {
     a: PerCore<ServiceId>,
     v: ServiceId | null,
     r: ServiceId | null,
-    z: [ServiceId, ServiceGas][],
+    z: Map<ServiceId, ServiceGas>,
   ): Result<OK, UpdatePrivilegesError>;
 
   /** Yield accumulation trie result hash. */
