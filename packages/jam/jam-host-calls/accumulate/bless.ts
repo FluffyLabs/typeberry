@@ -6,7 +6,14 @@ import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typebe
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { tryAsPerCore } from "@typeberry/state";
-import { asOpaqueType, assertNever, Compatibility, GpVersion, safeAllocUint8Array } from "@typeberry/utils";
+import {
+  asOpaqueType,
+  assertNever,
+  Compatibility,
+  GpVersion,
+  lazyInspect,
+  safeAllocUint8Array,
+} from "@typeberry/utils";
 import { type PartialState, UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -86,7 +93,7 @@ export class Bless implements HostCallHandler {
     const authorizersDecoder = Decoder.fromBlob(res);
     const memoryReadResult = memory.loadInto(res, authorization);
     if (memoryReadResult.isError) {
-      logger.trace`BLESS(${manager}, ${delegator}, ${registrar}, ${autoAccumulate}) <- PANIC`;
+      logger.trace`BLESS(${manager}, ${delegator}, ${registrar}, ${lazyInspect(autoAccumulate)}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
@@ -105,7 +112,7 @@ export class Bless implements HostCallHandler {
     );
 
     if (updateResult.isOk) {
-      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulate}) <- OK`;
+      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${lazyInspect(autoAccumulate)}) <- OK`;
       regs.set(IN_OUT_REG, HostCallResult.OK);
       return;
     }
@@ -114,13 +121,13 @@ export class Bless implements HostCallHandler {
 
     // NOTE: `UpdatePrivilegesError.UnprivilegedService` won't happen in 0.7.1+
     if (e === UpdatePrivilegesError.UnprivilegedService) {
-      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulate}) <- HUH`;
+      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${lazyInspect(autoAccumulate)}) <- HUH`;
       regs.set(IN_OUT_REG, HostCallResult.HUH);
       return;
     }
 
     if (e === UpdatePrivilegesError.InvalidServiceId) {
-      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulate}) <- WHO`;
+      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${lazyInspect(autoAccumulate)}) <- WHO`;
       regs.set(IN_OUT_REG, HostCallResult.WHO);
       return;
     }

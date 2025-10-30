@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { check } from "./debug.js";
+import { check, inspect, lazyInspect } from "./debug.js";
 
 describe("utils::check", () => {
   it("should do nothing if condition is met", () => {
@@ -12,5 +12,19 @@ describe("utils::check", () => {
     assert.throws(() => {
       check`${false} Oopsie ${4}, ${"!"} ${num}`;
     }, new Error("Assertion failure: Oopsie 4, ! 10"));
+  });
+});
+
+describe("utils::lazyInspect", () => {
+  it("should correctly print a map", () => {
+    const map = new Map([
+      ["a", 1],
+      ["b", 2],
+    ]);
+
+    const lazyInspectedMap = `${lazyInspect(map)}`;
+    const expected = inspect(map);
+
+    assert.strictEqual(lazyInspectedMap, expected);
   });
 });
