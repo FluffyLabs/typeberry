@@ -12,7 +12,7 @@ import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { MAX_VALUE, MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import { codecPerCore, type PerCore, tryAsPerCore } from "@typeberry/state";
-import { Compatibility, GpVersion, Result } from "@typeberry/utils";
+import { Compatibility, deepEqual, GpVersion, Result } from "@typeberry/utils";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
@@ -28,7 +28,7 @@ const REGISTRAR_REG = 10;
 const DICTIONARY_START = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? 11 : 10;
 const DICTIONARY_COUNT = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? 12 : 11;
 
-function prepareServiceGasEntires() {
+function prepareServiceGasMap() {
   const entries: [ServiceId, ServiceGas][] = [];
   entries.push([tryAsServiceId(10_000), tryAsServiceGas(15_000)]);
   entries.push([tryAsServiceId(20_000), tryAsServiceGas(15_000)]);
@@ -94,7 +94,7 @@ describe("HostCalls: Bless", () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const bless = new Bless(serviceId, accumulate, tinyChainSpec);
-    const entries = prepareServiceGasEntires();
+    const entries = prepareServiceGasMap();
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers);
 
@@ -105,17 +105,23 @@ describe("HostCalls: Bless", () => {
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      assert.deepStrictEqual(accumulate.privilegedServices, [
-        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), tryAsServiceId(42), entries],
-      ]);
-    } else {
-      assert.deepStrictEqual(accumulate.privilegedServices, [
+      deepEqual(accumulate.privilegedServices, [
         [
           tryAsServiceId(5),
-          [tryAsServiceId(10), tryAsServiceId(15)],
+          tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
+          tryAsServiceId(20),
+          tryAsServiceId(42),
+          new Map(entries),
+        ],
+      ]);
+    } else {
+      deepEqual(accumulate.privilegedServices, [
+        [
+          tryAsServiceId(5),
+          tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
           tryAsServiceId(20),
           tryAsServiceId(MAX_VALUE),
-          entries,
+          new Map(entries),
         ],
       ]);
     }
@@ -125,7 +131,7 @@ describe("HostCalls: Bless", () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const bless = new Bless(serviceId, accumulate, tinyChainSpec);
-    const entries = prepareServiceGasEntires();
+    const entries = prepareServiceGasMap();
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers, { skipDictionary: true });
 
@@ -141,7 +147,7 @@ describe("HostCalls: Bless", () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const bless = new Bless(serviceId, accumulate, tinyChainSpec);
-    const entries = prepareServiceGasEntires();
+    const entries = prepareServiceGasMap();
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers, { skipAuth: true });
 
@@ -157,7 +163,7 @@ describe("HostCalls: Bless", () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const bless = new Bless(serviceId, accumulate, tinyChainSpec);
-    const entries = prepareServiceGasEntires();
+    const entries = prepareServiceGasMap();
     entries.push([tryAsServiceId(5), tryAsServiceGas(10_000)]);
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers);
@@ -169,17 +175,23 @@ describe("HostCalls: Bless", () => {
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      assert.deepStrictEqual(accumulate.privilegedServices, [
-        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), tryAsServiceId(42), entries],
-      ]);
-    } else {
-      assert.deepStrictEqual(accumulate.privilegedServices, [
+      deepEqual(accumulate.privilegedServices, [
         [
           tryAsServiceId(5),
-          [tryAsServiceId(10), tryAsServiceId(15)],
+          tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
+          tryAsServiceId(20),
+          tryAsServiceId(42),
+          new Map(entries),
+        ],
+      ]);
+    } else {
+      deepEqual(accumulate.privilegedServices, [
+        [
+          tryAsServiceId(5),
+          tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
           tryAsServiceId(20),
           tryAsServiceId(MAX_VALUE),
-          entries,
+          new Map(entries),
         ],
       ]);
     }
@@ -189,7 +201,7 @@ describe("HostCalls: Bless", () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const bless = new Bless(serviceId, accumulate, tinyChainSpec);
-    const entries = prepareServiceGasEntires();
+    const entries = prepareServiceGasMap();
     entries.push(entries[entries.length - 1]);
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers);
@@ -201,17 +213,23 @@ describe("HostCalls: Bless", () => {
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      assert.deepStrictEqual(accumulate.privilegedServices, [
-        [tryAsServiceId(5), [tryAsServiceId(10), tryAsServiceId(15)], tryAsServiceId(20), tryAsServiceId(42), entries],
-      ]);
-    } else {
-      assert.deepStrictEqual(accumulate.privilegedServices, [
+      deepEqual(accumulate.privilegedServices, [
         [
           tryAsServiceId(5),
-          [tryAsServiceId(10), tryAsServiceId(15)],
+          tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
+          tryAsServiceId(20),
+          tryAsServiceId(42),
+          new Map(entries),
+        ],
+      ]);
+    } else {
+      deepEqual(accumulate.privilegedServices, [
+        [
+          tryAsServiceId(5),
+          tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
           tryAsServiceId(20),
           tryAsServiceId(MAX_VALUE),
-          entries,
+          new Map(entries),
         ],
       ]);
     }
@@ -225,7 +243,7 @@ describe("HostCalls: Bless", () => {
     );
     const serviceId = tryAsServiceId(11_000);
     const bless = new Bless(serviceId, accumulate, tinyChainSpec);
-    const entries = prepareServiceGasEntires();
+    const entries = prepareServiceGasMap();
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers);
 
@@ -246,7 +264,7 @@ describe("HostCalls: Bless", () => {
     );
     const serviceId = tryAsServiceId(11_000);
     const bless = new Bless(serviceId, accumulate, tinyChainSpec);
-    const entries = prepareServiceGasEntires();
+    const entries = prepareServiceGasMap();
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers, { manager: tryAsU64(MAX_VALUE_U64) });
 
@@ -267,7 +285,7 @@ describe("HostCalls: Bless", () => {
     );
     const serviceId = tryAsServiceId(11_000);
     const bless = new Bless(serviceId, accumulate, tinyChainSpec);
-    const entries = prepareServiceGasEntires();
+    const entries = prepareServiceGasMap();
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers, { validator: tryAsU64(MAX_VALUE_U64) });
 
@@ -288,7 +306,7 @@ describe("HostCalls: Bless", () => {
     );
     const serviceId = tryAsServiceId(11_000);
     const bless = new Bless(serviceId, accumulate, tinyChainSpec);
-    const entries = prepareServiceGasEntires();
+    const entries = prepareServiceGasMap();
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers, { registrar: tryAsU64(MAX_VALUE_U64) });
 

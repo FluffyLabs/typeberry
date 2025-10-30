@@ -1,7 +1,13 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import fs from "node:fs";
+import { beforeEach, describe, it, mock } from "node:test";
+import { configs } from "@typeberry/configs";
+import polkajamConfig from "@typeberry/configs/typeberry-polkajam-dev.json" with { type: "json" };
 import { parseFromJson } from "@typeberry/json-parser";
+import { workspacePathFix } from "@typeberry/utils";
 import { KnownChainSpec, loadConfig, NodeConfiguration } from "./node-config.js";
+
+const withRelPath = workspacePathFix(`${import.meta.dirname}/../..`);
 
 const NODE_CONFIG_TEST = {
   $schema: "https://typeberry.dev/schemas/config-v1.schema.json",
@@ -70,6 +76,211 @@ describe("Importing Node Configuration: Error Handling", () => {
 
 describe("Load dev config", () => {
   it("should load dev config without crashing", () => {
-    loadConfig("dev");
+    loadConfig(["dev"], withRelPath);
+  });
+});
+
+describe("loadConfig", () => {
+  beforeEach(() => {
+    mock.restoreAll();
+  });
+
+  it("should load default config", () => {
+    const config = loadConfig(["default"], withRelPath);
+    assert.deepStrictEqual(config, parseFromJson(configs.default, NodeConfiguration.fromJson));
+  });
+
+  it("should load dev config", () => {
+    const config = loadConfig(["dev"], withRelPath);
+    assert.deepStrictEqual(config, parseFromJson(configs.dev, NodeConfiguration.fromJson));
+  });
+
+  it("should parse inline json config and deep merge onto previous entries", () => {
+    const config = loadConfig(
+      ["default", JSON.stringify({ database_base_path: "/test/path", chain_spec: { bootnodes: [] } })],
+      withRelPath,
+    );
+    assert.deepStrictEqual(
+      config,
+      parseFromJson(
+        {
+          ...configs.default,
+          database_base_path: "/test/path",
+          chain_spec: { ...configs.default.chain_spec, bootnodes: [] },
+        },
+        NodeConfiguration.fromJson,
+      ),
+    );
+  });
+
+  it("should load config from file if a valid file path is specified", () => {
+    mock.method(fs, "readFileSync", (src: string) => {
+      if (src === withRelPath("file.json")) {
+        return JSON.stringify(polkajamConfig);
+      }
+      throw new Error(`File ${src} not found`);
+    });
+    const config = loadConfig(["file.json"], withRelPath);
+    assert.deepStrictEqual(config, parseFromJson(polkajamConfig, NodeConfiguration.fromJson));
+  });
+
+  it("should load config from file and deep merge onto previous entries", () => {
+    mock.method(fs, "readFileSync", (src: string) => {
+      if (src === withRelPath("file.json")) {
+        return JSON.stringify({ chain_spec: { bootnodes: [] } });
+      }
+      throw new Error(`File ${src} not found`);
+    });
+    const config = loadConfig(["default", "file.json"], withRelPath);
+    assert.deepStrictEqual(
+      config,
+      parseFromJson(
+        {
+          ...configs.default,
+          chain_spec: { ...configs.default.chain_spec, bootnodes: [] },
+        },
+        NodeConfiguration.fromJson,
+      ),
+    );
+  });
+
+  it("should apply pseudo-jq queries by replacement", () => {
+    const config = loadConfig(["default", ".chain_spec.bootnodes=[]"], withRelPath);
+    assert.deepStrictEqual(
+      config,
+      parseFromJson(
+        {
+          ...configs.default,
+          chain_spec: { ...configs.default.chain_spec, bootnodes: [] },
+        },
+        NodeConfiguration.fromJson,
+      ),
+    );
+  });
+
+  it("should apply pseudo-jq queries by merging", () => {
+    const config = loadConfig(["default", `.chain_spec+={"bootnodes": []}`], withRelPath);
+    assert.deepStrictEqual(
+      config,
+      parseFromJson(
+        {
+          ...configs.default,
+          chain_spec: { ...configs.default.chain_spec, bootnodes: [] },
+        },
+        NodeConfiguration.fromJson,
+      ),
+    );
+  });
+
+  it("should load config from files specified in a pseudo-jq query", () => {
+    mock.method(fs, "readFileSync", (src: string) => {
+      if (src === withRelPath("file.json")) {
+        return JSON.stringify({ bootnodes: [] });
+      }
+      throw new Error(`File ${src} not found`);
+    });
+    const config = loadConfig(["default", ".chain_spec+=file.json"], withRelPath);
+    assert.deepStrictEqual(
+      config,
+      parseFromJson(
+        {
+          ...configs.default,
+          chain_spec: { ...configs.default.chain_spec, bootnodes: [] },
+        },
+        NodeConfiguration.fromJson,
+      ),
+    );
+  });
+
+  it("should stack several config entries in order from left to right", () => {
+    const config = loadConfig(
+      [
+        "dev",
+        `.chain_spec+={"bootnodes": []}`,
+        `.database_base_path="/test/path"`,
+        `.database_base_path="/test/path-1"`,
+      ],
+      withRelPath,
+    );
+    assert.deepStrictEqual(
+      config,
+      parseFromJson(
+        {
+          ...configs.dev,
+          database_base_path: "/test/path-1",
+          chain_spec: { ...configs.dev.chain_spec, bootnodes: [] },
+        },
+        NodeConfiguration.fromJson,
+      ),
+    );
+  });
+
+  it("should throw an error if an invalid json file is provided", () => {
+    mock.method(fs, "readFileSync", () => "invalid json");
+    assert.throws(
+      () => loadConfig(["file.json"], withRelPath),
+      new Error(
+        `Unable to load config from file.json: SyntaxError: Unexpected token 'i', "invalid json" is not valid JSON`,
+      ),
+    );
+  });
+
+  it("should throw an error if non-existing json file path is provided", () => {
+    mock.method(fs, "readFileSync", () => {
+      throw new Error("File not found");
+    });
+    assert.throws(
+      () => loadConfig(["file.json"], withRelPath),
+      new Error("Unable to load config from file.json: Error: File not found"),
+    );
+  });
+
+  it("should throw an error if an invalid json file is provided using a pseudo-jq query", () => {
+    mock.method(fs, "readFileSync", () => "invalid json");
+    assert.throws(
+      () => loadConfig(["default", ".chain_spec+=file.json"], withRelPath),
+      new Error(
+        `Error while processing '.chain_spec+=file.json': Error: Unable to load config from file.json: SyntaxError: Unexpected token 'i', "invalid json" is not valid JSON`,
+      ),
+    );
+  });
+
+  it("should throw an error if non-existing json file path is provided using a pseudo-jq query", () => {
+    mock.method(fs, "readFileSync", () => {
+      throw new Error("File not found");
+    });
+    assert.throws(
+      () => loadConfig(["default", ".chain_spec+=file.json"], withRelPath),
+      new Error(
+        "Error while processing '.chain_spec+=file.json': Error: Unable to load config from file.json: Error: File not found",
+      ),
+    );
+  });
+
+  it("should throw an error if the right side of a pseudo-jq query is not a valid json", () => {
+    mock.method(fs, "existsSync", () => false);
+    assert.throws(
+      () => loadConfig(["default", ".chain_spec+=invalid json"], withRelPath),
+      new Error(
+        `Error while processing '.chain_spec+=invalid json': Error: Unrecognized syntax 'invalid json': SyntaxError: Unexpected token 'i', "invalid json" is not valid JSON`,
+      ),
+    );
+  });
+
+  it("should throw an error if the provided config is neither of the valid options (inline json, file path, pseudo-jq query)", () => {
+    mock.method(fs, "existsSync", () => false);
+    assert.throws(
+      () => loadConfig(["invalid config"], withRelPath),
+      new Error("Error while processing 'invalid config': Error: Unrecognized syntax."),
+    );
+  });
+
+  it("should throw an error if the provided config has valid syntax but the resulting data is not a valid node config", () => {
+    assert.throws(
+      () => loadConfig(["default", ".chain_spec=1"], withRelPath),
+      new Error(
+        "Unable to parse config: Error: [<root>] Error while parsing the value: Error: [<root>.chain_spec] Error while parsing the value: Error: [<root>.chain_spec] Expected complex type but got number",
+      ),
+    );
   });
 });

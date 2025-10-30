@@ -594,7 +594,7 @@ export class InMemoryState extends WithDebug implements State, WithStateView, En
         assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
         delegator: tryAsServiceId(0),
         registrar: tryAsServiceId(MAX_VALUE),
-        autoAccumulateServices: [],
+        autoAccumulateServices: new Map(),
       }),
       accumulationOutputLog: SortedArray.fromArray(accumulationOutputComparator, []),
       services: new Map(),
