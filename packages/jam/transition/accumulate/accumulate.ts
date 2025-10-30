@@ -460,7 +460,8 @@ export class Accumulate {
       // [0.7.1]: do not update statistics, if the service only had incoming transfers
       if (
         (Compatibility.isLessThan(GpVersion.V0_7_2) && count > 0) ||
-        ((Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) || Compatibility.isSuite(TestSuite.W3F_DAVXY)) &&
+        ((Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) ||
+          (Compatibility.isSuite(TestSuite.W3F_DAVXY) && Compatibility.is(GpVersion.V0_7_1))) &&
           (count > 0 || consumedGas > 0n))
       ) {
         serviceStatistics.count = tryAsU32(serviceStatistics.count + count);
