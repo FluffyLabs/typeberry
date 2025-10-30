@@ -117,11 +117,9 @@ export async function main(
   initialFiles: string[],
   directoryToScan: string,
   {
-    pattern = testFile.json,
     accepted,
     ignored,
   }: {
-    pattern?: testFile.json | testFile.bin;
     accepted?: string[];
     ignored?: string[];
   } = {},
@@ -134,7 +132,9 @@ export async function main(
   let testFiles = initialFiles;
   if (initialFiles.length === 0) {
     // scan the given directory for fallback tests
-    testFiles = await scanDir(relPath, directoryToScan, pattern);
+    testFiles = await scanDir(relPath, directoryToScan, [
+      testFile.bin, testFile.json
+    ]);
   }
 
   logger.info`Preparing tests for ${testFiles.length} files.`;
@@ -217,12 +217,12 @@ export async function main(
   return "Tests registered successfully";
 }
 
-async function scanDir(relPath: string, dir: string, filePattern: string): Promise<string[]> {
+async function scanDir(relPath: string, dir: string, filePatterns: string[]): Promise<string[]> {
   try {
     const files = await fs.readdir(`${relPath}/${dir}`, {
       recursive: true,
     });
-    return files.filter((f) => f.endsWith(filePattern)).map((f) => `${dir}/${f}`);
+    return files.filter((f) => filePatterns.some(pattern => f.endsWith(pattern))).map((f) => `${dir}/${f}`);
   } catch (e) {
     logger.error`Unable to find test vectors in ${relPath}/${dir}: ${e}`;
     return [];
