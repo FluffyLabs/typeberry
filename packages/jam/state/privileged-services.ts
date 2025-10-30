@@ -1,27 +1,8 @@
 import { type ServiceGas, type ServiceId, tryAsServiceId } from "@typeberry/block";
-import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
+import { type CodecRecord, codec } from "@typeberry/codec";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import { codecPerCore, type PerCore } from "./common.js";
 import { ignoreValueWithDefault } from "./service.js";
-
-/** Dictionary entry of services that auto-accumulate every block. */
-export class AutoAccumulate {
-  static Codec = codec.Class(AutoAccumulate, {
-    service: codec.u32.asOpaque<ServiceId>(),
-    gasLimit: codec.u64.asOpaque<ServiceGas>(),
-  });
-
-  static create({ service, gasLimit }: CodecRecord<AutoAccumulate>) {
-    return new AutoAccumulate(service, gasLimit);
-  }
-
-  private constructor(
-    /** Service id that auto-accumulates. */
-    readonly service: ServiceId,
-    /** Gas limit for auto-accumulation. */
-    readonly gasLimit: ServiceGas,
-  ) {}
-}
 
 /**
  * https://graypaper.fluffylabs.dev/#/ab2cdbd/114402114402?v=0.7.2
@@ -35,7 +16,9 @@ export class PrivilegedServices {
     registrar: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
       ? codec.u32.asOpaque<ServiceId>()
       : ignoreValueWithDefault(tryAsServiceId(2 ** 32 - 1)),
-    autoAccumulateServices: readonlyArray(codec.sequenceVarLen(AutoAccumulate.Codec)),
+    autoAccumulateServices: codec.dictionary(codec.u32.asOpaque<ServiceId>(), codec.u64.asOpaque<ServiceGas>(), {
+      sortKeys: (a, b) => a - b,
+    }),
   });
 
   static create(a: CodecRecord<PrivilegedServices>) {
@@ -60,6 +43,6 @@ export class PrivilegedServices {
     /** `χ_A`: Manages authorization queue one for each core. */
     readonly assigners: PerCore<ServiceId>,
     /** `χ_Z`: Dictionary of services that auto-accumulate every block with their gas limit. */
-    readonly autoAccumulateServices: readonly AutoAccumulate[],
+    readonly autoAccumulateServices: Map<ServiceId, ServiceGas>,
   ) {}
 }

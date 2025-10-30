@@ -122,7 +122,7 @@ export class PartialStateMock implements PartialState {
     a: PerCore<ServiceId>,
     v: ServiceId | null,
     r: ServiceId | null,
-    g: [ServiceId, ServiceGas][],
+    g: Map<ServiceId, ServiceGas>,
   ): Result<OK, UpdatePrivilegesError> {
     if (this.privilegedServicesResponse.isOk) {
       this.privilegedServices.push([m, a, v, r, g]);

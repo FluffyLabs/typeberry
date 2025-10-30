@@ -358,7 +358,7 @@ const createPrivilegedServices = (spec: ChainSpec) =>
     manager: tryAsServiceId(0),
     delegator: tryAsServiceId(0),
     registrar: tryAsServiceId(0),
-    autoAccumulateServices: [],
+    autoAccumulateServices: new Map(),
   });
 
 const createWorkReport = (

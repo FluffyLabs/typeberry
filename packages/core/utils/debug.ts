@@ -129,3 +129,11 @@ export abstract class WithDebug {
     return inspect(this);
   }
 }
+
+export function lazyInspect<T>(obj: T) {
+  return {
+    toString() {
+      return inspect(obj);
+    },
+  };
+}

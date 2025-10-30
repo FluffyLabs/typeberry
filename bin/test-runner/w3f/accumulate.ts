@@ -16,13 +16,7 @@ import { type ChainSpec, PvmBackend, PvmBackendNames } from "@typeberry/config";
 import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { InMemoryService } from "@typeberry/state";
-import {
-  AutoAccumulate,
-  InMemoryState,
-  NotYetAccumulatedReport,
-  PrivilegedServices,
-  tryAsPerCore,
-} from "@typeberry/state";
+import { InMemoryState, NotYetAccumulatedReport, PrivilegedServices, tryAsPerCore } from "@typeberry/state";
 import { JsonService } from "@typeberry/state-json/accounts.js";
 import { AccumulateOutput } from "@typeberry/transition/accumulate/accumulate-output.js";
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
@@ -87,6 +81,8 @@ class TestState {
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && privileges.register === undefined) {
       throw new Error("Privileges from version 0.7.1 must have `register` field!");
     }
+    const autoAccumulateServices = new Map(privileges.always_acc.map(({ gas, id }) => [id, gas]));
+
     return InMemoryState.partial(chainSpec, {
       timeslot: slot,
       accumulationQueue: tryAsPerEpochBlock(
@@ -106,9 +102,7 @@ class TestState {
         assigners: tryAsPerCore(privileges.assign, chainSpec),
         delegator: privileges.designate,
         registrar: privileges.register ?? tryAsServiceId(2 ** 32 - 1),
-        autoAccumulateServices: privileges.always_acc.map(({ gas, id }) =>
-          AutoAccumulate.create({ gasLimit: gas, service: id }),
-        ),
+        autoAccumulateServices,
       }),
       services: new Map(accounts.map((service) => [service.serviceId, service])),
     });
