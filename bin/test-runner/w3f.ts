@@ -4,6 +4,8 @@ import { runners } from "./w3f/runners.js";
 main(runners, process.argv.slice(2), "test-vectors/w3f-fluffy", {
   ignored: [
     "genesis.json",
+    // invalid tests
+    "host_function",
     // Ignored - not working correctly in 0.6.7 and we ditched fixing them.
     "traces/preimages_light/00000070.json",
     "traces/preimages_light/00000073.json",
