@@ -240,7 +240,12 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     /** Return lookup history item for newly created service */
     if (updatedService !== undefined && updatedService.action.kind === UpdateServiceKind.Create) {
       const lookupHistoryItem = updatedService.action.lookupHistory;
-      if (lookupHistoryItem?.hash.isEqualTo(hash) && length === BigInt(lookupHistoryItem.length)) {
+
+      if (
+        lookupHistoryItem !== null &&
+        hash.isEqualTo(lookupHistoryItem.hash) &&
+        length === BigInt(lookupHistoryItem.length)
+      ) {
         return lookupHistoryItem;
       }
     }
