@@ -12,7 +12,7 @@ import { Logger } from "@typeberry/logger";
 import { sumU64, tryAsU32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interface";
 import { ServiceAccountInfo, type ServicesUpdate, type State } from "@typeberry/state";
-import { check, Result } from "@typeberry/utils";
+import { Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/fetch-externalities.js";
 import type { CountAndGasUsed } from "../statistics.js";
@@ -138,9 +138,8 @@ export class DeferredTransfers {
       }
 
       transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(consumedGas) });
-      const [updatedState, checkpointedState] = partialState.getStateUpdates();
+      const [updatedState] = partialState.getStateUpdates();
       currentStateUpdate = updatedState;
-      check`${checkpointedState === null} On transfer cannot invoke checkpoint.`;
     }
 
     return Result.ok({
