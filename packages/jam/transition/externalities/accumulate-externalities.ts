@@ -741,8 +741,10 @@ export class AccumulateExternalities
 
   eject(destination: ServiceId | null, previousCodeHash: PreimageHash): Result<OK, EjectError> {
     const service = this.getServiceInfo(destination);
+    const isRemoved =
+      this.updatedState.stateUpdate.services.removed.find((serviceId) => serviceId === destination) !== undefined;
 
-    if (service === null || destination === null) {
+    if (service === null || destination === null || isRemoved) {
       return Result.error(EjectError.InvalidService, () => "Service missing");
     }
 
