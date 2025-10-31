@@ -6,7 +6,7 @@ import { HashSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { Blake2b } from "@typeberry/hash";
-import { asOpaqueType, Compatibility, deepEqual, GpVersion } from "@typeberry/utils";
+import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 import {
   ENTROPY,
@@ -222,9 +222,7 @@ describe("Reports.verifyCredentials", () => {
     const res = reports.verifyCredentials(input, hashes);
 
     const message = BytesBlob.parseBlob(
-      Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
-        ? "0x6a616d5f67756172616e7465650f8925aab38c879431d70efa7fa0adc2e1868aa1710aa032041b7c13b194ce36"
-        : "0x6a616d5f67756172616e746565d8b3242cac2d1db846434afa3a9eead57339a1244f3203de5e810bfe7ee84de5",
+      "0x6a616d5f67756172616e7465650f8925aab38c879431d70efa7fa0adc2e1868aa1710aa032041b7c13b194ce36",
     );
 
     const validators = initialValidators();
