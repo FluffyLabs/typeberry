@@ -2374,6 +2374,45 @@ describe("PartialState.eject", () => {
     assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
+  it("should return InvalidService if destination service is already ejected", () => {
+    const state = partiallyUpdatedState();
+    state.state.applyUpdate({
+      timeslot: tryAsTimeSlot(1_000_000),
+    });
+    const tombstone = Bytes.fill(HASH_SIZE, 0xe8).asOpaque();
+    const length = tryAsU32(100);
+
+    const destinationId = setupEjectableService(state.state, {
+      tombstone: {
+        hash: tombstone,
+        length,
+        slots: tryAsLookupHistorySlots([0, 1].map((x) => tryAsTimeSlot(x))),
+      },
+    });
+
+    const partialState = new AccumulateExternalities(
+      tinyChainSpec,
+      blake2b,
+      state,
+      tryAsServiceId(0),
+      tryAsServiceId(10),
+      tryAsTimeSlot(50),
+    );
+
+    // when
+    const correctEjectResult = partialState.eject(destinationId, tombstone); // correct eject
+    assert.strictEqual(correctEjectResult.isOk, true);
+    assert.deepStrictEqual(state.stateUpdate.services.removed, [destinationId]);
+
+    const incorrectResult = partialState.eject(destinationId, tombstone); // incorrect eject
+
+    // then
+    deepEqual(
+      incorrectResult,
+      Result.error(EjectError.InvalidService, () => "Service missing"),
+    );
+  });
+
   it("should return InvalidService if destination service codeHash does not match expected pattern", () => {
     const state = partiallyUpdatedState();
     const destinationId = setupEjectableService(state.state, {
