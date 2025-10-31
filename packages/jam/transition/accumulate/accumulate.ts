@@ -673,7 +673,7 @@ export class Accumulate {
     } = state;
     assertEmpty(stateUpdateRest);
 
-    // yieled root is retrieved after each pvm invocation so we can ignore it here
+    // yielded root is retrieved after each pvm invocation so we can ignore it here
     const _yieldedRoot = yieldedRoot;
 
     if (this.hasDuplicatedServiceIdCreated(services.created)) {
