@@ -685,8 +685,8 @@ export class AccumulateExternalities
   }
 
   yield(hash: OpaqueHash): void {
-    /** https://graypaper.fluffylabs.dev/#/9a08063/387d02387d02?v=0.6.6 */
-    this.updatedState.stateUpdate.yieldedRoots.set(this.currentServiceId, hash);
+    /** https://graypaper.fluffylabs.dev/#/ab2cdbd/380f03381503?v=0.7.2 */
+    this.updatedState.stateUpdate.yieldedRoot = hash;
   }
 
   providePreimage(serviceId: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {

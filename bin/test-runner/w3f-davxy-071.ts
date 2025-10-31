@@ -5,8 +5,6 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_071", {
   accepted: ["traces", "codec", "stf"],
   ignored: [
     "genesis.json",
-    "fuzzy/00000014.json", // statistics + alot
-    "fuzzy/00000016.json", // statistics + alot
     "fuzzy/00000037.json", // statistics + afew
     "fuzzy/00000111.json", // statistics
   ],
