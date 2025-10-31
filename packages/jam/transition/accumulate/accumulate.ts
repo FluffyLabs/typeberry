@@ -12,7 +12,7 @@ import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import { ArrayView, HashSet, SortedArray } from "@typeberry/collections";
 import type { ChainSpec, PvmBackend } from "@typeberry/config";
-import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
+import { type Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import type { PendingTransfer } from "@typeberry/jam-host-calls";
 import {
   AccumulationStateUpdate,
@@ -210,7 +210,7 @@ export class Accumulate {
      */
     if (result.hasMemorySlice() && result.memorySlice.length === HASH_SIZE) {
       const memorySlice = Bytes.fromBlob(result.memorySlice, HASH_SIZE);
-      newState.yieldedRoots.set(serviceId, memorySlice.asOpaque());
+      newState.yieldedRoot = memorySlice.asOpaque();
     }
 
     /**
@@ -294,6 +294,7 @@ export class Accumulate {
     statistics: Map<ServiceId, CountAndGasUsed>,
     stateUpdate: AccumulationStateUpdate,
     autoAccumulateServices: Map<ServiceId, ServiceGas>,
+    yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>>,
   ): Promise<SequentialAccumulationResult> {
     const i = this.findReportCutoffIndex(gasLimit, reports);
 
@@ -313,7 +314,7 @@ export class Accumulate {
       gasCost,
       state: stateAfterParallelAcc,
       ...rest
-    } = await this.accumulateInParallel(accumulateData, slot, entropy, statistics, stateUpdate);
+    } = await this.accumulateInParallel(accumulateData, slot, entropy, statistics, stateUpdate, yieldedRoots);
     assertEmpty(rest);
 
     // NOTE [ToDr] recursive invocation
@@ -330,6 +331,7 @@ export class Accumulate {
       statistics,
       stateAfterParallelAcc,
       new Map(),
+      yieldedRoots,
     );
     assertEmpty(seqRest);
 
@@ -357,6 +359,7 @@ export class Accumulate {
     statistics: Map<ServiceId, CountAndGasUsed>,
     stateUpdate: AccumulationStateUpdate,
     autoAccumulateServices: Map<ServiceId, ServiceGas>,
+    yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>>,
   ): Promise<SequentialAccumulationResult> {
     const i = this.findReportCutoffIndex(gasLimit, reports);
 
@@ -378,7 +381,7 @@ export class Accumulate {
       gasCost,
       state: stateAfterParallelAcc,
       ...rest
-    } = await this.accumulateInParallel(accumulateData, slot, entropy, statistics, stateUpdate);
+    } = await this.accumulateInParallel(accumulateData, slot, entropy, statistics, stateUpdate, yieldedRoots);
     const newTransfers = stateAfterParallelAcc.takeTransfers();
     assertEmpty(rest);
 
@@ -404,6 +407,7 @@ export class Accumulate {
       statistics,
       stateAfterParallelAcc,
       new Map(),
+      yieldedRoots,
     );
     assertEmpty(seqRest);
 
@@ -430,6 +434,7 @@ export class Accumulate {
     entropy: EntropyHash,
     statistics: Map<ServiceId, CountAndGasUsed>,
     inputStateUpdate: AccumulationStateUpdate,
+    yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>>,
   ): Promise<ParallelAccumulationResult> {
     const serviceIds = accumulateData.getServiceIds();
 
@@ -483,6 +488,17 @@ export class Accumulate {
         statistics.set(serviceId, serviceStatistics);
       }
       currentState = stateUpdate === null ? checkpoint : stateUpdate;
+
+      const yieldedRoot = currentState.takeYieldedRoot();
+      if (yieldedRoot !== null) {
+        const rootsSet = yieldedRoots.get(serviceId);
+        if (rootsSet === undefined) {
+          const hashSet = HashSet.from([yieldedRoot]);
+          yieldedRoots.set(serviceId, hashSet);
+        } else {
+          rootsSet.insert(yieldedRoot);
+        }
+      }
 
       if (Compatibility.is(GpVersion.V0_7_0) && serviceId === currentManager) {
         const newV = currentState.privilegedServices?.delegator;
@@ -604,11 +620,11 @@ export class Accumulate {
 
   async transition({ reports, slot, entropy }: AccumulateInput): Promise<Result<AccumulateResult, ACCUMULATION_ERROR>> {
     const statistics: Map<ServiceId, CountAndGasUsed> = new Map();
+    const yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>> = new Map();
     const accumulateQueue = new AccumulateQueue(this.chainSpec, this.state);
     const toAccumulateImmediately = accumulateQueue.getWorkReportsToAccumulateImmediately(reports);
     const toAccumulateLater = accumulateQueue.getWorkReportsToAccumulateLater(reports);
     const queueFromState = accumulateQueue.getQueueFromState(slot);
-
     const toEnqueue = pruneQueue(
       queueFromState.concat(toAccumulateLater),
       getWorkPackageHashes(toAccumulateImmediately),
@@ -629,6 +645,7 @@ export class Accumulate {
           statistics,
           AccumulationStateUpdate.empty(),
           autoAccumulateServices,
+          yieldedRoots,
         )
       : await this.accumulateSequentiallyLegacy(
           gasLimit,
@@ -638,6 +655,7 @@ export class Accumulate {
           statistics,
           AccumulationStateUpdate.empty(),
           autoAccumulateServices,
+          yieldedRoots,
         );
     // we can safely ignore top-level gas cost from accSequentially.
     const _gasCost = gasCost;
@@ -645,8 +663,8 @@ export class Accumulate {
 
     const accumulated = accumulatableReports.subview(0, accumulatedReports);
     const {
+      yieldedRoot,
       services,
-      yieldedRoots,
       transfers,
       validatorsData,
       privilegedServices,
@@ -654,6 +672,9 @@ export class Accumulate {
       ...stateUpdateRest
     } = state;
     assertEmpty(stateUpdateRest);
+
+    // yielded root is retrieved after each pvm invocation so we can ignore it here
+    const _yieldedRoot = yieldedRoot;
 
     if (this.hasDuplicatedServiceIdCreated(services.created)) {
       logger.trace`Duplicated Service creation detected. Block is invalid.`;
@@ -668,10 +689,10 @@ export class Accumulate {
       services,
     );
 
-    const accumulationOutputUnsorted: AccumulationOutput[] = Array.from(yieldedRoots.entries()).map(
-      ([serviceId, root]) => {
-        return { serviceId, output: root.asOpaque() };
-      },
+    const accumulationOutputUnsorted: AccumulationOutput[] = Array.from(yieldedRoots).flatMap(([serviceId, roots]) =>
+      Array.from(roots).map((root) => {
+        return { serviceId, output: root };
+      }),
     );
     const accumulationOutput = SortedArray.fromArray(accumulationOutputComparator, accumulationOutputUnsorted);
     const authQueues = (() => {

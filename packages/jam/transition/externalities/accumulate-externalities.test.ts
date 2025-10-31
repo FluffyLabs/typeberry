@@ -1875,13 +1875,12 @@ describe("PartialState.yield", () => {
       tryAsServiceId(10),
       tryAsTimeSlot(16),
     );
-    const expectedYieldedRoots = new Map<ServiceId, Bytes<32>>();
-    expectedYieldedRoots.set(currentServiceId, Bytes.fill(HASH_SIZE, 0xef));
+    const expectedYieldedRoot = Bytes.fill(HASH_SIZE, 0xef);
     // when
     partialState.yield(Bytes.fill(HASH_SIZE, 0xef));
 
     // then
-    deepEqual(state.stateUpdate.yieldedRoots, expectedYieldedRoots);
+    deepEqual(state.stateUpdate.yieldedRoot, expectedYieldedRoot);
   });
 });
 

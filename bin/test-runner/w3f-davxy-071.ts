@@ -8,9 +8,6 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_071", {
   },
   ignored: [
     "genesis.json",
-    "genesis.bin",
-    "fuzzy/00000014", // statistics + alot
-    "fuzzy/00000016", // statistics + alot
     "fuzzy/00000037", // statistics + afew
     "fuzzy/00000111", // statistics
   ],
