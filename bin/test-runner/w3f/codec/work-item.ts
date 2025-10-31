@@ -4,6 +4,7 @@ import { fromJson, type JsonObject } from "@typeberry/block-json";
 import { BytesBlob } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
 import type { U16 } from "@typeberry/numbers";
+import type { RunOptions } from "../../common.js";
 import { runCodecTest } from "./common.js";
 
 const importSpecFromJson = json.object<JsonObject<ImportSpec>, ImportSpec>(
@@ -57,6 +58,6 @@ type JsonWorkItem = {
   export_count: U16;
 };
 
-export async function runWorkItemTest(test: WorkItem, file: string) {
-  runCodecTest(WorkItem.Codec, test, file);
+export async function runWorkItemTest(test: WorkItem, { path }: RunOptions) {
+  runCodecTest(WorkItem.Codec, test, path);
 }

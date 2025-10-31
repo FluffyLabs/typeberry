@@ -1,6 +1,6 @@
 import { isMainThread } from "node:worker_threads";
 import type { BlockView, HeaderHash, HeaderView, StateRootHash } from "@typeberry/block";
-import type { ChainSpec } from "@typeberry/config";
+import { type ChainSpec, PvmBackend } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
 import { Blake2b, type WithHash } from "@typeberry/hash";
 import { type ImporterApi, ImporterConfig } from "@typeberry/importer";
@@ -33,7 +33,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
 
   logger.info`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
   logger.info`🎸 Starting node: ${config.nodeName}.`;
-  logger.info`🖥️ PVM Backend: ${config.pvmBackend}.`;
+  logger.info`🖥️ PVM Backend: ${PvmBackend[config.pvmBackend]}.`;
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
   if (config.node.databaseBasePath === undefined) {

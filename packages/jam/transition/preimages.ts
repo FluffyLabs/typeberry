@@ -20,7 +20,6 @@ export enum PreimagesErrorCode {
   AccountNotFound = "account_not_found",
 }
 
-// TODO [SeKo] consider whether this module is the right place to remove expired preimages
 export class Preimages {
   constructor(
     public readonly state: PreimagesState,

@@ -39,6 +39,8 @@ export const EC_SEGMENT_SIZE = 4104;
  * Additional data that has to be passed to the codec to correctly parse incoming bytes.
  */
 export class ChainSpec extends WithDebug {
+  /** Human-readable name of the chain spec. */
+  readonly name: string;
   /** Number of validators. */
   readonly validatorsCount: U16;
   /** 1/3 of number of validators */
@@ -83,6 +85,7 @@ export class ChainSpec extends WithDebug {
   constructor(data: Omit<ChainSpec, "validatorsSuperMajority" | "thirdOfValidators" | "erasureCodedPieceSize">) {
     super();
 
+    this.name = data.name;
     this.validatorsCount = data.validatorsCount;
     this.thirdOfValidators = tryAsU16(Math.floor(data.validatorsCount / 3));
     this.validatorsSuperMajority = tryAsU16(Math.floor(data.validatorsCount / 3) * 2 + 1);
@@ -104,6 +107,7 @@ export class ChainSpec extends WithDebug {
 
 /** Set of values for "tiny" chain as defined in JAM test vectors. */
 export const tinyChainSpec = new ChainSpec({
+  name: "tiny",
   validatorsCount: tryAsU16(6),
   coresCount: tryAsU16(2),
   epochLength: tryAsU32(12),
@@ -126,6 +130,7 @@ export const tinyChainSpec = new ChainSpec({
  * Please note that only validatorsCount and epochLength are "full", the rest is copied from "tiny".
  */
 export const fullChainSpec = new ChainSpec({
+  name: "full",
   validatorsCount: tryAsU16(1023),
   coresCount: tryAsU16(341),
   epochLength: tryAsU32(600),

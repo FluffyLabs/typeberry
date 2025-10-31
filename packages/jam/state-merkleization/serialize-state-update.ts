@@ -54,7 +54,6 @@ function* serializeRemovedServices(servicesRemoved: ServiceId[] | undefined): Ge
     return;
   }
   for (const serviceId of servicesRemoved) {
-    // TODO [ToDr] what about all data associated with a service?
     const codec = serialize.serviceData(serviceId);
     yield [StateEntryUpdateAction.Remove, codec.key, EMPTY_BLOB];
   }

@@ -2451,7 +2451,7 @@ describe("PartialState.eject", () => {
     // then
     deepEqual(
       result,
-      Result.error(EjectError.InvalidPreimage, () => "Previous code available: wrong status"),
+      Result.error(EjectError.InvalidPreimage, () => "Previous code available: wrong status: null"),
     );
     assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
@@ -2485,7 +2485,7 @@ describe("PartialState.eject", () => {
     // then
     deepEqual(
       result,
-      Result.error(EjectError.InvalidPreimage, () => "Previous code available: wrong status"),
+      Result.error(EjectError.InvalidPreimage, () => "Previous code available: wrong status: Available"),
     );
     assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });

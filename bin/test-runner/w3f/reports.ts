@@ -9,7 +9,7 @@ import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash, WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { fromJson, guaranteesExtrinsicFromJson, segmentRootLookupItemFromJson } from "@typeberry/block-json";
 import { asKnownSize, FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
-import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import type { ChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
@@ -43,6 +43,7 @@ import { guaranteesAsView } from "@typeberry/transition/reports/test.utils.js";
 import type { HeaderChain } from "@typeberry/transition/reports/verify-contextual.js";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { deepEqual, Result } from "@typeberry/utils";
+import type { RunOptions } from "../common.js";
 
 type TestReportsOutput = Omit<ReportsOutput, "stateUpdate">;
 
@@ -247,15 +248,7 @@ export class ReportsTest {
   post_state!: TestState;
 }
 
-export async function runReportsTestTiny(testContent: ReportsTest) {
-  await runReportsTest(testContent, tinyChainSpec);
-}
-
-export async function runReportsTestFull(testContent: ReportsTest) {
-  await runReportsTest(testContent, fullChainSpec);
-}
-
-async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
+export async function runReportsTest(testContent: ReportsTest, { chainSpec: spec }: RunOptions) {
   const preState = TestState.toReportsState(testContent.pre_state, spec);
   const postState = TestState.toReportsState(testContent.post_state, spec);
   const input = Input.toReportsInput(

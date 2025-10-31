@@ -1,10 +1,8 @@
 import type { ExtrinsicHash, ExtrinsicView, HeaderHash, HeaderView, WorkReportHash } from "@typeberry/block";
-import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
-import { WorkPackage } from "@typeberry/block/work-package.js";
 import { BytesBlob } from "@typeberry/bytes";
-import { type Codec, codec, Encoder } from "@typeberry/codec";
+import { codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { type Blake2b, type KeccakHash, keccak, type OpaqueHash, WithHash, WithHashAndBytes } from "@typeberry/hash";
+import { type Blake2b, type KeccakHash, keccak, WithHash, WithHashAndBytes } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { tryAsU32 } from "@typeberry/numbers";
 
@@ -62,16 +60,5 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
     const encoded = BytesBlob.blobFromParts([et.raw, ep.raw, eg.raw, ea.raw, ed.raw]);
 
     return new WithHashAndBytes(this.blake2b.hashBytes(encoded).asOpaque(), extrinsicView, encoded);
-  }
-
-  /** Creates hash for given WorkPackage */
-  workPackage(workPackage: WorkPackage): WithHashAndBytes<WorkPackageHash, WorkPackage> {
-    return this.encode(WorkPackage.Codec, workPackage);
-  }
-
-  private encode<T, THash extends OpaqueHash>(codec: Codec<T>, data: T): WithHashAndBytes<THash, T> {
-    // TODO [ToDr] Use already allocated encoding destination and hash bytes from some arena.
-    const encoded = Encoder.encodeObject(codec, data, this.context);
-    return new WithHashAndBytes(this.blake2b.hashBytes(encoded).asOpaque(), data, encoded);
   }
 }

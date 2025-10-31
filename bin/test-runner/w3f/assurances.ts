@@ -17,6 +17,7 @@ import {
 } from "@typeberry/transition/assurances.js";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { deepEqual, Result } from "@typeberry/utils";
+import type { RunOptions } from "../common.js";
 
 const blake2b = Blake2b.createHasher();
 
@@ -144,29 +145,28 @@ export class AssurancesTestFull {
   post_state!: TestState;
 }
 
-export async function runAssurancesTestTiny(testContent: AssurancesTestTiny, path: string) {
-  const spec = tinyChainSpec;
+export async function runAssurancesTestTiny(testContent: AssurancesTestTiny, options: RunOptions) {
+  const spec = options.chainSpec;
   const preState = TestState.toAssurancesState(testContent.pre_state, spec);
   const postState = TestState.toAssurancesState(testContent.post_state, spec);
   const input = Input.toAssurancesInput(testContent.input, spec, preState.availabilityAssignment);
   const expectedResult = Output.toAssurancesTransitionResult(testContent.output);
 
-  await runAssurancesTest(path, spec, preState, postState, input, expectedResult);
+  await runAssurancesTest(options, preState, postState, input, expectedResult);
 }
 
-export async function runAssurancesTestFull(testContent: AssurancesTestFull, path: string) {
-  const spec = fullChainSpec;
+export async function runAssurancesTestFull(testContent: AssurancesTestFull, options: RunOptions) {
+  const spec = options.chainSpec;
   const preState = TestState.toAssurancesState(testContent.pre_state, spec);
   const postState = TestState.toAssurancesState(testContent.post_state, spec);
   const input = Input.toAssurancesInput(testContent.input, spec, preState.availabilityAssignment);
   const expectedResult = Output.toAssurancesTransitionResult(testContent.output);
 
-  await runAssurancesTest(path, spec, preState, postState, input, expectedResult);
+  await runAssurancesTest(options, preState, postState, input, expectedResult);
 }
 
 async function runAssurancesTest(
-  path: string,
-  spec: ChainSpec,
+  { chainSpec: spec, path }: RunOptions,
   preState: AssurancesState,
   postState: AssurancesState,
   input: AssurancesInput,

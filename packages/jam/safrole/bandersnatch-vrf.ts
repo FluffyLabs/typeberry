@@ -33,7 +33,7 @@ type CacheEntry = {
   value: Promise<Result<BandersnatchRingRoot, null>>;
 };
 
-// TODO [ToDr] We export the entire object to allow mocking in tests.
+// NOTE [ToDr] We export the entire object to allow mocking in tests.
 // Ideally we would just export functions and figure out how to mock
 // properly in ESM.
 export default {

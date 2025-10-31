@@ -20,7 +20,7 @@ class ShufflingTest {
   output!: number[];
 }
 
-export const shufflingTests = json.array(ShufflingTest.fromJson);
+export const shufflingTestsFromJson = json.array(ShufflingTest.fromJson);
 
 export async function runShufflingTests(testContents: ShufflingTest[]) {
   const blake2b = await Blake2b.createHasher();

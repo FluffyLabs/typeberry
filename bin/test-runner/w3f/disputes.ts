@@ -11,7 +11,7 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import { type AvailabilityAssignment, type DisputesRecords, tryAsPerCore, type ValidatorData } from "@typeberry/state";
 import { availabilityAssignmentFromJson, disputesRecordsFromJson, validatorDataFromJson } from "@typeberry/state-json";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
-import { getChainSpec } from "./spec.js";
+import type { RunOptions } from "../common.js";
 
 class DisputesOutputMarks {
   static fromJson: FromJson<DisputesOutputMarks> = {
@@ -88,8 +88,7 @@ export class DisputesTest {
   post_state!: TestState;
 }
 
-export async function runDisputesTest(testContent: DisputesTest, path: string) {
-  const chainSpec = getChainSpec(path);
+export async function runDisputesTest(testContent: DisputesTest, { chainSpec }: RunOptions) {
   const preState = testContent.pre_state;
 
   const disputes = new Disputes(
