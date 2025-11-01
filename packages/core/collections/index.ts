@@ -1,4 +1,5 @@
 export * from "./array-view.js";
+export * from "./blob-dictionary.js";
 export * from "./hash-dictionary.js";
 export * from "./hash-set.js";
 export * from "./multi-map.js";
