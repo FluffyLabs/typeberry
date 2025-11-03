@@ -234,7 +234,7 @@ export class Accumulate {
     slot: TimeSlot,
     entropy: EntropyHash,
     inputStateUpdate: AccumulationStateUpdate,
-  ) {
+  ): Promise<InvocationResult> {
     logger.log`Accumulating service ${serviceId}, transfers: ${transfers.length} operands: ${operands.length} at slot: ${slot}.`;
 
     const updatedState = new PartiallyUpdatedState(this.state, inputStateUpdate);
@@ -248,7 +248,7 @@ export class Accumulate {
 
         if (newBalance.overflow) {
           logger.log`Accumulation failed because of overflowing balance ${serviceId}.`;
-          return { stateUpdate: null, consumedGas: 0n };
+          return { stateUpdate: null, consumedGas: tryAsServiceGas(0n) };
         }
 
         const newInfo = ServiceAccountInfo.create({ ...serviceInfo, balance: newBalance.value });
@@ -271,7 +271,7 @@ export class Accumulate {
       logger.log`Accumulation failed for ${serviceId}.`;
       // even though accumulation failed, we still need to make sure that
       // incoming transfers updated the balance, hence we pass state update here
-      return { stateUpdate: updatedState.stateUpdate, consumedGas: 0n };
+      return { stateUpdate: updatedState.stateUpdate, consumedGas: tryAsServiceGas(0n) };
     }
 
     logger.log`Accumulation successful for ${serviceId}. Consumed: ${result.ok.consumedGas}`;
@@ -418,6 +418,42 @@ export class Accumulate {
     };
   }
 
+  private async accumulateInParalllelInternal(
+    accumulateData: AccumulateData,
+    slot: TimeSlot,
+    entropy: EntropyHash,
+    state: AccumulationStateUpdate,
+  ) {
+    const serviceIds = accumulateData.getServiceIds();
+    const results = new Map<ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }>();
+    let currentState = AccumulationStateUpdate.copyFrom(state);
+    for (const serviceId of serviceIds) {
+      const checkpoint = AccumulationStateUpdate.copyFrom(currentState);
+      const operands = accumulateData.getOperands(serviceId);
+      const { consumedGas, stateUpdate } = await this.accumulateSingleService(
+        serviceId,
+        accumulateData.getTransfers(serviceId),
+        operands,
+        accumulateData.getGasLimit(serviceId),
+        slot,
+        entropy,
+        currentState,
+      );
+
+      results.set(serviceId, {
+        consumedGas,
+        stateUpdate: stateUpdate === null ? checkpoint : stateUpdate,
+      });
+
+      // TODO [ToDr] remove changing state in favor of state merging
+      currentState = stateUpdate === null ? checkpoint : AccumulationStateUpdate.copyFrom(stateUpdate);
+    }
+    return {
+      currentState,
+      results,
+    };
+  }
+
   /**
    * The parallelized accumulation function ∆∗ which,
    * with the help of the single-service accumulation function ∆1,
@@ -436,27 +472,18 @@ export class Accumulate {
     inputStateUpdate: AccumulationStateUpdate,
     yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>>,
   ): Promise<ParallelAccumulationResult> {
-    const serviceIds = accumulateData.getServiceIds();
+    const { currentState, results } = await this.accumulateInParalllelInternal(
+      accumulateData,
+      slot,
+      entropy,
+      inputStateUpdate,
+    );
 
-    let gasCost: ServiceGas = tryAsServiceGas(0);
-    let currentState = inputStateUpdate;
-    const currentManager = (inputStateUpdate.privilegedServices ?? this.state.privilegedServices).manager;
+    const entries = Array.from(results.entries());
+    const totalGasCost = tryAsServiceGas(sumU64(...entries.map((x) => x[1].consumedGas)).value);
 
-    for (const serviceId of serviceIds) {
-      const checkpoint = AccumulationStateUpdate.copyFrom(currentState);
-      const operands = accumulateData.getOperands(serviceId);
-      const { consumedGas, stateUpdate } = await this.accumulateSingleService(
-        serviceId,
-        accumulateData.getTransfers(serviceId),
-        operands,
-        accumulateData.getGasLimit(serviceId),
-        slot,
-        entropy,
-        currentState,
-      );
-
-      gasCost = tryAsServiceGas(gasCost + consumedGas);
-
+    // update statistics
+    for (const [serviceId, { consumedGas }] of entries) {
       // https://graypaper.fluffylabs.dev/#/ab2cdbd/193b05193b05?v=0.7.2
       const serviceStatistics = statistics.get(serviceId) ?? { count: tryAsU32(0), gasUsed: tryAsServiceGas(0) };
       const count = accumulateData.getReportsLength(serviceId);
@@ -487,9 +514,11 @@ export class Accumulate {
         serviceStatistics.gasUsed = tryAsServiceGas(serviceStatistics.gasUsed + consumedGas);
         statistics.set(serviceId, serviceStatistics);
       }
-      currentState = stateUpdate === null ? checkpoint : stateUpdate;
+    }
 
-      const yieldedRoot = currentState.takeYieldedRoot();
+    // update yielded roots
+    for (const [serviceId, { stateUpdate }] of entries) {
+      const yieldedRoot = stateUpdate.takeYieldedRoot();
       if (yieldedRoot !== null) {
         const rootsSet = yieldedRoots.get(serviceId);
         if (rootsSet === undefined) {
@@ -499,8 +528,24 @@ export class Accumulate {
           rootsSet.insert(yieldedRoot);
         }
       }
+    }
 
-      if (Compatibility.is(GpVersion.V0_7_0) && serviceId === currentManager) {
+    const currentPrivileged = inputStateUpdate.privilegedServices ?? this.state.privilegedServices;
+    const prevValidatorData = inputStateUpdate.validatorsData ?? this.state.designatedValidatorData;
+    const serviceIds = accumulateData.getServiceIds();
+    // update privileged data
+    for (const [serviceId] of entries) {
+      // TODO [ToDr] merge state updates instead of using `currentState`
+
+      // Owned privileges
+      if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
+        // TODO [toDr] Other privileges
+        if (serviceId !== currentPrivileged.delegator) {
+          currentState.validatorsData = prevValidatorData;
+        }
+      }
+
+      if (Compatibility.is(GpVersion.V0_7_0) && serviceId === currentPrivileged.manager) {
         const newV = currentState.privilegedServices?.delegator;
         if (currentState.privilegedServices !== null && newV !== undefined && serviceIds.includes(newV)) {
           logger.info`Entering completely incorrect code that probably reverts delegator change. This is valid in 0.7.0 only and incorrect in 0.7.1+`;
@@ -514,7 +559,7 @@ export class Accumulate {
             accumulateData.getGasLimit(newV),
             slot,
             entropy,
-            checkpoint,
+            AccumulationStateUpdate.copyFrom(inputStateUpdate),
           );
 
           const correctV = stateUpdate?.privilegedServices?.delegator ?? this.state.privilegedServices.delegator;
@@ -528,7 +573,7 @@ export class Accumulate {
 
     return {
       state: currentState,
-      gasCost,
+      gasCost: totalGasCost,
     };
   }
 
