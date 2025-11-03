@@ -13,8 +13,9 @@ enum Levels {
   WARNING = 1,
   INFO = 2,
   DEBUG = 3,
-  NIT = 4
-};
+  NIT = 4,
+  UNKNOWN = 5,
+}
 
 /**
  * Log message to the console
@@ -43,7 +44,8 @@ export class LogHostCall implements HostCallHandler {
     }
     memory.loadInto(message, msgStart);
 
-    logger.trace`LOG(${this.currentServiceId}, ${Levels[Number(lvl)]}, ${decoder.decode(target)}, ${decoder.decode(message)})`;
+    const level = clampU64ToU32(lvl);
+    logger.trace`LOG(${this.currentServiceId}, ${level < Levels.UNKNOWN ? Levels[level] : Levels[Levels.UNKNOWN]}(${lvl}), ${decoder.decode(target)}, ${decoder.decode(message)})`;
     return Promise.resolve(undefined);
   }
 }
