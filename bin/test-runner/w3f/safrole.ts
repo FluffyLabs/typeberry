@@ -30,7 +30,7 @@ import { ENTROPY_ENTRIES, hashComparator, type ValidatorData } from "@typeberry/
 import { TicketsOrKeys, ticketFromJson, validatorDataFromJson } from "@typeberry/state-json";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { deepEqual, Result } from "@typeberry/utils";
-import { getChainSpec } from "./spec.js";
+import type { RunOptions } from "../common.js";
 
 namespace safroleFromJson {
   export const ticketEnvelope: FromJson<SignedTicket> = {
@@ -211,8 +211,7 @@ export class SafroleTest {
 
 export const bwasm = BandernsatchWasm.new();
 
-export async function runSafroleTest(testContent: SafroleTest, path: string) {
-  const chainSpec = getChainSpec(path);
+export async function runSafroleTest(testContent: SafroleTest, { chainSpec }: RunOptions) {
   const preState = JsonState.toSafroleState(testContent.pre_state, chainSpec);
   const punishSet = SortedSet.fromArrayUnique(hashComparator, testContent.pre_state.post_offenders);
   const safrole = new Safrole(chainSpec, await Blake2b.createHasher(), preState, bwasm);
