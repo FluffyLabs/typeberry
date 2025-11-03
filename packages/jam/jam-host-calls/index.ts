@@ -4,3 +4,4 @@ export * from "./externalities/refine-externalities.js";
 export * from "./externalities/state-update.js";
 export * from "./results.js";
 export * from "./utils.js";
+export { codecServiceAccountInfoWithThresholdBalance as hostCallInfoAccount } from "./info.js";

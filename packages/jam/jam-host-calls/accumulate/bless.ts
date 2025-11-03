@@ -79,7 +79,7 @@ export class Bless implements HostCallHandler {
       decoder.resetTo(0);
       const memoryReadResult = memory.loadInto(result, memIndex);
       if (memoryReadResult.isError) {
-        logger.trace`BLESS(${manager}, ${delegator}, ${registrar}) <- PANIC`;
+        logger.trace`BLESS(m: ${manager}, v: ${delegator}, r: ${registrar}) <- PANIC`;
         return PvmExecution.Panic;
       }
 
@@ -93,7 +93,7 @@ export class Bless implements HostCallHandler {
     const authorizersDecoder = Decoder.fromBlob(res);
     const memoryReadResult = memory.loadInto(res, authorization);
     if (memoryReadResult.isError) {
-      logger.trace`BLESS(${manager}, ${delegator}, ${registrar}, ${lazyInspect(autoAccumulate)}) <- PANIC`;
+      logger.trace`BLESS(m: ${manager}, v: ${delegator}, r: ${registrar}, ${lazyInspect(autoAccumulate)}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
@@ -112,7 +112,7 @@ export class Bless implements HostCallHandler {
     );
 
     if (updateResult.isOk) {
-      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${lazyInspect(autoAccumulate)}) <- OK`;
+      logger.trace`BLESS(m: ${manager}, a: [${authorizers}], v: ${delegator}, r: ${registrar}, ${lazyInspect(autoAccumulate)}) <- OK`;
       regs.set(IN_OUT_REG, HostCallResult.OK);
       return;
     }
@@ -121,13 +121,13 @@ export class Bless implements HostCallHandler {
 
     // NOTE: `UpdatePrivilegesError.UnprivilegedService` won't happen in 0.7.1+
     if (e === UpdatePrivilegesError.UnprivilegedService) {
-      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${lazyInspect(autoAccumulate)}) <- HUH`;
+      logger.trace`BLESS(m: ${manager}, a: [${authorizers}], v: ${delegator}, r: ${registrar}, ${lazyInspect(autoAccumulate)}) <- HUH`;
       regs.set(IN_OUT_REG, HostCallResult.HUH);
       return;
     }
 
     if (e === UpdatePrivilegesError.InvalidServiceId) {
-      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${lazyInspect(autoAccumulate)}) <- WHO`;
+      logger.trace`BLESS(m: ${manager}, a: [${authorizers}], v: ${delegator}, r: ${registrar}, ${lazyInspect(autoAccumulate)}) <- WHO`;
       regs.set(IN_OUT_REG, HostCallResult.WHO);
       return;
     }

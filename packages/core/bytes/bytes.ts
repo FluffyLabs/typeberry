@@ -273,6 +273,9 @@ function numberFromCharCode(x: number) {
 }
 
 function bytesToHexString(buffer: Uint8Array): string {
+  if (buffer.length === 0) {
+    return "";
+  }
   const nibbleToString = (n: number) => {
     if (n >= VALUE_OF_A) {
       return String.fromCharCode(n + CODE_OF_a - VALUE_OF_A);
