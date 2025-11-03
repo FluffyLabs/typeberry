@@ -2,7 +2,10 @@ import { logger, main } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
 main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_067", {
-  accepted: ["traces"],
+  patterns: [".json"],
+  accepted: {
+    ".json": ["traces"],
+  },
   ignored: [
     "genesis.json",
     // note [seko] storage tests await implementation of read/write
