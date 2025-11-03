@@ -9,7 +9,6 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_071", {
   ignored: [
     "genesis.json",
     "fuzzy/00000037", // statistics + afew
-    "fuzzy/00000111", // statistics
   ],
 })
   .then((r) => logger.log`${r}`)

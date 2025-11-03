@@ -50,10 +50,10 @@ export class Eject implements HostCallHandler {
     }
 
     const result = this.partialState.eject(serviceId, previousCodeHash);
-    logger.trace`EJECT(${serviceId}, ${previousCodeHash}) <- ${resultToString(result)}`;
 
     // All good!
     if (result.isOk) {
+      logger.trace`EJECT(${serviceId}, ${previousCodeHash}) <- OK`;
       regs.set(IN_OUT_REG, HostCallResult.OK);
       return;
     }
@@ -61,8 +61,10 @@ export class Eject implements HostCallHandler {
     const e = result.error;
 
     if (e === EjectError.InvalidService) {
+      logger.trace`EJECT(${serviceId}, ${previousCodeHash}) <- WHO ${resultToString(result)}`;
       regs.set(IN_OUT_REG, HostCallResult.WHO);
     } else if (e === EjectError.InvalidPreimage) {
+      logger.trace`EJECT(${serviceId}, ${previousCodeHash}) <- HUH ${resultToString(result)}`;
       regs.set(IN_OUT_REG, HostCallResult.HUH);
     } else {
       assertNever(e);
