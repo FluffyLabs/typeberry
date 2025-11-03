@@ -1,7 +1,6 @@
 import assert from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
-import type { TestContext } from "node:test";
 import { Block, emptyBlock } from "@typeberry/block";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { ChainSpec, PvmBackend, tinyChainSpec } from "@typeberry/config";
@@ -14,6 +13,7 @@ import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
+import type { RunOptions } from "../common.js";
 import { loadState } from "./state-loader.js";
 
 const keccakHasher = keccak.KeccakHasher.create();
@@ -61,22 +61,23 @@ function blockAsView(spec: ChainSpec, block: Block) {
 // that were run pre-V1 fuzzer version.
 const jamConformance070V0Spec = new ChainSpec({
   ...tinyChainSpec,
+  name: "jam-conformance-v070v0",
   maxLookupAnchorAge: tryAsU32(14_400),
 });
 
 export async function runStateTransition(
   testContent: StateTransition,
-  testPath: string,
-  t: TestContext,
-  chainSpec: ChainSpec,
+  options: RunOptions,
+  variant: "ananas" | "builtin",
 ) {
+  const pvm = variant === "ananas" ? PvmBackend.Ananas : PvmBackend.BuiltIn;
   const blake2b = await Blake2b.createHasher();
   // a bit of a hack, but the new value for `maxLookupAnchorAge` was proposed with V1
   // version of the fuzzer, yet these tests were still depending on the older value.
   // To simplify the chain spec, we just special case this one vector here.
-  const spec = testPath.includes("fuzz-reports/0.7.0/traces/1756548916/00000082.json")
+  const spec = options.path.includes("fuzz-reports/0.7.0/traces/1756548916/00000082.json")
     ? jamConformance070V0Spec
-    : chainSpec;
+    : options.chainSpec;
   const preState = loadState(spec, blake2b, testContent.pre_state.keyvals);
   const postState = loadState(spec, blake2b, testContent.post_state.keyvals);
 
@@ -84,7 +85,7 @@ export async function runStateTransition(
   const postStateRoot = postState.backend.getRootHash(blake2b);
 
   const blockView = blockAsView(spec, testContent.block);
-  const allBlocks = loadBlocks(testPath, spec);
+  const allBlocks = loadBlocks(options.path, spec);
   const myBlockIndex = allBlocks.findIndex(
     ({ header }) => header.timeSlotIndex === testContent.block.header.timeSlotIndex,
   );
@@ -100,7 +101,7 @@ export async function runStateTransition(
     }),
   );
 
-  const stf = new OnChain(spec, preState, blocksDb, hasher, PvmBackend.BuiltIn);
+  const stf = new OnChain(spec, preState, blocksDb, hasher, pvm);
 
   // verify that we compute the state root exactly the same.
   assert.deepStrictEqual(testContent.pre_state.state_root.toString(), preStateRoot.toString());
@@ -132,7 +133,7 @@ export async function runStateTransition(
 
   // some conformance test vectors have an empty state, we run them, yet do not perform any assertions.
   if (testContent.post_state.keyvals.length === 0) {
-    t.skip(`Successfuly run a test vector with empty post state!. Please verify: ${testPath}`);
+    options.test.skip(`Successfuly run a test vector with empty post state!. Please verify: ${options.path}`);
     return;
   }
 

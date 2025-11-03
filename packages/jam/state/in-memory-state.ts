@@ -45,7 +45,7 @@ import {
   LookupHistoryItem,
   type LookupHistorySlots,
   PreimageItem,
-  type ServiceAccountInfo,
+  ServiceAccountInfo,
   StorageItem,
   type StorageKey,
   tryAsLookupHistorySlots,
@@ -127,6 +127,18 @@ export class InMemoryService extends WithDebug implements Service {
         return { hash, length: val[0].length };
       }),
     };
+  }
+
+  /** Return identical `InMemoryService` which does not share any references. */
+  clone(): InMemoryService {
+    return new InMemoryService(this.serviceId, {
+      info: ServiceAccountInfo.create(this.data.info),
+      preimages: HashDictionary.fromEntries(Array.from(this.data.preimages.entries())),
+      lookupHistory: HashDictionary.fromEntries(
+        Array.from(this.data.lookupHistory.entries()).map(([k, v]) => [k, v.slice()]),
+      ),
+      storage: new Map(this.data.storage.entries()),
+    });
   }
 
   /**

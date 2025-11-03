@@ -4,7 +4,7 @@
   "description": "Anan-as PVM implementation.",
   "main": "index.ts",
   "dependencies": {
-    "@fluffylabs/anan-as": "^1.0.0-a9b8141",
+    "@fluffylabs/anan-as": "^1.1.3",
     "@typeberry/codec": "*",
     "@typeberry/numbers": "*",
     "@typeberry/pvm-interface": "*",

@@ -11,11 +11,6 @@ export class DebuggerAdapter {
     this.pvm = new Interpreter({ useSbrkGas });
   }
 
-  // TODO [MaSi]: a temporary solution that is needed to implement host calls in PVM debugger
-  getInterpreter() {
-    return this.pvm;
-  }
-
   resetGeneric(rawProgram: Uint8Array, flatRegisters: Uint8Array, initialGas: bigint) {
     this.pvm.resetGeneric(rawProgram, 0, tryAsGas(initialGas), new Registers(flatRegisters));
   }
