@@ -1,5 +1,6 @@
+import { StateTransition } from "@typeberry/state-vectors";
 import { logger, main, runner } from "./common.js";
-import { runStateTransition, StateTransition } from "./state-transition/state-transition.js";
+import { runStateTransition } from "./state-transition/state-transition.js";
 
 const runners = [runner("traces", StateTransition.fromJson, runStateTransition)];
 

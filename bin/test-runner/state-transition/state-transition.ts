@@ -2,53 +2,19 @@ import assert from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
 import type { TestContext } from "node:test";
-import { Block, emptyBlock, Header } from "@typeberry/block";
-import { blockFromJson, headerFromJson } from "@typeberry/block-json";
-import { codec, Decoder, Encoder } from "@typeberry/codec";
+import { Block, emptyBlock } from "@typeberry/block";
+import { Decoder, Encoder } from "@typeberry/codec";
 import { ChainSpec, PvmBackend, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { Blake2b, keccak, WithHash } from "@typeberry/hash";
-import type { FromJson } from "@typeberry/json-parser";
 import { tryAsU32 } from "@typeberry/numbers";
 import { serializeStateUpdate } from "@typeberry/state-merkleization";
+import { StateTransition, StateTransitionGenesis } from "@typeberry/state-vectors";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
-import { loadState, TestState } from "./state-loader.js";
-
-export class StateTransitionGenesis {
-  static fromJson: FromJson<StateTransitionGenesis> = {
-    header: headerFromJson,
-    state: TestState.fromJson,
-  };
-
-  static Codec = codec.object({
-    header: Header.Codec,
-    state: TestState.Codec,
-  });
-
-  header!: Header;
-  state!: TestState;
-}
-
-export class StateTransition {
-  static fromJson: FromJson<StateTransition> = {
-    pre_state: TestState.fromJson,
-    post_state: TestState.fromJson,
-    block: blockFromJson(tinyChainSpec),
-  };
-
-  static Codec = codec.object({
-    pre_state: TestState.Codec,
-    block: Block.Codec,
-    post_state: TestState.Codec,
-  });
-
-  pre_state!: TestState;
-  post_state!: TestState;
-  block!: Block;
-}
+import { loadState } from "./state-loader.js";
 
 const keccakHasher = keccak.KeccakHasher.create();
 

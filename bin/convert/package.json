@@ -29,6 +29,7 @@
     "@typeberry/state": "*",
     "@typeberry/state-json": "*",
     "@typeberry/state-merkleization": "*",
+    "@typeberry/state-vectors": "*",
     "@typeberry/test-runner": "*",
     "@typeberry/utils": "*",
     "json-bigint-patch": "0.0.8",

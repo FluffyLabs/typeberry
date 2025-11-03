@@ -12,8 +12,9 @@ import {
   workResultFromJson,
 } from "@typeberry/block-json";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import { StateTransition } from "@typeberry/state-vectors";
 import { runner } from "../common.js";
-import { runStateTransition, StateTransition } from "../state-transition/state-transition.js";
+import { runStateTransition } from "../state-transition/state-transition.js";
 import { AccumulateTest, runAccumulateTest } from "./accumulate.js";
 import { AssurancesTestFull, AssurancesTestTiny, runAssurancesTestFull, runAssurancesTestTiny } from "./assurances.js";
 import { AuthorizationsTest, runAuthorizationsTest } from "./authorizations.js";
