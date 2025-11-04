@@ -8,7 +8,9 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_071", {
   },
   ignored: [
     "genesis.json",
-    "fuzzy/00000037", // statistics + afew
+
+    // NOTE: Running parallel accumulation should fix this test.
+    "fuzzy/00000037", // incorrect onTransferMinGas retrieved from Info HC of another service
   ],
 })
   .then((r) => logger.log`${r}`)
