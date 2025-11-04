@@ -58,12 +58,13 @@ type InvocationResult = {
 };
 
 type ParallelAccumulationResult = {
-  state: AccumulationStateUpdate;
-  gasCost: ServiceGas;
+  results: Map<ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }>;
 };
 
-type SequentialAccumulationResult = ParallelAccumulationResult & {
+type SequentialAccumulationResult = {
   accumulatedReports: U32;
+  state: AccumulationStateUpdate;
+  gasCost: ServiceGas;
 };
 
 enum PvmInvocationError {
@@ -310,12 +311,13 @@ export class Accumulate {
     const accumulateData = new AccumulateData(reportsToAccumulateInParallel, [], autoAccumulateServices);
     const reportsToAccumulateSequentially = reports.subview(i);
 
-    const {
-      gasCost,
-      state: stateAfterParallelAcc,
-      ...rest
-    } = await this.accumulateInParallel(accumulateData, slot, entropy, statistics, stateUpdate, yieldedRoots);
+    const { results, ...rest } = await this.accumulateInParallel(accumulateData, slot, entropy, stateUpdate);
     assertEmpty(rest);
+
+    this.updateStatistics(results, statistics, accumulateData);
+    this.updateYieldedRoots(results, yieldedRoots);
+    const totalGasCost = tryAsServiceGas(sumU64(...Array.from(results.entries()).map((x) => x[1].consumedGas)).value);
+    const stateAfterParallelAcc = this.mergePerallelAccumulationResults(stateUpdate, results);
 
     // NOTE [ToDr] recursive invocation
     const {
@@ -324,7 +326,7 @@ export class Accumulate {
       state,
       ...seqRest
     } = await this.accumulateSequentiallyLegacy(
-      tryAsServiceGas(gasLimit - gasCost),
+      tryAsServiceGas(gasLimit - totalGasCost),
       reportsToAccumulateSequentially,
       slot,
       entropy,
@@ -337,7 +339,7 @@ export class Accumulate {
 
     return {
       accumulatedReports: tryAsU32(i + accumulatedReports),
-      gasCost: tryAsServiceGas(gasCost + seqGasCost),
+      gasCost: tryAsServiceGas(totalGasCost + seqGasCost),
       state,
     };
   }
@@ -377,13 +379,14 @@ export class Accumulate {
     const accumulateData = new AccumulateData(reportsToAccumulateInParallel, transfers, autoAccumulateServices);
     const reportsToAccumulateSequentially = reports.subview(i);
 
-    const {
-      gasCost,
-      state: stateAfterParallelAcc,
-      ...rest
-    } = await this.accumulateInParallel(accumulateData, slot, entropy, statistics, stateUpdate, yieldedRoots);
-    const newTransfers = stateAfterParallelAcc.takeTransfers();
+    const { results, ...rest } = await this.accumulateInParallel(accumulateData, slot, entropy, stateUpdate);
     assertEmpty(rest);
+
+    this.updateStatistics(results, statistics, accumulateData);
+    this.updateYieldedRoots(results, yieldedRoots);
+    const newTransfers = this.getTransfers(results);
+    const totalGasCost = tryAsServiceGas(sumU64(...Array.from(results.entries()).map((x) => x[1].consumedGas)).value);
+    const stateAfterParallelAcc = this.mergePerallelAccumulationResults(stateUpdate, results);
 
     /**
      * Gas limit from transfers is added to the next round of accumulation
@@ -391,7 +394,7 @@ export class Accumulate {
      * https://graypaper.fluffylabs.dev/#/ab2cdbd/172b02172b02?v=0.7.2
      */
     const transfersGas = transfers.map((t) => t.gas);
-    const { value: newGasLimit, overflow } = sumU64(tryAsServiceGas(gasLimit - gasCost), ...transfersGas);
+    const { value: newGasLimit, overflow } = sumU64(tryAsServiceGas(gasLimit - totalGasCost), ...transfersGas);
     // NOTE [ToDr] recursive invocation
     const {
       accumulatedReports,
@@ -413,77 +416,17 @@ export class Accumulate {
 
     return {
       accumulatedReports: tryAsU32(i + accumulatedReports),
-      gasCost: tryAsServiceGas(gasCost + seqGasCost),
+      gasCost: tryAsServiceGas(totalGasCost + seqGasCost),
       state,
     };
   }
 
-  private async accumulateInParalllelInternal(
-    accumulateData: AccumulateData,
-    slot: TimeSlot,
-    entropy: EntropyHash,
-    state: AccumulationStateUpdate,
-  ) {
-    const serviceIds = accumulateData.getServiceIds();
-    const results = new Map<ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }>();
-    let currentState = AccumulationStateUpdate.copyFrom(state);
-    for (const serviceId of serviceIds) {
-      const checkpoint = AccumulationStateUpdate.copyFrom(currentState);
-      const operands = accumulateData.getOperands(serviceId);
-      const { consumedGas, stateUpdate } = await this.accumulateSingleService(
-        serviceId,
-        accumulateData.getTransfers(serviceId),
-        operands,
-        accumulateData.getGasLimit(serviceId),
-        slot,
-        entropy,
-        currentState,
-      );
-
-      results.set(serviceId, {
-        consumedGas,
-        stateUpdate: stateUpdate === null ? checkpoint : stateUpdate,
-      });
-
-      // TODO [ToDr] remove changing state in favor of state merging
-      currentState = stateUpdate === null ? checkpoint : AccumulationStateUpdate.copyFrom(stateUpdate);
-    }
-    return {
-      currentState,
-      results,
-    };
-  }
-
-  /**
-   * The parallelized accumulation function ∆∗ which,
-   * with the help of the single-service accumulation function ∆1,
-   * transforms an initial state-context, together with a sequence of work-reports
-   * and a dictionary of privileged always-accumulate services,
-   * into a tuple of the total gas utilized in pvm execution u, a posterior state-context
-   * and the resultant accumulation-output pairings b and deferred-transfers.
-   *
-   * https://graypaper.fluffylabs.dev/#/ab2cdbd/174602174602?v=0.7.2
-   */
-  private async accumulateInParallel(
-    accumulateData: AccumulateData,
-    slot: TimeSlot,
-    entropy: EntropyHash,
+  private updateStatistics(
+    results: Map<ServiceId, { consumedGas: ServiceGas }>,
     statistics: Map<ServiceId, CountAndGasUsed>,
-    inputStateUpdate: AccumulationStateUpdate,
-    yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>>,
-  ): Promise<ParallelAccumulationResult> {
-    const { currentState, results } = await this.accumulateInParalllelInternal(
-      accumulateData,
-      slot,
-      entropy,
-      inputStateUpdate,
-    );
-
-    const entries = Array.from(results.entries());
-    const totalGasCost = tryAsServiceGas(sumU64(...entries.map((x) => x[1].consumedGas)).value);
-
-    // update statistics
-    for (const [serviceId, { consumedGas }] of entries) {
+    accumulateData: AccumulateData,
+  ) {
+    for (const [serviceId, { consumedGas }] of results.entries()) {
       // https://graypaper.fluffylabs.dev/#/ab2cdbd/193b05193b05?v=0.7.2
       const serviceStatistics = statistics.get(serviceId) ?? { count: tryAsU32(0), gasUsed: tryAsServiceGas(0) };
       const count = accumulateData.getReportsLength(serviceId);
@@ -515,10 +458,18 @@ export class Accumulate {
         statistics.set(serviceId, serviceStatistics);
       }
     }
+  }
 
-    // update yielded roots
-    for (const [serviceId, { stateUpdate }] of entries) {
-      const yieldedRoot = stateUpdate.takeYieldedRoot();
+  private updateYieldedRoots(
+    results: Map<ServiceId, { stateUpdate: Pick<AccumulationStateUpdate, "yieldedRoot"> }>,
+    yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>>,
+  ) {
+    for (const [
+      serviceId,
+      {
+        stateUpdate: { yieldedRoot },
+      },
+    ] of results.entries()) {
       if (yieldedRoot !== null) {
         const rootsSet = yieldedRoots.get(serviceId);
         if (rootsSet === undefined) {
@@ -529,6 +480,72 @@ export class Accumulate {
         }
       }
     }
+  }
+
+  getTransfers(results: Map<ServiceId, { stateUpdate: Pick<AccumulationStateUpdate, "transfers"> }>) {
+    return Array.from(results.values()).flatMap(({ stateUpdate }) => stateUpdate.transfers);
+  }
+
+  private async accumulateInParallelInternal(
+    accumulateData: AccumulateData,
+    slot: TimeSlot,
+    entropy: EntropyHash,
+    state: AccumulationStateUpdate,
+  ) {
+    const serviceIds = accumulateData.getServiceIds();
+    const results = new Map<ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }>();
+    let currentState = AccumulationStateUpdate.copyFrom(state);
+    for (const serviceId of serviceIds) {
+      const checkpoint = AccumulationStateUpdate.copyFrom(currentState);
+      const operands = accumulateData.getOperands(serviceId);
+      const { consumedGas, stateUpdate } = await this.accumulateSingleService(
+        serviceId,
+        accumulateData.getTransfers(serviceId),
+        operands,
+        accumulateData.getGasLimit(serviceId),
+        slot,
+        entropy,
+        currentState,
+      );
+
+      results.set(serviceId, {
+        consumedGas,
+        stateUpdate: stateUpdate === null ? checkpoint : AccumulationStateUpdate.copyFrom(stateUpdate),
+      });
+
+      // TODO [ToDr] remove changing state in favor of state merging
+      currentState = stateUpdate === null ? checkpoint : stateUpdate;
+    }
+    return {
+      currentState,
+      results,
+    };
+  }
+
+  /**
+   * The parallelized accumulation function ∆∗ which,
+   * with the help of the single-service accumulation function ∆1,
+   * transforms an initial state-context, together with a sequence of work-reports
+   * and a dictionary of privileged always-accumulate services,
+   * into a tuple of the total gas utilized in pvm execution u, a posterior state-context
+   * and the resultant accumulation-output pairings b and deferred-transfers.
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/174602174602?v=0.7.2
+   */
+  private async accumulateInParallel(
+    accumulateData: AccumulateData,
+    slot: TimeSlot,
+    entropy: EntropyHash,
+    inputStateUpdate: AccumulationStateUpdate,
+  ): Promise<ParallelAccumulationResult> {
+    const { currentState, results } = await this.accumulateInParallelInternal(
+      accumulateData,
+      slot,
+      entropy,
+      inputStateUpdate,
+    );
+
+    const entries = Array.from(results.entries());
 
     const currentPrivileged = inputStateUpdate.privilegedServices ?? this.state.privilegedServices;
     const prevValidatorData = inputStateUpdate.validatorsData ?? this.state.designatedValidatorData;
@@ -572,9 +589,147 @@ export class Accumulate {
     }
 
     return {
-      state: currentState,
-      gasCost: totalGasCost,
+      results,
     };
+  }
+
+  private updatePrivilegedServiceId(
+    // The id that privileged service wants to be updated to
+    newId: ServiceId,
+    // Current id of privileged service (updated state)
+    currentId: ServiceId,
+    {
+      // is current service id a manager (can update anything)
+      isManager,
+      // is current service attempting to update itself (privileged are owned)
+      isSelf,
+      // is the service id already changed in this block
+      isAlreadyChanged,
+    }: { isManager: boolean; isSelf: boolean; isAlreadyChanged: boolean },
+  ) {
+    if (isManager) {
+      return newId;
+    }
+
+    // current service can update itself, only if it was a privileged
+    // service at the start of the block. I.e. owned privileges cannot
+    // be transfered multiple times in a block.
+    if (isSelf && !isAlreadyChanged) {
+      return newId;
+    }
+
+    return currentId;
+  }
+
+  private mergePerallelAccumulationResults(
+    inputState: AccumulationStateUpdate,
+    results: Map<ServiceId, { stateUpdate: AccumulationStateUpdate }>,
+  ): AccumulationStateUpdate {
+    const outputState = AccumulationStateUpdate.copyFrom(inputState);
+    const previousPrivilegedServices = inputState.privilegedServices ?? this.state.privilegedServices;
+    const currentManager = previousPrivilegedServices.manager;
+    const currentDelegator = previousPrivilegedServices.delegator;
+    const currentRegistrar = previousPrivilegedServices.registrar;
+    const currentAssigners = previousPrivilegedServices.assigners;
+    const privilegedServicesUpdatedByManager =
+      results.get(currentManager)?.stateUpdate.privilegedServices ?? previousPrivilegedServices;
+
+    const newRemovedServices = new Set<ServiceId>(inputState.services.removed);
+    const newCreatedServices = new Set<ServiceId>(inputState.services.created);
+    function updatePrivilegedService(
+      currentServiceId: ServiceId,
+      serviceIdUpdatedByManager: ServiceId,
+      selfUpdatedServiceId: ServiceId,
+    ) {
+      if (currentServiceId === serviceIdUpdatedByManager) {
+        return serviceIdUpdatedByManager;
+      }
+
+      return selfUpdatedServiceId;
+    }
+
+    for (const [serviceId, { stateUpdate }] of results.entries()) {
+      const { authorizationQueues, privilegedServices, validatorsData } = stateUpdate;
+      if (privilegedServices !== null) {
+        const newPrivilegedServices = outputState.privilegedServices ?? previousPrivilegedServices;
+
+        if (serviceId === currentManager) {
+          outputState.privilegedServices = PrivilegedServices.create({
+            ...newPrivilegedServices,
+            manager: privilegedServices.manager,
+            autoAccumulateServices: privilegedServices.autoAccumulateServices,
+          });
+        }
+
+        if (serviceId === currentRegistrar) {
+          outputState.privilegedServices = PrivilegedServices.create({
+            ...newPrivilegedServices,
+            registrar: updatePrivilegedService(
+              previousPrivilegedServices.registrar,
+              privilegedServicesUpdatedByManager.registrar,
+              privilegedServices.registrar,
+            ),
+          });
+        }
+
+        if (serviceId === currentDelegator) {
+          outputState.privilegedServices = PrivilegedServices.create({
+            ...newPrivilegedServices,
+            delegator: updatePrivilegedService(
+              previousPrivilegedServices.delegator,
+              privilegedServicesUpdatedByManager.delegator,
+              privilegedServices.delegator,
+            ),
+          });
+        }
+
+        const newAssigners = currentAssigners.map((currentAssigner, coreIndex) =>
+          serviceId === currentAssigner ? privilegedServices.assigners[coreIndex] : currentAssigner,
+        );
+
+        outputState.privilegedServices = PrivilegedServices.create({
+          ...newPrivilegedServices,
+          assigners: tryAsPerCore(newAssigners, this.chainSpec),
+        });
+      }
+
+      if (validatorsData !== null && serviceId === currentDelegator) {
+        outputState.validatorsData = validatorsData;
+      }
+
+      if (authorizationQueues !== null) {
+        for (const [core, queue] of authorizationQueues.entries()) {
+          if (serviceId === currentAssigners[core]) {
+            outputState.authorizationQueues.set(core, queue);
+          }
+        }
+      }
+
+      for (const [serviceId, preimage] of stateUpdate.services.preimages.entries()) {
+        outputState.services.preimages.set(serviceId, preimage);
+      }
+
+      for (const [serviceId, storageUpdates] of stateUpdate.services.storage.entries()) {
+        outputState.services.storage.set(serviceId, storageUpdates);
+      }
+
+      for (const [serviceId, serviceUpdaet] of stateUpdate.services.updated.entries()) {
+        outputState.services.updated.set(serviceId, serviceUpdaet);
+      }
+
+      for (const removedServiceId of stateUpdate.services.removed) {
+        newRemovedServices.add(removedServiceId);
+      }
+
+      for (const createdServiceId of stateUpdate.services.created) {
+        newRemovedServices.add(createdServiceId);
+      }
+    }
+
+    outputState.services.created = Array.from(newCreatedServices);
+    outputState.services.removed = Array.from(newRemovedServices);
+
+    return outputState;
   }
 
   /**
