@@ -1,0 +1,21 @@
+{
+  "name": "@typeberry/state-vectors",
+  "version": "0.2.0",
+  "description": "State Transition vectors.",
+  "main": "index.ts",
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "dependencies": {
+    "@typeberry/block": "*",
+    "@typeberry/block-json": "*",
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/config": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/json-parser": "*"
+  },
+  "type": "module",
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0"
+}
