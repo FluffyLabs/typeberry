@@ -24,7 +24,7 @@ const UPPER_BITS_SHIFT = 32n;
  *
  * Get time slots for current preimage availability status.
  *
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/373002373002?v=0.6.7
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/37cb0237cb02?v=0.7.2
  */
 export class Query implements HostCallHandler {
   index = tryAsHostCallIndex(22);
