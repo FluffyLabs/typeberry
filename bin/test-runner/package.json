@@ -26,6 +26,7 @@
     "@typeberry/state": "*",
     "@typeberry/state-json": "*",
     "@typeberry/state-merkleization": "*",
+    "@typeberry/state-vectors": "*",
     "@typeberry/transition": "*",
     "@typeberry/trie": "*",
     "@typeberry/utils": "*",
