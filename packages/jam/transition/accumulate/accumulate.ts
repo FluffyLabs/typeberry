@@ -234,8 +234,8 @@ export class Accumulate {
     slot: TimeSlot,
     entropy: EntropyHash,
     inputStateUpdate: AccumulationStateUpdate,
-  ): Promise<InvocationResult> {
-    logger.log`Accumulating service ${serviceId}, transfers: ${transfers.length} operands: ${operands.length} at slot: ${slot}.`;
+  ) {
+    logger.log`Accumulating service ${serviceId}, transfers: ${transfers.length} operands: ${operands.length} at slot: ${slot}`;
 
     const updatedState = new PartiallyUpdatedState(this.state, inputStateUpdate);
 
