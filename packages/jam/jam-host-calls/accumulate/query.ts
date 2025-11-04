@@ -67,16 +67,17 @@ export class Query implements HostCallHandler {
         regs.set(IN_OUT_REG_2, zero);
         return;
       case PreimageStatusKind.Available:
-        logger.trace`QUERY(${hash}, ${length}) <- AVAILABLE ${result.data}`;
+        logger.trace`QUERY(${hash}, ${length}) <- AVAILABLE [${result.data}]`;
         regs.set(IN_OUT_REG_1, tryAsU64((BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 1n));
         regs.set(IN_OUT_REG_2, zero);
         return;
       case PreimageStatusKind.Unavailable:
+        logger.trace`QUERY(${hash}, ${length}) <- UNAVAILABLE [${result.data.join(", ")}]`;
         regs.set(IN_OUT_REG_1, tryAsU64((BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 2n));
         regs.set(IN_OUT_REG_2, tryAsU64(result.data[1]));
         return;
       case PreimageStatusKind.Reavailable:
-        logger.trace`QUERY(${hash}, ${length}) <- REAVAILABLE ${result.data}`;
+        logger.trace`QUERY(${hash}, ${length}) <- REAVAILABLE [${result.data.join(", ")}]`;
         regs.set(IN_OUT_REG_1, tryAsU64((BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 3n));
         regs.set(IN_OUT_REG_2, tryAsU64((BigInt(result.data[2]) << UPPER_BITS_SHIFT) + BigInt(result.data[1])));
         return;
