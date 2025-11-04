@@ -77,7 +77,7 @@ export class Write implements HostCallHandler {
 
     // a
     const result = this.account.write(storageKey, maybeValue);
-    logger.trace`WRITE(${storageKey}, ${maybeValue?.toStringTruncated()}) <- ${resultToString(result)}`;
+    logger.trace`WRITE(${storageKey}, ${maybeValue?.toStringTruncated() ?? "remove"}) <- ${resultToString(result)}`;
 
     if (result.isError) {
       regs.set(IN_OUT_REG, HostCallResult.FULL);
