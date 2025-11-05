@@ -53,7 +53,7 @@ export const ACCUMULATION_ERROR = "duplicate service created";
 export type ACCUMULATION_ERROR = typeof ACCUMULATION_ERROR;
 
 type InvocationResult = {
-  stateUpdate: AccumulationStateUpdate | null;
+  stateUpdate: AccumulationStateUpdate;
   consumedGas: ServiceGas;
 };
 
@@ -393,7 +393,7 @@ export class Accumulate {
      *
      * https://graypaper.fluffylabs.dev/#/ab2cdbd/172b02172b02?v=0.7.2
      */
-    const transfersGas = transfers.map((t) => t.gas);
+    const transfersGas = newTransfers.map((t) => t.gas);
     const { value: newGasLimit, overflow } = sumU64(tryAsServiceGas(gasLimit - totalGasCost), ...transfersGas);
     // NOTE [ToDr] recursive invocation
     const {
@@ -497,15 +497,14 @@ export class Accumulate {
 
     for (const serviceId of serviceIds) {
       const checkpoint = AccumulationStateUpdate.copyFrom(state);
-      const operands = accumulateData.getOperands(serviceId);
       const { consumedGas, stateUpdate } = await this.accumulateSingleService(
         serviceId,
         accumulateData.getTransfers(serviceId),
-        operands,
+        accumulateData.getOperands(serviceId),
         accumulateData.getGasLimit(serviceId),
         slot,
         entropy,
-        state,
+        AccumulationStateUpdate.copyFrom(state),
       );
 
       results.set(serviceId, {
@@ -613,19 +612,21 @@ export class Accumulate {
     for (const [serviceId, { stateUpdate }] of results.entries()) {
       const { authorizationQueues, privilegedServices, validatorsData } = stateUpdate;
       if (privilegedServices !== null) {
-        const newPrivilegedServices = outputState.privilegedServices ?? previousPrivilegedServices;
+        if (outputState.privilegedServices === null) {
+          outputState.privilegedServices = PrivilegedServices.create({
+            ...previousPrivilegedServices,
+          });
+        }
 
         if (serviceId === currentManager) {
           outputState.privilegedServices = PrivilegedServices.create({
-            ...newPrivilegedServices,
-            manager: privilegedServices.manager,
-            autoAccumulateServices: privilegedServices.autoAccumulateServices,
+            ...privilegedServices,
           });
         }
 
         if (serviceId === currentRegistrar) {
           outputState.privilegedServices = PrivilegedServices.create({
-            ...newPrivilegedServices,
+            ...outputState.privilegedServices,
             registrar: updatePrivilegedService(
               previousPrivilegedServices.registrar,
               privilegedServicesUpdatedByManager.registrar,
@@ -636,7 +637,7 @@ export class Accumulate {
 
         if (serviceId === currentDelegator) {
           outputState.privilegedServices = PrivilegedServices.create({
-            ...newPrivilegedServices,
+            ...outputState.privilegedServices,
             delegator: updatePrivilegedService(
               previousPrivilegedServices.delegator,
               privilegedServicesUpdatedByManager.delegator,
@@ -650,7 +651,7 @@ export class Accumulate {
         );
 
         outputState.privilegedServices = PrivilegedServices.create({
-          ...newPrivilegedServices,
+          ...outputState.privilegedServices,
           assigners: tryAsPerCore(newAssigners, this.chainSpec),
         });
       }
@@ -667,20 +668,42 @@ export class Accumulate {
         }
       }
 
-      for (const [serviceId, preimages] of stateUpdate.services.preimages.entries()) {
-        const outputPreimages = outputState.services.preimages.get(serviceId) ?? [];
-        outputPreimages.push(...preimages);
-        outputState.services.preimages.set(serviceId, outputPreimages);
+      const maybeUpdatedPreimages = stateUpdate.services.preimages.get(serviceId);
+
+      if (maybeUpdatedPreimages !== undefined) {
+        outputState.services.preimages.set(serviceId, maybeUpdatedPreimages);
       }
 
-      for (const [serviceId, storageUpdates] of stateUpdate.services.storage.entries()) {
-        const outputStorageUpdates = outputState.services.storage.get(serviceId) ?? [];
-        outputStorageUpdates.push(...storageUpdates);
-        outputState.services.storage.set(serviceId, outputStorageUpdates);
+      const maybeUpdatedStorage = stateUpdate.services.storage.get(serviceId);
+
+      if (maybeUpdatedStorage !== undefined) {
+        outputState.services.storage.set(serviceId, maybeUpdatedStorage);
       }
 
-      for (const [serviceId, serviceUpdate] of stateUpdate.services.updated.entries()) {
-        outputState.services.updated.set(serviceId, serviceUpdate);
+      const maybeUpdatedService = stateUpdate.services.updated.get(serviceId);
+
+      if (maybeUpdatedService !== undefined) {
+        outputState.services.updated.set(serviceId, maybeUpdatedService);
+      }
+
+      if (stateUpdate.services.removed.length > newRemovedServices.size) {
+        const removedServices = stateUpdate.services.removed.filter((id) => !newRemovedServices.has(id));
+        for (const id of removedServices) {
+          const preimages = stateUpdate.services.preimages.get(id);
+          if (preimages !== undefined) {
+            outputState.services.preimages.set(id, preimages); // merge instead of override?
+          }
+        }
+      }
+
+      if (stateUpdate.services.created.length > newCreatedServices.size) {
+        const createdServices = stateUpdate.services.created.filter((id) => !newCreatedServices.has(id));
+        for (const id of createdServices) {
+          const update = stateUpdate.services.updated.get(id);
+          if (update !== undefined) {
+            outputState.services.updated.set(id, update);
+          }
+        }
       }
 
       for (const removedServiceId of stateUpdate.services.removed) {
@@ -688,10 +711,7 @@ export class Accumulate {
       }
 
       for (const createdServiceId of stateUpdate.services.created) {
-        if (newRemovedServices.has(createdServiceId)) {
-          throw new Error("2 serwisy stworzyły serwis o tym samym id i mamy problemik");
-        }
-        newRemovedServices.add(createdServiceId);
+        newCreatedServices.add(createdServiceId);
       }
     }
 
