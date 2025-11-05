@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-
+import { PvmBackend, PvmBackendNames } from "@typeberry/config";
 import { NODE_DEFAULTS } from "@typeberry/config-node";
 import { tryAsU16 } from "@typeberry/numbers";
 import { deepEqual } from "@typeberry/utils";
@@ -10,7 +10,8 @@ describe("CLI", () => {
   const parse = (args: string[]) => parseArgs(args, (v) => `../${v}`);
   const defaultOptions: SharedOptions = {
     nodeName: NODE_DEFAULTS.name,
-    configPath: NODE_DEFAULTS.config,
+    config: NODE_DEFAULTS.config,
+    pvm: NODE_DEFAULTS.pvm,
   };
 
   it("should start with default arguments", () => {
@@ -34,28 +35,50 @@ describe("CLI", () => {
     });
   });
 
-  it("should parse config option", () => {
+  it("should parse single config option as array", () => {
     const args = parse(["--config=./config.json"]);
 
     deepEqual(args, {
       command: Command.Run,
       args: {
         ...defaultOptions,
-        configPath: ".././config.json",
+        config: ["./config.json"],
       },
     });
   });
 
-  it("should parse dev config option", () => {
+  it("should parse dev config option as array", () => {
     const args = parse(["--config=dev"]);
 
     deepEqual(args, {
       command: Command.Run,
       args: {
         ...defaultOptions,
-        configPath: "dev",
+        config: ["dev"],
       },
     });
+  });
+
+  it("should parse multiple config options as array", () => {
+    const args = parse(["--config=dev", "--config=./config.json"]);
+    deepEqual(args, {
+      command: Command.Run,
+      args: {
+        ...defaultOptions,
+        config: ["dev", "./config.json"],
+      },
+    });
+  });
+
+  it("should throw an error when one of config options is not a string", () => {
+    assert.throws(
+      () => {
+        parse(["--config=dev", "--config=1"]);
+      },
+      {
+        message: "Option '--config' requires an argument of type: string, got: number.",
+      },
+    );
   });
 
   it("should parse import command and add rel path to files", () => {
@@ -82,6 +105,30 @@ describe("CLI", () => {
     });
   });
 
+  it("should parse pvm option", () => {
+    const args = parse(["--pvm=ananas"]);
+
+    deepEqual(args, {
+      command: Command.Run,
+      args: {
+        ...defaultOptions,
+        pvm: PvmBackend.Ananas,
+      },
+    });
+  });
+
+  it("should throw on invalid pvm option", () => {
+    const pvms = PvmBackendNames.join(", ");
+    assert.throws(
+      () => {
+        const _args = parse(["--pvm=unimplemented"]);
+      },
+      {
+        message: `Invalid value 'unimplemented' for option 'pvm': Error: Use one of ${pvms}`,
+      },
+    );
+  });
+
   it("should throw on missing output path", () => {
     assert.throws(
       () => {
@@ -100,7 +147,7 @@ describe("CLI", () => {
       command: Command.Dev,
       args: {
         ...defaultOptions,
-        configPath: "dev",
+        config: ["dev"],
         index: tryAsU16(10),
       },
     });

@@ -1,9 +1,9 @@
 import type { ServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { minU64, tryAsU64 } from "@typeberry/numbers";
-import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { safeAllocUint8Array } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { HostCallResult } from "./results.js";
@@ -32,11 +32,7 @@ export class Read implements HostCallHandler {
     private readonly account: AccountsRead,
   ) {}
 
-  async execute(
-    _gas: GasCounter,
-    regs: IHostCallRegisters,
-    memory: IHostCallMemory,
-  ): Promise<undefined | PvmExecution> {
+  async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // a
     const serviceId = getServiceIdOrCurrent(IN_OUT_REG, regs, this.currentServiceId);
 
@@ -86,7 +82,12 @@ export class Read implements HostCallHandler {
       return;
     }
 
-    logger.trace`READ(${serviceId}, ${rawKey}) <- ${BytesBlob.blobFrom(chunk).toStringTruncated()}`;
+    if (chunk.length > 0) {
+      logger.trace`READ(${serviceId}, ${rawKey}) <- ${BytesBlob.blobFrom(chunk).toStringTruncated()}`;
+    } else {
+      // just a query for length of stored data
+      logger.trace`READ(${serviceId}, ${rawKey}) <- (${valueLength} ${valueLength === 1n ? "byte" : "bytes"})`;
+    }
     regs.set(IN_OUT_REG, valueLength);
   }
 }

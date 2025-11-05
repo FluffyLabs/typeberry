@@ -1,7 +1,8 @@
 import assert from "node:assert";
 import { fromJson } from "@typeberry/block-json";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { Interpreter, tryAsGas } from "@typeberry/pvm-interpreter";
+import { tryAsGas } from "@typeberry/pvm-interface";
+import { Interpreter } from "@typeberry/pvm-interpreter";
 
 export class PvmGasCostTest {
   static fromJson: FromJson<PvmGasCostTest> = {
@@ -15,7 +16,7 @@ export class PvmGasCostTest {
 
 export async function runPvmGasCostTest(testContent: PvmGasCostTest) {
   const pvm = new Interpreter();
-  pvm.reset(testContent.program, 0, tryAsGas(1000));
+  pvm.resetGeneric(testContent.program, 0, tryAsGas(1000));
 
   const blockGasCosts = pvm.calculateBlockGasCost();
 

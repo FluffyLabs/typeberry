@@ -2,9 +2,9 @@ import type { ServiceId } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { assertNever, resultToString } from "@typeberry/utils";
 import { EjectError, type PartialState } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
@@ -28,11 +28,7 @@ export class Eject implements HostCallHandler {
     private readonly partialState: PartialState,
   ) {}
 
-  async execute(
-    _gas: GasCounter,
-    regs: IHostCallRegisters,
-    memory: IHostCallMemory,
-  ): Promise<undefined | PvmExecution> {
+  async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `d`: account to eject from (source)
     const serviceId = getServiceId(regs.get(IN_OUT_REG));
     // `o`: preimage hash start memory index
@@ -54,10 +50,10 @@ export class Eject implements HostCallHandler {
     }
 
     const result = this.partialState.eject(serviceId, previousCodeHash);
-    logger.trace`EJECT(${serviceId}, ${previousCodeHash}) <- ${resultToString(result)}`;
 
     // All good!
     if (result.isOk) {
+      logger.trace`EJECT(${serviceId}, ${previousCodeHash}) <- OK`;
       regs.set(IN_OUT_REG, HostCallResult.OK);
       return;
     }
@@ -65,8 +61,10 @@ export class Eject implements HostCallHandler {
     const e = result.error;
 
     if (e === EjectError.InvalidService) {
+      logger.trace`EJECT(${serviceId}, ${previousCodeHash}) <- WHO ${resultToString(result)}`;
       regs.set(IN_OUT_REG, HostCallResult.WHO);
     } else if (e === EjectError.InvalidPreimage) {
+      logger.trace`EJECT(${serviceId}, ${previousCodeHash}) <- HUH ${resultToString(result)}`;
       regs.set(IN_OUT_REG, HostCallResult.HUH);
     } else {
       assertNever(e);

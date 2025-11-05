@@ -1,9 +1,9 @@
 import type { ServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { tryAsU64 } from "@typeberry/numbers";
-import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import type { StorageKey } from "@typeberry/state";
 import { asOpaqueType, type Result, resultToString, safeAllocUint8Array } from "@typeberry/utils";
 import { logger } from "./logger.js";
@@ -41,11 +41,7 @@ export class Write implements HostCallHandler {
     private readonly account: AccountsWrite,
   ) {}
 
-  async execute(
-    _gas: GasCounter,
-    regs: IHostCallRegisters,
-    memory: IHostCallMemory,
-  ): Promise<undefined | PvmExecution> {
+  async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // k_0
     const storageKeyStartAddress = regs.get(IN_OUT_REG);
     // k_z
@@ -81,7 +77,7 @@ export class Write implements HostCallHandler {
 
     // a
     const result = this.account.write(storageKey, maybeValue);
-    logger.trace`WRITE(${storageKey}, ${maybeValue?.toStringTruncated()}) <- ${resultToString(result)}`;
+    logger.trace`WRITE(${storageKey}, ${maybeValue?.toStringTruncated() ?? "remove"}) <- ${resultToString(result)}`;
 
     if (result.isError) {
       regs.set(IN_OUT_REG, HostCallResult.FULL);

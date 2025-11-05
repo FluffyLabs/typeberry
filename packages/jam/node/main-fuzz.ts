@@ -1,6 +1,7 @@
 import { type BlockView, Header, type HeaderHash, type StateRootHash, type TimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
+import { PvmBackend } from "@typeberry/config";
 import { type FuzzVersion, startFuzzTarget } from "@typeberry/ext-ipc";
 import { v1 as fuzzV1 } from "@typeberry/fuzz-proto";
 import { HASH_SIZE } from "@typeberry/hash";
@@ -31,6 +32,7 @@ export function getFuzzDetails() {
 
 export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) => string) {
   logger.info`💨 Fuzzer V${fuzzConfig.version} starting up.`;
+  logger.info`🖥️ PVM Backend: ${PvmBackend[fuzzConfig.jamNodeConfig.pvmBackend]}.`;
 
   const { jamNodeConfig: config } = fuzzConfig;
 

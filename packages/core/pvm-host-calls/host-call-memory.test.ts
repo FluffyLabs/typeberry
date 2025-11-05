@@ -1,17 +1,39 @@
 import { beforeEach, describe, it } from "node:test";
-import { tryAsU64 } from "@typeberry/numbers";
-import { Memory } from "@typeberry/pvm-interpreter";
-import { OutOfBounds, PageFault } from "@typeberry/pvm-interpreter/memory/errors.js";
-import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
+import { tryAsU32, tryAsU64, type U32 } from "@typeberry/numbers";
+import {
+  getPageStartAddress,
+  type IMemory,
+  MAX_MEMORY_INDEX,
+  MEMORY_SIZE,
+  type PageFault,
+} from "@typeberry/pvm-interface";
 import { deepEqual, OK, Result } from "@typeberry/utils";
 import { HostCallMemory } from "./host-call-memory.js";
 
+class FakeMemory implements IMemory {
+  store(address: U32, bytes: Uint8Array): Result<OK, PageFault> {
+    const pageStart = getPageStartAddress(tryAsU32((address + bytes.length) % 2 ** 32));
+    return Result.error(
+      { address: tryAsU32(pageStart) },
+      () => `Page fault: attempted to access reserved page ${pageStart}`,
+    );
+  }
+
+  read(address: U32, result: Uint8Array): Result<OK, PageFault> {
+    const pageStart = getPageStartAddress(tryAsU32((address + result.length) % 2 ** 32));
+    return Result.error(
+      { address: tryAsU32(pageStart) },
+      () => `Page fault: attempted to access reserved page ${pageStart}`,
+    );
+  }
+}
+
 describe("HostCallMemory", () => {
-  let memory: Memory;
+  let memory: FakeMemory;
   let hostCallMemory: HostCallMemory;
 
   beforeEach(() => {
-    memory = new Memory();
+    memory = new FakeMemory();
     hostCallMemory = new HostCallMemory(memory);
   });
 
@@ -33,7 +55,7 @@ describe("HostCallMemory", () => {
 
       deepEqual(
         result,
-        Result.error(PageFault.fromPageNumber(0, true), () => "Page fault: attempted to access reserved page 0"),
+        Result.error({ address: tryAsU32(0) }, () => "Page fault: attempted to access reserved page 0"),
       );
     });
 
@@ -45,25 +67,19 @@ describe("HostCallMemory", () => {
 
       deepEqual(
         result,
-        Result.error(
-          new OutOfBounds(),
-          () => "Memory access out of bounds: address 4294967294 + length 3 exceeds memory size",
-        ),
+        Result.error({ address: tryAsU32(0) }, () => "Page fault: attempted to access reserved page 0"),
       );
     });
 
-    it("should throw when address exceeds MAX_MEMORY_INDEX", () => {
-      const address = tryAsU64(MEMORY_SIZE);
+    it("should wrap address when exceeds MAX_MEMORY_INDEX and throw", () => {
+      const address = tryAsU64(MAX_MEMORY_INDEX + 1);
       const bytes = new Uint8Array([1, 2, 3]);
 
       const res = hostCallMemory.storeFrom(address, bytes);
 
       deepEqual(
         res,
-        Result.error(
-          new OutOfBounds(),
-          () => "Memory access out of bounds: address 4294967296 + length 3 exceeds memory size",
-        ),
+        Result.error({ address: tryAsU32(0) }, () => "Page fault: attempted to access reserved page 0"),
       );
     });
   });
@@ -86,7 +102,7 @@ describe("HostCallMemory", () => {
 
       deepEqual(
         result,
-        Result.error(PageFault.fromPageNumber(0, true), () => "Page fault: attempted to access reserved page 0"),
+        Result.error({ address: tryAsU32(0) }, () => "Page fault: attempted to access reserved page 0"),
       );
     });
 
@@ -98,25 +114,19 @@ describe("HostCallMemory", () => {
 
       deepEqual(
         res,
-        Result.error(
-          new OutOfBounds(),
-          () => "Memory access out of bounds: address 4294967294 + length 3 exceeds memory size",
-        ),
+        Result.error({ address: tryAsU32(0) }, () => "Page fault: attempted to access reserved page 0"),
       );
     });
 
-    it("should throw when address exceeds MAX_MEMORY_INDEX", () => {
-      const address = tryAsU64(MEMORY_SIZE);
+    it("should wrap address when exceeds MAX_MEMORY_INDEX and throw", () => {
+      const address = tryAsU64(MAX_MEMORY_INDEX + 1);
       const result = new Uint8Array([1, 2, 3]);
 
       const res = hostCallMemory.loadInto(result, address);
 
       deepEqual(
         res,
-        Result.error(
-          new OutOfBounds(),
-          () => "Memory access out of bounds: address 4294967296 + length 3 exceeds memory size",
-        ),
+        Result.error({ address: tryAsU32(0) }, () => "Page fault: attempted to access reserved page 0"),
       );
     });
   });

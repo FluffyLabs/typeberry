@@ -9,6 +9,8 @@ export enum TestSuite {
   JAMDUNA = "jamduna",
 }
 
+const ALL_VERSIONS_IN_ORDER = [GpVersion.V0_6_7, GpVersion.V0_7_0, GpVersion.V0_7_1, GpVersion.V0_7_2];
+
 export const DEFAULT_SUITE = TestSuite.W3F_DAVXY;
 export const DEFAULT_VERSION = GpVersion.V0_7_2;
 
@@ -16,32 +18,32 @@ const env = typeof process === "undefined" ? {} : process.env;
 export let CURRENT_VERSION = parseCurrentVersion(env.GP_VERSION) ?? DEFAULT_VERSION;
 export let CURRENT_SUITE = parseCurrentSuite(env.TEST_SUITE) ?? DEFAULT_SUITE;
 
-const ALL_VERSIONS_IN_ORDER = [GpVersion.V0_7_0, GpVersion.V0_7_1, GpVersion.V0_7_2];
-
 function parseCurrentVersion(env?: string): GpVersion | undefined {
   if (env === undefined) {
     return undefined;
   }
-  const version = env as GpVersion;
-  if (!Object.values(GpVersion).includes(version)) {
-    throw new Error(
-      `Configured environment variable GP_VERSION is unknown: '${env}'. Use one of: ${ALL_VERSIONS_IN_ORDER}`,
-    );
+  for (const v of Object.values(GpVersion)) {
+    if (env === v) {
+      return v;
+    }
   }
-  return version;
+  throw new Error(
+    `Configured environment variable GP_VERSION is unknown: '${env}'. Use one of: ${ALL_VERSIONS_IN_ORDER}`,
+  );
 }
 
 function parseCurrentSuite(env?: string): TestSuite | undefined {
   if (env === undefined) {
     return undefined;
   }
-  const suite = env as TestSuite;
-  if (!Object.values(TestSuite).includes(suite)) {
-    throw new Error(
-      `Configured environment variable TEST_SUITE is unknown: '${env}'. Use one of: ${Object.values(TestSuite)}`,
-    );
+  for (const s of Object.values(TestSuite)) {
+    if (env === s) {
+      return s;
+    }
   }
-  return suite;
+  throw new Error(
+    `Configured environment variable TEST_SUITE is unknown: '${env}'. Use one of: ${Object.values(TestSuite)}`,
+  );
 }
 
 export class Compatibility {

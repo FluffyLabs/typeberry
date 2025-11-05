@@ -2,11 +2,18 @@ import { type ServiceGas, type ServiceId, tryAsServiceGas, tryAsServiceId } from
 import { codec, Decoder, tryAsExactBytes } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU64 } from "@typeberry/numbers";
-import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { tryAsPerCore } from "@typeberry/state";
-import { asOpaqueType, assertNever, Compatibility, GpVersion, safeAllocUint8Array } from "@typeberry/utils";
+import {
+  asOpaqueType,
+  assertNever,
+  Compatibility,
+  GpVersion,
+  lazyInspect,
+  safeAllocUint8Array,
+} from "@typeberry/utils";
 import { type PartialState, UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { logger } from "../logger.js";
 import { HostCallResult } from "../results.js";
@@ -43,11 +50,7 @@ export class Bless implements HostCallHandler {
     private readonly chainSpec: ChainSpec,
   ) {}
 
-  async execute(
-    _gas: GasCounter,
-    regs: IHostCallRegisters,
-    memory: IHostCallMemory,
-  ): Promise<undefined | PvmExecution> {
+  async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `m`: manager service (can change privileged services)
     const manager = getServiceId(regs.get(IN_OUT_REG));
     // `a`: manages authorization queue
@@ -67,7 +70,7 @@ export class Bless implements HostCallHandler {
      * `z`: array of key-value pairs serviceId -> gas that auto-accumulate every block
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/368100368100?v=0.6.7
      */
-    const autoAccumulateEntries: [ServiceId, ServiceGas][] = [];
+    const autoAccumulate: Map<ServiceId, ServiceGas> = new Map();
     const result = safeAllocUint8Array(tryAsExactBytes(serviceIdAndGasCodec.sizeHint));
     const decoder = Decoder.fromBlob(result);
     let memIndex = sourceStart;
@@ -76,12 +79,12 @@ export class Bless implements HostCallHandler {
       decoder.resetTo(0);
       const memoryReadResult = memory.loadInto(result, memIndex);
       if (memoryReadResult.isError) {
-        logger.trace`BLESS(${manager}, ${delegator}, ${registrar}) <- PANIC`;
+        logger.trace`BLESS(m: ${manager}, v: ${delegator}, r: ${registrar}) <- PANIC`;
         return PvmExecution.Panic;
       }
 
       const { serviceId, gas } = decoder.object(serviceIdAndGasCodec);
-      autoAccumulateEntries.push([serviceId, gas]);
+      autoAccumulate.set(serviceId, gas);
       // we allow the index to go beyond `MEMORY_SIZE` (i.e. 2**32) and have the next `loadInto` fail with page fault.
       memIndex = tryAsU64(memIndex + tryAsU64(decoder.bytesRead()));
     }
@@ -90,7 +93,7 @@ export class Bless implements HostCallHandler {
     const authorizersDecoder = Decoder.fromBlob(res);
     const memoryReadResult = memory.loadInto(res, authorization);
     if (memoryReadResult.isError) {
-      logger.trace`BLESS(${manager}, ${delegator}, ${registrar}, ${autoAccumulateEntries}) <- PANIC`;
+      logger.trace`BLESS(m: ${manager}, v: ${delegator}, r: ${registrar}, ${lazyInspect(autoAccumulate)}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
@@ -105,11 +108,11 @@ export class Bless implements HostCallHandler {
       authorizers,
       delegator,
       registrar,
-      autoAccumulateEntries,
+      autoAccumulate,
     );
 
     if (updateResult.isOk) {
-      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulateEntries}) <- OK`;
+      logger.trace`BLESS(m: ${manager}, a: [${authorizers}], v: ${delegator}, r: ${registrar}, ${lazyInspect(autoAccumulate)}) <- OK`;
       regs.set(IN_OUT_REG, HostCallResult.OK);
       return;
     }
@@ -118,13 +121,13 @@ export class Bless implements HostCallHandler {
 
     // NOTE: `UpdatePrivilegesError.UnprivilegedService` won't happen in 0.7.1+
     if (e === UpdatePrivilegesError.UnprivilegedService) {
-      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulateEntries}) <- HUH`;
+      logger.trace`BLESS(m: ${manager}, a: [${authorizers}], v: ${delegator}, r: ${registrar}, ${lazyInspect(autoAccumulate)}) <- HUH`;
       regs.set(IN_OUT_REG, HostCallResult.HUH);
       return;
     }
 
     if (e === UpdatePrivilegesError.InvalidServiceId) {
-      logger.trace`BLESS(${manager}, ${authorizers}, ${delegator}, ${registrar}, ${autoAccumulateEntries}) <- WHO`;
+      logger.trace`BLESS(m: ${manager}, a: [${authorizers}], v: ${delegator}, r: ${registrar}, ${lazyInspect(autoAccumulate)}) <- WHO`;
       regs.set(IN_OUT_REG, HostCallResult.WHO);
       return;
     }

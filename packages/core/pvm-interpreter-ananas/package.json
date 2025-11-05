@@ -1,0 +1,21 @@
+{
+  "name": "@typeberry/pvm-interpreter-ananas",
+  "version": "0.1.3",
+  "description": "Anan-as PVM implementation.",
+  "main": "index.ts",
+  "dependencies": {
+    "@fluffylabs/anan-as": "^1.1.3",
+    "@typeberry/codec": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/pvm-interface": "*",
+    "@typeberry/utils": "*",
+    "assemblyscript-loader": "^0.3.0"
+  },
+  "scripts": {
+    "start": "tsx ./bin.ts",
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0",
+  "type": "module"
+}

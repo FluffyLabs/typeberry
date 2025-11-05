@@ -1,12 +1,21 @@
 import type { ServiceId } from "@typeberry/block";
-import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { safeAllocUint8Array } from "@typeberry/utils";
 import { logger } from "./logger.js";
 import { clampU64ToU32 } from "./utils.js";
 
 const decoder = new TextDecoder("utf8");
+
+enum Levels {
+  ERROR = 0,
+  WARNING = 1,
+  INFO = 2,
+  DEBUG = 3,
+  NIT = 4,
+  UNKNOWN = 5,
+}
 
 /**
  * Log message to the console
@@ -21,7 +30,7 @@ export class LogHostCall implements HostCallHandler {
 
   constructor(public readonly currentServiceId: ServiceId) {}
 
-  execute(_gas: GasCounter, regs: IHostCallRegisters, memory: IHostCallMemory): Promise<undefined | PvmExecution> {
+  execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     const lvl = regs.get(7);
     const targetStart = regs.get(8);
     const targetLength = regs.get(9);
@@ -35,7 +44,8 @@ export class LogHostCall implements HostCallHandler {
     }
     memory.loadInto(message, msgStart);
 
-    logger.trace`SERVICE [${this.currentServiceId}] [${lvl}] ${decoder.decode(target)} ${decoder.decode(message)}`;
+    const level = clampU64ToU32(lvl);
+    logger.trace`LOG(${this.currentServiceId}, ${level < Levels.UNKNOWN ? Levels[level] : Levels[Levels.UNKNOWN]}(${lvl}), ${decoder.decode(target)}, ${decoder.decode(message)})`;
     return Promise.resolve(undefined);
   }
 }

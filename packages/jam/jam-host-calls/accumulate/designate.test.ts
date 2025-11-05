@@ -7,16 +7,17 @@ import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
-import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
+import { tryAsGas } from "@typeberry/pvm-interface";
+import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import { UnprivilegedError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
+import { emptyRegistersBuffer } from "../utils.js";
 import { Designate } from "./designate.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -28,7 +29,7 @@ function prepareRegsAndMemory(
   { skipValidators = false }: { skipValidators?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(new Registers());
+  const registers = new HostCallRegisters(emptyRegistersBuffer());
   registers.set(VALIDATORS_DATA_START_REG, tryAsU64(memStart));
 
   const builder = new MemoryBuilder();
@@ -51,10 +52,10 @@ function prepareRegsAndMemory(
   if (!skipValidators) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
+  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers: registers,
-    memory: new HostCallMemory(memory),
+    memory,
   };
 }
 

@@ -105,13 +105,6 @@ export enum ForgetPreimageError {
 
 /**
  * Errors that may occur when the transfer is invoked.
- *
- * TODO [ToDr] Since I don't fully understand yet which of these
- * could be checked directly in the host call (i.e. if we will
- * have access to the service account state there) for now I keep
- * them safely in the `AccumulationPartialState` implementation.
- * However, if possible, these should be moved directly to the
- * host call implementation.
  */
 export enum TransferError {
   /** The destination service does not exist. */
@@ -276,7 +269,7 @@ export interface PartialState {
     a: PerCore<ServiceId>,
     v: ServiceId | null,
     r: ServiceId | null,
-    z: [ServiceId, ServiceGas][],
+    z: Map<ServiceId, ServiceGas>,
   ): Result<OK, UpdatePrivilegesError>;
 
   /** Yield accumulation trie result hash. */

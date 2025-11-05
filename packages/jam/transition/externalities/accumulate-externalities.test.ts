@@ -33,7 +33,6 @@ import {
 import { tryAsU32, tryAsU64, type U32, type U64 } from "@typeberry/numbers";
 import {
   AUTHORIZATION_QUEUE_SIZE,
-  AutoAccumulate,
   InMemoryService,
   InMemoryState,
   LookupHistoryItem,
@@ -1357,13 +1356,19 @@ describe("PartialState.updatePrivilegedServices", () => {
     const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
     const delegator = tryAsServiceId(3);
     const registrar = tryAsServiceId(4);
-    const autoAccumulate: [ServiceId, ServiceGas][] = [
+    const autoAccumulateServices = new Map([
       [tryAsServiceId(4), tryAsServiceGas(10n)],
       [tryAsServiceId(5), tryAsServiceGas(20n)],
-    ];
+    ]);
 
     // when
-    const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
+    const result = partialState.updatePrivilegedServices(
+      manager,
+      assigners,
+      delegator,
+      registrar,
+      autoAccumulateServices,
+    );
 
     // then
     assert.deepStrictEqual(result, Result.ok(OK));
@@ -1374,9 +1379,7 @@ describe("PartialState.updatePrivilegedServices", () => {
         assigners,
         delegator,
         registrar,
-        autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) =>
-          AutoAccumulate.create({ gasLimit, service }),
-        ),
+        autoAccumulateServices,
       }),
     );
   });
@@ -1407,7 +1410,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
     const delegator = tryAsServiceId(30);
     const registrar = tryAsServiceId(40);
-    const autoAccumulate: [ServiceId, ServiceGas][] = [];
+    const autoAccumulate: Map<ServiceId, ServiceGas> = new Map();
 
     // when
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
@@ -1449,7 +1452,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
     const delegator = tryAsServiceId(30);
     const registrar = tryAsServiceId(40);
-    const autoAccumulate: [ServiceId, ServiceGas][] = [];
+    const autoAccumulate: Map<ServiceId, ServiceGas> = new Map();
 
     // when
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
@@ -1491,7 +1494,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
     const delegator = tryAsServiceId(30);
     const registrar = tryAsServiceId(40);
-    const autoAccumulate: [ServiceId, ServiceGas][] = [];
+    const autoAccumulate: Map<ServiceId, ServiceGas> = new Map();
 
     const newAssigners = tryAsPerCore(
       [assigners[0], ...state.state.privilegedServices.assigners.slice(1)],
@@ -1527,10 +1530,10 @@ describe("PartialState.updatePrivilegedServices", () => {
     const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
     const delegator = tryAsServiceId(3);
     const registrar = tryAsServiceId(4);
-    const autoAccumulate: [ServiceId, ServiceGas][] = [
+    const autoAccumulate = new Map([
       [tryAsServiceId(4), tryAsServiceGas(10n)],
       [tryAsServiceId(5), tryAsServiceGas(20n)],
-    ];
+    ]);
 
     // when
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
@@ -1561,10 +1564,10 @@ describe("PartialState.updatePrivilegedServices", () => {
       const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
       const delegator = tryAsServiceId(3);
       const registrar = tryAsServiceId(4);
-      const autoAccumulate: [ServiceId, ServiceGas][] = [
+      const autoAccumulate = new Map([
         [tryAsServiceId(4), tryAsServiceGas(10n)],
         [tryAsServiceId(5), tryAsServiceGas(20n)],
-      ];
+      ]);
 
       // when
       const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
@@ -1596,10 +1599,10 @@ describe("PartialState.updatePrivilegedServices", () => {
       const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
       const delegator: ServiceId | null = null;
       const registrar = tryAsServiceId(4);
-      const autoAccumulate: [ServiceId, ServiceGas][] = [
+      const autoAccumulate = new Map([
         [tryAsServiceId(4), tryAsServiceGas(10n)],
         [tryAsServiceId(5), tryAsServiceGas(20n)],
-      ];
+      ]);
 
       // when
       const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
@@ -1628,10 +1631,10 @@ describe("PartialState.updatePrivilegedServices", () => {
     const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
     const delegator = tryAsServiceId(3);
     const registrar = tryAsServiceId(4);
-    const autoAccumulate: [ServiceId, ServiceGas][] = [
+    const autoAccumulate = new Map([
       [tryAsServiceId(4), tryAsServiceGas(10n)],
       [tryAsServiceId(5), tryAsServiceGas(20n)],
-    ];
+    ]);
 
     // when
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
@@ -1659,10 +1662,10 @@ describe("PartialState.updatePrivilegedServices", () => {
     const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
     const delegator: ServiceId | null = null;
     const registrar = tryAsServiceId(4);
-    const autoAccumulate: [ServiceId, ServiceGas][] = [
+    const autoAccumulate = new Map([
       [tryAsServiceId(4), tryAsServiceGas(10n)],
       [tryAsServiceId(5), tryAsServiceGas(20n)],
-    ];
+    ]);
 
     // when
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
@@ -1690,10 +1693,10 @@ describe("PartialState.updatePrivilegedServices", () => {
     const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
     const delegator = tryAsServiceId(3);
     const registrar: ServiceId | null = null;
-    const autoAccumulate: [ServiceId, ServiceGas][] = [
+    const autoAccumulate = new Map([
       [tryAsServiceId(4), tryAsServiceGas(10n)],
       [tryAsServiceId(5), tryAsServiceGas(20n)],
-    ];
+    ]);
 
     // when
     const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
@@ -1872,13 +1875,12 @@ describe("PartialState.yield", () => {
       tryAsServiceId(10),
       tryAsTimeSlot(16),
     );
-    const expectedYieldedRoots = new Map<ServiceId, Bytes<32>>();
-    expectedYieldedRoots.set(currentServiceId, Bytes.fill(HASH_SIZE, 0xef));
+    const expectedYieldedRoot = Bytes.fill(HASH_SIZE, 0xef);
     // when
     partialState.yield(Bytes.fill(HASH_SIZE, 0xef));
 
     // then
-    deepEqual(state.stateUpdate.yieldedRoots, expectedYieldedRoots);
+    deepEqual(state.stateUpdate.yieldedRoot, expectedYieldedRoot);
   });
 });
 
@@ -2372,6 +2374,45 @@ describe("PartialState.eject", () => {
     assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
 
+  it("should return InvalidService if destination service is already ejected", () => {
+    const state = partiallyUpdatedState();
+    state.state.applyUpdate({
+      timeslot: tryAsTimeSlot(1_000_000),
+    });
+    const tombstone = Bytes.fill(HASH_SIZE, 0xe8).asOpaque();
+    const length = tryAsU32(100);
+
+    const destinationId = setupEjectableService(state.state, {
+      tombstone: {
+        hash: tombstone,
+        length,
+        slots: tryAsLookupHistorySlots([0, 1].map((x) => tryAsTimeSlot(x))),
+      },
+    });
+
+    const partialState = new AccumulateExternalities(
+      tinyChainSpec,
+      blake2b,
+      state,
+      tryAsServiceId(0),
+      tryAsServiceId(10),
+      tryAsTimeSlot(50),
+    );
+
+    // when
+    const correctEjectResult = partialState.eject(destinationId, tombstone); // correct eject
+    assert.strictEqual(correctEjectResult.isOk, true);
+    assert.deepStrictEqual(state.stateUpdate.services.removed, [destinationId]);
+
+    const incorrectResult = partialState.eject(destinationId, tombstone); // incorrect eject
+
+    // then
+    deepEqual(
+      incorrectResult,
+      Result.error(EjectError.InvalidService, () => "Service missing"),
+    );
+  });
+
   it("should return InvalidService if destination service codeHash does not match expected pattern", () => {
     const state = partiallyUpdatedState();
     const destinationId = setupEjectableService(state.state, {
@@ -2448,7 +2489,7 @@ describe("PartialState.eject", () => {
     // then
     deepEqual(
       result,
-      Result.error(EjectError.InvalidPreimage, () => "Previous code available: wrong status"),
+      Result.error(EjectError.InvalidPreimage, () => "Previous code available: wrong status: null"),
     );
     assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });
@@ -2482,7 +2523,7 @@ describe("PartialState.eject", () => {
     // then
     deepEqual(
       result,
-      Result.error(EjectError.InvalidPreimage, () => "Previous code available: wrong status"),
+      Result.error(EjectError.InvalidPreimage, () => "Previous code available: wrong status: Available"),
     );
     assert.deepStrictEqual(state.stateUpdate.services.removed, []);
   });

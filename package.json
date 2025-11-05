@@ -30,7 +30,9 @@
     "packages/core/ordering",
     "packages/core/pvm-debugger-adapter",
     "packages/core/pvm-host-calls",
+    "packages/core/pvm-interface",
     "packages/core/pvm-interpreter",
+    "packages/core/pvm-interpreter-ananas",
     "packages/core/pvm-program",
     "packages/core/pvm-spi-decoder",
     "packages/core/shuffling",
@@ -59,7 +61,8 @@
     "packages/workers/api-node",
     "packages/workers/block-generator",
     "packages/workers/importer",
-    "packages/workers/jam-network"
+    "packages/workers/jam-network",
+    "packages/jam/state-vectors"
   ],
   "engines": {
     "node": ">=22",

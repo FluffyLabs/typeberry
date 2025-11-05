@@ -15,7 +15,7 @@ import {
 } from "@typeberry/erasure-coding";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { check, deepEqual } from "@typeberry/utils";
-import { getChainSpec } from "./spec.js";
+import type { RunOptions } from "../common.js";
 
 export class EcTest {
   static fromJson: FromJson<EcTest> = {
@@ -27,9 +27,7 @@ export class EcTest {
   shards!: PerValidator<BytesBlob>;
 }
 
-export async function runEcTest(test: EcTest, path: string) {
-  const spec = getChainSpec(path);
-
+export async function runEcTest(test: EcTest, { chainSpec: spec }: RunOptions) {
   await initEc();
 
   it("should encode data & decode it back", () => {

@@ -112,7 +112,7 @@ export class StoreOps {
       this.instructionResult.status = Result.FAULT_ACCESS;
     } else {
       this.instructionResult.status = Result.FAULT;
-      this.instructionResult.exitParam = getStartPageIndex(storeResult.error.address);
+      this.instructionResult.exitParam = getStartPageIndex(tryAsMemoryIndex(storeResult.error.address));
     }
   }
 }

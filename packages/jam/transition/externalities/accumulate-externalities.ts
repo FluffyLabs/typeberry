@@ -44,7 +44,6 @@ import { Logger } from "@typeberry/logger";
 import { maxU64, sumU64, tryAsU32, tryAsU64, type U64 } from "@typeberry/numbers";
 import {
   type AUTHORIZATION_QUEUE_SIZE,
-  AutoAccumulate,
   LookupHistoryItem,
   type PerCore,
   PreimageItem,
@@ -78,7 +77,7 @@ const logger = Logger.new(import.meta.filename, "externalities");
 export class AccumulateExternalities
   implements PartialState, AccountsWrite, AccountsRead, AccountsInfo, AccountsLookup
 {
-  private checkpointedState: AccumulationStateUpdate | null = null;
+  private checkpointedState: AccumulationStateUpdate;
   /** `x_i`: next service id we are going to create. */
   private nextNewServiceId: ServiceId;
 
@@ -91,6 +90,7 @@ export class AccumulateExternalities
     nextNewServiceIdCandidate: ServiceId,
     private readonly currentTimeslot: TimeSlot,
   ) {
+    this.checkpointedState = AccumulationStateUpdate.copyFrom(updatedState.stateUpdate);
     this.nextNewServiceId = this.getNextAvailableServiceId(nextNewServiceIdCandidate);
 
     const service = this.updatedState.getServiceInfo(this.currentServiceId);
@@ -99,8 +99,8 @@ export class AccumulateExternalities
     }
   }
 
-  /** Return the underlying state update and checkpointed state (if any). */
-  getStateUpdates(): [AccumulationStateUpdate, AccumulationStateUpdate | null] {
+  /** Return the underlying state update and checkpointed state. */
+  getStateUpdates(): [AccumulationStateUpdate, AccumulationStateUpdate] {
     return [this.updatedState.stateUpdate, this.checkpointedState];
   }
 
@@ -151,7 +151,7 @@ export class AccumulateExternalities
     const status = slots === null ? null : slotsToPreimageStatus(slots.slots);
     // The previous code needs to be forgotten and expired.
     if (status?.status !== PreimageStatusKind.Unavailable) {
-      return [false, "wrong status"];
+      return [false, `wrong status: ${status !== null ? PreimageStatusKind[status.status] : null}`];
     }
     const t = this.currentTimeslot;
     const isExpired = status.data[1] < t - this.chainSpec.preimageExpungePeriod;
@@ -606,7 +606,7 @@ export class AccumulateExternalities
     authorizers: PerCore<ServiceId>,
     delegator: ServiceId | null,
     registrar: ServiceId | null,
-    autoAccumulate: [ServiceId, ServiceGas][],
+    autoAccumulate: Map<ServiceId, ServiceGas>,
   ): Result<OK, UpdatePrivilegesError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
     const current = this.updatedState.getPrivilegedServices();
@@ -633,9 +633,7 @@ export class AccumulateExternalities
         assigners: authorizers,
         delegator: delegator,
         registrar: registrar ?? tryAsServiceId(0),
-        autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) =>
-          AutoAccumulate.create({ service, gasLimit }),
-        ),
+        autoAccumulateServices: autoAccumulate,
       });
 
       return Result.ok(OK);
@@ -672,9 +670,7 @@ export class AccumulateExternalities
 
     const newManager = isManager ? manager : current.manager;
 
-    const newAutoAccumulateServices = isManager
-      ? autoAccumulate.map(([service, gasLimit]) => AutoAccumulate.create({ service, gasLimit }))
-      : current.autoAccumulateServices;
+    const newAutoAccumulateServices = isManager ? autoAccumulate : current.autoAccumulateServices;
 
     // finally update the privileges
     this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
@@ -689,14 +685,15 @@ export class AccumulateExternalities
   }
 
   yield(hash: OpaqueHash): void {
-    /** https://graypaper.fluffylabs.dev/#/9a08063/387d02387d02?v=0.6.6 */
-    this.updatedState.stateUpdate.yieldedRoots.set(this.currentServiceId, hash);
+    /** https://graypaper.fluffylabs.dev/#/ab2cdbd/380f03381503?v=0.7.2 */
+    this.updatedState.stateUpdate.yieldedRoot = hash;
   }
 
   providePreimage(serviceId: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {
     // we need to explicitly check if service exists, since it's a different error.
-    // TODO [ToDr] what about newly created services?
-    const service = serviceId === null ? null : this.updatedState.state.getService(serviceId);
+    // we also check if it's in newly created
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/384e03384e03?v=0.7.2
+    const service = serviceId === null ? null : this.updatedState.getServiceInfo(serviceId);
     if (service === null || serviceId === null) {
       return Result.error(ProvidePreimageError.ServiceNotFound, () => `Service not found: ${serviceId}`);
     }
@@ -744,8 +741,10 @@ export class AccumulateExternalities
 
   eject(destination: ServiceId | null, previousCodeHash: PreimageHash): Result<OK, EjectError> {
     const service = this.getServiceInfo(destination);
+    const isRemoved =
+      this.updatedState.stateUpdate.services.removed.find((serviceId) => serviceId === destination) !== undefined;
 
-    if (service === null || destination === null) {
+    if (service === null || destination === null || isRemoved) {
       return Result.error(EjectError.InvalidService, () => "Service missing");
     }
 

@@ -18,7 +18,7 @@ if (suiteToRun === undefined) {
 const stream = run({
   files: [`${import.meta.dirname}/${suiteToRun}`],
   argv: process.argv.slice(3),
-  timeout: 10 * 60 * 1000,
+  timeout: 20 * 60 * 1000,
   concurrency: true,
 }).on("test:fail", () => {
   process.exitCode = 1;
@@ -27,7 +27,7 @@ const stream = run({
 stream.compose(new spec()).pipe(process.stdout);
 
 const reporter = new Reporter(suiteToRun);
-const fileStream = fs.createWriteStream(`${distDir}/${suiteToRun.replace(".ts", "")}.txt`);
+const fileStream = fs.createWriteStream(`${distDir}/${suiteToRun.replace(".ts", "")}.txt`, { flags: "a" });
 stream
   .compose(reporter)
   .on("end", () => {

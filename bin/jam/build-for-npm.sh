@@ -16,7 +16,8 @@ DIST_FOLDER=./dist/jam
 mkdir $DIST_FOLDER || true
 rm -rf $DIST_FOLDER/*
 
-
+# TODO [ToDr] Temporary require anan-as before https://github.com/tomusdrw/anan-as/issues/99
+# is resolved.
 # Build the main binary
 BUILD="npx @vercel/ncc build -a -s -e lmdb -e @matrixai/quic -e tsx/esm/api"
 $BUILD ./bin/jam/index.ts -o $DIST_FOLDER

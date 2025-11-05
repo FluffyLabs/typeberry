@@ -19,7 +19,7 @@ import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize, FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
-import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
+import { type ChainSpec, PvmBackend, PvmBackendNames, tinyChainSpec } from "@typeberry/config";
 import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
@@ -46,271 +46,273 @@ type TestServiceInfo = {
   lastAccumulation?: TimeSlot;
 };
 
-describe("accumulate", () => {
-  // based on tiny/enqueue_and_unlock_chain_wraps-5.json
-  it("should do correct state transition", async () => {
-    const entropy = hashFromString<EntropyHash>("0xae85d6635e9ae539d0846b911ec86a27fe000f619b78bcac8a74b77e36f6dbcf");
+[PvmBackend.BuiltIn, PvmBackend.Ananas].forEach((pvm) => {
+  describe(`accumulate: ${PvmBackendNames[pvm]}`, () => {
+    // based on tiny/enqueue_and_unlock_chain_wraps-5.json
+    it("should do correct state transition", async () => {
+      const entropy = hashFromString<EntropyHash>("0xae85d6635e9ae539d0846b911ec86a27fe000f619b78bcac8a74b77e36f6dbcf");
 
-    const input: AccumulateInput = {
-      reports: [
-        createWorkReport(hashFromString("0xdf49de52326d7d3c99391cdd32b2ca7c06398e798b520970347160ecf8d9ce32")),
-        createWorkReport(hashFromString("0xd3d0ac423a2e9451db2e88bd75cc143b19424747fbcf2696792987436e8722a6")),
-      ],
-      slot: tryAsTimeSlot(47),
-      entropy,
-    };
-
-    const services = createServices([
-      [
-        tryAsServiceId(1729),
-        hashFromString("0x3ecc56accce719e5214e8dbb034f49d5cf0c6942da3e5f3f047d1693cc60c74a"),
-        preimageBlob,
-        { lastAccumulation: undefined },
-      ],
-    ]);
-    const state = InMemoryState.partial(tinyChainSpec, {
-      timeslot: tryAsTimeSlot(46),
-      services,
-      privilegedServices: createPrivilegedServices(tinyChainSpec),
-      recentlyAccumulated: tryAsPerEpochBlock(
-        [
-          [],
-          [],
-          [],
-          [],
-          [],
-          ["0x04f5f2b6509d847d49487d5db1275e8105225018952c7aec9d2d90f039c50e45"],
-          ["0x506524cb141b83715705c05983d17ebc7760c64d2ce81f15b6bc2dd1eeb55551"],
-          ["0x7bbdd7961afb2db642f7cdb87021fb053c67d2ac79d69a87fc9fbcf6786e30b9"],
-          [],
-          ["0x07b08ccece1b01a9202152a6fa99d23cf0160da721374ccaabd40885d8fc15d3"],
-          [],
-          ["0x9d7588b469d529d9a058c12bef3ce96106babf54aa3ba251066832cd160aa2c6"],
-        ].map((x) => HashSet.from(x.map((x) => hashFromString<WorkPackageHash>(x)))),
-        tinyChainSpec,
-      ),
-      accumulationQueue: tryAsPerEpochBlock(
-        [
-          [],
-          [
-            createNotAccumulatedWorkReport(
-              hashFromString("0xa7a66c1635f45e0413cec365f60fb46fa0489c4d2df75f6fd9c00d1da3729222"),
-              [hashFromString("0x38b7a75bd6d296f01fc6b4b6569c38980af6ba2ea34e22d429cccfb6f5b7432a")],
-              [hashFromString("0x38b7a75bd6d296f01fc6b4b6569c38980af6ba2ea34e22d429cccfb6f5b7432a")],
-              tryAsServiceId(1729),
-            ),
-          ],
-          [],
-          [],
-          [],
-          [],
-          [
-            createNotAccumulatedWorkReport(
-              hashFromString("0x38b7a75bd6d296f01fc6b4b6569c38980af6ba2ea34e22d429cccfb6f5b7432a"),
-              [hashFromString("0x17e5809e4d5e9daf50361fb6557a00814301159fc81a39cd4d2687e110e0b7be")],
-              [hashFromString("0x17e5809e4d5e9daf50361fb6557a00814301159fc81a39cd4d2687e110e0b7be")],
-              tryAsServiceId(1729),
-            ),
-            createNotAccumulatedWorkReport(
-              hashFromString("0x17e5809e4d5e9daf50361fb6557a00814301159fc81a39cd4d2687e110e0b7be"),
-              [hashFromString("0x36a748779db31316ac26eebc08dadbeda8a8d4794892f6e340e32ab69e0d4d80")],
-              [hashFromString("0x36a748779db31316ac26eebc08dadbeda8a8d4794892f6e340e32ab69e0d4d80")],
-              tryAsServiceId(1729),
-            ),
-          ],
-          [],
-          [],
-          [],
-          [
-            createNotAccumulatedWorkReport(
-              hashFromString("0x36a748779db31316ac26eebc08dadbeda8a8d4794892f6e340e32ab69e0d4d80"),
-              [hashFromString("0xd3d0ac423a2e9451db2e88bd75cc143b19424747fbcf2696792987436e8722a6")],
-              [hashFromString("0xd3d0ac423a2e9451db2e88bd75cc143b19424747fbcf2696792987436e8722a6")],
-              tryAsServiceId(1729),
-            ),
-          ],
-          [
-            createNotAccumulatedWorkReport(
-              hashFromString("0x18176cfbff4a8b40f2d9cba3c2ddc4a5b75e9152c8c41452cda90bebc0632013"),
-              [hashFromString("0xa7a66c1635f45e0413cec365f60fb46fa0489c4d2df75f6fd9c00d1da3729222")],
-              [hashFromString("0xa7a66c1635f45e0413cec365f60fb46fa0489c4d2df75f6fd9c00d1da3729222")],
-              tryAsServiceId(1729),
-            ),
-            createNotAccumulatedWorkReport(
-              hashFromString("0xf5983aaa6fe1e7428902ace29d14be81a664a65f6dfca1138ccb99136547324e"),
-              [hashFromString("0x18176cfbff4a8b40f2d9cba3c2ddc4a5b75e9152c8c41452cda90bebc0632013")],
-              [hashFromString("0x18176cfbff4a8b40f2d9cba3c2ddc4a5b75e9152c8c41452cda90bebc0632013")],
-              tryAsServiceId(1729),
-            ),
-          ],
+      const input: AccumulateInput = {
+        reports: [
+          createWorkReport(hashFromString("0xdf49de52326d7d3c99391cdd32b2ca7c06398e798b520970347160ecf8d9ce32")),
+          createWorkReport(hashFromString("0xd3d0ac423a2e9451db2e88bd75cc143b19424747fbcf2696792987436e8722a6")),
         ],
-        tinyChainSpec,
-      ),
-    });
+        slot: tryAsTimeSlot(47),
+        entropy,
+      };
 
-    const expectedServices = createServices([
-      [
-        tryAsServiceId(1729),
-        hashFromString("0x3ecc56accce719e5214e8dbb034f49d5cf0c6942da3e5f3f047d1693cc60c74a"),
-        preimageBlob,
-        { lastAccumulation: tryAsTimeSlot(47) },
-      ],
-    ]);
-    const expectedState: AccumulateState = InMemoryState.partial(tinyChainSpec, {
-      timeslot: input.slot,
-      services: expectedServices,
-      privilegedServices: state.privilegedServices,
-      recentlyAccumulated: tryAsPerEpochBlock(
+      const services = createServices([
         [
-          [],
-          [],
-          [],
-          [],
-          ["0x04f5f2b6509d847d49487d5db1275e8105225018952c7aec9d2d90f039c50e45"],
-          ["0x506524cb141b83715705c05983d17ebc7760c64d2ce81f15b6bc2dd1eeb55551"],
-          ["0x7bbdd7961afb2db642f7cdb87021fb053c67d2ac79d69a87fc9fbcf6786e30b9"],
-          [],
-          ["0x07b08ccece1b01a9202152a6fa99d23cf0160da721374ccaabd40885d8fc15d3"],
-          [],
-          ["0x9d7588b469d529d9a058c12bef3ce96106babf54aa3ba251066832cd160aa2c6"],
-          [
-            "0x17e5809e4d5e9daf50361fb6557a00814301159fc81a39cd4d2687e110e0b7be",
-            "0x18176cfbff4a8b40f2d9cba3c2ddc4a5b75e9152c8c41452cda90bebc0632013",
-            "0x36a748779db31316ac26eebc08dadbeda8a8d4794892f6e340e32ab69e0d4d80",
-            "0x38b7a75bd6d296f01fc6b4b6569c38980af6ba2ea34e22d429cccfb6f5b7432a",
-            "0xa7a66c1635f45e0413cec365f60fb46fa0489c4d2df75f6fd9c00d1da3729222",
-            "0xd3d0ac423a2e9451db2e88bd75cc143b19424747fbcf2696792987436e8722a6",
-            "0xdf49de52326d7d3c99391cdd32b2ca7c06398e798b520970347160ecf8d9ce32",
-            "0xf5983aaa6fe1e7428902ace29d14be81a664a65f6dfca1138ccb99136547324e",
-          ],
-        ].map((x) => HashSet.from(x.map((x) => hashFromString<WorkPackageHash>(x)))),
-        tinyChainSpec,
-      ),
-      accumulationQueue: tryAsPerEpochBlock([[], [], [], [], [], [], [], [], [], [], [], []], tinyChainSpec),
-    });
-    const expectedOutput: AccumulationOutput[] = [];
-    const accumulate = new Accumulate(tinyChainSpec, blake2b, state);
-
-    // when
-    const output = await accumulate.transition(input);
-    if (output.isError) {
-      assert.fail(`Expect ok, got ${resultToString(output)}`);
-    }
-    state.applyUpdate(output.ok.stateUpdate);
-
-    // then
-    deepEqual(output.ok.accumulationOutputLog.array, expectedOutput);
-    deepEqual<AccumulateState>(state, expectedState);
-  });
-
-  it("should detect creation of duplicated service ids", async () => {
-    const services = createServices([
-      [
-        tryAsServiceId(1729),
-        hashFromString("0x3ecc56accce719e5214e8dbb034f49d5cf0c6942da3e5f3f047d1693cc60c74a"),
-        preimageBlob,
-        { lastAccumulation: undefined },
-      ],
-    ]);
-    const state = InMemoryState.partial(tinyChainSpec, {
-      timeslot: tryAsTimeSlot(46),
-      services,
-      privilegedServices: createPrivilegedServices(tinyChainSpec),
-      recentlyAccumulated: tryAsPerEpochBlock(
-        [
-          [],
-          [],
-          [],
-          [],
-          [],
-          ["0x04f5f2b6509d847d49487d5db1275e8105225018952c7aec9d2d90f039c50e45"],
-          ["0x506524cb141b83715705c05983d17ebc7760c64d2ce81f15b6bc2dd1eeb55551"],
-          ["0x7bbdd7961afb2db642f7cdb87021fb053c67d2ac79d69a87fc9fbcf6786e30b9"],
-          [],
-          ["0x07b08ccece1b01a9202152a6fa99d23cf0160da721374ccaabd40885d8fc15d3"],
-          [],
-          ["0x9d7588b469d529d9a058c12bef3ce96106babf54aa3ba251066832cd160aa2c6"],
-        ].map((x) => HashSet.from(x.map((x) => hashFromString<WorkPackageHash>(x)))),
-        tinyChainSpec,
-      ),
-      accumulationQueue: tryAsPerEpochBlock(
-        [
-          [],
-          [
-            createNotAccumulatedWorkReport(
-              hashFromString("0xa7a66c1635f45e0413cec365f60fb46fa0489c4d2df75f6fd9c00d1da3729222"),
-              [hashFromString("0x38b7a75bd6d296f01fc6b4b6569c38980af6ba2ea34e22d429cccfb6f5b7432a")],
-              [hashFromString("0x38b7a75bd6d296f01fc6b4b6569c38980af6ba2ea34e22d429cccfb6f5b7432a")],
-              tryAsServiceId(1729),
-            ),
-          ],
-          [],
-          [],
-          [],
-          [],
-          [
-            createNotAccumulatedWorkReport(
-              hashFromString("0x38b7a75bd6d296f01fc6b4b6569c38980af6ba2ea34e22d429cccfb6f5b7432a"),
-              [hashFromString("0x17e5809e4d5e9daf50361fb6557a00814301159fc81a39cd4d2687e110e0b7be")],
-              [hashFromString("0x17e5809e4d5e9daf50361fb6557a00814301159fc81a39cd4d2687e110e0b7be")],
-              tryAsServiceId(1729),
-            ),
-            createNotAccumulatedWorkReport(
-              hashFromString("0x17e5809e4d5e9daf50361fb6557a00814301159fc81a39cd4d2687e110e0b7be"),
-              [hashFromString("0x36a748779db31316ac26eebc08dadbeda8a8d4794892f6e340e32ab69e0d4d80")],
-              [hashFromString("0x36a748779db31316ac26eebc08dadbeda8a8d4794892f6e340e32ab69e0d4d80")],
-              tryAsServiceId(1729),
-            ),
-          ],
-          [],
-          [],
-          [],
-          [
-            createNotAccumulatedWorkReport(
-              hashFromString("0x36a748779db31316ac26eebc08dadbeda8a8d4794892f6e340e32ab69e0d4d80"),
-              [hashFromString("0xd3d0ac423a2e9451db2e88bd75cc143b19424747fbcf2696792987436e8722a6")],
-              [hashFromString("0xd3d0ac423a2e9451db2e88bd75cc143b19424747fbcf2696792987436e8722a6")],
-              tryAsServiceId(1729),
-            ),
-          ],
-          [
-            createNotAccumulatedWorkReport(
-              hashFromString("0x18176cfbff4a8b40f2d9cba3c2ddc4a5b75e9152c8c41452cda90bebc0632013"),
-              [hashFromString("0xa7a66c1635f45e0413cec365f60fb46fa0489c4d2df75f6fd9c00d1da3729222")],
-              [hashFromString("0xa7a66c1635f45e0413cec365f60fb46fa0489c4d2df75f6fd9c00d1da3729222")],
-              tryAsServiceId(1729),
-            ),
-            createNotAccumulatedWorkReport(
-              hashFromString("0xf5983aaa6fe1e7428902ace29d14be81a664a65f6dfca1138ccb99136547324e"),
-              [hashFromString("0x18176cfbff4a8b40f2d9cba3c2ddc4a5b75e9152c8c41452cda90bebc0632013")],
-              [hashFromString("0x18176cfbff4a8b40f2d9cba3c2ddc4a5b75e9152c8c41452cda90bebc0632013")],
-              tryAsServiceId(1729),
-            ),
-          ],
+          tryAsServiceId(1729),
+          hashFromString("0x3ecc56accce719e5214e8dbb034f49d5cf0c6942da3e5f3f047d1693cc60c74a"),
+          preimageBlob,
+          { lastAccumulation: undefined },
         ],
-        tinyChainSpec,
-      ),
+      ]);
+      const state = InMemoryState.partial(tinyChainSpec, {
+        timeslot: tryAsTimeSlot(46),
+        services,
+        privilegedServices: createPrivilegedServices(tinyChainSpec),
+        recentlyAccumulated: tryAsPerEpochBlock(
+          [
+            [],
+            [],
+            [],
+            [],
+            [],
+            ["0x04f5f2b6509d847d49487d5db1275e8105225018952c7aec9d2d90f039c50e45"],
+            ["0x506524cb141b83715705c05983d17ebc7760c64d2ce81f15b6bc2dd1eeb55551"],
+            ["0x7bbdd7961afb2db642f7cdb87021fb053c67d2ac79d69a87fc9fbcf6786e30b9"],
+            [],
+            ["0x07b08ccece1b01a9202152a6fa99d23cf0160da721374ccaabd40885d8fc15d3"],
+            [],
+            ["0x9d7588b469d529d9a058c12bef3ce96106babf54aa3ba251066832cd160aa2c6"],
+          ].map((x) => HashSet.from(x.map((x) => hashFromString<WorkPackageHash>(x)))),
+          tinyChainSpec,
+        ),
+        accumulationQueue: tryAsPerEpochBlock(
+          [
+            [],
+            [
+              createNotAccumulatedWorkReport(
+                hashFromString("0xa7a66c1635f45e0413cec365f60fb46fa0489c4d2df75f6fd9c00d1da3729222"),
+                [hashFromString("0x38b7a75bd6d296f01fc6b4b6569c38980af6ba2ea34e22d429cccfb6f5b7432a")],
+                [hashFromString("0x38b7a75bd6d296f01fc6b4b6569c38980af6ba2ea34e22d429cccfb6f5b7432a")],
+                tryAsServiceId(1729),
+              ),
+            ],
+            [],
+            [],
+            [],
+            [],
+            [
+              createNotAccumulatedWorkReport(
+                hashFromString("0x38b7a75bd6d296f01fc6b4b6569c38980af6ba2ea34e22d429cccfb6f5b7432a"),
+                [hashFromString("0x17e5809e4d5e9daf50361fb6557a00814301159fc81a39cd4d2687e110e0b7be")],
+                [hashFromString("0x17e5809e4d5e9daf50361fb6557a00814301159fc81a39cd4d2687e110e0b7be")],
+                tryAsServiceId(1729),
+              ),
+              createNotAccumulatedWorkReport(
+                hashFromString("0x17e5809e4d5e9daf50361fb6557a00814301159fc81a39cd4d2687e110e0b7be"),
+                [hashFromString("0x36a748779db31316ac26eebc08dadbeda8a8d4794892f6e340e32ab69e0d4d80")],
+                [hashFromString("0x36a748779db31316ac26eebc08dadbeda8a8d4794892f6e340e32ab69e0d4d80")],
+                tryAsServiceId(1729),
+              ),
+            ],
+            [],
+            [],
+            [],
+            [
+              createNotAccumulatedWorkReport(
+                hashFromString("0x36a748779db31316ac26eebc08dadbeda8a8d4794892f6e340e32ab69e0d4d80"),
+                [hashFromString("0xd3d0ac423a2e9451db2e88bd75cc143b19424747fbcf2696792987436e8722a6")],
+                [hashFromString("0xd3d0ac423a2e9451db2e88bd75cc143b19424747fbcf2696792987436e8722a6")],
+                tryAsServiceId(1729),
+              ),
+            ],
+            [
+              createNotAccumulatedWorkReport(
+                hashFromString("0x18176cfbff4a8b40f2d9cba3c2ddc4a5b75e9152c8c41452cda90bebc0632013"),
+                [hashFromString("0xa7a66c1635f45e0413cec365f60fb46fa0489c4d2df75f6fd9c00d1da3729222")],
+                [hashFromString("0xa7a66c1635f45e0413cec365f60fb46fa0489c4d2df75f6fd9c00d1da3729222")],
+                tryAsServiceId(1729),
+              ),
+              createNotAccumulatedWorkReport(
+                hashFromString("0xf5983aaa6fe1e7428902ace29d14be81a664a65f6dfca1138ccb99136547324e"),
+                [hashFromString("0x18176cfbff4a8b40f2d9cba3c2ddc4a5b75e9152c8c41452cda90bebc0632013")],
+                [hashFromString("0x18176cfbff4a8b40f2d9cba3c2ddc4a5b75e9152c8c41452cda90bebc0632013")],
+                tryAsServiceId(1729),
+              ),
+            ],
+          ],
+          tinyChainSpec,
+        ),
+      });
+
+      const expectedServices = createServices([
+        [
+          tryAsServiceId(1729),
+          hashFromString("0x3ecc56accce719e5214e8dbb034f49d5cf0c6942da3e5f3f047d1693cc60c74a"),
+          preimageBlob,
+          { lastAccumulation: tryAsTimeSlot(47) },
+        ],
+      ]);
+      const expectedState: AccumulateState = InMemoryState.partial(tinyChainSpec, {
+        timeslot: input.slot,
+        services: expectedServices,
+        privilegedServices: state.privilegedServices,
+        recentlyAccumulated: tryAsPerEpochBlock(
+          [
+            [],
+            [],
+            [],
+            [],
+            ["0x04f5f2b6509d847d49487d5db1275e8105225018952c7aec9d2d90f039c50e45"],
+            ["0x506524cb141b83715705c05983d17ebc7760c64d2ce81f15b6bc2dd1eeb55551"],
+            ["0x7bbdd7961afb2db642f7cdb87021fb053c67d2ac79d69a87fc9fbcf6786e30b9"],
+            [],
+            ["0x07b08ccece1b01a9202152a6fa99d23cf0160da721374ccaabd40885d8fc15d3"],
+            [],
+            ["0x9d7588b469d529d9a058c12bef3ce96106babf54aa3ba251066832cd160aa2c6"],
+            [
+              "0x17e5809e4d5e9daf50361fb6557a00814301159fc81a39cd4d2687e110e0b7be",
+              "0x18176cfbff4a8b40f2d9cba3c2ddc4a5b75e9152c8c41452cda90bebc0632013",
+              "0x36a748779db31316ac26eebc08dadbeda8a8d4794892f6e340e32ab69e0d4d80",
+              "0x38b7a75bd6d296f01fc6b4b6569c38980af6ba2ea34e22d429cccfb6f5b7432a",
+              "0xa7a66c1635f45e0413cec365f60fb46fa0489c4d2df75f6fd9c00d1da3729222",
+              "0xd3d0ac423a2e9451db2e88bd75cc143b19424747fbcf2696792987436e8722a6",
+              "0xdf49de52326d7d3c99391cdd32b2ca7c06398e798b520970347160ecf8d9ce32",
+              "0xf5983aaa6fe1e7428902ace29d14be81a664a65f6dfca1138ccb99136547324e",
+            ],
+          ].map((x) => HashSet.from(x.map((x) => hashFromString<WorkPackageHash>(x)))),
+          tinyChainSpec,
+        ),
+        accumulationQueue: tryAsPerEpochBlock([[], [], [], [], [], [], [], [], [], [], [], []], tinyChainSpec),
+      });
+      const expectedOutput: AccumulationOutput[] = [];
+      const accumulate = new Accumulate(tinyChainSpec, blake2b, state, pvm);
+
+      // when
+      const output = await accumulate.transition(input);
+      if (output.isError) {
+        assert.fail(`Expect ok, got ${resultToString(output)}`);
+      }
+      state.applyUpdate(output.ok.stateUpdate);
+
+      // then
+      deepEqual(output.ok.accumulationOutputLog.array, expectedOutput);
+      deepEqual<AccumulateState>(state, expectedState);
     });
 
-    const accumulate = new Accumulate(tinyChainSpec, blake2b, state);
+    it("should detect creation of duplicated service ids", async () => {
+      const services = createServices([
+        [
+          tryAsServiceId(1729),
+          hashFromString("0x3ecc56accce719e5214e8dbb034f49d5cf0c6942da3e5f3f047d1693cc60c74a"),
+          preimageBlob,
+          { lastAccumulation: undefined },
+        ],
+      ]);
+      const state = InMemoryState.partial(tinyChainSpec, {
+        timeslot: tryAsTimeSlot(46),
+        services,
+        privilegedServices: createPrivilegedServices(tinyChainSpec),
+        recentlyAccumulated: tryAsPerEpochBlock(
+          [
+            [],
+            [],
+            [],
+            [],
+            [],
+            ["0x04f5f2b6509d847d49487d5db1275e8105225018952c7aec9d2d90f039c50e45"],
+            ["0x506524cb141b83715705c05983d17ebc7760c64d2ce81f15b6bc2dd1eeb55551"],
+            ["0x7bbdd7961afb2db642f7cdb87021fb053c67d2ac79d69a87fc9fbcf6786e30b9"],
+            [],
+            ["0x07b08ccece1b01a9202152a6fa99d23cf0160da721374ccaabd40885d8fc15d3"],
+            [],
+            ["0x9d7588b469d529d9a058c12bef3ce96106babf54aa3ba251066832cd160aa2c6"],
+          ].map((x) => HashSet.from(x.map((x) => hashFromString<WorkPackageHash>(x)))),
+          tinyChainSpec,
+        ),
+        accumulationQueue: tryAsPerEpochBlock(
+          [
+            [],
+            [
+              createNotAccumulatedWorkReport(
+                hashFromString("0xa7a66c1635f45e0413cec365f60fb46fa0489c4d2df75f6fd9c00d1da3729222"),
+                [hashFromString("0x38b7a75bd6d296f01fc6b4b6569c38980af6ba2ea34e22d429cccfb6f5b7432a")],
+                [hashFromString("0x38b7a75bd6d296f01fc6b4b6569c38980af6ba2ea34e22d429cccfb6f5b7432a")],
+                tryAsServiceId(1729),
+              ),
+            ],
+            [],
+            [],
+            [],
+            [],
+            [
+              createNotAccumulatedWorkReport(
+                hashFromString("0x38b7a75bd6d296f01fc6b4b6569c38980af6ba2ea34e22d429cccfb6f5b7432a"),
+                [hashFromString("0x17e5809e4d5e9daf50361fb6557a00814301159fc81a39cd4d2687e110e0b7be")],
+                [hashFromString("0x17e5809e4d5e9daf50361fb6557a00814301159fc81a39cd4d2687e110e0b7be")],
+                tryAsServiceId(1729),
+              ),
+              createNotAccumulatedWorkReport(
+                hashFromString("0x17e5809e4d5e9daf50361fb6557a00814301159fc81a39cd4d2687e110e0b7be"),
+                [hashFromString("0x36a748779db31316ac26eebc08dadbeda8a8d4794892f6e340e32ab69e0d4d80")],
+                [hashFromString("0x36a748779db31316ac26eebc08dadbeda8a8d4794892f6e340e32ab69e0d4d80")],
+                tryAsServiceId(1729),
+              ),
+            ],
+            [],
+            [],
+            [],
+            [
+              createNotAccumulatedWorkReport(
+                hashFromString("0x36a748779db31316ac26eebc08dadbeda8a8d4794892f6e340e32ab69e0d4d80"),
+                [hashFromString("0xd3d0ac423a2e9451db2e88bd75cc143b19424747fbcf2696792987436e8722a6")],
+                [hashFromString("0xd3d0ac423a2e9451db2e88bd75cc143b19424747fbcf2696792987436e8722a6")],
+                tryAsServiceId(1729),
+              ),
+            ],
+            [
+              createNotAccumulatedWorkReport(
+                hashFromString("0x18176cfbff4a8b40f2d9cba3c2ddc4a5b75e9152c8c41452cda90bebc0632013"),
+                [hashFromString("0xa7a66c1635f45e0413cec365f60fb46fa0489c4d2df75f6fd9c00d1da3729222")],
+                [hashFromString("0xa7a66c1635f45e0413cec365f60fb46fa0489c4d2df75f6fd9c00d1da3729222")],
+                tryAsServiceId(1729),
+              ),
+              createNotAccumulatedWorkReport(
+                hashFromString("0xf5983aaa6fe1e7428902ace29d14be81a664a65f6dfca1138ccb99136547324e"),
+                [hashFromString("0x18176cfbff4a8b40f2d9cba3c2ddc4a5b75e9152c8c41452cda90bebc0632013")],
+                [hashFromString("0x18176cfbff4a8b40f2d9cba3c2ddc4a5b75e9152c8c41452cda90bebc0632013")],
+                tryAsServiceId(1729),
+              ),
+            ],
+          ],
+          tinyChainSpec,
+        ),
+      });
 
-    const mod = 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8;
-    const offset = MIN_PUBLIC_SERVICE_INDEX;
+      const accumulate = new Accumulate(tinyChainSpec, blake2b, state, pvm);
 
-    const createdIds: ServiceId[] = [];
-    let currentId = tryAsServiceId(0);
+      const mod = 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8;
+      const offset = MIN_PUBLIC_SERVICE_INDEX;
 
-    for (let i = 0; i < 10; i++) {
-      createdIds.push(currentId);
-      currentId = tryAsServiceId(((currentId - offset + 1 + mod) % mod) + offset);
-    }
+      const createdIds: ServiceId[] = [];
+      let currentId = tryAsServiceId(0);
 
-    // create no duplications
-    assert.ok(!accumulate.hasDuplicatedServiceIdCreated(createdIds), "Should not trigger duplicated service id!");
+      for (let i = 0; i < 10; i++) {
+        createdIds.push(currentId);
+        currentId = tryAsServiceId(((currentId - offset + 1 + mod) % mod) + offset);
+      }
 
-    // create duplication
-    createdIds.push(tryAsServiceId(0));
-    assert.ok(accumulate.hasDuplicatedServiceIdCreated(createdIds), "Should detect duplicated service id!");
+      // create no duplications
+      assert.ok(!accumulate.hasDuplicatedServiceIdCreated(createdIds), "Should not trigger duplicated service id!");
+
+      // create duplication
+      createdIds.push(tryAsServiceId(0));
+      assert.ok(accumulate.hasDuplicatedServiceIdCreated(createdIds), "Should detect duplicated service id!");
+    });
   });
 });
 
@@ -356,7 +358,7 @@ const createPrivilegedServices = (spec: ChainSpec) =>
     manager: tryAsServiceId(0),
     delegator: tryAsServiceId(0),
     registrar: tryAsServiceId(0),
-    autoAccumulateServices: [],
+    autoAccumulateServices: new Map(),
   });
 
 const createWorkReport = (

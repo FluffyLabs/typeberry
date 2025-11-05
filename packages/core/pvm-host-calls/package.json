@@ -4,9 +4,12 @@
   "description": "PVM host calls",
   "main": "index.ts",
   "dependencies": {
+    "@typeberry/config": "^0.2.0",
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
+    "@typeberry/pvm-interface": "*",
     "@typeberry/pvm-interpreter": "*",
+    "@typeberry/pvm-interpreter-ananas": "*",
     "@typeberry/pvm-program": "*",
     "@typeberry/pvm-spi-decoder": "*",
     "@typeberry/utils": "*"
