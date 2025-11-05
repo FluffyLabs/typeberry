@@ -494,9 +494,9 @@ export class Accumulate {
   ) {
     const serviceIds = accumulateData.getServiceIds();
     const results = new Map<ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }>();
-    let currentState = AccumulationStateUpdate.copyFrom(state);
+
     for (const serviceId of serviceIds) {
-      const checkpoint = AccumulationStateUpdate.copyFrom(currentState);
+      const checkpoint = AccumulationStateUpdate.copyFrom(state);
       const operands = accumulateData.getOperands(serviceId);
       const { consumedGas, stateUpdate } = await this.accumulateSingleService(
         serviceId,
@@ -505,19 +505,15 @@ export class Accumulate {
         accumulateData.getGasLimit(serviceId),
         slot,
         entropy,
-        currentState,
+        state,
       );
 
       results.set(serviceId, {
         consumedGas,
         stateUpdate: stateUpdate === null ? checkpoint : AccumulationStateUpdate.copyFrom(stateUpdate),
       });
-
-      // TODO [ToDr] remove changing state in favor of state merging
-      currentState = stateUpdate === null ? checkpoint : stateUpdate;
     }
     return {
-      currentState,
       results,
     };
   }
@@ -538,55 +534,49 @@ export class Accumulate {
     entropy: EntropyHash,
     inputStateUpdate: AccumulationStateUpdate,
   ): Promise<ParallelAccumulationResult> {
-    const { currentState, results } = await this.accumulateInParallelInternal(
-      accumulateData,
-      slot,
-      entropy,
-      inputStateUpdate,
-    );
+    const { results } = await this.accumulateInParallelInternal(accumulateData, slot, entropy, inputStateUpdate);
 
-    const entries = Array.from(results.entries());
+    // const entries = Array.from(results.entries());
 
-    const currentPrivileged = inputStateUpdate.privilegedServices ?? this.state.privilegedServices;
-    const prevValidatorData = inputStateUpdate.validatorsData ?? this.state.designatedValidatorData;
-    const serviceIds = accumulateData.getServiceIds();
+    // const currentPrivileged = inputStateUpdate.privilegedServices ?? this.state.privilegedServices;
+    // const prevValidatorData = inputStateUpdate.validatorsData ?? this.state.designatedValidatorData;
+    // const serviceIds = accumulateData.getServiceIds();
     // update privileged data
-    for (const [serviceId] of entries) {
-      // TODO [ToDr] merge state updates instead of using `currentState`
+    // for (const [serviceId] of entries) {
+    //   // TODO [ToDr] merge state updates instead of using `currentState`
+    //   // Owned privileges
+    //   if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
+    //     // TODO [toDr] Other privileges
+    //     if (serviceId !== currentPrivileged.delegator) {
+    //       currentState.validatorsData = prevValidatorData;
+    //     }
+    //   }
 
-      // Owned privileges
-      if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-        // TODO [toDr] Other privileges
-        if (serviceId !== currentPrivileged.delegator) {
-          currentState.validatorsData = prevValidatorData;
-        }
-      }
+    //   if (Compatibility.is(GpVersion.V0_7_0) && serviceId === currentPrivileged.manager) {
+    //     const newV = currentState.privilegedServices?.delegator;
+    //     if (currentState.privilegedServices !== null && newV !== undefined && serviceIds.includes(newV)) {
+    //       logger.info`Entering completely incorrect code that probably reverts delegator change. This is valid in 0.7.0 only and incorrect in 0.7.1+`;
+    //       // Since serviceIds already contains newV, this service gets accumulated twice.
+    //       // To avoid double-counting, we skip stats and gas cost tracking here.
+    //       // We need this accumulation to get the correct `delegator`
+    //       const { stateUpdate } = await this.accumulateSingleService(
+    //         newV,
+    //         [],
+    //         accumulateData.getOperands(newV),
+    //         accumulateData.getGasLimit(newV),
+    //         slot,
+    //         entropy,
+    //         AccumulationStateUpdate.copyFrom(inputStateUpdate),
+    //       );
 
-      if (Compatibility.is(GpVersion.V0_7_0) && serviceId === currentPrivileged.manager) {
-        const newV = currentState.privilegedServices?.delegator;
-        if (currentState.privilegedServices !== null && newV !== undefined && serviceIds.includes(newV)) {
-          logger.info`Entering completely incorrect code that probably reverts delegator change. This is valid in 0.7.0 only and incorrect in 0.7.1+`;
-          // Since serviceIds already contains newV, this service gets accumulated twice.
-          // To avoid double-counting, we skip stats and gas cost tracking here.
-          // We need this accumulation to get the correct `delegator`
-          const { stateUpdate } = await this.accumulateSingleService(
-            newV,
-            [],
-            accumulateData.getOperands(newV),
-            accumulateData.getGasLimit(newV),
-            slot,
-            entropy,
-            AccumulationStateUpdate.copyFrom(inputStateUpdate),
-          );
-
-          const correctV = stateUpdate?.privilegedServices?.delegator ?? this.state.privilegedServices.delegator;
-          currentState.privilegedServices = PrivilegedServices.create({
-            ...currentState.privilegedServices,
-            delegator: correctV,
-          });
-        }
-      }
-    }
+    //       const correctV = stateUpdate?.privilegedServices?.delegator ?? this.state.privilegedServices.delegator;
+    //       currentState.privilegedServices = PrivilegedServices.create({
+    //         ...currentState.privilegedServices,
+    //         delegator: correctV,
+    //       });
+    //     }
+    //   }
+    // }
 
     return {
       results,
@@ -728,7 +718,8 @@ export class Accumulate {
 
     outputState.services.created = Array.from(newCreatedServices);
     outputState.services.removed = Array.from(newRemovedServices);
-
+    outputState.yieldedRoot = null;
+    outputState.transfers = [];
     return outputState;
   }
 
