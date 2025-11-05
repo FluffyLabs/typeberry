@@ -1,4 +1,4 @@
-name: VECTORS - w3f-0.70
+name: VECTORS - w3f-0.7.0
 
 on:
   workflow_dispatch:
