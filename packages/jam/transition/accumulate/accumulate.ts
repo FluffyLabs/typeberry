@@ -583,34 +583,6 @@ export class Accumulate {
     };
   }
 
-  private updatePrivilegedServiceId(
-    // The id that privileged service wants to be updated to
-    newId: ServiceId,
-    // Current id of privileged service (updated state)
-    currentId: ServiceId,
-    {
-      // is current service id a manager (can update anything)
-      isManager,
-      // is current service attempting to update itself (privileged are owned)
-      isSelf,
-      // is the service id already changed in this block
-      isAlreadyChanged,
-    }: { isManager: boolean; isSelf: boolean; isAlreadyChanged: boolean },
-  ) {
-    if (isManager) {
-      return newId;
-    }
-
-    // current service can update itself, only if it was a privileged
-    // service at the start of the block. I.e. owned privileges cannot
-    // be transfered multiple times in a block.
-    if (isSelf && !isAlreadyChanged) {
-      return newId;
-    }
-
-    return currentId;
-  }
-
   private mergePerallelAccumulationResults(
     inputState: AccumulationStateUpdate,
     results: Map<ServiceId, { stateUpdate: AccumulationStateUpdate }>,
@@ -695,16 +667,20 @@ export class Accumulate {
         }
       }
 
-      for (const [serviceId, preimage] of stateUpdate.services.preimages.entries()) {
-        outputState.services.preimages.set(serviceId, preimage);
+      for (const [serviceId, preimages] of stateUpdate.services.preimages.entries()) {
+        const outputPreimages = outputState.services.preimages.get(serviceId) ?? [];
+        outputPreimages.push(...preimages);
+        outputState.services.preimages.set(serviceId, outputPreimages);
       }
 
       for (const [serviceId, storageUpdates] of stateUpdate.services.storage.entries()) {
-        outputState.services.storage.set(serviceId, storageUpdates);
+        const outputStorageUpdates = outputState.services.storage.get(serviceId) ?? [];
+        outputStorageUpdates.push(...storageUpdates);
+        outputState.services.storage.set(serviceId, outputStorageUpdates);
       }
 
-      for (const [serviceId, serviceUpdaet] of stateUpdate.services.updated.entries()) {
-        outputState.services.updated.set(serviceId, serviceUpdaet);
+      for (const [serviceId, serviceUpdate] of stateUpdate.services.updated.entries()) {
+        outputState.services.updated.set(serviceId, serviceUpdate);
       }
 
       for (const removedServiceId of stateUpdate.services.removed) {
@@ -712,14 +688,16 @@ export class Accumulate {
       }
 
       for (const createdServiceId of stateUpdate.services.created) {
+        if (newRemovedServices.has(createdServiceId)) {
+          throw new Error("2 serwisy stworzyły serwis o tym samym id i mamy problemik");
+        }
         newRemovedServices.add(createdServiceId);
       }
     }
 
     outputState.services.created = Array.from(newCreatedServices);
     outputState.services.removed = Array.from(newRemovedServices);
-    outputState.yieldedRoot = null;
-    outputState.transfers = [];
+
     return outputState;
   }
 
