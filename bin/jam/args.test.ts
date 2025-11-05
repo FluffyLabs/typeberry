@@ -10,7 +10,7 @@ describe("CLI", () => {
   const parse = (args: string[]) => parseArgs(args, (v) => `../${v}`);
   const defaultOptions: SharedOptions = {
     nodeName: NODE_DEFAULTS.name,
-    configPath: NODE_DEFAULTS.config,
+    config: NODE_DEFAULTS.config,
     pvm: NODE_DEFAULTS.pvm,
   };
 
@@ -35,28 +35,50 @@ describe("CLI", () => {
     });
   });
 
-  it("should parse config option", () => {
+  it("should parse single config option as array", () => {
     const args = parse(["--config=./config.json"]);
 
     deepEqual(args, {
       command: Command.Run,
       args: {
         ...defaultOptions,
-        configPath: ".././config.json",
+        config: ["./config.json"],
       },
     });
   });
 
-  it("should parse dev config option", () => {
+  it("should parse dev config option as array", () => {
     const args = parse(["--config=dev"]);
 
     deepEqual(args, {
       command: Command.Run,
       args: {
         ...defaultOptions,
-        configPath: "dev",
+        config: ["dev"],
       },
     });
+  });
+
+  it("should parse multiple config options as array", () => {
+    const args = parse(["--config=dev", "--config=./config.json"]);
+    deepEqual(args, {
+      command: Command.Run,
+      args: {
+        ...defaultOptions,
+        config: ["dev", "./config.json"],
+      },
+    });
+  });
+
+  it("should throw an error when one of config options is not a string", () => {
+    assert.throws(
+      () => {
+        parse(["--config=dev", "--config=1"]);
+      },
+      {
+        message: "Option '--config' requires an argument of type: string, got: number.",
+      },
+    );
   });
 
   it("should parse import command and add rel path to files", () => {
@@ -125,7 +147,7 @@ describe("CLI", () => {
       command: Command.Dev,
       args: {
         ...defaultOptions,
-        configPath: "dev",
+        config: ["dev"],
         index: tryAsU16(10),
       },
     });

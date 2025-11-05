@@ -7,6 +7,7 @@ import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Compatibility, GpVersion } from "@typeberry/utils";
+import type { RunOptions } from "../../common.js";
 import { runCodecTest } from "./common.js";
 import { workItemFromJson } from "./work-item.js";
 
@@ -76,6 +77,6 @@ type JsonWorkPackage = {
   items: WorkItem[];
 };
 
-export async function runWorkPackageTest(test: WorkPackage, file: string) {
+export async function runWorkPackageTest(test: WorkPackage, { path: file }: RunOptions) {
   runCodecTest(WorkPackage.Codec, test, file);
 }

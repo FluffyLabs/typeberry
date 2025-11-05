@@ -35,5 +35,5 @@ export function accumulationOutputComparator(a: AccumulationOutput, b: Accumulat
     return Ordering.Greater;
   }
 
-  return Ordering.Equal;
+  return a.output.compare(b.output);
 }

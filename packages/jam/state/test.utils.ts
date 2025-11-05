@@ -355,7 +355,7 @@ export const testState = (): InMemoryState => {
       assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
       delegator: tryAsServiceId(0),
       registrar: tryAsServiceId(MAX_VALUE),
-      autoAccumulateServices: [],
+      autoAccumulateServices: new Map(),
     }),
   });
   return state;

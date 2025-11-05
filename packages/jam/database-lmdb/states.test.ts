@@ -93,7 +93,7 @@ describe("LMDB States database", () => {
         assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(2)), spec),
         delegator: tryAsServiceId(3),
         registrar: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? tryAsServiceId(4) : tryAsServiceId(MAX_VALUE),
-        autoAccumulateServices: [],
+        autoAccumulateServices: new Map(),
       }),
       updated: new Map([
         [

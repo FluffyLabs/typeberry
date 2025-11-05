@@ -10,7 +10,7 @@ import {
 } from "@typeberry/transition/authorization.js";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { deepEqual } from "@typeberry/utils";
-import { getChainSpec } from "./spec.js";
+import type { RunOptions } from "../common.js";
 
 class TestCoreAuthorizer {
   static fromJson: FromJson<TestCoreAuthorizer> = {
@@ -77,9 +77,7 @@ export class AuthorizationsTest {
   post_state!: AuthorizationState;
 }
 
-export async function runAuthorizationsTest(test: AuthorizationsTest, path: string) {
-  const chainSpec = getChainSpec(path);
-
+export async function runAuthorizationsTest(test: AuthorizationsTest, { chainSpec }: RunOptions) {
   const authorization = new Authorization(chainSpec, test.pre_state);
   const update = authorization.transition(test.input);
   const result = copyAndUpdateState(test.pre_state, update);

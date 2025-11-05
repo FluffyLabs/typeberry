@@ -26,13 +26,14 @@
     "@typeberry/state": "*",
     "@typeberry/state-json": "*",
     "@typeberry/state-merkleization": "*",
+    "@typeberry/state-vectors": "*",
     "@typeberry/transition": "*",
     "@typeberry/trie": "*",
     "@typeberry/utils": "*",
     "json-bigint-patch": "0.0.8"
   },
   "scripts": {
-    "start": "tsx --test-timeout=600000 ./index.ts",
+    "start": "tsx --test-timeout=900000 ./index.ts",
     "w3f:0.6.7": "GP_VERSION=0.6.7 tsx ./w3f.ts",
     "w3f:0.7.1": "GP_VERSION=0.7.1 tsx ./w3f.ts",
     "w3f-davxy:0.6.7": "GP_VERSION=0.6.7 tsx ./w3f-davxy-067.ts",
