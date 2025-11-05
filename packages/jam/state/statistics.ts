@@ -22,7 +22,7 @@ const codecServiceId: Descriptor<ServiceId> = Compatibility.isSuite(TestSuite.W3
 /**
  * Activity Record of a single validator.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/183701183701
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/195c00195c00?v=0.7.2
  */
 export class ValidatorStatistics {
   static Codec = codec.Class(ValidatorStatistics, {
@@ -46,17 +46,17 @@ export class ValidatorStatistics {
   }
 
   private constructor(
-    /** The number of blocks produced by the validator. */
+    /** `b`: The number of blocks produced by the validator. */
     public blocks: U32,
-    /** The number of tickets introduced by the validator. */
+    /** `t`: The number of tickets introduced by the validator. */
     public tickets: U32,
-    /** The number of preimages introduced by the validator. */
+    /** `p`: The number of preimages introduced by the validator. */
     public preImages: U32,
-    /** The total number of octets across all preimages introduced by the validator. */
+    /** `d`: The total number of octets across all preimages introduced by the validator. */
     public preImagesSize: U32,
-    /** The number of reports guaranteed by the validator. */
+    /** `g`: The number of reports guaranteed by the validator. */
     public guarantees: U32,
-    /** The number of availability assurances made by the validator. */
+    /** `a`: The number of availability assurances made by the validator. */
     public assurances: U32,
   ) {}
 
@@ -81,7 +81,7 @@ const codecVarGas: Descriptor<ServiceGas> = codec.varU64.convert(
  * Single core statistics.
  * Updated per block, based on incoming work reports (`w`).
  *
- * https://graypaper.fluffylabs.dev/#/68eaa1f/18f10318f103?v=0.6.4
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/197902197902?v=0.7.2
  * https://github.com/gavofyork/graypaper/blob/9bffb08f3ea7b67832019176754df4fb36b9557d/text/statistics.tex#L65
  */
 export class CoreStatistics {
@@ -101,9 +101,9 @@ export class CoreStatistics {
       v.dataAvailabilityLoad,
       v.popularity,
       v.imports,
-      v.exports,
-      v.extrinsicSize,
       v.extrinsicCount,
+      v.extrinsicSize,
+      v.exports,
       v.bundleSize,
       v.gasUsed,
     );
@@ -116,13 +116,13 @@ export class CoreStatistics {
     public popularity: U16,
     /** `i` */
     public imports: U16,
-    /** `e` */
-    public exports: U16,
-    /** `z` */
-    public extrinsicSize: U32,
     /** `x` */
     public extrinsicCount: U16,
-    /** `b` */
+    /** `z` */
+    public extrinsicSize: U32,
+    /** `e` */
+    public exports: U16,
+    /** `l` */
     public bundleSize: U32,
     /** `u` */
     public gasUsed: ServiceGas,
@@ -140,7 +140,7 @@ export class CoreStatistics {
  * Service statistics.
  * Updated per block, based on available work reports (`W`).
  *
- * https://graypaper.fluffylabs.dev/#/1c979cb/199802199802?v=0.7.1
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/19e20219e202?v=0.7.2
  */
 export class ServiceStatistics {
   static Codec = Compatibility.selectIfGreaterOrEqual({
@@ -183,9 +183,9 @@ export class ServiceStatistics {
       v.refinementCount,
       v.refinementGasUsed,
       v.imports,
-      v.exports,
-      v.extrinsicSize,
       v.extrinsicCount,
+      v.extrinsicSize,
+      v.exports,
       v.accumulateCount,
       v.accumulateGasUsed,
       v.onTransfersCount,
@@ -204,12 +204,12 @@ export class ServiceStatistics {
     public refinementGasUsed: ServiceGas,
     /** `i` */
     public imports: U16,
-    /** `e` */
-    public exports: U16,
-    /** `z` */
-    public extrinsicSize: U32,
     /** `x` */
     public extrinsicCount: U16,
+    /** `z` */
+    public extrinsicSize: U32,
+    /** `e` */
+    public exports: U16,
     /** `a.0` */
     public accumulateCount: U32,
     /** `a.1` */
