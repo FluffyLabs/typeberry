@@ -61,7 +61,8 @@
     "packages/workers/api-node",
     "packages/workers/block-generator",
     "packages/workers/importer",
-    "packages/workers/jam-network"
+    "packages/workers/jam-network",
+    "packages/jam/state-vectors"
   ],
   "engines": {
     "node": ">=22",
