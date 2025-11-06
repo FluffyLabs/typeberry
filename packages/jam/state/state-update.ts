@@ -39,15 +39,20 @@ export class UpdatePreimage {
           kind: UpdatePreimageKind.UpdateOrAdd;
           item: LookupHistoryItem;
         },
+
+    public serviceId?: ServiceId,
   ) {}
 
   /** A preimage is provided. We should update the lookuphistory and add the preimage to db. */
-  static provide({ preimage, slot }: { preimage: PreimageItem; slot: TimeSlot | null }) {
-    return new UpdatePreimage({
-      kind: UpdatePreimageKind.Provide,
-      preimage,
-      slot,
-    });
+  static provide({ preimage, slot }: { preimage: PreimageItem; slot: TimeSlot | null }, serviceId: ServiceId) {
+    return new UpdatePreimage(
+      {
+        kind: UpdatePreimageKind.Provide,
+        preimage,
+        slot,
+      },
+      serviceId,
+    );
   }
 
   /** The preimage should be removed completely from the database. */

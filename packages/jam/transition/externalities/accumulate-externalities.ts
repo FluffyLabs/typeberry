@@ -669,14 +669,17 @@ export class AccumulateExternalities
 
     // setting up the new preimage
     this.updatedState.updatePreimage(
-      serviceId,
-      UpdatePreimage.provide({
-        preimage: PreimageItem.create({
-          hash: preimageHash,
-          blob: preimage,
-        }),
-        slot: this.currentTimeslot,
-      }),
+      this.currentServiceId,
+      UpdatePreimage.provide(
+        {
+          preimage: PreimageItem.create({
+            hash: preimageHash,
+            blob: preimage,
+          }),
+          slot: this.currentTimeslot,
+        },
+        serviceId,
+      ),
     );
 
     return Result.ok(OK);

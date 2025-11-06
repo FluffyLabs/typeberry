@@ -671,7 +671,18 @@ export class Accumulate {
       const maybeUpdatedPreimages = stateUpdate.services.preimages.get(serviceId);
 
       if (maybeUpdatedPreimages !== undefined) {
-        outputState.services.preimages.set(serviceId, maybeUpdatedPreimages);
+        const currentServiceUpdates = maybeUpdatedPreimages.filter((x) => x.serviceId === undefined);
+        const otherServiceUpdates = maybeUpdatedPreimages.filter((x) => x.serviceId !== undefined);
+        outputState.services.preimages.set(serviceId, currentServiceUpdates);
+        for (const update of otherServiceUpdates) {
+          if (update.serviceId === undefined) {
+            continue;
+          }
+
+          const preimages = outputState.services.preimages.get(update.serviceId) ?? [];
+          preimages.push(update);
+          outputState.services.preimages.set(update.serviceId, preimages);
+        }
       }
 
       const maybeUpdatedStorage = stateUpdate.services.storage.get(serviceId);
