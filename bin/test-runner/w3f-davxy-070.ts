@@ -6,11 +6,7 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_070", {
   accepted: {
     ".json": ["traces"],
   },
-  ignored: [
-    "genesis.json",
-    "1758622442/00000164", // bug in GP 070
-    "1758622403/00000239", // bug in GP 070
-  ],
+  ignored: ["genesis.json"],
 })
   .then((r) => logger.log`${r}`)
   .catch((e) => {
