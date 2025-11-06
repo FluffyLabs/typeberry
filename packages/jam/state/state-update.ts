@@ -44,7 +44,7 @@ export class UpdatePreimage {
   ) {}
 
   /** A preimage is provided. We should update the lookuphistory and add the preimage to db. */
-  static provide({ preimage, slot }: { preimage: PreimageItem; slot: TimeSlot | null }, serviceId: ServiceId) {
+  static provide({ preimage, slot }: { preimage: PreimageItem; slot: TimeSlot | null }, serviceId?: ServiceId) {
     return new UpdatePreimage(
       {
         kind: UpdatePreimageKind.Provide,

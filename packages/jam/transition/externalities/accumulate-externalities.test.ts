@@ -1844,7 +1844,7 @@ describe("PartialState.providePreimage", () => {
       state.stateUpdate.services.preimages,
       new Map([
         [
-          tryAsServiceId(1),
+          tryAsServiceId(0),
           [
             UpdatePreimage.provide({
               preimage: PreimageItem.create({
@@ -1852,7 +1852,7 @@ describe("PartialState.providePreimage", () => {
                 blob: preimage.blob,
               }),
               slot: state.state.timeslot,
-            }),
+            }, tryAsServiceId(1)),
           ],
         ],
       ]),
@@ -1891,7 +1891,7 @@ describe("PartialState.providePreimage", () => {
                 blob: preimage.blob,
               }),
               slot: state.state.timeslot,
-            }),
+            }, tryAsServiceId(0)),
           ],
         ],
       ]),
@@ -2067,7 +2067,7 @@ describe("PartialState.providePreimage", () => {
                 blob: preimage.blob,
               }),
               slot: state.state.timeslot,
-            }),
+            }, tryAsServiceId(0)),
           ],
         ],
       ]),
