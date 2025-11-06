@@ -58,9 +58,7 @@ type InvocationResult = {
   consumedGas: ServiceGas;
 };
 
-type ParallelAccumulationResult = {
-  results: Map<ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }>;
-};
+type ParallelAccumulationResult = Map<ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }>;
 
 type SequentialAccumulationResult = {
   accumulatedReports: U32;
@@ -297,6 +295,7 @@ export class Accumulate {
     stateUpdate: AccumulationStateUpdate,
     autoAccumulateServices: Map<ServiceId, ServiceGas>,
     yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>>,
+    transfers: PendingTransfer[],
   ): Promise<SequentialAccumulationResult> {
     const i = this.findReportCutoffIndex(gasLimit, reports);
 
@@ -312,9 +311,10 @@ export class Accumulate {
     const accumulateData = new AccumulateData(reportsToAccumulateInParallel, [], autoAccumulateServices);
     const reportsToAccumulateSequentially = reports.subview(i);
 
-    const { results, ...rest } = await this.accumulateInParallel(accumulateData, slot, entropy, stateUpdate);
-    assertEmpty(rest);
+    const results = await this.accumulateInParallel(accumulateData, slot, entropy, stateUpdate);
 
+    const newTransfers = this.getTransfers(results);
+    transfers.push(...newTransfers);
     this.updateStatistics(results, statistics, accumulateData);
     this.updateYieldedRoots(results, yieldedRoots);
     const totalGasCost = tryAsServiceGas(sumU64(...Array.from(results.entries()).map((x) => x[1].consumedGas)).value);
@@ -335,6 +335,7 @@ export class Accumulate {
       stateAfterParallelAcc,
       new Map(),
       yieldedRoots,
+      transfers,
     );
     assertEmpty(seqRest);
 
@@ -380,8 +381,7 @@ export class Accumulate {
     const accumulateData = new AccumulateData(reportsToAccumulateInParallel, transfers, autoAccumulateServices);
     const reportsToAccumulateSequentially = reports.subview(i);
 
-    const { results, ...rest } = await this.accumulateInParallel(accumulateData, slot, entropy, stateUpdate);
-    assertEmpty(rest);
+    const results = await this.accumulateInParallel(accumulateData, slot, entropy, stateUpdate);
 
     this.updateStatistics(results, statistics, accumulateData);
     this.updateYieldedRoots(results, yieldedRoots);
@@ -486,38 +486,6 @@ export class Accumulate {
   getTransfers(results: Map<ServiceId, { stateUpdate: Pick<AccumulationStateUpdate, "transfers"> }>) {
     return Array.from(results.values()).flatMap(({ stateUpdate }) => stateUpdate.transfers);
   }
-
-  private async accumulateInParallelInternal(
-    accumulateData: AccumulateData,
-    slot: TimeSlot,
-    entropy: EntropyHash,
-    state: AccumulationStateUpdate,
-  ) {
-    const serviceIds = accumulateData.getServiceIds();
-    const results = new Map<ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }>();
-
-    for (const serviceId of serviceIds) {
-      const checkpoint = AccumulationStateUpdate.copyFrom(state);
-      const { consumedGas, stateUpdate } = await this.accumulateSingleService(
-        serviceId,
-        accumulateData.getTransfers(serviceId),
-        accumulateData.getOperands(serviceId),
-        accumulateData.getGasLimit(serviceId),
-        slot,
-        entropy,
-        AccumulationStateUpdate.copyFrom(state),
-      );
-
-      results.set(serviceId, {
-        consumedGas,
-        stateUpdate: stateUpdate === null ? checkpoint : AccumulationStateUpdate.copyFrom(stateUpdate),
-      });
-    }
-    return {
-      results,
-    };
-  }
-
   /**
    * The parallelized accumulation function ∆∗ which,
    * with the help of the single-service accumulation function ∆1,
@@ -534,53 +502,28 @@ export class Accumulate {
     entropy: EntropyHash,
     inputStateUpdate: AccumulationStateUpdate,
   ): Promise<ParallelAccumulationResult> {
-    const { results } = await this.accumulateInParallelInternal(accumulateData, slot, entropy, inputStateUpdate);
+    const serviceIds = accumulateData.getServiceIds();
+    const results = new Map<ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }>();
 
-    // const entries = Array.from(results.entries());
+    for (const serviceId of serviceIds) {
+      const checkpoint = AccumulationStateUpdate.copyFrom(inputStateUpdate);
+      const { consumedGas, stateUpdate } = await this.accumulateSingleService(
+        serviceId,
+        accumulateData.getTransfers(serviceId),
+        accumulateData.getOperands(serviceId),
+        accumulateData.getGasLimit(serviceId),
+        slot,
+        entropy,
+        AccumulationStateUpdate.copyFrom(inputStateUpdate),
+      );
 
-    // const currentPrivileged = inputStateUpdate.privilegedServices ?? this.state.privilegedServices;
-    // const prevValidatorData = inputStateUpdate.validatorsData ?? this.state.designatedValidatorData;
-    // const serviceIds = accumulateData.getServiceIds();
-    // update privileged data
-    // for (const [serviceId] of entries) {
-    //   // TODO [ToDr] merge state updates instead of using `currentState`
-    //   // Owned privileges
-    //   if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-    //     // TODO [toDr] Other privileges
-    //     if (serviceId !== currentPrivileged.delegator) {
-    //       currentState.validatorsData = prevValidatorData;
-    //     }
-    //   }
+      results.set(serviceId, {
+        consumedGas,
+        stateUpdate: stateUpdate === null ? checkpoint : AccumulationStateUpdate.copyFrom(stateUpdate),
+      });
+    }
 
-    //   if (Compatibility.is(GpVersion.V0_7_0) && serviceId === currentPrivileged.manager) {
-    //     const newV = currentState.privilegedServices?.delegator;
-    //     if (currentState.privilegedServices !== null && newV !== undefined && serviceIds.includes(newV)) {
-    //       logger.info`Entering completely incorrect code that probably reverts delegator change. This is valid in 0.7.0 only and incorrect in 0.7.1+`;
-    //       // Since serviceIds already contains newV, this service gets accumulated twice.
-    //       // To avoid double-counting, we skip stats and gas cost tracking here.
-    //       // We need this accumulation to get the correct `delegator`
-    //       const { stateUpdate } = await this.accumulateSingleService(
-    //         newV,
-    //         [],
-    //         accumulateData.getOperands(newV),
-    //         accumulateData.getGasLimit(newV),
-    //         slot,
-    //         entropy,
-    //         AccumulationStateUpdate.copyFrom(inputStateUpdate),
-    //       );
-
-    //       const correctV = stateUpdate?.privilegedServices?.delegator ?? this.state.privilegedServices.delegator;
-    //       currentState.privilegedServices = PrivilegedServices.create({
-    //         ...currentState.privilegedServices,
-    //         delegator: correctV,
-    //       });
-    //     }
-    //   }
-    // }
-
-    return {
-      results,
-    };
+    return results;
   }
 
   private mergePerallelAccumulationResults(
@@ -821,6 +764,7 @@ export class Accumulate {
 
   async transition({ reports, slot, entropy }: AccumulateInput): Promise<Result<AccumulateResult, ACCUMULATION_ERROR>> {
     const statistics: Map<ServiceId, CountAndGasUsed> = new Map();
+    const legacyTransfers: PendingTransfer[] = [];
     const yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>> = new Map();
     const accumulateQueue = new AccumulateQueue(this.chainSpec, this.state);
     const toAccumulateImmediately = accumulateQueue.getWorkReportsToAccumulateImmediately(reports);
@@ -857,6 +801,7 @@ export class Accumulate {
           AccumulationStateUpdate.empty(),
           autoAccumulateServices,
           yieldedRoots,
+          legacyTransfers,
         );
     // we can safely ignore top-level gas cost from accSequentially.
     const _gasCost = gasCost;
@@ -866,7 +811,7 @@ export class Accumulate {
     const {
       yieldedRoot,
       services,
-      transfers,
+      transfers: _transfers,
       validatorsData,
       privilegedServices,
       authorizationQueues,
@@ -916,7 +861,7 @@ export class Accumulate {
         ...authQueues,
       },
       accumulationStatistics: statistics,
-      pendingTransfers: transfers,
+      pendingTransfers: legacyTransfers,
       accumulationOutputLog: accumulationOutput,
     });
   }
