@@ -503,11 +503,15 @@ export class Accumulate {
     inputStateUpdate: AccumulationStateUpdate,
   ): Promise<ParallelAccumulationResult> {
     const serviceIds = accumulateData.getServiceIds();
-    const results = new Map<ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }>();
+    const serviceIdsLength = serviceIds.length;
+    const resultPromises: Promise<{ consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }>[] = new Array(
+      serviceIdsLength,
+    );
 
-    for (const serviceId of serviceIds) {
+    for (let serviceIndex = 0; serviceIndex < serviceIdsLength; serviceIndex += 1) {
+      const serviceId = serviceIds[serviceIndex];
       const checkpoint = AccumulationStateUpdate.copyFrom(inputStateUpdate);
-      const { consumedGas, stateUpdate } = await this.accumulateSingleService(
+      const promise = this.accumulateSingleService(
         serviceId,
         accumulateData.getTransfers(serviceId),
         accumulateData.getOperands(serviceId),
@@ -515,15 +519,23 @@ export class Accumulate {
         slot,
         entropy,
         AccumulationStateUpdate.copyFrom(inputStateUpdate),
-      );
-
-      results.set(serviceId, {
+      ).then(({ consumedGas, stateUpdate }) => ({
         consumedGas,
-        stateUpdate: stateUpdate === null ? checkpoint : AccumulationStateUpdate.copyFrom(stateUpdate),
-      });
+        stateUpdate: stateUpdate === null ? checkpoint : stateUpdate,
+      }));
+
+      resultPromises[serviceIndex] = promise;
     }
 
-    return results;
+    return Promise.all(resultPromises).then((results) => {
+      const map = new Map<ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }>();
+
+      for (let serviceIndex = 0; serviceIndex < serviceIdsLength; serviceIndex += 1) {
+        map.set(serviceIds[serviceIndex], results[serviceIndex]);
+      }
+
+      return map;
+    });
   }
 
   private mergePerallelAccumulationResults(
