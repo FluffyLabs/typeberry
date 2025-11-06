@@ -697,23 +697,19 @@ export class Accumulate {
         outputState.services.updated.set(serviceId, maybeUpdatedService);
       }
 
-      if (stateUpdate.services.removed.length > newRemovedServices.size) {
-        const removedServices = stateUpdate.services.removed.filter((id) => !newRemovedServices.has(id));
-        for (const id of removedServices) {
-          const preimages = stateUpdate.services.preimages.get(id);
-          if (preimages !== undefined) {
-            outputState.services.preimages.set(id, preimages); // merge instead of override?
-          }
+      const removedServices = stateUpdate.services.removed.filter((id) => !newRemovedServices.has(id));
+      for (const id of removedServices) {
+        const preimages = stateUpdate.services.preimages.get(id);
+        if (preimages !== undefined) {
+          outputState.services.preimages.set(id, preimages); // merge instead of override?
         }
       }
 
-      if (stateUpdate.services.created.length > newCreatedServices.size) {
-        const createdServices = stateUpdate.services.created.filter((id) => !newCreatedServices.has(id));
-        for (const id of createdServices) {
-          const update = stateUpdate.services.updated.get(id);
-          if (update !== undefined) {
-            outputState.services.updated.set(id, update);
-          }
+      const createdServices = stateUpdate.services.created.filter((id) => !newCreatedServices.has(id));
+      for (const id of createdServices) {
+        const update = stateUpdate.services.updated.get(id);
+        if (update !== undefined) {
+          outputState.services.updated.set(id, update);
         }
       }
 
