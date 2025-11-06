@@ -668,19 +668,21 @@ export class AccumulateExternalities
     }
 
     // setting up the new preimage
-    this.updatedState.updatePreimage(
-      this.currentServiceId,
-      UpdatePreimage.provide(
-        {
-          preimage: PreimageItem.create({
-            hash: preimageHash,
-            blob: preimage,
-          }),
-          slot: this.currentTimeslot,
-        },
-        serviceId,
-      ),
-    );
+    const providedFor = serviceId;
+    const update = UpdatePreimage.provide({
+      preimage: PreimageItem.create({
+        hash: preimageHash,
+        blob: preimage,
+      }),
+      slot: this.currentTimeslot,
+      providedFor,
+    });
+
+    this.updatedState.updatePreimage(serviceId, update);
+
+    if (this.currentServiceId !== providedFor) {
+      this.updatedState.updatePreimage(this.currentServiceId, update);
+    }
 
     return Result.ok(OK);
   }

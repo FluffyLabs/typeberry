@@ -31,6 +31,7 @@ import {
   ServiceAccountInfo,
   type ServicesUpdate,
   tryAsPerCore,
+  UpdatePreimageKind,
 } from "@typeberry/state";
 import { assertEmpty, Compatibility, GpVersion, Result, TestSuite } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
@@ -671,17 +672,21 @@ export class Accumulate {
       const maybeUpdatedPreimages = stateUpdate.services.preimages.get(serviceId);
 
       if (maybeUpdatedPreimages !== undefined) {
-        const currentServiceUpdates = maybeUpdatedPreimages.filter((x) => x.serviceId === undefined);
-        const otherServiceUpdates = maybeUpdatedPreimages.filter((x) => x.serviceId !== undefined);
+        const currentServiceUpdates = maybeUpdatedPreimages.filter(
+          (x) => x.action.kind !== UpdatePreimageKind.Provide || x.action.providedFor === serviceId,
+        );
+        const otherServiceUpdates = maybeUpdatedPreimages.filter(
+          (x) => x.action.kind === UpdatePreimageKind.Provide && x.action.providedFor !== serviceId,
+        );
         outputState.services.preimages.set(serviceId, currentServiceUpdates);
         for (const update of otherServiceUpdates) {
-          if (update.serviceId === undefined) {
+          if (update.action.kind !== UpdatePreimageKind.Provide) {
             continue;
           }
-
-          const preimages = outputState.services.preimages.get(update.serviceId) ?? [];
+          const id = update.action.providedFor;
+          const preimages = outputState.services.preimages.get(id) ?? [];
           preimages.push(update);
-          outputState.services.preimages.set(update.serviceId, preimages);
+          outputState.services.preimages.set(id, preimages);
         }
       }
 

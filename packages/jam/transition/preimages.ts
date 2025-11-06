@@ -78,13 +78,11 @@ export class Preimages {
       // https://graypaper.fluffylabs.dev/#/5f542d7/18c00018f300
       const updates = pendingChanges.get(requester) ?? [];
       updates.push(
-        UpdatePreimage.provide(
-          {
-            preimage: PreimageItem.create({ hash, blob }),
-            slot,
-          },
-          requester,
-        ),
+        UpdatePreimage.provide({
+          preimage: PreimageItem.create({ hash, blob }),
+          slot,
+          providedFor: requester,
+        }),
       );
       pendingChanges.set(requester, updates);
     }
