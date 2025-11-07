@@ -27,11 +27,9 @@ import {
   accumulationOutputComparator,
   hashComparator,
   type NotYetAccumulatedReport,
-  PrivilegedServices,
   ServiceAccountInfo,
   type ServicesUpdate,
   tryAsPerCore,
-  UpdatePreimageKind,
 } from "@typeberry/state";
 import { assertEmpty, Compatibility, GpVersion, Result, TestSuite } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
@@ -47,6 +45,10 @@ import {
   GAS_TO_INVOKE_WORK_REPORT,
 } from "./accumulate-state.js";
 import { generateNextServiceId, getWorkPackageHashes } from "./accumulate-utils.js";
+import {
+  mergePerallelAccumulationResults,
+  type ParallelAccumulationResult,
+} from "./accumulation-result-merge-utils.js";
 import type { Operand } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
 
@@ -57,8 +59,6 @@ type InvocationResult = {
   stateUpdate: AccumulationStateUpdate;
   consumedGas: ServiceGas;
 };
-
-type ParallelAccumulationResult = Map<ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }>;
 
 type SequentialAccumulationResult = {
   accumulatedReports: U32;
@@ -313,12 +313,14 @@ export class Accumulate {
 
     const results = await this.accumulateInParallel(accumulateData, slot, entropy, stateUpdate);
 
-    const newTransfers = this.getTransfers(results);
-    transfers.push(...newTransfers);
     this.updateStatistics(results, statistics, accumulateData);
     this.updateYieldedRoots(results, yieldedRoots);
-    const totalGasCost = tryAsServiceGas(sumU64(...Array.from(results.entries()).map((x) => x[1].consumedGas)).value);
-    const stateAfterParallelAcc = this.mergePerallelAccumulationResults(stateUpdate, results);
+    const {
+      state: stateAfterParallelAcc,
+      totalGasCost,
+      transfers: newTransfers,
+    } = mergePerallelAccumulationResults(this.chainSpec, this.state, stateUpdate, results);
+    transfers.push(...newTransfers);
 
     // NOTE [ToDr] recursive invocation
     const {
@@ -385,9 +387,11 @@ export class Accumulate {
 
     this.updateStatistics(results, statistics, accumulateData);
     this.updateYieldedRoots(results, yieldedRoots);
-    const newTransfers = this.getTransfers(results);
-    const totalGasCost = tryAsServiceGas(sumU64(...Array.from(results.entries()).map((x) => x[1].consumedGas)).value);
-    const stateAfterParallelAcc = this.mergePerallelAccumulationResults(stateUpdate, results);
+    const {
+      state: stateAfterParallelAcc,
+      totalGasCost,
+      transfers: newTransfers,
+    } = mergePerallelAccumulationResults(this.chainSpec, this.state, stateUpdate, results);
 
     /**
      * Gas limit from transfers is added to the next round of accumulation
@@ -483,9 +487,6 @@ export class Accumulate {
     }
   }
 
-  getTransfers(results: Map<ServiceId, { stateUpdate: Pick<AccumulationStateUpdate, "transfers"> }>) {
-    return Array.from(results.values()).flatMap(({ stateUpdate }) => stateUpdate.transfers);
-  }
   /**
    * The parallelized accumulation function ∆∗ which,
    * with the help of the single-service accumulation function ∆1,
@@ -536,156 +537,6 @@ export class Accumulate {
 
       return map;
     });
-  }
-
-  private mergePerallelAccumulationResults(
-    inputState: AccumulationStateUpdate,
-    results: Map<ServiceId, { stateUpdate: AccumulationStateUpdate }>,
-  ): AccumulationStateUpdate {
-    const outputState = AccumulationStateUpdate.copyFrom(inputState);
-    const previousPrivilegedServices = inputState.privilegedServices ?? this.state.privilegedServices;
-    const currentManager = previousPrivilegedServices.manager;
-    const currentDelegator = previousPrivilegedServices.delegator;
-    const currentRegistrar = previousPrivilegedServices.registrar;
-    const currentAssigners = previousPrivilegedServices.assigners;
-    const privilegedServicesUpdatedByManager =
-      results.get(currentManager)?.stateUpdate.privilegedServices ?? previousPrivilegedServices;
-
-    const newRemovedServices = new Set<ServiceId>(inputState.services.removed);
-    const newCreatedServices = new Set<ServiceId>(inputState.services.created);
-    function updatePrivilegedService(
-      currentServiceId: ServiceId,
-      serviceIdUpdatedByManager: ServiceId,
-      selfUpdatedServiceId: ServiceId,
-    ) {
-      if (currentServiceId === serviceIdUpdatedByManager) {
-        return serviceIdUpdatedByManager;
-      }
-
-      return selfUpdatedServiceId;
-    }
-
-    for (const [serviceId, { stateUpdate }] of results.entries()) {
-      const { authorizationQueues, privilegedServices, validatorsData } = stateUpdate;
-      if (privilegedServices !== null) {
-        if (outputState.privilegedServices === null) {
-          outputState.privilegedServices = PrivilegedServices.create({
-            ...previousPrivilegedServices,
-          });
-        }
-
-        if (serviceId === currentManager) {
-          outputState.privilegedServices = PrivilegedServices.create({
-            ...privilegedServices,
-          });
-        }
-
-        if (serviceId === currentRegistrar) {
-          outputState.privilegedServices = PrivilegedServices.create({
-            ...outputState.privilegedServices,
-            registrar: updatePrivilegedService(
-              previousPrivilegedServices.registrar,
-              privilegedServicesUpdatedByManager.registrar,
-              privilegedServices.registrar,
-            ),
-          });
-        }
-
-        if (serviceId === currentDelegator) {
-          outputState.privilegedServices = PrivilegedServices.create({
-            ...outputState.privilegedServices,
-            delegator: updatePrivilegedService(
-              previousPrivilegedServices.delegator,
-              privilegedServicesUpdatedByManager.delegator,
-              privilegedServices.delegator,
-            ),
-          });
-        }
-
-        const newAssigners = currentAssigners.map((currentAssigner, coreIndex) =>
-          serviceId === currentAssigner ? privilegedServices.assigners[coreIndex] : currentAssigner,
-        );
-
-        outputState.privilegedServices = PrivilegedServices.create({
-          ...outputState.privilegedServices,
-          assigners: tryAsPerCore(newAssigners, this.chainSpec),
-        });
-      }
-
-      if (validatorsData !== null && serviceId === currentDelegator) {
-        outputState.validatorsData = validatorsData;
-      }
-
-      if (authorizationQueues !== null) {
-        for (const [core, queue] of authorizationQueues.entries()) {
-          if (serviceId === currentAssigners[core]) {
-            outputState.authorizationQueues.set(core, queue);
-          }
-        }
-      }
-
-      const maybeUpdatedPreimages = stateUpdate.services.preimages.get(serviceId);
-
-      if (maybeUpdatedPreimages !== undefined) {
-        const currentServiceUpdates = maybeUpdatedPreimages.filter(
-          (x) => x.action.kind !== UpdatePreimageKind.Provide || x.action.providedFor === serviceId,
-        );
-        const otherServiceUpdates = maybeUpdatedPreimages.filter(
-          (x) => x.action.kind === UpdatePreimageKind.Provide && x.action.providedFor !== serviceId,
-        );
-        outputState.services.preimages.set(serviceId, currentServiceUpdates);
-        for (const update of otherServiceUpdates) {
-          if (update.action.kind !== UpdatePreimageKind.Provide) {
-            continue;
-          }
-          const id = update.action.providedFor;
-          const preimages = outputState.services.preimages.get(id) ?? [];
-          preimages.push(update);
-          outputState.services.preimages.set(id, preimages);
-        }
-      }
-
-      const maybeUpdatedStorage = stateUpdate.services.storage.get(serviceId);
-
-      if (maybeUpdatedStorage !== undefined) {
-        outputState.services.storage.set(serviceId, maybeUpdatedStorage);
-      }
-
-      const maybeUpdatedService = stateUpdate.services.updated.get(serviceId);
-
-      if (maybeUpdatedService !== undefined) {
-        outputState.services.updated.set(serviceId, maybeUpdatedService);
-      }
-
-      const removedServices = stateUpdate.services.removed.filter((id) => !newRemovedServices.has(id));
-      for (const id of removedServices) {
-        const preimages = stateUpdate.services.preimages.get(id);
-        if (preimages !== undefined) {
-          outputState.services.preimages.set(id, preimages); // merge instead of override?
-        }
-      }
-
-      const createdServices = stateUpdate.services.created.filter((id) => !newCreatedServices.has(id));
-      for (const id of createdServices) {
-        const update = stateUpdate.services.updated.get(id);
-        if (update !== undefined) {
-          outputState.services.updated.set(id, update);
-        }
-      }
-
-      for (const removedServiceId of stateUpdate.services.removed) {
-        newRemovedServices.add(removedServiceId);
-      }
-
-      for (const createdServiceId of stateUpdate.services.created) {
-        newCreatedServices.add(createdServiceId);
-      }
-    }
-
-    outputState.services.created = Array.from(newCreatedServices);
-    outputState.services.removed = Array.from(newRemovedServices);
-
-    return outputState;
   }
 
   /**
