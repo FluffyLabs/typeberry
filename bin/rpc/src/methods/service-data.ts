@@ -4,10 +4,7 @@ import { Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { ServiceAccountInfo } from "@typeberry/state";
 import z from "zod";
-import { type BlobArray, Hash, type None, type RpcMethod, ServiceId } from "../types.js";
-
-export const ServiceDataParams = z.tuple([Hash, ServiceId]);
-export type ServiceDataParams = z.infer<typeof ServiceDataParams>;
+import { BlobArray, Hash, RpcError, RpcErrorCode, ServiceId, withValidation } from "../types.js";
 
 /**
  * https://hackmd.io/@polkadot/jip2#serviceData
@@ -20,23 +17,23 @@ export type ServiceDataParams = z.infer<typeof ServiceDataParams>;
  * ]
  * @returns Either null or Blob
  */
-export const serviceData: RpcMethod<ServiceDataParams, [BlobArray] | None | null> = async (
-  [headerHash, serviceId],
-  db,
-  chainSpec,
-) => {
-  const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
-  const state = db.states.getState(hashOpaque);
+export const serviceData = withValidation(
+  async ([headerHash, serviceId], db, chainSpec) => {
+    const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
+    const state = db.states.getState(hashOpaque);
 
-  if (state === null) {
-    return null;
-  }
+    if (state === null) {
+      throw new RpcError(RpcErrorCode.Other, `State not found for block: ${hashOpaque.toString()}`);
+    }
 
-  const serviceData = state.getService(tryAsServiceId(serviceId));
+    const serviceData = state.getService(tryAsServiceId(serviceId));
 
-  if (serviceData === null) {
-    return [null];
-  }
+    if (serviceData === null) {
+      return null;
+    }
 
-  return [Array.from(Encoder.encodeObject(ServiceAccountInfo.Codec, serviceData.getInfo(), chainSpec).raw)];
-};
+    return Encoder.encodeObject(ServiceAccountInfo.Codec, serviceData.getInfo(), chainSpec).raw;
+  },
+  z.tuple([Hash, ServiceId]),
+  z.union([BlobArray, z.null()]),
+);

@@ -2,10 +2,7 @@ import { type HeaderHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import z from "zod";
-import { type BlobArray, Hash, type RpcMethod, ServiceId } from "../types.js";
-
-export const ServicePreimageParams = z.tuple([Hash, ServiceId, Hash]);
-export type ServicePreimageParams = z.infer<typeof ServicePreimageParams>;
+import { BlobArray, Hash, RpcError, RpcErrorCode, ServiceId, withValidation } from "../types.js";
 
 /**
  * https://hackmd.io/@polkadot/jip2#servicePreimage
@@ -19,28 +16,29 @@ export type ServicePreimageParams = z.infer<typeof ServicePreimageParams>;
  * ]
  * @returns Either null or Blob
  */
-export const servicePreimage: RpcMethod<ServicePreimageParams, [BlobArray] | null> = async (
-  [headerHash, serviceId, preimageHash],
-  db,
-) => {
-  const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
-  const state = db.states.getState(hashOpaque);
+export const servicePreimage = withValidation(
+  async ([headerHash, serviceId, preimageHash], db) => {
+    const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
+    const state = db.states.getState(hashOpaque);
 
-  if (state === null) {
-    return null;
-  }
+    if (state === null) {
+      throw new RpcError(RpcErrorCode.Other, `State not found for block: ${hashOpaque.toString()}`);
+    }
 
-  const service = state.getService(tryAsServiceId(serviceId));
+    const service = state.getService(tryAsServiceId(serviceId));
 
-  if (service === null) {
-    return null;
-  }
+    if (service === null) {
+      throw new RpcError(RpcErrorCode.Other, `Service not found: ${serviceId.toString()}`);
+    }
 
-  const preimage = service.getPreimage(Bytes.fromNumbers(preimageHash, HASH_SIZE).asOpaque());
+    const preimage = service.getPreimage(Bytes.fromBlob(preimageHash, HASH_SIZE).asOpaque());
 
-  if (preimage === null) {
-    return null;
-  }
+    if (preimage === null) {
+      return null;
+    }
 
-  return [[...preimage.raw]];
-};
+    return preimage.raw;
+  },
+  z.tuple([Hash, ServiceId, Hash]),
+  z.union([BlobArray, z.null()]),
+);

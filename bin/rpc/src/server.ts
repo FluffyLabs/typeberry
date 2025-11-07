@@ -164,7 +164,7 @@ export class RpcServer {
 
     const [subscribeMethod, _] = SUBSCRIBE_METHOD_MAP.get(method) ?? [];
     if (subscribeMethod !== undefined) {
-      const validatedParams = this.validateCall(subscribeMethod, params ?? null);
+      const validatedParams = this.validateCall(subscribeMethod, params ?? []);
       return [this.subscriptionManager.subscribe(ws, subscribeMethod, validatedParams)];
     }
 
@@ -176,7 +176,7 @@ export class RpcServer {
       return [this.subscriptionManager.unsubscribe(parseResult.data[0])];
     }
 
-    const validatedParams = this.validateCall(method, params ?? null);
+    const validatedParams = this.validateCall(method, params ?? []);
     return this.callMethod(method, validatedParams);
   }
 
@@ -186,7 +186,7 @@ export class RpcServer {
       throw new RpcError(-32601, `Method not found: ${method}`);
     }
 
-    const [_, paramsSchema] = methodEntry;
+    const { paramsSchema } = methodEntry;
 
     const parseResult = paramsSchema.safeParse(params);
     if (parseResult.error !== undefined) {
@@ -200,14 +200,14 @@ export class RpcServer {
     if (methodEntry === undefined) {
       throw new RpcError(-32601, `Method not found: ${method}`);
     }
-    const [methodFn] = methodEntry;
+    const { method: methodFn, resultSchema } = methodEntry;
 
     const db: DatabaseContext = {
       blocks: this.blocks,
       states: this.states,
     };
 
-    return methodFn(validatedParams, db, this.chainSpec);
+    return resultSchema.encode(await methodFn(validatedParams, db, this.chainSpec));
   }
 
   getLogger(): Logger {

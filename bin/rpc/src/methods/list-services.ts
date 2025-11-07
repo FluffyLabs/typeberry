@@ -2,10 +2,7 @@ import type { HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import z from "zod";
-import { Hash, type RpcMethod, type ServiceId } from "../types.js";
-
-export const ListServicesParams = z.tuple([Hash]);
-export type ListServicesParams = z.infer<typeof ListServicesParams>;
+import { Hash, ServiceId, withValidation } from "../types.js";
 
 /**
  * https://hackmd.io/@polkadot/jip2#listServices
@@ -17,15 +14,19 @@ export type ListServicesParams = z.infer<typeof ListServicesParams>;
  * ]
  * @returns array of ServiceId
  */
-export const listServices: RpcMethod<ListServicesParams, [ServiceId[]]> = async ([headerHash], db) => {
-  const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
-  const state = db.states.getState(hashOpaque);
+export const listServices = withValidation(
+  async ([headerHash], db) => {
+    const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
+    const state = db.states.getState(hashOpaque);
 
-  if (state === null) {
-    throw new Error("State not found the given state root.");
-  }
+    if (state === null) {
+      throw new Error("State not found the given state root.");
+    }
 
-  const serviceIds = state.recentServiceIds();
+    const serviceIds = state.recentServiceIds();
 
-  return [[...serviceIds]];
-};
+    return [...serviceIds];
+  },
+  z.tuple([Hash]),
+  z.array(ServiceId),
+);

@@ -4,10 +4,7 @@ import { Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { StatisticsData } from "@typeberry/state";
 import z from "zod";
-import { type BlobArray, Hash, type RpcMethod } from "../types.js";
-
-export const StatisticsParams = z.tuple([Hash]);
-export type StatisticsParams = z.infer<typeof StatisticsParams>;
+import { BlobArray, Hash, RpcError, RpcErrorCode, withValidation } from "../types.js";
 
 /**
  * https://hackmd.io/@polkadot/jip2#statistics
@@ -19,13 +16,17 @@ export type StatisticsParams = z.infer<typeof StatisticsParams>;
  * ]
  * @returns Blob
  */
-export const statistics: RpcMethod<StatisticsParams, [BlobArray] | null> = async ([headerHash], db, chainSpec) => {
-  const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
-  const state = db.states.getState(hashOpaque);
+export const statistics = withValidation(
+  async ([headerHash], db, chainSpec) => {
+    const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
+    const state = db.states.getState(hashOpaque);
 
-  if (state === null) {
-    return null;
-  }
+    if (state === null) {
+      throw new RpcError(RpcErrorCode.Other, `State not found for block: ${hashOpaque.toString()}`);
+    }
 
-  return [Array.from(Encoder.encodeObject(StatisticsData.Codec, state.statistics, chainSpec).raw)];
-};
+    return Encoder.encodeObject(StatisticsData.Codec, state.statistics, chainSpec).raw;
+  },
+  z.tuple([Hash]),
+  BlobArray,
+);

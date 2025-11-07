@@ -2,10 +2,7 @@ import { type HeaderHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import z from "zod";
-import { BlobArray, Hash, type RpcMethod, ServiceId } from "../types.js";
-
-export const ServiceValueParams = z.tuple([Hash, ServiceId, BlobArray]);
-export type ServiceValueParams = z.infer<typeof ServiceValueParams>;
+import { BlobArray, Hash, RpcError, RpcErrorCode, ServiceId, withValidation } from "../types.js";
 
 /**
  * https://hackmd.io/@polkadot/jip2#serviceValue
@@ -19,28 +16,29 @@ export type ServiceValueParams = z.infer<typeof ServiceValueParams>;
  * ]
  * @returns Either null or Blob
  */
-export const serviceValue: RpcMethod<ServiceValueParams, [BlobArray] | null> = async (
-  [headerHash, serviceId, key],
-  db,
-) => {
-  const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
-  const state = db.states.getState(hashOpaque);
+export const serviceValue = withValidation(
+  async ([headerHash, serviceId, key], db) => {
+    const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
+    const state = db.states.getState(hashOpaque);
 
-  if (state === null) {
-    return null;
-  }
+    if (state === null) {
+      throw new RpcError(RpcErrorCode.Other, `State not found for block: ${hashOpaque.toString()}`);
+    }
 
-  const service = state.getService(tryAsServiceId(serviceId));
+    const service = state.getService(tryAsServiceId(serviceId));
 
-  if (service === null) {
-    return null;
-  }
+    if (service === null) {
+      return null;
+    }
 
-  const storageValue = service.getStorage(Bytes.fromNumbers(key, HASH_SIZE).asOpaque());
+    const storageValue = service.getStorage(Bytes.fromBlob(key, HASH_SIZE).asOpaque());
 
-  if (storageValue === null) {
-    return null;
-  }
+    if (storageValue === null) {
+      return null;
+    }
 
-  return [[...storageValue.raw]];
-};
+    return storageValue.raw;
+  },
+  z.tuple([Hash, ServiceId, BlobArray]),
+  z.union([BlobArray, z.null()]),
+);

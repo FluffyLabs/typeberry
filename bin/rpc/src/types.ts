@@ -63,9 +63,17 @@ export class RpcError extends Error {
   constructor(
     public code: number,
     message: string,
+    public data?: unknown,
   ) {
     super(message);
   }
+}
+
+export enum RpcErrorCode {
+  BlockUnavailable = 1,
+  WorkReportUnavailable = 2,
+  DASegmentUnavailable = 3,
+  Other = 0,
 }
 
 export interface DatabaseContext {
@@ -73,9 +81,41 @@ export interface DatabaseContext {
   states: StatesDb<State & EnumerableState>;
 }
 
-export type RpcMethod<T, R> = (params: T, db: DatabaseContext, chainSpec: ChainSpec) => Promise<R>;
+export const withValidation = <P extends z.ZodType, R extends z.ZodType>(
+  method: (params: z.infer<P>, db: DatabaseContext, chainSpec: ChainSpec) => Promise<z.infer<R>>,
+  paramsSchema: P,
+  resultSchema: R,
+) => ({
+  method,
+  paramsSchema,
+  resultSchema,
+});
 // biome-ignore lint/suspicious/noExplicitAny: any is used to make the method repo generic
-export type RpcMethodRepo = Map<string, [RpcMethod<any, any>, z.ZodType<any>]>;
+export type RpcMethodRepo = Map<string, ReturnType<typeof withValidation<z.ZodType<any>, z.ZodType<any>>>>;
+
+const zU32 = z.number().int().min(0).max(0xffffffff);
+const zUint8Array = z.custom<Uint8Array>((v) => v instanceof Uint8Array); // this is needed because a simple z.instanceof(Uint8Array) automatically narrows the type down to Uint8Array<ArrayBuffer> whereas our Bytes.raw are effectively Uint8Array<ArrayBufferLike>
+
+export const Hash = z.codec(
+  z.base64(),
+  zUint8Array.refine((v) => v.length === HASH_SIZE, "Invalid hash length."),
+  {
+    decode: (v) => Uint8Array.from(Buffer.from(v, "base64")),
+    encode: (v) => Buffer.from(v).toString("base64"),
+  },
+);
+export const Slot = zU32;
+export const BlobArray = z.codec(z.base64(), zUint8Array, {
+  decode: (v) => Uint8Array.from(Buffer.from(v, "base64")),
+  encode: (v) => Buffer.from(v).toString("base64"),
+});
+export const ServiceId = zU32;
+export const PreimageLength = zU32;
+export const NoArgs = z.tuple([]);
+export const BlockDescriptor = z.object({
+  header_hash: Hash,
+  slot: Slot,
+});
 
 export type Subscription = {
   ws: WebSocket;
@@ -84,21 +124,3 @@ export type Subscription = {
 };
 
 export type SubscriptionId = string;
-
-const ZU32 = z.number().int().min(0).max(0xffffffff);
-
-export const Hash = z.array(z.number()).length(HASH_SIZE);
-export const Slot = ZU32;
-export const BlobArray = z.array(z.number().int().min(0).max(255));
-export const ServiceId = ZU32;
-export const PreimageLength = ZU32;
-export const NoArgs = z.union([z.null(), z.array(z.any()).length(0)]);
-
-export type Hash = z.infer<typeof Hash>;
-export type Slot = z.infer<typeof Slot>;
-export type BlobArray = z.infer<typeof BlobArray>;
-export type ServiceId = z.infer<typeof ServiceId>;
-export type PreimageLength = z.infer<typeof PreimageLength>;
-export type NoArgs = z.infer<typeof NoArgs>;
-
-export type None = [null];

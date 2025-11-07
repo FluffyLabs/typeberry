@@ -2,10 +2,7 @@ import type { HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import z from "zod";
-import { Hash, type RpcMethod, type Slot } from "../types.js";
-
-export const ParentParams = z.tuple([Hash]);
-export type ParentParams = z.infer<typeof ParentParams>;
+import { BlockDescriptor, Hash, RpcError, RpcErrorCode, withValidation } from "../types.js";
 
 /**
  * https://hackmd.io/@polkadot/jip2#parent
@@ -19,23 +16,34 @@ export type ParentParams = z.infer<typeof ParentParams>;
  *   Slot - The slot,
  * ]
  */
-export const parent: RpcMethod<ParentParams, [Hash, Slot] | null> = async ([headerHash], db) => {
-  const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
-  const header = db.blocks.getHeader(hashOpaque);
-  if (header === null) {
-    throw new Error(`${hashOpaque} not found.`);
-  }
+export const parent = withValidation(
+  async ([headerHash], db) => {
+    const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
+    const header = db.blocks.getHeader(hashOpaque);
+    if (header === null) {
+      throw new RpcError(
+        RpcErrorCode.BlockUnavailable,
+        `Block unavailable: ${hashOpaque.toString()}`,
+        Hash.encode(hashOpaque.raw),
+      );
+    }
 
-  const parentHash = header.parentHeaderHash.materialize();
+    const parentHash = header.parentHeaderHash.materialize();
 
-  if (parentHash.isEqualTo(Bytes.zero(HASH_SIZE).asOpaque())) {
-    return null;
-  }
+    if (parentHash.isEqualTo(Bytes.zero(HASH_SIZE).asOpaque())) {
+      throw new RpcError(RpcErrorCode.Other, `Parent not found for block: ${hashOpaque.toString()}`);
+    }
 
-  const parentHeader = db.blocks.getHeader(parentHash);
-  if (parentHeader === null) {
-    throw new Error(`Parent (${parentHash}) not found.`);
-  }
+    const parentHeader = db.blocks.getHeader(parentHash);
+    if (parentHeader === null) {
+      throw new Error(`Parent (${parentHash}) not found.`);
+    }
 
-  return [Array.from(parentHash.raw), parentHeader.timeSlotIndex.materialize()];
-};
+    return {
+      header_hash: parentHash.raw,
+      slot: parentHeader.timeSlotIndex.materialize(),
+    };
+  },
+  z.tuple([Hash]),
+  BlockDescriptor,
+);
