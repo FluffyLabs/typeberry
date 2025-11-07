@@ -32,7 +32,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
       async () => {
         await client.call("unknownMethod");
       },
-      { name: "Error", message: "Method not found: unknownMethod" },
+      { code: -32601, message: "Method not found: unknownMethod" },
     );
   });
 
@@ -88,6 +88,21 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
       ),
       slot: 99,
     });
+  });
+
+  it("throws an error when a non-existing block hash is provided", async () => {
+    await assert.rejects(
+      async () => {
+        await client.call("parent", [
+          Buffer.from("1111111111111111111111111111111111111111111111111111111111111111", "hex").toString("base64"),
+        ]);
+      },
+      {
+        code: 1,
+        message: "Block unavailable: 0x1111111111111111111111111111111111111111111111111111111111111111",
+        data: "ERERERERERERERERERERERERERERERERERERERERERE=",
+      },
+    );
   });
 
   it("gets state root", async () => {

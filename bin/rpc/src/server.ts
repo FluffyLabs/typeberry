@@ -29,6 +29,7 @@ function createErrorResponse(error: RpcError, id: JsonRpcId): JsonRpcErrorRespon
     error: {
       code: error.code,
       message: error.message,
+      data: error.data,
     },
     id,
   };

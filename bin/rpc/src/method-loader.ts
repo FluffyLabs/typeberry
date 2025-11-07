@@ -11,9 +11,9 @@ import { statistics } from "./methods/statistics.js";
 import type { RpcMethodRepo } from "./types.js";
 
 export const methods: RpcMethodRepo = new Map();
-methods.set("beefyRoot", notImplemented);
+methods.set("beefyRoot", notImplemented); // todo [seko] beefy root needs to be stored in the db first, also awaits chapter 12
 methods.set("bestBlock", bestBlock);
-methods.set("finalizedBlock", bestBlock);
+methods.set("finalizedBlock", bestBlock); // todo [seko] implement when finality is implemented
 methods.set("listServices", listServices);
 methods.set("parameters", notImplemented);
 methods.set("parent", parent);
