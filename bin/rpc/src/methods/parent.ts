@@ -36,7 +36,10 @@ export const parent = withValidation(
 
     const parentHeader = db.blocks.getHeader(parentHash);
     if (parentHeader === null) {
-      throw new Error(`Parent (${parentHash}) not found.`);
+      throw new RpcError(
+        RpcErrorCode.Other,
+        `The hash of parent was found (${parentHash}) but its header doesn't exist in the database.`,
+      );
     }
 
     return {

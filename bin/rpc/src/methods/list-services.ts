@@ -2,7 +2,7 @@ import type { HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import z from "zod";
-import { Hash, ServiceId, withValidation } from "../types.js";
+import { Hash, RpcError, RpcErrorCode, ServiceId, withValidation } from "../types.js";
 
 /**
  * https://hackmd.io/@polkadot/jip2#listServices
@@ -20,7 +20,7 @@ export const listServices = withValidation(
     const state = db.states.getState(hashOpaque);
 
     if (state === null) {
-      throw new Error("State not found the given state root.");
+      throw new RpcError(RpcErrorCode.Other, `Posterior state not found for block: ${hashOpaque.toString()}`);
     }
 
     const serviceIds = state.recentServiceIds();
