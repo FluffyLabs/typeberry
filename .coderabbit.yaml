@@ -30,6 +30,10 @@ reviews:
     - path: 'packages/**/package.json'
       instructions: |
         Whenever a new package is added, the `packages/README.md` should be updated accordingly.
+    - path: 'packages/**/package.json'
+      instructions: |
+        Dependencies coming from the workspace (typically the ones starting with `@typeberry/`)
+        must use `*` as version.
     - path: 'packages/core/**/*.ts'
       instructions: |
         Core packages must not import any JAM-related packages
