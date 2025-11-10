@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import { tryAsU8 } from "@typeberry/numbers";
 import { CURRENT_VERSION, deepEqual } from "@typeberry/utils";
+//eslint-disable-next-line import/no-relative-packages
 import pkg from "../../../package.json" with { type: "json" };
 import { getFuzzDetails } from "./main-fuzz.js";
 
