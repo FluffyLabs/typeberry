@@ -81,6 +81,7 @@ export class Preimages {
         UpdatePreimage.provide({
           preimage: PreimageItem.create({ hash, blob }),
           slot,
+          providedFor: requester,
         }),
       );
       pendingChanges.set(requester, updates);

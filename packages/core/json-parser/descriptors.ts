@@ -12,6 +12,19 @@ export namespace json {
     return ["number", parser];
   }
 
+  /** Parse a JSON bigint or number into the expected type. */
+  export function fromBigInt<TInto>(parser: Parser<bigint, TInto>): FromJsonWithParser<unknown, TInto> {
+    return [
+      "object",
+      (x) => {
+        if (typeof x === "number" || typeof x === "bigint") {
+          return parser(BigInt(x));
+        }
+        throw new Error(`Expected number or bigint got: ${typeof x} (${x})`);
+      },
+    ];
+  }
+
   /** Cast the JSON number into the expected type. */
   export function castNumber<TInto extends number>() {
     return fromNumber((v) => v as TInto);

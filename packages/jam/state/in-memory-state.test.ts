@@ -255,6 +255,7 @@ describe("InMemoryState", () => {
             UpdatePreimage.provide({
               preimage,
               slot,
+              providedFor: serviceId,
             }),
           ],
         ],
@@ -317,6 +318,7 @@ describe("InMemoryState", () => {
             UpdatePreimage.provide({
               preimage,
               slot: null,
+              providedFor: serviceId,
             }),
           ],
         ],
@@ -379,6 +381,7 @@ describe("InMemoryState", () => {
             UpdatePreimage.provide({
               preimage,
               slot: slot1,
+              providedFor: serviceId,
             }),
           ],
         ],
@@ -463,6 +466,7 @@ describe("InMemoryState", () => {
             UpdatePreimage.provide({
               preimage,
               slot,
+              providedFor: serviceId,
             }),
           ],
         ],
@@ -480,6 +484,7 @@ describe("InMemoryState", () => {
             UpdatePreimage.provide({
               preimage,
               slot,
+              providedFor: serviceId,
             }),
           ],
         ],
@@ -536,6 +541,7 @@ describe("InMemoryState", () => {
             UpdatePreimage.provide({
               preimage,
               slot,
+              providedFor: serviceId,
             }),
           ],
         ],
@@ -619,6 +625,7 @@ describe("InMemoryState", () => {
             UpdatePreimage.provide({
               preimage,
               slot: slot1,
+              providedFor: serviceId,
             }),
             UpdatePreimage.updateOrAdd({
               lookupHistory: secondItem,
