@@ -77,7 +77,7 @@ export const workResultFromJson = json.object<JsonWorkResult, WorkResult>(
     service_id: "number",
     code_hash: fromJson.bytes32(),
     payload_hash: fromJson.bytes32(),
-    accumulate_gas: json.fromNumber((x) => tryAsServiceGas(x)),
+    accumulate_gas: json.fromBigInt((x) => tryAsServiceGas(x)),
     result: workExecResultFromJson,
     refine_load: workRefineLoadFromJson,
   },
