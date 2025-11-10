@@ -56,7 +56,7 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
     private readonly blake2b: Blake2b,
     public backend: T,
     /** Best-effort list of recently active services. */
-    private readonly _recentServiceIds: ServiceId[],
+    private readonly recentlyUsedServices: ServiceId[],
   ) {}
 
   /** Comparing the serialized states, just means comparing their backends. */
@@ -66,7 +66,7 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
 
   /** Return a non-decoding version of the state. */
   view(): StateView {
-    return new SerializedStateView(this.spec, this.backend, this._recentServiceIds, this.viewCache);
+    return new SerializedStateView(this.spec, this.backend, this.recentlyUsedServices, this.viewCache);
   }
 
   // TODO [ToDr] Temporary method to update the state,
@@ -78,7 +78,7 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
   }
 
   recentServiceIds(): readonly ServiceId[] {
-    return this._recentServiceIds;
+    return this.recentlyUsedServices;
   }
 
   getService(id: ServiceId): SerializedService | null {
@@ -87,8 +87,8 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
       return null;
     }
 
-    if (!this._recentServiceIds.includes(id)) {
-      this._recentServiceIds.push(id);
+    if (!this.recentlyUsedServices.includes(id)) {
+      this.recentlyUsedServices.push(id);
     }
 
     return new SerializedService(this.blake2b, id, serviceData, (key) => this.retrieveOptional(key));
