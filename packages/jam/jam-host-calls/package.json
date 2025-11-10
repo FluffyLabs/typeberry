@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/jam-host-calls",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "JAM-specific host calls implementations.",
   "main": "index.ts",
   "dependencies": {
