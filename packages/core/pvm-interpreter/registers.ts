@@ -31,7 +31,7 @@ export class Registers implements IRegisters {
 
   static fromBytes(bytes: Uint8Array) {
     check`${bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT} Invalid size of registers array.`;
-    return new Registers(bytes);
+    return new Registers(bytes as Uint8Array<ArrayBuffer>);
   }
 
   getBytesAsLittleEndian(index: number, len: number) {
