@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/networking",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "QUIC-based p2p networking.",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",
