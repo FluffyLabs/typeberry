@@ -22,7 +22,7 @@ export async function createImporter(config: Config) {
   const blocks = db.getBlocksDb();
   const states = db.getStatesDb();
 
-  const hasher = new TransitionHasher(chainSpec, await keccakHasher, await blake2b);
+  const hasher = new TransitionHasher(await keccakHasher, await blake2b);
   const importer = new Importer(chainSpec, interpreter, hasher, logger, blocks, states);
 
   return {

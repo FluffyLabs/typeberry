@@ -1,7 +1,6 @@
 import type { ExtrinsicHash, ExtrinsicView, HeaderHash, HeaderView, WorkReportHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
-import type { ChainSpec } from "@typeberry/config";
 import { type Blake2b, type KeccakHash, keccak, WithHash, WithHashAndBytes } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { tryAsU32 } from "@typeberry/numbers";
@@ -9,7 +8,6 @@ import { tryAsU32 } from "@typeberry/numbers";
 /** Helper function to create most used hashes in the block */
 export class TransitionHasher implements MmrHasher<KeccakHash> {
   constructor(
-    private readonly context: ChainSpec,
     private readonly keccakHasher: keccak.KeccakHasher,
     public readonly blake2b: Blake2b,
   ) {}

@@ -53,7 +53,7 @@ test("JSON parser", async (t) => {
     const j = `{"k": "0x123", "v": true }`;
     class TestClass {
       static fromJson: FromJson<TestClass> = {
-        k: json.fromString((v) => Number.parseInt(v)),
+        k: json.fromString((v) => Number(v)),
         v: "boolean",
       };
 
