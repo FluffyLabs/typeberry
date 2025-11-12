@@ -47,7 +47,7 @@ export const workReportFromJson = json.object<JsonWorkReport, WorkReport>(
     auth_output: json.fromString(BytesBlob.parseBlob),
     segment_root_lookup: json.array(segmentRootLookupItemFromJson),
     results: json.array(workResultFromJson),
-    auth_gas_used: json.fromNumber((x) => tryAsServiceGas(x)),
+    auth_gas_used: json.fromBigInt((x) => tryAsServiceGas(x)),
   },
   ({
     package_spec,

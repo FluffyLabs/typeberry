@@ -1,10 +1,10 @@
 {
   "name": "@typeberry/pvm-host-calls",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "PVM host calls",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/config": "^0.2.0",
+    "@typeberry/config": "*",
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
     "@typeberry/pvm-interface": "*",

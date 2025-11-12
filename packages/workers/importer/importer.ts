@@ -147,14 +147,7 @@ export class Importer {
       logger.error`🧱 Unable to update state: ${resultToString(updateResult)}`;
       return importerError(ImporterErrorKind.Update, updateResult);
     }
-    const newState = this.states.getState(headerHash);
 
-    if (newState === null) {
-      throw new Error("Freshly updated state not in the DB?");
-    }
-    // TODO [ToDr] This is a temporary measure. We should rather read
-    // the state of a parent block to support forks and create a fresh STF.
-    this.state.updateBackend(newState.backend);
     this.prepareForNextEpoch();
     this.currentHash = headerHash;
     logger.log`${timerState()}`;
@@ -165,7 +158,7 @@ export class Importer {
 
     // Computation of the state root may happen asynchronously,
     // but we still need to wait for it before next block can be imported
-    const stateRoot = await this.states.getStateRoot(newState);
+    const stateRoot = await this.states.getStateRoot(this.state);
     logger.log`🧱 Storing post-state-root for ${headerHash}: ${stateRoot}.`;
     const writeStateRoot = this.blocks.setPostStateRoot(headerHash, stateRoot);
 

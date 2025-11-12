@@ -45,7 +45,7 @@ export class JsonCoreStatistics {
       extrinsic_size: "number",
       extrinsic_count: "number",
       bundle_size: "number",
-      gas_used: json.fromNumber(tryAsServiceGas),
+      gas_used: json.fromBigInt(tryAsServiceGas),
     },
     ({ da_load, popularity, imports, exports, extrinsic_size, extrinsic_count, bundle_size, gas_used }) => {
       return CoreStatistics.create({
@@ -77,17 +77,17 @@ class JsonServiceStatistics {
       provided_count: "number",
       provided_size: "number",
       refinement_count: "number",
-      refinement_gas_used: json.fromNumber(tryAsServiceGas),
+      refinement_gas_used: json.fromBigInt(tryAsServiceGas),
       imports: "number",
       exports: "number",
       extrinsic_size: "number",
       extrinsic_count: "number",
       accumulate_count: "number",
-      accumulate_gas_used: json.fromNumber(tryAsServiceGas),
+      accumulate_gas_used: json.fromBigInt(tryAsServiceGas),
       ...(Compatibility.isLessThan(GpVersion.V0_7_1)
         ? {
             on_transfers_count: "number",
-            on_transfers_gas_used: json.fromNumber(tryAsServiceGas),
+            on_transfers_gas_used: json.fromBigInt(tryAsServiceGas),
           }
         : {}),
     },
