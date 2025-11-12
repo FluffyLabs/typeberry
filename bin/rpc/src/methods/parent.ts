@@ -16,37 +16,33 @@ import { BlockDescriptor, Hash, RpcError, RpcErrorCode, withValidation } from ".
  *   Slot - The slot,
  * ]
  */
-export const parent = withValidation(
-  async ([headerHash], db) => {
-    const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
-    const header = db.blocks.getHeader(hashOpaque);
-    if (header === null) {
-      throw new RpcError(
-        RpcErrorCode.BlockUnavailable,
-        `Block unavailable: ${hashOpaque.toString()}`,
-        Hash.encode(hashOpaque.raw),
-      );
-    }
+export const parent = withValidation(z.tuple([Hash]), BlockDescriptor, async ([headerHash], db) => {
+  const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
+  const header = db.blocks.getHeader(hashOpaque);
+  if (header === null) {
+    throw new RpcError(
+      RpcErrorCode.BlockUnavailable,
+      `Block unavailable: ${hashOpaque.toString()}`,
+      Hash.encode(hashOpaque.raw),
+    );
+  }
 
-    const parentHash = header.parentHeaderHash.materialize();
+  const parentHash = header.parentHeaderHash.materialize();
 
-    if (parentHash.isEqualTo(Bytes.zero(HASH_SIZE).asOpaque())) {
-      throw new RpcError(RpcErrorCode.Other, `Parent not found for block: ${hashOpaque.toString()}`);
-    }
+  if (parentHash.isEqualTo(Bytes.zero(HASH_SIZE).asOpaque())) {
+    throw new RpcError(RpcErrorCode.Other, `Parent not found for block: ${hashOpaque.toString()}`);
+  }
 
-    const parentHeader = db.blocks.getHeader(parentHash);
-    if (parentHeader === null) {
-      throw new RpcError(
-        RpcErrorCode.Other,
-        `The hash of parent was found (${parentHash}) but its header doesn't exist in the database.`,
-      );
-    }
+  const parentHeader = db.blocks.getHeader(parentHash);
+  if (parentHeader === null) {
+    throw new RpcError(
+      RpcErrorCode.Other,
+      `The hash of parent was found (${parentHash}) but its header doesn't exist in the database.`,
+    );
+  }
 
-    return {
-      header_hash: parentHash.raw,
-      slot: parentHeader.timeSlotIndex.materialize(),
-    };
-  },
-  z.tuple([Hash]),
-  BlockDescriptor,
-);
+  return {
+    header_hash: parentHash.raw,
+    slot: parentHeader.timeSlotIndex.materialize(),
+  };
+});

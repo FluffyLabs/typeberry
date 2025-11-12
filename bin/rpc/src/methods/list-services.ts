@@ -14,19 +14,15 @@ import { Hash, RpcError, RpcErrorCode, ServiceId, withValidation } from "../type
  * ]
  * @returns array of ServiceId
  */
-export const listServices = withValidation(
-  async ([headerHash], db) => {
-    const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
-    const state = db.states.getState(hashOpaque);
+export const listServices = withValidation(z.tuple([Hash]), z.array(ServiceId), async ([headerHash], db) => {
+  const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
+  const state = db.states.getState(hashOpaque);
 
-    if (state === null) {
-      throw new RpcError(RpcErrorCode.Other, `Posterior state not found for block: ${hashOpaque.toString()}`);
-    }
+  if (state === null) {
+    throw new RpcError(RpcErrorCode.Other, `Posterior state not found for block: ${hashOpaque.toString()}`);
+  }
 
-    const serviceIds = state.recentServiceIds();
+  const serviceIds = state.recentServiceIds();
 
-    return [...serviceIds];
-  },
-  z.tuple([Hash]),
-  z.array(ServiceId),
-);
+  return [...serviceIds];
+});

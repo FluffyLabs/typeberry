@@ -17,6 +17,8 @@ import { BlobArray, Hash, RpcError, RpcErrorCode, ServiceId, withValidation } fr
  * @returns Either null or Blob
  */
 export const serviceValue = withValidation(
+  z.tuple([Hash, ServiceId, BlobArray]),
+  z.union([BlobArray, z.null()]),
   async ([headerHash, serviceId, key], db) => {
     const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
     const state = db.states.getState(hashOpaque);
@@ -39,6 +41,4 @@ export const serviceValue = withValidation(
 
     return storageValue.raw;
   },
-  z.tuple([Hash, ServiceId, BlobArray]),
-  z.union([BlobArray, z.null()]),
 );

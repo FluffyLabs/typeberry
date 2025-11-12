@@ -82,9 +82,9 @@ export interface DatabaseContext {
 }
 
 export const withValidation = <P extends z.ZodType, R extends z.ZodType>(
-  method: (params: z.infer<P>, db: DatabaseContext, chainSpec: ChainSpec) => Promise<z.infer<R>>,
   paramsSchema: P,
   resultSchema: R,
+  method: (params: z.infer<P>, db: DatabaseContext, chainSpec: ChainSpec) => Promise<z.infer<R>>,
 ) => ({
   method,
   paramsSchema,

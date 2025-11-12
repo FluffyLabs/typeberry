@@ -58,6 +58,10 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
     await assert.rejects(async () => await client.call("submitPreimage", ["asdf"]));
   });
 
+  it("raises an error when a non-base64 string is provided as hash", async () => {
+    await assert.rejects(async () => await client.call("parent", ["ThisIsNotBase64!!"]), { code: -32602 });
+  });
+
   it("gets best block", async () => {
     const result = (await client.call("bestBlock")) as BlockDescriptor;
     assert.deepStrictEqual(result, {

@@ -18,6 +18,8 @@ import { BlobArray, Hash, RpcError, RpcErrorCode, ServiceId, withValidation } fr
  * @returns Either null or Blob
  */
 export const serviceData = withValidation(
+  z.tuple([Hash, ServiceId]),
+  z.union([BlobArray, z.null()]),
   async ([headerHash, serviceId], db, chainSpec) => {
     const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
     const state = db.states.getState(hashOpaque);
@@ -34,6 +36,4 @@ export const serviceData = withValidation(
 
     return Encoder.encodeObject(ServiceAccountInfo.Codec, serviceData.getInfo(), chainSpec).raw;
   },
-  z.tuple([Hash, ServiceId]),
-  z.union([BlobArray, z.null()]),
 );

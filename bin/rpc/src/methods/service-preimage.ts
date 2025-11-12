@@ -17,6 +17,8 @@ import { BlobArray, Hash, RpcError, RpcErrorCode, ServiceId, withValidation } fr
  * @returns Either null or Blob
  */
 export const servicePreimage = withValidation(
+  z.tuple([Hash, ServiceId, Hash]),
+  z.union([BlobArray, z.null()]),
   async ([headerHash, serviceId, preimageHash], db) => {
     const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
     const state = db.states.getState(hashOpaque);
@@ -39,6 +41,4 @@ export const servicePreimage = withValidation(
 
     return preimage.raw;
   },
-  z.tuple([Hash, ServiceId, Hash]),
-  z.union([BlobArray, z.null()]),
 );

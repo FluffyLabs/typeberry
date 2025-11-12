@@ -15,18 +15,14 @@ import { Hash, RpcError, RpcErrorCode, withValidation } from "../types.js";
  *   Hash - state_root
  * ]
  */
-export const stateRoot = withValidation(
-  async ([headerHash], db) => {
-    const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
+export const stateRoot = withValidation(z.tuple([Hash]), Hash, async ([headerHash], db) => {
+  const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
 
-    const stateRoot = db.blocks.getPostStateRoot(hashOpaque);
+  const stateRoot = db.blocks.getPostStateRoot(hashOpaque);
 
-    if (stateRoot === null) {
-      throw new RpcError(RpcErrorCode.BlockUnavailable, `Block unavailable: ${hashOpaque.toString()}`, hashOpaque.raw);
-    }
+  if (stateRoot === null) {
+    throw new RpcError(RpcErrorCode.BlockUnavailable, `Block unavailable: ${hashOpaque.toString()}`, hashOpaque.raw);
+  }
 
-    return stateRoot.raw;
-  },
-  z.tuple([Hash]),
-  Hash,
-);
+  return stateRoot.raw;
+});

@@ -19,6 +19,8 @@ import { Hash, PreimageLength, ServiceId, Slot, withValidation } from "../types.
  * @returns Either null or array of Slot
  */
 export const serviceRequest = withValidation(
+  z.tuple([Hash, ServiceId, Hash, PreimageLength]),
+  z.union([z.array(Slot).readonly(), z.null()]),
   async ([headerHash, serviceId, preimageHash, preimageLength], db) => {
     const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
     const state = db.states.getState(hashOpaque);
@@ -41,6 +43,4 @@ export const serviceRequest = withValidation(
 
     return slots;
   },
-  z.tuple([Hash, ServiceId, Hash, PreimageLength]),
-  z.union([z.array(Slot).readonly(), z.null()]),
 );
