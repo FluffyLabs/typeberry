@@ -14,7 +14,7 @@ export function parseBootnode(v: string): Bootnode {
     throw new Error(`Invalid bootnode format, expected: <name>@<ip>:<port>, got: "${v}"`);
   }
 
-  const portNumber = Number.parseInt(port);
+  const portNumber = Number.parseInt(port, 10);
   if (!isU16(portNumber)) {
     throw new Error(`Invalid port number: "${port}"`);
   }

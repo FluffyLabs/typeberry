@@ -64,7 +64,7 @@ async function listenForBestBlocks(prefix: string, proc: ChildProcess, check: (b
 
       const match = bestBlockPattern.exec(output);
       if (match !== null) {
-        const blockNum = Number.parseInt(match[1]);
+        const blockNum = Number.parseInt(match[1], 10);
         logger.info`(${prefix}) Got block ${blockNum}`;
         if (check(blockNum)) {
           resolve(`(${prefix}) Finished successfuly.`);

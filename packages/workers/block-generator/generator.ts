@@ -72,7 +72,7 @@ export class Generator {
     const validatorId = tryAsValidatorIndex(newTimeSlot % 6);
 
     // retriev data from previous block
-    const hasher = new TransitionHasher(this.chainSpec, this.keccakHasher, this.blake2b);
+    const hasher = new TransitionHasher(this.keccakHasher, this.blake2b);
     const parentHeaderHash = this.lastHeaderHash;
     const stateRoot = this.states.getStateRoot(this.lastState);
 

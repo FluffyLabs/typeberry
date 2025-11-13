@@ -87,7 +87,7 @@ const parsePort = (v: string | undefined) => {
     return 0;
   }
 
-  const p = Number.parseInt(v);
+  const p = Number.parseInt(v, 10);
   if (Number.isNaN(p)) {
     throw new Error(`Not a number: ${v}`);
   }

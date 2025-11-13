@@ -91,7 +91,7 @@ export async function runStateTransition(
   );
   const previousBlocks = allBlocks.slice(0, myBlockIndex);
 
-  const hasher = new TransitionHasher(spec, await keccakHasher, blake2b);
+  const hasher = new TransitionHasher(await keccakHasher, blake2b);
 
   const blocksDb = InMemoryBlocks.fromBlocks(
     previousBlocks.map((block) => {
