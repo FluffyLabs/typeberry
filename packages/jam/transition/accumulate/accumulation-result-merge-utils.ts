@@ -134,21 +134,25 @@ function mergePrivilegedServices(mergeContext: MergeContext, [serviceId, { state
       });
     }
 
-    let isAssignerChanged = false;
+    let shouldUpdateAssigners = false;
+
     const newAssigners = currentAssigners.map((currentAssigner, coreIndex) => {
       if (serviceId === currentAssigner) {
-        isAssignerChanged = true;
-        return updatePrivilegedService(
+        const newAssigner = updatePrivilegedService(
           currentPrivilegedServices.assigners[coreIndex],
           privilegedServicesUpdatedByManager.assigners[coreIndex],
           privilegedServices.assigners[coreIndex],
         );
+
+        shouldUpdateAssigners = newAssigner !== currentAssigner;
+
+        return newAssigner;
       }
 
       return currentAssigner;
     });
 
-    if (isAssignerChanged) {
+    if (shouldUpdateAssigners) {
       const newAssignersPerCore = tryAsPerCore(newAssigners, chainSpec);
       outputState.privilegedServices = PrivilegedServices.create({
         ...outputState.privilegedServices,

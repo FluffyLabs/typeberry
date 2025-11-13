@@ -520,16 +520,17 @@ export class Accumulate {
         slot,
         entropy,
         AccumulationStateUpdate.copyFrom(inputStateUpdate),
-      ).then(
-        ({ consumedGas, stateUpdate }) =>
-          [
-            serviceId,
-            {
-              consumedGas,
-              stateUpdate: stateUpdate === null ? checkpoint : stateUpdate,
-            },
-          ] as const,
-      );
+      ).then(({ consumedGas, stateUpdate }) => {
+        const resultEntry: readonly [ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }] = [
+          serviceId,
+          {
+            consumedGas,
+            stateUpdate: stateUpdate === null ? checkpoint : stateUpdate,
+          },
+        ];
+
+        return resultEntry;
+      });
 
       resultPromises[serviceIndex] = promise;
     }
