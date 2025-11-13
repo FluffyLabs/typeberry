@@ -144,7 +144,7 @@ function mergePrivilegedServices(mergeContext: MergeContext, [serviceId, { state
           privilegedServices.assigners[coreIndex],
         );
 
-        shouldUpdateAssigners = newAssigner !== currentAssigner;
+        shouldUpdateAssigners = shouldUpdateAssigners || newAssigner !== currentAssigner;
 
         return newAssigner;
       }
