@@ -56,8 +56,7 @@ const V1 = z.object({
 export type V1 = z.infer<typeof V1>;
 
 /**
- * https://docs.jamcha.in/advanced/rpc/jip2-node-rpc#parameters
- * https://hackmd.io/@polkadot/jip2#parameters
+ * https://github.com/polkadot-fellows/JIPs/blob/77cba2dcc1887233d4b19371c05284ff761a5fa6/JIP-2.md#chain-parameters
  * Returns the parameters of the current node/chain.
  */
 export const parameters = withValidation(NoArgs, V1, async (_params, _db, chainSpec) => {
