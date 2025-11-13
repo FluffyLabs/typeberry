@@ -58,7 +58,11 @@ export class InMemorySerializedStates implements StatesDb<SerializedState<LeafDb
   ): Promise<Result<OK, StateUpdateError>> {
     const blake2b = this.blake2b;
     const updatedValues = serializeStateUpdate(this.spec, blake2b, update);
-    const { values, leafs } = updateLeafs(state.backend.leafs, blake2b, updatedValues);
+    // make sure to clone the leafs before writing, since the collection is re-used.
+    const newLeafs = SortedSet.fromSortedArray(leafComparator, state.backend.leafs.array);
+    const { values, leafs } = updateLeafs(newLeafs, blake2b, updatedValues);
+    // make sure to reset the cache and re-create leafsdb lookup
+    state.updateBackend(LeafDb.fromLeaves(leafs, state.backend.db));
 
     // insert values to the db
     // valuesdb can be shared between all states because it's just
@@ -67,8 +71,8 @@ export class InMemorySerializedStates implements StatesDb<SerializedState<LeafDb
       this.valuesDb.set(val[0], val[1]);
     }
 
-    // make sure to clone the leafs before writing, since the collection is re-used.
-    this.db.set(header, SortedSet.fromSortedArray(leafComparator, leafs.slice()));
+    // store new set of leaves
+    this.db.set(header, leafs);
 
     return Result.ok(OK);
   }

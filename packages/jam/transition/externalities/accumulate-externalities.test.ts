@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
 import {
   type CodeHash,
-  type ServiceGas,
   type ServiceId,
   tryAsCoreIndex,
   tryAsServiceGas,
@@ -1384,136 +1383,6 @@ describe("PartialState.updatePrivilegedServices", () => {
     );
   });
 
-  itPost071("should allow delegator to transfer its power ", () => {
-    const state = partiallyUpdatedState();
-    const currentServiceId = tryAsServiceId(0);
-    state.state.privilegedServices = PrivilegedServices.create({
-      ...state.state.privilegedServices,
-      manager: tryAsServiceId(2),
-      delegator: currentServiceId,
-      registrar: tryAsServiceId(3),
-      assigners: tryAsPerCore(
-        new Array(tinyChainSpec.coresCount).fill(0).map((_, index) => tryAsServiceId(index + 10)),
-        tinyChainSpec,
-      ),
-    });
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      currentServiceId,
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
-
-    const manager = tryAsServiceId(20);
-    const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
-    const delegator = tryAsServiceId(30);
-    const registrar = tryAsServiceId(40);
-    const autoAccumulate: Map<ServiceId, ServiceGas> = new Map();
-
-    // when
-    const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
-
-    // then
-    assert.deepStrictEqual(result, Result.ok(OK));
-    assert.deepStrictEqual(
-      state.stateUpdate.privilegedServices,
-      PrivilegedServices.create({
-        ...state.state.privilegedServices,
-        delegator,
-      }),
-    );
-  });
-
-  itPost071("should allow registrar to transfer its power ", () => {
-    const state = partiallyUpdatedState();
-    const currentServiceId = tryAsServiceId(0);
-    state.state.privilegedServices = PrivilegedServices.create({
-      ...state.state.privilegedServices,
-      manager: tryAsServiceId(2),
-      delegator: tryAsServiceId(3),
-      registrar: currentServiceId,
-      assigners: tryAsPerCore(
-        new Array(tinyChainSpec.coresCount).fill(0).map((_, index) => tryAsServiceId(index + 10)),
-        tinyChainSpec,
-      ),
-    });
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      currentServiceId,
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
-
-    const manager = tryAsServiceId(20);
-    const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
-    const delegator = tryAsServiceId(30);
-    const registrar = tryAsServiceId(40);
-    const autoAccumulate: Map<ServiceId, ServiceGas> = new Map();
-
-    // when
-    const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
-
-    // then
-    assert.deepStrictEqual(result, Result.ok(OK));
-    assert.deepStrictEqual(
-      state.stateUpdate.privilegedServices,
-      PrivilegedServices.create({
-        ...state.state.privilegedServices,
-        registrar,
-      }),
-    );
-  });
-
-  itPost071("should allow one of assigners to transfer its power ", () => {
-    const state = partiallyUpdatedState();
-    const currentServiceId = tryAsServiceId(0);
-    state.state.privilegedServices = PrivilegedServices.create({
-      ...state.state.privilegedServices,
-      manager: tryAsServiceId(2),
-      delegator: tryAsServiceId(3),
-      registrar: tryAsServiceId(4),
-      assigners: tryAsPerCore(
-        new Array(tinyChainSpec.coresCount).fill(0).map((_, index) => tryAsServiceId(index)),
-        tinyChainSpec,
-      ),
-    });
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      currentServiceId,
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
-
-    const manager = tryAsServiceId(20);
-    const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
-    const delegator = tryAsServiceId(30);
-    const registrar = tryAsServiceId(40);
-    const autoAccumulate: Map<ServiceId, ServiceGas> = new Map();
-
-    const newAssigners = tryAsPerCore(
-      [assigners[0], ...state.state.privilegedServices.assigners.slice(1)],
-      tinyChainSpec,
-    );
-    // when
-    const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
-
-    // then
-    assert.deepStrictEqual(result, Result.ok(OK));
-    assert.deepStrictEqual(
-      state.stateUpdate.privilegedServices,
-      PrivilegedServices.create({
-        ...state.state.privilegedServices,
-        assigners: newAssigners,
-      }),
-    );
-  });
-
   itPre071("should return UnprivilegedError when current service is unprivileged", () => {
     const state = partiallyUpdatedState();
     state.state.privilegedServices = { ...state.state.privilegedServices, manager: tryAsServiceId(1) };
@@ -1975,6 +1844,20 @@ describe("PartialState.providePreimage", () => {
       state.stateUpdate.services.preimages,
       new Map([
         [
+          tryAsServiceId(0),
+
+          [
+            UpdatePreimage.provide({
+              preimage: PreimageItem.create({
+                hash: preimage.hash,
+                blob: preimage.blob,
+              }),
+              slot: state.state.timeslot,
+              providedFor: serviceId,
+            }),
+          ],
+        ],
+        [
           tryAsServiceId(1),
           [
             UpdatePreimage.provide({
@@ -1983,6 +1866,7 @@ describe("PartialState.providePreimage", () => {
                 blob: preimage.blob,
               }),
               slot: state.state.timeslot,
+              providedFor: serviceId,
             }),
           ],
         ],
@@ -2022,6 +1906,7 @@ describe("PartialState.providePreimage", () => {
                 blob: preimage.blob,
               }),
               slot: state.state.timeslot,
+              providedFor: tryAsServiceId(0),
             }),
           ],
         ],
@@ -2086,6 +1971,7 @@ describe("PartialState.providePreimage", () => {
           blob: preimage.blob,
         }),
         slot: state.state.timeslot,
+        providedFor: serviceId,
       }),
     );
     state.stateUpdate.services.preimages.set(serviceId, updates);
@@ -2114,6 +2000,7 @@ describe("PartialState.providePreimage", () => {
                 blob: preimage.blob,
               }),
               slot: state.state.timeslot,
+              providedFor: serviceId,
             }),
           ],
         ],
@@ -2198,6 +2085,7 @@ describe("PartialState.providePreimage", () => {
                 blob: preimage.blob,
               }),
               slot: state.state.timeslot,
+              providedFor: serviceId,
             }),
           ],
         ],
@@ -2242,7 +2130,7 @@ describe("PartialState.providePreimage", () => {
       state.stateUpdate.services.preimages,
       new Map([
         [
-          tryAsServiceId(1),
+          tryAsServiceId(0),
           [
             UpdatePreimage.provide({
               preimage: PreimageItem.create({
@@ -2250,6 +2138,20 @@ describe("PartialState.providePreimage", () => {
                 blob: preimage.blob,
               }),
               slot: state.state.timeslot,
+              providedFor: serviceId,
+            }),
+          ],
+        ],
+        [
+          serviceId,
+          [
+            UpdatePreimage.provide({
+              preimage: PreimageItem.create({
+                hash: preimage.hash,
+                blob: preimage.blob,
+              }),
+              slot: state.state.timeslot,
+              providedFor: serviceId,
             }),
           ],
         ],

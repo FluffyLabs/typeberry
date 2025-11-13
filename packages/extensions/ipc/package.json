@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/ext-ipc",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "An IPC extension to inspect the node state.",
   "main": "index.ts",
   "dependencies": {
