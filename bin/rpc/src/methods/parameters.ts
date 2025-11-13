@@ -1,55 +1,57 @@
-import z from "zod";
-import { NoArgs, type RpcMethod } from "../types.js";
+import { W_E } from "@typeberry/block";
 import { G_I, MAX_REPORT_DEPENDENCIES, O, Q, T, W_B, W_C, W_T } from "@typeberry/block/gp-constants.js";
 import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package.js";
-import { BASE_SERVICE_BALANCE, ELECTIVE_BYTE_BALANCE, ELECTIVE_ITEM_BALANCE, MAX_RECENT_HISTORY } from "@typeberry/state";
-import { G_A } from "@typeberry/transition/reports/verify-post-signature.js";
+import {
+  BASE_SERVICE_BALANCE,
+  ELECTIVE_BYTE_BALANCE,
+  ELECTIVE_ITEM_BALANCE,
+  MAX_RECENT_HISTORY,
+} from "@typeberry/state";
 import { REPORT_TIMEOUT_GRACE_PERIOD } from "@typeberry/transition/assurances.js";
-import { W_E } from "@typeberry/block";
-
-export const ParametersParams = NoArgs;
-export type ParametersParams = NoArgs;
+import { G_A } from "@typeberry/transition/reports/verify-post-signature.js";
+import z from "zod";
+import { NoArgs, withValidation } from "../types.js";
 
 const V1 = z.object({
   V1: z.object({
-  deposit_per_account: z.number(),
-  deposit_per_item: z.number(),
-  deposit_per_byte: z.number(),
-  min_turnaround_period: z.number(),
-  epoch_period: z.number(),
-  max_accumulate_gas: z.number(),
-  max_is_authorized_gas: z.number(),
-  max_refine_gas: z.number(),
-  block_gas_limit: z.number(),
-  recent_block_count: z.number(),
-  max_work_items: z.number(),
-  max_dependencies: z.number(),
-  max_tickets_per_block: z.number(),
-  max_lookup_anchor_age: z.number(),
-  tickets_attempts_number: z.number(),
-  auth_window: z.number(),
-  auth_queue_len: z.number(),
-  rotation_period: z.number(),
-  max_extrinsics: z.number(),
-  availability_timeout: z.number(),
-  val_count: z.number(),
-  max_input: z.number(),
-  max_refine_code_size: z.number(),
-  basic_piece_len: z.number(),
-  max_imports: z.number(),
-  max_is_authorized_code_size: z.number(),
-  max_exports: z.number(),
-  max_refine_memory: z.number(),
-  max_is_authorized_memory: z.number(),
-  segment_piece_count: z.number(),
-  max_report_elective_data: z.number(),
-  transfer_memo_size: z.number(),
-  epoch_tail_start: z.number(),
-  core_count: z.number(),
-  slot_period_sec: z.number(),
-  max_authorizer_code_size: z.number(),
-  max_service_code_size: z.number(),
-})
+    deposit_per_account: z.number(),
+    deposit_per_item: z.number(),
+    deposit_per_byte: z.number(),
+    min_turnaround_period: z.number(),
+    epoch_period: z.number(),
+    max_accumulate_gas: z.number(),
+    max_is_authorized_gas: z.number(),
+    max_refine_gas: z.number(),
+    block_gas_limit: z.number(),
+    recent_block_count: z.number(),
+    max_work_items: z.number(),
+    max_dependencies: z.number(),
+    max_tickets_per_block: z.number(),
+    max_lookup_anchor_age: z.number(),
+    tickets_attempts_number: z.number(),
+    auth_window: z.number(),
+    auth_queue_len: z.number(),
+    rotation_period: z.number(),
+    max_extrinsics: z.number(),
+    availability_timeout: z.number(),
+    val_count: z.number(),
+    max_input: z.number(),
+    max_refine_code_size: z.number(),
+    basic_piece_len: z.number(),
+    max_imports: z.number(),
+    max_is_authorized_code_size: z.number(),
+    max_exports: z.number(),
+    max_refine_memory: z.number(),
+    max_is_authorized_memory: z.number(),
+    segment_piece_count: z.number(),
+    max_report_elective_data: z.number(),
+    transfer_memo_size: z.number(),
+    epoch_tail_start: z.number(),
+    core_count: z.number(),
+    slot_period_sec: z.number(),
+    max_authorizer_code_size: z.number(),
+    max_service_code_size: z.number(),
+  }),
 });
 export type V1 = z.infer<typeof V1>;
 
@@ -58,7 +60,7 @@ export type V1 = z.infer<typeof V1>;
  * https://hackmd.io/@polkadot/jip2#parameters
  * Returns the parameters of the current node/chain.
  */
-export const parameters: RpcMethod<ParametersParams, V1> = async (_params, _db, chainSpec) => {
+export const parameters = withValidation(NoArgs, V1, async (_params, _db, chainSpec) => {
   return {
     V1: {
       deposit_per_account: Number(BASE_SERVICE_BALANCE),
@@ -100,4 +102,4 @@ export const parameters: RpcMethod<ParametersParams, V1> = async (_params, _db, 
       max_service_code_size: 4000000,
     },
   };
-};
+});
