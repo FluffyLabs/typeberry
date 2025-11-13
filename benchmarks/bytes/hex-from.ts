@@ -94,6 +94,7 @@ export default function run() {
         if (Number.isNaN(n)) {
           throw new Error("Not a number");
         }
+        return n;
       });
     }),
 

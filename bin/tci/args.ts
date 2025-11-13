@@ -61,7 +61,7 @@ const toBytes = (v: string): PublicKeySeed => {
 };
 const toStr = (v: string) => v;
 const toNumber = (v: string): number => {
-  const val = Number.parseInt(v);
+  const val = Number(v);
   if (Number.isNaN(val)) {
     throw Error(`Cannot parse '${v}' as a number.`);
   }
