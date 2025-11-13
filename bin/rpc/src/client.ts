@@ -107,7 +107,7 @@ export class RpcClient {
 
       this.messageQueue.set(id, (response: JsonRpcResponse) => {
         if ("error" in response) {
-          reject(new Error(response.error.message));
+          reject(response.error);
         } else {
           resolve(response.result);
         }

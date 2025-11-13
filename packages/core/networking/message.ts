@@ -24,7 +24,7 @@ export function handleMessageFragmentation(
   let expectedLength = -1;
 
   return (data: Uint8Array) => {
-    buffer = Buffer.concat([buffer as Uint8Array, data]);
+    buffer = Buffer.concat([buffer, data]);
     do {
       // we now expect a length prefix.
       if (expectedLength === -1) {

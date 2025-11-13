@@ -25,7 +25,7 @@ const DEFAULT_TIME_SLOT = tryAsTimeSlot(1);
 
 describe("Block Verifier", async () => {
   const spec = tinyChainSpec;
-  const hasher = new TransitionHasher(spec, await keccak.KeccakHasher.create(), await Blake2b.createHasher());
+  const hasher = new TransitionHasher(await keccak.KeccakHasher.create(), await Blake2b.createHasher());
 
   const toBlockView = (block: Block): BlockView => {
     const encodedBlock = Encoder.encodeObject(Block.Codec, block, spec);

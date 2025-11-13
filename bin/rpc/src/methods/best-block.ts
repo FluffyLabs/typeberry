@@ -1,7 +1,4 @@
-import { type Hash, NoArgs, type RpcMethod, type Slot } from "../types.js";
-
-export const BestBlockParams = NoArgs;
-export type BestBlockParams = NoArgs;
+import { BlockDescriptor, Hash, NoArgs, RpcError, RpcErrorCode, withValidation } from "../types.js";
 
 /**
  * https://hackmd.io/@polkadot/jip2#bestBlock
@@ -11,13 +8,20 @@ export type BestBlockParams = NoArgs;
  *   Slot - The slot,
  * ]
  */
-export const bestBlock: RpcMethod<BestBlockParams, [Hash, Slot]> = async (_params, db) => {
+export const bestBlock = withValidation(NoArgs, BlockDescriptor, async (_params, db) => {
   const headerHash = db.blocks.getBestHeaderHash();
   const header = db.blocks.getHeader(headerHash);
 
   if (header === null) {
-    throw new Error(`Best header not found with hash: ${headerHash.raw}`);
+    throw new RpcError(
+      RpcErrorCode.BlockUnavailable,
+      `Best header not found with hash: ${headerHash.toString()}`,
+      Hash.encode(headerHash.raw),
+    );
   }
 
-  return [Array.from(headerHash.raw), header.timeSlotIndex.materialize()];
-};
+  return {
+    header_hash: headerHash.raw,
+    slot: header.timeSlotIndex.materialize(),
+  };
+});
