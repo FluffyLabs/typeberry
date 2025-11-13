@@ -1,5 +1,5 @@
 /**
- * @fileoverview `Opaque<Type, Token>` constructs a unique type which is a subset of Type with a
+ * `Opaque<Type, Token>` constructs a unique type which is a subset of Type with a
  * specified unique token Token. It means that base type cannot be assigned to unique type by accident.
  * Good examples of opaque types include:
  * - JWTs or other tokens - these are special kinds of string used for authorization purposes.

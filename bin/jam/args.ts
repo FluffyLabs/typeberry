@@ -282,7 +282,7 @@ function assertNoMoreArgs(args: minimist.ParsedArgs) {
   }
 }
 
-type CommandArgs<T extends Command, Args> = {
+export type CommandArgs<T extends Command, Args> = {
   command: T;
   args: Args;
 };
