@@ -9,6 +9,7 @@ import { ServiceValueParams, serviceValue } from "./methods/service-value.js";
 import { StateRootParams, stateRoot } from "./methods/state-root.js";
 import { StatisticsParams, statistics } from "./methods/statistics.js";
 import { RpcError, type RpcMethod, type RpcMethodRepo } from "./types.js";
+import { parameters, ParametersParams } from "./methods/parameters.js";
 
 export const MethodNotImplementedParams = z.any();
 export type MethodNotImplementedParams = z.infer<typeof MethodNotImplementedParams>;
@@ -22,7 +23,7 @@ export const methods: RpcMethodRepo = new Map([
   ["bestBlock", [bestBlock, BestBlockParams]],
   ["finalizedBlock", [bestBlock, BestBlockParams]], // todo [seko] implement when finality is implemented
   ["listServices", [listServices, ListServicesParams]],
-  ["parameters", [methodNotImplemented, MethodNotImplementedParams]],
+  ["parameters", [parameters, ParametersParams]],
   ["parent", [parent, ParentParams]],
   ["serviceData", [serviceData, ServiceDataParams]],
   ["servicePreimage", [servicePreimage, ServicePreimageParams]],
