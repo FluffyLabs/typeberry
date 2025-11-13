@@ -82,14 +82,14 @@ function updatePrivilegedService(
   selfUpdatedServiceId: ServiceId,
 ) {
   if (currentServiceId === serviceIdUpdatedByManager) {
-    return serviceIdUpdatedByManager;
+    return selfUpdatedServiceId;
   }
 
-  return selfUpdatedServiceId;
+  return serviceIdUpdatedByManager;
 }
 
 function mergePrivilegedServices(mergeContext: MergeContext, [serviceId, { stateUpdate }]: ResultEntry) {
-  const { outputState, currentPrivilegedServices, chainSpec } = mergeContext;
+  const { outputState, currentPrivilegedServices, chainSpec, privilegedServicesUpdatedByManager } = mergeContext;
   const currentManager = currentPrivilegedServices.manager;
   const currentRegistrar = currentPrivilegedServices.registrar;
   const currentDelegator = currentPrivilegedServices.delegator;
@@ -112,9 +112,10 @@ function mergePrivilegedServices(mergeContext: MergeContext, [serviceId, { state
     if (serviceId === currentRegistrar) {
       const newRegistrar = updatePrivilegedService(
         currentPrivilegedServices.registrar,
-        outputState.privilegedServices.registrar,
+        privilegedServicesUpdatedByManager.registrar,
         privilegedServices.registrar,
       );
+
       outputState.privilegedServices = PrivilegedServices.create({
         ...outputState.privilegedServices,
         registrar: newRegistrar,
@@ -124,7 +125,7 @@ function mergePrivilegedServices(mergeContext: MergeContext, [serviceId, { state
     if (serviceId === currentDelegator) {
       const newDelegator = updatePrivilegedService(
         currentPrivilegedServices.delegator,
-        outputState.privilegedServices.delegator,
+        privilegedServicesUpdatedByManager.delegator,
         privilegedServices.delegator,
       );
       outputState.privilegedServices = PrivilegedServices.create({
@@ -132,22 +133,28 @@ function mergePrivilegedServices(mergeContext: MergeContext, [serviceId, { state
         delegator: newDelegator,
       });
     }
-    const assignersFromOutputState = outputState.privilegedServices;
-    const newAssigners = currentAssigners.map((currentAssigner, coreIndex) =>
-      serviceId === currentAssigner
-        ? updatePrivilegedService(
-            currentPrivilegedServices.assigners[coreIndex],
-            assignersFromOutputState.assigners[coreIndex],
-            privilegedServices.assigners[coreIndex],
-          )
-        : currentAssigner,
-    );
 
-    const newAssignersPerCore = tryAsPerCore(newAssigners, chainSpec);
-    outputState.privilegedServices = PrivilegedServices.create({
-      ...outputState.privilegedServices,
-      assigners: newAssignersPerCore,
+    let isAssignerChanged = false;
+    const newAssigners = currentAssigners.map((currentAssigner, coreIndex) => {
+      if (serviceId === currentAssigner) {
+        isAssignerChanged = true;
+        return updatePrivilegedService(
+          currentPrivilegedServices.assigners[coreIndex],
+          privilegedServicesUpdatedByManager.assigners[coreIndex],
+          privilegedServices.assigners[coreIndex],
+        );
+      }
+
+      return currentAssigner;
     });
+
+    if (isAssignerChanged) {
+      const newAssignersPerCore = tryAsPerCore(newAssigners, chainSpec);
+      outputState.privilegedServices = PrivilegedServices.create({
+        ...outputState.privilegedServices,
+        assigners: newAssignersPerCore,
+      });
+    }
   }
 }
 
