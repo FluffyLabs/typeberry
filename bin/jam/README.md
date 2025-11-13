@@ -24,7 +24,7 @@ jam --name=my-node --config=default
 
 ### `jam dev <index>`
 
-Run a JAM node in development mode as a validator. The `<index>` parameter (1-5) determines the validator slot and automatically configures:
+Run a JAM node in development mode as a validator. The `<index>` parameter determines the validator slot and automatically configures:
 - Node name (e.g., `jam-1`, `jam-2`)
 - Networking port (12346, 12347, etc.)
 - Local bootnodes for a 5-validator dev network

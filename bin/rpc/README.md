@@ -2,7 +2,7 @@
 
 JSON-RPC server for querying Typeberry node data.
 
-Implements the [JIP-2 (JAM Improvement Proposal 2)](https://hackmd.io/@polkadot/jip2) specification.
+Implements the [JIP-2](https://github.com/polkadot-fellows/JIPs/blob/main/JIP-2.md) specification.
 
 ## Overview
 
