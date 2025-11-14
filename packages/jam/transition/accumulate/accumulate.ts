@@ -505,9 +505,9 @@ export class Accumulate {
   ): Promise<ParallelAccumulationResult> {
     const serviceIds = accumulateData.getServiceIds();
     const serviceIdsLength = serviceIds.length;
-    const resultPromises: Promise<{ consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }>[] = new Array(
-      serviceIdsLength,
-    );
+    const resultPromises: Promise<
+      readonly [ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }]
+    >[] = new Array(serviceIdsLength);
 
     for (let serviceIndex = 0; serviceIndex < serviceIdsLength; serviceIndex += 1) {
       const serviceId = serviceIds[serviceIndex];
@@ -520,23 +520,22 @@ export class Accumulate {
         slot,
         entropy,
         AccumulationStateUpdate.copyFrom(inputStateUpdate),
-      ).then(({ consumedGas, stateUpdate }) => ({
-        consumedGas,
-        stateUpdate: stateUpdate === null ? checkpoint : stateUpdate,
-      }));
+      ).then(({ consumedGas, stateUpdate }) => {
+        const resultEntry: readonly [ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }] = [
+          serviceId,
+          {
+            consumedGas,
+            stateUpdate: stateUpdate === null ? checkpoint : stateUpdate,
+          },
+        ];
+
+        return resultEntry;
+      });
 
       resultPromises[serviceIndex] = promise;
     }
 
-    return Promise.all(resultPromises).then((results) => {
-      const map = new Map<ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }>();
-
-      for (let serviceIndex = 0; serviceIndex < serviceIdsLength; serviceIndex += 1) {
-        map.set(serviceIds[serviceIndex], results[serviceIndex]);
-      }
-
-      return map;
-    });
+    return Promise.all(resultPromises).then((results) => new Map(results));
   }
 
   /**
@@ -674,7 +673,7 @@ export class Accumulate {
     const {
       yieldedRoot,
       services,
-      transfers: _transfers,
+      transfers,
       validatorsData,
       privilegedServices,
       authorizationQueues,
@@ -682,7 +681,8 @@ export class Accumulate {
     } = state;
     assertEmpty(stateUpdateRest);
 
-    // yielded root is retrieved after each pvm invocation so we can ignore it here
+    // transfers and yielded root are retrieved after each pvm invocation so we can ignore it here
+    const _transfers = transfers;
     const _yieldedRoot = yieldedRoot;
 
     if (this.hasDuplicatedServiceIdCreated(services.created)) {

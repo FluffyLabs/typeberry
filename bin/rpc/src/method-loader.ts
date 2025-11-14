@@ -1,6 +1,7 @@
 import { bestBlock } from "./methods/best-block.js";
 import { listServices } from "./methods/list-services.js";
 import { notImplemented } from "./methods/not-implemented.js";
+import { parameters } from "./methods/parameters.js";
 import { parent } from "./methods/parent.js";
 import { serviceData } from "./methods/service-data.js";
 import { servicePreimage } from "./methods/service-preimage.js";
@@ -15,7 +16,7 @@ methods.set("beefyRoot", notImplemented); // todo [seko] beefy root needs to be 
 methods.set("bestBlock", bestBlock);
 methods.set("finalizedBlock", bestBlock); // todo [seko] implement when finality is implemented
 methods.set("listServices", listServices);
-methods.set("parameters", notImplemented);
+methods.set("parameters", parameters);
 methods.set("parent", parent);
 methods.set("serviceData", serviceData);
 methods.set("servicePreimage", servicePreimage);
