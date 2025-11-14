@@ -1,59 +1,25 @@
 import assert from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
-import type { TestContext } from "node:test";
-import { Block, emptyBlock, Header } from "@typeberry/block";
-import { blockFromJson, headerFromJson } from "@typeberry/block-json";
-import { codec, Decoder, Encoder } from "@typeberry/codec";
-import { ChainSpec, tinyChainSpec } from "@typeberry/config";
+import { Block, emptyBlock } from "@typeberry/block";
+import { Decoder, Encoder } from "@typeberry/codec";
+import { ChainSpec, PvmBackend, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { Blake2b, keccak, WithHash } from "@typeberry/hash";
-import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { tryAsU32 } from "@typeberry/numbers";
 import { serializeStateUpdate } from "@typeberry/state-merkleization";
+import { StateTransition, StateTransitionGenesis } from "@typeberry/state-vectors";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
-import { loadState, TestState } from "./state-loader.js";
-
-export class StateTransitionGenesis {
-  static fromJson: FromJson<StateTransitionGenesis> = {
-    header: headerFromJson,
-    state: TestState.fromJson,
-  };
-
-  static Codec = codec.object({
-    header: Header.Codec,
-    state: TestState.Codec,
-  });
-
-  header!: Header;
-  state!: TestState;
-}
-
-export class StateTransition {
-  static fromJson: FromJson<StateTransition> = {
-    pre_state: TestState.fromJson,
-    post_state: TestState.fromJson,
-    block: blockFromJson(tinyChainSpec),
-  };
-
-  static Codec = codec.object({
-    pre_state: TestState.Codec,
-    block: Block.Codec,
-    post_state: TestState.Codec,
-  });
-
-  pre_state!: TestState;
-  post_state!: TestState;
-  block!: Block;
-}
+import type { RunOptions } from "../common.js";
+import { loadState } from "./state-loader.js";
 
 const keccakHasher = keccak.KeccakHasher.create();
 
 const cachedBlocks = new Map<string, Block[]>();
-function loadBlocks(testPath: string) {
+function loadBlocks(testPath: string, spec: ChainSpec) {
   const dir = path.dirname(testPath);
   const fromCache = cachedBlocks.get(dir);
   if (fromCache !== undefined) {
@@ -62,19 +28,18 @@ function loadBlocks(testPath: string) {
 
   const blocks: Block[] = [];
   for (const file of fs.readdirSync(dir)) {
-    if (!file.endsWith(".json")) {
+    if (!file.endsWith(".bin")) {
       continue;
     }
-    const data = fs.readFileSync(path.join(dir, file), "utf8");
-    const parsed = JSON.parse(data);
+    const data = fs.readFileSync(path.join(dir, file));
     try {
-      if (file.endsWith("genesis.json")) {
-        const content = parseFromJson(parsed, StateTransitionGenesis.fromJson);
-        const genesisBlock = Block.create({ header: content.header, extrinsic: emptyBlock().extrinsic });
+      if (file.endsWith("genesis.bin")) {
+        const genesis = Decoder.decodeObject(StateTransitionGenesis.Codec, data, spec);
+        const genesisBlock = Block.create({ header: genesis.header, extrinsic: emptyBlock().extrinsic });
         blocks.push(genesisBlock);
       } else {
-        const content = parseFromJson(parsed, StateTransition.fromJson);
-        blocks.push(content.block);
+        const test = Decoder.decodeObject(StateTransition.Codec, data, spec);
+        blocks.push(test.block);
       }
     } catch {
       // some blocks might be invalid, but that's fine. We just ignore them.
@@ -96,17 +61,23 @@ function blockAsView(spec: ChainSpec, block: Block) {
 // that were run pre-V1 fuzzer version.
 const jamConformance070V0Spec = new ChainSpec({
   ...tinyChainSpec,
+  name: "jam-conformance-v070v0",
   maxLookupAnchorAge: tryAsU32(14_400),
 });
 
-export async function runStateTransition(testContent: StateTransition, testPath: string, t: TestContext) {
+export async function runStateTransition(
+  testContent: StateTransition,
+  options: RunOptions,
+  variant: "ananas" | "builtin",
+) {
+  const pvm = variant === "ananas" ? PvmBackend.Ananas : PvmBackend.BuiltIn;
   const blake2b = await Blake2b.createHasher();
   // a bit of a hack, but the new value for `maxLookupAnchorAge` was proposed with V1
   // version of the fuzzer, yet these tests were still depending on the older value.
   // To simplify the chain spec, we just special case this one vector here.
-  const spec = testPath.includes("fuzz-reports/0.7.0/traces/1756548916/00000082.json")
+  const spec = options.path.includes("fuzz-reports/0.7.0/traces/1756548916/00000082.json")
     ? jamConformance070V0Spec
-    : tinyChainSpec;
+    : options.chainSpec;
   const preState = loadState(spec, blake2b, testContent.pre_state.keyvals);
   const postState = loadState(spec, blake2b, testContent.post_state.keyvals);
 
@@ -114,13 +85,13 @@ export async function runStateTransition(testContent: StateTransition, testPath:
   const postStateRoot = postState.backend.getRootHash(blake2b);
 
   const blockView = blockAsView(spec, testContent.block);
-  const allBlocks = loadBlocks(testPath);
+  const allBlocks = loadBlocks(options.path, spec);
   const myBlockIndex = allBlocks.findIndex(
     ({ header }) => header.timeSlotIndex === testContent.block.header.timeSlotIndex,
   );
   const previousBlocks = allBlocks.slice(0, myBlockIndex);
 
-  const hasher = new TransitionHasher(spec, await keccakHasher, blake2b);
+  const hasher = new TransitionHasher(await keccakHasher, blake2b);
 
   const blocksDb = InMemoryBlocks.fromBlocks(
     previousBlocks.map((block) => {
@@ -130,7 +101,7 @@ export async function runStateTransition(testContent: StateTransition, testPath:
     }),
   );
 
-  const stf = new OnChain(spec, preState, blocksDb, hasher);
+  const stf = new OnChain(spec, preState, blocksDb, hasher, pvm);
 
   // verify that we compute the state root exactly the same.
   assert.deepStrictEqual(testContent.pre_state.state_root.toString(), preStateRoot.toString());
@@ -162,7 +133,7 @@ export async function runStateTransition(testContent: StateTransition, testPath:
 
   // some conformance test vectors have an empty state, we run them, yet do not perform any assertions.
   if (testContent.post_state.keyvals.length === 0) {
-    t.skip(`Successfuly run a test vector with empty post state!. Please verify: ${testPath}`);
+    options.test.skip(`Successfuly run a test vector with empty post state!. Please verify: ${options.path}`);
     return;
   }
 

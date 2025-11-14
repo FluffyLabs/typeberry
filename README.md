@@ -1,12 +1,17 @@
 # typeberry 🫐
 
-[![JAM Conformance 0.7.0](https://github.com/FluffyLabs/typeberry/actions/workflows/vectors-jam-conformance-070.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/vectors-jam-conformance-070.yml) [![W3F vectors](https://github.com/FluffyLabs/typeberry/actions/workflows/vectors-w3f.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/vectors-w3f.yml) [![Publish commits](https://github.com/FluffyLabs/typeberry/actions/workflows/blockchain-git-log.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/blockchain-git-log.yml) [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
+[![JAM Conformance 0.7.1](https://github.com/FluffyLabs/typeberry/actions/workflows/vectors-jam-conformance-071.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/vectors-jam-conformance-071.yml) [![W3F davxy 0.7.1](https://github.com/FluffyLabs/typeberry/actions/workflows/vectors-w3f-davxy-071.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/vectors-w3f-davxy-071.yml) [![W3F vectors](https://github.com/FluffyLabs/typeberry/actions/workflows/vectors-w3f.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/vectors-w3f.yml) [![Publish commits](https://github.com/FluffyLabs/typeberry/actions/workflows/prize-blockchain.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/prize-blockchain.yml) [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 
 Typeberry is a TypeScript implementation of [JAM protocol](https://graypaper.com/) by Fluffy Labs.
 
 **NOTE: Since we are taking part in the JAM Prize, we do not accept any external
 PRs unless the contributor waives any claims to the prize and copy rights for
 the submitted code. By creating the PR you accept this requirement.**
+
+## Links
+
+- [Documentation](https://fluffylabs.dev/typeberry)
+- [Performance Charts](https://typeberry.fluffylabs.dev)
 
 ## Implementation status
 
@@ -23,10 +28,10 @@ JAM Prize requirements
     - [x] Block import
     - [x] W3F test vectors
     - [x] JAM Conformance Fuzzer
-    - [ ] Performance optimisations
+    - [x] Performance optimisations
 - [ ] Milestone 2
     - [x] Networking (partial)
-    - [ ] Fast PVM
+    - [x] Fast PVM (ananas)
 - [ ] Milestone 3
     - [ ] PVM Recompiler
 - [ ] Milestone 4

@@ -1,9 +1,8 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.3.4/schema.json",
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
-    "includes": ["**"],
     "attributePosition": "auto",
     "indentStyle": "space",
     "indentWidth": 2,
@@ -64,7 +63,8 @@
       "!**/dist/**/*",
       "!**/benchmarks/**/output/**/*",
       "!**/test-vectors/**/*",
-      "!**/packages/misc/builder/pkg.ts"
+      "!**/packages/misc/builder/pkg.ts",
+      "!**/web/docs"
     ]
   }
 }

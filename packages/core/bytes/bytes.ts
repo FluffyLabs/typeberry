@@ -37,12 +37,13 @@ export class BytesBlob {
 
   /** Display a hex-encoded version of this byte blob, but truncated if it's large. */
   toStringTruncated() {
+    const bytes = `${this.raw.length} ${this.raw.length === 1 ? "byte" : "bytes"}`;
     if (this.raw.length > 32) {
       const start = bytesToHexString(this.raw.subarray(0, 16));
       const end = bytesToHexString(this.raw.subarray(this.raw.length - 16));
-      return `${start}...${end.substring(2)} (${this.raw.length} bytes)`;
+      return `${start}...${end.substring(2)} (${bytes})`;
     }
-    return this.toString();
+    return `${this.toString()} (${bytes})`;
   }
 
   toJSON() {

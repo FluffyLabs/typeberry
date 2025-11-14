@@ -120,7 +120,12 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>>, InitStates
   ): Promise<Result<OK, StateUpdateError>> {
     const updatedValues = serializeStateUpdate(this.spec, this.blake2b, update);
     // and finally we insert new values and store leaves in the DB.
-    return await this.updateAndCommit(headerHash, state.backend.leafs, updatedValues);
+    const res = await this.updateAndCommit(headerHash, state.backend.leafs, updatedValues);
+    if (res.isOk) {
+      // update the internal backend with new leaves.
+      state.updateBackend(LeafDb.fromLeaves(state.backend.leafs, state.backend.db));
+    }
+    return res;
   }
 
   async getStateRoot(state: SerializedState<LeafDb>): Promise<StateRootHash> {

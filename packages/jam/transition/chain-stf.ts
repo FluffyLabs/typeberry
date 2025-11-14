@@ -145,7 +145,7 @@ export class OnChain {
     public readonly state: State & WithStateView,
     blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
-    pvm: PvmBackend = PvmBackend.BuiltIn,
+    pvm: PvmBackend,
   ) {
     const bandersnatch = BandernsatchWasm.new();
     this.statistics = new Statistics(chainSpec, state);
@@ -302,7 +302,7 @@ export class OnChain {
     const { preimages, ...preimagesRest } = preimagesResult.ok;
     assertEmpty(preimagesRest);
 
-    const timerAccumulate = measure("import:accumulate");
+    const timerAccumulate = measure(`import:accumulate (${PvmBackend[this.accumulate.pvm]})`);
     // accumulate
     const accumulateResult = await this.accumulate.transition({
       slot: timeSlot,

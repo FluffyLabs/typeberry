@@ -44,7 +44,6 @@ import { Logger } from "@typeberry/logger";
 import { maxU64, sumU64, tryAsU32, tryAsU64, type U64 } from "@typeberry/numbers";
 import {
   type AUTHORIZATION_QUEUE_SIZE,
-  AutoAccumulate,
   LookupHistoryItem,
   type PerCore,
   PreimageItem,
@@ -52,7 +51,6 @@ import {
   ServiceAccountInfo,
   type StorageKey,
   tryAsLookupHistorySlots,
-  tryAsPerCore,
   UpdatePreimage,
   type ValidatorData,
 } from "@typeberry/state";
@@ -78,7 +76,7 @@ const logger = Logger.new(import.meta.filename, "externalities");
 export class AccumulateExternalities
   implements PartialState, AccountsWrite, AccountsRead, AccountsInfo, AccountsLookup
 {
-  private checkpointedState: AccumulationStateUpdate | null = null;
+  private checkpointedState: AccumulationStateUpdate;
   /** `x_i`: next service id we are going to create. */
   private nextNewServiceId: ServiceId;
 
@@ -91,6 +89,7 @@ export class AccumulateExternalities
     nextNewServiceIdCandidate: ServiceId,
     private readonly currentTimeslot: TimeSlot,
   ) {
+    this.checkpointedState = AccumulationStateUpdate.copyFrom(updatedState.stateUpdate);
     this.nextNewServiceId = this.getNextAvailableServiceId(nextNewServiceIdCandidate);
 
     const service = this.updatedState.getServiceInfo(this.currentServiceId);
@@ -99,8 +98,8 @@ export class AccumulateExternalities
     }
   }
 
-  /** Return the underlying state update and checkpointed state (if any). */
-  getStateUpdates(): [AccumulationStateUpdate, AccumulationStateUpdate | null] {
+  /** Return the underlying state update and checkpointed state. */
+  getStateUpdates(): [AccumulationStateUpdate, AccumulationStateUpdate] {
     return [this.updatedState.stateUpdate, this.checkpointedState];
   }
 
@@ -151,7 +150,7 @@ export class AccumulateExternalities
     const status = slots === null ? null : slotsToPreimageStatus(slots.slots);
     // The previous code needs to be forgotten and expired.
     if (status?.status !== PreimageStatusKind.Unavailable) {
-      return [false, "wrong status"];
+      return [false, `wrong status: ${status !== null ? PreimageStatusKind[status.status] : null}`];
     }
     const t = this.currentTimeslot;
     const isExpired = status.data[1] < t - this.chainSpec.preimageExpungePeriod;
@@ -573,47 +572,17 @@ export class AccumulateExternalities
     return Result.ok(OK);
   }
 
-  private updatePrivilegedServiceId(
-    // The id that privileged service wants to be updated to
-    newId: ServiceId,
-    // Current id of privileged service (updated state)
-    currentId: ServiceId,
-    {
-      // is current service id a manager (can update anything)
-      isManager,
-      // is current service attempting to update itself (privileged are owned)
-      isSelf,
-      // is the service id already changed in this block
-      isAlreadyChanged,
-    }: { isManager: boolean; isSelf: boolean; isAlreadyChanged: boolean },
-  ) {
-    if (isManager) {
-      return newId;
-    }
-
-    // current service can update itself, only if it was a privileged
-    // service at the start of the block. I.e. owned privileges cannot
-    // be transfered multiple times in a block.
-    if (isSelf && !isAlreadyChanged) {
-      return newId;
-    }
-
-    return currentId;
-  }
-
   updatePrivilegedServices(
     manager: ServiceId | null,
-    authorizers: PerCore<ServiceId>,
+    assigners: PerCore<ServiceId>,
     delegator: ServiceId | null,
     registrar: ServiceId | null,
-    autoAccumulate: [ServiceId, ServiceGas][],
+    autoAccumulateServices: Map<ServiceId, ServiceGas>,
   ): Result<OK, UpdatePrivilegesError> {
-    /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
-    const current = this.updatedState.getPrivilegedServices();
-
-    const isManager = current.manager === this.currentServiceId;
-
     if (Compatibility.isLessThan(GpVersion.V0_7_1)) {
+      /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
+      const current = this.updatedState.getPrivilegedServices();
+      const isManager = current.manager === this.currentServiceId;
       if (!isManager) {
         return Result.error(
           UpdatePrivilegesError.UnprivilegedService,
@@ -630,18 +599,14 @@ export class AccumulateExternalities
 
       this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
         manager,
-        assigners: authorizers,
-        delegator: delegator,
+        assigners,
+        delegator,
         registrar: registrar ?? tryAsServiceId(0),
-        autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) =>
-          AutoAccumulate.create({ service, gasLimit }),
-        ),
+        autoAccumulateServices,
       });
 
       return Result.ok(OK);
     }
-
-    const original = this.updatedState.state.privilegedServices;
 
     if (manager === null || delegator === null || registrar === null) {
       return Result.error(
@@ -650,53 +615,28 @@ export class AccumulateExternalities
       );
     }
 
-    const newDelegator = this.updatePrivilegedServiceId(delegator, current.delegator, {
-      isManager,
-      isSelf: this.currentServiceId === current.delegator,
-      isAlreadyChanged: current.delegator !== original.delegator,
-    });
-
-    const newRegistrar = this.updatePrivilegedServiceId(registrar, current.registrar, {
-      isManager,
-      isSelf: this.currentServiceId === current.registrar,
-      isAlreadyChanged: current.registrar !== original.registrar,
-    });
-
-    const newAssigners = current.assigners.map((currentAssigner, index) =>
-      this.updatePrivilegedServiceId(authorizers[index], currentAssigner, {
-        isManager,
-        isSelf: this.currentServiceId === currentAssigner,
-        isAlreadyChanged: currentAssigner !== original.assigners[index],
-      }),
-    );
-
-    const newManager = isManager ? manager : current.manager;
-
-    const newAutoAccumulateServices = isManager
-      ? autoAccumulate.map(([service, gasLimit]) => AutoAccumulate.create({ service, gasLimit }))
-      : current.autoAccumulateServices;
-
     // finally update the privileges
     this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
-      manager: newManager,
-      assigners: tryAsPerCore(newAssigners, this.chainSpec),
-      delegator: newDelegator,
-      registrar: newRegistrar,
-      autoAccumulateServices: newAutoAccumulateServices,
+      manager,
+      assigners,
+      delegator,
+      registrar: registrar ?? tryAsServiceId(0),
+      autoAccumulateServices,
     });
 
     return Result.ok(OK);
   }
 
   yield(hash: OpaqueHash): void {
-    /** https://graypaper.fluffylabs.dev/#/9a08063/387d02387d02?v=0.6.6 */
-    this.updatedState.stateUpdate.yieldedRoots.set(this.currentServiceId, hash);
+    /** https://graypaper.fluffylabs.dev/#/ab2cdbd/380f03381503?v=0.7.2 */
+    this.updatedState.stateUpdate.yieldedRoot = hash;
   }
 
   providePreimage(serviceId: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {
     // we need to explicitly check if service exists, since it's a different error.
-    // TODO [ToDr] what about newly created services?
-    const service = serviceId === null ? null : this.updatedState.state.getService(serviceId);
+    // we also check if it's in newly created
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/384e03384e03?v=0.7.2
+    const service = serviceId === null ? null : this.updatedState.getServiceInfo(serviceId);
     if (service === null || serviceId === null) {
       return Result.error(ProvidePreimageError.ServiceNotFound, () => `Service not found: ${serviceId}`);
     }
@@ -728,24 +668,31 @@ export class AccumulateExternalities
     }
 
     // setting up the new preimage
-    this.updatedState.updatePreimage(
-      serviceId,
-      UpdatePreimage.provide({
-        preimage: PreimageItem.create({
-          hash: preimageHash,
-          blob: preimage,
-        }),
-        slot: this.currentTimeslot,
+    const providedFor = serviceId;
+    const update = UpdatePreimage.provide({
+      preimage: PreimageItem.create({
+        hash: preimageHash,
+        blob: preimage,
       }),
-    );
+      slot: this.currentTimeslot,
+      providedFor,
+    });
+
+    this.updatedState.updatePreimage(serviceId, update);
+
+    if (this.currentServiceId !== providedFor) {
+      this.updatedState.updatePreimage(this.currentServiceId, update);
+    }
 
     return Result.ok(OK);
   }
 
   eject(destination: ServiceId | null, previousCodeHash: PreimageHash): Result<OK, EjectError> {
     const service = this.getServiceInfo(destination);
+    const isRemoved =
+      this.updatedState.stateUpdate.services.removed.find((serviceId) => serviceId === destination) !== undefined;
 
-    if (service === null || destination === null) {
+    if (service === null || destination === null || isRemoved) {
       return Result.error(EjectError.InvalidService, () => "Service missing");
     }
 

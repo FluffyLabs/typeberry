@@ -201,7 +201,6 @@ export class LeafNode {
   /**
    * Get the byte length of embedded value.
    *
-   * @remark
    * Note in case this node only contains hash this is going to be 0.
    */
   getValueLength(): number {
@@ -213,7 +212,6 @@ export class LeafNode {
   /**
    * Returns the embedded value.
    *
-   * @remark
    * Note that this is going to be empty for a regular leaf node (i.e. containing a hash).
    */
   getValue(): BytesBlob {
@@ -224,7 +222,6 @@ export class LeafNode {
   /**
    * Returns contained value hash.
    *
-   * @remark
    * Note that for embedded value this is going to be full 0-padded 32 bytes.
    */
   getValueHash(): ValueHash {

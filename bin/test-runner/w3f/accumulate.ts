@@ -16,18 +16,12 @@ import { type ChainSpec, PvmBackend, PvmBackendNames } from "@typeberry/config";
 import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { InMemoryService } from "@typeberry/state";
-import {
-  AutoAccumulate,
-  InMemoryState,
-  NotYetAccumulatedReport,
-  PrivilegedServices,
-  tryAsPerCore,
-} from "@typeberry/state";
+import { InMemoryState, NotYetAccumulatedReport, PrivilegedServices, tryAsPerCore } from "@typeberry/state";
 import { JsonService } from "@typeberry/state-json/accounts.js";
 import { AccumulateOutput } from "@typeberry/transition/accumulate/accumulate-output.js";
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
 import { Compatibility, deepEqual, GpVersion, Result } from "@typeberry/utils";
-import { getChainSpec } from "./spec.js";
+import type { RunOptions } from "../common.js";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -87,6 +81,8 @@ class TestState {
     if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && privileges.register === undefined) {
       throw new Error("Privileges from version 0.7.1 must have `register` field!");
     }
+    const autoAccumulateServices = new Map(privileges.always_acc.map(({ gas, id }) => [id, gas]));
+
     return InMemoryState.partial(chainSpec, {
       timeslot: slot,
       accumulationQueue: tryAsPerEpochBlock(
@@ -106,11 +102,9 @@ class TestState {
         assigners: tryAsPerCore(privileges.assign, chainSpec),
         delegator: privileges.designate,
         registrar: privileges.register ?? tryAsServiceId(2 ** 32 - 1),
-        autoAccumulateServices: privileges.always_acc.map(({ gas, id }) =>
-          AutoAccumulate.create({ gasLimit: gas, service: id }),
-        ),
+        autoAccumulateServices,
       }),
-      services: new Map(accounts.map((service) => [service.serviceId, service])),
+      services: new Map(accounts.map((service) => [service.serviceId, service.clone()])),
     });
   }
 }
@@ -141,16 +135,12 @@ export class AccumulateTest {
   post_state!: TestState;
 }
 
-export async function runAccumulateTest(test: AccumulateTest, path: string) {
-  await runAccumulateInternal(test, path, PvmBackend.BuiltIn);
-}
-
-export async function runAccumulateTestAnanas(test: AccumulateTest, path: string) {
-  await runAccumulateInternal(test, path, PvmBackend.Ananas);
-}
-
-async function runAccumulateInternal(test: AccumulateTest, path: string, pvm: PvmBackend) {
-  const chainSpec = getChainSpec(path);
+export async function runAccumulateTest(
+  test: AccumulateTest,
+  { chainSpec }: RunOptions,
+  variant: "ananas" | "builtin",
+) {
+  const pvm = variant === "ananas" ? PvmBackend.Ananas : PvmBackend.BuiltIn;
   /**
    * entropy has to be moved to input because state is incompatibile -
    * in test state we have: `entropy: EntropyHash;`
@@ -160,7 +150,6 @@ async function runAccumulateInternal(test: AccumulateTest, path: string, pvm: Pv
   const entropy = test.pre_state.entropy;
 
   const post_state = TestState.toAccumulateState(test.post_state, chainSpec);
-
   const state = TestState.toAccumulateState(test.pre_state, chainSpec);
   const accumulate = new Accumulate(chainSpec, await Blake2b.createHasher(), state, pvm);
   const accumulateOutput = new AccumulateOutput();

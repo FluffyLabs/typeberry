@@ -5,6 +5,8 @@ import * as fs from "node:fs/promises";
 import path from "node:path";
 import test, { type TestContext } from "node:test";
 import util from "node:util";
+import { type Decode, Decoder } from "@typeberry/codec";
+import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
@@ -12,70 +14,185 @@ import { Level, Logger } from "@typeberry/logger";
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 export const logger = Logger.new(import.meta.filename, "test-runner");
 
-export function runner<T>(
-  name: string,
-  fromJson: FromJson<T>,
-  run: (test: T, path: string, t: TestContext) => Promise<void>,
-): Runner<unknown> {
-  return { name, fromJson, run } as Runner<unknown>;
+export class RunnerBuilder<T, V> implements Runner<T, V> {
+  public readonly parsers: testFile.Kind<T>[] = [];
+  public readonly variants: V[] = [];
+  public readonly chainSpecs: ChainSpec[] = [];
+
+  constructor(
+    public readonly path: string,
+    public readonly run: RunFunction<T, V>,
+  ) {}
+
+  fromJson(fromJson: FromJson<T>) {
+    this.parsers.push({ kind: testFile.json, fromJson });
+    return this;
+  }
+
+  fromBin(codec: Decode<T>) {
+    this.parsers.push({ kind: testFile.bin, codec });
+    return this;
+  }
+
+  withChainSpecDetection(chainSpec: ChainSpec[]) {
+    this.chainSpecs.push(...chainSpec);
+    return this;
+  }
+
+  withVariants(variants: V[]) {
+    this.variants.push(...variants);
+    return this;
+  }
+
+  build(): Runner<unknown, unknown> {
+    const { path, run, parsers, variants, chainSpecs } = this;
+    if (parsers.length === 0) {
+      throw new Error(`No parsers for ${path}!`);
+    }
+
+    return {
+      path,
+      run,
+      parsers,
+      variants,
+      chainSpecs,
+    } as Runner<unknown, unknown>;
+  }
 }
 
-export type Runner<T> = {
-  name: string;
-  fromJson: FromJson<T>;
-  run: (test: T, path: string, t: TestContext) => Promise<void>;
+/** Test runner builder function. */
+export function runner<T, V = never>(path: string, run: RunFunction<T, V>, chainSpecs?: ChainSpec[]) {
+  const builder = new RunnerBuilder(path, run);
+  if (chainSpecs !== undefined) {
+    return builder.withChainSpecDetection(chainSpecs);
+  }
+  return builder;
+}
+
+export type RunOptions = {
+  test: TestContext;
+  chainSpec: ChainSpec;
+  path: string;
 };
 
+export type RunFunction<T, V> = (test: T, options: RunOptions, variant: V) => Promise<void>;
+
+export type Runner<T, V> = {
+  path: string;
+  parsers: testFile.Kind<T>[];
+  run: RunFunction<T, V>;
+  variants: V[];
+  chainSpecs: ChainSpec[];
+};
+
+export namespace testFile {
+  export const json = ".json";
+  export type json = typeof json;
+  export const bin = ".bin";
+  export type bin = typeof bin;
+
+  export type Kind<T> =
+    | {
+        kind: json;
+        fromJson: FromJson<T>;
+      }
+    | {
+        kind: bin;
+        codec: Decode<T>;
+      };
+
+  export type Content =
+    | {
+        kind: json;
+        content: unknown;
+      }
+    | {
+        kind: bin;
+        content: Uint8Array;
+      };
+}
+
 export async function main(
-  runners: Runner<unknown>[],
+  runners: Runner<unknown, unknown>[],
   initialFiles: string[],
   directoryToScan: string,
   {
+    patterns = [testFile.bin, testFile.json],
     accepted,
     ignored,
   }: {
-    accepted?: string[];
+    patterns?: (testFile.bin | testFile.json)[];
+    accepted?: {
+      [testFile.bin]?: string[];
+      [testFile.json]?: string[];
+    };
     ignored?: string[];
   } = {},
 ) {
   await initWasm();
   const relPath = `${import.meta.dirname}/../..`;
-  const tests: TestAndRunner[] = [];
+  const tests: TestAndRunner<unknown>[] = [];
   const ignoredPatterns = ignored ?? [];
 
   let testFiles = initialFiles;
   if (initialFiles.length === 0) {
     // scan the given directory for fallback tests
-    testFiles = await scanDir(relPath, directoryToScan, ".json");
+    testFiles = await scanDir(relPath, directoryToScan, patterns);
   }
 
   logger.info`Preparing tests for ${testFiles.length} files.`;
-  for (const testFile of testFiles) {
-    const absolutePath = path.resolve(`${relPath}/${testFile}`);
+  for (const testFilePath of testFiles) {
+    const absolutePath = path.resolve(`${relPath}/${testFilePath}`);
 
     if (ignoredPatterns.some((x) => absolutePath.includes(x))) {
-      logger.log`Ignoring: ${absolutePath}`;
-      continue;
+      if (testFiles.length === 1) {
+        logger.info`Executing ignored file, because it was explicitly requested: ${absolutePath}`;
+      } else {
+        logger.log`Ignoring: ${absolutePath}`;
+        continue;
+      }
     }
 
-    const content = await fs.readFile(absolutePath, "utf8");
-    const testJson = JSON.parse(content);
-    const test = prepareTest(runners, testJson, testFile, absolutePath);
+    let testFileContent: testFile.Content;
+    if (absolutePath.endsWith(testFile.bin)) {
+      const content: Buffer = await fs.readFile(absolutePath);
+      testFileContent = {
+        kind: testFile.bin,
+        content: new Uint8Array(content),
+      };
+    } else {
+      const content = await fs.readFile(absolutePath, "utf8");
+      testFileContent = {
+        kind: testFile.json,
+        content: JSON.parse(content),
+      };
+    }
 
-    test.shouldSkip = accepted !== undefined && !accepted.some((x) => absolutePath.includes(x));
+    // we accept a test file when:
+    // 1. No explicit `accepted` is defined
+    const isAccepted =
+      accepted === undefined ||
+      // 2. No explicit `accepted` for the file kind is defined
+      accepted[testFileContent.kind] === undefined ||
+      // 3. If the list is defined, we make sure that the path is on that list.
+      (accepted[testFileContent.kind] ?? []).some((x) => absolutePath.includes(x));
 
-    tests.push(test);
+    const testVariants = prepareTest(runners, testFileContent, testFilePath, absolutePath);
+    for (const test of testVariants) {
+      test.shouldSkip = !isAccepted;
+      tests.push(test);
+    }
   }
 
   // aggregate the tests by their runner.
-  const aggregated = new Map<string, TestAndRunner[]>();
+  const aggregated = new Map<string, TestAndRunner<unknown>[]>();
   for (const test of tests) {
     const sameRunner = aggregated.get(test.runner) ?? [];
     sameRunner.push(test);
     aggregated.set(test.runner, sameRunner);
   }
 
-  const pathToReplace = new RegExp(`/.*${directoryToScan}/`);
+  const pathToReplace = new RegExp(`.*${directoryToScan}/`);
 
   logger.info`Running ${tests.length} tests.`;
   // run in parallel and generate results.
@@ -100,10 +217,11 @@ export async function main(
             const runnersBatch = testRunners.slice(i * batchSize, (i + 1) * batchSize);
             for (const runner of runnersBatch) {
               const fileName = runner.file.replace(pathToReplace, "");
+              const testCase = `${runner.variant}` !== "" ? `[${runner.variant}] ${fileName}` : fileName;
               if (runner.shouldSkip) {
-                test.it.skip(fileName, runner.test);
+                test.it.skip(testCase, runner.test);
               } else {
-                test.it(fileName, { timeout }, runner.test);
+                test.it(testCase, { timeout }, runner.test);
               }
             }
           },
@@ -115,64 +233,128 @@ export async function main(
   return "Tests registered successfully";
 }
 
-async function scanDir(relPath: string, dir: string, filePattern: string): Promise<string[]> {
+async function scanDir(relPath: string, dir: string, filePatterns: string[]): Promise<string[]> {
   try {
-    const files = await fs.readdir(`${relPath}/${dir}`, {
+    const files = await fs.readdir(dir.startsWith("/") ? dir : `${relPath}/${dir}`, {
       recursive: true,
     });
-    return files.filter((f) => f.endsWith(filePattern)).map((f) => `${dir}/${f}`);
+    return files.filter((f) => filePatterns.some((pattern) => f.endsWith(pattern))).map((f) => `${dir}/${f}`);
   } catch (e) {
     logger.error`Unable to find test vectors in ${relPath}/${dir}: ${e}`;
     return [];
   }
 }
 
-type TestAndRunner = {
+type TestAndRunner<V> = {
   shouldSkip: boolean;
   runner: string;
   file: string;
+  variant: V;
   test: (ctx: TestContext) => Promise<void>;
 };
 
-function prepareTest(runners: Runner<unknown>[], testContent: unknown, file: string, path: string): TestAndRunner {
+function prepareTest<T, V>(
+  runners: Runner<T, V>[],
+  testContent: testFile.Content,
+  fileName: string,
+  fullPath: string,
+): TestAndRunner<V>[] {
   const errors: [string, unknown][] = [];
   const handleError = (name: string, e: unknown) => errors.push([name, e]);
+  // NOTE This is not safe, but if the test does not specify
+  // variants it means it doesn't care about them.
+  const noneVariant = "" as V;
+  const matchingRunners: TestAndRunner<V>[] = [];
 
   // Find the first runner that is able to parse the input data.
-  for (const { name, fromJson, run } of runners) {
-    // NOTE: this `if` statement is needed to distinguish between tiny and full chain spec
-    // without this `if` some tests (for example statistics) will be run twice
-    if (!name.split("/").every((pathPart) => path.includes(pathPart))) {
+  for (const { path, parsers, run, variants, chainSpecs } of runners) {
+    // NOTE: this `if` statement is intended to speed up parsing of the test files
+    // instead of trying each and every runner, we make sure that the absolute
+    // path to the file includes each part of our "test path" definition.
+    if (!path.split("/").every((pathPart) => fullPath.includes(pathPart))) {
       continue;
     }
+    const specs = chainSpecs.length > 0 ? chainSpecs : [tinyChainSpec];
+    const matchChainSpecPath = chainSpecs.length > 0;
+    for (const chainSpec of specs) {
+      // if we care about the chain spec, we also need to match the path
+      if (matchChainSpecPath && !fullPath.includes(chainSpec.name)) {
+        continue;
+      }
 
-    try {
-      const parsedTest = parseFromJson(testContent, fromJson);
-      return {
-        shouldSkip: false,
-        runner: name,
-        file,
-        test: (ctx) => {
-          logger.log`[${name}] running test from ${file}`;
-          logger.trace` ${util.inspect(parsedTest)}`;
-          return run(parsedTest, path, ctx);
-        },
-      };
-    } catch (e) {
-      handleError(name, e);
+      for (const parser of parsers) {
+        if (parser.kind === testFile.bin && testContent.kind === testFile.bin) {
+          try {
+            const parsedTest = Decoder.decodeObject(parser.codec, testContent.content, chainSpec);
+            matchingRunners.push(...createTestDefinitions(path, run, variants, parsedTest, chainSpec));
+          } catch (e) {
+            handleError(path, e);
+          }
+        }
+
+        if (parser.kind === testFile.json && testContent.kind === testFile.json) {
+          try {
+            const parsedTest = parseFromJson(testContent.content, parser.fromJson);
+            matchingRunners.push(...createTestDefinitions(path, run, variants, parsedTest, chainSpec));
+          } catch (e) {
+            handleError(path, e);
+          }
+        }
+      }
     }
   }
 
-  return {
-    shouldSkip: false,
-    runner: "Invalid",
-    file,
-    test: () => {
-      for (const [runner, error] of errors) {
-        logger.error`[${runner}] Parsing error: ${error}`;
-      }
+  if (matchingRunners.length > 0) {
+    return matchingRunners;
+  }
 
-      fail(`Unrecognized test case in ${file}`);
+  return [
+    {
+      shouldSkip: false,
+      runner: "Invalid",
+      file: fileName,
+      variant: noneVariant,
+      test: () => {
+        for (const [runner, error] of errors) {
+          logger.error`[${runner}] Parsing error: ${error}`;
+        }
+
+        fail(`Unrecognized test case in ${fileName}`);
+      },
     },
-  };
+  ];
+
+  function createTestDefinitions(
+    path: string,
+    run: RunFunction<T, V>,
+    variants: V[],
+    parsedTest: T,
+    chainSpec: ChainSpec,
+  ) {
+    const results: TestAndRunner<V>[] = [];
+    const possibleVariants: V[] = variants.length === 0 ? [noneVariant] : variants;
+
+    for (const variant of possibleVariants) {
+      results.push({
+        shouldSkip: false,
+        runner: path,
+        file: fileName,
+        variant,
+        test: (ctx) => {
+          logger.log`[${path}:${variant}] running test from ${fileName} (spec: ${chainSpec.name})`;
+          logger.trace` ${util.inspect(parsedTest, true, 2)}`;
+          return run(
+            parsedTest,
+            {
+              test: ctx,
+              path: fullPath,
+              chainSpec,
+            },
+            variant,
+          );
+        },
+      });
+    }
+    return results;
+  }
 }

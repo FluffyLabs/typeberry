@@ -1,5 +1,5 @@
 /**
- * @fileoverview `Opaque<Type, Token>` constructs a unique type which is a subset of Type with a
+ * `Opaque<Type, Token>` constructs a unique type which is a subset of Type with a
  * specified unique token Token. It means that base type cannot be assigned to unique type by accident.
  * Good examples of opaque types include:
  * - JWTs or other tokens - these are special kinds of string used for authorization purposes.
@@ -21,8 +21,7 @@ type Uninstantiable = void & { __brand: "uninstantiable" };
 
 type StringLiteral<Type> = Type extends string ? (string extends Type ? never : Type) : never;
 
-// TODO [MaSi]: it should be "unique symbol" but in debugger adapter we have opaque types from different packages and it is problematic.
-declare const __OPAQUE_TYPE__ = "__INTERNAL_OPAQUE_ID__";
+export declare const __OPAQUE_TYPE__: unique symbol;
 
 export type WithOpaque<Token extends string> = {
   readonly [__OPAQUE_TYPE__]: Token;

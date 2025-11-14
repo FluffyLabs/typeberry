@@ -2,7 +2,10 @@ import { logger, main } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
 main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_071", {
-  accepted: ["traces", "codec", "stf"],
+  patterns: [".json"],
+  accepted: {
+    ".json": ["traces", "codec", "stf"],
+  },
   ignored: ["genesis.json"],
 })
   .then((r) => logger.log`${r}`)

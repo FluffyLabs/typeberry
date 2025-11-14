@@ -50,6 +50,7 @@ Contains JAM (Join-Accumulate Machine) specific packages:
 - **state** - JAM state management
 - **state-json** - JSON serialization for JAM state
 - **state-merkleization** - State merkleization utilities
+- **state-vectors** - State transition vectors
 - **transition** - State transition logic
 
 ### `configs/`
