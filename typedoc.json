@@ -1,0 +1,17 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "plugin": ["typedoc-github-theme"],
+  "includeVersion": true,
+  "out": "./web/docs",
+  "name": "Typeberry by Fluffy Labs",
+  "searchInComments": true,
+  "searchInDocuments": true,
+  "projectDocuments": [
+    "./README.md",
+    "./bin/convert/README.md",
+    "./bin/jam/README.md",
+    "./bin/lib/README.md",
+    "./bin/rpc/README.md",
+    "./packages/README.md"
+  ]
+}

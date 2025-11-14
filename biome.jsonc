@@ -3,7 +3,6 @@
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
-    "includes": ["**"],
     "attributePosition": "auto",
     "indentStyle": "space",
     "indentWidth": 2,
@@ -64,7 +63,8 @@
       "!**/dist/**/*",
       "!**/benchmarks/**/output/**/*",
       "!**/test-vectors/**/*",
-      "!**/packages/misc/builder/pkg.ts"
+      "!**/packages/misc/builder/pkg.ts",
+      "!**/web/docs"
     ]
   }
 }

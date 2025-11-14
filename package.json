@@ -70,6 +70,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "docs": "npx typedoc",
     "qa": "biome ci && eslint .",
     "qa-fix": "npm run format; npm run lint",
     "format": "biome format --write",
@@ -92,10 +93,14 @@
     "eslint": "^9.39.1",
     "eslint-plugin-import": "^2.32.0",
     "tsx": "^4.20.6",
+    "typedoc-github-theme": "^0.3.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.4"
   },
   "dependencies": {
     "rollup": "^4.53.2"
+  },
+  "exports": {
+    "lib": "./bin/lib/index.ts"
   }
 }

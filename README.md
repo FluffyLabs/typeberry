@@ -8,6 +8,11 @@ Typeberry is a TypeScript implementation of [JAM protocol](https://graypaper.com
 PRs unless the contributor waives any claims to the prize and copy rights for
 the submitted code. By creating the PR you accept this requirement.**
 
+## Links
+
+- [Documentation](https://fluffylabs.dev/typeberry)
+- [Performance Charts](https://typeberry.fluffylabs.dev)
+
 ## Implementation status
 
 Gray Paper compliance can be controlled via `GP_VERSION` environment variable.
