@@ -20,14 +20,7 @@ const MEMO_START_REG = 10; // `o`
  * https://graypaper.fluffylabs.dev/#/ab2cdbd/373f00373f00?v=0.7.2
  */
 export class Transfer implements HostCallHandler {
-  index = tryAsHostCallIndex(
-    Compatibility.selectIfGreaterOrEqual({
-      fallback: 11,
-      versions: {
-        [GpVersion.V0_6_7]: 20,
-      },
-    }),
-  );
+  index = tryAsHostCallIndex(20);
   /**
    * `g = 10 + t`
    *

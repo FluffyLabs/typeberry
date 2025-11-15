@@ -17,7 +17,6 @@ the submitted code. By creating the PR you accept this requirement.**
 
 Gray Paper compliance can be controlled via `GP_VERSION` environment variable.
 
-- [x] 0.6.7
 - [x] 0.7.0
 - [x] 0.7.1
 - [x] 0.7.2

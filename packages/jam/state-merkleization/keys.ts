@@ -4,11 +4,9 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU32, type U32, u32AsLeBytes } from "@typeberry/numbers";
 import type { StorageKey } from "@typeberry/state";
-import { Compatibility, GpVersion, type Opaque } from "@typeberry/utils";
+import type { Opaque } from "@typeberry/utils";
 
 export type StateKey = Opaque<OpaqueHash, "stateKey">;
-
-const U32_BYTES = 4;
 
 /** Numeric mapping for state entries. */
 export enum StateKeyIdx {
@@ -39,7 +37,7 @@ export enum StateKeyIdx {
   Chi = 12,
   /** Statistics */
   Pi = 13,
-  /** Work Packages ready to be accumulated. NOTE: Pre 0.7.0 was called `Theta` */
+  /** Work Packages ready to be accumulated. */
   Omega = 14,
   /** Work Packages recently accumulated */
   Xi = 15,
@@ -71,25 +69,11 @@ export namespace stateKeys {
 
   /** https://graypaper.fluffylabs.dev/#/1c979cb/3bba033bba03?v=0.7.1 */
   export function serviceStorage(blake2b: Blake2b, serviceId: ServiceId, key: StorageKey): StateKey {
-    if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
-      const out = Bytes.zero(HASH_SIZE);
-      out.raw.set(u32AsLeBytes(tryAsU32(2 ** 32 - 1)), 0);
-      out.raw.set(key.raw.subarray(0, HASH_SIZE - U32_BYTES), U32_BYTES);
-      return legacyServiceNested(serviceId, out);
-    }
-
     return serviceNested(blake2b, serviceId, tryAsU32(2 ** 32 - 1), key);
   }
 
   /** https://graypaper.fluffylabs.dev/#/1c979cb/3bd7033bd703?v=0.7.1 */
   export function servicePreimage(blake2b: Blake2b, serviceId: ServiceId, hash: PreimageHash): StateKey {
-    if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
-      const out = Bytes.zero(HASH_SIZE);
-      out.raw.set(u32AsLeBytes(tryAsU32(2 ** 32 - 2)), 0);
-      out.raw.set(hash.raw.subarray(1, HASH_SIZE - U32_BYTES + 1), U32_BYTES);
-      return legacyServiceNested(serviceId, out);
-    }
-
     return serviceNested(blake2b, serviceId, tryAsU32(2 ** 32 - 2), hash);
   }
 
@@ -100,14 +84,6 @@ export namespace stateKeys {
     hash: PreimageHash,
     preimageLength: U32,
   ): StateKey {
-    if (Compatibility.isLessThan(GpVersion.V0_6_7)) {
-      const doubleHash = blake2b.hashBytes(hash);
-      const out = Bytes.zero(HASH_SIZE);
-      out.raw.set(u32AsLeBytes(preimageLength), 0);
-      out.raw.set(doubleHash.raw.subarray(2, HASH_SIZE - U32_BYTES + 2), U32_BYTES);
-      return legacyServiceNested(serviceId, out);
-    }
-
     return serviceNested(blake2b, serviceId, preimageLength, hash);
   }
 

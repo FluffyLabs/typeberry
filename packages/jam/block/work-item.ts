@@ -3,7 +3,7 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import { asKnownSize, type KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { sumU32, type U16, type U32 } from "@typeberry/numbers";
-import { Compatibility, GpVersion, type Opaque, WithDebug } from "@typeberry/utils";
+import { type Opaque, WithDebug } from "@typeberry/utils";
 import { codecKnownSizeArray } from "./codec.js";
 import type { ServiceGas, ServiceId } from "./common.js";
 import type { CodeHash } from "./hash.js";
@@ -110,35 +110,20 @@ export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
  * https://graypaper.fluffylabs.dev/#/579bd12/198b00199600
  */
 export class WorkItem extends WithDebug {
-  static Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
-    ? codec.Class(WorkItem, {
-        service: codec.u32.asOpaque<ServiceId>(),
-        codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
-        refineGasLimit: codec.u64.asOpaque<ServiceGas>(),
-        accumulateGasLimit: codec.u64.asOpaque<ServiceGas>(),
-        exportCount: codec.u16,
-        payload: codec.blob,
-        importSegments: codecKnownSizeArray(ImportSpec.Codec, {
-          minLength: 0,
-          maxLength: MAX_NUMBER_OF_SEGMENTS,
-          typicalLength: MAX_NUMBER_OF_SEGMENTS,
-        }),
-        extrinsic: codec.sequenceVarLen(WorkItemExtrinsicSpec.Codec),
-      })
-    : codec.Class(WorkItem, {
-        service: codec.u32.asOpaque<ServiceId>(),
-        codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
-        payload: codec.blob,
-        refineGasLimit: codec.u64.asOpaque<ServiceGas>(),
-        accumulateGasLimit: codec.u64.asOpaque<ServiceGas>(),
-        importSegments: codecKnownSizeArray(ImportSpec.Codec, {
-          minLength: 0,
-          maxLength: MAX_NUMBER_OF_SEGMENTS,
-          typicalLength: MAX_NUMBER_OF_SEGMENTS,
-        }),
-        extrinsic: codec.sequenceVarLen(WorkItemExtrinsicSpec.Codec),
-        exportCount: codec.u16,
-      });
+  static Codec = codec.Class(WorkItem, {
+    service: codec.u32.asOpaque<ServiceId>(),
+    codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
+    refineGasLimit: codec.u64.asOpaque<ServiceGas>(),
+    accumulateGasLimit: codec.u64.asOpaque<ServiceGas>(),
+    exportCount: codec.u16,
+    payload: codec.blob,
+    importSegments: codecKnownSizeArray(ImportSpec.Codec, {
+      minLength: 0,
+      maxLength: MAX_NUMBER_OF_SEGMENTS,
+      typicalLength: MAX_NUMBER_OF_SEGMENTS,
+    }),
+    extrinsic: codec.sequenceVarLen(WorkItemExtrinsicSpec.Codec),
+  });
 
   static create({
     service,
