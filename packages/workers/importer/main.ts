@@ -13,9 +13,12 @@ const logger = Logger.new(import.meta.filename, "importer");
 const keccakHasher = keccak.KeccakHasher.create();
 const blake2b = Blake2b.createHasher();
 
-type Config = WorkerConfig<ImporterConfig, BlocksDb, StatesDb<SerializedState<LeafDb>>>;
+export type Config = WorkerConfig<ImporterConfig, BlocksDb, StatesDb<SerializedState<LeafDb>>>;
 
-export async function createImporter(config: Config) {
+export async function createImporter(config: Config): Promise<{
+  importer: Importer,
+  db: ReturnType<Config['openDatabase']>
+}> {
   const chainSpec = config.chainSpec;
   const db = config.openDatabase({ readonly: false });
   const interpreter = config.workerParams.pvm;

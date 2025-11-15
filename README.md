@@ -101,6 +101,9 @@ $ npm start -w @typeberry/rpc
 ### Additional tooling
 
 - [@typeberry/convert](bin/convert/README.md) - convert common JAM formats
+- [@typeberry/jam](bin/jam/README.md) - main typeberry/jam node binary
+- [@typeberry/lib](bin/lib/README.md) - typeberry-as-library. All utilities exposed as ESM, browser-compatible
+    library.
 - [JAM search](https://github.com/fluffylabs/jam-search) - search across all public JAM-related channels
 - [State Viewer](https://github.com/fluffylabs/state-viewer) - load & inspect state of test vectors
 - [PVM Debugger](https://github.com/fluffylabs/pvm-debugger) - load & inspect a PVM program

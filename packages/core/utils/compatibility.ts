@@ -1,3 +1,5 @@
+import {env} from "./env.js";
+
 export enum GpVersion {
   V0_6_7 = "0.6.7",
   V0_7_0 = "0.7.0",
@@ -15,7 +17,6 @@ const ALL_VERSIONS_IN_ORDER = [GpVersion.V0_6_7, GpVersion.V0_7_0, GpVersion.V0_
 export const DEFAULT_SUITE = TestSuite.W3F_DAVXY;
 export const DEFAULT_VERSION = GpVersion.V0_7_2;
 
-const env = typeof process === "undefined" ? {} : process.env;
 export let CURRENT_VERSION = parseCurrentVersion(env.GP_VERSION) ?? DEFAULT_VERSION;
 export let CURRENT_SUITE = parseCurrentSuite(env.TEST_SUITE) ?? DEFAULT_SUITE;
 

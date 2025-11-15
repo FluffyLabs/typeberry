@@ -28,4 +28,6 @@ export * as state_merkleization from "@typeberry/state-merkleization";
 export * as state_vectors from "@typeberry/state-vectors";
 export * as transition from "@typeberry/transition";
 export * as trie from "@typeberry/trie";
+export * as typeberry from "@typeberry/importer";
 export * as utils from "@typeberry/utils";
+export * as workers from "@typeberry/workers-api";
