@@ -6,12 +6,7 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-davxy_071", {
   accepted: {
     ".json": ["traces", "codec", "stf"],
   },
-  ignored: [
-    "genesis.json",
-
-    // NOTE: Running parallel accumulation should fix this test.
-    "fuzzy/00000037", // incorrect onTransferMinGas retrieved from Info HC of another service
-  ],
+  ignored: ["genesis.json"],
 })
   .then((r) => logger.log`${r}`)
   .catch((e) => {

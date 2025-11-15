@@ -51,10 +51,10 @@ export type ClassConstructor<T> = {
 export type Codec<T> = Encode<T> & Decode<T>;
 
 /** A codec descriptor with extra view. */
-export type CodecWithView<T, V> = Codec<T> & {
+export interface CodecWithView<T, V> extends Codec<T> {
   /** encoded data view codec. */
   View: Codec<V>;
-};
+}
 
 /**
  * Type descriptor definition.

@@ -27,3 +27,4 @@ jobs:
     - run: GP_VERSION=0.7.0 npm test
     - run: GP_VERSION=0.7.1 npm test
     - run: GP_VERSION=0.7.2 npm test
+    - run: npm run docs

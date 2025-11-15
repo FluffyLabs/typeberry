@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/logger",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "A basic logger for typeberry.",
   "main": "index.ts",
   "scripts": {

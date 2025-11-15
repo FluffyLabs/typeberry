@@ -28,10 +28,9 @@ import { TransitionHasher } from "./hasher.js";
 describe("TransitionHasher", () => {
   describe("extrinsic", () => {
     async function prepareHasher() {
-      const spec = tinyChainSpec;
       const keccakHasher = await keccak.KeccakHasher.create();
       const blake2b = await Blake2b.createHasher();
-      return new TransitionHasher(spec, keccakHasher, blake2b);
+      return new TransitionHasher(keccakHasher, blake2b);
     }
 
     function prepareExtrinsicView(partialExtrinsic: Partial<Extrinsic>) {

@@ -27,7 +27,6 @@ import {
   accumulationOutputComparator,
   hashComparator,
   type NotYetAccumulatedReport,
-  PrivilegedServices,
   ServiceAccountInfo,
   type ServicesUpdate,
   tryAsPerCore,
@@ -46,6 +45,10 @@ import {
   GAS_TO_INVOKE_WORK_REPORT,
 } from "./accumulate-state.js";
 import { generateNextServiceId, getWorkPackageHashes } from "./accumulate-utils.js";
+import {
+  mergePerallelAccumulationResults,
+  type ParallelAccumulationResult,
+} from "./accumulation-result-merge-utils.js";
 import type { Operand } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
 
@@ -53,17 +56,14 @@ export const ACCUMULATION_ERROR = "duplicate service created";
 export type ACCUMULATION_ERROR = typeof ACCUMULATION_ERROR;
 
 type InvocationResult = {
-  stateUpdate: AccumulationStateUpdate | null;
+  stateUpdate: AccumulationStateUpdate;
   consumedGas: ServiceGas;
 };
 
-type ParallelAccumulationResult = {
+type SequentialAccumulationResult = {
+  accumulatedReports: U32;
   state: AccumulationStateUpdate;
   gasCost: ServiceGas;
-};
-
-type SequentialAccumulationResult = ParallelAccumulationResult & {
-  accumulatedReports: U32;
 };
 
 enum PvmInvocationError {
@@ -248,7 +248,7 @@ export class Accumulate {
 
         if (newBalance.overflow) {
           logger.log`Accumulation failed because of overflowing balance ${serviceId}.`;
-          return { stateUpdate: null, consumedGas: 0n };
+          return { stateUpdate: null, consumedGas: tryAsServiceGas(0n) };
         }
 
         const newInfo = ServiceAccountInfo.create({ ...serviceInfo, balance: newBalance.value });
@@ -271,7 +271,7 @@ export class Accumulate {
       logger.log`Accumulation failed for ${serviceId}.`;
       // even though accumulation failed, we still need to make sure that
       // incoming transfers updated the balance, hence we pass state update here
-      return { stateUpdate: updatedState.stateUpdate, consumedGas: 0n };
+      return { stateUpdate: updatedState.stateUpdate, consumedGas: tryAsServiceGas(0n) };
     }
 
     logger.log`Accumulation successful for ${serviceId}. Consumed: ${result.ok.consumedGas}`;
@@ -295,6 +295,7 @@ export class Accumulate {
     stateUpdate: AccumulationStateUpdate,
     autoAccumulateServices: Map<ServiceId, ServiceGas>,
     yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>>,
+    transfers: PendingTransfer[],
   ): Promise<SequentialAccumulationResult> {
     const i = this.findReportCutoffIndex(gasLimit, reports);
 
@@ -310,12 +311,16 @@ export class Accumulate {
     const accumulateData = new AccumulateData(reportsToAccumulateInParallel, [], autoAccumulateServices);
     const reportsToAccumulateSequentially = reports.subview(i);
 
+    const results = await this.accumulateInParallel(accumulateData, slot, entropy, stateUpdate);
+
+    this.updateStatistics(results, statistics, accumulateData);
+    this.updateYieldedRoots(results, yieldedRoots);
     const {
-      gasCost,
       state: stateAfterParallelAcc,
-      ...rest
-    } = await this.accumulateInParallel(accumulateData, slot, entropy, statistics, stateUpdate, yieldedRoots);
-    assertEmpty(rest);
+      totalGasCost,
+      transfers: newTransfers,
+    } = mergePerallelAccumulationResults(this.chainSpec, this.state, stateUpdate, results);
+    transfers.push(...newTransfers);
 
     // NOTE [ToDr] recursive invocation
     const {
@@ -324,7 +329,7 @@ export class Accumulate {
       state,
       ...seqRest
     } = await this.accumulateSequentiallyLegacy(
-      tryAsServiceGas(gasLimit - gasCost),
+      tryAsServiceGas(gasLimit - totalGasCost),
       reportsToAccumulateSequentially,
       slot,
       entropy,
@@ -332,12 +337,13 @@ export class Accumulate {
       stateAfterParallelAcc,
       new Map(),
       yieldedRoots,
+      transfers,
     );
     assertEmpty(seqRest);
 
     return {
       accumulatedReports: tryAsU32(i + accumulatedReports),
-      gasCost: tryAsServiceGas(gasCost + seqGasCost),
+      gasCost: tryAsServiceGas(totalGasCost + seqGasCost),
       state,
     };
   }
@@ -377,21 +383,23 @@ export class Accumulate {
     const accumulateData = new AccumulateData(reportsToAccumulateInParallel, transfers, autoAccumulateServices);
     const reportsToAccumulateSequentially = reports.subview(i);
 
+    const results = await this.accumulateInParallel(accumulateData, slot, entropy, stateUpdate);
+
+    this.updateStatistics(results, statistics, accumulateData);
+    this.updateYieldedRoots(results, yieldedRoots);
     const {
-      gasCost,
       state: stateAfterParallelAcc,
-      ...rest
-    } = await this.accumulateInParallel(accumulateData, slot, entropy, statistics, stateUpdate, yieldedRoots);
-    const newTransfers = stateAfterParallelAcc.takeTransfers();
-    assertEmpty(rest);
+      totalGasCost,
+      transfers: newTransfers,
+    } = mergePerallelAccumulationResults(this.chainSpec, this.state, stateUpdate, results);
 
     /**
      * Gas limit from transfers is added to the next round of accumulation
      *
      * https://graypaper.fluffylabs.dev/#/ab2cdbd/172b02172b02?v=0.7.2
      */
-    const transfersGas = transfers.map((t) => t.gas);
-    const { value: newGasLimit, overflow } = sumU64(tryAsServiceGas(gasLimit - gasCost), ...transfersGas);
+    const transfersGas = newTransfers.map((t) => t.gas);
+    const { value: newGasLimit, overflow } = sumU64(tryAsServiceGas(gasLimit - totalGasCost), ...transfersGas);
     // NOTE [ToDr] recursive invocation
     const {
       accumulatedReports,
@@ -413,50 +421,17 @@ export class Accumulate {
 
     return {
       accumulatedReports: tryAsU32(i + accumulatedReports),
-      gasCost: tryAsServiceGas(gasCost + seqGasCost),
+      gasCost: tryAsServiceGas(totalGasCost + seqGasCost),
       state,
     };
   }
 
-  /**
-   * The parallelized accumulation function ∆∗ which,
-   * with the help of the single-service accumulation function ∆1,
-   * transforms an initial state-context, together with a sequence of work-reports
-   * and a dictionary of privileged always-accumulate services,
-   * into a tuple of the total gas utilized in pvm execution u, a posterior state-context
-   * and the resultant accumulation-output pairings b and deferred-transfers.
-   *
-   * https://graypaper.fluffylabs.dev/#/ab2cdbd/174602174602?v=0.7.2
-   */
-  private async accumulateInParallel(
-    accumulateData: AccumulateData,
-    slot: TimeSlot,
-    entropy: EntropyHash,
+  private updateStatistics(
+    results: Map<ServiceId, { consumedGas: ServiceGas }>,
     statistics: Map<ServiceId, CountAndGasUsed>,
-    inputStateUpdate: AccumulationStateUpdate,
-    yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>>,
-  ): Promise<ParallelAccumulationResult> {
-    const serviceIds = accumulateData.getServiceIds();
-
-    let gasCost: ServiceGas = tryAsServiceGas(0);
-    let currentState = inputStateUpdate;
-    const currentManager = (inputStateUpdate.privilegedServices ?? this.state.privilegedServices).manager;
-
-    for (const serviceId of serviceIds) {
-      const checkpoint = AccumulationStateUpdate.copyFrom(currentState);
-      const operands = accumulateData.getOperands(serviceId);
-      const { consumedGas, stateUpdate } = await this.accumulateSingleService(
-        serviceId,
-        accumulateData.getTransfers(serviceId),
-        operands,
-        accumulateData.getGasLimit(serviceId),
-        slot,
-        entropy,
-        currentState,
-      );
-
-      gasCost = tryAsServiceGas(gasCost + consumedGas);
-
+    accumulateData: AccumulateData,
+  ) {
+    for (const [serviceId, { consumedGas }] of results.entries()) {
       // https://graypaper.fluffylabs.dev/#/ab2cdbd/193b05193b05?v=0.7.2
       const serviceStatistics = statistics.get(serviceId) ?? { count: tryAsU32(0), gasUsed: tryAsServiceGas(0) };
       const count = accumulateData.getReportsLength(serviceId);
@@ -487,9 +462,19 @@ export class Accumulate {
         serviceStatistics.gasUsed = tryAsServiceGas(serviceStatistics.gasUsed + consumedGas);
         statistics.set(serviceId, serviceStatistics);
       }
-      currentState = stateUpdate === null ? checkpoint : stateUpdate;
+    }
+  }
 
-      const yieldedRoot = currentState.takeYieldedRoot();
+  private updateYieldedRoots(
+    results: Map<ServiceId, { stateUpdate: Pick<AccumulationStateUpdate, "yieldedRoot"> }>,
+    yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>>,
+  ) {
+    for (const [
+      serviceId,
+      {
+        stateUpdate: { yieldedRoot },
+      },
+    ] of results.entries()) {
       if (yieldedRoot !== null) {
         const rootsSet = yieldedRoots.get(serviceId);
         if (rootsSet === undefined) {
@@ -499,37 +484,58 @@ export class Accumulate {
           rootsSet.insert(yieldedRoot);
         }
       }
+    }
+  }
 
-      if (Compatibility.is(GpVersion.V0_7_0) && serviceId === currentManager) {
-        const newV = currentState.privilegedServices?.delegator;
-        if (currentState.privilegedServices !== null && newV !== undefined && serviceIds.includes(newV)) {
-          logger.info`Entering completely incorrect code that probably reverts delegator change. This is valid in 0.7.0 only and incorrect in 0.7.1+`;
-          // Since serviceIds already contains newV, this service gets accumulated twice.
-          // To avoid double-counting, we skip stats and gas cost tracking here.
-          // We need this accumulation to get the correct `delegator`
-          const { stateUpdate } = await this.accumulateSingleService(
-            newV,
-            [],
-            accumulateData.getOperands(newV),
-            accumulateData.getGasLimit(newV),
-            slot,
-            entropy,
-            checkpoint,
-          );
+  /**
+   * The parallelized accumulation function ∆∗ which,
+   * with the help of the single-service accumulation function ∆1,
+   * transforms an initial state-context, together with a sequence of work-reports
+   * and a dictionary of privileged always-accumulate services,
+   * into a tuple of the total gas utilized in pvm execution u, a posterior state-context
+   * and the resultant accumulation-output pairings b and deferred-transfers.
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/174602174602?v=0.7.2
+   */
+  private async accumulateInParallel(
+    accumulateData: AccumulateData,
+    slot: TimeSlot,
+    entropy: EntropyHash,
+    inputStateUpdate: AccumulationStateUpdate,
+  ): Promise<ParallelAccumulationResult> {
+    const serviceIds = accumulateData.getServiceIds();
+    const serviceIdsLength = serviceIds.length;
+    const resultPromises: Promise<
+      readonly [ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }]
+    >[] = new Array(serviceIdsLength);
 
-          const correctV = stateUpdate?.privilegedServices?.delegator ?? this.state.privilegedServices.delegator;
-          currentState.privilegedServices = PrivilegedServices.create({
-            ...currentState.privilegedServices,
-            delegator: correctV,
-          });
-        }
-      }
+    for (let serviceIndex = 0; serviceIndex < serviceIdsLength; serviceIndex += 1) {
+      const serviceId = serviceIds[serviceIndex];
+      const checkpoint = AccumulationStateUpdate.copyFrom(inputStateUpdate);
+      const promise = this.accumulateSingleService(
+        serviceId,
+        accumulateData.getTransfers(serviceId),
+        accumulateData.getOperands(serviceId),
+        accumulateData.getGasLimit(serviceId),
+        slot,
+        entropy,
+        AccumulationStateUpdate.copyFrom(inputStateUpdate),
+      ).then(({ consumedGas, stateUpdate }) => {
+        const resultEntry: readonly [ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }] = [
+          serviceId,
+          {
+            consumedGas,
+            stateUpdate: stateUpdate === null ? checkpoint : stateUpdate,
+          },
+        ];
+
+        return resultEntry;
+      });
+
+      resultPromises[serviceIndex] = promise;
     }
 
-    return {
-      state: currentState,
-      gasCost,
-    };
+    return Promise.all(resultPromises).then((results) => new Map(results));
   }
 
   /**
@@ -620,6 +626,7 @@ export class Accumulate {
 
   async transition({ reports, slot, entropy }: AccumulateInput): Promise<Result<AccumulateResult, ACCUMULATION_ERROR>> {
     const statistics: Map<ServiceId, CountAndGasUsed> = new Map();
+    const legacyTransfers: PendingTransfer[] = [];
     const yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>> = new Map();
     const accumulateQueue = new AccumulateQueue(this.chainSpec, this.state);
     const toAccumulateImmediately = accumulateQueue.getWorkReportsToAccumulateImmediately(reports);
@@ -656,6 +663,7 @@ export class Accumulate {
           AccumulationStateUpdate.empty(),
           autoAccumulateServices,
           yieldedRoots,
+          legacyTransfers,
         );
     // we can safely ignore top-level gas cost from accSequentially.
     const _gasCost = gasCost;
@@ -673,7 +681,8 @@ export class Accumulate {
     } = state;
     assertEmpty(stateUpdateRest);
 
-    // yielded root is retrieved after each pvm invocation so we can ignore it here
+    // transfers and yielded root are retrieved after each pvm invocation so we can ignore it here
+    const _transfers = transfers;
     const _yieldedRoot = yieldedRoot;
 
     if (this.hasDuplicatedServiceIdCreated(services.created)) {
@@ -715,7 +724,7 @@ export class Accumulate {
         ...authQueues,
       },
       accumulationStatistics: statistics,
-      pendingTransfers: transfers,
+      pendingTransfers: legacyTransfers,
       accumulationOutputLog: accumulationOutput,
     });
   }

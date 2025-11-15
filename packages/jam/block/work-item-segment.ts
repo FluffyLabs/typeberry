@@ -3,10 +3,10 @@ import { tryAsU16, type U16 } from "@typeberry/numbers";
 import { asOpaqueType, type Opaque } from "@typeberry/utils";
 
 /** `W_E`: The basic size of erasure-coded pieces in octets. See equation H.6. */
-const W_E = 684;
+export const W_E = 684;
 
 /** `W_S`: The size of an exported segment in erasure-coded pieces in octets. */
-const W_S = 6;
+export const W_S = 6;
 
 /** `W_M`: The maximum number of entries in a work-package manifest. */
 export const MAX_NUMBER_OF_SEGMENTS = 2048; // 2**11

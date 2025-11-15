@@ -32,7 +32,7 @@ export class AccumulateData {
   constructor(
     reports: ArrayView<WorkReport>,
     transfers: PendingTransfer[],
-    private readonly autoAccumulateServicesByServiceId: Map<ServiceId, ServiceGas>,
+    autoAccumulateServicesByServiceId: Map<ServiceId, ServiceGas>,
   ) {
     const serviceIdsFromAutoAccumulate = new Set(autoAccumulateServicesByServiceId.keys());
     const {

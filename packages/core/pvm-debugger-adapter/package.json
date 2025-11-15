@@ -1,19 +1,11 @@
 {
   "name": "@typeberry/pvm-debugger-adapter",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "A package that adjust PVM interface to be consumed by PVM debugger",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/block": "*",
-    "@typeberry/bytes": "*",
-    "@typeberry/hash": "*",
-    "@typeberry/jam-host-calls": "*",
-    "@typeberry/numbers": "*",
-    "@typeberry/pvm-host-calls": "*",
     "@typeberry/pvm-interface": "*",
     "@typeberry/pvm-interpreter": "*",
-    "@typeberry/pvm-program": "*",
-    "@typeberry/pvm-spi-decoder": "*",
     "@typeberry/utils": "*"
   },
   "scripts": {

@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/tci",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Typeberry Common Interface - Compatibility wrapper binary with flags understood by all JAM nodes",
   "main": "index.ts",
   "bin": "./index.ts",
