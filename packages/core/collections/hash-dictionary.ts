@@ -11,17 +11,20 @@ export interface ImmutableHashDictionary<K extends OpaqueHash, V> extends Iterab
   get(key: K): V | undefined;
 
   /** Iterator over keys of the dictionary. */
-  keys(): Generator<K>;
+  keys(): Iterator<K>;
 
   /** Iterator over values of the dictionary. */
-  values(): Generator<V>;
+  values(): Iterator<V>;
 
   /** Returns an array of the map's values, sorted by their corresponding keys */
   toSortedArray(compare: Comparator<K>): V[];
 }
-
-/** A map which uses hashes as keys. */
-export class HashDictionary<K extends OpaqueHash, V> implements ImmutableHashDictionary<K, V> {
+/**
+ * A map which uses hashes as keys.
+ *
+ * @deprecated
+ * */
+export class StringHashDictionary<K extends OpaqueHash, V> implements ImmutableHashDictionary<K, V> {
   // TODO [ToDr] [crit] We can't use `TrieHash` directly in the map,
   // because of the way it's being compared. Hence having `string` here.
   // This has to be benchmarked and re-written to a custom map most likely.
@@ -98,5 +101,21 @@ export class HashDictionary<K extends OpaqueHash, V> implements ImmutableHashDic
    */
   delete(key: K) {
     return this.map.delete(key.toString());
+  }
+}
+
+import { BlobDictionary } from "./blob-dictionary.js";
+
+/**
+ * A value that indicates when `BlobDictionary` transforms Array nodes into Map nodes.
+ * In practice, it doesn't matter much because, in real life, arrays in this structure usually have a length close to 1.
+ */
+const BLOB_DICTIONARY_THRESHOLD = 5;
+export class HashDictionary<K extends OpaqueHash, V>
+  extends BlobDictionary<K, V>
+  implements ImmutableHashDictionary<K, V>
+{
+  constructor() {
+    super(BLOB_DICTIONARY_THRESHOLD);
   }
 }
