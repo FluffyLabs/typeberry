@@ -2,6 +2,9 @@ export function isBrowser() {
   return typeof process === "undefined" || typeof process.abort === "undefined";
 }
 
+/** Get current time in milliseconds (works in both Node and browser). */
+export const now = isBrowser() ? () => performance.now() : () => Number(process.hrtime.bigint() / 1_000_000n);
+
 /**
  * A function to perform runtime assertions.
  *
@@ -109,19 +112,10 @@ export function inspect<T>(val: T): string {
 }
 
 /** Utility function to measure time taken for some operation [ms]. */
-export const measure = isBrowser()
-  ? (id: string) => {
-      const start = performance.now();
-      return () => `${id} took ${performance.now() - start}ms`;
-    }
-  : (id: string) => {
-      const start = process.hrtime.bigint();
-      return () => {
-        const tookNano = process.hrtime.bigint() - start;
-        const tookMilli = Number(tookNano / 1_000_000n).toFixed(2);
-        return `${id} took ${tookMilli}ms`;
-      };
-    };
+export function measure(id: string) {
+  const start = now();
+  return () => `${id} took ${(now() - start).toFixed(2)}ms`;
+}
 
 /** A class that adds `toString` method that prints all properties of an object. */
 export abstract class WithDebug {

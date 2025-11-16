@@ -132,6 +132,27 @@ JAM_LOG=trace jam dev 1
 JAM_LOG=networking:debug,state:trace jam
 ```
 
+### OpenTelemetry Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OTEL_ENABLED` | Enable/disable OpenTelemetry | `true` |
+| `OTEL_PROMETHEUS_PORT` | Port for Prometheus metrics | `9464` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | URL to push metrics to | (disabled) |
+
+**Example:**
+
+```bash
+# Access Prometheus metrics at http://localhost:9464/metrics
+jam dev 1
+
+# Use custom Prometheus port
+OTEL_PROMETHEUS_PORT=8080 jam dev 1
+
+# Disable telemetry
+OTEL_ENABLED=false jam dev 1
+```
+
 ## Development
 
 The `dev` command is designed for local testing with multiple validators:

@@ -3,6 +3,7 @@ import { events, QUICClient, type QUICConnection, QUICServer, QUICSocket } from 
 import { BytesBlob } from "@typeberry/bytes";
 import type { Ed25519Pair } from "@typeberry/crypto/ed25519.js";
 import { Level, Logger } from "@typeberry/logger";
+import { now } from "@typeberry/utils";
 import {
   altNameRaw,
   certToPEM,
@@ -12,6 +13,7 @@ import {
   privateKeyToPEM,
 } from "./certificate.js";
 import { getQuicClientCrypto, getQuicServerCrypto } from "./crypto.js";
+import * as metrics from "./metrics.js";
 import type { DialOptions } from "./network.js";
 import { peerVerification } from "./peer-verification.js";
 import { type PeerAddress, PeersManagement } from "./peers.js";
@@ -93,25 +95,33 @@ export class Quic {
     // handling incoming session
     addEventListener(server, events.EventQUICServerConnection, async (ev) => {
       const conn = ev.detail;
+      const peerAddress = `${conn.remoteHost}:${conn.remotePort}`;
+
+      metrics.recordConnectingIn(peerAddress);
+
       if (lastConnectedPeer.info === null) {
+        metrics.recordConnectInFailed("no_peer_info");
         await conn.stop();
         return;
       }
 
       if (lastConnectedPeer.info.key.isEqualTo(key.pubKey)) {
         logger.log`🛜 Rejecting connection from ourself from ${conn.remoteHost}:${conn.remotePort}`;
+        metrics.recordConnectionRefused(peerAddress);
         await conn.stop({ isApp: true, errorCode: CloseReason.ConnectionFromOurself });
         return;
       }
 
       if (peers.isConnected(lastConnectedPeer.info.id)) {
         logger.log`🛜 Rejecting duplicate connection with peer ${lastConnectedPeer.info.id} from ${conn.remoteHost}:${conn.remotePort}`;
+        metrics.recordConnectionRefused(peerAddress);
         await conn.stop({ isApp: true, errorCode: CloseReason.DuplicateConnection });
         return;
       }
 
       logger.log`🛜 Server handshake with ${conn.remoteHost}:${conn.remotePort}`;
       newPeer(conn, lastConnectedPeer.info);
+      metrics.recordConnectedIn(lastConnectedPeer.info.id);
       lastConnectedPeer.info = null;
       await conn.start();
     });
@@ -121,53 +131,72 @@ export class Quic {
       return doDial();
 
       async function doDial() {
+        const peerAddress = `${peer.host}:${peer.port}`;
         const peerDetails = peerVerification();
-        const clientLater = QUICClient.createQUICClient(
-          {
-            socket: socket,
-            host: peer.host,
-            port: peer.port,
-            crypto: getQuicClientCrypto(),
-            config: {
-              ...config,
-              verifyCallback: peerDetails.verifyCallback,
+
+        metrics.recordConnectingOut("pending", peerAddress);
+
+        try {
+          const clientLater = QUICClient.createQUICClient(
+            {
+              socket: socket,
+              host: peer.host,
+              port: peer.port,
+              crypto: getQuicClientCrypto(),
+              config: {
+                ...config,
+                verifyCallback: peerDetails.verifyCallback,
+              },
+              logger: quicLogger.getChild("client"),
             },
-            logger: quicLogger.getChild("client"),
-          },
-          {
-            signal: options.signal,
-          },
-        );
-        const client = await clientLater;
-
-        if (peerDetails.info === null) {
-          await client.destroy({ isApp: true, errorCode: CloseReason.PeerIdMismatch });
-          throw new Error("Client connected, but there is no peer details!");
-        }
-
-        if (options.verifyName !== undefined && options.verifyName !== peerDetails.info.id) {
-          await client.destroy({ isApp: true, errorCode: CloseReason.PeerIdMismatch });
-          throw new Error(
-            `Client connected, but the id didn't match. Expected: ${options.verifyName}, got: ${peerDetails.info.id}`,
+            {
+              signal: options.signal,
+            },
           );
+          const client = await clientLater;
+
+          if (peerDetails.info === null) {
+            metrics.recordConnectOutFailed("no_peer_info");
+            await client.destroy({ isApp: true, errorCode: CloseReason.PeerIdMismatch });
+            throw new Error("Client connected, but there is no peer details!");
+          }
+
+          if (options.verifyName !== undefined && options.verifyName !== peerDetails.info.id) {
+            metrics.recordConnectOutFailed("peer_id_mismatch");
+            await client.destroy({ isApp: true, errorCode: CloseReason.PeerIdMismatch });
+            throw new Error(
+              `Client connected, but the id didn't match. Expected: ${options.verifyName}, got: ${peerDetails.info.id}`,
+            );
+          }
+
+          addEventListener(client, events.EventQUICClientClose, () => {
+            logger.log`⚰️ Client connection closed.`;
+          });
+
+          addEventListener(client, events.EventQUICClientError, (error) => {
+            logger.error`🔴 Client error: ${error.detail}`;
+          });
+
+          logger.log`🤝 Client handshake with: ${peer.host}:${peer.port}`;
+          const newPeerInstance = newPeer(client.connection, peerDetails.info);
+          metrics.recordConnectedOut(peerDetails.info.id);
+          return newPeerInstance;
+        } catch (error) {
+          metrics.recordConnectOutFailed(String(error));
+          throw error;
         }
-
-        addEventListener(client, events.EventQUICClientClose, () => {
-          logger.log`⚰️ Client connection closed.`;
-        });
-
-        addEventListener(client, events.EventQUICClientError, (error) => {
-          logger.error`🔴 Client error: ${error.detail}`;
-        });
-
-        logger.log`🤝 Client handshake with: ${peer.host}:${peer.port}`;
-        return newPeer(client.connection, peerDetails.info);
       }
     }
 
     function newPeer(conn: QUICConnection, peerInfo: PeerInfo) {
       const peer = new QuicPeer(conn, peerInfo);
-      addEventListener(peer.conn, events.EventQUICConnectionClose, () => peers.peerDisconnected(peer));
+      const connectionStartTime = now();
+      addEventListener(peer.conn, events.EventQUICConnectionClose, (ev) => {
+        const duration = now() - connectionStartTime;
+        const reason = String(ev.detail) ?? "normal";
+        metrics.recordDisconnected(peer.id, "in", reason, duration);
+        peers.peerDisconnected(peer);
+      });
       peers.peerConnected(peer);
       return peer;
     }

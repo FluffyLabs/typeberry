@@ -4,6 +4,7 @@
   "description": "A test block generator simulating blocks received over the network.",
   "main": "index.ts",
   "dependencies": {
+    "@opentelemetry/api": "1.9.0",
     "@typeberry/block": "*",
     "@typeberry/bytes": "*",
     "@typeberry/codec": "*",

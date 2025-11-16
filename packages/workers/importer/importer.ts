@@ -7,7 +7,8 @@ import type { SerializedState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, BlockVerifierError } from "@typeberry/transition/block-verifier.js";
 import { OnChain, type StfError } from "@typeberry/transition/chain-stf.js";
-import { type ErrorResult, measure, Result, resultToString, type TaggedError } from "@typeberry/utils";
+import { type ErrorResult, measure, now, Result, resultToString, type TaggedError } from "@typeberry/utils";
+import * as metrics from "./metrics.js";
 
 export enum ImporterErrorKind {
   Verifier = 0,
@@ -84,16 +85,24 @@ export class Importer {
   ): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
     const timer = measure("importBlock");
     const timeSlot = extractTimeSlot(block);
+
+    metrics.recordBlockImportingStarted(timeSlot);
+
+    const startTime = now();
     const maybeBestHeader = await this.importBlockInternal(block, omitSealVerification);
+    const duration = now() - startTime;
+
     if (maybeBestHeader.isOk) {
       const bestHeader = maybeBestHeader.ok;
       this.logger.info`🧊 Best block: #${timeSlot} (${bestHeader.hash})`;
       this.logger.log`${timer()}`;
+      metrics.recordBlockImportComplete(duration, true);
       return maybeBestHeader;
     }
 
     this.logger.log`❌ Rejected block #${timeSlot}: ${resultToString(maybeBestHeader)}`;
     this.logger.log`${timer()}`;
+    metrics.recordBlockImportComplete(duration, false);
     return maybeBestHeader;
   }
 
@@ -105,11 +114,15 @@ export class Importer {
     logger.log`🧱 Attempting to import a new block`;
 
     const timerVerify = measure("import:verify");
+    const verifyStart = now();
     const hash = await this.verifier.verifyBlock(block);
+    const verifyDuration = now() - verifyStart;
     logger.log`${timerVerify()}`;
     if (hash.isError) {
+      metrics.recordBlockVerificationFailed(resultToString(hash));
       return importerError(ImporterErrorKind.Verifier, hash);
     }
+    metrics.recordBlockVerified(verifyDuration);
 
     // TODO [ToDr] This is incomplete/temporary fork support!
     const parentHash = block.header.view().parentHeaderHash.materialize();
@@ -134,11 +147,15 @@ export class Importer {
     const headerHash = hash.ok;
     logger.log`🧱 Verified block: Got hash ${headerHash} for block at slot ${timeSlot}.`;
     const timerStf = measure("import:stf");
+    const stfStart = now();
     const res = await this.stf.transition(block, headerHash, omitSealVerification);
+    const stfDuration = now() - stfStart;
     logger.log`${timerStf()}`;
     if (res.isError) {
+      metrics.recordBlockExecutionFailed(resultToString(res));
       return importerError(ImporterErrorKind.Stf, res);
     }
+    metrics.recordBlockExecuted(stfDuration, 0);
     // modify the state
     const update = res.ok;
     const timerState = measure("import:state");

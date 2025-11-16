@@ -4,6 +4,7 @@
   "description": "JAM state transition.",
   "main": "index.ts",
   "dependencies": {
+    "@opentelemetry/api": "1.9.0",
     "@typeberry/block": "*",
     "@typeberry/bytes": "*",
     "@typeberry/codec": "*",

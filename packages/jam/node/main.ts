@@ -13,6 +13,7 @@ import { LmdbWorkerConfig } from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import { initializeExtensions } from "./extensions.js";
 import type { JamConfig, NetworkConfig } from "./jam-config.js";
+import * as metrics from "./metrics.js";
 import packageJson from "./package.json" with { type: "json" };
 import { spawnBlockGeneratorWorker, spawnImporterWorker, spawnNetworkWorker } from "./workers.js";
 
@@ -69,7 +70,11 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   // Start block importer
   const { importer, finish: closeImporter } = await spawnImporterWorker(importerConfig);
   const bestHeader = new Listener<WithHash<HeaderHash, HeaderView>>();
-  importer.setOnBestHeaderAnnouncement(bestHeader.callbackHandler());
+  importer.setOnBestHeaderAnnouncement(async (header) => {
+    const slot = header.data.timeSlotIndex.materialize();
+    metrics.recordBestBlockChanged(slot, header.hash.toString());
+    await bestHeader.callbackHandler()(header);
+  });
 
   // Start extensions
   const closeExtensions = initializeExtensions({ chainSpec, bestHeader, nodeName: config.nodeName });

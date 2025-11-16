@@ -9,7 +9,8 @@ import type { BlocksDb, StatesDb } from "@typeberry/database";
 import type { Blake2b, keccak } from "@typeberry/hash";
 import type { State } from "@typeberry/state";
 import { TransitionHasher } from "@typeberry/transition";
-import { asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType, now } from "@typeberry/utils";
+import * as metrics from "./metrics.js";
 
 export class Generator {
   private lastHeaderHash: HeaderHash;
@@ -68,6 +69,9 @@ export class Generator {
     const lastTimeSlot = this.lastHeader.timeSlotIndex;
     const newTimeSlot = lastTimeSlot + 1;
 
+    const startTime = now();
+    metrics.recordBlockAuthoringStarted(newTimeSlot);
+
     // select validator for block
     const validatorId = tryAsValidatorIndex(newTimeSlot % 6);
 
@@ -122,6 +126,9 @@ export class Generator {
     const headerView = Decoder.decodeObject(Header.Codec.View, encoded, this.chainSpec);
     this.lastHeaderHash = hasher.header(headerView).hash;
     this.lastHeader = header;
+
+    const duration = now() - startTime;
+    metrics.recordBlockAuthored(newTimeSlot, duration);
 
     return Block.create({ header, extrinsic });
   }
