@@ -1,5 +1,6 @@
 export { gasCounter } from "./gas.js";
 export * from "./interpreter.js";
+export * from "./debugger-adapter.js";
 export {
   Memory,
   MemoryBuilder,
