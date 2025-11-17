@@ -112,10 +112,14 @@ export async function runStateTransition(
   const verifier = new BlockVerifier(stf.hasher, blocksDb);
   // NOTE [ToDr] we skip full verification here, since we can run tests in isolation
   // (i.e. no block history)
-  const headerHash = verifier.hashHeader(blockView);
+  const verificationResult = await verifier.verifyBlock(blockView, { skipParentAndStateRoot: true });
+  if (verificationResult.isError) {
+    assert.fail(`Block verification error: ${resultToString(verificationResult)}`);
+  }
 
+  const headerHash = verificationResult.ok;
   // now perform the state transition
-  const stfResult = await stf.transition(blockView, headerHash.hash);
+  const stfResult = await stf.transition(blockView, headerHash);
   if (shouldBlockBeRejected) {
     assert.strictEqual(stfResult.isOk, false, "The block should be rejected, yet we imported it.");
     // there should be no changes.
