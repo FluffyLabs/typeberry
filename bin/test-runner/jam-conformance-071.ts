@@ -13,7 +13,7 @@ main(runners, process.argv.slice(2), "test-vectors/jam-conformance/fuzz-reports/
     // no timeslot in pre-state?
     "1763371531/00000042.json",
     // unrecognized test case (WorkItemsCount === 0) - valid behavior
-    "1763371098/00000006.json"
+    "1763371098/00000006.json",
   ],
 })
   .then((r) => logger.log`${r}`)
