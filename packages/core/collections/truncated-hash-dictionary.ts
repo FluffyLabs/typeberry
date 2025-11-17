@@ -1,12 +1,11 @@
 import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE, type OpaqueHash, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
+import { type OpaqueHash, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
 import { TEST_COMPARE_USING } from "@typeberry/utils";
 import { BlobDictionary } from "./blob-dictionary.js";
 
-type HashWithZeroedBit<T extends OpaqueHash> = T;
-
-function getTruncatedKey<T extends OpaqueHash>(key: T | TruncatedHash) {
-  return key.length < HASH_SIZE ? key : Bytes.fromBlob(key.raw.subarray(0, TRUNCATED_HASH_SIZE), TRUNCATED_HASH_SIZE);
+function getTruncatedKey(key: OpaqueHash | TruncatedHash) {
+  // Always return exactly TRUNCATED_HASH_SIZE bytes.
+  return Bytes.fromBlob(key.raw.subarray(0, TRUNCATED_HASH_SIZE), TRUNCATED_HASH_SIZE);
 }
 
 /**
@@ -29,14 +28,14 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
     entries: Iterable<[T | TruncatedHash, V] | readonly [T | TruncatedHash, V]>,
   ): TruncatedHashDictionary<T, V> {
     return new TruncatedHashDictionary(
-      BlobDictionary.fromEntries<T, V>(
-        Array.from(entries).map(([key, value]) => [getTruncatedKey(key).asOpaque(), value]),
+      BlobDictionary.fromEntries<TruncatedHash, V>(
+        Array.from(entries).map(([key, value]) => [getTruncatedKey(key), value]),
         BLOB_DICTIONARY_THRESHOLD,
       ),
     );
   }
 
-  private constructor(private readonly dict: BlobDictionary<HashWithZeroedBit<T>, V>) {}
+  private constructor(private readonly dict: BlobDictionary<TruncatedHash, V>) {}
 
   [TEST_COMPARE_USING]() {
     return Array.from(this.dict);
@@ -50,25 +49,25 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
   /** Retrieve a value that matches the key on `TRUNCATED_HASH_SIZE`. */
   get(key: T | TruncatedHash): V | undefined {
     const truncatedKey = getTruncatedKey(key);
-    return this.dict.get(truncatedKey.asOpaque());
+    return this.dict.get(truncatedKey);
   }
 
   /** Return true if the key is present in the dictionary */
   has(key: T | TruncatedHash): boolean {
     const truncatedKey = getTruncatedKey(key);
-    return this.dict.has(truncatedKey.asOpaque());
+    return this.dict.has(truncatedKey);
   }
 
   /** Set or update a value that matches the key on `TRUNCATED_HASH_SIZE`. */
   set(key: T | TruncatedHash, value: V) {
     const truncatedKey = getTruncatedKey(key);
-    this.dict.set(truncatedKey.asOpaque(), value);
+    this.dict.set(truncatedKey, value);
   }
 
   /** Remove a value that matches the key on `TRUNCATED_HASH_SIZE`. */
   delete(key: T | TruncatedHash) {
     const truncatedKey = getTruncatedKey(key);
-    this.dict.delete(truncatedKey.asOpaque());
+    this.dict.delete(truncatedKey);
   }
 
   /** Iterator over values of the dictionary. */
@@ -78,9 +77,7 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
 
   /** Iterator over entries of the dictionary (with truncated keys) */
   *entries(): Generator<[TruncatedHash, V]> {
-    for (const [key, value] of this.dict.entries()) {
-      yield [Bytes.fromBlob(key.raw.subarray(0, TRUNCATED_HASH_SIZE), TRUNCATED_HASH_SIZE).asOpaque(), value];
-    }
+    yield* this.dict.entries();
   }
 
   [Symbol.iterator]() {

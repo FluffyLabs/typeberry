@@ -92,7 +92,7 @@ export default function run() {
   }
 
   const hashKeyTestPromise = suite(
-    `Comparing set operation in two hash dicts using hash keys and BlobDictionary(n: [${MIN_THRESHOLD}: ${MAX_THRESHOLD}))`,
+    `Comparing get operation in two hash dicts using hash keys and BlobDictionary(n: [${MIN_THRESHOLD}: ${MAX_THRESHOLD}))`,
 
     add("StringHashDictionary", () => {
       const map = StringHashDictionary.new<OpaqueHash, number>();
