@@ -228,7 +228,11 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     return service?.getPreimage(hash) ?? null;
   }
 
-  /** Get status of a preimage of current service taking into account any updates. */
+  /**
+   * Get status of a preimage of current service taking into account any updates.
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/110201110201?v=0.7.2
+   */
   getLookupHistory(
     currentTimeslot: TimeSlot,
     serviceId: ServiceId,
@@ -281,13 +285,7 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
         return new LookupHistoryItem(hash, updatedPreimage.length, tryAsLookupHistorySlots([currentTimeslot]));
       }
       case UpdatePreimageKind.Remove: {
-        const state = stateFallback();
-        // kinda impossible, since we know it's there because it's removed.
-        if (state === null) {
-          return null;
-        }
-
-        return new LookupHistoryItem(hash, state.length, tryAsLookupHistorySlots([...state.slots, currentTimeslot]));
+        return null;
       }
       case UpdatePreimageKind.UpdateOrAdd: {
         return action.item;
