@@ -45,7 +45,7 @@ export class LogHostCall implements HostCallHandler {
     memory.loadInto(message, msgStart);
 
     const level = clampU64ToU32(lvl);
-    logger.trace`LOG(${this.currentServiceId}, ${level < Levels.UNKNOWN ? Levels[level] : Levels[Levels.UNKNOWN]}(${lvl}), ${decoder.decode(target)}, ${decoder.decode(message)})`;
+    logger.trace`[${this.currentServiceId}] LOG(${this.currentServiceId}, ${level < Levels.UNKNOWN ? Levels[level] : Levels[Levels.UNKNOWN]}(${lvl}), ${decoder.decode(target)}, ${decoder.decode(message)})`;
     return Promise.resolve(undefined);
   }
 }

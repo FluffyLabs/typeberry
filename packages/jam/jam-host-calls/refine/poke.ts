@@ -39,7 +39,7 @@ export class Poke implements HostCallHandler {
     const length = regs.get(10);
 
     const pokeResult = await this.refine.machinePokeInto(machineIndex, sourceStart, destinationStart, length, memory);
-    logger.trace`POKE(${machineIndex}, ${sourceStart}, ${destinationStart}, ${length}) <- ${resultToString(pokeResult)}`;
+    logger.trace`[${this.currentServiceId}] POKE(${machineIndex}, ${sourceStart}, ${destinationStart}, ${length}) <- ${resultToString(pokeResult)}`;
 
     if (pokeResult.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);

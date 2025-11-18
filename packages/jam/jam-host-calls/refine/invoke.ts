@@ -54,7 +54,7 @@ export class Invoke implements HostCallHandler {
     const initialData = Bytes.zero(GAS_REGISTERS_SIZE);
     const readResult = memory.loadInto(initialData.raw, destinationStart);
     if (readResult.isError) {
-      logger.trace`INVOKE(${machineIndex}) <- PANIC (read)`;
+      logger.trace`[${this.currentServiceId}] INVOKE(${machineIndex}) <- PANIC (read)`;
       return PvmExecution.Panic;
     }
 
@@ -63,7 +63,7 @@ export class Invoke implements HostCallHandler {
     // the weird `isWriteable` method.
     const writeResult = memory.storeFrom(destinationStart, initialData.raw);
     if (writeResult.isError) {
-      logger.trace`INVOKE(${machineIndex}) <- PANIC (write)`;
+      logger.trace`[${this.currentServiceId}] INVOKE(${machineIndex}) <- PANIC (write)`;
       return PvmExecution.Panic;
     }
 
@@ -75,7 +75,7 @@ export class Invoke implements HostCallHandler {
 
     // try run the machine
     const state = await this.refine.machineInvoke(machineIndex, gasCost, registers);
-    logger.trace`INVOKE(${machineIndex}, ${gasCost}, ${registers}) <- ${resultToString(state)}`;
+    logger.trace`[${this.currentServiceId}] INVOKE(${machineIndex}, ${gasCost}, ${registers}) <- ${resultToString(state)}`;
 
     // machine not found
     if (state.isError) {

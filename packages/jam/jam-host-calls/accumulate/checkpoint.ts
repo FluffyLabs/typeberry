@@ -30,7 +30,7 @@ export class Checkpoint implements HostCallHandler {
   async execute(gas: IGasCounter, regs: HostCallRegisters): Promise<undefined | PvmExecution> {
     await this.gasHostCall.execute(gas, regs);
     this.partialState.checkpoint();
-    logger.trace`CHECKPOINT()`;
+    logger.trace`[${this.currentServiceId}] CHECKPOINT()`;
     return;
   }
 }
