@@ -1,4 +1,4 @@
-import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
+import { type CodecRecord, codec } from "@typeberry/codec";
 import { asKnownSize, type KnownSizeArray } from "@typeberry/collections";
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key, type Ed25519Signature } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
@@ -100,7 +100,7 @@ export class Verdict extends WithDebug {
     workReportHash: codec.bytes(HASH_SIZE).asOpaque<WorkReportHash>(),
     votesEpoch: codec.u32.asOpaque<Epoch>(),
     votes: codecWithContext((context) => {
-      return readonlyArray(codec.sequenceFixLen(Judgement.Codec, context.validatorsSuperMajority)).convert<
+      return codec.readonlyArray(codec.sequenceFixLen(Judgement.Codec, context.validatorsSuperMajority)).convert<
         Verdict["votes"]
       >(seeThrough, asKnownSize);
     }),

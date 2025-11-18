@@ -3,7 +3,7 @@ import { codecKnownSizeArray } from "@typeberry/block/codec.js";
 import { MAX_REPORT_DEPENDENCIES } from "@typeberry/block/gp-constants.js";
 import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
-import { type CodecRecord, codec, type DescribedBy, readonlyArray } from "@typeberry/codec";
+import { type CodecRecord, codec, type DescribedBy } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { WithDebug } from "@typeberry/utils";
@@ -51,7 +51,7 @@ export class NotYetAccumulatedReport extends WithDebug {
 export type AccumulationQueue = PerEpochBlock<readonly NotYetAccumulatedReport[]>;
 
 export const accumulationQueueCodec = codecPerEpochBlock(
-  readonlyArray(codec.sequenceVarLen(NotYetAccumulatedReport.Codec)),
+  codec.readonlyArray(codec.sequenceVarLen(NotYetAccumulatedReport.Codec)),
 );
 
 export type AccumulationQueueView = DescribedBy<typeof accumulationQueueCodec.View>;

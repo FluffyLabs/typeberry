@@ -1,5 +1,5 @@
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
+import { type CodecRecord, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { isU16, tryAsU32, type U16, type U32 } from "@typeberry/numbers";
@@ -117,7 +117,7 @@ const WorkReportCodec = codec.Class(WorkReportNoCodec, {
   authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
   authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
   authorizationOutput: codec.blob,
-  segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
+  segmentRootLookup: codec.readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
   results: codec.sequenceVarLen(WorkResult.Codec).convert(
     (x) => x,
     (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
@@ -138,7 +138,7 @@ const WorkReportCodecPre070 = codec.Class(WorkReportNoCodec, {
   ),
   authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
   authorizationOutput: codec.blob,
-  segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
+  segmentRootLookup: codec.readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
   results: codec.sequenceVarLen(WorkResult.Codec).convert(
     (x) => x,
     (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
