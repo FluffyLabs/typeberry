@@ -164,7 +164,7 @@ export class BytesBlob {
    *
    * Last chunk might be smaller than `size`.
    */
-  *chunks(size: number): Generator<BytesBlob> {
+  *chunks(size: number): Generator<BytesBlob, undefined, void> {
     for (let i = 0; i < this.length; i += size) {
       yield BytesBlob.blobFrom(this.raw.subarray(i, i + size));
     }
