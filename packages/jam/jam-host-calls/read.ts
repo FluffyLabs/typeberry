@@ -72,21 +72,21 @@ export class Read implements HostCallHandler {
       value === null ? safeAllocUint8Array(0) : value.raw.subarray(Number(offset), Number(offset + blobLength));
     const memoryWriteResult = memory.storeFrom(destinationAddress, chunk);
     if (memoryWriteResult.isError) {
-      logger.trace`READ(${serviceId}, ${rawKey}) <- PANIC`;
+      logger.trace`[${this.currentServiceId}] READ(${serviceId}, ${rawKey}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
     if (value === null) {
-      logger.trace`READ(${serviceId}, ${rawKey}) <- NONE`;
+      logger.trace`[${this.currentServiceId}] READ(${serviceId}, ${rawKey}) <- NONE`;
       regs.set(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
     if (chunk.length > 0) {
-      logger.trace`READ(${serviceId}, ${rawKey}) <- ${BytesBlob.blobFrom(chunk).toStringTruncated()}`;
+      logger.trace`[${this.currentServiceId}] READ(${serviceId}, ${rawKey}) <- ${BytesBlob.blobFrom(chunk).toStringTruncated()}`;
     } else {
       // just a query for length of stored data
-      logger.trace`READ(${serviceId}, ${rawKey}) <- (${valueLength} ${valueLength === 1n ? "byte" : "bytes"})`;
+      logger.trace`[${this.currentServiceId}] READ(${serviceId}, ${rawKey}) <- (${valueLength} ${valueLength === 1n ? "byte" : "bytes"})`;
     }
     regs.set(IN_OUT_REG, valueLength);
   }

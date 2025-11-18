@@ -39,7 +39,7 @@ export class Peek implements HostCallHandler {
     const length = regs.get(10);
 
     const peekResult = await this.refine.machinePeekFrom(machineIndex, destinationStart, sourceStart, length, memory);
-    logger.trace`PEEK(${machineIndex}, ${destinationStart}, ${sourceStart}, ${length}) <- ${resultToString(peekResult)}`;
+    logger.trace`[${this.currentServiceId}] PEEK(${machineIndex}, ${destinationStart}, ${sourceStart}, ${length}) <- ${resultToString(peekResult)}`;
 
     if (peekResult.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);

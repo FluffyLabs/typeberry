@@ -39,12 +39,12 @@ export class Upgrade implements HostCallHandler {
     const codeHash = Bytes.zero(HASH_SIZE);
     const memoryReadResult = memory.loadInto(codeHash.raw, codeHashStart);
     if (memoryReadResult.isError) {
-      logger.trace`UPGRADE(${codeHash}, ${gas}, ${allowance}) <- PANIC`;
+      logger.trace`[${this.currentServiceId}] UPGRADE(${codeHash}, ${gas}, ${allowance}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
     this.partialState.upgradeService(codeHash.asOpaque(), gas, allowance);
-    logger.trace`UPGRADE(${codeHash}, ${gas}, ${allowance})`;
+    logger.trace`[${this.currentServiceId}] UPGRADE(${codeHash}, ${gas}, ${allowance})`;
 
     regs.set(IN_OUT_REG, HostCallResult.OK);
   }
