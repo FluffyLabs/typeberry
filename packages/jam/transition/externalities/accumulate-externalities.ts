@@ -272,7 +272,7 @@ export class AccumulateExternalities
       return this.updatedState.updateServiceStorageUtilisation(this.currentServiceId, items, bytes, serviceInfo);
     };
 
-    // https://graypaper.fluffylabs.dev/#/9a08063/389501389501?v=0.6.6
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/380802380802?v=0.7.2
     if (s.status === PreimageStatusKind.Requested) {
       const res = updateStorageUtilisation();
       if (res.isError) {
@@ -289,7 +289,7 @@ export class AccumulateExternalities
     }
 
     const t = this.currentTimeslot;
-    // https://graypaper.fluffylabs.dev/#/9a08063/378102378102?v=0.6.6
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/380802380802?v=0.7.2
     if (s.status === PreimageStatusKind.Unavailable) {
       const y = s.data[1];
       if (y < t - this.chainSpec.preimageExpungePeriod) {
@@ -313,7 +313,7 @@ export class AccumulateExternalities
       );
     }
 
-    // https://graypaper.fluffylabs.dev/#/9a08063/38c80138c801?v=0.6.6
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/382802383302?v=0.7.2
     if (s.status === PreimageStatusKind.Available) {
       this.updatedState.updatePreimage(
         serviceId,
@@ -324,7 +324,7 @@ export class AccumulateExternalities
       return Result.ok(OK);
     }
 
-    // https://graypaper.fluffylabs.dev/#/9a08063/38d00138d001?v=0.6.6
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/384002384c02?v=0.7.2
     if (s.status === PreimageStatusKind.Reavailable) {
       const y = s.data[1];
       if (y < t - this.chainSpec.preimageExpungePeriod) {

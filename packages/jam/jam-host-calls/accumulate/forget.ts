@@ -12,9 +12,9 @@ import { HostCallResult } from "../results.js";
 const IN_OUT_REG = 7;
 
 /**
- * Mark a preimage hash as unavailable.
+ * Delete preimage hash or mark as unavailable if it was available.
  *
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/382d01382d01?v=0.6.7
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/385d01385d01?v=0.7.2
  */
 export class Forget implements HostCallHandler {
   index = tryAsHostCallIndex(24);
