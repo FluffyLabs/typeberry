@@ -5,6 +5,10 @@ import { BlobDictionary } from "./blob-dictionary.js";
 
 function getTruncatedKey(key: OpaqueHash | TruncatedHash) {
   // Always return exactly TRUNCATED_HASH_SIZE bytes.
+  if (key.length === TRUNCATED_HASH_SIZE) {
+    return key;
+  }
+
   return Bytes.fromBlob(key.raw.subarray(0, TRUNCATED_HASH_SIZE), TRUNCATED_HASH_SIZE);
 }
 
