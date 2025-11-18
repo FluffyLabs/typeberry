@@ -75,7 +75,7 @@ export class BlockVerifier {
 
     if (!options.skipParentAndStateRoot) {
       // Check if the state root is valid.
-      // https://graypaper.fluffylabs.dev/#/cc517d7/0c18010c1801?v=0.6.5
+      // https://graypaper.fluffylabs.dev/#/ab2cdbd/0c73010c7301?v=0.7.2
       const stateRoot = headerView.priorStateRoot.materialize();
       const posteriorStateRoot = this.blocks.getPostStateRoot(parentHash);
       if (posteriorStateRoot === null) {
