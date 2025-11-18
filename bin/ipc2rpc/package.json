@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/ipc2rpc",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "JSON-RPC adapter for the JAMCODEC-IPC interface.",
   "main": "index.ts",
   "dependencies": {
