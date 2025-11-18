@@ -12,7 +12,7 @@ on:
         required: false
         type: string
       release_type:
-        description: 'Version bump type'
+        description: 'Version bump type. patch=0.0.x | minor=0.x.0 | major=x.0.0'
         required: true
         type: choice
         options:
