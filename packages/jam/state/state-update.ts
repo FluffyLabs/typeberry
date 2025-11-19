@@ -6,11 +6,32 @@ import { assertNever } from "@typeberry/utils";
 import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service.js";
 
 export enum UpdatePreimageKind {
-  /** Insert new preimage and optionally update it's lookup history. */
+  /**
+   * Insert new preimage and optionally update it's lookup history.
+   *
+   * Used in: `provide`
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/383904383904?v=0.7.2
+   */
   Provide = 0,
-  /** Remove a preimage and it's lookup history. */
+  /**
+   * Remove a preimage and it's lookup history.
+   *
+   * Used in: `forget` and `eject`
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/38c701380202?v=0.7.2
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/379102379302?v=0.7.2
+   */
   Remove = 1,
-  /** update or add lookup history for preimage hash/len to given value. */
+  /**
+   * Update or add lookup history for preimage hash/len to given value.
+   *
+   * Used in: `solicit` and `forget`
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/382802382802?v=0.7.2
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/384002384b02?v=0.7.2
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/38c60038ea00?v=0.7.2
+   */
   UpdateOrAdd = 2,
 }
 /**
@@ -18,7 +39,7 @@ export enum UpdatePreimageKind {
  *
  * Can be one of the following cases:
  * 1. Provide a new preimage blob and set the lookup history to available at `slot`.
- * 2. Remove (expunge) a preimage and it's lookup history.
+ * 2. Remove (forget) a preimage and it's lookup history.
  * 3. Update `LookupHistory` with given value.
  */
 export class UpdatePreimage {

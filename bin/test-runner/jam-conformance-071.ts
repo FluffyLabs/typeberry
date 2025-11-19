@@ -6,9 +6,6 @@ main(runners, process.argv.slice(2), "test-vectors/jam-conformance/fuzz-reports/
   ignored: [
     // genesis file is unparsable
     "genesis.json",
-    // statistics mismatch
-    "1763371379/00000237.json",
-    "1763371127/00000237.json",
     // offenders mismatch?
     "1763371403/00000171.json",
     // no timeslot in pre-state?

@@ -64,12 +64,12 @@ export class Transfer implements HostCallHandler {
 
     // page fault while reading the memory.
     if (memoryReadResult.isError) {
-      logger.trace`TRANSFER(${destination}, ${amount}, ${transferGasFee}, ${memo}) <- PANIC`;
+      logger.trace`[${this.currentServiceId}] TRANSFER(${destination}, ${amount}, ${transferGasFee}, ${memo}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
     const transferResult = this.partialState.transfer(destination, amount, transferGasFee, memo);
-    logger.trace`TRANSFER(${destination}, ${amount}, ${transferGasFee}, ${memo}) <- ${resultToString(transferResult)}`;
+    logger.trace`[${this.currentServiceId}] TRANSFER(${destination}, ${amount}, ${transferGasFee}, ${memo}) <- ${resultToString(transferResult)}`;
 
     // All good!
     if (transferResult.isOk) {

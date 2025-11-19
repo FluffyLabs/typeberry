@@ -47,12 +47,12 @@ export class Provide implements HostCallHandler {
     const preimage = BytesBlob.blobFrom(safeAllocUint8Array(length));
     const memoryReadResult = memory.loadInto(preimage.raw, preimageStart);
     if (memoryReadResult.isError) {
-      logger.trace`PROVIDE(${serviceId}, ${preimage.toStringTruncated()}) <- PANIC`;
+      logger.trace`[${this.currentServiceId}] PROVIDE(${serviceId}, ${preimage.toStringTruncated()}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
     const result = this.partialState.providePreimage(serviceId, preimage);
-    logger.trace`PROVIDE(${serviceId}, ${preimage.toStringTruncated()}) <- ${resultToString(result)}`;
+    logger.trace`[${this.currentServiceId}] PROVIDE(${serviceId}, ${preimage.toStringTruncated()}) <- ${resultToString(result)}`;
 
     if (result.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);

@@ -35,12 +35,12 @@ export class Solicit implements HostCallHandler {
     const hash = Bytes.zero(HASH_SIZE);
     const memoryReadResult = memory.loadInto(hash.raw, hashStart);
     if (memoryReadResult.isError) {
-      logger.trace`SOLICIT(${hash}, ${length}) <- PANIC`;
+      logger.trace`[${this.currentServiceId}] SOLICIT(${hash}, ${length}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
     const result = this.partialState.requestPreimage(hash.asOpaque(), length);
-    logger.trace`SOLICIT(${hash}, ${length}) <- ${resultToString(result)}`;
+    logger.trace`[${this.currentServiceId}] SOLICIT(${hash}, ${length}) <- ${resultToString(result)}`;
 
     if (result.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);
