@@ -3,7 +3,7 @@ import { metrics } from "@opentelemetry/api";
 /**
  * Network metrics for JAM implementation.
  *
- * JIP-3 Events 20-28 (Networking): https://github.com/polkadot-fellows/JIPs/blob/main/JIP-3.md#networking
+ * JIP-3 Events 20-28 (Networking): https://github.com/polkadot-fellows/JIPs/blob/main/JIP-3.md#networking-events
  */
 
 const meter = metrics.getMeter("@typeberry/networking", "0.4.0");
@@ -58,33 +58,50 @@ export const peerMisbehavedCounter = meter.createCounter("jam.jip3.peer_misbehav
   unit: "events",
 });
 
-// Connection state gauges
-let activeConnectionsCount = 0;
+// Connection state gauges - use provider functions to observe real state
+let getActiveConnectionsCount: () => number = () => 0;
+let getConnectedPeersCount: () => number = () => 0;
+let getActiveStreamsCount: () => number = () => 0;
+
+/**
+ * Set the provider functions that supply real-time state for observable gauges.
+ * This should be called by the networking layer to inject actual connection/stream counts.
+ *
+ * @param providers - Functions that return current counts for connections, peers, and streams
+ */
+export function setGaugeProviders(providers: {
+  activeConnections: () => number;
+  connectedPeers: () => number;
+  activeStreams: () => number;
+}): void {
+  getActiveConnectionsCount = providers.activeConnections;
+  getConnectedPeersCount = providers.connectedPeers;
+  getActiveStreamsCount = providers.activeStreams;
+}
+
 export const activeConnectionsGauge = meter.createObservableGauge("jam.networking.connections.active", {
   description: "Number of active network connections",
   unit: "connections",
 });
 activeConnectionsGauge.addCallback((observableResult) => {
-  observableResult.observe(activeConnectionsCount);
+  observableResult.observe(getActiveConnectionsCount());
 });
 
-let connectedPeersCount = 0;
 export const connectedPeersGauge = meter.createObservableGauge("jam.networking.peers.connected", {
   description: "Number of connected peers",
   unit: "peers",
 });
 connectedPeersGauge.addCallback((observableResult) => {
-  observableResult.observe(connectedPeersCount);
+  observableResult.observe(getConnectedPeersCount());
 });
 
 // Stream metrics
-let activeStreamsCount = 0;
 export const activeStreamsGauge = meter.createObservableGauge("jam.networking.streams.active", {
   description: "Number of active QUIC streams",
   unit: "streams",
 });
 activeStreamsGauge.addCallback((observableResult) => {
-  observableResult.observe(activeStreamsCount);
+  observableResult.observe(getActiveStreamsCount());
 });
 
 export const streamsOpenedCounter = meter.createCounter("jam.networking.streams.opened", {
@@ -160,8 +177,6 @@ export function recordConnectInFailed(reason: string): void {
 
 export function recordConnectedIn(peerId: string): void {
   connectedInCounter.add(1, { peer_id: peerId });
-  activeConnectionsCount++;
-  connectedPeersCount++;
 }
 
 export function recordConnectingOut(peerId: string, peerAddress: string): void {
@@ -174,15 +189,11 @@ export function recordConnectOutFailed(reason: string): void {
 
 export function recordConnectedOut(peerId: string): void {
   connectedOutCounter.add(1, { peer_id: peerId });
-  activeConnectionsCount++;
-  connectedPeersCount++;
 }
 
 export function recordDisconnected(peerId: string, side: "in" | "out", reason: string, durationMs: number): void {
   disconnectedCounter.add(1, { peer_id: peerId, side, reason });
   connectionDuration.record(durationMs, { side });
-  activeConnectionsCount = Math.max(0, activeConnectionsCount - 1);
-  connectedPeersCount = Math.max(0, connectedPeersCount - 1);
 }
 
 export function recordPeerMisbehaved(peerId: string, reason: string): void {
@@ -191,12 +202,10 @@ export function recordPeerMisbehaved(peerId: string, reason: string): void {
 
 export function recordStreamOpened(direction: "inbound" | "outbound"): void {
   streamsOpenedCounter.add(1, { direction });
-  activeStreamsCount++;
 }
 
 export function recordStreamClosed(direction: "inbound" | "outbound"): void {
   streamsClosedCounter.add(1, { direction });
-  activeStreamsCount = Math.max(0, activeStreamsCount - 1);
 }
 
 export function recordDataTransfer(direction: "sent" | "received", bytes: number): void {

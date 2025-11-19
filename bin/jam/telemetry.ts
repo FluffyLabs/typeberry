@@ -45,7 +45,7 @@ export function initializeTelemetry(config: TelemetryConfig): NodeSDK | null {
   logger.info`Prometheus metrics available at http://localhost:${prometheusPort}/metrics`;
 
   // OTLP exporter (push-based) - only if endpoint is configured
-  if (otlpEndpoint === undefined) {
+  if (otlpEndpoint !== undefined) {
     const otlpExporter = new OTLPMetricExporter({
       url: `${otlpEndpoint}/v1/metrics`,
     });

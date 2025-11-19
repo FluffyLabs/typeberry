@@ -2,8 +2,27 @@ export function isBrowser() {
   return typeof process === "undefined" || typeof process.abort === "undefined";
 }
 
-/** Get current time in milliseconds (works in both Node and browser). */
-export const now = isBrowser() ? () => performance.now() : () => Number(process.hrtime.bigint() / 1_000_000n);
+/**
+ * Get current time in milliseconds (works in both Node and browser).
+ *
+ * Node.js implementation converts hrtime bigint nanoseconds to milliseconds.
+ * This is safe because dividing nanoseconds by 1_000_000 yields milliseconds,
+ * which remain well below Number.MAX_SAFE_INTEGER for practical runtimes
+ * (would take ~285 years to overflow).
+ */
+export const now = isBrowser()
+  ? () => performance.now()
+  : (() => {
+      // Defer process.hrtime reference to avoid bundler issues in browser builds
+      const getTime = () => {
+        if (typeof process !== "undefined" && typeof process.hrtime === "function") {
+          return Number(process.hrtime.bigint() / 1_000_000n);
+        }
+        // Fallback to performance.now() if process.hrtime is unavailable
+        return performance.now();
+      };
+      return getTime;
+    })();
 
 /**
  * A function to perform runtime assertions.

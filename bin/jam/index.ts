@@ -18,7 +18,7 @@ export * from "./args.js";
 // Initialize OpenTelemetry before anything else
 initializeTelemetry({
   enabled: process.env.OTEL_ENABLED !== "false",
-  prometheusPort: Number(process.env.OTEL_PROMETHEUS_PORT === undefined ? process.env.OTEL_PROMETHEUS_PORT : 9464),
+  prometheusPort: process.env.OTEL_PROMETHEUS_PORT !== undefined ? Number(process.env.OTEL_PROMETHEUS_PORT) : 9464,
   serviceName: packageJson.name,
   serviceVersion: packageJson.version,
   otlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
