@@ -1,8 +1,8 @@
 import type { HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import z from "zod";
-import { BlockDescriptor, Hash, RpcError, RpcErrorCode, withValidation } from "../types.js";
+import { type Handler, RpcError, RpcErrorCode } from "../types.js";
+import { validation } from "../validation.js";
 
 /**
  * https://hackmd.io/@polkadot/jip2#parent
@@ -16,14 +16,14 @@ import { BlockDescriptor, Hash, RpcError, RpcErrorCode, withValidation } from ".
  *   Slot - The slot,
  * ]
  */
-export const parent = withValidation(z.tuple([Hash]), BlockDescriptor, async ([headerHash], db) => {
+export const parent: Handler<"parent"> = async ([headerHash], db) => {
   const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
   const header = db.blocks.getHeader(hashOpaque);
   if (header === null) {
     throw new RpcError(
       RpcErrorCode.BlockUnavailable,
       `Block unavailable: ${hashOpaque.toString()}`,
-      Hash.encode(hashOpaque.raw),
+      validation.hash.encode(hashOpaque.raw),
     );
   }
 
@@ -45,4 +45,4 @@ export const parent = withValidation(z.tuple([Hash]), BlockDescriptor, async ([h
     header_hash: parentHash.raw,
     slot: parentHeader.timeSlotIndex.materialize(),
   };
-});
+};

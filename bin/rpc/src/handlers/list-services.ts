@@ -1,8 +1,7 @@
 import type { HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import z from "zod";
-import { Hash, RpcError, RpcErrorCode, ServiceId, withValidation } from "../types.js";
+import { type Handler, RpcError, RpcErrorCode } from "../types.js";
 
 /**
  * https://hackmd.io/@polkadot/jip2#listServices
@@ -14,7 +13,7 @@ import { Hash, RpcError, RpcErrorCode, ServiceId, withValidation } from "../type
  * ]
  * @returns array of ServiceId
  */
-export const listServices = withValidation(z.tuple([Hash]), z.array(ServiceId), async ([headerHash], db) => {
+export const listServices: Handler<"listServices"> = async ([headerHash], db) => {
   const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
   const state = db.states.getState(hashOpaque);
 
@@ -25,4 +24,4 @@ export const listServices = withValidation(z.tuple([Hash]), z.array(ServiceId), 
   const serviceIds = state.recentServiceIds();
 
   return [...serviceIds];
-});
+};

@@ -1,8 +1,7 @@
 import type { HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import z from "zod";
-import { Hash, RpcError, RpcErrorCode, withValidation } from "../types.js";
+import { type Handler, RpcError, RpcErrorCode } from "../types.js";
 
 /**
  * https://hackmd.io/@polkadot/jip2#stateRoot
@@ -15,7 +14,7 @@ import { Hash, RpcError, RpcErrorCode, withValidation } from "../types.js";
  *   Hash - state_root
  * ]
  */
-export const stateRoot = withValidation(z.tuple([Hash]), Hash, async ([headerHash], db) => {
+export const stateRoot: Handler<"stateRoot"> = async ([headerHash], db) => {
   const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
 
   const stateRoot = db.blocks.getPostStateRoot(hashOpaque);
@@ -25,4 +24,4 @@ export const stateRoot = withValidation(z.tuple([Hash]), Hash, async ([headerHas
   }
 
   return stateRoot.raw;
-});
+};

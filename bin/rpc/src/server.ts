@@ -8,16 +8,21 @@ import z from "zod";
 import { SUBSCRIBE_METHOD_MAP, SubscriptionManager } from "./subscription-manager.js";
 import {
   type DatabaseContext,
-  JSON_RPC_VERSION,
+  type HandlerMap,
+  type InputOf,
   type JsonRpcErrorResponse,
   type JsonRpcId,
-  JsonRpcNotification,
-  JsonRpcRequest,
+  type JsonRpcNotification,
+  type JsonRpcRequest,
   type JsonRpcResponse,
   type JsonRpcResult,
+  type MethodName,
+  type OutputOf,
   RpcError,
-  type RpcMethodRepo,
+  type SchemaMap,
+  type SubscribeMethodName,
 } from "./types.js";
+import { JSON_RPC_VERSION, validation } from "./validation.js";
 
 const PING_INTERVAL_MS = 30000;
 
@@ -51,7 +56,8 @@ export class RpcServer {
     private readonly rootDb: LmdbRoot,
     private readonly chainSpec: ChainSpec,
     private readonly blake2b: Blake2b,
-    private readonly methods: RpcMethodRepo,
+    private readonly handlers: HandlerMap,
+    private readonly schemas: SchemaMap,
   ) {
     this.logger = Logger.new(import.meta.filename, "rpc");
 
@@ -128,7 +134,7 @@ export class RpcServer {
   }
 
   private async handleRequest(request: unknown, ws: WebSocket): Promise<JsonRpcResponse | null> {
-    const requestParseResult = JsonRpcRequest.safeParse(request);
+    const requestParseResult = validation.jsonRpcRequest.safeParse(request);
     if (requestParseResult.success === true) {
       try {
         return {
@@ -145,7 +151,7 @@ export class RpcServer {
       }
     }
 
-    const notificationParseResult = JsonRpcNotification.safeParse(request);
+    const notificationParseResult = validation.jsonRpcNotification.safeParse(request);
     if (notificationParseResult.success === true) {
       try {
         await this.fulfillRequest(notificationParseResult.data, ws);
@@ -163,13 +169,17 @@ export class RpcServer {
   private async fulfillRequest(request: JsonRpcRequest | JsonRpcNotification, ws: WebSocket): Promise<JsonRpcResult> {
     const { method, params } = request;
 
-    const [subscribeMethod, _] = SUBSCRIBE_METHOD_MAP.get(method) ?? [];
-    if (subscribeMethod !== undefined) {
-      const validatedParams = this.validateCall(subscribeMethod, params ?? []);
-      return [this.subscriptionManager.subscribe(ws, subscribeMethod, validatedParams)];
+    // todo [seko] seeing as some subscribe methods in the new spec
+    // do not directly correspond to a single non-subscribe handler subscribe/unsubscribe
+    // methods should probably become just separate handlers with access to the subscription manager.
+    if (method in SUBSCRIBE_METHOD_MAP) {
+      const handlerName = SUBSCRIBE_METHOD_MAP[method as SubscribeMethodName].handler;
+      const validatedParams = this.validateCall(handlerName, params ?? []);
+      return [this.subscriptionManager.subscribe(ws, handlerName, validatedParams)];
     }
 
-    if ([...SUBSCRIBE_METHOD_MAP.values()].some(([, unsubscribeMethod]) => unsubscribeMethod === method)) {
+    // todo [seko] make sure the unsub method name corresponds to the subscription method name and that the request is issued by the same client
+    if (Object.values(SUBSCRIBE_METHOD_MAP).some(({ unsubscribe }) => unsubscribe === method)) {
       const parseResult = UnsubscribeParams.safeParse(params);
       if (parseResult.error !== undefined) {
         throw new RpcError(-32602, createParamsParseErrorMessage(parseResult.error));
@@ -177,38 +187,33 @@ export class RpcServer {
       return [this.subscriptionManager.unsubscribe(parseResult.data[0])];
     }
 
-    const validatedParams = this.validateCall(method, params ?? []);
-    return this.callMethod(method, validatedParams);
-  }
-
-  private validateCall(method: string, params: unknown): unknown {
-    const methodEntry = this.methods.get(method);
-    if (methodEntry === undefined) {
+    if (!(method in this.schemas)) {
       throw new RpcError(-32601, `Method not found: ${method}`);
     }
+    const validatedParams = this.validateCall(method as MethodName, params ?? []);
+    return this.callHandler(method as MethodName, validatedParams);
+  }
 
-    const { paramsSchema } = methodEntry;
+  private validateCall<M extends MethodName>(method: M, params: unknown): InputOf<M> {
+    const { input } = this.schemas[method];
 
-    const parseResult = paramsSchema.safeParse(params);
+    const parseResult = input.safeParse(params);
     if (parseResult.error !== undefined) {
       throw new RpcError(-32602, createParamsParseErrorMessage(parseResult.error));
     }
     return parseResult.data;
   }
 
-  async callMethod(method: string, validatedParams: unknown): Promise<JsonRpcResult> {
-    const methodEntry = this.methods.get(method);
-    if (methodEntry === undefined) {
-      throw new RpcError(-32601, `Method not found: ${method}`);
-    }
-    const { method: methodFn, resultSchema } = methodEntry;
+  async callHandler<M extends MethodName>(method: M, validatedParams: InputOf<M>): Promise<OutputOf<M>> {
+    const handler = this.handlers[method];
+    const { output } = this.schemas[method];
 
     const db: DatabaseContext = {
       blocks: this.blocks,
       states: this.states,
     };
 
-    return resultSchema.encode(await methodFn(validatedParams, db, this.chainSpec));
+    return output.encode(await handler(validatedParams, db, this.chainSpec));
   }
 
   getLogger(): Logger {

@@ -7,8 +7,9 @@ import { getChainSpec, getDatabasePath } from "@typeberry/node";
 import { workspacePathFix } from "@typeberry/utils";
 import minimist from "minimist";
 import packageJson from "./package.json" with { type: "json" };
-import { methods } from "./src/method-loader.js";
+import { handlers } from "./src/handlers.js";
 import { RpcServer } from "./src/server.js";
+import { validation } from "./src/validation.js";
 
 const DEFAULT_PORT = 19800;
 
@@ -72,7 +73,7 @@ export async function main(args: string[]) {
   );
 
   const rootDb = new LmdbRoot(dbPath, true);
-  const server = new RpcServer(port, rootDb, spec, blake2b, methods);
+  const server = new RpcServer(port, rootDb, spec, blake2b, handlers, validation.schemas);
 
   process.on("SIGINT", async () => {
     await server.close();

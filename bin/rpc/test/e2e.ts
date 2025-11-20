@@ -4,7 +4,8 @@ import { after, before, describe, it } from "node:test";
 import { main } from "../main.js";
 import { RpcClient } from "../src/client.js";
 import type { RpcServer } from "../src/server.js";
-import { JSON_RPC_VERSION } from "../src/types.js";
+import type { AnyMethodName, MethodName } from "../src/types.js";
+import { JSON_RPC_VERSION } from "../src/validation.js";
 
 // todo [seko] to be removed once validation and typing in client is implemented
 type BlockDescriptor = {
@@ -30,7 +31,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
   it("raises an error for unknown method", async () => {
     await assert.rejects(
       async () => {
-        await client.call("unknownMethod");
+        await client.call("unknownMethod" as AnyMethodName);
       },
       { code: -32601, message: "Method not found: unknownMethod" },
     );
@@ -207,8 +208,8 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
   });
 
   it("client handles errors produced by the subscription", async () => {
-    const originalCallMethod = server.callMethod;
-    server.callMethod = async (method: string, validatedParams: unknown) => {
+    const originalCallMethod = server.callHandler;
+    server.callHandler = async (method: MethodName, validatedParams: unknown) => {
       if (method === "bestBlock") {
         throw new Error("Forced error for bestBlock");
       }
@@ -227,7 +228,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
         });
       });
     }).finally(() => {
-      server.callMethod = originalCallMethod;
+      server.callHandler = originalCallMethod;
     });
   });
 

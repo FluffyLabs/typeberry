@@ -3,8 +3,7 @@ import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { StatisticsData } from "@typeberry/state";
-import z from "zod";
-import { BlobArray, Hash, RpcError, RpcErrorCode, withValidation } from "../types.js";
+import { type Handler, RpcError, RpcErrorCode } from "../types.js";
 
 /**
  * https://hackmd.io/@polkadot/jip2#statistics
@@ -16,7 +15,7 @@ import { BlobArray, Hash, RpcError, RpcErrorCode, withValidation } from "../type
  * ]
  * @returns Blob
  */
-export const statistics = withValidation(z.tuple([Hash]), BlobArray, async ([headerHash], db, chainSpec) => {
+export const statistics: Handler<"statistics"> = async ([headerHash], db, chainSpec) => {
   const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
   const state = db.states.getState(hashOpaque);
 
@@ -25,4 +24,4 @@ export const statistics = withValidation(z.tuple([Hash]), BlobArray, async ([hea
   }
 
   return Encoder.encodeObject(StatisticsData.Codec, state.statistics, chainSpec).raw;
-});
+};
