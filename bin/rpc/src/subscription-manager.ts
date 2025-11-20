@@ -1,23 +1,51 @@
 import type WebSocket from "ws";
 import type { RpcServer } from "./server.js";
-import {
-  JSON_RPC_VERSION,
-  type JsonRpcSubscriptionNotification,
-  type Subscription,
-  type SubscriptionId,
+import type {
+  InputOf,
+  JsonRpcSubscriptionNotification,
+  MethodName,
+  SubscribeMethodName,
+  Subscription,
+  SubscriptionId,
+  UnsubscribeMethodName,
 } from "./types.js";
+import { JSON_RPC_VERSION } from "./validation.js";
 
 const POLL_INTERVAL_MS = 1000;
 
-export const SUBSCRIBE_METHOD_MAP = new Map<string, [string, string]>([
-  ["subscribeBestBlock", ["bestBlock", "unsubscribeBestBlock"]],
-  ["subscribeFinalizedBlock", ["finalizedBlock", "unsubscribeFinalizedBlock"]],
-  ["subscribeServiceData", ["serviceData", "unsubscribeServiceData"]],
-  ["subscribeServicePreimage", ["servicePreimage", "unsubscribeServicePreimage"]],
-  ["subscribeServiceRequest", ["serviceRequest", "unsubscribeServiceRequest"]],
-  ["subscribeServiceValue", ["serviceValue", "unsubscribeServiceValue"]],
-  ["subscribeStatistics", ["statistics", "unsubscribeStatistics"]],
-]);
+export const SUBSCRIBE_METHOD_MAP: Record<
+  SubscribeMethodName,
+  { handler: MethodName; unsubscribe: UnsubscribeMethodName }
+> = {
+  subscribeBestBlock: {
+    handler: "bestBlock",
+    unsubscribe: "unsubscribeBestBlock",
+  },
+  subscribeFinalizedBlock: {
+    handler: "finalizedBlock",
+    unsubscribe: "unsubscribeFinalizedBlock",
+  },
+  subscribeServiceData: {
+    handler: "serviceData",
+    unsubscribe: "unsubscribeServiceData",
+  },
+  subscribeServicePreimage: {
+    handler: "servicePreimage",
+    unsubscribe: "unsubscribeServicePreimage",
+  },
+  subscribeServiceRequest: {
+    handler: "serviceRequest",
+    unsubscribe: "unsubscribeServiceRequest",
+  },
+  subscribeServiceValue: {
+    handler: "serviceValue",
+    unsubscribe: "unsubscribeServiceValue",
+  },
+  subscribeStatistics: {
+    handler: "statistics",
+    unsubscribe: "unsubscribeStatistics",
+  },
+} as const;
 
 export class SubscriptionManager {
   private subscriptions: Map<SubscriptionId, Subscription>;
@@ -38,7 +66,7 @@ export class SubscriptionManager {
       let notificationString: string;
 
       try {
-        const result = await this.server.callMethod(subscription.method, subscription.params);
+        const result = await this.server.callHandler(subscription.method, subscription.params);
 
         const notification: JsonRpcSubscriptionNotification = {
           jsonrpc: JSON_RPC_VERSION,
@@ -64,7 +92,7 @@ export class SubscriptionManager {
     }
   }
 
-  subscribe(ws: WebSocket, method: string, params: unknown): SubscriptionId {
+  subscribe<M extends MethodName>(ws: WebSocket, method: M, params: InputOf<M>): SubscriptionId {
     const id = this.nextId++;
     const idHex = `0x${id.toString(16)}`;
 

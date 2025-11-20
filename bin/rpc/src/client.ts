@@ -2,12 +2,18 @@ import { EventEmitter } from "node:events";
 import { Logger } from "@typeberry/logger";
 import WebSocket from "ws";
 import { SUBSCRIBE_METHOD_MAP } from "./subscription-manager.js";
-import type { JsonRpcRequest, JsonRpcResponse, JsonRpcSubscriptionNotification } from "./types.js";
-import { JSON_RPC_VERSION } from "./types.js";
+import type {
+  AnyMethodName,
+  JsonRpcRequest,
+  JsonRpcResponse,
+  JsonRpcSubscriptionNotification,
+  SubscribeMethodName,
+} from "./types.js";
+import { JSON_RPC_VERSION } from "./validation.js";
 
 export interface Subscription {
   id: string;
-  method: string;
+  method: SubscribeMethodName;
   eventEmitter: SubscriptionEventEmitter;
 }
 
@@ -95,7 +101,7 @@ export class RpcClient {
     return this.connectionPromise;
   }
 
-  async call(method: string, params?: unknown[]): Promise<unknown> {
+  async call(method: AnyMethodName, params?: unknown[]): Promise<unknown> {
     return new Promise((resolve, reject) => {
       const id = this.nextId++;
       const request: JsonRpcRequest = {
@@ -117,7 +123,7 @@ export class RpcClient {
     });
   }
 
-  async subscribe(method: string, params: unknown[]): Promise<SubscriptionEventEmitter> {
+  async subscribe(method: SubscribeMethodName, params: unknown[]): Promise<SubscriptionEventEmitter> {
     const result = await this.call(method, params);
 
     if (Array.isArray(result) && result.length === 1 && typeof result[0] === "string") {
@@ -136,7 +142,7 @@ export class RpcClient {
       throw new Error("Subscription not found");
     }
 
-    const [_, unsubscribeMethod] = SUBSCRIBE_METHOD_MAP.get(subscription.method) ?? [];
+    const unsubscribeMethod = SUBSCRIBE_METHOD_MAP[subscription.method].unsubscribe;
     if (unsubscribeMethod === undefined) {
       throw new Error(`Missing unsubscribe method mapping for ${subscription.method}`);
     }
