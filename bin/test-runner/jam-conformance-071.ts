@@ -17,7 +17,7 @@ main(runners, process.argv.slice(2), "test-vectors/jam-conformance/fuzz-reports/
     // Invalid ticket attempt - valid behavior
     "1763371155/00000055.json",
     "1763488328/00000051.json",
-    "1763487981/00000051.json"
+    "1763487981/00000051.json",
   ],
 })
   .then((r) => logger.log`${r}`)
