@@ -1,4 +1,3 @@
-import { beefyRoot } from "./handlers/beefy-root.js";
 import { bestBlock } from "./handlers/best-block.js";
 import { finalizedBlock } from "./handlers/finalized-block.js";
 import { listServices } from "./handlers/list-services.js";
@@ -14,7 +13,7 @@ import { statistics } from "./handlers/statistics.js";
 import type { HandlerMap } from "./types.js";
 
 export const handlers: HandlerMap = {
-  beefyRoot,
+  beefyRoot: notImplemented,
   bestBlock,
   finalizedBlock,
   listServices,
