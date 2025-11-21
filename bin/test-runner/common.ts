@@ -154,9 +154,9 @@ export function parseArgs(argv: string[]) {
     const opts = parsed.split(",").map((x) => x.trim());
     const result: SelectedPvm[] = [];
     for (const o of opts) {
-      const idx = allPvms.indexOf(o as SelectedPvm);
-      if (idx !== -1) {
-        result.push(allPvms[idx]);
+      const pvm = allPvms.find((p) => p === o);
+      if (pvm !== undefined) {
+        result.push(pvm);
       } else {
         throw new Error(`Unknown pvm value: ${o}. Use one of ${allPvms.join(", ")}.`);
       }
