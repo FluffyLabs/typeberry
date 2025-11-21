@@ -48,7 +48,7 @@ export class New implements HostCallHandler {
     const memoryReadResult = memory.loadInto(codeHash.raw, codeHashStart);
     // error while reading the memory.
     if (memoryReadResult.isError) {
-      logger.trace`NEW(${codeHash}, ${codeLength}, ${gas}, ${allowance}, ${gratisStorage}, ${requestedServiceId}) <- PANIC`;
+      logger.trace`[${this.currentServiceId}] NEW(${codeHash}, ${codeLength}, ${gas}, ${allowance}, ${gratisStorage}, ${requestedServiceId}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
@@ -60,7 +60,7 @@ export class New implements HostCallHandler {
       gratisStorage,
       requestedServiceId,
     );
-    logger.trace`NEW(${codeHash}, ${codeLength}, ${gas}, ${allowance}, ${gratisStorage}, ${requestedServiceId}) <- ${resultToString(assignedId)}`;
+    logger.trace`[${this.currentServiceId}] NEW(${codeHash}, ${codeLength}, ${gas}, ${allowance}, ${gratisStorage}, ${requestedServiceId}) <- ${resultToString(assignedId)}`;
 
     if (assignedId.isOk) {
       regs.set(IN_OUT_REG, tryAsU64(assignedId.ok));

@@ -41,13 +41,13 @@ export class Machine implements HostCallHandler {
     const code = BytesBlob.blobFrom(safeAllocUint8Array(codeLengthClamped));
     const codeLoadResult = memory.loadInto(code.raw, codeStart);
     if (codeLoadResult.isError) {
-      logger.trace`MACHINE(${code.toStringTruncated()}, ${entrypoint}) <- PANIC`;
+      logger.trace`[${this.currentServiceId}] MACHINE(${code.toStringTruncated()}, ${entrypoint}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
     // NOTE: Highly unlikely, but machineId could potentially collide with HOST_CALL_RESULT.
     const machinInitResult = await this.refine.machineInit(code, entrypoint);
-    logger.trace`MACHINE(${code.toStringTruncated()}, ${entrypoint}) <- ${resultToString(machinInitResult)}`;
+    logger.trace`[${this.currentServiceId}] MACHINE(${code.toStringTruncated()}, ${entrypoint}) <- ${resultToString(machinInitResult)}`;
 
     if (machinInitResult.isError) {
       regs.set(IN_OUT_REG, HostCallResult.HUH);
