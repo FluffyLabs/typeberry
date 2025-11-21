@@ -1,5 +1,5 @@
 import { StateTransition } from "@typeberry/state-vectors";
-import { logger, main, runner } from "./common.js";
+import { logger, main, parseArgs, runner } from "./common.js";
 import { runStateTransition } from "./state-transition/state-transition.js";
 
 const runners = [
@@ -9,7 +9,8 @@ const runners = [
     .withVariants(["ananas", "builtin"]),
 ].map((x) => x.build());
 
-main(runners, process.argv.slice(2), "test-vectors/javajam", {
+main(runners, "test-vectors/javajam", {
+  ...parseArgs(process.argv.slice(2)),
   patterns: [".json"],
   accepted: {
     ".json": ["stf/state_transitions/"],

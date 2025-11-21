@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { Block, emptyBlock } from "@typeberry/block";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { ChainSpec, PvmBackend, tinyChainSpec } from "@typeberry/config";
+import { ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { Blake2b, keccak, WithHash } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
@@ -13,7 +13,7 @@ import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
-import type { RunOptions } from "../common.js";
+import { type RunOptions, type SelectedPvm, selectedPvmToBackend } from "../common.js";
 import { loadState } from "./state-loader.js";
 
 const keccakHasher = keccak.KeccakHasher.create();
@@ -65,12 +65,8 @@ const jamConformance070V0Spec = new ChainSpec({
   maxLookupAnchorAge: tryAsU32(14_400),
 });
 
-export async function runStateTransition(
-  testContent: StateTransition,
-  options: RunOptions,
-  variant: "ananas" | "builtin",
-) {
-  const pvm = variant === "ananas" ? PvmBackend.Ananas : PvmBackend.BuiltIn;
+export async function runStateTransition(testContent: StateTransition, options: RunOptions, variant: SelectedPvm) {
+  const pvm = selectedPvmToBackend(variant);
   const blake2b = await Blake2b.createHasher();
   // a bit of a hack, but the new value for `maxLookupAnchorAge` was proposed with V1
   // version of the fuzzer, yet these tests were still depending on the older value.

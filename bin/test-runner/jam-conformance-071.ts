@@ -1,7 +1,8 @@
-import { logger, main } from "./common.js";
+import { logger, main, parseArgs } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
-main(runners, process.argv.slice(2), "test-vectors/jam-conformance/fuzz-reports/0.7.1/traces", {
+main(runners, "test-vectors/jam-conformance/fuzz-reports/0.7.1/traces", {
+  ...parseArgs(process.argv.slice(2)),
   patterns: [".json"],
   ignored: [
     // genesis file is unparsable

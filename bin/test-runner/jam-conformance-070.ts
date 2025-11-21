@@ -1,7 +1,8 @@
-import { logger, main } from "./common.js";
+import { logger, main, parseArgs } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
-main(runners, process.argv.slice(2), "test-vectors/jam-conformance/fuzz-reports/0.7.0/traces", {
+main(runners, "test-vectors/jam-conformance/fuzz-reports/0.7.0/traces", {
+  ...parseArgs(process.argv.slice(2)),
   patterns: [".json"],
   ignored: [
     // CORRECT: note [seko] test rejected at block parsing stage, which is considered valid behavior

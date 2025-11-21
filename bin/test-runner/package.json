@@ -30,7 +30,8 @@
     "@typeberry/transition": "*",
     "@typeberry/trie": "*",
     "@typeberry/utils": "*",
-    "json-bigint-patch": "0.0.8"
+    "json-bigint-patch": "0.0.8",
+    "minimist": "^1.2.8"
   },
   "scripts": {
     "start": "tsx --test-timeout=900000 ./index.ts",
