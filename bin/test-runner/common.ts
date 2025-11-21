@@ -6,13 +6,35 @@ import path from "node:path";
 import test, { type TestContext } from "node:test";
 import util from "node:util";
 import { type Decode, Decoder } from "@typeberry/codec";
-import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
+import { type ChainSpec, PvmBackend, tinyChainSpec } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
+import { assertNever } from "@typeberry/utils";
+import minimist from "minimist";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 export const logger = Logger.new(import.meta.filename, "test-runner");
+
+export enum SelectedPvm {
+  Ananas = "ananas",
+  Builtin = "builtin",
+}
+export const ALL_PVMS = [SelectedPvm.Ananas, SelectedPvm.Builtin];
+export function selectedPvmToBackend(pvm: SelectedPvm): PvmBackend {
+  switch (pvm) {
+    case SelectedPvm.Ananas:
+      return PvmBackend.Ananas;
+    case SelectedPvm.Builtin:
+      return PvmBackend.BuiltIn;
+    default:
+      assertNever(pvm);
+  }
+}
+
+export type GlobalsOptions = {
+  pvms: SelectedPvm[];
+};
 
 export class RunnerBuilder<T, V> implements Runner<T, V> {
   public readonly parsers: testFile.Kind<T>[] = [];
@@ -112,22 +134,56 @@ export namespace testFile {
       };
 }
 
+export function parseArgs(argv: string[]) {
+  const PVM_OPTION = "pvm";
+  const parsed = minimist(argv);
+  const pvms = getPvms(parsed[PVM_OPTION]);
+
+  return {
+    initialFiles: parsed._,
+    pvms,
+  };
+
+  function getPvms(parsed: string | undefined): SelectedPvm[] {
+    const allPvms = ALL_PVMS.slice();
+
+    if (parsed === undefined) {
+      return allPvms;
+    }
+
+    const opts = parsed.split(",").map((x) => x.trim());
+    const result: SelectedPvm[] = [];
+    for (const o of opts) {
+      const pvm = allPvms.find((p) => p === o);
+      if (pvm !== undefined) {
+        result.push(pvm);
+      } else {
+        throw new Error(`Unknown pvm value: ${o}. Use one of ${allPvms.join(", ")}.`);
+      }
+    }
+    return result;
+  }
+}
+
 export async function main(
   runners: Runner<unknown, unknown>[],
-  initialFiles: string[],
   directoryToScan: string,
   {
+    initialFiles,
+    pvms,
     patterns = [testFile.bin, testFile.json],
     accepted,
     ignored,
   }: {
+    initialFiles: string[];
+    pvms: SelectedPvm[];
     patterns?: (testFile.bin | testFile.json)[];
     accepted?: {
       [testFile.bin]?: string[];
       [testFile.json]?: string[];
     };
     ignored?: string[];
-  } = {},
+  },
 ) {
   await initWasm();
   const relPath = `${import.meta.dirname}/../..`;
@@ -177,7 +233,7 @@ export async function main(
       // 3. If the list is defined, we make sure that the path is on that list.
       (accepted[testFileContent.kind] ?? []).some((x) => absolutePath.includes(x));
 
-    const testVariants = prepareTest(runners, testFileContent, testFilePath, absolutePath);
+    const testVariants = prepareTest(runners, testFileContent, testFilePath, absolutePath, { pvms });
     for (const test of testVariants) {
       test.shouldSkip = !isAccepted;
       tests.push(test);
@@ -258,6 +314,7 @@ function prepareTest<T, V>(
   testContent: testFile.Content,
   fileName: string,
   fullPath: string,
+  globalOptions: GlobalsOptions,
 ): TestAndRunner<V>[] {
   const errors: [string, unknown][] = [];
   const handleError = (name: string, e: unknown) => errors.push([name, e]);
@@ -286,7 +343,7 @@ function prepareTest<T, V>(
         if (parser.kind === testFile.bin && testContent.kind === testFile.bin) {
           try {
             const parsedTest = Decoder.decodeObject(parser.codec, testContent.content, chainSpec);
-            matchingRunners.push(...createTestDefinitions(path, run, variants, parsedTest, chainSpec));
+            matchingRunners.push(...createTestDefinitions(path, run, variants, parsedTest, chainSpec, globalOptions));
           } catch (e) {
             handleError(path, e);
           }
@@ -295,7 +352,7 @@ function prepareTest<T, V>(
         if (parser.kind === testFile.json && testContent.kind === testFile.json) {
           try {
             const parsedTest = parseFromJson(testContent.content, parser.fromJson);
-            matchingRunners.push(...createTestDefinitions(path, run, variants, parsedTest, chainSpec));
+            matchingRunners.push(...createTestDefinitions(path, run, variants, parsedTest, chainSpec, globalOptions));
           } catch (e) {
             handleError(path, e);
           }
@@ -330,9 +387,15 @@ function prepareTest<T, V>(
     variants: V[],
     parsedTest: T,
     chainSpec: ChainSpec,
+    globalOptions: GlobalsOptions,
   ) {
     const results: TestAndRunner<V>[] = [];
-    const possibleVariants: V[] = variants.length === 0 ? [noneVariant] : variants;
+    let possibleVariants: V[] = variants.length === 0 ? [noneVariant] : variants;
+    // a bit hacky way to detect pvm-variants and filtering.
+    const idx = ALL_PVMS.indexOf(possibleVariants[0] as SelectedPvm);
+    if (idx !== -1) {
+      possibleVariants = possibleVariants.filter((x) => globalOptions.pvms.includes(x as SelectedPvm));
+    }
 
     for (const variant of possibleVariants) {
       results.push({

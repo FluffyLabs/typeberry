@@ -1,7 +1,8 @@
-import { logger, main } from "./common.js";
+import { logger, main, parseArgs } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
-main(runners, process.argv.slice(2), "test-vectors/w3f-fluffy", {
+main(runners, "test-vectors/w3f-fluffy", {
+  ...parseArgs(process.argv.slice(2)),
   patterns: [".json"],
   ignored: [
     "genesis.json",
