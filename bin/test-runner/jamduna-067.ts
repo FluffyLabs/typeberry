@@ -1,12 +1,12 @@
 import { StateTransition } from "@typeberry/state-vectors";
-import { logger, main, parseArgs, runner } from "./common.js";
+import { logger, main, parseArgs, runner, SelectedPvm } from "./common.js";
 import { runStateTransition } from "./state-transition/state-transition.js";
 
 const runners = [
   runner("state_transition", runStateTransition)
     .fromJson(StateTransition.fromJson)
     .fromBin(StateTransition.Codec)
-    .withVariants(["ananas", "builtin"]),
+    .withVariants([SelectedPvm.Ananas, SelectedPvm.Builtin]),
 ].map((x) => x.build());
 
 main(runners, "test-vectors/jamduna_067", {

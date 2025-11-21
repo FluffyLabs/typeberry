@@ -1,8 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { PvmBackend } from "@typeberry/config";
 import { deepEqual } from "@typeberry/utils";
-import { parseArgs } from "./common.js";
+import { parseArgs, SelectedPvm } from "./common.js";
 
 describe("test runner common", () => {
   it("should parse pvm argument", () => {
@@ -12,7 +11,7 @@ describe("test runner common", () => {
 
     deepEqual(result, {
       initialFiles: ["file1.json", "file2.json"],
-      pvms: [PvmBackend.Ananas],
+      pvms: [SelectedPvm.Ananas],
     });
   });
 
@@ -23,7 +22,7 @@ describe("test runner common", () => {
 
     deepEqual(result, {
       initialFiles: ["file1.json", "file2.json"],
-      pvms: [PvmBackend.BuiltIn, PvmBackend.Ananas],
+      pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin],
     });
   });
 
@@ -35,7 +34,7 @@ describe("test runner common", () => {
         const _result = parseArgs(args);
       },
       {
-        message: "Unknown pvm value: invalid. Use one of built-in, ananas",
+        message: "Unknown pvm value: invalid. Use one of ananas, builtin.",
       },
     );
   });

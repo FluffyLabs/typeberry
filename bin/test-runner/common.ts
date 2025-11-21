@@ -391,11 +391,9 @@ function prepareTest<T, V>(
   ) {
     const results: TestAndRunner<V>[] = [];
     let possibleVariants: V[] = variants.length === 0 ? [noneVariant] : variants;
-    console.log(globalOptions.pvms, possibleVariants);
     // a bit hacky way to detect pvm-variants and filtering.
     const idx = ALL_PVMS.indexOf(possibleVariants[0] as SelectedPvm);
     if (idx !== -1) {
-      console.log("Filtering pvms", globalOptions.pvms, "vs", possibleVariants);
       possibleVariants = possibleVariants.filter((x) => globalOptions.pvms.includes(x as SelectedPvm));
     }
 
