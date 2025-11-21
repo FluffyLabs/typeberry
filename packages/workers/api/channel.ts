@@ -87,11 +87,9 @@ export class Channel {
       // listen to request incoming to worker
       this.port.on(key, val.request, async ({ responseId, data }) => {
         try {
-          console.log(`[${threadId}] handling ${key}. Responseid: ${responseId}`);
           // handle them
           const response = await handler(data);
 
-          console.log(`[${threadId}] sending response: ${responseId}`);
           // and send response back on dedicated event
           this.port.postMessage(responseId, val.response, {
             responseId,
@@ -110,7 +108,6 @@ export class Channel {
       this.nextResponseId++;
       const responseId = `${key}:${this.nextResponseId}`;
 
-      console.log(`[${threadId}] will wait for ${key}`);
       return new Promise((resolve, reject) => {
         this.pendingPromises.add(reject);
         // attach response listener first
@@ -118,7 +115,6 @@ export class Channel {
           // we got response, so will resolve
           this.pendingPromises.delete(reject);
 
-          console.log(`[${threadId}] got ${key}`);
           resolve(msg.data);
         });
 

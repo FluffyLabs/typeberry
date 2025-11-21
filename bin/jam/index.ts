@@ -15,15 +15,6 @@ import { initializeTelemetry } from "./telemetry.js";
 
 export * from "./args.js";
 
-// Initialize OpenTelemetry before anything else
-initializeTelemetry({
-  enabled: process.env.OTEL_ENABLED !== "false",
-  prometheusPort: process.env.OTEL_PROMETHEUS_PORT !== undefined ? Number(process.env.OTEL_PROMETHEUS_PORT) : 9464,
-  serviceName: packageJson.name,
-  serviceVersion: packageJson.version,
-  otlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
-});
-
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 
 let args: Arguments;
@@ -91,6 +82,17 @@ async function prepareConfigFile(
 async function startNode(args: Arguments, withRelPath: (p: string) => string) {
   const blake2b = await Blake2b.createHasher();
   const jamNodeConfig = await prepareConfigFile(args, blake2b, withRelPath);
+
+  // Initialize OpenTelemetry before anything else
+  const devPortShift = args.command === Command.Dev ? args.args.index : 0;
+  initializeTelemetry({
+    enabled: process.env.OTEL_ENABLED !== "false",
+    prometheusPort: process.env.OTEL_PROMETHEUS_PORT !== undefined ? Number(process.env.OTEL_PROMETHEUS_PORT) : 9464 + devPortShift,
+    serviceName: packageJson.name,
+    serviceVersion: packageJson.version,
+    otlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
+  });
+
   // Start fuzz-target
   if (args.command === Command.FuzzTarget) {
     const version = args.args.version;
