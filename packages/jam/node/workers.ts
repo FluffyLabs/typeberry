@@ -20,9 +20,7 @@ export async function spawnImporterWorker(config: LmdbWorkerConfig<importer.Impo
     finish: async () => {
       await api.sendFinish();
       api.destroy();
-      console.log("waiting for worker to finish");
       await workerFinished;
-      console.log("worker done");
     },
   };
 }

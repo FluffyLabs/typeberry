@@ -1,5 +1,5 @@
 import EventEmitter from "node:events";
-import { type MessagePort, type Transferable, threadId } from "node:worker_threads";
+import type { MessagePort, Transferable } from "node:worker_threads";
 import { type Codec, Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";
@@ -29,7 +29,6 @@ export class ThreadPort implements Port {
       }
 
       const { eventName, responseId, data } = input;
-      console.log(`[${threadId}] ${eventName} received. emitting (${responseId})`);
       check`${this.events.listeners(eventName).length > 0} No listeners for received event ${eventName}!`;
       this.events.emit(eventName, responseId, data);
     });
@@ -86,7 +85,6 @@ export class ThreadPort implements Port {
       responseId: msg.responseId,
       data: encoded.raw,
     };
-    console.log(`[${threadId}] ${event} posting message to port ${"name" in codec ? codec.name : ""}`);
     // casting to transferable is safe here, since we know that encoder
     // always returns owned uint8arrays.
     this.port.postMessage(message, [encoded.raw.buffer as unknown as Transferable]);

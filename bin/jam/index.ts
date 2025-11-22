@@ -10,6 +10,7 @@ import { altNameRaw } from "@typeberry/networking";
 import { exportBlocks, importBlocks, JamConfig, main, mainFuzz } from "@typeberry/node";
 import { asOpaqueType, workspacePathFix } from "@typeberry/utils";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
+import { initializeTelemetry } from "./telemetry.js";
 
 export * from "./args.js";
 
@@ -80,6 +81,13 @@ async function prepareConfigFile(
 async function startNode(args: Arguments, withRelPath: (p: string) => string) {
   const blake2b = await Blake2b.createHasher();
   const jamNodeConfig = await prepareConfigFile(args, blake2b, withRelPath);
+
+  // Initialize OpenTelemetry before anything else
+  initializeTelemetry({
+    nodeName: jamNodeConfig.nodeName,
+    worker: "main",
+  });
+
   // Start fuzz-target
   if (args.command === Command.FuzzTarget) {
     const version = args.args.version;
