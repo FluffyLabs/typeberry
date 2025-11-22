@@ -10,7 +10,7 @@ import {
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
-import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec.js";
+import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec-utils.js";
 import {
   Credential,
   GuaranteesExtrinsicBounds,

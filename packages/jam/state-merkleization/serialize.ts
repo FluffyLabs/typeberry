@@ -1,5 +1,5 @@
 import type { EntropyHash, ServiceId, TimeSlot } from "@typeberry/block";
-import { codecFixedSizeArray } from "@typeberry/block/codec.js";
+import { codecFixedSizeArray } from "@typeberry/block/codec-utils.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { codec, Descriptor } from "@typeberry/codec";

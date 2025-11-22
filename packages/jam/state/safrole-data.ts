@@ -1,5 +1,5 @@
 import { codecPerValidator, type PerEpochBlock, type PerValidator, tryAsPerEpochBlock } from "@typeberry/block";
-import { codecWithContext } from "@typeberry/block/codec.js";
+import { codecWithContext } from "@typeberry/block/codec-utils.js";
 import { Ticket } from "@typeberry/block/tickets.js";
 import { type CodecRecord, codec, type DescribedBy } from "@typeberry/codec";
 import { asKnownSize, type KnownSizeArray } from "@typeberry/collections";

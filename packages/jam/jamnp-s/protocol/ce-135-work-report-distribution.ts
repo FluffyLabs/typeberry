@@ -1,5 +1,5 @@
 import type { TimeSlot } from "@typeberry/block";
-import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec.js";
+import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec-utils.js";
 import { Credential } from "@typeberry/block/guarantees.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
 import type { BytesBlob } from "@typeberry/bytes";

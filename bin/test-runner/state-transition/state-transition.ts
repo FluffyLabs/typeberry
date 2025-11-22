@@ -11,7 +11,7 @@ import { serializeStateUpdate } from "@typeberry/state-merkleization";
 import { StateTransition, StateTransitionGenesis } from "@typeberry/state-vectors";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
-import { OnChain } from "@typeberry/transition/chain-stf.js";
+import { DbHeaderChain, OnChain } from "@typeberry/transition/chain-stf.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
 import type { RunOptions } from "../common.js";
 import { loadState } from "./state-loader.js";
@@ -101,7 +101,7 @@ export async function runStateTransition(
     }),
   );
 
-  const stf = new OnChain(spec, preState, blocksDb, hasher, pvm);
+  const stf = new OnChain(spec, preState, hasher, pvm, DbHeaderChain.new(blocksDb));
 
   // verify that we compute the state root exactly the same.
   assert.deepStrictEqual(testContent.pre_state.state_root.toString(), preStateRoot.toString());

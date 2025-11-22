@@ -1,5 +1,5 @@
 import { codecPerEpochBlock, type PerEpochBlock } from "@typeberry/block";
-import { codecKnownSizeArray } from "@typeberry/block/codec.js";
+import { codecKnownSizeArray } from "@typeberry/block/codec-utils.js";
 import { MAX_REPORT_DEPENDENCIES } from "@typeberry/block/gp-constants.js";
 import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { WorkReport } from "@typeberry/block/work-report.js";

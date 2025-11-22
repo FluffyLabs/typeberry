@@ -17,7 +17,7 @@ import { ReportsError } from "./error.js";
 import type { ReportsInput } from "./input.js";
 
 /** Recently imported blocks. */
-export type HeaderChain = {
+export interface HeaderChain {
   /** Check whether given `pastBlock` hash is part of the ancestor chain of `currentBlock` */
   isAncestor(pastBlockSlot: TimeSlot, pastBlock: HeaderHash, currentBlock: HeaderHash): boolean;
 };

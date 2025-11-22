@@ -1,5 +1,5 @@
 import { codecPerValidator, type ServiceId, type TimeSlot } from "@typeberry/block";
-import { type CodecHashDictionaryOptions, codecHashDictionary } from "@typeberry/block/codec.js";
+import { type CodecHashDictionaryOptions, codecHashDictionary } from "@typeberry/block/codec-utils.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Ticket } from "@typeberry/block/tickets.js";
 import { type CodecRecord, codec, Descriptor } from "@typeberry/codec";

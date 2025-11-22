@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { codec, Decoder, Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
-import { codecHashDictionary } from "./codec.js";
+import { codecHashDictionary } from "./codec-utils.js";
 import type { PreimageHash } from "./preimage.js";
 import { ImportSpec } from "./work-item.js";
 import { tryAsSegmentIndex } from "./work-item-segment.js";
@@ -34,8 +34,7 @@ describe("JAM types codec / HashDictionary", () => {
 
   it("should throw an error if order is incorrect", () => {
     const list = [
-      ImportSpec.create({ treeRoot: hash(2), index: tryAsSegmentIndex(30) }),
-      ImportSpec.create({ treeRoot: hash(3), index: tryAsSegmentIndex(65_300) }),
+      ImportSpec.create({ treeRoot: hash(2), index: tryAsSegmentIndex(30) }), ImportSpec.create({ treeRoot: hash(3), index: tryAsSegmentIndex(65_300) }),
       ImportSpec.create({ treeRoot: hash(1), index: tryAsSegmentIndex(15) }),
     ];
 
