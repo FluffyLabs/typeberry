@@ -34,6 +34,7 @@ export class Importer {
   private readonly state: SerializedState<LeafDb>;
   // Hash of the block that we have the posterior state for in `state`.
   private currentHash: HeaderHash;
+  private readonly metrics: ReturnType<typeof metrics.createMetrics>;
 
   constructor(
     spec: ChainSpec,
@@ -43,6 +44,7 @@ export class Importer {
     private readonly blocks: BlocksDb,
     private readonly states: StatesDb<SerializedState<LeafDb>>,
   ) {
+    this.metrics = metrics.createMetrics();
     const currentBestHeaderHash = this.blocks.getBestHeaderHash();
     const state = states.getState(currentBestHeaderHash);
     if (state === null) {
@@ -86,7 +88,7 @@ export class Importer {
     const timer = measure("importBlock");
     const timeSlot = extractTimeSlot(block);
 
-    metrics.recordBlockImportingStarted(timeSlot);
+    this.metrics.recordBlockImportingStarted(timeSlot);
 
     const startTime = now();
     const maybeBestHeader = await this.importBlockInternal(block, omitSealVerification);
@@ -96,13 +98,13 @@ export class Importer {
       const bestHeader = maybeBestHeader.ok;
       this.logger.info`🧊 Best block: #${timeSlot} (${bestHeader.hash})`;
       this.logger.log`${timer()}`;
-      metrics.recordBlockImportComplete(duration, true);
+      this.metrics.recordBlockImportComplete(duration, true);
       return maybeBestHeader;
     }
 
     this.logger.log`❌ Rejected block #${timeSlot}: ${resultToString(maybeBestHeader)}`;
     this.logger.log`${timer()}`;
-    metrics.recordBlockImportComplete(duration, false);
+    this.metrics.recordBlockImportComplete(duration, false);
     return maybeBestHeader;
   }
 
@@ -119,10 +121,10 @@ export class Importer {
     const verifyDuration = now() - verifyStart;
     logger.log`${timerVerify()}`;
     if (hash.isError) {
-      metrics.recordBlockVerificationFailed(resultToString(hash));
+      this.metrics.recordBlockVerificationFailed(resultToString(hash));
       return importerError(ImporterErrorKind.Verifier, hash);
     }
-    metrics.recordBlockVerified(verifyDuration);
+    this.metrics.recordBlockVerified(verifyDuration);
 
     // TODO [ToDr] This is incomplete/temporary fork support!
     const parentHash = block.header.view().parentHeaderHash.materialize();
@@ -152,10 +154,10 @@ export class Importer {
     const stfDuration = now() - stfStart;
     logger.log`${timerStf()}`;
     if (res.isError) {
-      metrics.recordBlockExecutionFailed(resultToString(res));
+      this.metrics.recordBlockExecutionFailed(resultToString(res));
       return importerError(ImporterErrorKind.Stf, res);
     }
-    metrics.recordBlockExecuted(stfDuration, 0);
+    this.metrics.recordBlockExecuted(stfDuration, 0);
     // modify the state
     const update = res.ok;
     const timerState = measure("import:state");

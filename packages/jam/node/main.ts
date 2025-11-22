@@ -32,6 +32,8 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
 
   await initWasm();
 
+  const nodeMetrics = metrics.createMetrics();
+
   logger.info`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
   logger.info`🎸 Starting node: ${config.nodeName}.`;
   logger.info`🖥️ PVM Backend: ${PvmBackend[config.pvmBackend]}.`;
@@ -48,7 +50,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
     withRelPath(config.node.databaseBasePath),
   );
 
-  const baseConfig = { chainSpec, blake2b, dbPath };
+  const baseConfig = { nodeName: config.nodeName, chainSpec, blake2b, dbPath };
   const importerConfig = LmdbWorkerConfig.new({
     ...baseConfig,
     workerParams: ImporterConfig.create({
@@ -72,7 +74,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   const bestHeader = new Listener<WithHash<HeaderHash, HeaderView>>();
   importer.setOnBestHeaderAnnouncement(async (header) => {
     const slot = header.data.timeSlotIndex.materialize();
-    metrics.recordBestBlockChanged(slot, header.hash.toString());
+    nodeMetrics.recordBestBlockChanged(slot, header.hash.toString());
     await bestHeader.callbackHandler()(header);
   });
 

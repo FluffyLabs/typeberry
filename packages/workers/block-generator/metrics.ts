@@ -7,42 +7,46 @@ import packageJson from "./package.json" with { type: "json" };
  * https://github.com/polkadot-fellows/JIPs/blob/main/JIP-3.md#block-authoringimporting-events
  */
 
-const meter = metrics.getMeter(packageJson.name, packageJson.version);
+export function createMetrics() {
+  const meter = metrics.getMeter(packageJson.name, packageJson.version);
 
-const blockAuthoringDuration = meter.createHistogram("jam.blockAuthoringTime", {
-  description: "Duration of block authoring process",
-  unit: "ms",
-});
+  const blockAuthoringDuration = meter.createHistogram("jam.blockAuthoringTime", {
+    description: "Duration of block authoring process",
+    unit: "ms",
+  });
 
-// JIP-3
+  // JIP-3
 
-// 40
-const blockAuthoringCounter = meter.createCounter("jam.jip3.authoring", {
-  description: "Block authoring started",
-  unit: "blocks",
-});
+  // 40
+  const blockAuthoringCounter = meter.createCounter("jam.jip3.authoring", {
+    description: "Block authoring started",
+    unit: "blocks",
+  });
 
-export function recordBlockAuthoringStarted(slot: number): void {
-  blockAuthoringCounter.add(1, { slot: slot.toString() });
-}
+  // 41
+  const blockAuthoringFailedCounter = meter.createCounter("jam.jip3.authoring_failed", {
+    description: "Block authoring failed",
+    unit: "errors",
+  });
 
-// 41
-const blockAuthoringFailedCounter = meter.createCounter("jam.jip3.authoring_failed", {
-  description: "Block authoring failed",
-  unit: "errors",
-});
+  // 42
+  const blockAuthoredCounter = meter.createCounter("jam.jip3.authored", {
+    description: "Block authored successfully",
+    unit: "blocks",
+  });
 
-export function recordBlockAuthoringFailed(reason: string): void {
-  blockAuthoringFailedCounter.add(1, { reason });
-}
+  return {
+    recordBlockAuthoringStarted(slot: number): void {
+      blockAuthoringCounter.add(1, { slot: slot.toString() });
+    },
 
-// 42
-const blockAuthoredCounter = meter.createCounter("jam.jip3.authored", {
-  description: "Block authored successfully",
-  unit: "blocks",
-});
+    recordBlockAuthoringFailed(reason: string): void {
+      blockAuthoringFailedCounter.add(1, { reason });
+    },
 
-export function recordBlockAuthored(slot: number, durationMs: number): void {
-  blockAuthoredCounter.add(1, { slot: slot.toString() });
-  blockAuthoringDuration.record(durationMs);
+    recordBlockAuthored(slot: number, durationMs: number): void {
+      blockAuthoredCounter.add(1, { slot: slot.toString() });
+      blockAuthoringDuration.record(durationMs);
+    },
+  };
 }

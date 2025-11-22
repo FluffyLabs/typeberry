@@ -44,6 +44,8 @@ enum CloseReason {
 export class Quic {
   /** Setup QUIC socket and start listening for connections. */
   static async setup({ host, port, protocols, key }: Options): Promise<QuicNetwork> {
+    const networkMetrics = metrics.createMetrics();
+
     const quicLoggerLvl = logger.getLevel() > Level.TRACE ? LogLevel.WARN : LogLevel.DEBUG;
     const quicLogger = new QuicLogger("quic", quicLoggerLvl, [
       new StreamHandler(formatting.format`${formatting.level}:${formatting.keys}:${formatting.msg}`),
@@ -97,31 +99,31 @@ export class Quic {
       const conn = ev.detail;
       const peerAddress = `${conn.remoteHost}:${conn.remotePort}`;
 
-      metrics.recordConnectingIn(peerAddress);
+      networkMetrics.recordConnectingIn(peerAddress);
 
       if (lastConnectedPeer.info === null) {
-        metrics.recordConnectInFailed("no_peer_info");
+        networkMetrics.recordConnectInFailed("no_peer_info");
         await conn.stop();
         return;
       }
 
       if (lastConnectedPeer.info.key.isEqualTo(key.pubKey)) {
         logger.log`🛜 Rejecting connection from ourself from ${conn.remoteHost}:${conn.remotePort}`;
-        metrics.recordConnectionRefused(peerAddress);
+        networkMetrics.recordConnectionRefused(peerAddress);
         await conn.stop({ isApp: true, errorCode: CloseReason.ConnectionFromOurself });
         return;
       }
 
       if (peers.isConnected(lastConnectedPeer.info.id)) {
         logger.log`🛜 Rejecting duplicate connection with peer ${lastConnectedPeer.info.id} from ${conn.remoteHost}:${conn.remotePort}`;
-        metrics.recordConnectionRefused(peerAddress);
+        networkMetrics.recordConnectionRefused(peerAddress);
         await conn.stop({ isApp: true, errorCode: CloseReason.DuplicateConnection });
         return;
       }
 
       logger.log`🛜 Server handshake with ${conn.remoteHost}:${conn.remotePort}`;
       newPeer(conn, lastConnectedPeer.info);
-      metrics.recordConnectedIn(lastConnectedPeer.info.id);
+      networkMetrics.recordConnectedIn(lastConnectedPeer.info.id);
       lastConnectedPeer.info = null;
       await conn.start();
     });
@@ -134,7 +136,7 @@ export class Quic {
         const peerAddress = `${peer.host}:${peer.port}`;
         const peerDetails = peerVerification();
 
-        metrics.recordConnectingOut("pending", peerAddress);
+        networkMetrics.recordConnectingOut("pending", peerAddress);
 
         try {
           const clientLater = QUICClient.createQUICClient(
@@ -156,13 +158,13 @@ export class Quic {
           const client = await clientLater;
 
           if (peerDetails.info === null) {
-            metrics.recordConnectOutFailed("no_peer_info");
+            networkMetrics.recordConnectOutFailed("no_peer_info");
             await client.destroy({ isApp: true, errorCode: CloseReason.PeerIdMismatch });
             throw new Error("Client connected, but there is no peer details!");
           }
 
           if (options.verifyName !== undefined && options.verifyName !== peerDetails.info.id) {
-            metrics.recordConnectOutFailed("peer_id_mismatch");
+            networkMetrics.recordConnectOutFailed("peer_id_mismatch");
             await client.destroy({ isApp: true, errorCode: CloseReason.PeerIdMismatch });
             throw new Error(
               `Client connected, but the id didn't match. Expected: ${options.verifyName}, got: ${peerDetails.info.id}`,
@@ -179,10 +181,10 @@ export class Quic {
 
           logger.log`🤝 Client handshake with: ${peer.host}:${peer.port}`;
           const newPeerInstance = newPeer(client.connection, peerDetails.info);
-          metrics.recordConnectedOut(peerDetails.info.id);
+          networkMetrics.recordConnectedOut(peerDetails.info.id);
           return newPeerInstance;
         } catch (error) {
-          metrics.recordConnectOutFailed(String(error));
+          networkMetrics.recordConnectOutFailed(String(error));
           throw error;
         }
       }
@@ -194,7 +196,7 @@ export class Quic {
       addEventListener(peer.conn, events.EventQUICConnectionClose, (ev) => {
         const duration = now() - connectionStartTime;
         const reason = String(ev.detail) ?? "normal";
-        metrics.recordDisconnected(peer.id, "in", reason, duration);
+        networkMetrics.recordDisconnected(peer.id, "in", reason, duration);
         peers.peerDisconnected(peer);
       });
       peers.peerConnected(peer);

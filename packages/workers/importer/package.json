@@ -18,6 +18,7 @@
     "@typeberry/numbers": "*",
     "@typeberry/ordering": "*",
     "@typeberry/state-merkleization": "*",
+    "@typeberry/telemetry": "*",
     "@typeberry/transition": "*",
     "@typeberry/utils": "*",
     "@typeberry/workers-api": "*",

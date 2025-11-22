@@ -10,7 +10,6 @@ import { altNameRaw } from "@typeberry/networking";
 import { exportBlocks, importBlocks, JamConfig, main, mainFuzz } from "@typeberry/node";
 import { asOpaqueType, workspacePathFix } from "@typeberry/utils";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
-import packageJson from "./package.json" with { type: "json" };
 import { initializeTelemetry } from "./telemetry.js";
 
 export * from "./args.js";
@@ -84,13 +83,9 @@ async function startNode(args: Arguments, withRelPath: (p: string) => string) {
   const jamNodeConfig = await prepareConfigFile(args, blake2b, withRelPath);
 
   // Initialize OpenTelemetry before anything else
-  const devPortShift = args.command === Command.Dev ? args.args.index : 0;
   initializeTelemetry({
-    enabled: process.env.OTEL_ENABLED !== "false",
-    prometheusPort: process.env.OTEL_PROMETHEUS_PORT !== undefined ? Number(process.env.OTEL_PROMETHEUS_PORT) : 9464 + devPortShift,
-    serviceName: packageJson.name,
-    serviceVersion: packageJson.version,
-    otlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
+    nodeName: jamNodeConfig.nodeName,
+    worker: "main",
   });
 
   // Start fuzz-target

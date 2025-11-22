@@ -3,6 +3,8 @@ import type { BlocksDb, InMemoryBlocks, InMemoryStates, RootDb, StatesDb } from 
 
 /** Standardized worker config. */
 export interface WorkerConfig<TParams = void, TBlocks = BlocksDb, TStates = StatesDb> {
+  /** Node name. */
+  readonly nodeName: string;
   /** Chain spec. */
   readonly chainSpec: ChainSpec;
   /** Worker parameters. */
@@ -19,20 +21,23 @@ export class DirectWorkerConfig<TParams = void, TBlocks = BlocksDb, TStates = St
   implements WorkerConfig<TParams, TBlocks, TStates>
 {
   static new<T>({
+    nodeName,
     chainSpec,
     blocksDb,
     statesDb,
     params,
   }: {
+    nodeName: string;
     chainSpec: ChainSpec;
     blocksDb: InMemoryBlocks;
     statesDb: InMemoryStates;
     params: T;
   }): DirectWorkerConfig<T> {
-    return new DirectWorkerConfig(chainSpec, params, blocksDb, statesDb);
+    return new DirectWorkerConfig(nodeName, chainSpec, params, blocksDb, statesDb);
   }
 
   private constructor(
+    public readonly nodeName: string,
     public readonly chainSpec: ChainSpec,
     public readonly workerParams: TParams,
     private readonly blocksDb: TBlocks,

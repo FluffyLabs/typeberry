@@ -5,14 +5,6 @@
   "main": "index.ts",
   "bin": "./index.ts",
   "dependencies": {
-    "@opentelemetry/api": "1.9.0",
-    "@opentelemetry/auto-instrumentations-node": "^0.67.0",
-    "@opentelemetry/exporter-metrics-otlp-http": "^0.208.0",
-    "@opentelemetry/exporter-prometheus": "^0.208.0",
-    "@opentelemetry/resources": "^2.2.0",
-    "@opentelemetry/sdk-metrics": "^2.2.0",
-    "@opentelemetry/sdk-node": "^0.208.0",
-    "@opentelemetry/semantic-conventions": "^1.38.0",
     "@typeberry/bytes": "*",
     "@typeberry/config": "*",
     "@typeberry/config-node": "*",
@@ -22,6 +14,7 @@
     "@typeberry/networking": "*",
     "@typeberry/node": "*",
     "@typeberry/numbers": "*",
+    "@typeberry/telemetry": "*",
     "@typeberry/utils": "*",
     "minimist": "1.2.8"
   },

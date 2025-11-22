@@ -7,36 +7,40 @@ import packageJson from "./package.json" with { type: "json" };
  * https://github.com/polkadot-fellows/JIPs/blob/main/JIP-3.md#status-events
  */
 
-const meter = metrics.getMeter(packageJson.name, packageJson.version);
+export function createMetrics() {
+  const meter = metrics.getMeter(packageJson.name, packageJson.version);
 
-// JIP-3
+  // JIP-3
 
-// 11
-const bestBlockChangedCounter = meter.createCounter("jam.jip3.best_block_changed", {
-  description: "Best block changed events",
-  unit: "events",
-});
+  // 11
+  const bestBlockChangedCounter = meter.createCounter("jam.jip3.best_block_changed", {
+    description: "Best block changed events",
+    unit: "events",
+  });
 
-export function recordBestBlockChanged(slot: number, headerHash: string): void {
-  bestBlockChangedCounter.add(1, { slot, header_hash: headerHash });
-}
+  // 12
+  const finalizedBlockChangedCounter = meter.createCounter("jam.jip3.finalized_block_changed", {
+    description: "Finalized block changed events",
+    unit: "events",
+  });
 
-// 12
-const finalizedBlockChangedCounter = meter.createCounter("jam.jip3.finalized_block_changed", {
-  description: "Finalized block changed events",
-  unit: "events",
-});
+  // 13
+  const syncStatusChangedCounter = meter.createCounter("jam.jip3.sync_status_changed", {
+    description: "Sync status changed events",
+    unit: "events",
+  });
 
-export function recordFinalizedBlockChanged(slot: number, headerHash: string): void {
-  finalizedBlockChangedCounter.add(1, { slot, header_hash: headerHash });
-}
+  return {
+    recordBestBlockChanged(slot: number, headerHash: string): void {
+      bestBlockChangedCounter.add(1, { slot, header_hash: headerHash });
+    },
 
-// 13
-const syncStatusChangedCounter = meter.createCounter("jam.jip3.sync_status_changed", {
-  description: "Sync status changed events",
-  unit: "events",
-});
+    recordFinalizedBlockChanged(slot: number, headerHash: string): void {
+      finalizedBlockChangedCounter.add(1, { slot, header_hash: headerHash });
+    },
 
-export function recordSyncStatusChanged(synced: boolean): void {
-  syncStatusChangedCounter.add(1, { synced: synced.toString() });
+    recordSyncStatusChanged(synced: boolean): void {
+      syncStatusChangedCounter.add(1, { synced: synced.toString() });
+    },
+  };
 }

@@ -15,6 +15,7 @@
     "@typeberry/hash": "*",
     "@typeberry/logger": "*",
     "@typeberry/state-merkleization": "*",
+    "@typeberry/telemetry": "*",
     "@typeberry/transition": "*",
     "@typeberry/utils": "*",
     "@typeberry/workers-api": "*",

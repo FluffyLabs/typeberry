@@ -42,6 +42,7 @@ export async function exportBlocks(jamNodeConfig: JamConfig, output: string, wit
     withRelPath(jamNodeConfig.node.databaseBasePath),
   );
   const config = LmdbWorkerConfig.new({
+    nodeName: jamNodeConfig.nodeName,
     chainSpec,
     blake2b,
     dbPath,

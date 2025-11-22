@@ -16,6 +16,7 @@ export class Generator {
   private lastHeaderHash: HeaderHash;
   private lastHeader: Header;
   private lastState: State;
+  private readonly metrics: ReturnType<typeof metrics.createMetrics>;
 
   constructor(
     public readonly chainSpec: ChainSpec,
@@ -24,6 +25,7 @@ export class Generator {
     private readonly blocks: BlocksDb,
     private readonly states: StatesDb,
   ) {
+    this.metrics = metrics.createMetrics();
     const { lastHeaderHash, lastHeader, lastState } = Generator.getLastHeaderAndState(blocks, states);
     this.lastHeaderHash = lastHeaderHash;
     this.lastHeader = lastHeader;
@@ -70,7 +72,7 @@ export class Generator {
     const newTimeSlot = lastTimeSlot + 1;
 
     const startTime = now();
-    metrics.recordBlockAuthoringStarted(newTimeSlot);
+    this.metrics.recordBlockAuthoringStarted(newTimeSlot);
 
     // select validator for block
     const validatorId = tryAsValidatorIndex(newTimeSlot % 6);
@@ -128,7 +130,7 @@ export class Generator {
     this.lastHeader = header;
 
     const duration = now() - startTime;
-    metrics.recordBlockAuthored(newTimeSlot, duration);
+    this.metrics.recordBlockAuthored(newTimeSlot, duration);
 
     return Block.create({ header, extrinsic });
   }

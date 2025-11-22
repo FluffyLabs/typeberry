@@ -1,4 +1,3 @@
-import { threadId } from "node:worker_threads";
 import { Logger } from "@typeberry/logger";
 import { check } from "@typeberry/utils";
 import type { Port } from "./port.js";
