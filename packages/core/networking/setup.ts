@@ -122,7 +122,7 @@ export class Quic {
       }
 
       logger.log`🛜 Server handshake with ${conn.remoteHost}:${conn.remotePort}`;
-      newPeer(conn, lastConnectedPeer.info);
+      newPeer(conn, lastConnectedPeer.info, "in");
       networkMetrics.recordConnectedIn(lastConnectedPeer.info.id);
       lastConnectedPeer.info = null;
       await conn.start();
@@ -180,7 +180,7 @@ export class Quic {
           });
 
           logger.log`🤝 Client handshake with: ${peer.host}:${peer.port}`;
-          const newPeerInstance = newPeer(client.connection, peerDetails.info);
+          const newPeerInstance = newPeer(client.connection, peerDetails.info, "out");
           networkMetrics.recordConnectedOut(peerDetails.info.id);
           return newPeerInstance;
         } catch (error) {
@@ -190,13 +190,13 @@ export class Quic {
       }
     }
 
-    function newPeer(conn: QUICConnection, peerInfo: PeerInfo) {
+    function newPeer(conn: QUICConnection, peerInfo: PeerInfo, side: "in" | "out") {
       const peer = new QuicPeer(conn, peerInfo);
       const connectionStartTime = now();
       addEventListener(peer.conn, events.EventQUICConnectionClose, (ev) => {
         const duration = now() - connectionStartTime;
         const reason = String(ev.detail) ?? "normal";
-        networkMetrics.recordDisconnected(peer.id, "in", reason, duration);
+        networkMetrics.recordDisconnected(peer.id, side, reason, duration);
         peers.peerDisconnected(peer);
       });
       peers.peerConnected(peer);

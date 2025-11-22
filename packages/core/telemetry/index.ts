@@ -116,7 +116,7 @@ export async function shutdownTelemetry(sdk?: NodeSDK): Promise<void> {
   if (sdk !== undefined) {
     try {
       await sdk.shutdown();
-      logger.info`OpenTelemetry shut down successfully`;
+      logger.log`OpenTelemetry shut down successfully`;
     } catch (error) {
       logger.error`Error shutting down OpenTelemetry: ${error}`;
     }

@@ -137,7 +137,7 @@ JAM_LOG=networking:debug,state:trace jam
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `OTEL_ENABLED` | Enable/disable OpenTelemetry | `true` |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | URL to push metrics to | http://localhost:9090/api/v1/otpl |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | URL to push metrics to | http://localhost:9090/api/v1/otlp |
 
 **Example:**
 
@@ -147,6 +147,7 @@ jam dev 1
 
 # Disable telemetry
 OTEL_ENABLED=false jam dev 1
+```
 
 ### Local Prometheus via Docker
 
@@ -158,8 +159,7 @@ docker run -d -p 9090:9090 --name=prometheus prom/prometheus \
   --web.enable-otlp-receiver
 ```
 
-The `OTEL_EXPORTER_OTLP_ENDPOINT` is configured to push metrics to local instance, so run the node and open `http://localhost:9090` to explore the collected telemetry.
-```
+The default `OTEL_EXPORTER_OTLP_ENDPOINT` already points to the local instance, so run the node and open `http://localhost:9090` to explore the collected telemetry.
 
 ## Development
 
