@@ -16,11 +16,11 @@
     "@typeberry/erasure-coding": "*",
     "@typeberry/fuzz-proto": "*",
     "@typeberry/hash": "*",
+    "@typeberry/importer": "*",
     "@typeberry/jam-host-calls": "*",
     "@typeberry/json-parser": "*",
     "@typeberry/logger": "*",
     "@typeberry/mmr": "*",
-    "@typeberry/importer": "*",
     "@typeberry/numbers": "*",
     "@typeberry/ordering": "*",
     "@typeberry/pvm-debugger-adapter": "*",
@@ -35,7 +35,8 @@
     "@typeberry/state-vectors": "*",
     "@typeberry/transition": "*",
     "@typeberry/trie": "*",
-    "@typeberry/utils": "*"
+    "@typeberry/utils": "*",
+    "@typeberry/workers-api": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",

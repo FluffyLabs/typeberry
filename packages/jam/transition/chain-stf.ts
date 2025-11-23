@@ -37,8 +37,7 @@ import { Authorization, type AuthorizationStateUpdate } from "./authorization.js
 import type { TransitionHasher } from "./hasher.js";
 import { Preimages, type PreimagesErrorCode, type PreimagesStateUpdate } from "./preimages.js";
 import { RecentHistory, type RecentHistoryStateUpdate } from "./recent-history.js";
-import { Reports, type ReportsError, type ReportsStateUpdate } from "./reports/index.js";
-import type { HeaderChain } from "./reports/verify-contextual.js";
+import { type HeaderChain, Reports, type ReportsError, type ReportsStateUpdate } from "./reports/index.js";
 import { type CountAndGasUsed, Statistics, type StatisticsStateUpdate } from "./statistics.js";
 
 export class DbHeaderChain implements HeaderChain {
