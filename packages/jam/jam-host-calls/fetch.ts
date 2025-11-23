@@ -88,11 +88,11 @@ export interface IFetchExternalities {
    * authorizer code hash (`u`) and parametrization (`p`).
    *
    * Is Authorized: <empty>
-   * Refine: `E(p_u, ↕p_p)`
+   * Refine: `p_f`
    * Accumulate: <empty>
    * On Transfer: <empty>
    *
-   * https://graypaper.fluffylabs.dev/#/9a08063/32aa0132aa01?v=0.6.6
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/31c80231c802?v=0.7.2
    */
   authorizer(): BytesBlob | null;
 
