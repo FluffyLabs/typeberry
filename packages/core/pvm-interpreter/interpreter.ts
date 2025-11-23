@@ -128,8 +128,8 @@ export class Interpreter implements IPvmInterpreter {
     this.oneRegOneExtImmDispatcher = new OneRegOneExtImmDispatcher(loadOps);
   }
 
-  resetJam(program: Uint8Array, args: Uint8Array, pc: number, gas: Gas) {
-    const p = Program.fromSpi(program, args, true);
+  resetJam(program: Uint8Array, args: Uint8Array, pc: number, gas: Gas, hasMetadata = true) {
+    const p = Program.fromSpi(program, args, hasMetadata);
     this.resetGeneric(p.code, pc, gas, p.registers, p.memory);
   }
 
