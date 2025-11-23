@@ -1,6 +1,6 @@
 export * as assurances from "./assurances.js";
 export * from "./block.js";
-export * as codecUtils from "./codec.js";
+export * as codecUtils from "./codec-utils.js";
 export * from "./common.js";
 export * as disputes from "./disputes.js";
 export * as guarantees from "./guarantees.js";

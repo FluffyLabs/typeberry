@@ -1,4 +1,4 @@
-import { codecFixedSizeArray, codecKnownSizeArray } from "@typeberry/block/codec.js";
+import { codecFixedSizeArray, codecKnownSizeArray } from "@typeberry/block/codec-utils.js";
 import { O, Q } from "@typeberry/block/gp-constants.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { codec, type SequenceView } from "@typeberry/codec";

@@ -1,7 +1,7 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
-import { codecHashDictionary, codecKnownSizeArray } from "@typeberry/block/codec.js";
+import { codecHashDictionary, codecKnownSizeArray } from "@typeberry/block/codec-utils.js";
 import { type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
-import { type CodecRecord, codec, type DescribedBy, readonlyArray } from "@typeberry/codec";
+import { type CodecRecord, codec, type DescribedBy } from "@typeberry/codec";
 import { asKnownSize, type HashDictionary, type KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";
 import type { MmrPeaks } from "@typeberry/mmr";
@@ -58,7 +58,7 @@ export class RecentBlocks extends WithDebug {
       typicalLength: MAX_RECENT_HISTORY,
     }),
     accumulationLog: codec.object({
-      peaks: readonlyArray(codec.sequenceVarLen(codec.optional(codec.bytes(HASH_SIZE)))),
+      peaks: codec.readonlyArray(codec.sequenceVarLen(codec.optional(codec.bytes(HASH_SIZE)))),
     }),
   });
 

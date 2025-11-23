@@ -11,9 +11,9 @@ import { AvailabilityAssignment, type State, type StateView, tryAsPerCore, type 
 import { asOpaqueType, OK, Result } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment.js";
-import type { ReportsInput } from "./input.js";
+import type { HeaderChain, ReportsInput } from "./input.js";
 import { verifyReportsBasic } from "./verify-basic.js";
-import { type HeaderChain, verifyContextualValidity } from "./verify-contextual.js";
+import { verifyContextualValidity } from "./verify-contextual.js";
 import { type GuarantorAssignment, verifyCredentials } from "./verify-credentials.js";
 import { verifyReportsOrder } from "./verify-order.js";
 import { verifyPostSignatureChecks } from "./verify-post-signature.js";

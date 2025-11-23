@@ -33,6 +33,7 @@ import {
   validatorDataFromJson,
 } from "@typeberry/state-json";
 import {
+  type HeaderChain,
   Reports,
   ReportsError,
   type ReportsInput,
@@ -40,7 +41,6 @@ import {
   type ReportsState,
 } from "@typeberry/transition/reports/index.js";
 import { guaranteesAsView } from "@typeberry/transition/reports/test.utils.js";
-import type { HeaderChain } from "@typeberry/transition/reports/verify-contextual.js";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { deepEqual, Result } from "@typeberry/utils";
 import type { RunOptions } from "../common.js";

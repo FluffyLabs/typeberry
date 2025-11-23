@@ -2,7 +2,7 @@ import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import type { Blake2b } from "@typeberry/hash";
+import { Blake2b } from "@typeberry/hash";
 import type { State } from "@typeberry/state/state.js";
 import type { ServicesUpdate } from "@typeberry/state/state-update.js";
 import {
@@ -25,7 +25,16 @@ export class InMemorySerializedStates implements StatesDb<SerializedState<LeafDb
   private readonly db: HashDictionary<HeaderHash, SortedSet<LeafNode>> = HashDictionary.new();
   private readonly valuesDb: HashDictionary<ValueHash, BytesBlob> = HashDictionary.new();
 
-  constructor(
+  static async new({ chainSpec }: { chainSpec: ChainSpec }) {
+    const blake2b = await Blake2b.createHasher();
+    return new InMemorySerializedStates(chainSpec, blake2b);
+  }
+
+  static withHasher({ chainSpec, blake2b }: { chainSpec: ChainSpec; blake2b: Blake2b }) {
+    return new InMemorySerializedStates(chainSpec, blake2b);
+  }
+
+  private constructor(
     private readonly spec: ChainSpec,
     private readonly blake2b: Blake2b,
   ) {}

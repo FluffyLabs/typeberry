@@ -16,6 +16,7 @@ const MESSAGE_KEYS: (keyof Message)[] = ["eventName", "responseId", "data"];
 const logger = Logger.new(import.meta.filename, "workers/api");
 
 export class ThreadPort implements Port {
+  public readonly threadId = threadId;
   private readonly events = new EventEmitter();
 
   public constructor(

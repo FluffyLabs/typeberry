@@ -10,7 +10,7 @@ import {
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
-import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec.js";
+import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec-utils.js";
 import {
   Credential,
   GuaranteesExtrinsicBounds,
@@ -49,8 +49,8 @@ import {
 } from "@typeberry/state";
 import { RecentBlocks } from "@typeberry/state/recent-blocks.js";
 import { asOpaqueType } from "@typeberry/utils";
+import type { HeaderChain } from "./input.js";
 import { Reports, type ReportsState } from "./reports.js";
-import type { HeaderChain } from "./verify-contextual.js";
 
 export const ENTROPY = getEntropy(1, 2, 3, 4);
 

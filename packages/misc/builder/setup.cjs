@@ -59,5 +59,5 @@ module.exports = {
   inputFile,
   esmOutFile: `${DIST}/index.js`,
   cjsOutFile: `${DIST}/index.cjs`,
-  typesInput: `${DIST}/packages/misc/builder/pkg.d.ts`,
+  typesInput: inputFile,
 };

@@ -4,7 +4,7 @@ import { asKnownSize, type KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { sumU32, type U16, type U32 } from "@typeberry/numbers";
 import { Compatibility, GpVersion, type Opaque, WithDebug } from "@typeberry/utils";
-import { codecKnownSizeArray } from "./codec.js";
+import { codecKnownSizeArray } from "./codec-utils.js";
 import type { ServiceGas, ServiceId } from "./common.js";
 import type { CodeHash } from "./hash.js";
 import { MAX_NUMBER_OF_SEGMENTS, type SegmentIndex } from "./work-item-segment.js";

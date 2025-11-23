@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "./decoder.js";
-import { codec } from "./descriptors.js";
+import * as codec from "./descriptors.js";
 import { Encoder } from "./encoder.js";
 
 function decodeVarU32(source: Uint8Array, finish = true) {

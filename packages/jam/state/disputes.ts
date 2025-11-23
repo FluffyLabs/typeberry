@@ -1,11 +1,11 @@
 import type { WorkReportHash } from "@typeberry/block";
-import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
+import { type CodecRecord, codec } from "@typeberry/codec";
 import { HashSet, type ImmutableHashSet, type ImmutableSortedSet, SortedSet } from "@typeberry/collections";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 
 const sortedSetCodec = <T extends OpaqueHash>() =>
-  readonlyArray(codec.sequenceVarLen(codec.bytes(HASH_SIZE))).convert<ImmutableSortedSet<T>>(
+  codec.readonlyArray(codec.sequenceVarLen(codec.bytes(HASH_SIZE))).convert<ImmutableSortedSet<T>>(
     (input) => input.array,
     (output) => {
       const typed: T[] = output.map((x) => x.asOpaque());

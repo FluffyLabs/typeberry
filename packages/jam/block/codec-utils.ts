@@ -1,4 +1,4 @@
-import { codec, Descriptor, readonlyArray, type SequenceView, TYPICAL_DICTIONARY_LENGTH } from "@typeberry/codec";
+import { codec, Descriptor, type SequenceView } from "@typeberry/codec";
 import { asKnownSize, FixedSizeArray, HashDictionary, type KnownSizeArray } from "@typeberry/collections";
 import { ChainSpec, fullChainSpec } from "@typeberry/config";
 import type { OpaqueHash } from "@typeberry/hash";
@@ -50,10 +50,10 @@ export const codecKnownSizeArray = <F extends string, T, V>(
   _id?: F,
 ): Descriptor<KnownSizeArray<T, F>, SequenceView<T, V>> => {
   if ("fixedLength" in options) {
-    return readonlyArray(codec.sequenceFixLen(val, options.fixedLength)).convert(seeThrough, asKnownSize);
+    return codec.readonlyArray(codec.sequenceFixLen(val, options.fixedLength)).convert(seeThrough, asKnownSize);
   }
 
-  return readonlyArray(codec.sequenceVarLen(val, options)).convert(seeThrough, asKnownSize);
+  return codec.readonlyArray(codec.sequenceVarLen(val, options)).convert(seeThrough, asKnownSize);
 };
 
 /** Codec for a fixed-size array with length validation. */
@@ -88,7 +88,7 @@ export const codecHashDictionary = <K extends OpaqueHash, T>(
   value: Descriptor<T>,
   extractKey: (val: T) => K,
   {
-    typicalLength = TYPICAL_DICTIONARY_LENGTH,
+    typicalLength = codec.TYPICAL_DICTIONARY_LENGTH,
     compare = (a, b) => extractKey(a).compare(extractKey(b)),
   }: CodecHashDictionaryOptions<T> = {},
 ): Descriptor<HashDictionary<K, T>> => {

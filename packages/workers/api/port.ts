@@ -1,5 +1,5 @@
-import { EventEmitter } from "node:events";
 import type { Codec } from "@typeberry/codec";
+import { EventEmitter } from "eventemitter3";
 
 /**
  * Our specific message envelope.
@@ -19,6 +19,9 @@ export type Envelope<T> = {
  * Can be used to communicate between worker threads.
  */
 export interface Port {
+  /** Optional thread id. */
+  readonly threadId: number;
+
   /** Attach a callback to be triggered when the port is being closed (via error or not). */
   onClose(callback: (e: Error) => void): void;
 
@@ -50,6 +53,8 @@ export interface Port {
  * so there is no need for any serialization - we simply pass the data.
  */
 export class DirectPort implements Port {
+  readonly threadId = 0;
+
   /** Create a pair of symmetrical inter-connected ports. */
   static pair(): [DirectPort, DirectPort] {
     const events = new EventEmitter();

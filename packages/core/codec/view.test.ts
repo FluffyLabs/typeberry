@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { Decoder } from "./decoder.js";
 import type { CodecRecord } from "./descriptor.js";
-import { codec } from "./descriptors.js";
+import * as codec from "./descriptors.js";
 import { Encoder } from "./encoder.js";
 
 describe("Codec view", () => {

@@ -8,10 +8,11 @@
   },
   "dependencies": {
     "@typeberry/codec": "*",
-    "@typeberry/numbers": "*",
     "@typeberry/listener": "*",
     "@typeberry/logger": "*",
-    "@typeberry/utils": "*"
+    "@typeberry/numbers": "*",
+    "@typeberry/utils": "*",
+    "eventemitter3": "^5.0.1"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
