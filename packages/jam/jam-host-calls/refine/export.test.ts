@@ -8,7 +8,7 @@ import { tryAsGas } from "@typeberry/pvm-interface";
 import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
+import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import { Result } from "@typeberry/utils";
 import { SegmentExportError } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";

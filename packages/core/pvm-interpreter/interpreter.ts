@@ -1,7 +1,6 @@
 import { Logger } from "@typeberry/logger";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { type Gas, type IPvmInterpreter, Status, tryAsGas } from "@typeberry/pvm-interface";
-import { Program } from "@typeberry/pvm-program";
 import { ArgsDecoder } from "./args-decoder/args-decoder.js";
 import { createResults } from "./args-decoder/args-decoding-results.js";
 import { ArgumentType } from "./args-decoder/argument-type.js";
@@ -46,6 +45,7 @@ import {
   TwoRegsOneOffsetDispatcher,
   TwoRegsTwoImmsDispatcher,
 } from "./ops-dispatchers/index.js";
+import { Program } from "./program.js";
 import { JumpTable } from "./program-decoder/jump-table.js";
 import { Mask } from "./program-decoder/mask.js";
 import { ProgramDecoder } from "./program-decoder/program-decoder.js";
