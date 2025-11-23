@@ -153,7 +153,7 @@ export const u8 = Descriptor.new<U8>(
 
 /** Signed 64-bit number. */
 export const i64 = Descriptor.withView<bigint, Bytes<8>>(
-  "u64",
+  "i64",
   exactHint(8),
   (e, v) => e.i64(v),
   (d) => d.i64(),
@@ -336,7 +336,7 @@ export const dictionary = <K, V, V2>(
       data.sort((a, b) => sortKeys(a[0], b[0]));
 
       // length prefix
-      if (fixedLength === undefined || fixedLength === 0) {
+      if (fixedLength === undefined) {
         e.varU32(tryAsU32(data.length));
       }
       for (const [k, v] of data) {
