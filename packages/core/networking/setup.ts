@@ -136,8 +136,6 @@ export class Quic {
         const peerAddress = `${peer.host}:${peer.port}`;
         const peerDetails = peerVerification();
 
-        networkMetrics.recordConnectingOut("pending", peerAddress);
-
         try {
           const clientLater = QUICClient.createQUICClient(
             {
@@ -156,6 +154,8 @@ export class Quic {
             },
           );
           const client = await clientLater;
+
+          networkMetrics.recordConnectingOut(peerDetails.info?.id ?? "unknown", peerAddress);
 
           if (peerDetails.info === null) {
             networkMetrics.recordConnectOutFailed("no_peer_info");

@@ -40,7 +40,7 @@ export function createMetrics() {
     },
 
     recordSyncStatusChanged(synced: boolean): void {
-      syncStatusChangedCounter.add(1, { synced: synced.toString() });
+      syncStatusChangedCounter.add(1, { synced });
     },
   };
 }

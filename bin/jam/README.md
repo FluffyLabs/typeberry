@@ -137,7 +137,7 @@ JAM_LOG=networking:debug,state:trace jam
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `OTEL_ENABLED` | Enable/disable OpenTelemetry | `true` |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | URL to push metrics to | http://localhost:9090/api/v1/otlp |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | URL to push metrics to | `http://localhost:9090/api/v1/otlp` |
 
 **Example:**
 

@@ -37,7 +37,7 @@ export function createMetrics() {
 
   return {
     recordBlockAuthoringStarted(slot: number): void {
-      blockAuthoringCounter.add(1, { slot: slot.toString() });
+      blockAuthoringCounter.add(1, { slot });
     },
 
     recordBlockAuthoringFailed(reason: string): void {
@@ -45,7 +45,7 @@ export function createMetrics() {
     },
 
     recordBlockAuthored(slot: number, durationMs: number): void {
-      blockAuthoredCounter.add(1, { slot: slot.toString() });
+      blockAuthoredCounter.add(1, { slot });
       blockAuthoringDuration.record(durationMs);
     },
   };

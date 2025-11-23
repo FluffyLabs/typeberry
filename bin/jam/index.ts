@@ -8,9 +8,9 @@ import { Blake2b } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { altNameRaw } from "@typeberry/networking";
 import { exportBlocks, importBlocks, JamConfig, main, mainFuzz } from "@typeberry/node";
+import { initializeTelemetry } from "@typeberry/telemetry";
 import { asOpaqueType, workspacePathFix } from "@typeberry/utils";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
-import { initializeTelemetry } from "./telemetry.js";
 
 export * from "./args.js";
 
@@ -83,9 +83,18 @@ async function startNode(args: Arguments, withRelPath: (p: string) => string) {
   const jamNodeConfig = await prepareConfigFile(args, blake2b, withRelPath);
 
   // Initialize OpenTelemetry before anything else
-  initializeTelemetry({
+  const telemetry = initializeTelemetry({
     nodeName: jamNodeConfig.nodeName,
     worker: "main",
+  });
+
+  // Handle graceful shutdown
+  process.on("SIGTERM", async () => {
+    await shutdownTelemetry(telemetry);
+  });
+
+  process.on("SIGINT", async () => {
+    await shutdownTelemetry(telemetry);
   });
 
   // Start fuzz-target

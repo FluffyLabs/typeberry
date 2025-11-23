@@ -10,19 +10,7 @@ export function isBrowser() {
  * which remain well below Number.MAX_SAFE_INTEGER for practical runtimes
  * (would take ~285 years to overflow).
  */
-export const now = isBrowser()
-  ? () => performance.now()
-  : (() => {
-      // Defer process.hrtime reference to avoid bundler issues in browser builds
-      const getTime = () => {
-        if (typeof process !== "undefined" && typeof process.hrtime === "function") {
-          return Number(process.hrtime.bigint() / 1_000_000n);
-        }
-        // Fallback to performance.now() if process.hrtime is unavailable
-        return performance.now();
-      };
-      return getTime;
-    })();
+export const now = isBrowser() ? () => performance.now() : () => Number(process.hrtime.bigint() / 1_000_000n);
 
 /**
  * A function to perform runtime assertions.

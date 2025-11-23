@@ -64,11 +64,11 @@ export function createMetrics() {
 
   return {
     recordBlockImportComplete(totalDurationMs: number, success: boolean): void {
-      blockImportDuration.record(totalDurationMs, { success: success.toString() });
+      blockImportDuration.record(totalDurationMs, { success });
     },
 
     recordBlockImportingStarted(slot: number): void {
-      blockImportingCounter.add(1, { slot: slot.toString() });
+      blockImportingCounter.add(1, { slot });
     },
 
     recordBlockVerificationFailed(reason: string): void {

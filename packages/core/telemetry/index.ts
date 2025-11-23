@@ -96,15 +96,6 @@ function initializeTelemetryFull(config: TelemetryConfigFull): NodeSDK | null {
   try {
     sdk.start();
     logger.info`OpenTelemetry initialized for service: ${serviceName}`;
-
-    // Handle graceful shutdown
-    process.on("SIGTERM", async () => {
-      await shutdownTelemetry(sdk);
-    });
-
-    process.on("SIGINT", async () => {
-      await shutdownTelemetry(sdk);
-    });
   } catch (error) {
     logger.error`Error initializing OpenTelemetry: ${error}`;
   }
