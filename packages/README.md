@@ -29,6 +29,7 @@ Contains fundamental packages that provide low-level functionality and utilities
 - **pvm-program** - PVM program utilities
 - **pvm-spi-decoder** - PVM SPI decoder
 - **shuffling** - Shuffling algorithms
+- **telemetry** - OpenTelemetry initialization utilities
 - **trie** - Trie data structure implementation
 - **utils** - General purpose utilities
 
