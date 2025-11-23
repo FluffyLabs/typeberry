@@ -142,7 +142,7 @@ JAM_LOG=networking:debug,state:trace jam
 **Example:**
 
 ```bash
-# Access Prometheus metrics at http://localhost:9464/metrics
+# Metrics will be pushed to local prometheus with OTLP receiver.
 jam dev 1
 
 # Disable telemetry
