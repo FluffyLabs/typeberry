@@ -4,7 +4,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { Decoder } from "./decoder.js";
 import type { CodecRecord } from "./descriptor.js";
-import { codec } from "./descriptors.js";
+import * as codec from "./descriptors.js";
 import { Encoder } from "./encoder.js";
 
 class TestHeader {
@@ -400,6 +400,21 @@ describe("Codec Descriptors / dictionary", () => {
       `${encoded}`,
       "0x0100000001010101010101010101010101010101010101010101010101010101010101010a0000000a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0f0000000f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
     );
+  });
+
+  it("should encode/decode 0-length dictionary", () => {
+    const input = new Map<U32, Bytes<32>>();
+
+    const dictCodec = codec.dictionary(codec.u32, codec.bytes(32), {
+      sortKeys: (a, b) => a - b,
+      fixedLength: 0,
+    });
+
+    const encoded = Encoder.encodeObject(dictCodec, input);
+    const decoded = Decoder.decodeObject(dictCodec, encoded);
+
+    assert.deepStrictEqual(decoded, input);
+    assert.deepStrictEqual(`${encoded}`, "0x");
   });
 });
 

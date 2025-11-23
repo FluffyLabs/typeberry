@@ -6,7 +6,7 @@ import type { Logger } from "@typeberry/logger";
 import type { SerializedState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, BlockVerifierError } from "@typeberry/transition/block-verifier.js";
-import { OnChain, type StfError } from "@typeberry/transition/chain-stf.js";
+import { DbHeaderChain, OnChain, type StfError } from "@typeberry/transition/chain-stf.js";
 import { type ErrorResult, measure, Result, resultToString, type TaggedError } from "@typeberry/utils";
 
 export enum ImporterErrorKind {
@@ -49,7 +49,7 @@ export class Importer {
     }
 
     this.verifier = new BlockVerifier(hasher, blocks);
-    this.stf = new OnChain(spec, state, blocks, hasher, pvm);
+    this.stf = new OnChain(spec, state, hasher, pvm, DbHeaderChain.new(blocks));
     this.state = state;
     this.currentHash = currentBestHeaderHash;
     this.prepareForNextEpoch();

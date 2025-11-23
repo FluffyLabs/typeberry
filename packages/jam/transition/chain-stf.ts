@@ -37,12 +37,15 @@ import { Authorization, type AuthorizationStateUpdate } from "./authorization.js
 import type { TransitionHasher } from "./hasher.js";
 import { Preimages, type PreimagesErrorCode, type PreimagesStateUpdate } from "./preimages.js";
 import { RecentHistory, type RecentHistoryStateUpdate } from "./recent-history.js";
-import { Reports, type ReportsError, type ReportsStateUpdate } from "./reports/index.js";
-import type { HeaderChain } from "./reports/verify-contextual.js";
+import { type HeaderChain, Reports, type ReportsError, type ReportsStateUpdate } from "./reports/index.js";
 import { type CountAndGasUsed, Statistics, type StatisticsStateUpdate } from "./statistics.js";
 
-class DbHeaderChain implements HeaderChain {
-  constructor(private readonly blocks: BlocksDb) {}
+export class DbHeaderChain implements HeaderChain {
+  static new(blocks: BlocksDb) {
+    return new DbHeaderChain(blocks);
+  }
+
+  private constructor(private readonly blocks: BlocksDb) {}
 
   isAncestor(pastHeaderSlot: TimeSlot, pastHeader: HeaderHash, currentHeader: HeaderHash): boolean {
     let currentHash = currentHeader;
@@ -143,9 +146,9 @@ export class OnChain {
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly state: State & WithStateView,
-    blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
     pvm: PvmBackend,
+    headerChain: HeaderChain,
   ) {
     const bandersnatch = BandernsatchWasm.new();
     this.statistics = new Statistics(chainSpec, state);
@@ -157,7 +160,7 @@ export class OnChain {
 
     this.disputes = new Disputes(chainSpec, hasher.blake2b, state);
 
-    this.reports = new Reports(chainSpec, hasher.blake2b, state, new DbHeaderChain(blocks));
+    this.reports = new Reports(chainSpec, hasher.blake2b, state, headerChain);
     this.assurances = new Assurances(chainSpec, state, hasher.blake2b);
     this.accumulate = new Accumulate(chainSpec, hasher.blake2b, state, pvm);
     this.accumulateOutput = new AccumulateOutput();

@@ -1,5 +1,5 @@
 import type { ChainSpec } from "@typeberry/config";
-import type { BlocksDb, InMemoryBlocks, InMemoryStates, RootDb, StatesDb } from "@typeberry/database";
+import type { BlocksDb, RootDb, StatesDb } from "@typeberry/database";
 
 /** Standardized worker config. */
 export interface WorkerConfig<TParams = void, TBlocks = BlocksDb, TStates = StatesDb> {
@@ -18,17 +18,17 @@ export interface WorkerConfig<TParams = void, TBlocks = BlocksDb, TStates = Stat
 export class DirectWorkerConfig<TParams = void, TBlocks = BlocksDb, TStates = StatesDb>
   implements WorkerConfig<TParams, TBlocks, TStates>
 {
-  static new<T>({
+  static new<T, B, S>({
     chainSpec,
     blocksDb,
     statesDb,
     params,
   }: {
     chainSpec: ChainSpec;
-    blocksDb: InMemoryBlocks;
-    statesDb: InMemoryStates;
+    blocksDb: B;
+    statesDb: S;
     params: T;
-  }): DirectWorkerConfig<T> {
+  }): DirectWorkerConfig<T, B, S> {
     return new DirectWorkerConfig(chainSpec, params, blocksDb, statesDb);
   }
 

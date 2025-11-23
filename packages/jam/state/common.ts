@@ -1,4 +1,4 @@
-import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec.js";
+import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec-utils.js";
 import type { Descriptor, SequenceView } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";

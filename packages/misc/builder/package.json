@@ -4,7 +4,7 @@
   "description": "Build typeberry package into one CommonJS module",
   "type": "module",
   "scripts": {
-    "build": "rollup -c"
+    "build": "NODE_OPTIONS=--max-old-space-size=8192 rollup -c"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

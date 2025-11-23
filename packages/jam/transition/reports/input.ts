@@ -1,10 +1,16 @@
-import type { TimeSlot } from "@typeberry/block";
+import type { HeaderHash, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { HashSet } from "@typeberry/collections";
 import type { Ed25519Key } from "@typeberry/crypto";
 import type { SafroleStateUpdate } from "@typeberry/safrole";
 import type { AssurancesStateUpdate } from "../assurances.js";
 import type { RecentHistoryStateUpdate } from "../recent-history.js";
+
+/** Recently imported blocks. */
+export interface HeaderChain {
+  /** Check whether given `pastBlock` hash is part of the ancestor chain of `currentBlock` */
+  isAncestor(pastBlockSlot: TimeSlot, pastBlock: HeaderHash, currentBlock: HeaderHash): boolean;
+}
 
 /**
  * Work Report is presented on-chain within `GuaranteesExtrinsic`

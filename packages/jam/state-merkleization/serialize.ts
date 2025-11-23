@@ -1,8 +1,8 @@
 import type { EntropyHash, ServiceId, TimeSlot } from "@typeberry/block";
-import { codecFixedSizeArray } from "@typeberry/block/codec.js";
+import { codecFixedSizeArray } from "@typeberry/block/codec-utils.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { codec, Descriptor, readonlyArray } from "@typeberry/codec";
+import { codec, Descriptor } from "@typeberry/codec";
 import { SortedArray } from "@typeberry/collections";
 import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
@@ -204,7 +204,7 @@ export namespace serialize {
   /** https://graypaper.fluffylabs.dev/#/85129da/387603387603?v=0.6.3 */
   export const serviceLookupHistory = (blake2b: Blake2b, serviceId: ServiceId, hash: PreimageHash, len: U32) => ({
     key: stateKeys.serviceLookupHistory(blake2b, serviceId, hash, len),
-    Codec: readonlyArray(codec.sequenceVarLen(codec.u32)),
+    Codec: codec.readonlyArray(codec.sequenceVarLen(codec.u32)),
   });
 }
 
