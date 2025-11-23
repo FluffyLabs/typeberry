@@ -79,7 +79,9 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
       return importer.getBestStateRootHash() ?? zeroHash;
     },
     async close() {
-      logger.log`[main] 🛢️ Closing the database`;
+      logger.log`[main] ⏳ Closing importer`;
+      await importer.close();
+      logger.log`[main] 🛢️ Closing database`;
       await db.close();
       logger.info`[main] ✅ Done.`;
     },

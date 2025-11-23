@@ -111,7 +111,7 @@ export class InMemWorkerConfig<T = undefined> implements WorkerConfig<T, BlocksD
     public readonly blake2b: Blake2b,
   ) {
     this.blocks = InMemoryBlocks.new();
-    this.states = new InMemorySerializedStates(chainSpec, blake2b);
+    this.states = InMemorySerializedStates.withHasher({ chainSpec, blake2b });
   }
 
   openDatabase(_options: { readonly: boolean } = { readonly: true }): RootDb<BlocksDb, SerializedStatesDb> {

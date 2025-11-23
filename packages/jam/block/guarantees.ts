@@ -2,7 +2,7 @@ import { type CodecRecord, codec, type DescribedBy } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypto";
 import { WithDebug } from "@typeberry/utils";
-import { codecKnownSizeArray, codecWithContext } from "./codec.js";
+import { codecKnownSizeArray, codecWithContext } from "./codec-utils.js";
 import type { TimeSlot, ValidatorIndex } from "./common.js";
 import { WorkReport } from "./work-report.js";
 

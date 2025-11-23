@@ -1,8 +1,8 @@
 import { codecPerValidator, type ServiceId, type TimeSlot } from "@typeberry/block";
-import { type CodecHashDictionaryOptions, codecHashDictionary } from "@typeberry/block/codec.js";
+import { type CodecHashDictionaryOptions, codecHashDictionary } from "@typeberry/block/codec-utils.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Ticket } from "@typeberry/block/tickets.js";
-import { type CodecRecord, codec, Descriptor, readonlyArray, TYPICAL_DICTIONARY_LENGTH } from "@typeberry/codec";
+import { type CodecRecord, codec, Descriptor } from "@typeberry/codec";
 import { asKnownSize, HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/crypto/bandersnatch.js";
@@ -34,7 +34,7 @@ export const codecMap = <T>(
   value: Descriptor<T>,
   extractKey: (val: T) => string,
   {
-    typicalLength = TYPICAL_DICTIONARY_LENGTH,
+    typicalLength = codec.TYPICAL_DICTIONARY_LENGTH,
     compare = (a, b) => {
       const keyA = extractKey(a);
       const keyB = extractKey(b);
@@ -98,10 +98,9 @@ const lookupHistoryItemCodec = codec.object<LookupHistoryItem>(
   {
     hash: codec.bytes(HASH_SIZE).asOpaque<PreimageHash>(),
     length: codec.u32,
-    slots: readonlyArray(codec.sequenceVarLen(codec.u32.asOpaque<TimeSlot>())).convert(
-      seeThrough,
-      tryAsLookupHistorySlots,
-    ),
+    slots: codec
+      .readonlyArray(codec.sequenceVarLen(codec.u32.asOpaque<TimeSlot>()))
+      .convert(seeThrough, tryAsLookupHistorySlots),
   },
   "LookupHistoryItem",
   ({ hash, length, slots }) => new LookupHistoryItem(hash, length, slots),
@@ -177,10 +176,9 @@ export const inMemoryStateCodec = (spec: ChainSpec) =>
       // gamma_s
       sealingKeySeries: SafroleSealingKeysData.Codec,
       // gamma_a
-      ticketsAccumulator: readonlyArray(codec.sequenceVarLen(Ticket.Codec)).convert<State["ticketsAccumulator"]>(
-        (x) => x,
-        asKnownSize,
-      ),
+      ticketsAccumulator: codec
+        .readonlyArray(codec.sequenceVarLen(Ticket.Codec))
+        .convert<State["ticketsAccumulator"]>((x) => x, asKnownSize),
       // psi
       disputesRecords: serialize.disputesRecords.Codec,
       // eta

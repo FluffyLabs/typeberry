@@ -1,5 +1,5 @@
 import EventEmitter from "node:events";
-import type { MessagePort, Transferable } from "node:worker_threads";
+import { type MessagePort, type Transferable, threadId } from "node:worker_threads";
 import { type Codec, Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";
@@ -16,6 +16,7 @@ const MESSAGE_KEYS: (keyof Message)[] = ["eventName", "responseId", "data"];
 const logger = Logger.new(import.meta.filename, "workers/api");
 
 export class ThreadPort implements Port {
+  public readonly threadId = threadId;
   private readonly events = new EventEmitter();
 
   public constructor(

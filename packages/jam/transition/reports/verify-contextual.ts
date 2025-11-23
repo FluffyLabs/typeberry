@@ -1,4 +1,4 @@
-import type { HeaderHash, TimeSlot } from "@typeberry/block";
+import type { HeaderHash } from "@typeberry/block";
 import {
   type ExportsRootHash,
   type RefineContext,
@@ -14,13 +14,7 @@ import type { BlockState } from "@typeberry/state/recent-blocks.js";
 import { OK, Result } from "@typeberry/utils";
 import type { RecentHistoryStateUpdate } from "../recent-history.js";
 import { ReportsError } from "./error.js";
-import type { ReportsInput } from "./input.js";
-
-/** Recently imported blocks. */
-export type HeaderChain = {
-  /** Check whether given `pastBlock` hash is part of the ancestor chain of `currentBlock` */
-  isAncestor(pastBlockSlot: TimeSlot, pastBlock: HeaderHash, currentBlock: HeaderHash): boolean;
-};
+import type { HeaderChain, ReportsInput } from "./input.js";
 
 const logger = Logger.new(import.meta.filename, "stf:reports");
 
