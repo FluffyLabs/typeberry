@@ -8,7 +8,7 @@ import { Blake2b } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { altNameRaw } from "@typeberry/networking";
 import { exportBlocks, importBlocks, JamConfig, main, mainFuzz } from "@typeberry/node";
-import { initializeTelemetry } from "@typeberry/telemetry";
+import { initializeTelemetry, shutdownTelemetry } from "@typeberry/telemetry";
 import { asOpaqueType, workspacePathFix } from "@typeberry/utils";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 

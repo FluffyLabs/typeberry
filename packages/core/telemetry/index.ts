@@ -103,8 +103,8 @@ function initializeTelemetryFull(config: TelemetryConfigFull): NodeSDK | null {
   return sdk;
 }
 
-export async function shutdownTelemetry(sdk?: NodeSDK): Promise<void> {
-  if (sdk !== undefined) {
+export async function shutdownTelemetry(sdk: NodeSDK | null): Promise<void> {
+  if (sdk !== null) {
     try {
       await sdk.shutdown();
       logger.log`OpenTelemetry shut down successfully`;
