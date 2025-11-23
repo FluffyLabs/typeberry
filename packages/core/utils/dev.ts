@@ -1,4 +1,4 @@
-import {env} from "./env.js";
+import { env } from "./env.js";
 
 /**
  * The function will produce relative path resolver that is adjusted

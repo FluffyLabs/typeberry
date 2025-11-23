@@ -245,7 +245,7 @@ export const bitVecFixLen = (bitLen: number) =>
     (e, v) => e.bitVecFixLen(v),
     (d) => d.bitVecFixLen(bitLen),
     (s) => s.bitVecFixLen(bitLen),
-);
+  );
 
 /** Optionality wrapper for given type. */
 export const optional = <T, V>(type: Descriptor<T, V>): Descriptor<T | null, V | null> => {
@@ -258,14 +258,7 @@ export const optional = <T, V>(type: Descriptor<T, V>): Descriptor<T | null, V |
   );
 
   if (hasUniqueView(type)) {
-    return Descriptor.withView(
-      self.name,
-      self.sizeHint,
-      self.encode,
-      self.decode,
-      self.skip,
-      optional(type.View),
-    );
+    return Descriptor.withView(self.name, self.sizeHint, self.encode, self.decode, self.skip, optional(type.View));
   }
 
   return self;
@@ -315,7 +308,7 @@ export const sequenceFixLen = <T, V = T>(type: Descriptor<T, V>, len: number) =>
     (d) => d.sequenceFixLen(type, len),
     (s) => s.sequenceFixLen(type, len),
     sequenceViewFixLen(type, { fixedLength: len }),
-);
+  );
 
 /** Small dictionary codec. */
 export const dictionary = <K, V, V2>(
@@ -336,7 +329,7 @@ export const dictionary = <K, V, V2>(
         fixedLength !== undefined
           ? fixedLength * addSizeHints(key.sizeHint, value.sizeHint).bytes
           : TYPICAL_DICTIONARY_LENGTH * (addSizeHints(key.sizeHint, value.sizeHint).bytes ?? 0),
-          isExact: fixedLength !== undefined ? key.sizeHint.isExact && value.sizeHint.isExact : false,
+      isExact: fixedLength !== undefined ? key.sizeHint.isExact && value.sizeHint.isExact : false,
     },
     (e, v) => {
       const data = Array.from(v.entries());
@@ -414,14 +407,7 @@ export const pair = <A, AView, B, BView>(
   );
 
   if (hasUniqueView(a) && hasUniqueView(b)) {
-    return Descriptor.withView(
-      self.name,
-      self.sizeHint,
-      self.encode,
-      self.decode,
-      self.skip,
-      pair(a.View, b.View),
-    );
+    return Descriptor.withView(self.name, self.sizeHint, self.encode, self.decode, self.skip, pair(a.View, b.View));
   }
   return self;
 };
@@ -460,13 +446,13 @@ export const select = <T, V = T>(
     (s) => chooser(s.decoder.getContext()).skip(s),
     hasUniqueView(Self)
       ? select(
-        {
-          name: Self.View.name,
-          sizeHint: Self.View.sizeHint,
-        },
-        (ctx) => chooser(ctx).View,
-      )
-        : Self.View,
+          {
+            name: Self.View.name,
+            sizeHint: Self.View.sizeHint,
+          },
+          (ctx) => chooser(ctx).View,
+        )
+      : Self.View,
   );
 };
 
@@ -478,10 +464,10 @@ export const select = <T, V = T>(
  * the object here.
  */
 export const object = <T>(
-    descriptors: SimpleDescriptorRecord<T>,
-    name = "object",
-    create: (o: CodecRecord<T>) => T = (o) => o as T,
-    ) => {
+  descriptors: SimpleDescriptorRecord<T>,
+  name = "object",
+  create: (o: CodecRecord<T>) => T = (o) => o as T,
+) => {
   return Class({ name, create }, descriptors);
 };
 
@@ -495,14 +481,14 @@ export const object = <T>(
  * shape-based `object` method.
  */
 export const Class = <T, D extends DescriptorRecord<T> = DescriptorRecord<T>>(
-    Class: ClassConstructor<T>,
-    descriptors: D,
-    ): Descriptor<T, ViewOf<T, D>> => {
+  Class: ClassConstructor<T>,
+  descriptors: D,
+): Descriptor<T, ViewOf<T, D>> => {
   // Calculate a size hint for this class.
   let sizeHint = exactHint(0);
   forEachDescriptor(descriptors, (_k, val) => {
-      sizeHint = addSizeHints(sizeHint, val.sizeHint);
-      });
+    sizeHint = addSizeHints(sizeHint, val.sizeHint);
+  });
 
   const skipper = (s: Skipper) => {
     // optimized case for fixed size complex values.
@@ -510,33 +496,33 @@ export const Class = <T, D extends DescriptorRecord<T> = DescriptorRecord<T>>(
       return s.decoder.skip(sizeHint.bytes);
     }
     forEachDescriptor(descriptors, (_key, descriptor) => {
-        descriptor.skip(s);
-        });
+      descriptor.skip(s);
+    });
   };
 
   const view = objectView(Class, descriptors, sizeHint, skipper);
 
   // and create the descriptor for the entire class.
   return Descriptor.withView<T, ViewOf<T, D>>(
-      Class.name,
-      sizeHint,
-      (e, t) => {
+    Class.name,
+    sizeHint,
+    (e, t) => {
       forEachDescriptor(descriptors, (key, descriptor) => {
-          const value = t[key];
-          descriptor.encode(e, value);
-          });
-      },
-      (d) => {
+        const value = t[key];
+        descriptor.encode(e, value);
+      });
+    },
+    (d) => {
       const constructorParams: OptionalRecord<T> = {};
       forEachDescriptor(descriptors, (key, descriptor) => {
-          const value = descriptor.decode(d);
-          constructorParams[key] = value;
-          });
+        const value = descriptor.decode(d);
+        constructorParams[key] = value;
+      });
       return Class.create(constructorParams as CodecRecord<T>);
-      },
-      skipper,
-      view,
-      );
+    },
+    skipper,
+    view,
+  );
 };
 
 /** Typesafe iteration of every descriptor in the record object. */

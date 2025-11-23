@@ -16,8 +16,8 @@ const blake2b = Blake2b.createHasher();
 export type Config = WorkerConfig<ImporterConfig, BlocksDb, StatesDb<SerializedState<LeafDb>>>;
 
 export async function createImporter(config: Config): Promise<{
-  importer: Importer,
-  db: ReturnType<Config['openDatabase']>
+  importer: Importer;
+  db: ReturnType<Config["openDatabase"]>;
 }> {
   const chainSpec = config.chainSpec;
   const db = config.openDatabase({ readonly: false });

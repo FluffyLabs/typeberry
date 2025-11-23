@@ -20,7 +20,7 @@ import type { ReportsInput } from "./input.js";
 export interface HeaderChain {
   /** Check whether given `pastBlock` hash is part of the ancestor chain of `currentBlock` */
   isAncestor(pastBlockSlot: TimeSlot, pastBlock: HeaderHash, currentBlock: HeaderHash): boolean;
-};
+}
 
 const logger = Logger.new(import.meta.filename, "stf:reports");
 

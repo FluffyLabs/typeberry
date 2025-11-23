@@ -98,10 +98,9 @@ const lookupHistoryItemCodec = codec.object<LookupHistoryItem>(
   {
     hash: codec.bytes(HASH_SIZE).asOpaque<PreimageHash>(),
     length: codec.u32,
-    slots: codec.readonlyArray(codec.sequenceVarLen(codec.u32.asOpaque<TimeSlot>())).convert(
-      seeThrough,
-      tryAsLookupHistorySlots,
-    ),
+    slots: codec
+      .readonlyArray(codec.sequenceVarLen(codec.u32.asOpaque<TimeSlot>()))
+      .convert(seeThrough, tryAsLookupHistorySlots),
   },
   "LookupHistoryItem",
   ({ hash, length, slots }) => new LookupHistoryItem(hash, length, slots),
@@ -177,10 +176,9 @@ export const inMemoryStateCodec = (spec: ChainSpec) =>
       // gamma_s
       sealingKeySeries: SafroleSealingKeysData.Codec,
       // gamma_a
-      ticketsAccumulator: codec.readonlyArray(codec.sequenceVarLen(Ticket.Codec)).convert<State["ticketsAccumulator"]>(
-        (x) => x,
-        asKnownSize,
-      ),
+      ticketsAccumulator: codec
+        .readonlyArray(codec.sequenceVarLen(Ticket.Codec))
+        .convert<State["ticketsAccumulator"]>((x) => x, asKnownSize),
       // psi
       disputesRecords: serialize.disputesRecords.Codec,
       // eta

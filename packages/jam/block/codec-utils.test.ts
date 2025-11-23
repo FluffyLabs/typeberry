@@ -34,7 +34,8 @@ describe("JAM types codec / HashDictionary", () => {
 
   it("should throw an error if order is incorrect", () => {
     const list = [
-      ImportSpec.create({ treeRoot: hash(2), index: tryAsSegmentIndex(30) }), ImportSpec.create({ treeRoot: hash(3), index: tryAsSegmentIndex(65_300) }),
+      ImportSpec.create({ treeRoot: hash(2), index: tryAsSegmentIndex(30) }),
+      ImportSpec.create({ treeRoot: hash(3), index: tryAsSegmentIndex(65_300) }),
       ImportSpec.create({ treeRoot: hash(1), index: tryAsSegmentIndex(15) }),
     ];
 

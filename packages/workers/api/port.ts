@@ -1,5 +1,5 @@
-import { EventEmitter } from "eventemitter3";
 import type { Codec } from "@typeberry/codec";
+import { EventEmitter } from "eventemitter3";
 
 /**
  * Our specific message envelope.

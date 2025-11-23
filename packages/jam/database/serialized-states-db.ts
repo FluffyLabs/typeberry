@@ -30,10 +30,7 @@ export class InMemorySerializedStates implements StatesDb<SerializedState<LeafDb
     return new InMemorySerializedStates(chainSpec, blake2b);
   }
 
-  static withHasher({ chainSpec, blake2b }: {
-    chainSpec: ChainSpec,
-    blake2b: Blake2b,
-  }) {
+  static withHasher({ chainSpec, blake2b }: { chainSpec: ChainSpec; blake2b: Blake2b }) {
     return new InMemorySerializedStates(chainSpec, blake2b);
   }
 

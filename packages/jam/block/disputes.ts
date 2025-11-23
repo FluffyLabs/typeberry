@@ -100,9 +100,9 @@ export class Verdict extends WithDebug {
     workReportHash: codec.bytes(HASH_SIZE).asOpaque<WorkReportHash>(),
     votesEpoch: codec.u32.asOpaque<Epoch>(),
     votes: codecWithContext((context) => {
-      return codec.readonlyArray(codec.sequenceFixLen(Judgement.Codec, context.validatorsSuperMajority)).convert<
-        Verdict["votes"]
-      >(seeThrough, asKnownSize);
+      return codec
+        .readonlyArray(codec.sequenceFixLen(Judgement.Codec, context.validatorsSuperMajority))
+        .convert<Verdict["votes"]>(seeThrough, asKnownSize);
     }),
   });
 

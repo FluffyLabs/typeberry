@@ -1,17 +1,14 @@
 import type { ExtrinsicHash, ExtrinsicView, HeaderHash, HeaderView, WorkReportHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
-import { type KeccakHash, Blake2b, keccak, WithHash, WithHashAndBytes } from "@typeberry/hash";
+import { Blake2b, type KeccakHash, keccak, WithHash, WithHashAndBytes } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { tryAsU32 } from "@typeberry/numbers";
 
 /** Helper function to create most used hashes in the block */
 export class TransitionHasher implements MmrHasher<KeccakHash> {
   static async create() {
-    return new TransitionHasher(
-      await keccak.KeccakHasher.create(),
-      await Blake2b.createHasher()
-    );
+    return new TransitionHasher(await keccak.KeccakHasher.create(), await Blake2b.createHasher());
   }
 
   constructor(

@@ -1,4 +1,4 @@
-import {env} from "./env.js";
+import { env } from "./env.js";
 
 export enum GpVersion {
   V0_6_7 = "0.6.7",

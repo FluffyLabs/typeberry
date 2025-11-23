@@ -1,5 +1,5 @@
 import type { ChainSpec } from "@typeberry/config";
-import type { BlocksDb, InMemoryBlocks, InMemoryStates, RootDb, StatesDb } from "@typeberry/database";
+import type { BlocksDb, RootDb, StatesDb } from "@typeberry/database";
 
 /** Standardized worker config. */
 export interface WorkerConfig<TParams = void, TBlocks = BlocksDb, TStates = StatesDb> {
