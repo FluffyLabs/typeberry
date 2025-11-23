@@ -171,6 +171,25 @@ all relevant ones can be easily checked out from [our test vectors repository](h
 Obviously it's also possible to run just single test case or part of the test
 cases by altering the glob pattern in the path.
 
+#### Selecting PVM Backend
+
+By default, test vectors are run with both PVM backends (built-in and Ananas).
+You can select a specific PVM backend using the `--pvm` option:
+
+```bash
+# Run tests with built-in PVM only
+$ npm run w3f-davxy:0.7.1 -w @typeberry/test-runner -- --pvm builtin
+
+# Run tests with Ananas PVM only
+$ npm run w3f-davxy:0.7.1 -w @typeberry/test-runner -- --pvm ananas
+
+# Run tests with both PVMs (default)
+$ npm run w3f-davxy:0.7.1 -w @typeberry/test-runner
+```
+
+This option is useful for debugging PVM-specific issues or running faster tests
+by testing only one implementation at a time.
+
 ### Running JSON RPC E2E tests
 
 To run JSON RPC E2E test-vectors [test-vectors](https://github.com/fluffylabs/test-vectors) 

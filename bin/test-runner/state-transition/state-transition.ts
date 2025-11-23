@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { Block, emptyBlock } from "@typeberry/block";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { ChainSpec, PvmBackend, tinyChainSpec } from "@typeberry/config";
+import { ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { Blake2b, keccak, WithHash } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
@@ -13,7 +13,7 @@ import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { DbHeaderChain, OnChain } from "@typeberry/transition/chain-stf.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
-import type { RunOptions } from "../common.js";
+import { type RunOptions, type SelectedPvm, selectedPvmToBackend } from "../common.js";
 import { loadState } from "./state-loader.js";
 
 const keccakHasher = keccak.KeccakHasher.create();
@@ -65,12 +65,8 @@ const jamConformance070V0Spec = new ChainSpec({
   maxLookupAnchorAge: tryAsU32(14_400),
 });
 
-export async function runStateTransition(
-  testContent: StateTransition,
-  options: RunOptions,
-  variant: "ananas" | "builtin",
-) {
-  const pvm = variant === "ananas" ? PvmBackend.Ananas : PvmBackend.BuiltIn;
+export async function runStateTransition(testContent: StateTransition, options: RunOptions, variant: SelectedPvm) {
+  const pvm = selectedPvmToBackend(variant);
   const blake2b = await Blake2b.createHasher();
   // a bit of a hack, but the new value for `maxLookupAnchorAge` was proposed with V1
   // version of the fuzzer, yet these tests were still depending on the older value.
@@ -112,10 +108,14 @@ export async function runStateTransition(
   const verifier = new BlockVerifier(stf.hasher, blocksDb);
   // NOTE [ToDr] we skip full verification here, since we can run tests in isolation
   // (i.e. no block history)
-  const headerHash = verifier.hashHeader(blockView);
+  const verificationResult = await verifier.verifyBlock(blockView, { skipParentAndStateRoot: true });
+  if (verificationResult.isError) {
+    assert.fail(`Block verification error: ${resultToString(verificationResult)}`);
+  }
 
+  const headerHash = verificationResult.ok;
   // now perform the state transition
-  const stfResult = await stf.transition(blockView, headerHash.hash);
+  const stfResult = await stf.transition(blockView, headerHash);
   if (shouldBlockBeRejected) {
     assert.strictEqual(stfResult.isOk, false, "The block should be rejected, yet we imported it.");
     // there should be no changes.

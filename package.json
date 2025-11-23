@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/jam",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "JAM implementation in TypeScript",
   "private": true,
   "workspaces": [
@@ -28,7 +28,6 @@
     "packages/core/networking",
     "packages/core/numbers",
     "packages/core/ordering",
-    "packages/core/pvm-debugger-adapter",
     "packages/core/pvm-host-calls",
     "packages/core/pvm-interface",
     "packages/core/pvm-interpreter",

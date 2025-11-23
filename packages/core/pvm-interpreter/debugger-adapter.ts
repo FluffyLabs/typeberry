@@ -1,8 +1,9 @@
 import { Status, tryAsGas } from "@typeberry/pvm-interface";
-import { Interpreter, type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
-import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
-import { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { check, safeAllocUint8Array } from "@typeberry/utils";
+import { Interpreter } from "./interpreter.js";
+import { type Memory, tryAsMemoryIndex } from "./memory/index.js";
+import { PAGE_SIZE } from "./memory/memory-consts.js";
+import { Registers } from "./registers.js";
 
 export class DebuggerAdapter {
   private readonly pvm: Interpreter;

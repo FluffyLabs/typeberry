@@ -12,9 +12,9 @@ import { HostCallResult } from "../results.js";
 const IN_OUT_REG = 7;
 
 /**
- * Mark a preimage hash as unavailable.
+ * Delete preimage hash or mark as unavailable if it was available.
  *
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/382d01382d01?v=0.6.7
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/385d01385d01?v=0.7.2
  */
 export class Forget implements HostCallHandler {
   index = tryAsHostCallIndex(24);
@@ -36,12 +36,12 @@ export class Forget implements HostCallHandler {
     const memoryReadResult = memory.loadInto(hash.raw, hashStart);
     // error while reading the memory.
     if (memoryReadResult.isError) {
-      logger.trace`FORGET(${hash}, ${length}) <- PANIC`;
+      logger.trace`[${this.currentServiceId}] FORGET(${hash}, ${length}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
     const result = this.partialState.forgetPreimage(hash.asOpaque(), length);
-    logger.trace`FORGET(${hash}, ${length}) <- ${resultToString(result)}`;
+    logger.trace`[${this.currentServiceId}] FORGET(${hash}, ${length}) <- ${resultToString(result)}`;
 
     if (result.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);
