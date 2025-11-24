@@ -3,6 +3,8 @@ import type { BlocksDb, RootDb, StatesDb } from "@typeberry/database";
 
 /** Standardized worker config. */
 export interface WorkerConfig<TParams = void, TBlocks = BlocksDb, TStates = StatesDb> {
+  /** Node name. */
+  readonly nodeName: string;
   /** Chain spec. */
   readonly chainSpec: ChainSpec;
   /** Worker parameters. */
@@ -19,20 +21,23 @@ export class DirectWorkerConfig<TParams = void, TBlocks = BlocksDb, TStates = St
   implements WorkerConfig<TParams, TBlocks, TStates>
 {
   static new<T, B, S>({
+    nodeName,
     chainSpec,
     blocksDb,
     statesDb,
     params,
   }: {
+    nodeName: string;
     chainSpec: ChainSpec;
     blocksDb: B;
     statesDb: S;
     params: T;
   }): DirectWorkerConfig<T, B, S> {
-    return new DirectWorkerConfig(chainSpec, params, blocksDb, statesDb);
+    return new DirectWorkerConfig(nodeName, chainSpec, params, blocksDb, statesDb);
   }
 
   private constructor(
+    public readonly nodeName: string,
     public readonly chainSpec: ChainSpec,
     public readonly workerParams: TParams,
     private readonly blocksDb: TBlocks,

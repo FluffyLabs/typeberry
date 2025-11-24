@@ -33,6 +33,7 @@
     "packages/core/pvm-interpreter",
     "packages/core/pvm-interpreter-ananas",
     "packages/core/shuffling",
+    "packages/core/telemetry",
     "packages/core/trie",
     "packages/core/utils",
     "packages/extensions/ipc",

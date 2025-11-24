@@ -4,6 +4,7 @@
   "description": "A JAM block importer queue.",
   "main": "index.ts",
   "dependencies": {
+    "@opentelemetry/api": "1.9.0",
     "@typeberry/block": "*",
     "@typeberry/bytes": "*",
     "@typeberry/codec": "*",
@@ -17,6 +18,7 @@
     "@typeberry/numbers": "*",
     "@typeberry/ordering": "*",
     "@typeberry/state-merkleization": "*",
+    "@typeberry/telemetry": "*",
     "@typeberry/transition": "*",
     "@typeberry/utils": "*",
     "@typeberry/workers-api": "*",

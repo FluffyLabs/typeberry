@@ -3,6 +3,16 @@ export function isBrowser() {
 }
 
 /**
+ * Get current time in milliseconds (works in both Node and browser).
+ *
+ * Node.js implementation converts hrtime bigint nanoseconds to milliseconds.
+ * This is safe because dividing nanoseconds by 1_000_000 yields milliseconds,
+ * which remain well below Number.MAX_SAFE_INTEGER for practical runtimes
+ * (would take ~285 years to overflow).
+ */
+export const now = isBrowser() ? () => performance.now() : () => Number(process.hrtime.bigint() / 1_000_000n);
+
+/**
  * A function to perform runtime assertions.
  *
  * We avoid using `node:assert` to keep compatibility with a browser environment.
@@ -109,19 +119,10 @@ export function inspect<T>(val: T): string {
 }
 
 /** Utility function to measure time taken for some operation [ms]. */
-export const measure = isBrowser()
-  ? (id: string) => {
-      const start = performance.now();
-      return () => `${id} took ${performance.now() - start}ms`;
-    }
-  : (id: string) => {
-      const start = process.hrtime.bigint();
-      return () => {
-        const tookNano = process.hrtime.bigint() - start;
-        const tookMilli = Number(tookNano / 1_000_000n).toFixed(2);
-        return `${id} took ${tookMilli}ms`;
-      };
-    };
+export function measure(id: string) {
+  const start = now();
+  return () => `${id} took ${(now() - start).toFixed(2)}ms`;
+}
 
 /** A class that adds `toString` method that prints all properties of an object. */
 export abstract class WithDebug {

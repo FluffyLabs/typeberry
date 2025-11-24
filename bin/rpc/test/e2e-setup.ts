@@ -13,7 +13,7 @@ async function main() {
   const nodeConfig = loadConfig([`${import.meta.dirname}/e2e.config.json`], withRelPath);
   const jamConfig = JamConfig.new({ nodeName: NODE_DEFAULTS.name, nodeConfig, pvmBackend: NODE_DEFAULTS.pvm });
   try {
-    const api = await node(jamConfig, withRelPath);
+    const api = await node(jamConfig, withRelPath, null);
     await importBlocks(api, blocksToImport);
   } catch (e) {
     console.error(`${e}`);

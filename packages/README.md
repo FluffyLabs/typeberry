@@ -26,6 +26,7 @@ Contains fundamental packages that provide low-level functionality and utilities
 - **pvm-interpreter** - PVM interpreter functionality
 - **pvm-interpreter-ananas** - Ananas PVM interpreter implementation
 - **shuffling** - Shuffling algorithms
+- **telemetry** - OpenTelemetry initialization utilities
 - **trie** - Trie data structure implementation
 - **utils** - General purpose utilities
 

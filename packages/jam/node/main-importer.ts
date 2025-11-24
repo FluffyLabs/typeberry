@@ -21,6 +21,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
   logger.info`🖥️ PVM Backend: ${PvmBackend[config.pvmBackend]}.`;
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
+  const nodeName = config.nodeName;
   const omitSealVerification = false;
 
   const { dbPath, genesisHeaderHash } = getDatabasePath(
@@ -33,6 +34,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
   const workerConfig =
     config.node.databaseBasePath === undefined
       ? InMemWorkerConfig.new({
+          nodeName,
           chainSpec,
           blake2b,
           workerParams: {
@@ -41,6 +43,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
           },
         })
       : LmdbWorkerConfig.new({
+          nodeName,
           chainSpec,
           blake2b,
           dbPath,
