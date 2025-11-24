@@ -9,7 +9,7 @@ import { tryAsGas } from "@typeberry/pvm-interface";
 import { gasCounter } from "@typeberry/pvm-interpreter";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
+import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { TestAccounts } from "./externalities/test-accounts.js";
 import { codecServiceAccountInfoWithThresholdBalance, Info, LEN_REG } from "./info.js";

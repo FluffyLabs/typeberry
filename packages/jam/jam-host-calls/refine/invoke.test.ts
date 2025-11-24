@@ -8,7 +8,7 @@ import { Status, tryAsGas } from "@typeberry/pvm-interface";
 import { gasCounter, MemoryBuilder } from "@typeberry/pvm-interpreter";
 import { RESERVED_NUMBER_OF_PAGES } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
+import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import {
   type MachineId,
   MachineInstance,

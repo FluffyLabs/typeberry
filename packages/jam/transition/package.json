@@ -20,7 +20,6 @@
     "@typeberry/pvm-host-calls": "*",
     "@typeberry/pvm-interface": "*",
     "@typeberry/pvm-interpreter": "*",
-    "@typeberry/pvm-program": "*",
     "@typeberry/safrole": "*",
     "@typeberry/shuffling": "*",
     "@typeberry/state": "*",

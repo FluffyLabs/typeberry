@@ -9,7 +9,7 @@ import { JipChainSpec } from "@typeberry/config-node";
 import { v1 } from "@typeberry/fuzz-proto";
 import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
-import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
+import { decodeStandardProgram } from "@typeberry/pvm-interpreter/spi-decoder/index.js";
 import type { InMemoryState } from "@typeberry/state";
 import { fullStateDumpFromJson } from "@typeberry/state-json";
 import { SerializedState, StateEntries } from "@typeberry/state-merkleization";

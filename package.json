@@ -32,8 +32,6 @@
     "packages/core/pvm-interface",
     "packages/core/pvm-interpreter",
     "packages/core/pvm-interpreter-ananas",
-    "packages/core/pvm-program",
-    "packages/core/pvm-spi-decoder",
     "packages/core/shuffling",
     "packages/core/telemetry",
     "packages/core/trie",
