@@ -40,7 +40,6 @@ Contains JAM (Join-Accumulate Machine) specific packages:
 - **database-lmdb** - LMDB database implementation
 - **fuzz-proto** - Fuzzing protocol implementation
 - **jam-host-calls** - JAM-specific host calls
-- **jamnp-protocol** - JAM network protocol definitions
 - **jamnp-s** - JAM network protocol implementation
 - **node** - JAM node implementation
 - **safrole** - Safrole consensus mechanism
