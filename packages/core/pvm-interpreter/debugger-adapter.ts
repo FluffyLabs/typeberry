@@ -12,6 +12,10 @@ export class DebuggerAdapter {
     this.pvm = new Interpreter({ useSbrkGas });
   }
 
+  resetJAM(jamProgram: Uint8Array, pc: number, gas: bigint, args: Uint8Array, hasMetadata = false) {
+    this.pvm.resetJam(jamProgram, args, pc, tryAsGas(gas), hasMetadata);
+  }
+
   resetGeneric(rawProgram: Uint8Array, flatRegisters: Uint8Array, initialGas: bigint) {
     this.pvm.resetGeneric(rawProgram, 0, tryAsGas(initialGas), new Registers(flatRegisters));
   }
@@ -66,8 +70,8 @@ export class DebuggerAdapter {
     return true;
   }
 
-  getRegisters(): BigUint64Array {
-    return this.pvm.registers.getAllU64();
+  getRegisters(): Uint8Array {
+    return this.pvm.registers.getAllEncoded();
   }
 
   setRegisters(registers: Uint8Array) {

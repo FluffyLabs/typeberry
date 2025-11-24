@@ -2,7 +2,7 @@ import { Decoder } from "@typeberry/codec";
 import { Memory, MemoryBuilder } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
-import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
+import { decodeStandardProgram } from "@typeberry/pvm-interpreter/spi-decoder/index.js";
 
 export class Program {
   static fromSpi(blob: Uint8Array, args: Uint8Array, hasMetadata: boolean) {

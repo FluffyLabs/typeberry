@@ -25,7 +25,7 @@
     "@typeberry/hash": "*",
     "@typeberry/json-parser": "*",
     "@typeberry/logger": "*",
-    "@typeberry/pvm-spi-decoder": "*",
+    "@typeberry/pvm-interpreter": "*",
     "@typeberry/state": "*",
     "@typeberry/state-json": "*",
     "@typeberry/state-merkleization": "*",

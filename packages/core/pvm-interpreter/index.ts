@@ -1,12 +1,10 @@
+export * as args from "./args-decoder/index.js";
+export * from "./basic-blocks/index.js";
 export * from "./debugger-adapter.js";
-export { gasCounter } from "./gas.js";
+export * from "./gas.js";
 export * from "./interpreter.js";
-export {
-  Memory,
-  MemoryBuilder,
-  type MemoryIndex,
-  type SbrkIndex,
-  tryAsMemoryIndex,
-  tryAsSbrkIndex,
-} from "./memory/index.js";
-export { Registers } from "./registers.js";
+export * from "./memory/index.js";
+export * from "./program.js";
+export * from "./program-decoder/index.js";
+export * from "./registers.js";
+export * as spi from "./spi-decoder/index.js";
