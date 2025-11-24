@@ -28,7 +28,7 @@ export async function main(args: string[]) {
     console.info(HELP);
     process.exit(1);
   }
-  node.main(config, withRelPath);
+  node.main(config, withRelPath, null);
 }
 
 export function createJamConfig(argv: CommonArguments, withRelPath: (p: string) => string): node.JamConfig {

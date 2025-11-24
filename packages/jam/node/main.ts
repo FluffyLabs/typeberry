@@ -8,6 +8,7 @@ import { NetworkingConfig } from "@typeberry/jam-network";
 import { Listener } from "@typeberry/listener";
 import { tryAsU16 } from "@typeberry/numbers";
 import type { StateEntries } from "@typeberry/state-merkleization";
+import type { Telemetry } from "@typeberry/telemetry";
 import { CURRENT_SUITE, CURRENT_VERSION, Result } from "@typeberry/utils";
 import { LmdbWorkerConfig } from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
@@ -25,7 +26,11 @@ export type NodeApi = {
   close(): Promise<void>;
 };
 
-export async function main(config: JamConfig, withRelPath: (v: string) => string): Promise<NodeApi> {
+export async function main(
+  config: JamConfig,
+  withRelPath: (v: string) => string,
+  telemetry: Telemetry | null,
+): Promise<NodeApi> {
   if (!isMainThread) {
     throw new Error("The main binary cannot be running as a Worker!");
   }
@@ -126,6 +131,8 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
       await closeNetwork();
       logger.log`[main] 🛢️ Closing the database`;
       await rootDb.close();
+      logger.log`[main] 📳 Closing telemetry`;
+      await telemetry?.close();
       logger.info`[main] ✅ Done.`;
     },
   };

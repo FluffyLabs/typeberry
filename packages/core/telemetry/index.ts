@@ -16,17 +16,36 @@ export interface TelemetryConfig {
   worker: string;
 }
 
-export function initializeTelemetry(config: TelemetryConfig) {
-  return initializeTelemetryFull({
-    isMain: config.isMain ?? false,
-    serviceName: `typeberry-${config.nodeName}`,
-    serviceVersion: packageJson.version,
-    enabled: env.OTEL_ENABLED !== "false",
-    otlpEndpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "http://localhost:9090/api/v1/otlp",
-    resourceAttributes: {
-      "worker.type": config.worker,
-    },
-  });
+export class Telemetry {
+  static initialize(config: TelemetryConfig) {
+    const sdk = initializeTelemetry({
+      isMain: config.isMain ?? false,
+      serviceName: `typeberry-${config.nodeName}`,
+      serviceVersion: packageJson.version,
+      enabled: env.OTEL_ENABLED !== "false",
+      otlpEndpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "http://localhost:9090/api/v1/otlp",
+      resourceAttributes: {
+        "worker.type": config.worker,
+      },
+    });
+
+    if (sdk === null) {
+      return null;
+    }
+
+    return new Telemetry(sdk);
+  }
+
+  private constructor(public readonly sdk: NodeSDK) {}
+
+  async close(): Promise<void> {
+    try {
+      await this.sdk.shutdown();
+      logger.trace`📳 OpenTelemetry shut down successfully`;
+    } catch (error) {
+      logger.error`🔴 Error shutting down OpenTelemetry: ${error}`;
+    }
+  }
 }
 
 interface TelemetryConfigFull {
@@ -39,7 +58,7 @@ interface TelemetryConfigFull {
   resourceAttributes: Record<string, string>;
 }
 
-function initializeTelemetryFull(config: TelemetryConfigFull): NodeSDK | null {
+function initializeTelemetry(config: TelemetryConfigFull): NodeSDK | null {
   // Check if telemetry is disabled
   if (config.enabled === false) {
     logger.info`📳 OpenTelemetry disabled`;
@@ -105,15 +124,4 @@ function initializeTelemetryFull(config: TelemetryConfigFull): NodeSDK | null {
   }
 
   return sdk;
-}
-
-export async function shutdownTelemetry(sdk: NodeSDK | null): Promise<void> {
-  if (sdk !== null) {
-    try {
-      await sdk.shutdown();
-      logger.trace`📳 OpenTelemetry shut down successfully`;
-    } catch (error) {
-      logger.error`🔴 Error shutting down OpenTelemetry: ${error}`;
-    }
-  }
 }
