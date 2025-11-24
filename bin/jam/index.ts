@@ -84,6 +84,7 @@ async function startNode(args: Arguments, withRelPath: (p: string) => string) {
 
   // Initialize OpenTelemetry before anything else
   const telemetry = initializeTelemetry({
+    isMain: true,
     nodeName: jamNodeConfig.nodeName,
     worker: "main",
   });
