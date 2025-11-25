@@ -4,19 +4,6 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import type { Handler } from "../types.js";
 
-/**
- * https://hackmd.io/@polkadot/jip2#serviceRequest
- * Returns the preimage request associated with the given service ID and hash/len in the posterior state
- * of the block with the given header hash. `null` is returned if there is no preimage request
- * associated with the given service ID, hash and length.
- * @param [
- *   Hash - The header hash indicating the block whose posterior state should be used for the query.
- *   ServiceId - The ID of the service.
- *   Hash - The hash.
- *   U32 - The preimage length.
- * ]
- * @returns Either null or array of Slot
- */
 export const serviceRequest: Handler<"serviceRequest"> = async (
   [headerHash, serviceId, preimageHash, preimageLength],
   { db },

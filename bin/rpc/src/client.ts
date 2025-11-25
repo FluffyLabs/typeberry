@@ -109,7 +109,7 @@ export class RpcClient {
   async call<M extends MethodName>(method: M, params: InputOf<M>): Promise<OutputOf<M>>;
   async call<M extends MethodName>(method: M, params?: InputOf<M>): Promise<OutputOf<M>> {
     if (!(method in validation.schemas)) {
-      throw new Error(`Method ${method} not found`);
+      throw new Error(`Method "${method}" not found. Request was not sent.`);
     }
 
     const { input } = validation.schemas[method] as SchemaMapUnknown[M];
@@ -130,7 +130,9 @@ export class RpcClient {
           const { output } = validation.schemas[method];
           const parseResult = output.safeParse(response.result);
           if (parseResult.success === false) {
-            reject(new Error(`Invalid response for method ${method}: ${JSON.stringify(response.result)}`));
+            reject(
+              new Error(`Received an invalid response for method "${method}": ${JSON.stringify(response.result)}`),
+            );
           }
           resolve(parseResult.data);
         }
@@ -150,18 +152,20 @@ export class RpcClient {
       return eventEmitter;
     }
 
-    throw new Error("Invalid subscription response");
+    throw new Error("Received an invalid subscription response.");
   }
 
   private async unsubscribe(subscriptionId: string): Promise<void> {
     const subscription = this.subscriptions.get(subscriptionId);
     if (subscription === undefined) {
-      throw new Error("Subscription not found");
+      throw new Error("Subscription not found. Unsubscribe request was not sent.");
     }
 
     const unsubscribeMethod = SUBSCRIBABLE_METHODS[subscription.method];
     if (unsubscribeMethod === undefined) {
-      throw new Error(`Missing unsubscribe method mapping for ${subscription.method}`);
+      throw new Error(
+        `Missing unsubscribe method mapping for "${subscription.method}". Unsubscribe request was not sent.`,
+      );
     }
     const result = await this.call(unsubscribeMethod, [subscriptionId]);
 
@@ -175,7 +179,7 @@ export class RpcClient {
       return;
     }
 
-    throw new Error("Invalid unsubscribe response");
+    throw new Error("Received an invalid unsubscribe response.");
   }
 
   close(): void {

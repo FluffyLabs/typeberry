@@ -4,18 +4,6 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { type Handler, RpcError, RpcErrorCode } from "../types.js";
 import { validation } from "../validation.js";
 
-/**
- * https://hackmd.io/@polkadot/jip2#parent
- * Returns the header hash and slot of the parent of the block with the given header hash, or `null` if
- * this is not known.
- * @param [
- *   Hash - The hash of a child's header.
- * ]
- * @returns Either null or [
- *   Hash - The parent's header hash,
- *   Slot - The slot,
- * ]
- */
 export const parent: Handler<"parent"> = async ([headerHash], { db }) => {
   const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
   const header = db.blocks.getHeader(hashOpaque);
