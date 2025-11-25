@@ -10,6 +10,14 @@ import { serviceRequest } from "./handlers/service-request.js";
 import { serviceValue } from "./handlers/service-value.js";
 import { stateRoot } from "./handlers/state-root.js";
 import { statistics } from "./handlers/statistics.js";
+import { subscribeBestBlock } from "./handlers/subscribe-best-block.js";
+import { subscribeFinalizedBlock } from "./handlers/subscribe-finalized-block.js";
+import { subscribeServiceData } from "./handlers/subscribe-service-data.js";
+import { subscribeServicePreimage } from "./handlers/subscribe-service-preimage.js";
+import { subscribeServiceRequest } from "./handlers/subscribe-service-request.js";
+import { subscribeServiceValue } from "./handlers/subscribe-service-value.js";
+import { subscribeStatistics } from "./handlers/subscribe-statistics.js";
+import { unsubscribe } from "./handlers/unsubscribe.js";
 import type { HandlerMap } from "./types.js";
 
 export const handlers: HandlerMap = {
@@ -27,4 +35,18 @@ export const handlers: HandlerMap = {
   statistics,
   submitPreimage: notImplemented,
   submitWorkPackage: notImplemented,
+  subscribeBestBlock,
+  subscribeFinalizedBlock,
+  subscribeServiceData,
+  subscribeServicePreimage,
+  subscribeServiceRequest,
+  subscribeServiceValue,
+  subscribeStatistics,
+  unsubscribeBestBlock: unsubscribe,
+  unsubscribeFinalizedBlock: unsubscribe,
+  unsubscribeServiceData: unsubscribe,
+  unsubscribeServicePreimage: unsubscribe,
+  unsubscribeServiceRequest: unsubscribe,
+  unsubscribeServiceValue: unsubscribe,
+  unsubscribeStatistics: unsubscribe,
 };

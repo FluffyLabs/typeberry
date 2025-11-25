@@ -4,8 +4,8 @@ import type { Blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { WebSocket } from "ws";
 import { WebSocketServer } from "ws";
-import z from "zod";
-import { SUBSCRIBE_METHOD_MAP, SubscriptionManager } from "./subscription-manager.js";
+import type z from "zod";
+import { SubscriptionManager } from "./subscription-manager.js";
 import {
   type DatabaseContext,
   type HandlerMap,
@@ -20,13 +20,11 @@ import {
   type OutputOf,
   RpcError,
   type SchemaMap,
-  type SubscribeMethodName,
+  type SchemaMapUnknown,
 } from "./types.js";
 import { JSON_RPC_VERSION, validation } from "./validation.js";
 
 const PING_INTERVAL_MS = 30000;
-
-const UnsubscribeParams = z.tuple([z.string()]);
 
 function createErrorResponse(error: RpcError, id: JsonRpcId): JsonRpcErrorResponse {
   return {
@@ -169,51 +167,38 @@ export class RpcServer {
   private async fulfillRequest(request: JsonRpcRequest | JsonRpcNotification, ws: WebSocket): Promise<JsonRpcResult> {
     const { method, params } = request;
 
-    // todo [seko] seeing as some subscribe methods in the new spec
-    // do not directly correspond to a single non-subscribe handler subscribe/unsubscribe
-    // methods should probably become just separate handlers with access to the subscription manager.
-    if (method in SUBSCRIBE_METHOD_MAP) {
-      const handlerName = SUBSCRIBE_METHOD_MAP[method as SubscribeMethodName].handler;
-      const validatedParams = this.validateCall(handlerName, params ?? []);
-      return [this.subscriptionManager.subscribe(ws, handlerName, validatedParams)];
-    }
-
-    // todo [seko] make sure the unsub method name corresponds to the subscription method name and that the request is issued by the same client
-    if (Object.values(SUBSCRIBE_METHOD_MAP).some(({ unsubscribe }) => unsubscribe === method)) {
-      const parseResult = UnsubscribeParams.safeParse(params);
-      if (parseResult.error !== undefined) {
-        throw new RpcError(-32602, createParamsParseErrorMessage(parseResult.error));
-      }
-      return [this.subscriptionManager.unsubscribe(parseResult.data[0])];
-    }
-
     if (!(method in this.schemas)) {
       throw new RpcError(-32601, `Method not found: ${method}`);
     }
     const validatedParams = this.validateCall(method as MethodName, params ?? []);
-    return this.callHandler(method as MethodName, validatedParams);
+    return this.callHandler(method as MethodName, validatedParams, ws);
   }
 
   private validateCall<M extends MethodName>(method: M, params: unknown): InputOf<M> {
     const { input } = this.schemas[method];
-
     const parseResult = input.safeParse(params);
     if (parseResult.error !== undefined) {
       throw new RpcError(-32602, createParamsParseErrorMessage(parseResult.error));
     }
-    return parseResult.data;
+    return parseResult.data as InputOf<M>;
   }
 
-  async callHandler<M extends MethodName>(method: M, validatedParams: InputOf<M>): Promise<OutputOf<M>> {
+  async callHandler<M extends MethodName>(method: M, validatedParams: InputOf<M>, ws: WebSocket): Promise<OutputOf<M>> {
     const handler = this.handlers[method];
-    const { output } = this.schemas[method];
+    const { output } = this.schemas[method] as SchemaMapUnknown[M];
 
     const db: DatabaseContext = {
       blocks: this.blocks,
       states: this.states,
     };
 
-    return output.encode(await handler(validatedParams, db, this.chainSpec));
+    return output.encode(
+      await handler(validatedParams, {
+        db,
+        chainSpec: this.chainSpec,
+        subscription: this.subscriptionManager.getHandlerApi(ws),
+      }),
+    ) as OutputOf<M>;
   }
 
   getLogger(): Logger {

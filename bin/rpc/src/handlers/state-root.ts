@@ -14,7 +14,7 @@ import { type Handler, RpcError, RpcErrorCode } from "../types.js";
  *   Hash - state_root
  * ]
  */
-export const stateRoot: Handler<"stateRoot"> = async ([headerHash], db) => {
+export const stateRoot: Handler<"stateRoot"> = async ([headerHash], { db }) => {
   const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
 
   const stateRoot = db.blocks.getPostStateRoot(hashOpaque);

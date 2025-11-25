@@ -1,51 +1,28 @@
 import type WebSocket from "ws";
 import type { RpcServer } from "./server.js";
-import type {
-  InputOf,
-  JsonRpcSubscriptionNotification,
-  MethodName,
-  SubscribeMethodName,
-  Subscription,
-  SubscriptionId,
-  UnsubscribeMethodName,
+import {
+  type InputOf,
+  type JsonRpcSubscriptionNotification,
+  type MethodName,
+  RpcError,
+  RpcErrorCode,
+  type Subscription,
+  type SubscriptionHandlerApi,
+  type SubscriptionId,
 } from "./types.js";
 import { JSON_RPC_VERSION } from "./validation.js";
 
 const POLL_INTERVAL_MS = 1000;
 
-export const SUBSCRIBE_METHOD_MAP: Record<
-  SubscribeMethodName,
-  { handler: MethodName; unsubscribe: UnsubscribeMethodName }
-> = {
-  subscribeBestBlock: {
-    handler: "bestBlock",
-    unsubscribe: "unsubscribeBestBlock",
-  },
-  subscribeFinalizedBlock: {
-    handler: "finalizedBlock",
-    unsubscribe: "unsubscribeFinalizedBlock",
-  },
-  subscribeServiceData: {
-    handler: "serviceData",
-    unsubscribe: "unsubscribeServiceData",
-  },
-  subscribeServicePreimage: {
-    handler: "servicePreimage",
-    unsubscribe: "unsubscribeServicePreimage",
-  },
-  subscribeServiceRequest: {
-    handler: "serviceRequest",
-    unsubscribe: "unsubscribeServiceRequest",
-  },
-  subscribeServiceValue: {
-    handler: "serviceValue",
-    unsubscribe: "unsubscribeServiceValue",
-  },
-  subscribeStatistics: {
-    handler: "statistics",
-    unsubscribe: "unsubscribeStatistics",
-  },
-} as const;
+export const SUBSCRIBABLE_METHODS: Partial<Record<MethodName, MethodName>> = {
+  subscribeBestBlock: "unsubscribeBestBlock",
+  subscribeFinalizedBlock: "unsubscribeFinalizedBlock",
+  subscribeServiceData: "unsubscribeServiceData",
+  subscribeServicePreimage: "unsubscribeServicePreimage",
+  subscribeServiceRequest: "unsubscribeServiceRequest",
+  subscribeServiceValue: "unsubscribeServiceValue",
+  subscribeStatistics: "unsubscribeStatistics",
+};
 
 export class SubscriptionManager {
   private subscriptions: Map<SubscriptionId, Subscription>;
@@ -66,7 +43,7 @@ export class SubscriptionManager {
       let notificationString: string;
 
       try {
-        const result = await this.server.callHandler(subscription.method, subscription.params);
+        const result = await this.server.callHandler(subscription.method, subscription.params, subscription.ws);
 
         const notification: JsonRpcSubscriptionNotification = {
           jsonrpc: JSON_RPC_VERSION,
@@ -99,15 +76,27 @@ export class SubscriptionManager {
     this.subscriptions.set(idHex, { ws, method, params });
 
     ws.on("close", () => {
-      this.unsubscribe(idHex);
+      if (this.subscriptions.has(idHex)) {
+        this.unsubscribe(ws, idHex);
+      }
     });
 
     return idHex;
   }
 
-  unsubscribe(id: SubscriptionId): boolean {
+  unsubscribe(ws: WebSocket, id: SubscriptionId): boolean {
+    if (this.subscriptions.get(id)?.ws !== ws) {
+      throw new RpcError(RpcErrorCode.Other, "Subscription not found.");
+    }
     this.lastResults.delete(id);
     return this.subscriptions.delete(id);
+  }
+
+  getHandlerApi(ws: WebSocket): SubscriptionHandlerApi {
+    return {
+      subscribe: (method, params) => this.subscribe(ws, method, params),
+      unsubscribe: (id) => this.unsubscribe(ws, id),
+    };
   }
 
   destroy(): void {

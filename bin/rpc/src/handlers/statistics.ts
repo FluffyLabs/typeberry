@@ -15,7 +15,7 @@ import { type Handler, RpcError, RpcErrorCode } from "../types.js";
  * ]
  * @returns Blob
  */
-export const statistics: Handler<"statistics"> = async ([headerHash], db, chainSpec) => {
+export const statistics: Handler<"statistics"> = async ([headerHash], { db, chainSpec }) => {
   const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
   const state = db.states.getState(hashOpaque);
 

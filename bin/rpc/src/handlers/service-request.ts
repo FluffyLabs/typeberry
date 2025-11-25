@@ -19,7 +19,7 @@ import type { Handler } from "../types.js";
  */
 export const serviceRequest: Handler<"serviceRequest"> = async (
   [headerHash, serviceId, preimageHash, preimageLength],
-  db,
+  { db },
 ) => {
   const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
   const state = db.states.getState(hashOpaque);

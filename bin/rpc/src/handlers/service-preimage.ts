@@ -15,7 +15,7 @@ import { type Handler, RpcError, RpcErrorCode } from "../types.js";
  * ]
  * @returns Either null or Blob
  */
-export const servicePreimage: Handler<"servicePreimage"> = async ([headerHash, serviceId, preimageHash], db) => {
+export const servicePreimage: Handler<"servicePreimage"> = async ([headerHash, serviceId, preimageHash], { db }) => {
   const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
   const state = db.states.getState(hashOpaque);
 

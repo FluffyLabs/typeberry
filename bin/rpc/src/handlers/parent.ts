@@ -16,7 +16,7 @@ import { validation } from "../validation.js";
  *   Slot - The slot,
  * ]
  */
-export const parent: Handler<"parent"> = async ([headerHash], db) => {
+export const parent: Handler<"parent"> = async ([headerHash], { db }) => {
   const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
   const header = db.blocks.getHeader(hashOpaque);
   if (header === null) {

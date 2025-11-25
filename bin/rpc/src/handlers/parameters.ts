@@ -15,7 +15,7 @@ import type { Handler } from "../types.js";
  * https://github.com/polkadot-fellows/JIPs/blob/77cba2dcc1887233d4b19371c05284ff761a5fa6/JIP-2.md#chain-parameters
  * Returns the parameters of the current node/chain.
  */
-export const parameters: Handler<"parameters"> = async (_params, _db, chainSpec) => {
+export const parameters: Handler<"parameters"> = async (_params, { chainSpec }) => {
   return {
     V1: {
       deposit_per_account: Number(BASE_SERVICE_BALANCE),

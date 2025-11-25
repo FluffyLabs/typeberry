@@ -71,8 +71,13 @@ export namespace validation {
   });
 
   export const notImplementedSchema = {
-    input: z.any(),
+    input: z.tuple([]),
     output: z.any(),
+  };
+
+  export const unsubscribeSchema = {
+    input: z.tuple([z.string()]),
+    output: z.boolean(),
   };
 
   export const schemas = {
@@ -123,6 +128,41 @@ export namespace validation {
       input: z.tuple([hash]),
       output: blobArray,
     },
+    subscribeBestBlock: {
+      input: noArgs,
+      output: z.string(),
+    },
+    subscribeFinalizedBlock: {
+      input: noArgs,
+      output: z.string(),
+    },
+    subscribeServiceData: {
+      input: z.tuple([hash, serviceId]),
+      output: z.string(),
+    },
+    subscribeServicePreimage: {
+      input: z.tuple([hash, serviceId, hash]),
+      output: z.string(),
+    },
+    subscribeServiceRequest: {
+      input: z.tuple([hash, serviceId, hash, preimageLength]),
+      output: z.string(),
+    },
+    subscribeServiceValue: {
+      input: z.tuple([hash, serviceId, blobArray]),
+      output: z.string(),
+    },
+    subscribeStatistics: {
+      input: z.tuple([hash]),
+      output: z.string(),
+    },
+    unsubscribeBestBlock: unsubscribeSchema,
+    unsubscribeFinalizedBlock: unsubscribeSchema,
+    unsubscribeServiceData: unsubscribeSchema,
+    unsubscribeServicePreimage: unsubscribeSchema,
+    unsubscribeServiceRequest: unsubscribeSchema,
+    unsubscribeServiceValue: unsubscribeSchema,
+    unsubscribeStatistics: unsubscribeSchema,
   } as const;
 
   export const jsonRpcRequest = z.object({

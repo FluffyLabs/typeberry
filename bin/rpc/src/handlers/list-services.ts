@@ -13,7 +13,7 @@ import { type Handler, RpcError, RpcErrorCode } from "../types.js";
  * ]
  * @returns array of ServiceId
  */
-export const listServices: Handler<"listServices"> = async ([headerHash], db) => {
+export const listServices: Handler<"listServices"> = async ([headerHash], { db }) => {
   const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
   const state = db.states.getState(hashOpaque);
 

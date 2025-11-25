@@ -9,7 +9,7 @@ import { validation } from "../validation.js";
  *   Slot - The slot,
  * ]
  */
-export const bestBlock: Handler<"bestBlock"> = async (_params, db) => {
+export const bestBlock: Handler<"bestBlock"> = async (_params, { db }) => {
   const headerHash = db.blocks.getBestHeaderHash();
   const header = db.blocks.getHeader(headerHash);
 

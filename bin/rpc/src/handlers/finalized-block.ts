@@ -9,6 +9,6 @@ import { bestBlock } from "./best-block.js";
  *   Slot - The slot,
  * ]
  */
-export const finalizedBlock: Handler<"finalizedBlock"> = async (params, db, chainSpec) => {
-  return bestBlock(params, db, chainSpec); // todo [seko] implement finalized block logic once finality is there
+export const finalizedBlock: Handler<"finalizedBlock"> = async (params, context) => {
+  return bestBlock(params, context); // todo [seko] implement finalized block logic once finality is there
 };

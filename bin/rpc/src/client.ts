@@ -1,19 +1,23 @@
 import { EventEmitter } from "node:events";
 import { Logger } from "@typeberry/logger";
 import WebSocket from "ws";
-import { SUBSCRIBE_METHOD_MAP } from "./subscription-manager.js";
+import { SUBSCRIBABLE_METHODS } from "./subscription-manager.js";
 import type {
-  AnyMethodName,
+  InputOf,
   JsonRpcRequest,
   JsonRpcResponse,
   JsonRpcSubscriptionNotification,
-  SubscribeMethodName,
+  MethodName,
+  MethodWithNoArgsName,
+  OutputOf,
+  SchemaMapUnknown,
+  SubscribableMethodName,
 } from "./types.js";
-import { JSON_RPC_VERSION } from "./validation.js";
+import { JSON_RPC_VERSION, validation } from "./validation.js";
 
-export interface Subscription {
+export interface Subscription<M extends SubscribableMethodName> {
   id: string;
-  method: SubscribeMethodName;
+  method: M;
   eventEmitter: SubscriptionEventEmitter;
 }
 
@@ -34,7 +38,7 @@ const logger = Logger.new(import.meta.filename, "rpc");
 export class RpcClient {
   private ws: WebSocket;
   private messageQueue: Map<number, (response: JsonRpcResponse) => void> = new Map();
-  private subscriptions: Map<string, Subscription> = new Map();
+  private subscriptions: Map<string, Subscription<SubscribableMethodName>> = new Map();
   private nextId = 1;
   private connectionPromise: Promise<void>;
 
@@ -101,13 +105,21 @@ export class RpcClient {
     return this.connectionPromise;
   }
 
-  async call(method: AnyMethodName, params?: unknown[]): Promise<unknown> {
+  async call<M extends MethodWithNoArgsName>(method: M, params?: InputOf<M>): Promise<OutputOf<M>>;
+  async call<M extends MethodName>(method: M, params: InputOf<M>): Promise<OutputOf<M>>;
+  async call<M extends MethodName>(method: M, params?: InputOf<M>): Promise<OutputOf<M>> {
+    if (!(method in validation.schemas)) {
+      throw new Error(`Method ${method} not found`);
+    }
+
+    const { input } = validation.schemas[method] as SchemaMapUnknown[M];
+
     return new Promise((resolve, reject) => {
       const id = this.nextId++;
       const request: JsonRpcRequest = {
         jsonrpc: JSON_RPC_VERSION,
         method,
-        params,
+        params: input.encode(params ?? []),
         id,
       };
 
@@ -115,7 +127,12 @@ export class RpcClient {
         if ("error" in response) {
           reject(response.error);
         } else {
-          resolve(response.result);
+          const { output } = validation.schemas[method];
+          const parseResult = output.safeParse(response.result);
+          if (parseResult.success === false) {
+            reject(new Error(`Invalid response for method ${method}: ${JSON.stringify(response.result)}`));
+          }
+          resolve(parseResult.data);
         }
       });
 
@@ -123,11 +140,11 @@ export class RpcClient {
     });
   }
 
-  async subscribe(method: SubscribeMethodName, params: unknown[]): Promise<SubscriptionEventEmitter> {
+  async subscribe<M extends SubscribableMethodName>(method: M, params: InputOf<M>): Promise<SubscriptionEventEmitter> {
     const result = await this.call(method, params);
 
-    if (Array.isArray(result) && result.length === 1 && typeof result[0] === "string") {
-      const subscriptionId = result[0];
+    if (typeof result === "string") {
+      const subscriptionId = result;
       const eventEmitter = new SubscriptionEventEmitter(() => this.unsubscribe(subscriptionId));
       this.subscriptions.set(subscriptionId, { id: subscriptionId, method, eventEmitter });
       return eventEmitter;
@@ -142,18 +159,17 @@ export class RpcClient {
       throw new Error("Subscription not found");
     }
 
-    const unsubscribeMethod = SUBSCRIBE_METHOD_MAP[subscription.method].unsubscribe;
+    const unsubscribeMethod = SUBSCRIBABLE_METHODS[subscription.method];
     if (unsubscribeMethod === undefined) {
       throw new Error(`Missing unsubscribe method mapping for ${subscription.method}`);
     }
-
     const result = await this.call(unsubscribeMethod, [subscriptionId]);
 
-    if (Array.isArray(result) && result.length === 1 && typeof result[0] === "boolean") {
-      if (result[0] === true) {
+    if (typeof result === "boolean") {
+      if (result === true) {
         this.subscriptions.delete(subscriptionId);
       } else {
-        throw new Error("Couldn't terminate subscription on server because it was not found.");
+        throw new Error("Server failed to terminate subscription.");
       }
 
       return;

@@ -3,6 +3,7 @@ import type { BlocksDb, StatesDb } from "@typeberry/database";
 import type { EnumerableState, State } from "@typeberry/state";
 import type WebSocket from "ws";
 import type { z } from "zod";
+import type { SUBSCRIBABLE_METHODS } from "./subscription-manager.js";
 import type { JSON_RPC_VERSION, validation } from "./validation.js";
 
 export type JsonRpcResult = unknown;
@@ -73,40 +74,32 @@ export interface DatabaseContext {
 
 export type SchemaMap = typeof validation.schemas;
 export type MethodName = keyof SchemaMap;
-export type InputOf<Name extends MethodName> = z.infer<SchemaMap[Name]["input"]>;
-export type OutputOf<Name extends MethodName> = z.infer<SchemaMap[Name]["output"]>;
-export type Handler<Name extends MethodName> = (
-  input: InputOf<Name>,
-  db: DatabaseContext,
-  chainSpec: ChainSpec,
-) => Promise<OutputOf<Name>>;
+export type MethodWithNoArgsName = keyof {
+  [K in keyof SchemaMap as SchemaMap[K]["input"] extends z.ZodTuple<[]> ? K : never]: SchemaMap[K];
+};
+export type SchemaMapUnknown = Record<MethodName, { input: z.ZodTypeAny; output: z.ZodTypeAny }>;
+export type InputOf<M extends MethodName> = z.infer<SchemaMap[M]["input"]>;
+export type OutputOf<M extends MethodName> = z.infer<SchemaMap[M]["output"]>;
+export type GenericHandler<I, O> = (
+  input: I,
+  context: { db: DatabaseContext; chainSpec: ChainSpec; subscription: SubscriptionHandlerApi },
+) => Promise<O>;
+export type Handler<M extends MethodName> = GenericHandler<InputOf<M>, OutputOf<M>>;
 export type HandlerMap = {
   [N in MethodName]: Handler<N>;
 };
 
-export type SubscribeMethodName =
-  | "subscribeBestBlock"
-  | "subscribeFinalizedBlock"
-  | "subscribeServiceData"
-  | "subscribeServicePreimage"
-  | "subscribeServiceRequest"
-  | "subscribeServiceValue"
-  | "subscribeStatistics";
-export type UnsubscribeMethodName =
-  | "unsubscribeBestBlock"
-  | "unsubscribeFinalizedBlock"
-  | "unsubscribeServiceData"
-  | "unsubscribeServicePreimage"
-  | "unsubscribeServiceRequest"
-  | "unsubscribeServiceValue"
-  | "unsubscribeStatistics";
-
-export type AnyMethodName = MethodName | SubscribeMethodName | UnsubscribeMethodName;
-
 export type Subscription<M extends MethodName = MethodName> = {
   ws: WebSocket;
   method: M;
-  params?: InputOf<M>;
+  params: InputOf<M>;
 };
 
 export type SubscriptionId = string;
+
+export type SubscriptionHandlerApi = {
+  subscribe: <M extends MethodName>(method: M, params: InputOf<M>) => SubscriptionId;
+  unsubscribe: (id: SubscriptionId) => boolean;
+};
+
+export type SubscribableMethodName = keyof typeof SUBSCRIBABLE_METHODS;
