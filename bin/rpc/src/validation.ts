@@ -163,7 +163,7 @@ export namespace validation {
     unsubscribeServiceRequest: unsubscribeSchema,
     unsubscribeServiceValue: unsubscribeSchema,
     unsubscribeStatistics: unsubscribeSchema,
-  } as const;
+  } as const satisfies Record<string, { input: z.ZodTypeAny; output: z.ZodTypeAny }>;
 
   export const jsonRpcRequest = z.object({
     jsonrpc: z.literal(JSON_RPC_VERSION),

@@ -14,7 +14,7 @@ import { JSON_RPC_VERSION } from "./validation.js";
 
 const POLL_INTERVAL_MS = 1000;
 
-export const SUBSCRIBABLE_METHODS: Partial<Record<MethodName, MethodName>> = {
+export const SUBSCRIBABLE_METHODS = {
   subscribeBestBlock: "unsubscribeBestBlock",
   subscribeFinalizedBlock: "unsubscribeFinalizedBlock",
   subscribeServiceData: "unsubscribeServiceData",
@@ -22,7 +22,7 @@ export const SUBSCRIBABLE_METHODS: Partial<Record<MethodName, MethodName>> = {
   subscribeServiceRequest: "unsubscribeServiceRequest",
   subscribeServiceValue: "unsubscribeServiceValue",
   subscribeStatistics: "unsubscribeStatistics",
-};
+} as const satisfies Partial<Record<MethodName, MethodName>>;
 
 export class SubscriptionManager {
   private subscriptions: Map<SubscriptionId, Subscription>;
