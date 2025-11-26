@@ -14,7 +14,9 @@
     "@typeberry/networking": "*",
     "@typeberry/node": "*",
     "@typeberry/numbers": "*",
+    "@typeberry/telemetry": "*",
     "@typeberry/utils": "*",
+    "@typeberry/workers-api": "*",
     "minimist": "1.2.8"
   },
   "scripts": {

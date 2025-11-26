@@ -9,7 +9,6 @@
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
     "@typeberry/pvm-interface": "*",
-    "@typeberry/pvm-program": "*",
     "@typeberry/utils": "*"
   },
   "scripts": {

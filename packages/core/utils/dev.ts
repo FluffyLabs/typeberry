@@ -1,4 +1,4 @@
-const env = typeof process === "undefined" ? {} : process.env;
+import { env } from "./env.js";
 
 /**
  * The function will produce relative path resolver that is adjusted

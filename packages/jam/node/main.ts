@@ -8,11 +8,13 @@ import { NetworkingConfig } from "@typeberry/jam-network";
 import { Listener } from "@typeberry/listener";
 import { tryAsU16 } from "@typeberry/numbers";
 import type { StateEntries } from "@typeberry/state-merkleization";
+import type { Telemetry } from "@typeberry/telemetry";
 import { CURRENT_SUITE, CURRENT_VERSION, Result } from "@typeberry/utils";
 import { LmdbWorkerConfig } from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import { initializeExtensions } from "./extensions.js";
 import type { JamConfig, NetworkConfig } from "./jam-config.js";
+import * as metrics from "./metrics.js";
 import packageJson from "./package.json" with { type: "json" };
 import { spawnBlockGeneratorWorker, spawnImporterWorker, spawnNetworkWorker } from "./workers.js";
 
@@ -24,12 +26,18 @@ export type NodeApi = {
   close(): Promise<void>;
 };
 
-export async function main(config: JamConfig, withRelPath: (v: string) => string): Promise<NodeApi> {
+export async function main(
+  config: JamConfig,
+  withRelPath: (v: string) => string,
+  telemetry: Telemetry | null,
+): Promise<NodeApi> {
   if (!isMainThread) {
     throw new Error("The main binary cannot be running as a Worker!");
   }
 
   await initWasm();
+
+  const nodeMetrics = metrics.createMetrics();
 
   logger.info`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
   logger.info`🎸 Starting node: ${config.nodeName}.`;
@@ -47,7 +55,7 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
     withRelPath(config.node.databaseBasePath),
   );
 
-  const baseConfig = { chainSpec, blake2b, dbPath };
+  const baseConfig = { nodeName: config.nodeName, chainSpec, blake2b, dbPath };
   const importerConfig = LmdbWorkerConfig.new({
     ...baseConfig,
     workerParams: ImporterConfig.create({
@@ -69,7 +77,11 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
   // Start block importer
   const { importer, finish: closeImporter } = await spawnImporterWorker(importerConfig);
   const bestHeader = new Listener<WithHash<HeaderHash, HeaderView>>();
-  importer.setOnBestHeaderAnnouncement(bestHeader.callbackHandler());
+  importer.setOnBestHeaderAnnouncement(async (header) => {
+    const slot = header.data.timeSlotIndex.materialize();
+    nodeMetrics.recordBestBlockChanged(slot, header.hash.toString());
+    await bestHeader.callbackHandler()(header);
+  });
 
   // Start extensions
   const closeExtensions = initializeExtensions({ chainSpec, bestHeader, nodeName: config.nodeName });
@@ -119,6 +131,8 @@ export async function main(config: JamConfig, withRelPath: (v: string) => string
       await closeNetwork();
       logger.log`[main] 🛢️ Closing the database`;
       await rootDb.close();
+      logger.log`[main] 📳 Closing telemetry`;
+      await telemetry?.close();
       logger.info`[main] ✅ Done.`;
     },
   };

@@ -13,7 +13,7 @@ import {
 } from "@typeberry/block-json";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { StateTransition } from "@typeberry/state-vectors";
-import { runner } from "../common.js";
+import { runner, SelectedPvm } from "../common.js";
 import { runStateTransition } from "../state-transition/state-transition.js";
 import { AccumulateTest, runAccumulateTest } from "./accumulate.js";
 import { AssurancesTestFull, AssurancesTestTiny, runAssurancesTestFull, runAssurancesTestTiny } from "./assurances.js";
@@ -46,7 +46,7 @@ import { runShufflingTests, shufflingTestsFromJson } from "./shuffling.js";
 import { runStatisticsTestFull, runStatisticsTestTiny, StatisticsTestFull, StatisticsTestTiny } from "./statistics.js";
 import { runTrieTest, trieTestSuiteFromJson } from "./trie.js";
 
-const pvms: ("ananas" | "builtin")[] = ["ananas", "builtin"];
+const pvms: SelectedPvm[] = [SelectedPvm.Ananas, SelectedPvm.Builtin];
 const tiny = [tinyChainSpec];
 const full = [fullChainSpec];
 const tinyFull = [...tiny, ...full];

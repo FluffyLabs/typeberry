@@ -132,6 +132,35 @@ JAM_LOG=trace jam dev 1
 JAM_LOG=networking:debug,state:trace jam
 ```
 
+### OpenTelemetry Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OTEL_ENABLED` | Enable/disable OpenTelemetry | `true` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | URL to push metrics to | `http://localhost:9090/api/v1/otlp` |
+
+**Example:**
+
+```bash
+# Metrics will be pushed to local prometheus with OTLP receiver.
+jam dev 1
+
+# Disable telemetry
+OTEL_ENABLED=false jam dev 1
+```
+
+### Local Prometheus via Docker
+
+To inspect metrics pushed over OTLP, start a Prometheus container with the OTLP receiver enabled:
+
+```bash
+docker run -d -p 9090:9090 --name=prometheus prom/prometheus \
+  --config.file=/etc/prometheus/prometheus.yml \
+  --web.enable-otlp-receiver
+```
+
+The default `OTEL_EXPORTER_OTLP_ENDPOINT` already points to the local instance, so run the node and open `http://localhost:9090` to explore the collected telemetry.
+
 ## Development
 
 The `dev` command is designed for local testing with multiple validators:

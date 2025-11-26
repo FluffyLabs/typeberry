@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { codec, Decoder, Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
-import { codecHashDictionary } from "./codec.js";
+import { codecHashDictionary } from "./codec-utils.js";
 import type { PreimageHash } from "./preimage.js";
 import { ImportSpec } from "./work-item.js";
 import { tryAsSegmentIndex } from "./work-item-segment.js";

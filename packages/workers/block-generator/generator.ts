@@ -9,12 +9,14 @@ import type { BlocksDb, StatesDb } from "@typeberry/database";
 import type { Blake2b, keccak } from "@typeberry/hash";
 import type { State } from "@typeberry/state";
 import { TransitionHasher } from "@typeberry/transition";
-import { asOpaqueType } from "@typeberry/utils";
+import { asOpaqueType, now } from "@typeberry/utils";
+import * as metrics from "./metrics.js";
 
 export class Generator {
   private lastHeaderHash: HeaderHash;
   private lastHeader: Header;
   private lastState: State;
+  private readonly metrics: ReturnType<typeof metrics.createMetrics>;
 
   constructor(
     public readonly chainSpec: ChainSpec,
@@ -23,6 +25,7 @@ export class Generator {
     private readonly blocks: BlocksDb,
     private readonly states: StatesDb,
   ) {
+    this.metrics = metrics.createMetrics();
     const { lastHeaderHash, lastHeader, lastState } = Generator.getLastHeaderAndState(blocks, states);
     this.lastHeaderHash = lastHeaderHash;
     this.lastHeader = lastHeader;
@@ -67,6 +70,9 @@ export class Generator {
     // incrementing timeslot for current block
     const lastTimeSlot = this.lastHeader.timeSlotIndex;
     const newTimeSlot = lastTimeSlot + 1;
+
+    const startTime = now();
+    this.metrics.recordBlockAuthoringStarted(newTimeSlot);
 
     // select validator for block
     const validatorId = tryAsValidatorIndex(newTimeSlot % 6);
@@ -122,6 +128,9 @@ export class Generator {
     const headerView = Decoder.decodeObject(Header.Codec.View, encoded, this.chainSpec);
     this.lastHeaderHash = hasher.header(headerView).hash;
     this.lastHeader = header;
+
+    const duration = now() - startTime;
+    this.metrics.recordBlockAuthored(newTimeSlot, duration);
 
     return Block.create({ header, extrinsic });
   }
