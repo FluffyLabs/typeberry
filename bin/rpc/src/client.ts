@@ -133,6 +133,7 @@ export class RpcClient {
             reject(
               new Error(`Received an invalid response for method "${method}": ${JSON.stringify(response.result)}`),
             );
+            return;
           }
           resolve(parseResult.data);
         }
