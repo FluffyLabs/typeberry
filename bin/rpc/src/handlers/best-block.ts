@@ -1,6 +1,9 @@
 import { type Handler, RpcError, RpcErrorCode } from "../types.js";
 import { validation } from "../validation.js";
 
+/**
+ * https://github.com/polkadot-fellows/JIPs/blob/772ce90bfc33f4e1de9de3bbe10c561753cc0d41/JIP-2.md#bestblock
+ */
 export const bestBlock: Handler<"bestBlock"> = async (_params, { db }) => {
   const headerHash = db.blocks.getBestHeaderHash();
   const header = db.blocks.getHeader(headerHash);

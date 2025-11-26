@@ -4,6 +4,9 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { type Handler, RpcError, RpcErrorCode } from "../types.js";
 import { validation } from "../validation.js";
 
+/**
+ * https://github.com/polkadot-fellows/JIPs/blob/772ce90bfc33f4e1de9de3bbe10c561753cc0d41/JIP-2.md#parentheader_hash
+ */
 export const parent: Handler<"parent"> = async ([headerHash], { db }) => {
   const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
   const header = db.blocks.getHeader(hashOpaque);

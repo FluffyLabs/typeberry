@@ -5,6 +5,9 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { type Handler, RpcError, RpcErrorCode } from "../types.js";
 
+/**
+ * https://github.com/polkadot-fellows/JIPs/blob/772ce90bfc33f4e1de9de3bbe10c561753cc0d41/JIP-2.md#servicedataheader_hash-id
+ */
 export const serviceData: Handler<"serviceData"> = async ([headerHash, serviceId], { db, chainSpec }) => {
   const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
   const state = db.states.getState(hashOpaque);
