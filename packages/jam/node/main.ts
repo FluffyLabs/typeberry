@@ -1,12 +1,14 @@
 import { isMainThread } from "node:worker_threads";
 import type { BlockView, HeaderHash, HeaderView, StateRootHash } from "@typeberry/block";
+import type { BlockAuthorshipConfig } from "@typeberry/block-authorship";
 import { type ChainSpec, PvmBackend } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
+import { deriveBandersnatchSecretKey, deriveEd25519SecretKey, trivialSeed } from "@typeberry/crypto/key-derivation.js";
 import { Blake2b, type WithHash } from "@typeberry/hash";
 import { type ImporterApi, ImporterConfig } from "@typeberry/importer";
 import { NetworkingConfig } from "@typeberry/jam-network";
 import { Listener } from "@typeberry/listener";
-import { tryAsU16 } from "@typeberry/numbers";
+import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import type { Telemetry } from "@typeberry/telemetry";
 import { CURRENT_SUITE, CURRENT_VERSION, Result } from "@typeberry/utils";
@@ -93,7 +95,17 @@ export async function main(
   const closeAuthorship = await initAuthorship(
     importer,
     config.isAuthoring,
-    LmdbWorkerConfig.new({ ...baseConfig, workerParams: undefined }),
+    LmdbWorkerConfig.new({
+      ...baseConfig,
+      workerParams: {
+        keys: Array.from({ length: 6 })
+          .map((_, i) => trivialSeed(tryAsU32(i)))
+          .map((seed) => ({
+            bandersnatch: deriveBandersnatchSecretKey(seed, blake2b),
+            ed25519: deriveEd25519SecretKey(seed, blake2b),
+          })),
+      },
+    }),
   );
 
   // Networking initialization
@@ -140,7 +152,11 @@ export async function main(
   return api;
 }
 
-const initAuthorship = async (importer: ImporterApi, isAuthoring: boolean, config: LmdbWorkerConfig) => {
+const initAuthorship = async (
+  importer: ImporterApi,
+  isAuthoring: boolean,
+  config: LmdbWorkerConfig<BlockAuthorshipConfig>,
+) => {
   if (!isAuthoring) {
     logger.log`✍️  Authorship off: disabled`;
     return () => Promise.resolve();

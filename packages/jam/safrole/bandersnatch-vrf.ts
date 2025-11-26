@@ -1,9 +1,10 @@
 import type { EntropyHash } from "@typeberry/block";
 import type { SignedTicket } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import type { BandersnatchKey } from "@typeberry/crypto";
+import type { BandersnatchKey, BandersnatchSecretSeed } from "@typeberry/crypto";
 import {
   BANDERSNATCH_RING_ROOT_BYTES,
+  BANDERSNATCH_VRF_SIGNATURE_BYTES,
   type BandersnatchRingRoot,
   type BandersnatchVrfSignature,
 } from "@typeberry/crypto/bandersnatch.js";
@@ -37,6 +38,7 @@ const FUNCTIONS = {
   verifySeal,
   verifyTickets,
   getRingCommitment,
+  generateSeal,
 };
 
 // NOTE [ToDr] We export the entire object to allow mocking in tests.
@@ -132,4 +134,19 @@ async function verifyTickets(
     isValid: result.raw[RESULT_INDEX] === ResultValues.Ok,
     entropyHash: Bytes.fromBlob(result.raw.subarray(1, TICKET_RESULT_LENGTH), HASH_SIZE).asOpaque(),
   }));
+}
+
+async function generateSeal(
+  bandersnatch: BandernsatchWasm,
+  authorKey: BandersnatchSecretSeed,
+  input: BytesBlob,
+  auxData: BytesBlob,
+): Promise<Result<BandersnatchVrfSignature, null>> {
+  const result = await bandersnatch.generateSeal(authorKey.raw, input.raw, auxData.raw);
+
+  if (result[RESULT_INDEX] === ResultValues.Error) {
+    return Result.error(null, () => "Seal generation failed");
+  }
+
+  return Result.ok(Bytes.fromBlob(result.subarray(1), BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque());
 }

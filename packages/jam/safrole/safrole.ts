@@ -500,6 +500,20 @@ export class Safrole {
     };
   }
 
+  async blockAuthorshipTransition(
+    input: Omit<Input, "epochMarker | ticketsMarker">,
+  ): Promise<Result<Omit<OkResult, "stateUpdate">, SafroleErrorCode>> {
+    const validatorKeysResult = await this.getValidatorKeys(input.slot, input.punishSet);
+
+    if (validatorKeysResult.isError) {
+      return Result.error(validatorKeysResult.error, validatorKeysResult.details);
+    }
+
+    const epochMark = this.getEpochMark(input.slot, validatorKeysResult.ok.nextValidatorData);
+    const ticketsMark = this.getTicketsMarker(input.slot);
+    return Result.ok({ epochMark, ticketsMark });
+  }
+
   async transition(input: Input): Promise<Result<OkResult, SafroleErrorCode>> {
     if (this.state.timeslot >= input.slot) {
       return Result.error(
@@ -559,6 +573,7 @@ export class Safrole {
       input.epochMarker,
       EpochMarker.Codec,
     );
+
     if (epochMarkerRes.isError) {
       return epochMarkerRes;
     }
