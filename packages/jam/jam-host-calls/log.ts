@@ -1,9 +1,10 @@
 import type { ServiceId } from "@typeberry/block";
 import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
-import { type PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
+import { traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
-import { safeAllocUint8Array } from "@typeberry/utils";
+import { Compatibility, GpVersion, safeAllocUint8Array } from "@typeberry/utils";
 import { logger } from "./logger.js";
+import { HostCallResult } from "./results.js";
 import { clampU64ToU32 } from "./utils.js";
 
 const decoder = new TextDecoder("utf8");
@@ -17,6 +18,8 @@ enum Levels {
   UNKNOWN = 5,
 }
 
+const IN_OUT_REG = 7;
+
 /**
  * Log message to the console
  *
@@ -24,13 +27,13 @@ enum Levels {
  */
 export class LogHostCall implements HostCallHandler {
   index = tryAsHostCallIndex(100);
-  basicGasCost = tryAsSmallGas(0);
+  basicGasCost = Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) ? tryAsSmallGas(10) : tryAsSmallGas(0);
   // intentionally not tracing anything here, since the message will be printed anyway.
   tracedRegisters = traceRegisters();
 
   constructor(public readonly currentServiceId: ServiceId) {}
 
-  execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
+  async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined> {
     const lvl = regs.get(7);
     const targetStart = regs.get(8);
     const targetLength = regs.get(9);
@@ -46,6 +49,9 @@ export class LogHostCall implements HostCallHandler {
 
     const level = clampU64ToU32(lvl);
     logger.trace`[${this.currentServiceId}] LOG(${this.currentServiceId}, ${level < Levels.UNKNOWN ? Levels[level] : Levels[Levels.UNKNOWN]}(${lvl}), ${decoder.decode(target)}, ${decoder.decode(message)})`;
-    return Promise.resolve(undefined);
+
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)) {
+      regs.set(IN_OUT_REG, HostCallResult.WHAT);
+    }
   }
 }
