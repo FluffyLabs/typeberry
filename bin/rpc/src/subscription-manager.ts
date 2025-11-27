@@ -69,7 +69,7 @@ export class SubscriptionManager {
     }
   }
 
-  subscribe<M extends MethodName>(ws: WebSocket, method: M, params: InputOf<M>): SubscriptionId {
+  private subscribe<M extends MethodName>(ws: WebSocket, method: M, params: InputOf<M>): SubscriptionId {
     const id = this.nextId++;
     const idHex = `0x${id.toString(16)}`;
 
@@ -84,7 +84,7 @@ export class SubscriptionManager {
     return idHex;
   }
 
-  unsubscribe(ws: WebSocket, id: SubscriptionId): boolean {
+  private unsubscribe(ws: WebSocket, id: SubscriptionId): boolean {
     if (this.subscriptions.get(id)?.ws !== ws) {
       throw new RpcError(RpcErrorCode.Other, "Subscription not found.");
     }

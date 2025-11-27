@@ -144,16 +144,10 @@ export class RpcClient {
   }
 
   async subscribe<M extends SubscribableMethodName>(method: M, params: InputOf<M>): Promise<SubscriptionEventEmitter> {
-    const result = await this.call(method, params);
-
-    if (typeof result === "string") {
-      const subscriptionId = result;
-      const eventEmitter = new SubscriptionEventEmitter(() => this.unsubscribe(subscriptionId));
-      this.subscriptions.set(subscriptionId, { id: subscriptionId, method, eventEmitter });
-      return eventEmitter;
-    }
-
-    throw new Error("Received an invalid subscription response.");
+    const subscriptionId = await this.call(method, params);
+    const eventEmitter = new SubscriptionEventEmitter(() => this.unsubscribe(subscriptionId));
+    this.subscriptions.set(subscriptionId, { id: subscriptionId, method, eventEmitter });
+    return eventEmitter;
   }
 
   private async unsubscribe(subscriptionId: string): Promise<void> {
@@ -170,17 +164,11 @@ export class RpcClient {
     }
     const result = await this.call(unsubscribeMethod, [subscriptionId]);
 
-    if (typeof result === "boolean") {
-      if (result === true) {
-        this.subscriptions.delete(subscriptionId);
-      } else {
-        throw new Error("Server failed to terminate subscription.");
-      }
-
-      return;
+    if (result === true) {
+      this.subscriptions.delete(subscriptionId);
+    } else {
+      throw new Error("Server failed to terminate subscription.");
     }
-
-    throw new Error("Received an invalid unsubscribe response.");
   }
 
   close(): void {

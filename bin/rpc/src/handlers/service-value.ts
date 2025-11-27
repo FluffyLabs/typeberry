@@ -20,7 +20,7 @@ export const serviceValue: Handler<"serviceValue"> = async ([headerHash, service
     return null;
   }
 
-  const storageValue = service.getStorage(Bytes.fromBlob(key, HASH_SIZE).asOpaque());
+  const storageValue = service.getStorage(Bytes.fromBlob(key, key.length).asOpaque());
 
   if (storageValue === null) {
     return null;
