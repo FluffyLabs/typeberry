@@ -8,8 +8,8 @@ import {
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { resultToString } from "@typeberry/utils";
 import { type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
+import { HostCallResult } from "../general/results.js";
 import { logger } from "../logger.js";
-import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID } from "../utils.js";
 
 const IN_OUT_REG = 7;

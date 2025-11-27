@@ -8,7 +8,7 @@ import { gasCounter, MemoryBuilder, tryAsMemoryIndex, tryAsSbrkIndex } from "@ty
 import { OK, Result } from "@typeberry/utils";
 import { type MachineId, PeekPokeError, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
-import { HostCallResult } from "../results.js";
+import { HostCallResult } from "../general/results.js";
 import { emptyRegistersBuffer } from "../utils.js";
 import { Poke } from "./poke.js";
 

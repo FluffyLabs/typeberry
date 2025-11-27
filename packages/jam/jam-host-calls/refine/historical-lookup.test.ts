@@ -11,7 +11,7 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
-import { HostCallResult } from "../results.js";
+import { HostCallResult } from "../general/results.js";
 import { emptyRegistersBuffer } from "../utils.js";
 import { HistoricalLookup } from "./historical-lookup.js";
 

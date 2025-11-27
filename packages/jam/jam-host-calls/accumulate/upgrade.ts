@@ -5,8 +5,8 @@ import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typebe
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import type { PartialState } from "../externalities/partial-state.js";
+import { HostCallResult } from "../general/results.js";
 import { logger } from "../logger.js";
-import { HostCallResult } from "../results.js";
 
 const IN_OUT_REG = 7; // `o`
 const GAS_REG = 8; // `g`

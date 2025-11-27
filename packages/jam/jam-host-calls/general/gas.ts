@@ -3,7 +3,7 @@ import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
-import { logger } from "./logger.js";
+import { logger } from "../logger.js";
 
 /**
  * Return remaining gas to the PVM.

@@ -19,14 +19,14 @@ import {
   type ProgramCounter,
   tryAsProgramCounter,
 } from "@typeberry/jam-host-calls/externalities/refine-externalities.js";
-import { Fetch, type IFetchExternalities } from "@typeberry/jam-host-calls/fetch.js";
-import { GasHostCall } from "@typeberry/jam-host-calls/gas.js";
-import { type AccountsInfo, Info } from "@typeberry/jam-host-calls/info.js";
-import { LogHostCall } from "@typeberry/jam-host-calls/log.js";
-import { type AccountsLookup, Lookup } from "@typeberry/jam-host-calls/lookup.js";
-import { Missing } from "@typeberry/jam-host-calls/missing.js";
-import { type AccountsRead, Read } from "@typeberry/jam-host-calls/read.js";
-import { type AccountsWrite, Write } from "@typeberry/jam-host-calls/write.js";
+import { Fetch, type IFetchExternalities } from "@typeberry/jam-host-calls/general/fetch.js";
+import { GasHostCall } from "@typeberry/jam-host-calls/general/gas.js";
+import { type AccountsInfo, Info } from "@typeberry/jam-host-calls/general/info.js";
+import { LogHostCall } from "@typeberry/jam-host-calls/general/log.js";
+import { type AccountsLookup, Lookup } from "@typeberry/jam-host-calls/general/lookup.js";
+import { Missing } from "@typeberry/jam-host-calls/general/missing.js";
+import { type AccountsRead, Read } from "@typeberry/jam-host-calls/general/read.js";
+import { type AccountsWrite, Write } from "@typeberry/jam-host-calls/general/write.js";
 import { type HostCallHandler, HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
 import type { Gas } from "@typeberry/pvm-interface";
 

@@ -3,9 +3,9 @@ import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typebe
 import { traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { Compatibility, GpVersion, safeAllocUint8Array } from "@typeberry/utils";
-import { logger } from "./logger.js";
+import { logger } from "../logger.js";
+import { clampU64ToU32 } from "../utils.js";
 import { HostCallResult } from "./results.js";
-import { clampU64ToU32 } from "./utils.js";
 
 const decoder = new TextDecoder("utf8");
 

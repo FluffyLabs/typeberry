@@ -1,7 +1,10 @@
+export * as accumulate from "./accumulate/index.js";
 export * from "./externalities/partial-state.js";
 export * from "./externalities/pending-transfer.js";
 export * from "./externalities/refine-externalities.js";
 export * from "./externalities/state-update.js";
-export { codecServiceAccountInfoWithThresholdBalance as hostCallInfoAccount } from "./info.js";
-export * from "./results.js";
+export * as general from "./general/index.js";
+export { codecServiceAccountInfoWithThresholdBalance as hostCallInfoAccount } from "./general/info.js";
+export * from "./general/results.js";
+export * as refine from "./refine/index.js";
 export * from "./utils.js";

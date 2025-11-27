@@ -14,7 +14,7 @@ import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.j
 import { deepEqual, OK, Result } from "@typeberry/utils";
 import { EjectError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
-import { HostCallResult } from "../results.js";
+import { HostCallResult } from "../general/results.js";
 import { emptyRegistersBuffer } from "../utils.js";
 import { Eject } from "./eject.js";
 

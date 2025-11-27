@@ -15,7 +15,7 @@ import { codecPerCore, type PerCore, tryAsPerCore } from "@typeberry/state";
 import { Compatibility, deepEqual, GpVersion, Result } from "@typeberry/utils";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
-import { HostCallResult } from "../results.js";
+import { HostCallResult } from "../general/results.js";
 import { emptyRegistersBuffer } from "../utils.js";
 import { Bless } from "./bless.js";
 

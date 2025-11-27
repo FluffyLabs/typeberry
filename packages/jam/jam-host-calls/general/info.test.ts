@@ -11,10 +11,10 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { TestAccounts } from "./externalities/test-accounts.js";
+import { TestAccounts } from "../externalities/test-accounts.js";
+import { emptyRegistersBuffer } from "../utils.js";
 import { codecServiceAccountInfoWithThresholdBalance, Info, LEN_REG } from "./info.js";
 import { HostCallResult } from "./results.js";
-import { emptyRegistersBuffer } from "./utils.js";
 
 const SERVICE_ID_REG = 7;
 const RESULT_REG = SERVICE_ID_REG;

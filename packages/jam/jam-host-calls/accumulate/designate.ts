@@ -7,8 +7,8 @@ import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { ValidatorData } from "@typeberry/state";
 import { safeAllocUint8Array } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
+import { HostCallResult } from "../general/results.js";
 import { logger } from "../logger.js";
-import { HostCallResult } from "../results.js";
 
 const IN_OUT_REG = 7;
 export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint);

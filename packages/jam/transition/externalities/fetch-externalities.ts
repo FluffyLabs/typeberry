@@ -18,7 +18,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
-import type { IFetchExternalities } from "@typeberry/jam-host-calls/fetch.js";
+import type { IFetchExternalities } from "@typeberry/jam-host-calls/general/fetch.js";
 import { tryAsU16, tryAsU32, tryAsU64, type U64 } from "@typeberry/numbers";
 import {
   BASE_SERVICE_BALANCE,

@@ -8,9 +8,9 @@ import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
-import { logger } from "./logger.js";
+import { logger } from "../logger.js";
+import { getServiceIdOrCurrent } from "../utils.js";
 import { HostCallResult } from "./results.js";
-import { getServiceIdOrCurrent } from "./utils.js";
 
 /** Account data interface for info host calls. */
 export interface AccountsInfo {

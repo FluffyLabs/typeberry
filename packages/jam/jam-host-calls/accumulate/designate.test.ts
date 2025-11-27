@@ -16,7 +16,7 @@ import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import { UnprivilegedError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
-import { HostCallResult } from "../results.js";
+import { HostCallResult } from "../general/results.js";
 import { emptyRegistersBuffer } from "../utils.js";
 import { Designate } from "./designate.js";
 

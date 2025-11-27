@@ -11,8 +11,8 @@ import {
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { assertNever, resultToString, safeAllocUint8Array } from "@typeberry/utils";
 import { type PartialState, ProvidePreimageError } from "../externalities/partial-state.js";
+import { HostCallResult } from "../general/results.js";
 import { logger } from "../logger.js";
-import { HostCallResult } from "../results.js";
 import { clampU64ToU32, getServiceIdOrCurrent } from "../utils.js";
 
 const IN_OUT_REG = 7;

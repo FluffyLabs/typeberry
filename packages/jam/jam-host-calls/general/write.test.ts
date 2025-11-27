@@ -11,9 +11,9 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
-import { TestAccounts } from "./externalities/test-accounts.js";
+import { TestAccounts } from "../externalities/test-accounts.js";
+import { emptyRegistersBuffer } from "../utils.js";
 import { HostCallResult } from "./results.js";
-import { emptyRegistersBuffer } from "./utils.js";
 import { Write } from "./write.js";
 
 const gas = gasCounter(tryAsGas(0));

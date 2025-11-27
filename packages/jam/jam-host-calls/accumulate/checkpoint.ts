@@ -4,7 +4,7 @@ import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import type { RegisterIndex } from "@typeberry/pvm-interpreter/registers.js";
 import type { PartialState } from "../externalities/partial-state.js";
-import { GasHostCall } from "../gas.js";
+import { GasHostCall } from "../general/gas.js";
 import { logger } from "../logger.js";
 
 /**

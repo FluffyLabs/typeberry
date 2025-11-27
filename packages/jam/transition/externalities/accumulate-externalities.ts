@@ -36,10 +36,10 @@ import {
   UpdatePrivilegesError,
   writeServiceIdAsLeBytes,
 } from "@typeberry/jam-host-calls";
-import type { AccountsInfo } from "@typeberry/jam-host-calls/info.js";
-import type { AccountsLookup } from "@typeberry/jam-host-calls/lookup.js";
-import type { AccountsRead } from "@typeberry/jam-host-calls/read.js";
-import type { AccountsWrite } from "@typeberry/jam-host-calls/write.js";
+import type { AccountsInfo } from "@typeberry/jam-host-calls/general/info.js";
+import type { AccountsLookup } from "@typeberry/jam-host-calls/general/lookup.js";
+import type { AccountsRead } from "@typeberry/jam-host-calls/general/read.js";
+import type { AccountsWrite } from "@typeberry/jam-host-calls/general/write.js";
 import { Logger } from "@typeberry/logger";
 import { maxU64, sumU64, tryAsU32, tryAsU64, type U64 } from "@typeberry/numbers";
 import {

@@ -10,10 +10,10 @@ import { gasCounter } from "@typeberry/pvm-interpreter";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
-import { TestAccounts } from "./externalities/test-accounts.js";
+import { TestAccounts } from "../externalities/test-accounts.js";
+import { emptyRegistersBuffer } from "../utils.js";
 import { Lookup } from "./lookup.js";
 import { HostCallResult } from "./results.js";
-import { emptyRegistersBuffer } from "./utils.js";
 
 let blake2b: Blake2b;
 let HASH: Blake2bHash;

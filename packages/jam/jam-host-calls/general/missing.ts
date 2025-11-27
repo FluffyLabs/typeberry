@@ -7,8 +7,8 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
+import { CURRENT_SERVICE_ID } from "../utils.js";
 import { HostCallResult } from "./results.js";
-import { CURRENT_SERVICE_ID } from "./utils.js";
 
 export class Missing implements HostCallHandler {
   index = tryAsHostCallIndex(2 ** 32 - 1);

@@ -12,8 +12,8 @@ import {
 } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { type PartialState, PreimageStatusKind } from "../externalities/partial-state.js";
+import { HostCallResult } from "../general/results.js";
 import { logger } from "../logger.js";
-import { HostCallResult } from "../results.js";
 
 const IN_OUT_REG_1 = 7;
 const IN_OUT_REG_2 = 8;
