@@ -1,7 +1,10 @@
 import { ConsoleTransport } from "./console.js";
 import { findLevel, Level, type Options, parseLoggerOptions } from "./options.js";
+import {Transport, TransportBuilder} from "./transport.js";
 
-export { Level, parseLoggerOptions } from "./options.js";
+export * from './console.js';
+export * from "./options.js";
+export * from './transport.js';
 
 const DEFAULT_OPTIONS = {
   workingDir: "",
@@ -9,7 +12,7 @@ const DEFAULT_OPTIONS = {
   modules: new Map(),
 };
 
-const GLOBAL_CONFIG = {
+const GLOBAL_CONFIG: { options: Options, transport: Transport } = {
   options: DEFAULT_OPTIONS,
   transport: ConsoleTransport.create(DEFAULT_OPTIONS.defaultLevel, DEFAULT_OPTIONS),
 };
@@ -42,14 +45,14 @@ export class Logger {
    *
    * Changing the options affects all previously created loggers.
    */
-  static configureAllFromOptions(options: Options) {
+  static configureAllFromOptions(options: Options, createTransport: TransportBuilder = ConsoleTransport.create) {
     // find minimal level to optimise logging in case
     // we don't care about low-level logs.
     const minimalLevel = Array.from(options.modules.values()).reduce((level, modLevel) => {
       return level < modLevel ? level : modLevel;
     }, options.defaultLevel);
 
-    const transport = ConsoleTransport.create(minimalLevel, options);
+    const transport = createTransport(minimalLevel, options);
 
     // set the global config
     GLOBAL_CONFIG.options = options;
@@ -81,8 +84,11 @@ export class Logger {
 
   private getLevelAndName(): readonly [Level, string] {
     if (this.cachedLevelAndName === undefined) {
-      const level = findLevel(this.config.options, this.moduleName);
-      const shortName = this.moduleName.replace(this.config.options.workingDir, "");
+      // since we pad module name for better alignment, we need to
+      // trim it for the lookup
+      const moduleTrimmed = this.moduleName.trim();
+      const level = findLevel(this.config.options, moduleTrimmed);
+      const shortName = moduleTrimmed.replace(this.config.options.workingDir, "");
       this.cachedLevelAndName = [level, shortName];
     }
     return this.cachedLevelAndName;
