@@ -1,21 +1,12 @@
 import type { HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import z from "zod";
-import { Hash, RpcError, RpcErrorCode, withValidation } from "../types.js";
+import { type Handler, RpcError, RpcErrorCode } from "../types.js";
 
 /**
- * https://hackmd.io/@polkadot/jip2#stateRoot
- * Returns the posterior state root of the block with the given header hash, or `null` if this is not
- * known.
- * @param [
- *   Hash - The header hash.
- * ]
- * @returns Either null or [
- *   Hash - state_root
- * ]
+ * https://github.com/polkadot-fellows/JIPs/blob/772ce90bfc33f4e1de9de3bbe10c561753cc0d41/JIP-2.md#staterootheader_hash
  */
-export const stateRoot = withValidation(z.tuple([Hash]), Hash, async ([headerHash], db) => {
+export const stateRoot: Handler<"stateRoot"> = async ([headerHash], { db }) => {
   const hashOpaque: HeaderHash = Bytes.fromBlob(headerHash, HASH_SIZE).asOpaque();
 
   const stateRoot = db.blocks.getPostStateRoot(hashOpaque);
@@ -25,4 +16,4 @@ export const stateRoot = withValidation(z.tuple([Hash]), Hash, async ([headerHas
   }
 
   return stateRoot.raw;
-});
+};
