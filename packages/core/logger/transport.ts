@@ -1,5 +1,6 @@
-import type { Level } from "./options.js";
+import type { Level, Options } from "./options.js";
 
+export type TransportBuilder = (minLevel: Level, options: Options) => Transport;
 /**
  * An interface for the logger `Transport`.
  */
