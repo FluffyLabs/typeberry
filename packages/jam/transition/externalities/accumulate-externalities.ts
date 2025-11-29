@@ -21,6 +21,7 @@ import {
   clampU64ToU32,
   EjectError,
   ForgetPreimageError,
+  type general,
   NewServiceError,
   type PartiallyUpdatedState,
   type PartialState,
@@ -36,10 +37,6 @@ import {
   UpdatePrivilegesError,
   writeServiceIdAsLeBytes,
 } from "@typeberry/jam-host-calls";
-import type { AccountsInfo } from "@typeberry/jam-host-calls/info.js";
-import type { AccountsLookup } from "@typeberry/jam-host-calls/lookup.js";
-import type { AccountsRead } from "@typeberry/jam-host-calls/read.js";
-import type { AccountsWrite } from "@typeberry/jam-host-calls/write.js";
 import { Logger } from "@typeberry/logger";
 import { maxU64, sumU64, tryAsU32, tryAsU64, type U64 } from "@typeberry/numbers";
 import {
@@ -74,7 +71,7 @@ const BASE_STORAGE_BYTES = tryAsU64(34);
 const logger = Logger.new(import.meta.filename, "externalities");
 
 export class AccumulateExternalities
-  implements PartialState, AccountsWrite, AccountsRead, AccountsInfo, AccountsLookup
+  implements PartialState, general.AccountsWrite, general.AccountsRead, general.AccountsInfo, general.AccountsLookup
 {
   private checkpointedState: AccumulationStateUpdate;
   /** `x_i`: next service id we are going to create. */

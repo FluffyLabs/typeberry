@@ -7,8 +7,8 @@ import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { assertNever, resultToString } from "@typeberry/utils";
 import { EjectError, type PartialState } from "../externalities/partial-state.js";
+import { HostCallResult } from "../general/results.js";
 import { logger } from "../logger.js";
-import { HostCallResult } from "../results.js";
 import { getServiceId } from "../utils.js";
 
 const IN_OUT_REG = 7;

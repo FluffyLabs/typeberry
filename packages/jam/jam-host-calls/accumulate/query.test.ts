@@ -10,7 +10,7 @@ import { gasCounter, MemoryBuilder, tryAsMemoryIndex, tryAsSbrkIndex } from "@ty
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import { type PreimageStatus, PreimageStatusKind } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
-import { HostCallResult } from "../results.js";
+import { HostCallResult } from "../general/results.js";
 import { emptyRegistersBuffer } from "../utils.js";
 import { Query } from "./query.js";
 

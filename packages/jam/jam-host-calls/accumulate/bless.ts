@@ -15,8 +15,8 @@ import {
   safeAllocUint8Array,
 } from "@typeberry/utils";
 import { type PartialState, UpdatePrivilegesError } from "../externalities/partial-state.js";
+import { HostCallResult } from "../general/results.js";
 import { logger } from "../logger.js";
-import { HostCallResult } from "../results.js";
 import { getServiceId } from "../utils.js";
 
 const IN_OUT_REG = 7;

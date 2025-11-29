@@ -9,9 +9,9 @@ import { tryAsGas } from "@typeberry/pvm-interface";
 import { gasCounter, MemoryBuilder, tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { Compatibility, GpVersion } from "@typeberry/utils";
+import { emptyRegistersBuffer } from "../utils.js";
 import { Fetch, FetchKind, type IFetchExternalities } from "./fetch.js";
 import { HostCallResult } from "./results.js";
-import { emptyRegistersBuffer } from "./utils.js";
 
 describe("Fetch", () => {
   const IN_OUT_REG = 7;

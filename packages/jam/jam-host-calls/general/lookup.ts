@@ -6,9 +6,9 @@ import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typebe
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { safeAllocUint8Array } from "@typeberry/utils";
-import { logger } from "./logger.js";
+import { logger } from "../logger.js";
+import { getServiceIdOrCurrent } from "../utils.js";
 import { HostCallResult } from "./results.js";
-import { getServiceIdOrCurrent } from "./utils.js";
 
 /** Account data interface for lookup host calls. */
 export interface AccountsLookup {

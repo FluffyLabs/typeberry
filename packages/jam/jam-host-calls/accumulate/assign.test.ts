@@ -17,7 +17,7 @@ import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
-import { HostCallResult } from "../results.js";
+import { HostCallResult } from "../general/results.js";
 import { emptyRegistersBuffer } from "../utils.js";
 import { Assign } from "./assign.js";
 

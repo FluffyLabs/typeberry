@@ -57,99 +57,110 @@ describe("LMDB States database", () => {
     const root = new LmdbRoot(tmpDir);
     const states = new LmdbStates(spec, blake2b, root);
 
-    const emptyState = InMemoryState.empty(spec);
-    const serialized = StateEntries.serializeInMemory(spec, blake2b, emptyState);
-    const emptyRoot = serialized.getRootHash(blake2b);
+    try {
+      const emptyState = InMemoryState.empty(spec);
+      const serialized = StateEntries.serializeInMemory(spec, blake2b, emptyState);
+      const emptyRoot = serialized.getRootHash(blake2b);
 
-    // when
-    const res = await states.insertInitialState(headerHash, serialized);
-    deepEqual(res, Result.ok(OK));
-    const newState = states.getState(headerHash);
-    assert.ok(newState !== null);
-    const newRoot = await states.getStateRoot(newState);
+      // when
+      const res = await states.insertInitialState(headerHash, serialized);
+      deepEqual(res, Result.ok(OK));
+      const newState = states.getState(headerHash);
+      assert.ok(newState !== null);
+      const newRoot = await states.getStateRoot(newState);
 
-    assert.deepStrictEqual(`${newRoot}`, `${emptyRoot}`);
-    deepEqual(InMemoryState.copyFrom(spec, newState, new Map()), emptyState);
+      assert.deepStrictEqual(`${newRoot}`, `${emptyRoot}`);
+      deepEqual(InMemoryState.copyFrom(spec, newState, new Map()), emptyState);
+    } finally {
+      await states.close();
+      await root.close();
+    }
   });
 
   it("should update the state", async () => {
     const root = new LmdbRoot(tmpDir);
     const states = new LmdbStates(spec, blake2b, root);
-    const state = InMemoryState.empty(spec);
-    await states.insertInitialState(headerHash, StateEntries.serializeInMemory(spec, blake2b, state));
-    const newState = states.getState(headerHash);
-    assert.ok(newState !== null);
-    const headerHash2: HeaderHash = Bytes.fill(HASH_SIZE, 2).asOpaque();
 
-    const lookupHistory = new LookupHistoryItem(
-      Bytes.fill(HASH_SIZE, 0xff).asOpaque(),
-      tryAsU32(5),
-      tryAsLookupHistorySlots([]),
-    );
-    const stateUpdate = {
-      timeslot: tryAsTimeSlot(15),
-      privilegedServices: PrivilegedServices.create({
-        manager: tryAsServiceId(1),
-        assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(2)), spec),
-        delegator: tryAsServiceId(3),
-        registrar: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? tryAsServiceId(4) : tryAsServiceId(MAX_VALUE),
-        autoAccumulateServices: new Map(),
-      }),
-      updated: new Map([
-        [
-          tryAsServiceId(1),
-          UpdateService.create({
-            serviceInfo: ServiceAccountInfo.create({
-              codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
-              balance: tryAsU64(1_000_000),
-              accumulateMinGas: tryAsServiceGas(10_000),
-              onTransferMinGas: tryAsServiceGas(5_000),
-              storageUtilisationBytes: tryAsU64(1_000),
-              gratisStorage: tryAsU64(0),
-              storageUtilisationCount: tryAsU32(1),
-              created: tryAsTimeSlot(0),
-              lastAccumulation: tryAsTimeSlot(0),
-              parentService: tryAsServiceId(0),
-            }),
-            lookupHistory,
-          }),
-        ],
-      ]),
-    };
+    try {
+      const state = InMemoryState.empty(spec);
+      await states.insertInitialState(headerHash, StateEntries.serializeInMemory(spec, blake2b, state));
+      const newState = states.getState(headerHash);
+      assert.ok(newState !== null);
+      const headerHash2: HeaderHash = Bytes.fill(HASH_SIZE, 2).asOpaque();
 
-    // when
-    // in-memory state update
-    const res1 = state.applyUpdate(stateUpdate);
-    deepEqual(res1, Result.ok(OK));
-    // on-disk state update
-    const res2 = await states.updateAndSetState(headerHash2, newState, stateUpdate);
-    deepEqual(res2, Result.ok(OK));
-
-    const updatedState = states.getState(headerHash2);
-    assert.ok(updatedState !== null);
-    const updatedStateRoot = await states.getStateRoot(updatedState);
-
-    deepEqual(
-      InMemoryState.copyFrom(
-        spec,
-        updatedState,
-        new Map([
+      const lookupHistory = new LookupHistoryItem(
+        Bytes.fill(HASH_SIZE, 0xff).asOpaque(),
+        tryAsU32(5),
+        tryAsLookupHistorySlots([]),
+      );
+      const stateUpdate = {
+        timeslot: tryAsTimeSlot(15),
+        privilegedServices: PrivilegedServices.create({
+          manager: tryAsServiceId(1),
+          assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(2)), spec),
+          delegator: tryAsServiceId(3),
+          registrar: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? tryAsServiceId(4) : tryAsServiceId(MAX_VALUE),
+          autoAccumulateServices: new Map(),
+        }),
+        updated: new Map([
           [
             tryAsServiceId(1),
-            {
-              storageKeys: [],
-              preimages: [],
-              lookupHistory: [{ hash: lookupHistory.hash, length: lookupHistory.length }],
-            },
+            UpdateService.create({
+              serviceInfo: ServiceAccountInfo.create({
+                codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
+                balance: tryAsU64(1_000_000),
+                accumulateMinGas: tryAsServiceGas(10_000),
+                onTransferMinGas: tryAsServiceGas(5_000),
+                storageUtilisationBytes: tryAsU64(1_000),
+                gratisStorage: tryAsU64(0),
+                storageUtilisationCount: tryAsU32(1),
+                created: tryAsTimeSlot(0),
+                lastAccumulation: tryAsTimeSlot(0),
+                parentService: tryAsServiceId(0),
+              }),
+              lookupHistory,
+            }),
           ],
         ]),
-      ),
-      state,
-    );
-    assert.strictEqual(
-      `${updatedStateRoot}`,
-      `${StateEntries.serializeInMemory(spec, blake2b, state).getRootHash(blake2b)}`,
-    );
+      };
+
+      // when
+      // in-memory state update
+      const res1 = state.applyUpdate(stateUpdate);
+      deepEqual(res1, Result.ok(OK));
+      // on-disk state update
+      const res2 = await states.updateAndSetState(headerHash2, newState, stateUpdate);
+      deepEqual(res2, Result.ok(OK));
+
+      const updatedState = states.getState(headerHash2);
+      assert.ok(updatedState !== null);
+      const updatedStateRoot = await states.getStateRoot(updatedState);
+
+      deepEqual(
+        InMemoryState.copyFrom(
+          spec,
+          updatedState,
+          new Map([
+            [
+              tryAsServiceId(1),
+              {
+                storageKeys: [],
+                preimages: [],
+                lookupHistory: [{ hash: lookupHistory.hash, length: lookupHistory.length }],
+              },
+            ],
+          ]),
+        ),
+        state,
+      );
+      assert.strictEqual(
+        `${updatedStateRoot}`,
+        `${StateEntries.serializeInMemory(spec, blake2b, state).getRootHash(blake2b)}`,
+      );
+    } finally {
+      await states.close();
+      await root.close();
+    }
   });
 
   it("sorted set should be actual to trie", () => {
@@ -180,64 +191,75 @@ describe("LMDB States database", () => {
     const root = new LmdbRoot(tmpDir);
     const states = new LmdbStates(spec, blake2b, root);
 
-    const initialState = testState();
-    const initialService = initialState.services.get(tryAsServiceId(0));
-    if (initialService === undefined) {
-      throw new Error("Expected service in test state!");
+    try {
+      const initialState = testState();
+      const initialService = initialState.services.get(tryAsServiceId(0));
+      if (initialService === undefined) {
+        throw new Error("Expected service in test state!");
+      }
+
+      const serialized = StateEntries.serializeInMemory(spec, blake2b, initialState);
+      const initialRoot = serialized.getRootHash(blake2b);
+
+      // when
+      const res = await states.insertInitialState(headerHash, serialized);
+      deepEqual(res, Result.ok(OK));
+      const newState = states.getState(headerHash);
+      assert.ok(newState !== null);
+      const newRoot = await states.getStateRoot(newState);
+
+      assert.deepStrictEqual(`${newRoot}`, `${initialRoot}`);
+      deepEqual(
+        InMemoryState.copyFrom(spec, newState, new Map([[initialService.serviceId, initialService.getEntries()]])),
+        initialState,
+      );
+    } finally {
+      await states.close();
+      await root.close();
     }
-
-    const serialized = StateEntries.serializeInMemory(spec, blake2b, initialState);
-    const initialRoot = serialized.getRootHash(blake2b);
-
-    // when
-    const res = await states.insertInitialState(headerHash, serialized);
-    deepEqual(res, Result.ok(OK));
-    const newState = states.getState(headerHash);
-    assert.ok(newState !== null);
-    const newRoot = await states.getStateRoot(newState);
-
-    assert.deepStrictEqual(`${newRoot}`, `${initialRoot}`);
-    deepEqual(
-      InMemoryState.copyFrom(spec, newState, new Map([[initialService.serviceId, initialService.getEntries()]])),
-      initialState,
-    );
   });
 
   it("should update more complex entries", async () => {
     const root = new LmdbRoot(tmpDir);
     const states = new LmdbStates(spec, blake2b, root);
-    const state = testState();
-    const initialService = state.services.get(tryAsServiceId(0));
-    if (initialService === undefined) {
-      throw new Error("Expected service in test state!");
+
+    try {
+      const state = testState();
+      const initialService = state.services.get(tryAsServiceId(0));
+      if (initialService === undefined) {
+        throw new Error("Expected service in test state!");
+      }
+      await states.insertInitialState(headerHash, StateEntries.serializeInMemory(spec, blake2b, state));
+      const newState = states.getState(headerHash);
+      assert.ok(newState !== null);
+      const headerHash2: HeaderHash = Bytes.fill(HASH_SIZE, 2).asOpaque();
+
+      // attempt to update all entries
+      const stateUpdate = Object.assign({}, state);
+
+      // when
+      // in-memory state update
+      const res1 = state.applyUpdate(stateUpdate);
+      deepEqual(res1, Result.ok(OK));
+      // on-disk state update
+      const res2 = await states.updateAndSetState(headerHash2, newState, stateUpdate);
+      deepEqual(res2, Result.ok(OK));
+
+      const updatedState = states.getState(headerHash2);
+      assert.ok(updatedState !== null);
+      const updatedStateRoot = await states.getStateRoot(updatedState);
+
+      deepEqual(
+        InMemoryState.copyFrom(spec, updatedState, new Map([[initialService.serviceId, initialService.getEntries()]])),
+        state,
+      );
+      assert.strictEqual(
+        `${updatedStateRoot}`,
+        `${StateEntries.serializeInMemory(spec, blake2b, state).getRootHash(blake2b)}`,
+      );
+    } finally {
+      await states.close();
+      await root.close();
     }
-    await states.insertInitialState(headerHash, StateEntries.serializeInMemory(spec, blake2b, state));
-    const newState = states.getState(headerHash);
-    assert.ok(newState !== null);
-    const headerHash2: HeaderHash = Bytes.fill(HASH_SIZE, 2).asOpaque();
-
-    // attempt to update all entries
-    const stateUpdate = Object.assign({}, state);
-
-    // when
-    // in-memory state update
-    const res1 = state.applyUpdate(stateUpdate);
-    deepEqual(res1, Result.ok(OK));
-    // on-disk state update
-    const res2 = await states.updateAndSetState(headerHash2, newState, stateUpdate);
-    deepEqual(res2, Result.ok(OK));
-
-    const updatedState = states.getState(headerHash2);
-    assert.ok(updatedState !== null);
-    const updatedStateRoot = await states.getStateRoot(updatedState);
-
-    deepEqual(
-      InMemoryState.copyFrom(spec, updatedState, new Map([[initialService.serviceId, initialService.getEntries()]])),
-      state,
-    );
-    assert.strictEqual(
-      `${updatedStateRoot}`,
-      `${StateEntries.serializeInMemory(spec, blake2b, state).getRootHash(blake2b)}`,
-    );
   });
 });

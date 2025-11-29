@@ -11,8 +11,8 @@ import {
 } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import type { RefineExternalities } from "../externalities/refine-externalities.js";
+import { HostCallResult } from "../general/results.js";
 import { logger } from "../logger.js";
-import { HostCallResult } from "../results.js";
 import { CURRENT_SERVICE_ID, getServiceIdOrCurrent } from "../utils.js";
 
 const IN_OUT_REG = 7;

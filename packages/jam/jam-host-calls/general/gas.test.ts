@@ -4,8 +4,8 @@ import { tryAsServiceId } from "@typeberry/block";
 import { HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { tryAsGas } from "@typeberry/pvm-interface";
 import { gasCounter } from "@typeberry/pvm-interpreter";
+import { emptyRegistersBuffer } from "../utils.js";
 import { GasHostCall } from "./gas.js";
-import { emptyRegistersBuffer } from "./utils.js";
 
 const REGISTER = 7;
 

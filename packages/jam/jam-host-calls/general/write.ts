@@ -6,9 +6,9 @@ import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import type { StorageKey } from "@typeberry/state";
 import { asOpaqueType, type Result, resultToString, safeAllocUint8Array } from "@typeberry/utils";
-import { logger } from "./logger.js";
+import { logger } from "../logger.js";
+import { clampU64ToU32 } from "../utils.js";
 import { HostCallResult } from "./results.js";
-import { clampU64ToU32 } from "./utils.js";
 
 /** Account data interface for write host calls. */
 export interface AccountsWrite {

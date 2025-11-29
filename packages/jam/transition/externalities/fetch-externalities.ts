@@ -17,8 +17,7 @@ import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
-import type { IFetchExternalities } from "@typeberry/jam-host-calls/fetch.js";
+import { type general, PendingTransfer } from "@typeberry/jam-host-calls";
 import { tryAsU16, tryAsU32, tryAsU64, type U64 } from "@typeberry/numbers";
 import {
   BASE_SERVICE_BALANCE,
@@ -205,7 +204,7 @@ type AccumulateFetchData = {
 
 type FetchData = LegacyAccumulateFetchData | LegacyOnTransferFetchData | AccumulateFetchData;
 
-export class FetchExternalities implements IFetchExternalities {
+export class FetchExternalities implements general.IFetchExternalities {
   private constructor(
     private fetchData: FetchData,
     private chainSpec: ChainSpec,
