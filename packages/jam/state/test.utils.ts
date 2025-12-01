@@ -398,10 +398,8 @@ const TEST_VALIDATOR_DATA =
 
 // from post state of jamduna/assurances/1_004.json
 export const TEST_STATE_ROOT = Compatibility.selectIfGreaterOrEqual({
-  fallback: "0xbe8cd9b7aa81b5a129d86781babaa869ffc3445f8960b147adc6dd0a1785a6a9",
+  fallback: "0xa48088ed900219e5115670c1dff1ae69396b8ca152f6a3d279d770114c458059",
   versions: {
-    [GpVersion.V0_6_7]: "0x1a7a9e304769a973af637617b07fab19d3836a62d603cb6bf116c79d79eaf32e",
-    [GpVersion.V0_7_0]: "0xa48088ed900219e5115670c1dff1ae69396b8ca152f6a3d279d770114c458059",
     [GpVersion.V0_7_1]: "0x6bf5545f35877d3c3f7066287daf2c96a37e22cab92426b188e2afd38ec87a9a",
   },
 });

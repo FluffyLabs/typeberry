@@ -12,13 +12,12 @@ import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
 import { codecPerCore, type PerCore } from "./common.js";
 import { ignoreValueWithDefault } from "./service.js";
 
-const codecServiceId: Descriptor<ServiceId> =
-  Compatibility.isSuite(TestSuite.W3F_DAVXY) || Compatibility.isSuite(TestSuite.JAMDUNA, GpVersion.V0_6_7)
-    ? codec.u32.asOpaque<ServiceId>()
-    : codec.varU32.convert(
-        (s) => tryAsU32(s),
-        (i) => tryAsServiceId(i),
-      );
+const codecServiceId: Descriptor<ServiceId> = Compatibility.isSuite(TestSuite.W3F_DAVXY)
+  ? codec.u32.asOpaque<ServiceId>()
+  : codec.varU32.convert(
+      (s) => tryAsU32(s),
+      (i) => tryAsServiceId(i),
+    );
 
 /**
  * Activity Record of a single validator.

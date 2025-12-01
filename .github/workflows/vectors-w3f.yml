@@ -1,4 +1,4 @@
-name: VECTORS - w3f-0.6.7
+name: VECTORS - w3f-0.7.0
 
 on:
   workflow_dispatch:
@@ -11,7 +11,8 @@ concurrency:
 
 env:
   TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
-  GP_VERSION: 0.6.7
+  GP_VERSION: 0.7.0
+  TEST_SUITE: w3f
 
 jobs:
   run:
