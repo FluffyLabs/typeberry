@@ -1,6 +1,5 @@
 import { HASH_SIZE } from "@typeberry/hash";
 import z from "zod";
-import type { MethodName } from "./types.js";
 
 export const JSON_RPC_VERSION = "2.0";
 
@@ -12,7 +11,7 @@ export const SUBSCRIBABLE_METHODS = {
   subscribeServiceRequest: "unsubscribeServiceRequest",
   subscribeServiceValue: "unsubscribeServiceValue",
   subscribeStatistics: "unsubscribeStatistics",
-} as const satisfies Partial<Record<MethodName, MethodName>>;
+} as const satisfies Partial<Record<keyof typeof validation.schemas, keyof typeof validation.schemas>>;
 
 export namespace validation {
   const u32 = z.number().int().min(0).max(0xffffffff);
