@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [ "main" ]
+  merge_group:
 
 env:
   TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # it is loaded in scripts/load-test-ref.sh
