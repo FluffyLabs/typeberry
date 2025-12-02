@@ -12,7 +12,6 @@ concurrency:
 env:
   TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
   GP_VERSION: 0.7.0
-  TEST_SUITE: w3f
 
 jobs:
   run:
@@ -40,14 +39,14 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/test-runner -- w3f.ts
+      - run: npm start -w @typeberry/test-runner -- w3f-070.ts
       - name: Display results
         if: always()
-        run: cat ./dist/w3f.txt
+        run: cat ./dist/w3f-070.txt
       - name: Upload new transaction log
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           path: |
-            ./dist/w3f.txt
+            ./dist/w3f-070.txt
           name: jamtestvectors-results

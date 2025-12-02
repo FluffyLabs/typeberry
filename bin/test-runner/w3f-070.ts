@@ -1,16 +1,21 @@
 import { logger, main, parseArgs } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
-main(runners, "test-vectors/w3f-fluffy", {
+main(runners, "test-vectors/w3f-070", {
   ...parseArgs(process.argv.slice(2)),
   patterns: [".json"],
   ignored: [
     "genesis.json",
-    // TODO [MaSo] Erasure coding test vectors need to be updated
+
+    // TODO: Unrecognized test case
     "erasure/",
-    // TODO: [MaSo] Needs fixing/compatibility adjusting
+
+    // TODO: Expected values to be strictly deep-equal
     "trie/",
-    // Tests case uses version 0.7.1
+
+    // Invalid test cases
+    // Tests case uses json structure from v0.7.1+
+    // Unrecognized test case
     "codec/tiny/work_package.json",
     "codec/full/work_package.json",
   ],

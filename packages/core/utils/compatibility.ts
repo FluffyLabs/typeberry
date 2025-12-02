@@ -8,7 +8,6 @@ export enum GpVersion {
 
 export enum TestSuite {
   W3F_DAVXY = "w3f-davxy",
-  W3F = "w3f",
 }
 
 // NOTE: Also acts as a supported versions
