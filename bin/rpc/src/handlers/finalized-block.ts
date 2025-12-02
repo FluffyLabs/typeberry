@@ -1,4 +1,4 @@
-import type { Handler } from "../types.js";
+import type { Handler } from "@typeberry/rpc-validation";
 import { bestBlock } from "./best-block.js";
 
 /**

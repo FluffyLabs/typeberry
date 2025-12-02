@@ -3,8 +3,7 @@ import type { BlocksDb, StatesDb } from "@typeberry/database";
 import type { EnumerableState, State } from "@typeberry/state";
 import type WebSocket from "ws";
 import type { z } from "zod";
-import type { SUBSCRIBABLE_METHODS } from "./subscription-manager.js";
-import type { JSON_RPC_VERSION, validation } from "./validation.js";
+import type { JSON_RPC_VERSION, SUBSCRIBABLE_METHODS, validation } from "./validation.js";
 
 export type JsonRpcResult = unknown;
 

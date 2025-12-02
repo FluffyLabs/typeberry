@@ -1,12 +1,11 @@
 import assert from "node:assert";
 import { once } from "node:events";
 import { after, before, describe, it } from "node:test";
+import { RpcClient } from "@typeberry/rpc-client";
+import { type InputOf, JSON_RPC_VERSION, type MethodName, type OutputOf } from "@typeberry/rpc-validation";
 import type { WebSocket } from "ws";
 import { main } from "../main.js";
-import { RpcClient } from "../src/client.js";
 import type { RpcServer } from "../src/server.js";
-import type { InputOf, MethodName, OutputOf } from "../src/types.js";
-import { JSON_RPC_VERSION } from "../src/validation.js";
 
 function hexToUint8Array(hex: string): Uint8Array {
   return new Uint8Array(Buffer.from(hex, "hex"));

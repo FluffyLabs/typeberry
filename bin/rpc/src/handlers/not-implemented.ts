@@ -1,6 +1,5 @@
+import { type GenericHandler, RpcError, RpcErrorCode, type validation } from "@typeberry/rpc-validation";
 import type z from "zod";
-import { type GenericHandler, RpcError, RpcErrorCode } from "../types.js";
-import type { validation } from "../validation.js";
 
 export const notImplemented: GenericHandler<
   z.infer<typeof validation.notImplementedSchema.input>,

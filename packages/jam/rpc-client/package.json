@@ -1,0 +1,17 @@
+{
+  "name": "@typeberry/rpc-client",
+  "version": "0.4.1",
+  "description": "A TypeScript JAM JSON RPC client.",
+  "main": "index.ts",
+  "dependencies": {
+    "@typeberry/logger": "^0.4.1",
+    "@typeberry/rpc-validation": "^0.4.1",
+    "ws": "8.18.2"
+  },
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0",
+  "type": "module"
+}
