@@ -12,7 +12,6 @@ import { WithDebug } from "@typeberry/utils";
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/173d03173d03?v=0.6.7
  */
 export class Operand extends WithDebug {
-  // JamDuna uses a different order of operands.
   static Codec = codec.Class(Operand, {
     // h
     hash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),

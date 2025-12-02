@@ -74,7 +74,10 @@ describe("Disputes", () => {
     assert.strictEqual(ok, undefined);
   });
 
-  it("should clear work-reports which were judged as invalid", async () => {
+  // NOTE [ToDr] This test is so far disabled for 0.7.0+ because we need
+  // to get the test data for it from w3f test vectors or regenerate the current
+  // data.
+  it.skip("should clear work-reports which were judged as invalid", async () => {
     const workReport0 = testData2.workReport(
       Bytes.parseBytes("0x11da6d1f761ddf9bdb4c9d6e5303ebd41f61858d0a5647a1a7bfe089bf921be9", HASH_SIZE).asOpaque(),
       0,
@@ -123,5 +126,11 @@ describe("Disputes", () => {
 
     assert.strictEqual(resultToString(result), "OK: [object Object]");
     assert.notStrictEqual(stateUpdate, undefined);
+
+    if (stateUpdate !== undefined) {
+      const clearedAvailabilityAssignment = stateUpdate.availabilityAssignment;
+      assert.strictEqual(clearedAvailabilityAssignment[0], null);
+      assert.strictEqual(clearedAvailabilityAssignment[1], availabilityAssignment2);
+    }
   });
 });

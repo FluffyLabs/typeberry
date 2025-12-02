@@ -4,20 +4,12 @@ import {
   type ServiceGas,
   type ServiceId,
   tryAsServiceGas,
-  tryAsServiceId,
 } from "@typeberry/block";
 import { type CodecRecord, codec, type DescribedBy, type Descriptor } from "@typeberry/codec";
 import { tryAsU16, tryAsU32, tryAsU64, type U16, type U32 } from "@typeberry/numbers";
-import { Compatibility, GpVersion, TestSuite } from "@typeberry/utils";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { codecPerCore, type PerCore } from "./common.js";
 import { ignoreValueWithDefault } from "./service.js";
-
-const codecServiceId: Descriptor<ServiceId> = Compatibility.isSuite(TestSuite.W3F_DAVXY)
-  ? codec.u32.asOpaque<ServiceId>()
-  : codec.varU32.convert(
-      (s) => tryAsU32(s),
-      (i) => tryAsServiceId(i),
-    );
 
 /**
  * Activity Record of a single validator.
@@ -81,31 +73,20 @@ const codecVarGas: Descriptor<ServiceGas> = codec.varU64.convert(
  * Single core statistics.
  * Updated per block, based on incoming work reports (`w`).
  *
- * https://graypaper.fluffylabs.dev/#/68eaa1f/18f10318f103?v=0.6.4
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/197902197902?v=0.7.2
  * https://github.com/gavofyork/graypaper/blob/9bffb08f3ea7b67832019176754df4fb36b9557d/text/statistics.tex#L65
  */
 export class CoreStatistics {
-  static Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
-    ? codec.Class(CoreStatistics, {
-        dataAvailabilityLoad: codec.varU32,
-        popularity: codecVarU16,
-        imports: codecVarU16,
-        extrinsicCount: codecVarU16,
-        extrinsicSize: codec.varU32,
-        exports: codecVarU16,
-        bundleSize: codec.varU32,
-        gasUsed: codecVarGas,
-      })
-    : codec.Class(CoreStatistics, {
-        dataAvailabilityLoad: codec.varU32,
-        popularity: codecVarU16,
-        imports: codecVarU16,
-        exports: codecVarU16,
-        extrinsicSize: codec.varU32,
-        extrinsicCount: codecVarU16,
-        bundleSize: codec.varU32,
-        gasUsed: codecVarGas,
-      });
+  static Codec = codec.Class(CoreStatistics, {
+    dataAvailabilityLoad: codec.varU32,
+    popularity: codecVarU16,
+    imports: codecVarU16,
+    extrinsicCount: codecVarU16,
+    extrinsicSize: codec.varU32,
+    exports: codecVarU16,
+    bundleSize: codec.varU32,
+    gasUsed: codecVarGas,
+  });
 
   static create(v: CodecRecord<CoreStatistics>) {
     return new CoreStatistics(
@@ -151,7 +132,7 @@ export class CoreStatistics {
  * Service statistics.
  * Updated per block, based on available work reports (`W`).
  *
- * https://graypaper.fluffylabs.dev/#/1c979cb/199802199802?v=0.7.1
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/19e20219e202?v=0.7.2
  */
 export class ServiceStatistics {
   static Codec = Compatibility.selectIfGreaterOrEqual({
@@ -161,29 +142,15 @@ export class ServiceStatistics {
       refinementCount: codec.varU32,
       refinementGasUsed: codecVarGas,
       imports: codecVarU16,
-      exports: codecVarU16,
-      extrinsicSize: codec.varU32,
       extrinsicCount: codecVarU16,
+      extrinsicSize: codec.varU32,
+      exports: codecVarU16,
       accumulateCount: codec.varU32,
       accumulateGasUsed: codecVarGas,
       onTransfersCount: codec.varU32,
       onTransfersGasUsed: codecVarGas,
     }),
     versions: {
-      [GpVersion.V0_7_0]: codec.Class(ServiceStatistics, {
-        providedCount: codecVarU16,
-        providedSize: codec.varU32,
-        refinementCount: codec.varU32,
-        refinementGasUsed: codecVarGas,
-        imports: codecVarU16,
-        extrinsicCount: codecVarU16,
-        extrinsicSize: codec.varU32,
-        exports: codecVarU16,
-        accumulateCount: codec.varU32,
-        accumulateGasUsed: codecVarGas,
-        onTransfersCount: codec.varU32,
-        onTransfersGasUsed: codecVarGas,
-      }),
       [GpVersion.V0_7_1]: codec.Class(ServiceStatistics, {
         providedCount: codecVarU16,
         providedSize: codec.varU32,
@@ -272,7 +239,7 @@ export class StatisticsData {
     current: codecPerValidator(ValidatorStatistics.Codec),
     previous: codecPerValidator(ValidatorStatistics.Codec),
     cores: codecPerCore(CoreStatistics.Codec),
-    services: codec.dictionary(codecServiceId, ServiceStatistics.Codec, {
+    services: codec.dictionary(codec.u32.asOpaque<ServiceId>(), ServiceStatistics.Codec, {
       sortKeys: (a, b) => a - b,
     }),
   });
