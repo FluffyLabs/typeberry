@@ -1,4 +1,3 @@
-import { EventEmitter } from "node:events";
 import { Logger } from "@typeberry/logger";
 import {
   type InputOf,
@@ -14,6 +13,7 @@ import {
   type SubscribableMethodName,
   validation,
 } from "@typeberry/rpc-validation";
+import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 
 export interface Subscription<M extends SubscribableMethodName> {

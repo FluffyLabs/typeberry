@@ -6,7 +6,8 @@
   "dependencies": {
     "@typeberry/logger": "^0.4.1",
     "@typeberry/rpc-validation": "^0.4.1",
-    "ws": "8.18.2"
+    "ws": "8.18.2",
+    "eventemitter3": "^5.0.1"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
