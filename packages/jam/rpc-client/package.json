@@ -4,8 +4,8 @@
   "description": "A TypeScript JAM JSON RPC client.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/logger": "^0.4.1",
-    "@typeberry/rpc-validation": "^0.4.1",
+    "@typeberry/logger": "*",
+    "@typeberry/rpc-validation": "*",
     "ws": "8.18.2",
     "eventemitter3": "^5.0.1"
   },

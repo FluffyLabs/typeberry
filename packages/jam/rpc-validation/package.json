@@ -4,7 +4,7 @@
   "description": "Validation schemas and type definitions for Typeberry JAM JSON RPC client and server.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/hash": "^0.4.1",
+    "@typeberry/hash": "*",
     "zod": "^4.1.13"
   },
   "scripts": {

@@ -28,7 +28,7 @@
     "@typeberry/logger": "*",
     "@typeberry/node": "*",
     "@typeberry/numbers": "*",
-    "@typeberry/rpc-validation": "^0.4.1",
+    "@typeberry/rpc-validation": "*",
     "@typeberry/state": "*",
     "@typeberry/utils": "*",
     "minimist": "1.2.8",
