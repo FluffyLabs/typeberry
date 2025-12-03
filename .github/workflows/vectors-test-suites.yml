@@ -1,0 +1,94 @@
+name: VECTORS - test suites
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ "main" ]
+  #merge_group: skip test vectors in merge queue, because it's pretty slow
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.merge_group.head_ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
+  NODE_VERSION: 22.x
+
+jobs:
+  test-vectors:
+    name: ${{ matrix.display_name }}
+    runs-on: self-hosted
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - display_name: conformance-0.7.0
+            gp_version: 0.7.0
+            script: jam-conformance-070.ts
+            output: jam-conformance-070.txt
+            artifact_name: jam-conformance-070-results
+          - display_name: conformance-0.7.1
+            gp_version: 0.7.1
+            script: jam-conformance-071.ts
+            output: jam-conformance-071.txt
+            artifact_name: jam-conformance-071-results
+          - display_name: w3f-0.7.0
+            gp_version: 0.7.0
+            script: w3f-070.ts
+            output: w3f-070.txt
+            artifact_name: jamtestvectors-results
+          - display_name: w3f-davxy-0.7.0
+            gp_version: 0.7.0
+            script: w3f-davxy-070.ts
+            output: w3f-davxy-070.txt
+            artifact_name: jamtestvectors-davxy-results
+          - display_name: w3f-davxy-0.7.1
+            gp_version: 0.7.1
+            script: w3f-davxy-071.ts
+            output: w3f-davxy-071.txt
+            artifact_name: jamtestvectors-davxy-results
+          - display_name: w3f-davxy-0.7.2
+            gp_version: 0.7.2
+            script: w3f-davxy-072.ts
+            output: w3f-davxy-072.txt
+            artifact_name: jamtestvectors-davxy-results
+
+    env:
+      GP_VERSION: ${{ matrix.gp_version }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load test ref
+        run: .github/scripts/load-test-ref.sh
+      - name: Cache JAM test vectors
+        id: cache-test-vectors
+        uses: actions/cache@v4
+        with:
+          path: test-vectors
+          key: jam-test-vectors-${{ env.TEST_VECTORS_REF }}
+      - name: Checkout JAM test vectors
+        if: steps.cache-test-vectors.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: fluffylabs/test-vectors
+          path: "./test-vectors"
+          ref: ${{ env.TEST_VECTORS_REF }}
+          submodules: true
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm start -w @typeberry/test-runner -- ${{ matrix.script }}
+      - name: Display results
+        if: always()
+        run: cat ./dist/${{ matrix.output }}
+      - name: Upload new transaction log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          path: |
+            ./dist/${{ matrix.output }}
+          name: ${{ matrix.artifact_name }}

@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [ "main" ]
+  #merge_group: # no need to run benchmarks again
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
