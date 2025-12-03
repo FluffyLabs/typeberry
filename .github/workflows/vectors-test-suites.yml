@@ -15,9 +15,33 @@ env:
   NODE_VERSION: 22.x
 
 jobs:
+  setup-test-vectors:
+    name: Setup test vectors cache
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load test ref
+        run: .github/scripts/load-test-ref.sh
+      - name: Cache JAM test vectors
+        id: cache-test-vectors
+        uses: actions/cache@v4
+        with:
+          path: test-vectors
+          key: jam-test-vectors-${{ env.TEST_VECTORS_REF }}
+      - name: Checkout JAM test vectors
+        if: steps.cache-test-vectors.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: fluffylabs/test-vectors
+          path: "./test-vectors"
+          ref: ${{ env.TEST_VECTORS_REF }}
+          submodules: true
+
   test-vectors:
     name: ${{ matrix.display_name }}
     runs-on: self-hosted
+    needs: setup-test-vectors
 
     strategy:
       fail-fast: false
@@ -61,13 +85,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Load test ref
         run: .github/scripts/load-test-ref.sh
-      - name: Cache JAM test vectors
+      - name: Restore JAM test vectors cache
         id: cache-test-vectors
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: test-vectors
           key: jam-test-vectors-${{ env.TEST_VECTORS_REF }}
-      - name: Checkout JAM test vectors
+      - name: Checkout JAM test vectors (fallback)
         if: steps.cache-test-vectors.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
