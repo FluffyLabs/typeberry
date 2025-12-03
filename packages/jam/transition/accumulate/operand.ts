@@ -9,7 +9,7 @@ import { WithDebug } from "@typeberry/utils";
 /**
  * The set of wrangled operand tuples, used as an operand to the PVM Accumulation function.
  *
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/173d03173d03?v=0.6.7
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/176b00176b00?v=0.7.2
  */
 export class Operand extends WithDebug {
   static Codec = codec.Class(Operand, {
@@ -30,7 +30,7 @@ export class Operand extends WithDebug {
   });
 
   /**
-   * https://graypaper.fluffylabs.dev/#/7e6ff6a/181801189d01?v=0.6.7
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/18680118eb01?v=0.7.2
    */
   hash: WorkPackageHash;
   exportsRoot: ExportsRootHash;
