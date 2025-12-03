@@ -86,11 +86,18 @@ jobs:
       run: |
         npm install --package-lock-only
 
+    - name: Generate GitHub App Token
+      id: app-token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ vars.PR_APP_ID }}
+        private-key: ${{ secrets.PR_APP_PRIVATE_KEY }}
+
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
       id: pr
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ steps.app-token.outputs.token }}
         base: 'main'
         draft: true
         branch: version/v${{ steps.version.outputs.version }}
