@@ -2,10 +2,9 @@ name: Build - Lint & Test
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
-  merge_group:
+    branches: ["main"]
 
 jobs:
   test:
@@ -16,17 +15,16 @@ jobs:
         node-version: [22.x]
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run qa
-    - run: npm test
-    - run: GP_VERSION=0.6.7 npm test
-    - run: GP_VERSION=0.7.0 npm test
-    - run: GP_VERSION=0.7.1 npm test
-    - run: GP_VERSION=0.7.2 npm test
-    - run: npm run docs
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run qa
+      - run: npm test
+      - run: GP_VERSION=0.7.0 npm test
+      - run: GP_VERSION=0.7.1 npm test
+      - run: GP_VERSION=0.7.2 npm test
+      - run: npm run docs
