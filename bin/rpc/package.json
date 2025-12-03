@@ -36,7 +36,7 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@typeberry/rpc-client": "^0.4.1",
+    "@typeberry/rpc-client": "*",
     "@types/ws": "^8.18.1"
   }
 }
