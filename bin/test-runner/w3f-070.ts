@@ -1,7 +1,7 @@
 import { logger, main, parseArgs } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
-main(runners, "test-vectors/w3f-070", {
+main(runners, "test-vectors/w3f_070", {
   ...parseArgs(process.argv.slice(2)),
   patterns: [".json"],
   ignored: [
@@ -9,9 +9,6 @@ main(runners, "test-vectors/w3f-070", {
 
     // TODO: Unrecognized test case
     "erasure/",
-
-    // TODO: Expected values to be strictly deep-equal
-    "trie/",
 
     // Invalid test cases
     // Tests case uses json structure from v0.7.1+
