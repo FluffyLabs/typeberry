@@ -36,15 +36,6 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
     assert.equal(Compatibility.isGreaterOrEqual(GpVersion.V0_7_2), false);
   });
 
-  it("Should check an order of versions (isLessThan)", () => {
-    const gpVersion = GpVersion.V0_7_0;
-    Compatibility.override(gpVersion);
-
-    assert.equal(Compatibility.isLessThan(GpVersion.V0_7_2), true);
-    assert.equal(Compatibility.isLessThan(GpVersion.V0_7_1), true);
-    assert.equal(Compatibility.isLessThan(GpVersion.V0_7_0), false);
-  });
-
   it("Should order values by versions and get the one for highest version matching", () => {
     const gpVersion = GpVersion.V0_7_1;
     Compatibility.override(gpVersion);

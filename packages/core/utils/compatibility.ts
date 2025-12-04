@@ -80,10 +80,6 @@ export class Compatibility {
     return Compatibility.is(...ALL_VERSIONS_IN_ORDER.slice(index));
   }
 
-  static isLessThan(version: GpVersion) {
-    return !Compatibility.isGreaterOrEqual(version);
-  }
-
   /**
    * Allows selecting different values for different Gray Paper versions from one record.
    *

@@ -84,12 +84,12 @@ class JsonServiceStatistics {
       extrinsic_count: "number",
       accumulate_count: "number",
       accumulate_gas_used: json.fromBigInt(tryAsServiceGas),
-      ...(Compatibility.isLessThan(GpVersion.V0_7_1)
-        ? {
+      ...(Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+        ? {}
+        : {
             on_transfers_count: "number",
             on_transfers_gas_used: json.fromBigInt(tryAsServiceGas),
-          }
-        : {}),
+          }),
     },
     ({
       provided_count,

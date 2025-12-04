@@ -138,18 +138,18 @@ export class JsonService {
   static fromJson = json.object<JsonService, InMemoryService>(
     {
       id: "number",
-      data: Compatibility.isLessThan(GpVersion.V0_7_1)
+      data: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
         ? {
-            service: JsonServiceInfo.fromJson,
-            preimages: json.optional(json.array(JsonPreimageItem.fromJson)),
-            storage: json.optional(json.array(JsonStorageItem.fromJson)),
-            lookup_meta: json.optional(json.array(lookupMetaFromJson)),
-          }
-        : {
             service: JsonServiceInfo.fromJson,
             storage: json.optional(json.array(JsonStorageItem.fromJson)),
             preimages_blob: json.optional(json.array(JsonPreimageItem.fromJson)),
             preimages_status: json.optional(json.array(preimageStatusFromJson)),
+          }
+        : {
+            service: JsonServiceInfo.fromJson,
+            preimages: json.optional(json.array(JsonPreimageItem.fromJson)),
+            storage: json.optional(json.array(JsonStorageItem.fromJson)),
+            lookup_meta: json.optional(json.array(lookupMetaFromJson)),
           },
     },
     ({ id, data }) => {
