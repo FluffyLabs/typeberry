@@ -338,7 +338,7 @@ export class OnChain {
     let transferStatistics = new Map<ServiceId, CountAndGasUsed>();
     let servicesUpdate: ServicesUpdate = { ...servicesUpdateFromAccumulate, preimages: accumulatePreimages };
 
-    if (Compatibility.isLessThan(GpVersion.V0_7_1)) {
+    if (!Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
       const deferredTransfersResult = await this.deferredTransfers.transition({
         entropy: entropy[0],
         pendingTransfers,

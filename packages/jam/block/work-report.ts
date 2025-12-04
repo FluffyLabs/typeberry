@@ -3,7 +3,7 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { isU16, tryAsU32, type U16, type U32 } from "@typeberry/numbers";
-import { Compatibility, GpVersion, WithDebug } from "@typeberry/utils";
+import { WithDebug } from "@typeberry/utils";
 import { type CoreIndex, type ServiceGas, tryAsCoreIndex } from "./common.js";
 import {
   type AuthorizerHash,
@@ -52,9 +52,31 @@ export class WorkPackageSpec extends WithDebug {
 /**
  * A report of execution of some work package.
  *
- * https://graypaper.fluffylabs.dev/#/cc517d7/131c01132401?v=0.6.5
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/13bb0113c301?v=0.7.2
  */
-export class WorkReportNoCodec extends WithDebug {
+export class WorkReport extends WithDebug {
+  static Codec = codec.Class(WorkReport, {
+    workPackageSpec: WorkPackageSpec.Codec,
+    context: RefineContext.Codec,
+    coreIndex: codec.varU32.convert(
+      (o) => tryAsU32(o),
+      (i) => {
+        if (!isU16(i)) {
+          throw new Error(`Core index exceeds U16: ${i}`);
+        }
+        return tryAsCoreIndex(i);
+      },
+    ),
+    authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
+    authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
+    authorizationOutput: codec.blob,
+    segmentRootLookup: codec.readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
+    results: codec.sequenceVarLen(WorkResult.Codec).convert(
+      (x) => x,
+      (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+    ),
+  });
+
   static create({
     workPackageSpec,
     context,
@@ -64,8 +86,8 @@ export class WorkReportNoCodec extends WithDebug {
     segmentRootLookup,
     results,
     authorizationGasUsed,
-  }: CodecRecord<WorkReportNoCodec>) {
-    return new WorkReportNoCodec(
+  }: CodecRecord<WorkReport>) {
+    return new WorkReport(
       workPackageSpec,
       context,
       coreIndex,
@@ -80,11 +102,11 @@ export class WorkReportNoCodec extends WithDebug {
   protected constructor(
     /** `s`: Work package specification. */
     public readonly workPackageSpec: WorkPackageSpec,
-    /** `x`: Refinement context. */
+    /** `c`: Refinement context. */
     public readonly context: RefineContext,
-    /** `c`: Core index on which the work is done. */
+    /** *`c`*: Core index on which the work is done. */
     public readonly coreIndex: CoreIndex,
-    /** `a`: Hash of the authorizer. */
+    /** *`a`*: Hash of the authorizer. */
     public readonly authorizerHash: AuthorizerHash,
     /** `o`: Authorization output. */
     public readonly authorizationOutput: BytesBlob,
@@ -95,59 +117,9 @@ export class WorkReportNoCodec extends WithDebug {
     public readonly segmentRootLookup: readonly WorkPackageInfo[],
     /** `r`: The results of evaluation of each of the items in the work package. */
     public readonly results: FixedSizeArray<WorkResult, WorkItemsCount>,
-    /** `g`: Gas used during authorization. */
+    /** *`g`*: Gas used during authorization. */
     public readonly authorizationGasUsed: ServiceGas,
   ) {
     super();
   }
-}
-
-const WorkReportCodec = codec.Class(WorkReportNoCodec, {
-  workPackageSpec: WorkPackageSpec.Codec,
-  context: RefineContext.Codec,
-  coreIndex: codec.varU32.convert(
-    (o) => tryAsU32(o),
-    (i) => {
-      if (!isU16(i)) {
-        throw new Error(`Core index exceeds U16: ${i}`);
-      }
-      return tryAsCoreIndex(i);
-    },
-  ),
-  authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
-  authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
-  authorizationOutput: codec.blob,
-  segmentRootLookup: codec.readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
-  results: codec.sequenceVarLen(WorkResult.Codec).convert(
-    (x) => x,
-    (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
-  ),
-});
-
-const WorkReportCodecPre070 = codec.Class(WorkReportNoCodec, {
-  workPackageSpec: WorkPackageSpec.Codec,
-  context: RefineContext.Codec,
-  coreIndex: codec.varU32.convert(
-    (o) => tryAsU32(o),
-    (i) => {
-      if (!isU16(i)) {
-        throw new Error(`Core index exceeds U16: ${i}`);
-      }
-      return tryAsCoreIndex(i);
-    },
-  ),
-  authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
-  authorizationOutput: codec.blob,
-  segmentRootLookup: codec.readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
-  results: codec.sequenceVarLen(WorkResult.Codec).convert(
-    (x) => x,
-    (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
-  ),
-  authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
-});
-
-export class WorkReport extends WorkReportNoCodec {
-  static Codec: typeof WorkReportCodec = Compatibility.isGreaterOrEqual(GpVersion.V0_7_0)
-    ? WorkReportCodec
-    : WorkReportCodecPre070;
 }
