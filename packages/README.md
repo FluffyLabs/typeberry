@@ -43,6 +43,8 @@ Contains JAM (Join-Accumulate Machine) specific packages:
 - **jam-host-calls** - JAM-specific host calls
 - **jamnp-s** - JAM network protocol implementation
 - **node** - JAM node implementation
+- **rpc-client** - JAM JSON-RPC client
+- **rpc-validation** - Validation schemas and type definitions for JSON-RPC client and server.
 - **safrole** - Safrole consensus mechanism
 - **state** - JAM state management
 - **state-json** - JSON serialization for JAM state

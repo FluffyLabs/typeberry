@@ -47,6 +47,8 @@
     "packages/jam/jam-host-calls",
     "packages/jam/jamnp-s",
     "packages/jam/node",
+    "packages/jam/rpc-client",
+    "packages/jam/rpc-validation",
     "packages/jam/safrole",
     "packages/jam/state",
     "packages/jam/state-json",

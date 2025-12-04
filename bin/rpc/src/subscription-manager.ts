@@ -1,7 +1,6 @@
-import type WebSocket from "ws";
-import type { RpcServer } from "./server.js";
 import {
   type InputOf,
+  JSON_RPC_VERSION,
   type JsonRpcSubscriptionNotification,
   type MethodName,
   RpcError,
@@ -9,20 +8,11 @@ import {
   type Subscription,
   type SubscriptionHandlerApi,
   type SubscriptionId,
-} from "./types.js";
-import { JSON_RPC_VERSION } from "./validation.js";
+} from "@typeberry/rpc-validation";
+import type WebSocket from "ws";
+import type { RpcServer } from "./server.js";
 
 const POLL_INTERVAL_MS = 1000;
-
-export const SUBSCRIBABLE_METHODS = {
-  subscribeBestBlock: "unsubscribeBestBlock",
-  subscribeFinalizedBlock: "unsubscribeFinalizedBlock",
-  subscribeServiceData: "unsubscribeServiceData",
-  subscribeServicePreimage: "unsubscribeServicePreimage",
-  subscribeServiceRequest: "unsubscribeServiceRequest",
-  subscribeServiceValue: "unsubscribeServiceValue",
-  subscribeStatistics: "unsubscribeStatistics",
-} as const satisfies Partial<Record<MethodName, MethodName>>;
 
 export class SubscriptionManager {
   private subscriptions: Map<SubscriptionId, Subscription>;

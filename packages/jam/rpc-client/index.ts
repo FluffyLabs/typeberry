@@ -1,19 +1,20 @@
-import { EventEmitter } from "node:events";
 import { Logger } from "@typeberry/logger";
+import {
+  type InputOf,
+  JSON_RPC_VERSION,
+  type JsonRpcRequest,
+  type JsonRpcResponse,
+  type JsonRpcSubscriptionNotification,
+  type MethodName,
+  type MethodWithNoArgsName,
+  type OutputOf,
+  type SchemaMapUnknown,
+  SUBSCRIBABLE_METHODS,
+  type SubscribableMethodName,
+  validation,
+} from "@typeberry/rpc-validation";
+import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
-import { SUBSCRIBABLE_METHODS } from "./subscription-manager.js";
-import type {
-  InputOf,
-  JsonRpcRequest,
-  JsonRpcResponse,
-  JsonRpcSubscriptionNotification,
-  MethodName,
-  MethodWithNoArgsName,
-  OutputOf,
-  SchemaMapUnknown,
-  SubscribableMethodName,
-} from "./types.js";
-import { JSON_RPC_VERSION, validation } from "./validation.js";
 
 export interface Subscription<M extends SubscribableMethodName> {
   id: string;
@@ -33,7 +34,7 @@ class SubscriptionEventEmitter extends EventEmitter<SubscriptionEventMap> {
   }
 }
 
-const logger = Logger.new(import.meta.filename, "rpc");
+const logger = Logger.new("rpc");
 
 export class RpcClient {
   private ws: WebSocket;

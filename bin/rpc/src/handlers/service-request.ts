@@ -2,7 +2,7 @@ import { type HeaderHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
-import type { Handler } from "../types.js";
+import type { Handler } from "@typeberry/rpc-validation";
 
 /**
  * https://github.com/polkadot-fellows/JIPs/blob/772ce90bfc33f4e1de9de3bbe10c561753cc0d41/JIP-2.md#servicerequestheader_hash-id-hash-len
