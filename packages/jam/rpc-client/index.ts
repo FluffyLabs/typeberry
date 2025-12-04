@@ -34,7 +34,7 @@ class SubscriptionEventEmitter extends EventEmitter<SubscriptionEventMap> {
   }
 }
 
-const logger = Logger.new("RpcClient");
+const logger = Logger.new("rpc");
 
 export class RpcClient {
   private ws: WebSocket;
