@@ -441,7 +441,7 @@ export class Accumulate {
        *
        * https://graypaper.fluffylabs.dev/#/1c979cb/18ae0318ae03?v=0.7.1
        */
-      const shouldUpdateStatisticsPre072 = Compatibility.isLessThan(GpVersion.V0_7_2) && count > 0;
+      const shouldUpdateStatisticsPre072 = !Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) && count > 0;
       /**
        * [0.7.2]: We update statistics if anything is changed
        *

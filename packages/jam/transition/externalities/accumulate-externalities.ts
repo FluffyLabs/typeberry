@@ -576,7 +576,7 @@ export class AccumulateExternalities
     registrar: ServiceId | null,
     autoAccumulateServices: Map<ServiceId, ServiceGas>,
   ): Result<OK, UpdatePrivilegesError> {
-    if (Compatibility.isLessThan(GpVersion.V0_7_1)) {
+    if (!Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
       /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
       const current = this.updatedState.getPrivilegedServices();
       const isManager = current.manager === this.currentServiceId;
