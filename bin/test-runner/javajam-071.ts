@@ -9,7 +9,7 @@ const runners = [
     .withVariants([SelectedPvm.Ananas, SelectedPvm.Builtin]),
 ].map((x) => x.build());
 
-main(runners, "test-vectors/javajam", {
+main(runners, "test-vectors/javajam_071", {
   ...parseArgs(process.argv.slice(2)),
   patterns: [".json"],
   accepted: {

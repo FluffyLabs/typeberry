@@ -77,6 +77,11 @@ jobs:
             script: w3f-davxy-072.ts
             output: w3f-davxy-072.txt
             artifact_name: davxy-072-results
+          - display_name: javajam-0.7.1
+            gp_version: 0.7.1
+            script: javajam-071.ts
+            output: javajam-071.txt
+            artifact_name: javajam-071-results
 
     env:
       GP_VERSION: ${{ matrix.gp_version }}
