@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   benchmarks:
-    runs-on: self-hosted
+    runs-on: [self-hosted, benchmarks]
 
     strategy:
       matrix:

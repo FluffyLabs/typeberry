@@ -5,52 +5,52 @@
   "results": [
     {
       "name": "Get the first field from Decoded",
-      "ops": 351510.02,
+      "ops": 22564.02,
       "margin": 10
     },
     {
       "name": "Get the first field from View",
-      "ops": 391861.79,
+      "ops": 38693.79,
       "margin": 10
     },
     {
       "name": "Get the first field as view from View",
-      "ops": 383453.46,
+      "ops": 40324.46,
       "margin": 10
     },
     {
       "name": "Get two fields from Decoded",
-      "ops": 350192.31,
+      "ops": 179042.31,
       "margin": 10
     },
     {
       "name": "Get two fields from View",
-      "ops": 317433.74,
+      "ops": 35966.74,
       "margin": 10
     },
     {
       "name": "Get two fields from materialized from View",
-      "ops": 412183.3,
+      "ops": 73179.3,
       "margin": 10
     },
     {
       "name": "Get two fields as views from View",
-      "ops": 310230.97,
+      "ops": 35920.97,
       "margin": 10
     },
     {
       "name": "Get only third field from Decoded",
-      "ops": 353340.84,
+      "ops": 179702.84,
       "margin": 10
     },
     {
       "name": "Get only third field from View",
-      "ops": 396437.97,
+      "ops": 44791.97,
       "margin": 10
     },
     {
       "name": "Get only third field as view from View",
-      "ops": 393088.95,
+      "ops": 45399.95,
       "margin": 10
     }
   ],
