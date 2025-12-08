@@ -9,13 +9,13 @@ const runners = [
     .withVariants([SelectedPvm.Ananas, SelectedPvm.Builtin]),
 ].map((x) => x.build());
 
-main(runners, "test-vectors/jamduna_067", {
+main(runners, "test-vectors/javajam_071", {
   ...parseArgs(process.argv.slice(2)),
   patterns: [".json"],
   accepted: {
-    ".json": ["traces/"],
+    ".json": ["stf/state_transitions/"],
   },
-  ignored: [],
+  ignored: ["testnetKeys.json", "stf/blocks/", "erasure_coding/"],
 })
   .then((r) => logger.log`${r}`)
   .catch((e) => {

@@ -2,7 +2,6 @@ import { HASH_SIZE } from "@typeberry/hash";
 import z from "zod";
 
 export const JSON_RPC_VERSION = "2.0";
-
 export namespace validation {
   const u32 = z.number().int().min(0).max(0xffffffff);
   const uint8Array = z.custom<Uint8Array>((v) => v instanceof Uint8Array); // this is needed because a simple z.instanceof(Uint8Array) automatically narrows the type down to Uint8Array<ArrayBuffer> whereas our Bytes.raw are effectively Uint8Array<ArrayBufferLike>
@@ -174,3 +173,13 @@ export namespace validation {
 
   export const jsonRpcNotification = jsonRpcRequest.omit({ id: true });
 }
+
+export const SUBSCRIBABLE_METHODS = {
+  subscribeBestBlock: "unsubscribeBestBlock",
+  subscribeFinalizedBlock: "unsubscribeFinalizedBlock",
+  subscribeServiceData: "unsubscribeServiceData",
+  subscribeServicePreimage: "unsubscribeServicePreimage",
+  subscribeServiceRequest: "unsubscribeServiceRequest",
+  subscribeServiceValue: "unsubscribeServiceValue",
+  subscribeStatistics: "unsubscribeStatistics",
+} as const satisfies Partial<Record<keyof typeof validation.schemas, keyof typeof validation.schemas>>;

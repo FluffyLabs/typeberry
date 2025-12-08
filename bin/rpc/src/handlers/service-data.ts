@@ -2,8 +2,8 @@ import { type HeaderHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
+import { type Handler, RpcError, RpcErrorCode } from "@typeberry/rpc-validation";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { type Handler, RpcError, RpcErrorCode } from "../types.js";
 
 /**
  * https://github.com/polkadot-fellows/JIPs/blob/772ce90bfc33f4e1de9de3bbe10c561753cc0d41/JIP-2.md#servicedataheader_hash-id

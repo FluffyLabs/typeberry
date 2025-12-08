@@ -1,12 +1,10 @@
 import assert from "node:assert";
-import { once } from "node:events";
 import { after, before, describe, it } from "node:test";
+import { RpcClient } from "@typeberry/rpc-client";
+import { type InputOf, JSON_RPC_VERSION, type MethodName, type OutputOf } from "@typeberry/rpc-validation";
 import type { WebSocket } from "ws";
 import { main } from "../main.js";
-import { RpcClient } from "../src/client.js";
 import type { RpcServer } from "../src/server.js";
-import type { InputOf, MethodName, OutputOf } from "../src/types.js";
-import { JSON_RPC_VERSION } from "../src/validation.js";
 
 function hexToUint8Array(hex: string): Uint8Array {
   return new Uint8Array(Buffer.from(hex, "hex"));
@@ -131,7 +129,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
     assert.deepStrictEqual(result, []);
   });
 
-  it("subscribes and unsubscribes to/from service preimage", async (abort) => {
+  it("subscribes and unsubscribes to/from service preimage", async () => {
     const bestBlock = await client.call("bestBlock");
     const subscription = await client.subscribe("subscribeServicePreimage", [
       bestBlock.header_hash,
@@ -140,7 +138,9 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
     ]);
 
     try {
-      const [data] = (await once(subscription, "data", { signal: abort.signal })) as [string];
+      const data = await new Promise<string>((resolve) =>
+        subscription.once("data", (result) => resolve(result as string)),
+      );
       assert.deepStrictEqual(data.length, 155144);
     } finally {
       await subscription.unsubscribe();

@@ -1,3 +1,4 @@
+import type { HandlerMap } from "@typeberry/rpc-validation";
 import { bestBlock } from "./handlers/best-block.js";
 import { finalizedBlock } from "./handlers/finalized-block.js";
 import { listServices } from "./handlers/list-services.js";
@@ -18,7 +19,6 @@ import { subscribeServiceRequest } from "./handlers/subscribe-service-request.js
 import { subscribeServiceValue } from "./handlers/subscribe-service-value.js";
 import { subscribeStatistics } from "./handlers/subscribe-statistics.js";
 import { unsubscribe } from "./handlers/unsubscribe.js";
-import type { HandlerMap } from "./types.js";
 
 export const handlers: HandlerMap = {
   beefyRoot: notImplemented,

@@ -1,6 +1,7 @@
 import { W_E } from "@typeberry/block";
 import { G_I, MAX_REPORT_DEPENDENCIES, O, Q, T, W_B, W_C, W_T } from "@typeberry/block/gp-constants.js";
 import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package.js";
+import type { Handler } from "@typeberry/rpc-validation";
 import {
   BASE_SERVICE_BALANCE,
   ELECTIVE_BYTE_BALANCE,
@@ -9,7 +10,6 @@ import {
 } from "@typeberry/state";
 import { REPORT_TIMEOUT_GRACE_PERIOD } from "@typeberry/transition/assurances.js";
 import { G_A } from "@typeberry/transition/reports/verify-post-signature.js";
-import type { Handler } from "../types.js";
 
 /**
  * https://github.com/polkadot-fellows/JIPs/blob/77cba2dcc1887233d4b19371c05284ff761a5fa6/JIP-2.md#chain-parameters

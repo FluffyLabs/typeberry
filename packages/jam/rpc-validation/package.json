@@ -1,14 +1,13 @@
 {
-  "name": "@typeberry/pvm-interface",
+  "name": "@typeberry/rpc-validation",
   "version": "0.5.0",
-  "description": "A PVM interface for external implementations.",
+  "description": "Validation schemas and type definitions for Typeberry JAM JSON-RPC client and server.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/numbers": "*",
-    "@typeberry/utils": "*"
+    "@typeberry/hash": "*",
+    "zod": "^4.1.13"
   },
   "scripts": {
-    "start": "tsx ./bin.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",

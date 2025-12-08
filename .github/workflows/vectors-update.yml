@@ -58,12 +58,20 @@ jobs:
         sed -i "s/^REF=.*/REF=$NEW_REF/" .github/scripts/load-test-ref.sh
         echo "Updated test vectors ref to: $NEW_REF"
 
+    - name: Generate GitHub App Token
+      if: steps.check_update.outputs.update_needed == 'true'
+      id: app-token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ vars.PR_APP_ID }}
+        private-key: ${{ secrets.PR_APP_PRIVATE_KEY }}
+
     - name: Create Pull Request
       if: steps.check_update.outputs.update_needed == 'true'
       uses: peter-evans/create-pull-request@v7
       id: pr
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ steps.app-token.outputs.token }}
         base: 'main'
         branch: update-test-vectors/${{ steps.latest_ref.outputs.latest_ref }}
         title: "Update test vectors to ${{ steps.latest_ref.outputs.latest_ref }}"

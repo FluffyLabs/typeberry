@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/jam",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "JAM implementation in TypeScript",
   "private": true,
   "workspaces": [
@@ -47,6 +47,8 @@
     "packages/jam/jam-host-calls",
     "packages/jam/jamnp-s",
     "packages/jam/node",
+    "packages/jam/rpc-client",
+    "packages/jam/rpc-validation",
     "packages/jam/safrole",
     "packages/jam/state",
     "packages/jam/state-json",
