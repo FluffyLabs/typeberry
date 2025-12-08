@@ -4,21 +4,18 @@ import {
   encodeUnsealedHeader,
   Header,
   type HeaderHash,
+  reencodeAsView,
   tryAsTimeSlot,
   type ValidatorIndex,
 } from "@typeberry/block";
 import { type BlockView, Extrinsic } from "@typeberry/block/block.js";
 import { DisputesExtrinsic } from "@typeberry/block/disputes.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import {
-  BANDERSNATCH_VRF_SIGNATURE_BYTES,
-  type BandersnatchSecretSeed,
-  type BandersnatchVrfSignature,
-} from "@typeberry/crypto";
+import { BANDERSNATCH_VRF_SIGNATURE_BYTES, type BandersnatchSecretSeed } from "@typeberry/crypto";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { type Blake2b, HASH_SIZE, type keccak } from "@typeberry/hash";
+import { Logger } from "@typeberry/logger";
 import type { U64 } from "@typeberry/numbers";
 import { Safrole } from "@typeberry/safrole";
 import bandersnatchVrf from "@typeberry/safrole/bandersnatch-vrf.js";
@@ -26,9 +23,22 @@ import type { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import { JAM_ENTROPY } from "@typeberry/safrole/constants.js";
 import type { State } from "@typeberry/state";
 import { TransitionHasher } from "@typeberry/transition";
-import { asOpaqueType, Result } from "@typeberry/utils";
+import { asOpaqueType, type Opaque, Result } from "@typeberry/utils";
 
 const EMPTY_AUX_DATA = BytesBlob.empty();
+const logger = Logger.new(import.meta.filename, "author");
+
+/**
+ * Either Ticket (Safrole) or Key (fallback) seal input data.
+ *
+ * Passed to function V, either:
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/0e46010e4601?v=0.7.2
+ * or:
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/0eac010eac01?v=0.7.2
+ *
+ */
+export type BlockSealInput = Opaque<BytesBlob, "Seal">;
+
 export class Generator {
   private lastHeaderHash: HeaderHash;
   private lastState: State;
@@ -72,19 +82,28 @@ export class Generator {
   async nextBlockView(
     validatorIndex: ValidatorIndex,
     bandersnatchSecret: BandersnatchSecretSeed,
-    sealPayload: BytesBlob,
+    sealPayload: BlockSealInput,
     time: U64,
   ): Promise<BlockView> {
     const newBlock = await this.nextBlock(validatorIndex, bandersnatchSecret, sealPayload, time);
-    const encoded = Encoder.encodeObject(Block.Codec, newBlock, this.chainSpec);
-    const view = Decoder.decodeObject(Block.Codec.View, encoded, this.chainSpec);
-    return view;
+    return reencodeAsView(Block.Codec, newBlock, this.chainSpec);
   }
 
-  private async getEntropySource(
+  /**
+   * Returns y(H_S) part of the VRF signature.
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/0ec7010ece01?v=0.7.2
+   *
+   * Note that in case of Ticket-sealing this is going to be the ticket value.
+   *
+   * In either case (Tickets or Keys) the value returned here DOES not depend on the header
+   * data (i.e. the `aux_data`) so we are able to compute it beforehand.
+   */
+  private async getEntropyHash(
     sealPayload: BytesBlob,
     bandersnatchSecret: BandersnatchSecretSeed,
-  ): Promise<Result<BandersnatchVrfSignature, null>> {
+  ): Promise<Result<EntropyHash, null>> {
+    // TODO [ToDr] Use bandersnatchVrf.vrf_output_hash
     const entropyHashResult = await bandersnatchVrf.generateSeal(
       await this.bandersnatch,
       bandersnatchSecret,
@@ -96,28 +115,38 @@ export class Generator {
       return Result.error(null, () => "Entropy hash generation failed");
     }
 
-    const entropyHash: EntropyHash = Bytes.fromBlob(
-      entropyHashResult.ok.raw.subarray(0, HASH_SIZE),
-      HASH_SIZE,
-    ).asOpaque();
-    const entropySourcePayload = BytesBlob.blobFromParts(JAM_ENTROPY, entropyHash.raw);
-
-    return bandersnatchVrf.generateSeal(
-      await this.bandersnatch,
-      bandersnatchSecret,
-      entropySourcePayload,
-      EMPTY_AUX_DATA,
+    return Result.ok(
+      Bytes.fromBlob(entropyHashResult.ok.raw.subarray(0, HASH_SIZE), HASH_SIZE).asOpaque<EntropyHash>(),
     );
   }
 
   async nextBlock(
     validatorIndex: ValidatorIndex,
     bandersnatchSecret: BandersnatchSecretSeed,
-    sealPayload: BytesBlob,
+    sealPayload: BlockSealInput,
     time: U64,
   ) {
     // fetch latest data from the db.
     this.refreshLastHeaderAndState();
+
+    // generate entropy hash first (NOTE this might be coming from a ticket)
+    const entropyHashRes = await this.getEntropyHash(sealPayload, bandersnatchSecret);
+    if (entropyHashRes.isError) {
+      throw new Error(`Entropy hash generation failed: ${entropyHashRes.error}`);
+    }
+    const entropyHash = entropyHashRes.ok;
+    logger.trace`Generated entropy: ${entropyHash} for block @${time}`;
+
+    // create the signature for source of entropy
+    const entropySource = await bandersnatchVrf.generateSeal(
+      await this.bandersnatch,
+      bandersnatchSecret,
+      BytesBlob.blobFromParts([JAM_ENTROPY, entropyHash.raw]),
+      EMPTY_AUX_DATA,
+    );
+    if (entropySource.isError) {
+      throw new Error(`Entropy source generation failed: ${entropySource.error}`);
+    }
 
     // incrementing timeslot for current block
     const newTimeSlot = tryAsTimeSlot(Number(time / BigInt(this.chainSpec.slotDuration * 1000)));
@@ -127,7 +156,7 @@ export class Generator {
     const parentHeaderHash = this.lastHeaderHash;
     const stateRoot = this.states.getStateRoot(this.lastState);
 
-    // create extrinsic
+    // TODO create extrinsic
     const extrinsic = Extrinsic.create({
       tickets: asOpaqueType([]),
       preimages: [],
@@ -140,19 +169,9 @@ export class Generator {
       }),
     });
 
-    const encodedExtrinsic = Encoder.encodeObject(Extrinsic.Codec, extrinsic, this.chainSpec);
-    const extrinsicView = Decoder.decodeObject(Extrinsic.Codec.View, encodedExtrinsic, this.chainSpec);
+    const extrinsicView = reencodeAsView(Extrinsic.Codec, extrinsic, this.chainSpec);
     const extrinsicHash = hasher.extrinsic(extrinsicView).hash;
 
-    const entropySourceResult = await this.getEntropySource(sealPayload, bandersnatchSecret);
-
-    if (entropySourceResult.isError) {
-      throw new Error(`Entropy source generation failed: ${entropySourceResult.error}`);
-    }
-
-    const entropySource = entropySourceResult.ok;
-
-    const entropy: EntropyHash = Bytes.fromBlob(entropySource.raw.subarray(0, HASH_SIZE), HASH_SIZE).asOpaque();
     const state = this.states.getState(parentHeaderHash);
 
     if (state === null) {
@@ -162,7 +181,7 @@ export class Generator {
     const slot = tryAsTimeSlot(newTimeSlot);
     const safrole = new Safrole(this.chainSpec, this.blake2b, state);
     const safroleResult = await safrole.blockAuthorshipTransition({
-      entropy,
+      entropy: entropyHash,
       slot,
       extrinsic: extrinsic.tickets,
       epochMarker: null,
@@ -175,7 +194,7 @@ export class Generator {
     }
 
     // create header
-    const header = Header.create({
+    const headerData = {
       parentHeaderHash,
       priorStateRoot: await stateRoot,
       extrinsicHash,
@@ -184,27 +203,27 @@ export class Generator {
       ticketsMarker: safroleResult.ok.ticketsMark,
       offendersMarker: [],
       bandersnatchBlockAuthorIndex: validatorIndex,
-      entropySource: entropySource,
+      entropySource: entropySource.ok,
+    };
+    const tempHeader = Header.create({
+      ...headerData,
       seal: Bytes.zero(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque(),
     });
-    const encoded = Encoder.encodeObject(Header.Codec, header, this.chainSpec);
-    const headerView = Decoder.decodeObject(Header.Codec.View, encoded, this.chainSpec);
     const sealResult = await bandersnatchVrf.generateSeal(
       await this.bandersnatch,
       bandersnatchSecret,
       sealPayload,
-      encodeUnsealedHeader(headerView),
+      encodeUnsealedHeader(reencodeAsView(Header.Codec, tempHeader, this.chainSpec)),
     );
 
     if (sealResult.isError) {
       throw new Error(`Seal generation failed: ${sealResult.error}`);
     }
-    // TODO [MaSo] IDK if this is ok to update it here.
-    // This function utility is to create a block
-    // not to update any logic.
-    header.seal = sealResult.ok;
-    const encodedWithSeal = Encoder.encodeObject(Header.Codec, header, this.chainSpec);
-    const headerViewWithSeal = Decoder.decodeObject(Header.Codec.View, encodedWithSeal, this.chainSpec);
+    const header = Header.create({
+      ...headerData,
+      seal: sealResult.ok,
+    });
+    const headerViewWithSeal = reencodeAsView(Header.Codec, header, this.chainSpec);
     this.lastHeaderHash = hasher.header(headerViewWithSeal).hash;
 
     return Block.create({ header, extrinsic });

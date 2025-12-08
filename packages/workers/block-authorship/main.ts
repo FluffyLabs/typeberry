@@ -24,12 +24,12 @@ import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import { JAM_FALLBACK_SEAL, JAM_TICKET_SEAL } from "@typeberry/safrole/constants.js";
 import { type SafroleSealingKeys, SafroleSealingKeysKind, type ValidatorData } from "@typeberry/state";
 import type { SerializedState } from "@typeberry/state-merkleization";
-import { assertNever } from "@typeberry/utils";
+import { asOpaqueType, assertNever } from "@typeberry/utils";
 import type { WorkerConfig } from "@typeberry/workers-api";
-import { Generator } from "./generator.js";
+import { type BlockSealInput, Generator } from "./generator.js";
 import type { BlockAuthorshipConfig, GeneratorInternal } from "./protocol.js";
 
-const logger = Logger.new(import.meta.filename, "block-authorship");
+const logger = Logger.new(import.meta.filename, "author");
 
 type Config = WorkerConfig<BlockAuthorshipConfig, BlocksDb, StatesDb<SerializedState<LeafDb>>>;
 
@@ -122,12 +122,17 @@ export async function main(config: Config, comms: GeneratorInternal) {
     return tryAsValidatorIndex(index);
   }
 
-  function getSealPayload(sealingKeySeries: SafroleSealingKeys, entropy: EntropyHash, attempt?: TicketAttempt) {
+  function getSealPayload(
+    sealingKeySeries: SafroleSealingKeys,
+    entropy: EntropyHash,
+    attempt?: TicketAttempt,
+  ): BlockSealInput {
     if (sealingKeySeries.kind === SafroleSealingKeysKind.Keys) {
-      return BytesBlob.blobFromParts(JAM_FALLBACK_SEAL, entropy.raw);
+      return asOpaqueType(BytesBlob.blobFromParts(JAM_FALLBACK_SEAL, entropy.raw));
     }
+
     if (sealingKeySeries.kind === SafroleSealingKeysKind.Tickets) {
-      return BytesBlob.blobFromParts(JAM_TICKET_SEAL, entropy.raw, new Uint8Array([attempt ?? 0]));
+      return asOpaqueType(BytesBlob.blobFromParts(JAM_TICKET_SEAL, entropy.raw, new Uint8Array([attempt ?? 0])));
     }
 
     assertNever(sealingKeySeries);
@@ -159,6 +164,8 @@ export async function main(config: Config, comms: GeneratorInternal) {
       if (validatorIndex === null) {
         continue;
       }
+
+      logger.log`Attempting to create a block using key ${key.bandersnatchPublic} located at validator index ${validatorIndex}.`;
       const entropy = isEpochChanged(lastTimeslot, timeslot) ? state.entropy[2] : state.entropy[3];
       const sealPayload = getSealPayload(sealingKeySeries, entropy);
       const newBlock = await generator.nextBlockView(validatorIndex, key.bandersnatchSecret, sealPayload, time);
