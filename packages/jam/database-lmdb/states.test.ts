@@ -6,8 +6,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { SortedSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { MAX_VALUE } from "@typeberry/pvm-interpreter/ops/math-consts.js";
+import { MAX_VALUE_U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   InMemoryState,
   LookupHistoryItem,
@@ -99,7 +98,9 @@ describe("LMDB States database", () => {
           manager: tryAsServiceId(1),
           assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(2)), spec),
           delegator: tryAsServiceId(3),
-          registrar: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? tryAsServiceId(4) : tryAsServiceId(MAX_VALUE),
+          registrar: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
+            ? tryAsServiceId(4)
+            : tryAsServiceId(MAX_VALUE_U32),
           autoAccumulateServices: new Map(),
         }),
         updated: new Map([

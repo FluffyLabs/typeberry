@@ -27,8 +27,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32, type U32 } from "@typeberry/numbers";
-import { MAX_VALUE } from "@typeberry/pvm-interpreter/ops/math-consts.js";
+import { MAX_VALUE_U32, tryAsU32, type U32 } from "@typeberry/numbers";
 import { asOpaqueType, assertNever, check, OK, Result, WithDebug } from "@typeberry/utils";
 import { type AccumulationOutput, accumulationOutputComparator } from "./accumulation-output.js";
 import type { AccumulationQueue } from "./accumulation-queue.js";
@@ -593,7 +592,7 @@ export class InMemoryState extends WithDebug implements State, WithStateView, En
         manager: tryAsServiceId(0),
         assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
         delegator: tryAsServiceId(0),
-        registrar: tryAsServiceId(MAX_VALUE),
+        registrar: tryAsServiceId(MAX_VALUE_U32),
         autoAccumulateServices: new Map(),
       }),
       accumulationOutputLog: SortedArray.fromArray(accumulationOutputComparator, []),
