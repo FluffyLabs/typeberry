@@ -130,7 +130,7 @@ export class PvmExecutor {
   }
 
   /** A utility function that can be used to prepare on transfer executor */
-  static async createOnTransferExecutr(
+  static async createOnTransferExecutor(
     serviceId: ServiceId,
     serviceCode: BytesBlob,
     externalities: OnTransferHostCallExternalities,

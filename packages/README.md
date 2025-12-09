@@ -40,6 +40,7 @@ Contains JAM (Join-Accumulate Machine) specific packages:
 - **database** - Database abstractions for JAM
 - **database-lmdb** - LMDB database implementation
 - **fuzz-proto** - Fuzzing protocol implementation
+- **in-core** - In-core execution utilities (refine phase)
 - **jam-host-calls** - JAM-specific host calls
 - **jamnp-s** - JAM network protocol implementation
 - **node** - JAM node implementation

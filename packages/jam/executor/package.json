@@ -1,0 +1,18 @@
+{
+  "name": "@typeberry/executor",
+  "version": "0.5.0",
+  "description": "JAM PVM execution entry point with host calls.",
+  "main": "index.ts",
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "dependencies": {
+    "@typeberry/jam-host-calls": "*",
+    "@typeberry/pvm-host-calls": "*",
+    "@typeberry/pvm-interface": "*",
+    "@typeberry/pvm-interpreter": "*"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0",
+  "type": "module"
+}

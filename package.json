@@ -44,6 +44,7 @@
     "packages/jam/database",
     "packages/jam/database-lmdb",
     "packages/jam/fuzz-proto",
+    "packages/jam/in-core",
     "packages/jam/jam-host-calls",
     "packages/jam/jamnp-s",
     "packages/jam/node",
@@ -53,6 +54,7 @@
     "packages/jam/state",
     "packages/jam/state-json",
     "packages/jam/state-merkleization",
+    "packages/jam/state-vectors",
     "packages/jam/transition",
     "packages/jam/transition/disputes",
     "packages/misc/benchmark",
@@ -62,7 +64,7 @@
     "packages/workers/block-authorship",
     "packages/workers/importer",
     "packages/workers/jam-network",
-    "packages/jam/state-vectors"
+    "packages/jam/executor"
   ],
   "engines": {
     "node": ">=22",

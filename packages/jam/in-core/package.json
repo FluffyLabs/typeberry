@@ -1,0 +1,17 @@
+{
+  "name": "@typeberry/in-core",
+  "version": "0.5.0",
+  "description": "In core execution utilities (refine phase).",
+  "main": "index.ts",
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "dependencies": {
+    "@typeberry/block": "*",
+    "@typeberry/bytes": "*",
+    "@typeberry/utils": "*"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0",
+  "type": "module"
+}

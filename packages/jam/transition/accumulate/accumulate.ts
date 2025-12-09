@@ -19,9 +19,8 @@ import {
   PartiallyUpdatedState,
 } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
-import { sumU64, tryAsU32, type U32 } from "@typeberry/numbers";
+import { MAX_VALUE_U64, sumU64, tryAsU32, type U32 } from "@typeberry/numbers";
 import { Status, tryAsGas } from "@typeberry/pvm-interface";
-import { MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import {
   type AccumulationOutput,
   accumulationOutputComparator,
