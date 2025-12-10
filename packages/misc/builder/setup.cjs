@@ -31,11 +31,13 @@ const packageJson = JSON.stringify(
       ? originalPackageJson.version
       : `${originalPackageJson.version}-${commitHashResult.toString("utf8").trim()}`,
     main: "index.cjs",
+    types: "index.d.ts",
     author: originalPackageJson.author,
     license: originalPackageJson.license,
     sideEffects: false,
     exports: {
       ".": {
+        types: "./index.d.ts",
         import: "./index.mjs",
         require: "./index.cjs",
       },
