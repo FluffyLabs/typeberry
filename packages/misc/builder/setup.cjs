@@ -30,13 +30,13 @@ const packageJson = JSON.stringify(
     version: isRelease
       ? originalPackageJson.version
       : `${originalPackageJson.version}-${commitHashResult.toString("utf8").trim()}`,
-    main: "index.js",
+    main: "index.cjs",
     author: originalPackageJson.author,
     license: originalPackageJson.license,
     sideEffects: false,
     exports: {
       ".": {
-        import: "./index.js",
+        import: "./index.mjs",
         require: "./index.cjs",
       },
     },
@@ -57,7 +57,7 @@ packages/**
 
 module.exports = {
   inputFile,
-  esmOutFile: `${DIST}/index.js`,
+  esmOutFile: `${DIST}/index.mjs`,
   cjsOutFile: `${DIST}/index.cjs`,
   typesInput: inputFile,
 };
