@@ -5,7 +5,7 @@ import type { Encode, Encoder, SizeHint } from "./encoder.js";
 import { type Skip, Skipper } from "./skip.js";
 
 /** Infer the type that is described by given descriptor `T` */
-export type DescribedBy<T> = T extends Descriptor<infer V> ? V : never;
+export type DescribedBy<T> = T extends Descriptor<infer V, infer _> ? V : never;
 
 /**
  * Converts a class `T` into an object with the same fields as the class.

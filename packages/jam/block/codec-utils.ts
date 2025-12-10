@@ -1,4 +1,4 @@
-import { codec, Descriptor, type SequenceView } from "@typeberry/codec";
+import { codec, Descriptor, SequenceVarLenOptions, type SequenceView } from "@typeberry/codec";
 import { asKnownSize, FixedSizeArray, HashDictionary, type KnownSizeArray } from "@typeberry/collections";
 import { ChainSpec, fullChainSpec } from "@typeberry/config";
 import type { OpaqueHash } from "@typeberry/hash";
@@ -46,7 +46,7 @@ export function codecWithContext<T, V>(chooser: (ctx: ChainSpec) => Descriptor<T
 /** Codec for a known-size array with length validation. */
 export const codecKnownSizeArray = <F extends string, T, V>(
   val: Descriptor<T, V>,
-  options: codec.SequenceVarLenOptions | { fixedLength: number },
+  options: SequenceVarLenOptions | { fixedLength: number },
   _id?: F,
 ): Descriptor<KnownSizeArray<T, F>, SequenceView<T, V>> => {
   if ("fixedLength" in options) {
