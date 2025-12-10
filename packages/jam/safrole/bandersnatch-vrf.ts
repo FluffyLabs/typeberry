@@ -8,8 +8,8 @@ import {
   type BandersnatchRingRoot,
   type BandersnatchVrfSignature,
 } from "@typeberry/crypto/bandersnatch.js";
-import { HASH_SIZE } from "@typeberry/hash";
-import { Result } from "@typeberry/utils";
+import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import { type Opaque, Result } from "@typeberry/utils";
 import type { BandernsatchWasm } from "./bandersnatch-wasm.js";
 import { JAM_TICKET_SEAL } from "./constants.js";
 
@@ -39,6 +39,7 @@ const FUNCTIONS = {
   verifyTickets,
   getRingCommitment,
   generateSeal,
+  getVrfOutputHash,
 };
 
 // NOTE [ToDr] We export the entire object to allow mocking in tests.
@@ -149,4 +150,20 @@ async function generateSeal(
   }
 
   return Result.ok(Bytes.fromBlob(result.subarray(1), BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque());
+}
+
+export type VrfOutputHash = Opaque<OpaqueHash, "VRF Output Hash">;
+
+async function getVrfOutputHash(
+  bandersnatch: BandernsatchWasm,
+  authorKey: BandersnatchSecretSeed,
+  input: BytesBlob,
+): Promise<Result<VrfOutputHash, null>> {
+  const result = await bandersnatch.getVrfOutputHash(authorKey.raw, input.raw);
+
+  if (result[RESULT_INDEX] === ResultValues.Error) {
+    return Result.error(null, () => "VRF output hash generation failed");
+  }
+
+  return Result.ok(Bytes.fromBlob(result.subarray(1), HASH_SIZE).asOpaque());
 }

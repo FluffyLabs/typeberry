@@ -10,7 +10,7 @@
     "@noble/ed25519": "2.2.3",
     "@typeberry/bytes": "*",
     "@typeberry/hash": "*",
-    "@typeberry/native": "0.0.4-e18a946",
+    "@typeberry/native": "0.0.4-51b82bc",
     "@typeberry/numbers": "*",
     "@typeberry/utils": "*"
   },

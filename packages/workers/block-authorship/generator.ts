@@ -1,11 +1,10 @@
 import {
   Block,
-  type EntropyHash,
   encodeUnsealedHeader,
   Header,
   type HeaderHash,
   reencodeAsView,
-  tryAsTimeSlot,
+  type TimeSlot,
   type ValidatorIndex,
 } from "@typeberry/block";
 import { type BlockView, Extrinsic } from "@typeberry/block/block.js";
@@ -14,11 +13,10 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_VRF_SIGNATURE_BYTES, type BandersnatchSecretSeed } from "@typeberry/crypto";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
-import { type Blake2b, HASH_SIZE, type keccak } from "@typeberry/hash";
+import type { Blake2b, keccak } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import type { U64 } from "@typeberry/numbers";
 import { Safrole } from "@typeberry/safrole";
-import bandersnatchVrf from "@typeberry/safrole/bandersnatch-vrf.js";
+import bandersnatchVrf, { type VrfOutputHash } from "@typeberry/safrole/bandersnatch-vrf.js";
 import type { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import { JAM_ENTROPY } from "@typeberry/safrole/constants.js";
 import type { State } from "@typeberry/state";
@@ -83,9 +81,9 @@ export class Generator {
     validatorIndex: ValidatorIndex,
     bandersnatchSecret: BandersnatchSecretSeed,
     sealPayload: BlockSealInput,
-    time: U64,
+    timeSlot: TimeSlot,
   ): Promise<BlockView> {
-    const newBlock = await this.nextBlock(validatorIndex, bandersnatchSecret, sealPayload, time);
+    const newBlock = await this.nextBlock(validatorIndex, bandersnatchSecret, sealPayload, timeSlot);
     return reencodeAsView(Block.Codec, newBlock, this.chainSpec);
   }
 
@@ -102,29 +100,25 @@ export class Generator {
   private async getEntropyHash(
     sealPayload: BytesBlob,
     bandersnatchSecret: BandersnatchSecretSeed,
-  ): Promise<Result<EntropyHash, null>> {
-    // TODO [ToDr] Use bandersnatchVrf.vrf_output_hash
-    const entropyHashResult = await bandersnatchVrf.generateSeal(
+  ): Promise<Result<VrfOutputHash, null>> {
+    const entropyHashResult = await bandersnatchVrf.getVrfOutputHash(
       await this.bandersnatch,
       bandersnatchSecret,
       sealPayload,
-      EMPTY_AUX_DATA,
     );
 
     if (entropyHashResult.isError) {
       return Result.error(null, () => "Entropy hash generation failed");
     }
 
-    return Result.ok(
-      Bytes.fromBlob(entropyHashResult.ok.raw.subarray(0, HASH_SIZE), HASH_SIZE).asOpaque<EntropyHash>(),
-    );
+    return entropyHashResult;
   }
 
   async nextBlock(
     validatorIndex: ValidatorIndex,
     bandersnatchSecret: BandersnatchSecretSeed,
     sealPayload: BlockSealInput,
-    time: U64,
+    timeSlot: TimeSlot,
   ) {
     // fetch latest data from the db.
     this.refreshLastHeaderAndState();
@@ -135,7 +129,7 @@ export class Generator {
       throw new Error(`Entropy hash generation failed: ${entropyHashRes.error}`);
     }
     const entropyHash = entropyHashRes.ok;
-    logger.trace`Generated entropy: ${entropyHash} for block @${time}`;
+    logger.trace`Generated entropy: ${entropyHash} for block @${timeSlot}`;
 
     // create the signature for source of entropy
     const entropySource = await bandersnatchVrf.generateSeal(
@@ -147,9 +141,6 @@ export class Generator {
     if (entropySource.isError) {
       throw new Error(`Entropy source generation failed: ${entropySource.error}`);
     }
-
-    // incrementing timeslot for current block
-    const newTimeSlot = tryAsTimeSlot(Number(time / BigInt(this.chainSpec.slotDuration * 1000)));
 
     // retriev data from previous block
     const hasher = new TransitionHasher(this.keccakHasher, this.blake2b);
@@ -178,15 +169,12 @@ export class Generator {
       throw new Error(`Missing state at ${parentHeaderHash}! Make sure DB is initialized.`);
     }
 
-    const slot = tryAsTimeSlot(newTimeSlot);
     const safrole = new Safrole(this.chainSpec, this.blake2b, state);
     const safroleResult = await safrole.blockAuthorshipTransition({
-      entropy: entropyHash,
-      slot,
+      entropy: entropyHash.asOpaque(),
+      slot: timeSlot,
       extrinsic: extrinsic.tickets,
-      epochMarker: null,
       punishSet: state.disputesRecords.punishSet,
-      ticketsMarker: null,
     });
 
     if (safroleResult.isError) {
@@ -198,22 +186,24 @@ export class Generator {
       parentHeaderHash,
       priorStateRoot: await stateRoot,
       extrinsicHash,
-      timeSlotIndex: slot,
+      timeSlotIndex: timeSlot,
       epochMarker: safroleResult.ok.epochMark,
       ticketsMarker: safroleResult.ok.ticketsMark,
       offendersMarker: [],
       bandersnatchBlockAuthorIndex: validatorIndex,
       entropySource: entropySource.ok,
     };
-    const tempHeader = Header.create({
+
+    const unsealedHeader = Header.create({
       ...headerData,
       seal: Bytes.zero(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque(),
     });
+
     const sealResult = await bandersnatchVrf.generateSeal(
       await this.bandersnatch,
       bandersnatchSecret,
       sealPayload,
-      encodeUnsealedHeader(reencodeAsView(Header.Codec, tempHeader, this.chainSpec)),
+      encodeUnsealedHeader(reencodeAsView(Header.Codec, unsealedHeader, this.chainSpec)),
     );
 
     if (sealResult.isError) {

@@ -8,7 +8,6 @@ import {
 } from "@typeberry/block";
 import type { TicketAttempt } from "@typeberry/block/tickets.js";
 import { BytesBlob } from "@typeberry/bytes";
-import type { ChainSpec } from "@typeberry/config";
 import { type BandersnatchKey, type Ed25519Key, initWasm } from "@typeberry/crypto";
 import {
   type BandersnatchSecretSeed,
@@ -20,11 +19,12 @@ import type { BlocksDb, LeafDb, StatesDb } from "@typeberry/database";
 import { Blake2b, keccak } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { tryAsU64 } from "@typeberry/numbers";
+import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import { JAM_FALLBACK_SEAL, JAM_TICKET_SEAL } from "@typeberry/safrole/constants.js";
-import { type SafroleSealingKeys, SafroleSealingKeysKind, type ValidatorData } from "@typeberry/state";
+import { type SafroleSealingKeys, SafroleSealingKeysKind, type State, type ValidatorData } from "@typeberry/state";
 import type { SerializedState } from "@typeberry/state-merkleization";
-import { asOpaqueType, assertNever } from "@typeberry/utils";
+import { asOpaqueType, assertNever, Result } from "@typeberry/utils";
 import type { WorkerConfig } from "@typeberry/workers-api";
 import { type BlockSealInput, Generator } from "./generator.js";
 import type { BlockAuthorshipConfig, GeneratorInternal } from "./protocol.js";
@@ -97,16 +97,9 @@ export async function main(config: Config, comms: GeneratorInternal) {
     return tryAsU64(BigInt(startTimeSlot) * slotDurationMs + timeFromStart + slotDurationMs);
   }
 
-  function getSealingKeyIndex(chainSpec: ChainSpec) {
-    const currentTime = getTime();
-    const slotDurationMs = BigInt(chainSpec.slotDuration * 1000);
-    const currentSlot = Number(currentTime / slotDurationMs);
-    return currentSlot % chainSpec.epochLength;
-  }
-
-  function getKeyForCurrentSlot(sealingKeySeries: SafroleSealingKeys, keys: ValidatorKeys[]) {
+  function getKeyForCurrentSlot(sealingKeySeries: SafroleSealingKeys, keys: ValidatorKeys[], timeSlot: TimeSlot) {
     if (sealingKeySeries.kind === SafroleSealingKeysKind.Keys) {
-      const indexForCurrentSlot = getSealingKeyIndex(chainSpec);
+      const indexForCurrentSlot = timeSlot % sealingKeySeries.keys.length;
       const sealingKey = sealingKeySeries.keys[indexForCurrentSlot];
       return keys.find((x) => x.bandersnatchPublic.isEqualTo(sealingKey)) ?? null;
     }
@@ -144,20 +137,38 @@ export async function main(config: Config, comms: GeneratorInternal) {
     return currentEpoch > lastEpoch;
   }
 
+  async function getSealingKeySeries(isNewEpoch: boolean, timeSlot: TimeSlot, state: State) {
+    if (isNewEpoch) {
+      const safrole = new Safrole(chainSpec, blake2bHasher, state);
+      return await safrole.getSelingKeySeries({
+        entropy: isNewEpoch ? state.entropy[1] : state.entropy[2],
+        slot: timeSlot,
+        punishSet: state.disputesRecords.punishSet,
+      });
+    }
+
+    return Result.ok(state.sealingKeySeries);
+  }
+
   while (!isFinished) {
     const hash = blocks.getBestHeaderHash();
     const state = states.getState(hash);
-    const sealingKeySeries = state?.sealingKeySeries;
     const currentValidatorData = state?.currentValidatorData;
 
-    if (sealingKeySeries === undefined || state === null) {
+    if (state === null) {
       continue;
     }
 
-    const key = getKeyForCurrentSlot(sealingKeySeries, keys);
     const time = getTime();
-    const timeslot = tryAsTimeSlot(Number(time / 1000n / BigInt(chainSpec.slotDuration)));
+    const timeSlot = tryAsTimeSlot(Number(time / 1000n / BigInt(chainSpec.slotDuration)));
     const lastTimeslot = state.timeslot;
+    const isNewEpoch = isEpochChanged(lastTimeslot, timeSlot);
+    const selingKeySeriesResult = await getSealingKeySeries(isNewEpoch, timeSlot, state);
+
+    if (selingKeySeriesResult.isError) {
+      continue;
+    }
+    const key = getKeyForCurrentSlot(selingKeySeriesResult.ok, keys, timeSlot);
 
     if (key !== null && currentValidatorData !== undefined) {
       const validatorIndex = getValidatorIndex(key, currentValidatorData);
@@ -166,9 +177,9 @@ export async function main(config: Config, comms: GeneratorInternal) {
       }
 
       logger.log`Attempting to create a block using key ${key.bandersnatchPublic} located at validator index ${validatorIndex}.`;
-      const entropy = isEpochChanged(lastTimeslot, timeslot) ? state.entropy[2] : state.entropy[3];
-      const sealPayload = getSealPayload(sealingKeySeries, entropy);
-      const newBlock = await generator.nextBlockView(validatorIndex, key.bandersnatchSecret, sealPayload, time);
+      const entropy = isNewEpoch ? state.entropy[2] : state.entropy[3];
+      const sealPayload = getSealPayload(selingKeySeriesResult.ok, entropy);
+      const newBlock = await generator.nextBlockView(validatorIndex, key.bandersnatchSecret, sealPayload, timeSlot);
       counter += 1;
       logger.trace`Sending block ${counter}`;
       await comms.sendBlock(newBlock);

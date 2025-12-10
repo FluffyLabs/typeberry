@@ -500,18 +500,30 @@ export class Safrole {
     };
   }
 
+  async getSelingKeySeries(input: Omit<Input, "epochMarker" | "ticketsMarker" | "extrinsic">) {
+    const validatorKeysResult = await this.getValidatorKeys(input.slot, input.punishSet);
+    if (validatorKeysResult.isError) {
+      return Result.error(validatorKeysResult.error, validatorKeysResult.details);
+    }
+    const { currentValidatorData } = validatorKeysResult.ok;
+    return Result.ok(this.getSlotKeySequence(input.slot, currentValidatorData, input.entropy));
+  }
+
   async blockAuthorshipTransition(
-    input: Omit<Input, "epochMarker | ticketsMarker">,
-  ): Promise<Result<Omit<OkResult, "stateUpdate">, SafroleErrorCode>> {
+    input: Omit<Input, "epochMarker" | "ticketsMarker">,
+  ): Promise<Result<Omit<OkResult, "stateUpdate"> & { sealingKeySeries: SafroleSealingKeys }, SafroleErrorCode>> {
     const validatorKeysResult = await this.getValidatorKeys(input.slot, input.punishSet);
 
     if (validatorKeysResult.isError) {
       return Result.error(validatorKeysResult.error, validatorKeysResult.details);
     }
+    const { currentValidatorData } = validatorKeysResult.ok;
+    const entropy = this.getEntropy(input.slot, input.entropy);
+    const sealingKeySeries = this.getSlotKeySequence(input.slot, currentValidatorData, entropy[2]);
 
     const epochMark = this.getEpochMark(input.slot, validatorKeysResult.ok.nextValidatorData);
     const ticketsMark = this.getTicketsMarker(input.slot);
-    return Result.ok({ epochMark, ticketsMark });
+    return Result.ok({ epochMark, ticketsMark, sealingKeySeries });
   }
 
   async transition(input: Input): Promise<Result<OkResult, SafroleErrorCode>> {

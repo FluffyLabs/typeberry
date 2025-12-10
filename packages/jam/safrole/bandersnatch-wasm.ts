@@ -23,4 +23,8 @@ export class BandernsatchWasm {
   async generateSeal(authorKey: Uint8Array, input: Uint8Array, auxData: Uint8Array) {
     return bandersnatchWasm.generate_seal(authorKey, input, auxData);
   }
+
+  async getVrfOutputHash(authorKey: Uint8Array, input: Uint8Array) {
+    return bandersnatchWasm.vrf_output_hash(authorKey, input);
+  }
 }
