@@ -430,3 +430,64 @@ describe("Codec Descriptors / pair", () => {
     assert.deepStrictEqual(`${encoded}`, "0xdd0400000c68656c6c6f20776f726c6421");
   });
 });
+
+describe("Codec Descriptors / union", () => {
+  enum DataKind {
+    Length = 0,
+    Data = 1,
+  }
+
+  type MemoryData = { kind: DataKind.Length; value: U32 } | { kind: DataKind.Data; value: BytesBlob };
+
+  const MemoryDataCodec = codec.union<DataKind, MemoryData>("MemoryData", {
+    [DataKind.Length]: codec.object({ value: codec.u32 }),
+    [DataKind.Data]: codec.object({ value: codec.blob }),
+  });
+
+  it("should encode/decode union with first variant (Length)", () => {
+    const input: MemoryData = { kind: DataKind.Length, value: tryAsU32(42) };
+
+    const encoded = Encoder.encodeObject(MemoryDataCodec, input);
+    const decoded = Decoder.decodeObject(MemoryDataCodec, encoded);
+
+    assert.deepStrictEqual(decoded, input);
+    // Variant index 0 (varU32) + value 42 (u32)
+    assert.deepStrictEqual(`${encoded}`, "0x002a000000");
+  });
+
+  it("should encode/decode union with second variant (Data)", () => {
+    const input: MemoryData = { kind: DataKind.Data, value: BytesBlob.blobFromString("test") };
+
+    const encoded = Encoder.encodeObject(MemoryDataCodec, input);
+    const decoded = Decoder.decodeObject(MemoryDataCodec, encoded);
+
+    assert.deepStrictEqual(decoded, input);
+    // Variant index 1 (varU32) + length 4 (varU32) + "test"
+    assert.deepStrictEqual(`${encoded}`, "0x010474657374");
+  });
+
+  it("should handle multiple encode/decode cycles", () => {
+    const inputs: MemoryData[] = [
+      { kind: DataKind.Length, value: tryAsU32(100) },
+      { kind: DataKind.Data, value: BytesBlob.blobFromString("hello") },
+      { kind: DataKind.Length, value: tryAsU32(0) },
+      { kind: DataKind.Data, value: BytesBlob.blobFromString("") },
+    ];
+
+    for (const input of inputs) {
+      const encoded = Encoder.encodeObject(MemoryDataCodec, input);
+      const decoded = Decoder.decodeObject(MemoryDataCodec, encoded);
+      assert.deepStrictEqual(decoded, input);
+    }
+  });
+
+  it("should throw on unknown variant index during decode", () => {
+    const encoder = Encoder.create();
+    encoder.varU32(tryAsU32(99)); // Invalid variant index
+
+    const encoded = encoder.viewResult();
+    assert.throws(() => {
+      Decoder.decodeObject(MemoryDataCodec, encoded);
+    }, /Unknown variant index: 99/);
+  });
+});

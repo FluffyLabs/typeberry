@@ -1,4 +1,4 @@
-import { codec, Descriptor, SequenceVarLenOptions, type SequenceView } from "@typeberry/codec";
+import { codec, Descriptor, type SequenceVarLenOptions, type SequenceView } from "@typeberry/codec";
 import { asKnownSize, FixedSizeArray, HashDictionary, type KnownSizeArray } from "@typeberry/collections";
 import { ChainSpec, fullChainSpec } from "@typeberry/config";
 import type { OpaqueHash } from "@typeberry/hash";

@@ -426,6 +426,69 @@ export const custom = <T>(
   skip: (s: Skipper) => void,
 ): Descriptor<T> => Descriptor.new(name, sizeHint, encode, decode, skip);
 
+/**
+ * Descriptor record for union variants.
+ * Each variant can have its own view type, but the union itself won't expose views.
+ */
+type UnionDescriptorRecord<TKind extends number, T extends { kind: TKind }> = {
+  [K in TKind]: Descriptor<Omit<Extract<T, { kind: K }>, "kind">, unknown>;
+};
+
+/** Tagged union type encoding. */
+export const union = <
+  TKind extends number,
+  T extends { kind: TKind },
+  TVariants extends UnionDescriptorRecord<TKind, T> = UnionDescriptorRecord<TKind, T>,
+>(
+  name: string,
+  variants: TVariants,
+): Descriptor<T> => {
+  const keys = Object.keys(variants).map(Number) as TKind[];
+  const variantMap = Object.fromEntries(keys.map((key, idx) => [key, idx]));
+  const indexToKey = Object.fromEntries(keys.map((key, idx) => [idx, key]));
+
+  // Calculate size hint as the minimum variant size + index size
+  const minVariantSize = Math.max(...keys.map((key) => variants[key].sizeHint.bytes));
+  const sizeHint: SizeHint = {
+    bytes: 1 + minVariantSize, // varU32 index + smallest variant
+    isExact: false,
+  };
+
+  const encode = (e: Encoder, x: T) => {
+    const idx = variantMap[x.kind];
+    if (idx === undefined) {
+      throw new Error(`Unknown variant type: ${x.kind} for ${name}`);
+    }
+    e.varU32(tryAsU32(idx));
+    const codec = variants[x.kind];
+    // I'm sorry but I can't figure out a better typing here :)
+    codec.encode(e, x as unknown as Omit<Extract<T, { kind: number }>, "kind">);
+  };
+
+  const decode = (d: Decoder): T => {
+    const idx = d.varU32();
+    const kind = indexToKey[idx];
+    if (kind === undefined) {
+      throw new Error(`Unknown variant index: ${idx} for ${name}`);
+    }
+    const codec = variants[kind];
+    const value = codec.decode(d);
+    return { kind, ...value } as unknown as T;
+  };
+
+  const skip = (s: Skipper) => {
+    const idx = s.decoder.varU32();
+    const kind = indexToKey[idx];
+    if (kind === undefined) {
+      throw new Error(`Unknown variant index: ${idx} for ${name}`);
+    }
+    const codec = variants[kind];
+    codec.skip(s);
+  };
+
+  return Descriptor.new(name, sizeHint, encode, decode, skip);
+};
+
 /** Choose a descriptor depending on the encoding/decoding context. */
 export const select = <T, V = T>(
   {

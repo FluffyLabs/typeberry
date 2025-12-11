@@ -1,14 +1,22 @@
 import { describe, it } from "node:test";
-import { codecPerValidator } from "@typeberry/block";
+import { codecPerValidator, tryAsPerEpochBlock } from "@typeberry/block";
 import { Ticket } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { codec, Decoder } from "@typeberry/codec";
+import { codec, Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";
+import {
+  BANDERSNATCH_KEY_BYTES,
+  BANDERSNATCH_RING_ROOT_BYTES,
+  type BandersnatchKey,
+} from "@typeberry/crypto/bandersnatch.js";
 import { deepEqual } from "@typeberry/utils";
 import { SafroleData, SafroleSealingKeysData } from "./safrole-data.js";
 import { ValidatorData } from "./validator-data.js";
+
+const banderKey = (hex: string): BandersnatchKey => {
+  return Bytes.parseBytes(hex, BANDERSNATCH_KEY_BYTES).asOpaque();
+};
 
 describe("Safrole Data", () => {
   it("should decode safrole data", () => {
@@ -40,6 +48,30 @@ describe("Safrole Data", () => {
         ticketsAccumulator: asKnownSize(ticketsAccumulator),
       }),
     );
+  });
+
+  it("should encode and decode SafroleSealingKeys (keys variant)", () => {
+    const spec = tinyChainSpec;
+    const keys = [
+      banderKey("0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3"),
+      banderKey("0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3"),
+      banderKey("0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3"),
+      banderKey("0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d"),
+      banderKey("0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d"),
+      banderKey("0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3"),
+      banderKey("0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d"),
+      banderKey("0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3"),
+      banderKey("0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0"),
+      banderKey("0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d"),
+      banderKey("0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0"),
+      banderKey("0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3"),
+    ];
+
+    const original = SafroleSealingKeysData.keys(tryAsPerEpochBlock(keys, spec));
+    const encoded = Encoder.encodeObject(SafroleSealingKeysData.Codec, original, spec);
+    const decoded = Decoder.decodeObject(SafroleSealingKeysData.Codec, encoded, spec);
+
+    deepEqual(decoded, original);
   });
 });
 
