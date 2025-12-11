@@ -34,6 +34,7 @@ import {
 import { runWorkItemTest, workItemFromJson } from "./codec/work-item.js";
 import { runWorkPackageTest, workPackageFromJson } from "./codec/work-package.js";
 import { DisputesTest, runDisputesTest } from "./disputes.js";
+import { ed25519TestsFromJson, runEd25519Test } from "./ed25519.js";
 import { EcTest, runEcTest } from "./erasure-coding.js";
 import { PreImagesTest, runPreImagesTest } from "./preimages.js";
 import { PvmTest, runPvmTest } from "./pvm.js";
@@ -75,6 +76,7 @@ export const runners = [
     .fromJson(StateTransition.fromJson)
     .fromBin(StateTransition.Codec)
     .withVariants(pvms),
+  runner("crypto/ed25519", runEd25519Test).fromJson(ed25519TestsFromJson),
 ].map((b) => b.build());
 
 function codecRunners(flavor: "tiny" | "full") {
