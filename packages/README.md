@@ -70,7 +70,7 @@ Worker-related packages for background processing:
 
 - **api** - API worker utilities
 - **api-node** - Node-specific API worker
-- **block-generator** - Block generation worker
+- **block-authorship** - Block generation worker
 - **importer** - Data import worker
 - **jam-network** - JAM network worker
 

@@ -39,6 +39,18 @@ running.catch((e) => {
   process.exit(-1);
 });
 
+function getPortShift(args: Arguments) {
+  if (args.command !== Command.Dev) {
+    return 0;
+  }
+
+  if (args.args.index === "all") {
+    return 1;
+  }
+
+  return args.args.index;
+}
+
 async function prepareConfigFile(
   args: Arguments,
   blake2b: Blake2b,
@@ -48,7 +60,7 @@ async function prepareConfigFile(
   const nodeConfig = loadConfig(args.args.config, withRelPath);
   const nodeName = args.command === Command.Dev ? devNodeName(defaultNodeName, args.args.index) : defaultNodeName;
 
-  const devPortShift = args.command === Command.Dev ? args.args.index : 0;
+  const devPortShift = getPortShift(args);
 
   const devBootnodes =
     args.command === Command.Dev
@@ -118,7 +130,7 @@ async function startNode(args: Arguments, withRelPath: (p: string) => string) {
   return main(jamNodeConfig, withRelPath, telemetry);
 }
 
-function devNodeName(defaultNodeName: string, idx: number) {
+function devNodeName(defaultNodeName: string, idx: number | string) {
   return `${defaultNodeName}-${idx}`;
 }
 

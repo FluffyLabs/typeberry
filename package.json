@@ -59,7 +59,7 @@
     "packages/misc/builder",
     "packages/workers/api",
     "packages/workers/api-node",
-    "packages/workers/block-generator",
+    "packages/workers/block-authorship",
     "packages/workers/importer",
     "packages/workers/jam-network",
     "packages/jam/state-vectors"

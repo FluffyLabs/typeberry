@@ -27,13 +27,13 @@ test("JAM Node network connection", { timeout: TEST_TIMEOUT }, async () => {
   let jamProcess1: ChildProcess | null = null;
   let jamProcess2: ChildProcess | null = null;
   try {
-    jamProcess1 = await start({ devIndex: 2 });
+    jamProcess1 = await start({ devIndex: "all" });
     // introducing some timeout, due to networking issues when started at the same time
     await promises.setTimeout(1_000);
     jamProcess2 = await start({ devIndex: null });
 
     // wait for the dev-mode one to start
-    const proc1 = listenForBestBlocks("dev-2", jamProcess1, () => true);
+    const proc1 = listenForBestBlocks("dev-all", jamProcess1, () => true);
 
     // wait for specific output on the console of the second node (should sync)
     const proc2 = listenForBestBlocks("test", jamProcess2, (blockNum) => blockNum > TARGET_BLOCK);
@@ -88,7 +88,7 @@ async function terminate(jamProcess: ChildProcess | null) {
   }
 }
 
-async function start(options: { devIndex: number | null } = { devIndex: 1 }) {
+async function start(options: { devIndex: number | "all" | null } = { devIndex: "all" }) {
   const args = options.devIndex === null ? ["--", "--config=dev", "--name=test"] : ["dev", `${options.devIndex}`];
   const spawned = spawn("npm", ["start", ...args], {
     cwd: process.cwd(),

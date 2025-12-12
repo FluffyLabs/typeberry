@@ -63,7 +63,7 @@ export type Arguments =
   | CommandArgs<
       Command.Dev,
       SharedOptions & {
-        index: U16;
+        index: U16 | "all";
       }
     >
   | CommandArgs<
@@ -127,13 +127,17 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
     }
     case Command.Dev: {
       const data = parseSharedOptions(args, [DEV_CONFIG]);
-      const index = args._.shift();
-      if (index === undefined) {
+      const indexOrAll = args._.shift();
+      if (indexOrAll === undefined) {
         throw new Error("Missing dev-validator index.");
       }
-      const numIndex = Number(index);
+
+      if (indexOrAll === "all") {
+        return { command: Command.Dev, args: { ...data, index: "all" } };
+      }
+      const numIndex = Number(indexOrAll);
       if (!isU16(numIndex)) {
-        throw new Error(`Invalid dev-validator index: ${numIndex}, need U16`);
+        throw new Error(`Invalid dev-validator index: ${numIndex}, need U16 or "all"`);
       }
       assertNoMoreArgs(args);
       return { command: Command.Dev, args: { ...data, index: numIndex } };

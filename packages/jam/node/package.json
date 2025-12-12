@@ -6,7 +6,7 @@
   "dependencies": {
     "@opentelemetry/api": "1.9.0",
     "@typeberry/block": "*",
-    "@typeberry/block-generator": "*",
+    "@typeberry/block-authorship": "*",
     "@typeberry/block-json": "*",
     "@typeberry/bytes": "*",
     "@typeberry/codec": "*",

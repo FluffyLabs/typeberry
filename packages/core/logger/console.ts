@@ -10,7 +10,7 @@ function print(level: Level, levelAndName: readonly [Level, string], strings: Te
 
   const lvlText = Level[level].padEnd(5);
   const val = strings.map((v, idx) => `${v}${idx < data.length ? data[idx] : ""}`);
-  const msg = `${lvlText} [${levelAndName[1]}] ${val.join("")}`;
+  const msg = `${lvlText} [${levelAndName[1].padStart(8, " ")}] ${val.join("")}`;
   if (level === Level.WARN) {
     console.warn(msg);
   } else if (level === Level.ERROR) {

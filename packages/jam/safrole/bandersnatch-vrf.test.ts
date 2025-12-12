@@ -1,18 +1,21 @@
-import assert from "node:assert";
+import assert, { deepEqual } from "node:assert";
 import { before, describe, it } from "node:test";
 
 import { tryAsValidatorIndex } from "@typeberry/block";
 import { type SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
-import { BANDERSNATCH_KEY_BYTES } from "@typeberry/crypto";
+import { BANDERSNATCH_KEY_BYTES, SEED_SIZE } from "@typeberry/crypto";
 import {
   BANDERSNATCH_PROOF_BYTES,
   BANDERSNATCH_RING_ROOT_BYTES,
+  BANDERSNATCH_VRF_SIGNATURE_BYTES,
   type BandersnatchKey,
   type BandersnatchRingRoot,
 } from "@typeberry/crypto/bandersnatch.js";
+import { deriveBandersnatchPublicKey } from "@typeberry/crypto/key-derivation.js";
 import { HASH_SIZE } from "@typeberry/hash";
+import { Result } from "@typeberry/utils";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm.js";
 
@@ -221,6 +224,73 @@ describe("Bandersnatch verification", () => {
       assert.deepStrictEqual(
         BytesBlob.blobFrom(result).toString(),
         "0x00543054132a05c2710ac8fd0924810d3a8f7b7a7637c31a35cf6a05d54122529f",
+      );
+    });
+  });
+
+  describe("generateSeal", () => {
+    it("should generate a valid seal", async () => {
+      const secretSeed = Bytes.fill(SEED_SIZE, 1).asOpaque();
+      const input = BytesBlob.blobFromString("example input");
+      const auxData = BytesBlob.blobFromString("example aux data");
+      const expectedSeal = Bytes.parseBytes(
+        "0x0b6c772fe61e4e7252722633475c998be3bfcabcda2efff75edaa7c6c889f4df8b487dea89dfbdf086e74c7a3678fed15e5b39eceebf133711c7410ea99d420163f50a95249c087272604395fc694a522ac50a572ac66a4706366a69fda74500",
+        BANDERSNATCH_VRF_SIGNATURE_BYTES,
+      ).asOpaque();
+
+      const result = await bandersnatchVrf.generateSeal(await bandersnatchWasm, secretSeed, input, auxData);
+
+      deepEqual(result, Result.ok(expectedSeal));
+    });
+
+    it("should generate two seals that are the same on first 32 bytes", async () => {
+      const secretSeed = Bytes.fill(SEED_SIZE, 1).asOpaque();
+      const input = BytesBlob.blobFromString("example input");
+      const auxData1 = BytesBlob.blobFromString("example aux data1");
+      const auxData2 = BytesBlob.blobFromString("example aux data2");
+
+      const result1 = await bandersnatchVrf.generateSeal(await bandersnatchWasm, secretSeed, input, auxData1);
+      const result2 = await bandersnatchVrf.generateSeal(await bandersnatchWasm, secretSeed, input, auxData2);
+
+      if (result1.isError || result2.isError) {
+        throw new Error("Seal generation failed");
+      }
+
+      deepEqual(
+        BytesBlob.blobFrom(result1.ok.raw.subarray(0, HASH_SIZE)),
+        BytesBlob.blobFrom(result2.ok.raw.subarray(0, HASH_SIZE)),
+      );
+      assert.notDeepEqual(result1.ok, result2.ok);
+    });
+
+    it("should generate and verify seal", async () => {
+      const secretSeed = Bytes.fill(SEED_SIZE, 1).asOpaque();
+      const pubKey = deriveBandersnatchPublicKey(secretSeed);
+      const input = BytesBlob.blobFromString("example input");
+      const auxData = BytesBlob.blobFromString("example aux data");
+      const expectedSeal = Bytes.parseBytes(
+        "0x0b6c772fe61e4e7252722633475c998be3bfcabcda2efff75edaa7c6c889f4df8b487dea89dfbdf086e74c7a3678fed15e5b39eceebf133711c7410ea99d420163f50a95249c087272604395fc694a522ac50a572ac66a4706366a69fda74500",
+        BANDERSNATCH_VRF_SIGNATURE_BYTES,
+      ).asOpaque();
+
+      const generationResult = await bandersnatchVrf.generateSeal(await bandersnatchWasm, secretSeed, input, auxData);
+
+      deepEqual(generationResult, Result.ok(expectedSeal));
+
+      if (generationResult.isError) {
+        throw new Error("Seal generation failed");
+      }
+      const verificationResult = await bandersnatchVrf.verifySeal(
+        await bandersnatchWasm,
+        pubKey,
+        generationResult.ok,
+        input,
+        auxData,
+      );
+
+      deepEqual(
+        verificationResult,
+        Result.ok(BytesBlob.parseBlob("0x000b0e5c06e70a23d6cfed372763de718b0c21119ea51f7afe1e69b0000de620")),
       );
     });
   });
