@@ -181,7 +181,7 @@ describe("CLI", () => {
         const _args = parse(["dev", "1.5"]);
       },
       {
-        message: "Invalid dev-validator index: 1.5, need U16",
+        message: "Invalid dev-validator index: 1.5, need U16 or \"all\"",
       },
     );
   });
