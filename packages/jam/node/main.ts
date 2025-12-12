@@ -92,8 +92,8 @@ export async function main(
   // 1. load validator keys (bandersnatch, ed25519, bls)
   // 2. allow the validator to specify metadata.
   // 3. if we have validator keys, we should start the authorship module.
-  const maybeIndex = config.nodeName.split("-").reverse()[0];
-  const index = maybeIndex === "all" ? maybeIndex : Number.parseInt(maybeIndex, 10);
+  const maybeIndex = config.nodeName.split("-").reverse()[0] ?? "all";
+  const index = maybeIndex === "all" ? maybeIndex : Number.parseInt(maybeIndex, 10) || "all";
 
   const closeAuthorship = await initAuthorship(
     importer,
