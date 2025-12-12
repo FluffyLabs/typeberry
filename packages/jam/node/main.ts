@@ -92,18 +92,29 @@ export async function main(
   // 1. load validator keys (bandersnatch, ed25519, bls)
   // 2. allow the validator to specify metadata.
   // 3. if we have validator keys, we should start the authorship module.
+  const maybeIndex = config.nodeName.split("-").reverse()[0];
+  const index = maybeIndex === "all" ? maybeIndex : Number.parseInt(maybeIndex, 10);
+
   const closeAuthorship = await initAuthorship(
     importer,
     config.isAuthoring,
     LmdbWorkerConfig.new({
       ...baseConfig,
       workerParams: {
-        keys: Array.from({ length: 6 })
-          .map((_, i) => trivialSeed(tryAsU32(i)))
-          .map((seed) => ({
-            bandersnatch: deriveBandersnatchSecretKey(seed, blake2b),
-            ed25519: deriveEd25519SecretKey(seed, blake2b),
-          })),
+        keys:
+          index === "all"
+            ? Array.from({ length: chainSpec.validatorsCount })
+                .map((_, i) => trivialSeed(tryAsU32(i)))
+                .map((seed) => ({
+                  bandersnatch: deriveBandersnatchSecretKey(seed, blake2b),
+                  ed25519: deriveEd25519SecretKey(seed, blake2b),
+                }))
+            : [
+                {
+                  bandersnatch: deriveBandersnatchSecretKey(trivialSeed(tryAsU32(index)), blake2b),
+                  ed25519: deriveEd25519SecretKey(trivialSeed(tryAsU32(index)), blake2b),
+                },
+              ],
       },
     }),
   );

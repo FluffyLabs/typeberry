@@ -161,8 +161,8 @@ export async function main(config: Config, comms: GeneratorInternal) {
 
     const time = getTime();
     const timeSlot = tryAsTimeSlot(Number(time / 1000n / BigInt(chainSpec.slotDuration)));
-    const lastTimeslot = state.timeslot;
-    const isNewEpoch = isEpochChanged(lastTimeslot, timeSlot);
+    const lastTimeSlot = state.timeslot;
+    const isNewEpoch = isEpochChanged(lastTimeSlot, timeSlot);
     const selingKeySeriesResult = await getSealingKeySeries(isNewEpoch, timeSlot, state);
 
     if (selingKeySeriesResult.isError) {
