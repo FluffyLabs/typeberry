@@ -45,7 +45,7 @@ function getPortShift(args: Arguments) {
   }
 
   if (args.args.index === "all") {
-    return 1;
+    return 0;
   }
 
   return args.args.index;
@@ -87,6 +87,7 @@ async function prepareConfigFile(
       port: devPort(devPortShift),
       bootnodes: devBootnodes.concat(nodeConfig.chainSpec.bootnodes ?? []),
     },
+    devValidatorIndex: args.command === Command.Dev ? args.args.index : null,
   });
 }
 

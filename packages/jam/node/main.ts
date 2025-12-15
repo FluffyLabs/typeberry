@@ -92,8 +92,7 @@ export async function main(
   // 1. load validator keys (bandersnatch, ed25519, bls)
   // 2. allow the validator to specify metadata.
   // 3. if we have validator keys, we should start the authorship module.
-  const maybeIndex = config.nodeName.split("-").reverse()[0] ?? "all";
-  const index = maybeIndex === "all" ? maybeIndex : Number.parseInt(maybeIndex, 10) || "all";
+  const validatorIndex = config.devValidatorIndex ?? "all";
 
   const closeAuthorship = await initAuthorship(
     importer,
@@ -102,7 +101,7 @@ export async function main(
       ...baseConfig,
       workerParams: {
         keys:
-          index === "all"
+          validatorIndex === "all"
             ? Array.from({ length: chainSpec.validatorsCount })
                 .map((_, i) => trivialSeed(tryAsU32(i)))
                 .map((seed) => ({
@@ -111,8 +110,8 @@ export async function main(
                 }))
             : [
                 {
-                  bandersnatch: deriveBandersnatchSecretKey(trivialSeed(tryAsU32(index)), blake2b),
-                  ed25519: deriveEd25519SecretKey(trivialSeed(tryAsU32(index)), blake2b),
+                  bandersnatch: deriveBandersnatchSecretKey(trivialSeed(tryAsU32(validatorIndex)), blake2b),
+                  ed25519: deriveEd25519SecretKey(trivialSeed(tryAsU32(validatorIndex)), blake2b),
                 },
               ],
       },

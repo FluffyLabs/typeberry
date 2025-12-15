@@ -8,6 +8,7 @@ import {
 import type { Bootnode, PvmBackend } from "@typeberry/config";
 import type { NodeConfiguration } from "@typeberry/config-node";
 import type { Ed25519SecretSeed, KeySeed } from "@typeberry/crypto/key-derivation.js";
+import type { U16 } from "@typeberry/numbers";
 
 export const DEFAULT_DEV_CONFIG = {
   genesisPath: "",
@@ -27,6 +28,7 @@ export class JamConfig {
     devConfig = null,
     networkConfig = null,
     ancestry = [],
+    devValidatorIndex = null,
   }: {
     isAuthoring?: boolean;
     nodeName: string;
@@ -35,8 +37,19 @@ export class JamConfig {
     devConfig?: DevConfig | null;
     networkConfig?: NetworkConfig | null;
     ancestry?: [HeaderHash, TimeSlot][];
+    /** Validator index for dev mode authorship. Use "all" to author as all validators. */
+    devValidatorIndex?: U16 | "all" | null;
   }) {
-    return new JamConfig(isAuthoring ?? false, nodeName, nodeConfig, pvmBackend, devConfig, networkConfig, ancestry);
+    return new JamConfig(
+      isAuthoring ?? false,
+      nodeName,
+      nodeConfig,
+      pvmBackend,
+      devConfig,
+      networkConfig,
+      ancestry,
+      devValidatorIndex,
+    );
   }
 
   private constructor(
@@ -54,6 +67,8 @@ export class JamConfig {
     public readonly network: NetworkConfig | null,
     /** Optional pre-genesis ancestry information. */
     public readonly ancestry: [HeaderHash, TimeSlot][],
+    /** Validator index for dev mode authorship. Use "all" to author as all validators. */
+    public readonly devValidatorIndex: U16 | "all" | null,
   ) {}
 }
 
