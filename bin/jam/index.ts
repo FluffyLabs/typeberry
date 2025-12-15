@@ -45,7 +45,7 @@ function getPortShift(args: Arguments) {
   }
 
   if (args.args.index === "all") {
-    return 0;
+    return 1;
   }
 
   return args.args.index;
