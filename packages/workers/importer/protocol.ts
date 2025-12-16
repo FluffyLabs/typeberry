@@ -80,7 +80,6 @@ export type ImporterApi = Api<typeof protocol>;
 
 export class ImporterConfig {
   static Codec = codec.Class(ImporterConfig, {
-    omitSealVerification: codec.bool,
     pvm: codec.u8.convert(
       (i) => tryAsU8(i),
       (o) => {
@@ -95,12 +94,9 @@ export class ImporterConfig {
     ),
   });
 
-  static create({ omitSealVerification, pvm }: CodecRecord<ImporterConfig>) {
-    return new ImporterConfig(omitSealVerification, pvm);
+  static create({ pvm }: CodecRecord<ImporterConfig>) {
+    return new ImporterConfig(pvm);
   }
 
-  private constructor(
-    public readonly omitSealVerification: boolean,
-    public readonly pvm: PvmBackend,
-  ) {}
+  private constructor(public readonly pvm: PvmBackend) {}
 }

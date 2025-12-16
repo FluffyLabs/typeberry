@@ -1,10 +1,10 @@
 {
-  "name": "@typeberry/block-generator",
-  "version": "0.5.0",
+  "name": "@typeberry/block-authorship",
+  "version": "0.4.0",
   "description": "A test block generator simulating blocks received over the network.",
   "main": "index.ts",
   "dependencies": {
-    "@opentelemetry/api": "1.9.0",
+    "@opentelemetry/api": "^1.9.0",
     "@typeberry/block": "*",
     "@typeberry/bytes": "*",
     "@typeberry/codec": "*",
@@ -14,6 +14,9 @@
     "@typeberry/database": "*",
     "@typeberry/hash": "*",
     "@typeberry/logger": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/safrole": "*",
+    "@typeberry/state": "*",
     "@typeberry/state-merkleization": "*",
     "@typeberry/telemetry": "*",
     "@typeberry/transition": "*",

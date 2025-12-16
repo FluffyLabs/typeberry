@@ -31,7 +31,7 @@ $BUILD ./bin/jam/index.ts -o $DIST_FOLDER
 # Build all workers separately and then the main binary
 $BUILD ./packages/workers/importer/index.ts -o $DIST_FOLDER/importer
 $BUILD ./packages/workers/jam-network/index.ts -o $DIST_FOLDER/jam-network
-$BUILD ./packages/workers/block-generator/index.ts -o $DIST_FOLDER/block-generator
+$BUILD ./packages/workers/block-authorship/index.ts -o $DIST_FOLDER/block-authorship
 
 # copy some files that should be there
 cp ./LICENSE $DIST_FOLDER/
@@ -50,7 +50,7 @@ rm *.mjs || true
 mv index.js bootstrap-network.mjs
 mv index.js.map bootstrap-network.mjs.map
 mv * ../
-cd ../block-generator
+cd ../block-authorship
 rm *.mjs || true
 mv index.js bootstrap-generator.mjs
 mv index.js.map bootstrap-generator.mjs.map
