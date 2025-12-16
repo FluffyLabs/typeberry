@@ -22,7 +22,6 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
   const nodeName = config.nodeName;
-  const omitSealVerification = false;
 
   const { dbPath, genesisHeaderHash } = getDatabasePath(
     blake2b,
@@ -39,7 +38,6 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
           blake2b,
           workerParams: {
             pvm: config.pvmBackend,
-            omitSealVerification,
           },
         })
       : LmdbWorkerConfig.new({
@@ -49,7 +47,6 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
           dbPath,
           workerParams: {
             pvm: config.pvmBackend,
-            omitSealVerification,
           },
         });
 
@@ -65,7 +62,7 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
   const api: NodeApi = {
     chainSpec,
     async importBlock(block: BlockView): Promise<Result<StateRootHash, string>> {
-      const res = await importer.importBlockWithStateRoot(block, omitSealVerification);
+      const res = await importer.importBlockWithStateRoot(block);
       if (res.isOk) {
         return res;
       }

@@ -1,5 +1,4 @@
-import * as blockGenerator from "@typeberry/block-generator";
-import { codec } from "@typeberry/codec";
+import * as blockAuthorship from "@typeberry/block-authorship";
 import type { BlocksDb, LeafDb, StatesDb } from "@typeberry/database";
 import * as importer from "@typeberry/importer";
 import * as jamNetwork from "@typeberry/jam-network";
@@ -77,8 +76,13 @@ export async function startNetwork(
   };
 }
 
-export async function spawnBlockGeneratorWorker(config: LmdbWorkerConfig) {
-  const { api, workerFinished } = spawnWorker(blockGenerator.protocol, blockGenerator.WORKER, config, codec.nothing);
+export async function spawnBlockGeneratorWorker(config: LmdbWorkerConfig<blockAuthorship.BlockAuthorshipConfig>) {
+  const { api, workerFinished } = spawnWorker(
+    blockAuthorship.protocol,
+    blockAuthorship.WORKER,
+    config,
+    blockAuthorship.BlockAuthorshipConfig.Codec,
+  );
 
   return {
     generator: api,
@@ -90,9 +94,11 @@ export async function spawnBlockGeneratorWorker(config: LmdbWorkerConfig) {
   };
 }
 
-export async function startBlockGenerator(config: DirectWorkerConfig): ReturnType<typeof spawnBlockGeneratorWorker> {
-  const { api, internal } = startSameThread(blockGenerator.protocol);
-  const finish = blockGenerator.main(config, internal);
+export async function startBlockGenerator(
+  config: DirectWorkerConfig<blockAuthorship.BlockAuthorshipConfig>,
+): ReturnType<typeof spawnBlockGeneratorWorker> {
+  const { api, internal } = startSameThread(blockAuthorship.protocol);
+  const finish = blockAuthorship.main(config, internal);
 
   return {
     generator: api,

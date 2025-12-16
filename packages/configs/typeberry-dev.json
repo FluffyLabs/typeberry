@@ -2,9 +2,7 @@
   "$schema": "https://fluffylabs.dev/typeberry/schemas/config-v1.schema.json",
   "version": 1,
   "flavor": "tiny",
-  "authorship": {
-    "omit_seal_verification": true
-  },
+  "authorship": {},
   "chain_spec": {
     "id": "typeberry-dev",
     "bootnodes": ["eyonydqt7gj7bjdek62lwdeuxdzr5q7nmxa2p5zwwtoijgamdnkka@127.0.0.1:12345"],

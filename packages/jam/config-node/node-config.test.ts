@@ -29,9 +29,7 @@ const NODE_CONFIG_TEST = {
     },
   },
   database_base_path: "/tmp/jam-node-db",
-  authorship: {
-    omit_seal_verification: true,
-  },
+  authorship: {},
 };
 
 describe("Importing Node Configuration", () => {
@@ -57,10 +55,6 @@ describe("Importing Node Configuration", () => {
     assert.deepStrictEqual(config.chainSpec.id, "testnet");
     assert(config.chainSpec.bootnodes !== undefined);
     assert.deepStrictEqual(config.chainSpec.bootnodes.length, 2);
-  });
-
-  it("should read the authorship options", () => {
-    assert.deepStrictEqual(config.authorship.omitSealVerification, true);
   });
 });
 

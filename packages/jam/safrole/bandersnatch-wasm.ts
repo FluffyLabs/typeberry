@@ -19,4 +19,12 @@ export class BandernsatchWasm {
   async batchVerifyTicket(ringSize: number, commitment: Uint8Array, ticketsData: Uint8Array, contextLength: number) {
     return bandersnatchWasm.batch_verify_tickets(ringSize, commitment, ticketsData, contextLength);
   }
+
+  async generateSeal(authorKey: Uint8Array, input: Uint8Array, auxData: Uint8Array) {
+    return bandersnatchWasm.generate_seal(authorKey, input, auxData);
+  }
+
+  async getVrfOutputHash(authorKey: Uint8Array, input: Uint8Array) {
+    return bandersnatchWasm.vrf_output_hash(authorKey, input);
+  }
 }

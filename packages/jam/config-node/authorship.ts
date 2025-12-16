@@ -3,19 +3,11 @@ import { json } from "@typeberry/json-parser";
 
 /** Block authorship options. */
 export class AuthorshipOptions {
-  static fromJson = json.object<JsonObject<AuthorshipOptions>, AuthorshipOptions>(
-    {
-      omit_seal_verification: "boolean",
-    },
-    AuthorshipOptions.new,
-  );
+  static fromJson = json.object<JsonObject<AuthorshipOptions>, AuthorshipOptions>({}, AuthorshipOptions.new);
 
-  static new({ omit_seal_verification }: JsonObject<AuthorshipOptions>) {
-    return new AuthorshipOptions(omit_seal_verification);
+  static new() {
+    return new AuthorshipOptions();
   }
 
-  private constructor(
-    /** Use fake seal verification instead of running bandersnatch. */
-    public readonly omitSealVerification: boolean,
-  ) {}
+  private constructor() {}
 }

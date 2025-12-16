@@ -70,28 +70,22 @@ export class Importer {
   }
 
   // TODO [ToDr] import block and get state root
-  public async importBlockWithStateRoot(
-    block: BlockView,
-    omitSealVerification: boolean,
-  ): Promise<Result<StateRootHash, ImporterError>> {
-    const res = await this.importBlock(block, omitSealVerification);
+  public async importBlockWithStateRoot(block: BlockView): Promise<Result<StateRootHash, ImporterError>> {
+    const res = await this.importBlock(block);
     if (res.isOk) {
       return Result.ok(this.state.backend.getStateRoot(this.hasher.blake2b));
     }
     return res;
   }
 
-  public async importBlock(
-    block: BlockView,
-    omitSealVerification: boolean,
-  ): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
+  public async importBlock(block: BlockView): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
     const timer = measure("importBlock");
     const timeSlot = extractTimeSlot(block);
 
     this.metrics.recordBlockImportingStarted(timeSlot);
 
     const startTime = now();
-    const maybeBestHeader = await this.importBlockInternal(block, omitSealVerification);
+    const maybeBestHeader = await this.importBlockInternal(block);
     const duration = now() - startTime;
 
     if (maybeBestHeader.isOk) {
@@ -110,7 +104,6 @@ export class Importer {
 
   private async importBlockInternal(
     block: BlockView,
-    omitSealVerification = false,
   ): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
     const logger = this.logger;
     logger.log`🧱 Attempting to import a new block`;
@@ -150,7 +143,7 @@ export class Importer {
     logger.log`🧱 Verified block: Got hash ${headerHash} for block at slot ${timeSlot}.`;
     const timerStf = measure("import:stf");
     const stfStart = now();
-    const res = await this.stf.transition(block, headerHash, omitSealVerification);
+    const res = await this.stf.transition(block, headerHash);
     const stfDuration = now() - stfStart;
     logger.log`${timerStf()}`;
     if (res.isError) {
