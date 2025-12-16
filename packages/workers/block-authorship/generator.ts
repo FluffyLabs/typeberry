@@ -2,7 +2,6 @@ import {
   Block,
   encodeUnsealedHeader,
   Header,
-  type HeaderHash,
   reencodeAsView,
   type TimeSlot,
   type ValidatorIndex,
@@ -19,7 +18,6 @@ import { Safrole } from "@typeberry/safrole";
 import bandersnatchVrf, { type VrfOutputHash } from "@typeberry/safrole/bandersnatch-vrf.js";
 import type { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import { JAM_ENTROPY } from "@typeberry/safrole/constants.js";
-import type { State } from "@typeberry/state";
 import { TransitionHasher } from "@typeberry/transition";
 import { asOpaqueType, type Opaque, Result } from "@typeberry/utils";
 
@@ -38,9 +36,6 @@ const logger = Logger.new(import.meta.filename, "author");
 export type BlockSealInput = Opaque<BytesBlob, "Seal">;
 
 export class Generator {
-  private lastHeaderHash: HeaderHash;
-  private lastState: State;
-
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly bandersnatch: BandernsatchWasm,
@@ -48,31 +43,16 @@ export class Generator {
     public readonly blake2b: Blake2b,
     private readonly blocks: BlocksDb,
     private readonly states: StatesDb,
-  ) {
-    const { lastHeaderHash, lastState } = Generator.getLastHeaderAndState(blocks, states);
-    this.lastHeaderHash = lastHeaderHash;
-    this.lastState = lastState;
-  }
+  ) {}
 
-  private refreshLastHeaderAndState(): void {
-    const { lastHeaderHash, lastState } = Generator.getLastHeaderAndState(this.blocks, this.states);
-    this.lastHeaderHash = lastHeaderHash;
-    this.lastState = lastState;
-  }
-
-  private static getLastHeaderAndState(blocks: BlocksDb, states: StatesDb) {
-    const headerHash = blocks.getBestHeaderHash();
-    const lastHeader = blocks.getHeader(headerHash)?.materialize() ?? null;
-    const lastState = states.getState(headerHash);
-    if (lastHeader === null) {
-      throw new Error(`Missing best header: ${headerHash}! Make sure DB is initialized.`);
-    }
+  private getLastHeaderAndState() {
+    const headerHash = this.blocks.getBestHeaderHash();
+    const lastState = this.states.getState(headerHash);
     if (lastState === null) {
       throw new Error(`Missing last state at ${headerHash}! Make sure DB is initialized.`);
     }
     return {
       lastHeaderHash: headerHash,
-      lastHeader,
       lastState,
     };
   }
@@ -121,7 +101,7 @@ export class Generator {
     timeSlot: TimeSlot,
   ) {
     // fetch latest data from the db.
-    this.refreshLastHeaderAndState();
+    const { lastHeaderHash, lastState } = this.getLastHeaderAndState();
 
     // generate entropy hash first (NOTE this might be coming from a ticket)
     const entropyHashRes = await this.getEntropyHash(sealPayload, bandersnatchSecret);
@@ -142,10 +122,9 @@ export class Generator {
       throw new Error(`Entropy source generation failed: ${entropySource.error}`);
     }
 
-    // retriev data from previous block
+    // retrieve data from previous block
     const hasher = new TransitionHasher(this.keccakHasher, this.blake2b);
-    const parentHeaderHash = this.lastHeaderHash;
-    const stateRoot = this.states.getStateRoot(this.lastState);
+    const stateRoot = this.states.getStateRoot(lastState);
 
     // TODO create extrinsic
     const extrinsic = Extrinsic.create({
@@ -163,18 +142,12 @@ export class Generator {
     const extrinsicView = reencodeAsView(Extrinsic.Codec, extrinsic, this.chainSpec);
     const extrinsicHash = hasher.extrinsic(extrinsicView).hash;
 
-    const state = this.states.getState(parentHeaderHash);
-
-    if (state === null) {
-      throw new Error(`Missing state at ${parentHeaderHash}! Make sure DB is initialized.`);
-    }
-
-    const safrole = new Safrole(this.chainSpec, this.blake2b, state);
+    const safrole = new Safrole(this.chainSpec, this.blake2b, lastState);
     const safroleResult = await safrole.blockAuthorshipTransition({
       entropy: entropyHash.asOpaque(),
       slot: timeSlot,
       extrinsic: extrinsic.tickets,
-      punishSet: state.disputesRecords.punishSet,
+      punishSet: lastState.disputesRecords.punishSet,
     });
 
     if (safroleResult.isError) {
@@ -183,7 +156,7 @@ export class Generator {
 
     // create header
     const headerData = {
-      parentHeaderHash,
+      parentHeaderHash: lastHeaderHash,
       priorStateRoot: await stateRoot,
       extrinsicHash,
       timeSlotIndex: timeSlot,
@@ -213,8 +186,6 @@ export class Generator {
       ...headerData,
       seal: sealResult.ok,
     });
-    const headerViewWithSeal = reencodeAsView(Header.Codec, header, this.chainSpec);
-    this.lastHeaderHash = hasher.header(headerViewWithSeal).hash;
 
     return Block.create({ header, extrinsic });
   }
