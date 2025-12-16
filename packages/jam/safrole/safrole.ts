@@ -500,7 +500,9 @@ export class Safrole {
     };
   }
 
-  async getSealingKeySeries(input: Omit<Input, "epochMarker" | "ticketsMarker" | "extrinsic">) {
+  async getSealingKeySeries(
+    input: Omit<Input, "epochMarker" | "ticketsMarker" | "extrinsic">,
+  ): Promise<Result<SafroleSealingKeys, typeof SafroleErrorCode.IncorrectData>> {
     const validatorKeysResult = await this.getValidatorKeys(input.slot, input.punishSet);
     if (validatorKeysResult.isError) {
       return Result.error(validatorKeysResult.error, validatorKeysResult.details);

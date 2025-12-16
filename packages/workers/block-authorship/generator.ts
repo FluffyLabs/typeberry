@@ -43,7 +43,7 @@ export class Generator {
 
   constructor(
     public readonly chainSpec: ChainSpec,
-    public readonly bandersnatch: Promise<BandernsatchWasm>,
+    public readonly bandersnatch: BandernsatchWasm,
     public readonly keccakHasher: keccak.KeccakHasher,
     public readonly blake2b: Blake2b,
     private readonly blocks: BlocksDb,
@@ -102,7 +102,7 @@ export class Generator {
     bandersnatchSecret: BandersnatchSecretSeed,
   ): Promise<Result<VrfOutputHash, null>> {
     const entropyHashResult = await bandersnatchVrf.getVrfOutputHash(
-      await this.bandersnatch,
+      this.bandersnatch,
       bandersnatchSecret,
       sealPayload,
     );
@@ -133,7 +133,7 @@ export class Generator {
 
     // create the signature for source of entropy
     const entropySource = await bandersnatchVrf.generateSeal(
-      await this.bandersnatch,
+      this.bandersnatch,
       bandersnatchSecret,
       BytesBlob.blobFromParts([JAM_ENTROPY, entropyHash.raw]),
       EMPTY_AUX_DATA,
@@ -200,7 +200,7 @@ export class Generator {
     });
 
     const sealResult = await bandersnatchVrf.generateSeal(
-      await this.bandersnatch,
+      this.bandersnatch,
       bandersnatchSecret,
       sealPayload,
       encodeUnsealedHeader(reencodeAsView(Header.Codec, unsealedHeader, this.chainSpec)),

@@ -65,19 +65,14 @@ export async function main(config: Config, comms: GeneratorInternal) {
   // Generate blocks until the close signal is received.
   let counter = 0;
   const blake2bHasher = await Blake2b.createHasher();
-  const bandersnatch = BandernsatchWasm.new();
+  const bandersnatch = await BandernsatchWasm.new();
+  const keccakHasher = await keccak.KeccakHasher.create();
 
   const hash = blocks.getBestHeaderHash();
   const startTime = tryAsU64(process.hrtime.bigint() / 1_000_000n);
   const startTimeSlot = states.getState(hash)?.timeslot ?? tryAsTimeSlot(0);
-  const generator = new Generator(
-    chainSpec,
-    bandersnatch,
-    await keccak.KeccakHasher.create(),
-    blake2bHasher,
-    blocks,
-    states,
-  );
+
+  const generator = new Generator(chainSpec, bandersnatch, keccakHasher, blake2bHasher, blocks, states);
 
   const keys = await Promise.all(
     config.workerParams.keys.map(async (secrets) => ({
