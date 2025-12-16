@@ -251,16 +251,14 @@ function blocksSeq({ start, end = start }: { start: number; end?: number }) {
 function createTestBlock(
   options: { parentHash?: HeaderHash; timeSlot?: TimeSlot; stateRoot?: StateRootHash } = {},
 ): WithHash<HeaderHash, Block> {
-  const block = testBlockView().materialize();
-  if (options.parentHash !== undefined) {
-    block.header.parentHeaderHash = options.parentHash;
-  }
-  if (options.timeSlot !== undefined) {
-    block.header.timeSlotIndex = options.timeSlot;
-  }
-  if (options.stateRoot !== undefined) {
-    block.header.priorStateRoot = options.stateRoot;
-  }
+  const baseBlock = testBlockView().materialize();
+  const header = Header.create({
+    ...baseBlock.header,
+    parentHeaderHash: options.parentHash ?? baseBlock.header.parentHeaderHash,
+    timeSlotIndex: options.timeSlot ?? baseBlock.header.timeSlotIndex,
+    priorStateRoot: options.stateRoot ?? baseBlock.header.priorStateRoot,
+  });
+  const block = Block.create({ ...baseBlock, header });
   const view = toBlockView(block);
   const headerHash = blake2b.hashBytes(view.header.encoded());
   return new WithHash(headerHash.asOpaque<HeaderHash>(), block);
