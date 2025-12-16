@@ -117,7 +117,7 @@ export class StateEntries {
 }
 
 /** https://graypaper.fluffylabs.dev/#/68eaa1f/38a50038a500?v=0.6.4 */
-function convertInMemoryStateToDictionary(
+export function convertInMemoryStateToDictionary(
   spec: ChainSpec,
   blake2b: Blake2b,
   state: InMemoryState,
