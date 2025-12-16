@@ -140,8 +140,8 @@ export async function main(config: Config, comms: GeneratorInternal) {
   async function getSealingKeySeries(isNewEpoch: boolean, timeSlot: TimeSlot, state: State) {
     if (isNewEpoch) {
       const safrole = new Safrole(chainSpec, blake2bHasher, state);
-      return await safrole.getSelingKeySeries({
-        entropy: isNewEpoch ? state.entropy[1] : state.entropy[2],
+      return await safrole.getSealingKeySeries({
+        entropy: state.entropy[1],
         slot: timeSlot,
         punishSet: state.disputesRecords.punishSet,
       });
@@ -160,6 +160,7 @@ export async function main(config: Config, comms: GeneratorInternal) {
     }
 
     const time = getTime();
+    /** Assuming `slotDuration` is 6 sec it is safe till year 2786. If `slotDuration` is 1 sec then it is safe till 2106   */
     const timeSlot = tryAsTimeSlot(Number(time / 1000n / BigInt(chainSpec.slotDuration)));
     const lastTimeSlot = state.timeslot;
     const isNewEpoch = isEpochChanged(lastTimeSlot, timeSlot);

@@ -500,7 +500,7 @@ export class Safrole {
     };
   }
 
-  async getSelingKeySeries(input: Omit<Input, "epochMarker" | "ticketsMarker" | "extrinsic">) {
+  async getSealingKeySeries(input: Omit<Input, "epochMarker" | "ticketsMarker" | "extrinsic">) {
     const validatorKeysResult = await this.getValidatorKeys(input.slot, input.punishSet);
     if (validatorKeysResult.isError) {
       return Result.error(validatorKeysResult.error, validatorKeysResult.details);
