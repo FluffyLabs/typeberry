@@ -30,7 +30,7 @@ export class StateEntries {
         bytes: TYPICAL_STATE_ITEMS * (HASH_SIZE + TYPICAL_STATE_ITEM_LEN),
       },
     },
-    (e, v) => stateEntriesSequenceCodec.encode(e, Array.from(v.entries)),
+    (e, v) => stateEntriesSequenceCodec.encode(e, Array.from(v.dictionary)),
     (d) => StateEntries.fromEntriesUnsafe(stateEntriesSequenceCodec.decode(d)),
     (s) => stateEntriesSequenceCodec.skip(s),
   );
@@ -62,17 +62,32 @@ export class StateEntries {
     return new StateEntries(TruncatedHashDictionary.fromEntries(entries));
   }
 
-  private constructor(private readonly entries: TruncatedHashDictionary<StateKey, BytesBlob>) {}
+  private constructor(private readonly dictionary: TruncatedHashDictionary<StateKey, BytesBlob>) {}
 
   /** When comparing, we can safely ignore `trieCache` and just use entries. */
   [TEST_COMPARE_USING]() {
-    return Object.fromEntries(this.entries);
+    return Object.fromEntries(this.dictionary);
+  }
+
+  /** Iterator over entries */
+  entries(): Generator<[TruncatedHash, BytesBlob]> {
+    return this.dictionary.entries();
+  }
+
+  /** Iterator over entries keys */
+  *keys(): Generator<TruncatedHash> {
+    yield* this.dictionary.keys();
+  }
+
+  /** Iterator over entries values */
+  *values(): Generator<BytesBlob> {
+    yield* this.dictionary.values();
   }
 
   /** Dump state entries to JSON string (format compatible with stf vectors). */
   toString() {
     return JSON.stringify(
-      Array.from(this.entries.entries()).map(([key, value]) => ({
+      Array.from(this.entries()).map(([key, value]) => ({
         key,
         value,
       })),
@@ -82,21 +97,21 @@ export class StateEntries {
   }
 
   [Symbol.iterator]() {
-    return this.entries[Symbol.iterator]();
+    return this.dictionary[Symbol.iterator]();
   }
 
   /** Retrieve value of some serialized key (if present). */
   get(key: StateKey): BytesBlob | null {
-    return this.entries.get(key) ?? null;
+    return this.dictionary.get(key) ?? null;
   }
 
   /** Modify underlying entries dictionary with given update. */
   applyUpdate(stateEntriesUpdate: Iterable<StateEntryUpdate>) {
     for (const [action, key, value] of stateEntriesUpdate) {
       if (action === StateEntryUpdateAction.Insert) {
-        this.entries.set(key, value);
+        this.dictionary.set(key, value);
       } else if (action === StateEntryUpdateAction.Remove) {
-        this.entries.delete(key);
+        this.dictionary.delete(key);
       } else {
         assertNever(action);
       }
