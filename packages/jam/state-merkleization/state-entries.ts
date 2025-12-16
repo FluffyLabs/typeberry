@@ -30,7 +30,7 @@ export class StateEntries {
         bytes: TYPICAL_STATE_ITEMS * (HASH_SIZE + TYPICAL_STATE_ITEM_LEN),
       },
     },
-    (e, v) => stateEntriesSequenceCodec.encode(e, Array.from(v.entries)),
+    (e, v) => stateEntriesSequenceCodec.encode(e, Array.from(v.stateEntries)),
     (d) => StateEntries.fromEntriesUnsafe(stateEntriesSequenceCodec.decode(d)),
     (s) => stateEntriesSequenceCodec.skip(s),
   );
@@ -62,42 +62,56 @@ export class StateEntries {
     return new StateEntries(TruncatedHashDictionary.fromEntries(entries));
   }
 
-  private constructor(private readonly entries: TruncatedHashDictionary<StateKey, BytesBlob>) {}
+  private constructor(private readonly stateEntries: TruncatedHashDictionary<StateKey, BytesBlob>) {}
 
   /** When comparing, we can safely ignore `trieCache` and just use entries. */
   [TEST_COMPARE_USING]() {
-    return Object.fromEntries(this.entries);
+    return Object.fromEntries(this.stateEntries);
   }
 
-  /** Dump state entries */
-  getEntries() {
-    return Array.from(this.entries.entries()).map(([key, value]) => ({
-      key,
-      value,
-    }));
+  /** Iterator over entries */
+  *entries(): Generator<[TruncatedHash, BytesBlob]> {
+    yield* this.stateEntries.entries();
+  }
+
+  /** Iterator over entries keys */
+  *keys(): Generator<TruncatedHash> {
+    yield* this.stateEntries.keys();
+  }
+
+  /** Iterator over entries values */
+  *values(): Generator<BytesBlob> {
+    yield* this.stateEntries.values();
   }
 
   /** Dump state entries to JSON string (format compatible with stf vectors). */
   toString() {
-    return JSON.stringify(this.getEntries(), null, 2);
+    return JSON.stringify(
+      Array.from(this.stateEntries.entries()).map(([key, value]) => ({
+        key,
+        value,
+      })),
+      null,
+      2,
+    );
   }
 
   [Symbol.iterator]() {
-    return this.entries[Symbol.iterator]();
+    return this.stateEntries[Symbol.iterator]();
   }
 
   /** Retrieve value of some serialized key (if present). */
   get(key: StateKey): BytesBlob | null {
-    return this.entries.get(key) ?? null;
+    return this.stateEntries.get(key) ?? null;
   }
 
   /** Modify underlying entries dictionary with given update. */
   applyUpdate(stateEntriesUpdate: Iterable<StateEntryUpdate>) {
     for (const [action, key, value] of stateEntriesUpdate) {
       if (action === StateEntryUpdateAction.Insert) {
-        this.entries.set(key, value);
+        this.stateEntries.set(key, value);
       } else if (action === StateEntryUpdateAction.Remove) {
-        this.entries.delete(key);
+        this.stateEntries.delete(key);
       } else {
         assertNever(action);
       }
@@ -117,7 +131,7 @@ export class StateEntries {
 }
 
 /** https://graypaper.fluffylabs.dev/#/68eaa1f/38a50038a500?v=0.6.4 */
-export function convertInMemoryStateToDictionary(
+function convertInMemoryStateToDictionary(
   spec: ChainSpec,
   blake2b: Blake2b,
   state: InMemoryState,
