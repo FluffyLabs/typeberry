@@ -127,8 +127,6 @@ export class Header extends WithDebug {
     return Object.assign(Header.empty(), h);
   }
 
-  // TODO [ToDr] the fields should be readonly
-
   /**
    * `H_p`: Hash of the parent header.
    *
