@@ -70,8 +70,8 @@ export class StateEntries {
   }
 
   /** Iterator over entries */
-  *entries(): Generator<[TruncatedHash, BytesBlob]> {
-    yield* this.stateEntries.entries();
+  entries(): Generator<[TruncatedHash, BytesBlob]> {
+     return this.stateEntries.entries();
   }
 
   /** Iterator over entries keys */
