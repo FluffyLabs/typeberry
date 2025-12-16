@@ -90,20 +90,22 @@ export const headerFromJson = json.object<JsonHeader, Header>(
     entropy_source,
     seal,
   }) => {
-    const header = Header.empty();
-    header.parentHeaderHash = parent;
-    header.priorStateRoot = parent_state_root;
-    header.extrinsicHash = extrinsic_hash;
-    header.timeSlotIndex = slot;
-    header.epochMarker = epoch_mark ?? null;
-    header.ticketsMarker =
+    const epochMarker = epoch_mark ?? null;
+    const ticketsMarker =
       tickets_mark === undefined || tickets_mark === null
         ? null
         : TicketsMarker.create({ tickets: asOpaqueType(tickets_mark) });
-    header.offendersMarker = offenders_mark;
-    header.bandersnatchBlockAuthorIndex = author_index;
-    header.entropySource = entropy_source;
-    header.seal = seal;
-    return header;
+    return Header.create({
+      parentHeaderHash: parent,
+      priorStateRoot: parent_state_root,
+      extrinsicHash: extrinsic_hash,
+      timeSlotIndex: slot,
+      epochMarker,
+      ticketsMarker,
+      offendersMarker: offenders_mark,
+      bandersnatchBlockAuthorIndex: author_index,
+      entropySource: entropy_source,
+      seal,
+    });
   },
 );

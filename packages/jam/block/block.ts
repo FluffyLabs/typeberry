@@ -93,8 +93,8 @@ export class Block extends WithDebug {
 export type BlockView = DescribedBy<typeof Block.Codec.View>;
 
 export function emptyBlock(slot: TimeSlot = tryAsTimeSlot(0)) {
-  const header = Header.empty();
-  header.timeSlotIndex = slot;
+  const header = Header.create({ ...Header.empty(), timeSlotIndex: slot });
+
   return Block.create({
     header,
     extrinsic: Extrinsic.create({
