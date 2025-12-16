@@ -87,7 +87,7 @@ export class StateEntries {
   /** Dump state entries to JSON string (format compatible with stf vectors). */
   toString() {
     return JSON.stringify(
-      Array.from(this.dictionary.entries()).map(([key, value]) => ({
+      Array.from(this.entries()).map(([key, value]) => ({
         key,
         value,
       })),
