@@ -18,7 +18,7 @@
     "@typeberry/safrole": "*",
     "@typeberry/state": "*",
     "@typeberry/state-merkleization": "*",
-    "@typeberry/telemetry": "^0.5.0",
+    "@typeberry/telemetry": "*",
     "@typeberry/transition": "*",
     "@typeberry/utils": "*",
     "@typeberry/workers-api": "*",
