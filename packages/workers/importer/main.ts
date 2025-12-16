@@ -44,10 +44,6 @@ export async function main(config: Config, comms: ImporterInternal) {
   const wasmPromise = initWasm();
   logger.info`📥 Importer starting`;
 
-  const { omitSealVerification } = config.workerParams;
-  if (omitSealVerification) {
-    logger.warn`⚠️  WARNING: running without seal verification! Use only for dev stuff!⚠️ `;
-  }
   const { importer, db } = await createImporter(config);
 
   const finishPromise = new Promise<void>((resolve) => {
@@ -55,7 +51,7 @@ export async function main(config: Config, comms: ImporterInternal) {
   });
 
   comms.setOnImportBlock(async (block) => {
-    const res = await importer.importBlock(block, omitSealVerification);
+    const res = await importer.importBlock(block);
     if (res.isError) {
       const errMsg = resultToString(res);
       return Result.error(errMsg, () => errMsg);

@@ -94,16 +94,18 @@ export async function spawnBlockGeneratorWorker(config: LmdbWorkerConfig<blockAu
   };
 }
 
-// export async function startBlockGenerator(config: DirectWorkerConfig): ReturnType<typeof spawnBlockGeneratorWorker> {
-//   const { api, internal } = startSameThread(blockGenerator.protocol);
-//   const finish = blockGenerator.main(config, internal);
+export async function startBlockGenerator(
+  config: DirectWorkerConfig<blockAuthorship.BlockAuthorshipConfig>,
+): ReturnType<typeof spawnBlockGeneratorWorker> {
+  const { api, internal } = startSameThread(blockAuthorship.protocol);
+  const finish = blockAuthorship.main(config, internal);
 
-//   return {
-//     generator: api,
-//     finish: async () => {
-//       await api.sendFinish();
-//       api.destroy();
-//       await finish;
-//     },
-//   };
-// }
+  return {
+    generator: api,
+    finish: async () => {
+      await api.sendFinish();
+      api.destroy();
+      await finish;
+    },
+  };
+}

@@ -19,7 +19,8 @@ import bandersnatchVrf, { type VrfOutputHash } from "@typeberry/safrole/bandersn
 import type { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import { JAM_ENTROPY } from "@typeberry/safrole/constants.js";
 import { TransitionHasher } from "@typeberry/transition";
-import { asOpaqueType, type Opaque, Result } from "@typeberry/utils";
+import { asOpaqueType, now, type Opaque, Result } from "@typeberry/utils";
+import * as metrics from "./metrics.js";
 
 const EMPTY_AUX_DATA = BytesBlob.empty();
 const logger = Logger.new(import.meta.filename, "author");
@@ -36,6 +37,8 @@ const logger = Logger.new(import.meta.filename, "author");
 export type BlockSealInput = Opaque<BytesBlob, "Seal">;
 
 export class Generator {
+  private readonly metrics: ReturnType<typeof metrics.createMetrics>;
+
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly bandersnatch: BandernsatchWasm,
@@ -43,7 +46,9 @@ export class Generator {
     public readonly blake2b: Blake2b,
     private readonly blocks: BlocksDb,
     private readonly states: StatesDb,
-  ) {}
+  ) {
+    this.metrics = metrics.createMetrics();
+  }
 
   private getLastHeaderAndState() {
     const headerHash = this.blocks.getBestHeaderHash();
@@ -100,6 +105,8 @@ export class Generator {
     sealPayload: BlockSealInput,
     timeSlot: TimeSlot,
   ) {
+    this.metrics.recordBlockAuthoringStarted(timeSlot);
+    const startTime = now();
     // fetch latest data from the db.
     const { lastHeaderHash, lastState } = this.getLastHeaderAndState();
 
@@ -186,6 +193,9 @@ export class Generator {
       ...headerData,
       seal: sealResult.ok,
     });
+
+    const duration = now() - startTime;
+    this.metrics.recordBlockAuthored(timeSlot, duration);
 
     return Block.create({ header, extrinsic });
   }

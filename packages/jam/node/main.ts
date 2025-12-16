@@ -62,7 +62,6 @@ export async function main(
     ...baseConfig,
     workerParams: ImporterConfig.create({
       pvm: config.pvmBackend,
-      omitSealVerification: config.node.authorship.omitSealVerification,
     }),
   });
 

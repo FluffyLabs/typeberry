@@ -15,7 +15,6 @@ import {
   deriveEd25519PublicKey,
   type Ed25519SecretSeed,
 } from "@typeberry/crypto/key-derivation.js";
-import type { BlocksDb, LeafDb, StatesDb } from "@typeberry/database";
 import { Blake2b, keccak } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { tryAsU64 } from "@typeberry/numbers";
@@ -23,7 +22,6 @@ import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import { JAM_FALLBACK_SEAL, JAM_TICKET_SEAL } from "@typeberry/safrole/constants.js";
 import { type SafroleSealingKeys, SafroleSealingKeysKind, type State, type ValidatorData } from "@typeberry/state";
-import type { SerializedState } from "@typeberry/state-merkleization";
 import { asOpaqueType, assertNever, Result } from "@typeberry/utils";
 import type { WorkerConfig } from "@typeberry/workers-api";
 import { type BlockSealInput, Generator } from "./generator.js";
@@ -31,7 +29,7 @@ import type { BlockAuthorshipConfig, GeneratorInternal } from "./protocol.js";
 
 const logger = Logger.new(import.meta.filename, "author");
 
-type Config = WorkerConfig<BlockAuthorshipConfig, BlocksDb, StatesDb<SerializedState<LeafDb>>>;
+type Config = WorkerConfig<BlockAuthorshipConfig>;
 
 /**
  * The `BlockAuthorship` should create new blocks and send them as signals to the main thread.

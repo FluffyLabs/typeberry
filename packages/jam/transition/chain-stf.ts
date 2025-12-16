@@ -1,4 +1,4 @@
-import type { BlockView, CoreIndex, EntropyHash, HeaderHash, ServiceId, TimeSlot } from "@typeberry/block";
+import type { BlockView, CoreIndex, HeaderHash, ServiceId, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { asKnownSize, HashSet } from "@typeberry/collections";
@@ -184,11 +184,7 @@ export class OnChain {
     return await this.safroleSeal.verifyHeaderSeal(block.header.view(), sealState);
   }
 
-  async transition(
-    block: BlockView,
-    headerHash: HeaderHash,
-    omitSealVerification = false,
-  ): Promise<Result<Ok, StfError>> {
+  async transition(block: BlockView, headerHash: HeaderHash): Promise<Result<Ok, StfError>> {
     const headerView = block.header.view();
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
@@ -199,16 +195,11 @@ export class OnChain {
     }
 
     // safrole seal
-    let newEntropyHash: EntropyHash;
-    if (omitSealVerification) {
-      newEntropyHash = this.hasher.blake2b.hashBytes(header.seal).asOpaque();
-    } else {
-      const sealResult = await this.verifySeal(timeSlot, block);
-      if (sealResult.isError) {
-        return stfError(StfErrorKind.SafroleSeal, sealResult);
-      }
-      newEntropyHash = sealResult.ok;
+    const sealResult = await this.verifySeal(timeSlot, block);
+    if (sealResult.isError) {
+      return stfError(StfErrorKind.SafroleSeal, sealResult);
     }
+    const newEntropyHash = sealResult.ok;
 
     // disputes
     const disputesResult = await this.disputes.transition(block.extrinsic.view().disputes.materialize());
