@@ -88,6 +88,7 @@ async function prepareConfigFile(
       bootnodes: devBootnodes.concat(nodeConfig.chainSpec.bootnodes ?? []),
     },
     devValidatorIndex: args.command === Command.Dev ? args.args.index : null,
+    accumulateSequentially: args.args.accumulateSequentially,
   });
 }
 

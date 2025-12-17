@@ -17,6 +17,7 @@ describe("Typeberry Common Interface: Config", () => {
     nodeConfig: loadConfig(NODE_DEFAULTS.config, withRelPath),
     devConfig: DEFAULT_DEV_CONFIG,
     pvmBackend: NODE_DEFAULTS.pvm,
+    accumulateSequentially: NODE_DEFAULTS.accumulateSequentially,
   });
   const key = Bytes.fill(SEED_SIZE, 1).asOpaque<PublicKeySeed>();
 

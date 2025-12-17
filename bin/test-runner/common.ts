@@ -34,6 +34,7 @@ export function selectedPvmToBackend(pvm: SelectedPvm): PvmBackend {
 
 export type GlobalsOptions = {
   pvms: SelectedPvm[];
+  accumulateSequentially: boolean;
 };
 
 export class RunnerBuilder<T, V> implements Runner<T, V> {
@@ -95,6 +96,7 @@ export type RunOptions = {
   test: TestContext;
   chainSpec: ChainSpec;
   path: string;
+  accumulateSequentially: boolean;
 };
 
 export type RunFunction<T, V> = (test: T, options: RunOptions, variant: V) => Promise<void>;
@@ -138,10 +140,12 @@ export function parseArgs(argv: string[]) {
   const PVM_OPTION = "pvm";
   const parsed = minimist(argv);
   const pvms = getPvms(parsed[PVM_OPTION]);
+  const accumulateSequentially = parsed["accumulate-sequentially"] === true;
 
   return {
     initialFiles: parsed._,
     pvms,
+    accumulateSequentially,
   };
 
   function getPvms(parsed: string | undefined): SelectedPvm[] {
@@ -171,12 +175,14 @@ export async function main(
   {
     initialFiles,
     pvms,
+    accumulateSequentially,
     patterns = [testFile.bin, testFile.json],
     accepted,
     ignored,
   }: {
     initialFiles: string[];
     pvms: SelectedPvm[];
+    accumulateSequentially: boolean;
     patterns?: (testFile.bin | testFile.json)[];
     accepted?: {
       [testFile.bin]?: string[];
@@ -233,7 +239,10 @@ export async function main(
       // 3. If the list is defined, we make sure that the path is on that list.
       (accepted[testFileContent.kind] ?? []).some((x) => absolutePath.includes(x));
 
-    const testVariants = prepareTest(runners, testFileContent, testFilePath, absolutePath, { pvms });
+    const testVariants = prepareTest(runners, testFileContent, testFilePath, absolutePath, {
+      pvms,
+      accumulateSequentially,
+    });
     for (const test of testVariants) {
       test.shouldSkip = !isAccepted;
       tests.push(test);
@@ -412,6 +421,7 @@ function prepareTest<T, V>(
               test: ctx,
               path: fullPath,
               chainSpec,
+              accumulateSequentially: globalOptions.accumulateSequentially,
             },
             variant,
           );

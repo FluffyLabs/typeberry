@@ -12,6 +12,7 @@ describe("test runner common", () => {
     deepEqual(result, {
       initialFiles: ["file1.json", "file2.json"],
       pvms: [SelectedPvm.Ananas],
+      accumulateSequentially: false,
     });
   });
 
@@ -23,6 +24,7 @@ describe("test runner common", () => {
     deepEqual(result, {
       initialFiles: ["file1.json", "file2.json"],
       pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin],
+      accumulateSequentially: false,
     });
   });
 

@@ -92,11 +92,15 @@ export class ImporterConfig {
         throw new Error(`Invalid PvmBackend: ${o}`);
       },
     ),
+    accumulateSequentially: codec.bool,
   });
 
-  static create({ pvm }: CodecRecord<ImporterConfig>) {
-    return new ImporterConfig(pvm);
+  static create({ pvm, accumulateSequentially }: CodecRecord<ImporterConfig>) {
+    return new ImporterConfig(pvm, accumulateSequentially);
   }
 
-  private constructor(public readonly pvm: PvmBackend) {}
+  private constructor(
+    public readonly pvm: PvmBackend,
+    public readonly accumulateSequentially: boolean,
+  ) {}
 }

@@ -85,6 +85,7 @@ export function createJamConfig(argv: CommonArguments, withRelPath: (p: string) 
     nodeConfig,
     devConfig,
     pvmBackend: NODE_DEFAULTS.pvm,
+    accumulateSequentially: NODE_DEFAULTS.accumulateSequentially,
   });
 }
 

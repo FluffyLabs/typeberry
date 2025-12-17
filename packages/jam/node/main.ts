@@ -62,6 +62,7 @@ export async function main(
     ...baseConfig,
     workerParams: ImporterConfig.create({
       pvm: config.pvmBackend,
+      accumulateSequentially: config.accumulateSequentially,
     }),
   });
 

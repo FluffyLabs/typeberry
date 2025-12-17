@@ -20,6 +20,7 @@ export const NODE_DEFAULTS = {
   name: isBrowser() ? "browser" : os.hostname(),
   config: [DEFAULT_CONFIG],
   pvm: PvmBackend.Ananas,
+  accumulateSequentially: false,
 };
 
 /** Chain spec chooser. */
