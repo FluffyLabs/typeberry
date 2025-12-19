@@ -136,15 +136,45 @@ export namespace testFile {
       };
 }
 
+const PVM_OPTION = "pvm";
+const ACCUMULATE_SEQUENTIALLY_OPTION = "accumulate-sequentially";
+const HELP_OPTION = "help";
+export const HELP_MESSAGE = `
+Usage: test-runner [options] [files...]
+
+Options:
+  --pvm <value>                Select PVM backend(s). Comma-separated list.
+                               Available: ${ALL_PVMS.join(", ")}
+                               Default: all PVMs
+
+  --accumulate-sequentially    Run accumulation sequentially instead of in parallel.
+                               Default: false
+
+  -h, --help                   Show this help message.
+
+Examples:
+  test-runner                           Run all tests with all PVMs
+  test-runner --pvm ananas              Run tests with ananas PVM only
+  test-runner --accumulate-sequentially Run tests with sequential accumulation
+  test-runner test.json                 Run specific test file
+`;
+
 export function parseArgs(argv: string[]) {
-  const PVM_OPTION = "pvm";
-  const ACCUMULATE_SEQUENTIALLY_OPTION = "accumulate-sequentially";
   const parsed = minimist(argv, {
-    boolean: [ACCUMULATE_SEQUENTIALLY_OPTION],
+    boolean: [ACCUMULATE_SEQUENTIALLY_OPTION, HELP_OPTION],
+    alias: { h: HELP_OPTION },
     default: { [ACCUMULATE_SEQUENTIALLY_OPTION]: false },
   });
+
+  const shouldShowHelp = getBooleanOption(parsed[HELP_OPTION]);
+
+  if (shouldShowHelp) {
+    console.log(HELP_MESSAGE);
+    process.exit(0);
+  }
+
   const pvms = getPvms(parsed[PVM_OPTION]);
-  const accumulateSequentially = getAccumulateSequentially(parsed[ACCUMULATE_SEQUENTIALLY_OPTION]);
+  const accumulateSequentially = getBooleanOption(parsed[ACCUMULATE_SEQUENTIALLY_OPTION]);
 
   return {
     initialFiles: parsed._,
@@ -152,7 +182,7 @@ export function parseArgs(argv: string[]) {
     accumulateSequentially,
   };
 
-  function getAccumulateSequentially(value: unknown): boolean {
+  function getBooleanOption(value: unknown): boolean {
     if (value === true) {
       return true;
     }

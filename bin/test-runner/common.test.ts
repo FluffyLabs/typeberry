@@ -1,7 +1,7 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { describe, it, mock } from "node:test";
 import { deepEqual } from "@typeberry/utils";
-import { parseArgs, SelectedPvm } from "./common.js";
+import { HELP_MESSAGE, parseArgs, SelectedPvm } from "./common.js";
 
 describe("test runner common", () => {
   it("should parse pvm argument", () => {
@@ -75,5 +75,21 @@ describe("test runner common", () => {
       pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin],
       accumulateSequentially: false,
     });
+  });
+
+  it("should print help with --help", () => {
+    const args = ["--help"];
+    const logMock = mock.method(console, "log");
+    const exitMock = mock.method(process, "exit");
+
+    parseArgs(args);
+
+    logMock.mock.restore();
+    exitMock.mock.restore();
+
+    assert.strictEqual(exitMock.mock.calls.length, 1);
+    assert.strictEqual(logMock.mock.calls.length, 1);
+    const output = logMock.mock.calls[0].arguments[0] as string;
+    assert.strictEqual(output, HELP_MESSAGE);
   });
 });
