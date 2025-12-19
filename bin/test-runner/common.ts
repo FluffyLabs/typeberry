@@ -138,15 +138,27 @@ export namespace testFile {
 
 export function parseArgs(argv: string[]) {
   const PVM_OPTION = "pvm";
-  const parsed = minimist(argv);
+  const ACCUMULATE_SEQUENTIALLY_OPTION = "accumulate-sequentially";
+  const parsed = minimist(argv, {
+    boolean: [ACCUMULATE_SEQUENTIALLY_OPTION],
+    default: { [ACCUMULATE_SEQUENTIALLY_OPTION]: false },
+  });
   const pvms = getPvms(parsed[PVM_OPTION]);
-  const accumulateSequentially = parsed["accumulate-sequentially"] === true;
+  const accumulateSequentially = getAccumulateSequentially(parsed[ACCUMULATE_SEQUENTIALLY_OPTION]);
 
   return {
     initialFiles: parsed._,
     pvms,
     accumulateSequentially,
   };
+
+  function getAccumulateSequentially(value: unknown): boolean {
+    if (value === true) {
+      return true;
+    }
+
+    return false;
+  }
 
   function getPvms(parsed: string | undefined): SelectedPvm[] {
     const allPvms = ALL_PVMS.slice();

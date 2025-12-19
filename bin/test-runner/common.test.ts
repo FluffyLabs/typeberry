@@ -40,4 +40,40 @@ describe("test runner common", () => {
       },
     );
   });
+
+  it("should parse --accumulate-sequentially without value as true", () => {
+    const args = ["--accumulate-sequentially", "file1.json"];
+
+    const result = parseArgs(args);
+
+    deepEqual(result, {
+      initialFiles: ["file1.json"],
+      pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin],
+      accumulateSequentially: true,
+    });
+  });
+
+  it("should parse --accumulate-sequentially=something as true", () => {
+    const args = ["--accumulate-sequentially=something", "file1.json"];
+
+    const result = parseArgs(args);
+
+    deepEqual(result, {
+      initialFiles: ["file1.json"],
+      pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin],
+      accumulateSequentially: true,
+    });
+  });
+
+  it("should parse --accumulate-sequentially=false as false", () => {
+    const args = ["--accumulate-sequentially=false", "file1.json"];
+
+    const result = parseArgs(args);
+
+    deepEqual(result, {
+      initialFiles: ["file1.json"],
+      pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin],
+      accumulateSequentially: false,
+    });
+  });
 });
