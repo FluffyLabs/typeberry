@@ -29,7 +29,6 @@ export class JamConfig {
     networkConfig = null,
     ancestry = [],
     devValidatorIndex = null,
-    accumulateSequentially = false,
   }: {
     isAuthoring?: boolean;
     nodeName: string;
@@ -40,7 +39,6 @@ export class JamConfig {
     ancestry?: [HeaderHash, TimeSlot][];
     /** Validator index for dev mode authorship. Use "all" to author as all validators. */
     devValidatorIndex?: U16 | "all" | null;
-    accumulateSequentially: boolean;
   }) {
     return new JamConfig(
       isAuthoring ?? false,
@@ -51,7 +49,6 @@ export class JamConfig {
       networkConfig,
       ancestry,
       devValidatorIndex,
-      accumulateSequentially,
     );
   }
 
@@ -72,8 +69,6 @@ export class JamConfig {
     public readonly ancestry: [HeaderHash, TimeSlot][],
     /** Validator index for dev mode authorship. Use "all" to author as all validators. */
     public readonly devValidatorIndex: U16 | "all" | null,
-    /** Disable parallel accumulation */
-    public readonly accumulateSequentially: boolean,
   ) {}
 }
 

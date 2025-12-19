@@ -12,7 +12,6 @@ describe("CLI", () => {
     nodeName: NODE_DEFAULTS.name,
     config: NODE_DEFAULTS.config,
     pvm: NODE_DEFAULTS.pvm,
-    accumulateSequentially: NODE_DEFAULTS.accumulateSequentially,
   };
 
   it("should start with default arguments", () => {

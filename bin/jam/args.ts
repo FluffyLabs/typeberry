@@ -29,9 +29,6 @@ Options:
                         [default: ${NODE_DEFAULTS.config}]
   --pvm                 PVM Backend, one of: [${PvmBackendNames.join(", ")}].
                         [default: ${PvmBackendNames[NODE_DEFAULTS.pvm]}]
-  --accumulate-sequentially
-                        Disable parallel accumulation.
-                        [default: false]
 `;
 
 /** Command to execute. */
@@ -52,7 +49,6 @@ export type SharedOptions = {
   nodeName: string;
   config: string[];
   pvm: PvmBackend;
-  accumulateSequentially: boolean;
 };
 
 export type Arguments =
@@ -108,13 +104,10 @@ export function parseSharedOptions(
     NODE_DEFAULTS.pvm,
   );
 
-  const accumulateSequentially = parseBooleanOption(args, "accumulate-sequentially");
-
   return {
     nodeName: name,
     config,
     pvm,
-    accumulateSequentially,
   };
 }
 
@@ -207,12 +200,6 @@ function parseStringOption<S extends string, T>(
   defaultValue: T,
 ): Record<S, T> {
   return parseValueOption(args, option, "string", parser, defaultValue);
-}
-
-function parseBooleanOption(args: minimist.ParsedArgs, option: string): boolean {
-  const val = args[option];
-  delete args[option];
-  return val === true;
 }
 
 function parseValueOptionAsArray<X, S extends string, T>(

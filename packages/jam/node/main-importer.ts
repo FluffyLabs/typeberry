@@ -38,7 +38,6 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
           blake2b,
           workerParams: {
             pvm: config.pvmBackend,
-            accumulateSequentially: config.accumulateSequentially,
           },
         })
       : LmdbWorkerConfig.new({
@@ -48,7 +47,6 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
           dbPath,
           workerParams: {
             pvm: config.pvmBackend,
-            accumulateSequentially: config.accumulateSequentially,
           },
         });
 

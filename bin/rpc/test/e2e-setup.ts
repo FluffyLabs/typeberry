@@ -15,7 +15,6 @@ async function main() {
     nodeName: NODE_DEFAULTS.name,
     nodeConfig,
     pvmBackend: NODE_DEFAULTS.pvm,
-    accumulateSequentially: NODE_DEFAULTS.accumulateSequentially,
   });
   try {
     const api = await node(jamConfig, withRelPath, null);

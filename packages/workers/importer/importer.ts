@@ -1,10 +1,10 @@
 import { type BlockView, type HeaderHash, type HeaderView, type StateRootHash, tryAsTimeSlot } from "@typeberry/block";
-import type { ChainSpec } from "@typeberry/config";
+import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import type { BlocksDb, LeafDb, StatesDb, StateUpdateError } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";
 import type { SerializedState } from "@typeberry/state-merkleization";
-import type { AccumulateOptions, TransitionHasher } from "@typeberry/transition";
+import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, BlockVerifierError } from "@typeberry/transition/block-verifier.js";
 import { DbHeaderChain, OnChain, type StfError } from "@typeberry/transition/chain-stf.js";
 import { type ErrorResult, measure, now, Result, resultToString, type TaggedError } from "@typeberry/utils";
@@ -38,7 +38,7 @@ export class Importer {
 
   constructor(
     spec: ChainSpec,
-    options: AccumulateOptions,
+    pvm: PvmBackend,
     private readonly hasher: TransitionHasher,
     private readonly logger: Logger,
     private readonly blocks: BlocksDb,
@@ -52,7 +52,7 @@ export class Importer {
     }
 
     this.verifier = new BlockVerifier(hasher, blocks);
-    this.stf = new OnChain(spec, state, hasher, options, DbHeaderChain.new(blocks));
+    this.stf = new OnChain(spec, state, hasher, { pvm, accumulateSequentially: false }, DbHeaderChain.new(blocks));
     this.state = state;
     this.currentHash = currentBestHeaderHash;
     this.prepareForNextEpoch();

@@ -21,15 +21,12 @@ export async function createImporter(config: Config): Promise<{
 }> {
   const chainSpec = config.chainSpec;
   const db = config.openDatabase({ readonly: false });
-  const options = {
-    pvm: config.workerParams.pvm,
-    accumulateSequentially: config.workerParams.accumulateSequentially,
-  };
+  const pvm = config.workerParams.pvm;
   const blocks = db.getBlocksDb();
   const states = db.getStatesDb();
 
   const hasher = new TransitionHasher(await keccakHasher, await blake2b);
-  const importer = new Importer(chainSpec, options, hasher, logger, blocks, states);
+  const importer = new Importer(chainSpec, pvm, hasher, logger, blocks, states);
 
   return {
     importer,
