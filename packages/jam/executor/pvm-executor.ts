@@ -1,14 +1,26 @@
 import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec, PvmBackend } from "@typeberry/config";
-import { accumulate, general } from "@typeberry/jam-host-calls";
+import { accumulate, refine, general } from "@typeberry/jam-host-calls";
 import type { PartialState } from "@typeberry/jam-host-calls/externalities/partial-state.js";
 import {
   type ProgramCounter,
+  RefineExternalities,
   tryAsProgramCounter,
 } from "@typeberry/jam-host-calls/externalities/refine-externalities.js";
 import { type HostCallHandler, HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
 import type { Gas } from "@typeberry/pvm-interface";
+
+const REFINE_HOST_CALL_CLASSES = [
+  refine.Export,
+  refine.Expunge,
+  refine.HistoricalLookup,
+  refine.Invoke,
+  refine.Machine,
+  refine.Pages,
+  refine.Peek,
+  refine.Poke
+];
 
 const ACCUMULATE_HOST_CALL_CLASSES = [
   accumulate.Bless,
@@ -26,6 +38,12 @@ const ACCUMULATE_HOST_CALL_CLASSES = [
   accumulate.Provide,
 ];
 
+type RefineHostCallExternalities = {
+  refine: RefineExternalities;
+  fetchExternalities: general.IFetchExternalities;
+  serviceExternalities: general.AccountsInfo & general.AccountsLookup & general.AccountsWrite & general.AccountsRead;
+};
+
 type AccumulateHostCallExternalities = {
   partialState: PartialState;
   fetchExternalities: general.IFetchExternalities;
@@ -41,6 +59,7 @@ namespace entrypoint {
   export const IS_AUTHORIZED = tryAsProgramCounter(0);
   export const REFINE = tryAsProgramCounter(0);
   export const ACCUMULATE = tryAsProgramCounter(5);
+  /** @deprecated since 0.7.1 */
   export const ON_TRANSFER = tryAsProgramCounter(10);
 }
 
@@ -66,6 +85,29 @@ export class PvmExecutor {
 
   private static async prepareBackend(pvm: PvmBackend) {
     return PvmInstanceManager.new(pvm);
+  }
+
+  /** Prepare refine host call handlers */
+  private static prepareRefineHostCalls(
+    serviceId: ServiceId,
+    externalities: RefineHostCallExternalities,
+  ) {
+    const refineHandlers: HostCallHandler[] = REFINE_HOST_CALL_CLASSES.map(
+      (HandlerClass) => new HandlerClass(externalities.refine),
+    );
+
+    // TODO todr check if all needed
+    const generalHandlers: HostCallHandler[] = [
+      new general.LogHostCall(serviceId),
+      new general.GasHostCall(serviceId),
+      new general.Read(serviceId, externalities.serviceExternalities),
+      new general.Write(serviceId, externalities.serviceExternalities),
+      new general.Fetch(serviceId, externalities.fetchExternalities),
+      new general.Lookup(serviceId, externalities.serviceExternalities),
+      new general.Info(serviceId, externalities.serviceExternalities),
+    ];
+
+    return refineHandlers.concat(generalHandlers);
   }
 
   /** Prepare accumulation host call handlers */
@@ -114,6 +156,18 @@ export class PvmExecutor {
    */
   async run(args: BytesBlob, gas: Gas) {
     return this.pvm.runProgram(this.serviceCode.raw, args.raw, Number(this.entrypoint), gas);
+  }
+
+  /** A utility function that can be used to prepare refine executor */
+  static async createRefineExecutor(
+    serviceId: ServiceId,
+    serviceCode: BytesBlob,
+    externalities: RefineHostCallExternalities,
+    pvm: PvmBackend,
+  ) {
+    const hostCallHandlers = PvmExecutor.prepareRefineHostCalls(serviceId, externalities);
+    const instances = await PvmExecutor.prepareBackend(pvm);
+    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ACCUMULATE, instances);
   }
 
   /** A utility function that can be used to prepare accumulate executor */
