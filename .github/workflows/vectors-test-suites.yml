@@ -57,6 +57,11 @@ jobs:
             script: jam-conformance-071.ts
             output: jam-conformance-071.txt
             artifact_name: conformance-071-results
+          - display_name: conformance-0.7.2
+            gp_version: 0.7.2
+            script: jam-conformance-072.ts
+            output: jam-conformance-072.txt
+            artifact_name: conformance-072-results
           - display_name: w3f-0.7.0
             gp_version: 0.7.0
             script: w3f-070.ts
