@@ -70,20 +70,16 @@ export async function main(
     withRelPath(config.node.databaseBasePath ?? "<in-memory>"),
   );
 
+  const baseConfig = { nodeName, chainSpec, blake2b, dbPath };
   const workerConfig = isInMemory
     ? InMemWorkerConfig.new({
-        nodeName,
-        chainSpec,
-        blake2b,
+        ...baseConfig,
         workerParams: ImporterConfig.create({
           pvm: config.pvmBackend,
         }),
       })
     : LmdbWorkerConfig.new({
-        nodeName,
-        chainSpec,
-        blake2b,
-        dbPath,
+        ...baseConfig,
         workerParams: ImporterConfig.create({
           pvm: config.pvmBackend,
         }),
@@ -121,9 +117,6 @@ export async function main(
   // Start extensions
   const closeExtensions = initializeExtensions({ chainSpec, bestHeader, nodeName });
 
-  // Config shared between init Authorship and Networking
-  const baseConfig = { ...workerConfig, dbPath, rootDb };
-
   // Authorship initialization.
   // 1. load validator keys (bandersnatch, ed25519, bls)
   // 2. allow the validator to specify metadata.
@@ -146,11 +139,19 @@ export async function main(
           ],
   };
 
-  const closeAuthorship = await initAuthorship(importer, config.isAuthoring, baseConfig, authorshipKeys, isInMemory);
+  const closeAuthorship = await initAuthorship(
+    importer,
+    config.isAuthoring,
+    rootDb,
+    baseConfig,
+    authorshipKeys,
+    isInMemory,
+  );
 
   // Networking initialization
   const closeNetwork = await initNetwork(
     importer,
+    rootDb,
     baseConfig,
     genesisHeaderHash,
     config.network,
@@ -196,12 +197,12 @@ export async function main(
 const initAuthorship = async (
   importer: ImporterApi,
   isAuthoring: boolean,
+  rootDb: RootDb<BlocksDb, SerializedStatesDb>,
   baseConfig: {
     nodeName: string;
     chainSpec: ChainSpec;
     blake2b: Blake2b;
     dbPath: string;
-    rootDb: RootDb<BlocksDb, SerializedStatesDb>;
   },
   authorshipKeys: { keys: { bandersnatch: BandersnatchSecretSeed; ed25519: Ed25519SecretSeed }[] },
   isInMemory: boolean,
@@ -217,8 +218,8 @@ const initAuthorship = async (
         DirectWorkerConfig.new({
           nodeName: baseConfig.nodeName,
           chainSpec: baseConfig.chainSpec,
-          blocksDb: baseConfig.rootDb.getBlocksDb(),
-          statesDb: baseConfig.rootDb.getStatesDb(),
+          blocksDb: rootDb.getBlocksDb(),
+          statesDb: rootDb.getStatesDb(),
           params: authorshipKeys,
         }),
       )
@@ -240,12 +241,12 @@ const initAuthorship = async (
 
 const initNetwork = async (
   importer: ImporterApi,
+  rootDb: RootDb<BlocksDb, SerializedStatesDb>,
   baseConfig: {
     nodeName: string;
     chainSpec: ChainSpec;
     blake2b: Blake2b;
     dbPath: string;
-    rootDb: RootDb<BlocksDb, SerializedStatesDb>;
   },
   genesisHeaderHash: HeaderHash,
   networkConfig: NetworkConfig | null,
@@ -272,8 +273,8 @@ const initNetwork = async (
         DirectWorkerConfig.new({
           nodeName: baseConfig.nodeName,
           chainSpec: baseConfig.chainSpec,
-          blocksDb: baseConfig.rootDb.getBlocksDb(),
-          statesDb: baseConfig.rootDb.getStatesDb(),
+          blocksDb: rootDb.getBlocksDb(),
+          statesDb: rootDb.getStatesDb(),
           params: networkingConfig,
         }),
       )
