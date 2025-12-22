@@ -71,8 +71,7 @@ export async function main(
   );
 
   const baseConfig = { nodeName, chainSpec, blake2b, dbPath };
-
-  const workerConfig = isInMemory
+  const importerConfig = isInMemory
     ? InMemWorkerConfig.new({
         ...baseConfig,
         workerParams: ImporterConfig.create({
@@ -88,7 +87,7 @@ export async function main(
 
   // Initialize the database with genesis state and block if there isn't one.
   logger.info`🛢️ Opening database at ${dbPath}`;
-  const rootDb = workerConfig.openDatabase({ readonly: false });
+  const rootDb = importerConfig.openDatabase({ readonly: false });
   await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
   // NOTE [ToDr] even though, we should be closing the database here,
   // it seems that opening it in the main thread for writing, and later
@@ -103,16 +102,16 @@ export async function main(
   if (isInMemory) {
     ({ importer, finish: closeImporter } = await startImporterDirect(
       DirectWorkerConfig.new({
-        ...workerConfig,
+        ...importerConfig,
         blocksDb: rootDb.getBlocksDb(),
         statesDb: rootDb.getStatesDb(),
       }),
     ));
   } else {
-    if (!(workerConfig instanceof LmdbWorkerConfig)) {
+    if (!(importerConfig instanceof LmdbWorkerConfig)) {
       throw new Error("Expected LmdbWorkerConfig in LMDB mode");
     }
-    ({ importer, finish: closeImporter } = await spawnImporterWorker(workerConfig));
+    ({ importer, finish: closeImporter } = await spawnImporterWorker(importerConfig));
   }
 
   const bestHeader = new Listener<WithHash<HeaderHash, HeaderView>>();
