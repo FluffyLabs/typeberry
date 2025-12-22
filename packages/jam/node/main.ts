@@ -226,8 +226,7 @@ const initAuthorship = async (
   const { generator, finish } = isInMemory
     ? await startBlockGenerator(
         DirectWorkerConfig.new({
-          nodeName: baseConfig.nodeName,
-          chainSpec: baseConfig.chainSpec,
+          ...baseConfig,
           blocksDb: rootDb.getBlocksDb(),
           statesDb: rootDb.getStatesDb(),
           workerParams: authorshipKeys,
@@ -281,8 +280,7 @@ const initNetwork = async (
   const { network, finish } = isInMemory
     ? await startNetwork(
         DirectWorkerConfig.new({
-          nodeName: baseConfig.nodeName,
-          chainSpec: baseConfig.chainSpec,
+          ...baseConfig,
           blocksDb: rootDb.getBlocksDb(),
           statesDb: rootDb.getStatesDb(),
           workerParams: networkingConfig,
