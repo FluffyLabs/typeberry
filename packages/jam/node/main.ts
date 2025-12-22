@@ -100,7 +100,6 @@ export async function main(
     ? await startImporterDirect(
         DirectWorkerConfig.new({
           ...workerConfig,
-          params: workerConfig.workerParams,
           blocksDb: rootDb.getBlocksDb(),
           statesDb: rootDb.getStatesDb(),
         }),
@@ -220,7 +219,7 @@ const initAuthorship = async (
           chainSpec: baseConfig.chainSpec,
           blocksDb: rootDb.getBlocksDb(),
           statesDb: rootDb.getStatesDb(),
-          params: authorshipKeys,
+          workerParams: authorshipKeys,
         }),
       )
     : await spawnBlockGeneratorWorker(
@@ -275,7 +274,7 @@ const initNetwork = async (
           chainSpec: baseConfig.chainSpec,
           blocksDb: rootDb.getBlocksDb(),
           statesDb: rootDb.getStatesDb(),
-          params: networkingConfig,
+          workerParams: networkingConfig,
         }),
       )
     : await spawnNetworkWorker(
