@@ -71,6 +71,7 @@ export async function main(
   );
 
   const baseConfig = { nodeName, chainSpec, blake2b, dbPath };
+
   const workerConfig = isInMemory
     ? InMemWorkerConfig.new({
         ...baseConfig,
@@ -96,15 +97,23 @@ export async function main(
   // await rootDb.close();
 
   // Start block importer
-  const { importer, finish: closeImporter } = isInMemory
-    ? await startImporterDirect(
-        DirectWorkerConfig.new({
-          ...workerConfig,
-          blocksDb: rootDb.getBlocksDb(),
-          statesDb: rootDb.getStatesDb(),
-        }),
-      )
-    : await spawnImporterWorker(workerConfig as LmdbWorkerConfig<ImporterConfig>);
+  let importer: ImporterApi;
+  let closeImporter: () => Promise<void>;
+
+  if (isInMemory) {
+    ({ importer, finish: closeImporter } = await startImporterDirect(
+      DirectWorkerConfig.new({
+        ...workerConfig,
+        blocksDb: rootDb.getBlocksDb(),
+        statesDb: rootDb.getStatesDb(),
+      }),
+    ));
+  } else {
+    if (!(workerConfig instanceof LmdbWorkerConfig)) {
+      throw new Error("Expected LmdbWorkerConfig in LMDB mode");
+    }
+    ({ importer, finish: closeImporter } = await spawnImporterWorker(workerConfig));
+  }
 
   const bestHeader = new Listener<WithHash<HeaderHash, HeaderView>>();
   importer.setOnBestHeaderAnnouncement(async (header) => {
@@ -120,6 +129,9 @@ export async function main(
   // 1. load validator keys (bandersnatch, ed25519, bls)
   // 2. allow the validator to specify metadata.
   // 3. if we have validator keys, we should start the authorship module.
+  // NOTE: use trivialSeed to derive validator keys is safe
+  // because the authorship keys are only initialized when devValidatorIndex is specified (development mode),
+  // and trivial seeds are appropriate for test validators as defined in JIP-5.
   const validatorIndex = config.devValidatorIndex ?? "all";
   const authorshipKeys = {
     keys:
