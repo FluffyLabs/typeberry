@@ -243,6 +243,9 @@ export class Statistics {
 
     for (const reporter of input.reporters) {
       const index = validatorKeys.findIndex((x) => x.isEqualTo(reporter));
+      if (index === -1) {
+        continue; // Reporter not in current validator set
+      }
       const newGuaranteesCount = current[index].guarantees + 1;
       current[index].guarantees = tryAsU32(newGuaranteesCount);
     }
