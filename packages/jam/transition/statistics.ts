@@ -12,10 +12,10 @@ import type { Preimage, PreimagesExtrinsic } from "@typeberry/block/preimage.js"
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import type { WorkResult } from "@typeberry/block/work-result.js";
 import { type ChainSpec, EC_SEGMENT_SIZE } from "@typeberry/config";
+import type { Ed25519Key } from "@typeberry/crypto";
 import { tryAsU16, tryAsU32, type U32 } from "@typeberry/numbers";
 import { ServiceStatistics, type State, StatisticsData, ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
-import type { Reporters } from "./reports/reports.js";
 
 export type Input = {
   slot: TimeSlot;
@@ -47,7 +47,7 @@ export type Input = {
    * https://graypaper.fluffylabs.dev/#/cc517d7/18dd0018dd00?v=0.6.5
    */
   transferStatistics: Map<ServiceId, CountAndGasUsed>;
-  reporters: Reporters;
+  reporters: readonly Ed25519Key[];
   currentValidatorData: State["currentValidatorData"];
 };
 

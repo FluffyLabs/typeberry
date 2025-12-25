@@ -40,8 +40,6 @@ export type ReportsState = Pick<
 /** Reports state update. */
 export type ReportsStateUpdate = Pick<ReportsState, "availabilityAssignment">;
 
-export type Reporters = KnownSizeArray<Ed25519Key, "Guarantees * Credentials (at most `cores*3`)">;
-
 export type ReportsOutput = {
   /** Altered state. */
   stateUpdate: ReportsStateUpdate;
@@ -52,7 +50,7 @@ export type ReportsOutput = {
    */
   reported: HashDictionary<WorkPackageHash, WorkPackageInfo>;
   /** A set `R` of work package reporters. */
-  reporters: Reporters;
+  reporters: KnownSizeArray<Ed25519Key, "Guarantees * Credentials (at most `cores*3`)">;
 };
 
 export class Reports {

@@ -21,7 +21,13 @@ import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { asKnownSize, FixedSizeArray } from "@typeberry/collections";
 import { EC_SEGMENT_SIZE, tinyChainSpec } from "@typeberry/config";
-import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
+import {
+  BANDERSNATCH_KEY_BYTES,
+  BLS_KEY_BYTES,
+  ED25519_KEY_BYTES,
+  ED25519_SIGNATURE_BYTES,
+  type Ed25519Key,
+} from "@typeberry/crypto";
 import { currentValidatorData } from "@typeberry/disputes/disputes.test.data.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { isU16, isU32, tryAsU32 } from "@typeberry/numbers";
@@ -35,7 +41,6 @@ import {
   ValidatorStatistics,
 } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
-import type { Reporters } from "./reports/reports.js";
 import { Statistics, type StatisticsState } from "./statistics.js";
 import { copyAndUpdateState } from "./test.utils.js";
 
@@ -112,17 +117,25 @@ describe("Statistics", () => {
       validatorIndex,
       currentSlot: tryAsTimeSlot(currentSlot),
       currentValidatorData: state.currentValidatorData,
+      reporters: asKnownSize([]),
     };
   }
 
   describe("epoch change", () => {
     it("should keep the same 'current' and 'last' statistics if epoch is not changed", () => {
       const emptyExtrinsic = getExtrinsic();
-      const { statistics, currentSlot, validatorIndex, currentStatistics, lastStatistics, currentValidatorData } =
-        prepareData({
-          previousSlot: 0,
-          currentSlot: 1,
-        });
+      const {
+        statistics,
+        currentSlot,
+        validatorIndex,
+        currentStatistics,
+        lastStatistics,
+        currentValidatorData,
+        reporters,
+      } = prepareData({
+        previousSlot: 0,
+        currentSlot: 1,
+      });
 
       const update = statistics.transition({
         slot: currentSlot,
@@ -133,7 +146,7 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
         currentValidatorData,
-        reporters: asOpaqueType([]),
+        reporters,
       });
 
       const state = copyAndUpdateState(statistics.state, update);
@@ -145,10 +158,11 @@ describe("Statistics", () => {
     it("should create a new 'current' statistics and previous current should be 'last' when the epoch is changed", () => {
       const previousSlot = 1;
       const emptyExtrinsic = getExtrinsic();
-      const { statistics, currentSlot, validatorIndex, currentStatistics, currentValidatorData } = prepareData({
-        previousSlot,
-        currentSlot: previousSlot + tinyChainSpec.epochLength,
-      });
+      const { statistics, currentSlot, validatorIndex, currentStatistics, currentValidatorData, reporters } =
+        prepareData({
+          previousSlot,
+          currentSlot: previousSlot + tinyChainSpec.epochLength,
+        });
 
       assert.deepStrictEqual(statistics.state.statistics.current, currentStatistics);
 
@@ -161,7 +175,7 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
         currentValidatorData,
-        reporters: asOpaqueType([]),
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 
@@ -171,7 +185,7 @@ describe("Statistics", () => {
     it("should create a new current statistics object that have length equal to number of validators ", () => {
       const previousSlot = 1;
       const emptyExtrinsic = getExtrinsic();
-      const { statistics, currentSlot, validatorIndex, currentValidatorData } = prepareData({
+      const { statistics, currentSlot, validatorIndex, currentValidatorData, reporters } = prepareData({
         previousSlot,
         currentSlot: previousSlot + tinyChainSpec.epochLength,
       });
@@ -185,7 +199,7 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
         currentValidatorData,
-        reporters: asOpaqueType([]),
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 
@@ -229,7 +243,7 @@ describe("Statistics", () => {
     }: {
       previousSlot: number;
       currentSlot: number;
-      reporters?: Reporters;
+      reporters?: readonly Ed25519Key[];
       currentValidatorData?: State["currentValidatorData"];
     }) {
       const validatorIndex = tryAsValidatorIndex(0);
@@ -248,7 +262,7 @@ describe("Statistics", () => {
         services: serviceStatistics,
       });
 
-      const defaultReporters: Reporters = asOpaqueType([]);
+      const defaultReporters: readonly Ed25519Key[] = [];
       const state: StatisticsState = {
         statistics: statisticsData,
         timeslot: tryAsTimeSlot(previousSlot),

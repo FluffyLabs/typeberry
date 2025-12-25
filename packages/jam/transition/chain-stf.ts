@@ -381,7 +381,7 @@ export class OnChain {
       availableReports,
       accumulationStatistics,
       transferStatistics,
-      reporters,
+      reporters: reporters,
       currentValidatorData,
     });
     const { statistics, ...statisticsRest } = statisticsUpdate;
