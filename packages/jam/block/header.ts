@@ -132,35 +132,35 @@ export class Header extends WithDebug {
    *
    * In case of the genesis block, the hash will be zero.
    */
-  public parentHeaderHash: HeaderHash = Bytes.zero(HASH_SIZE).asOpaque();
+  public readonly parentHeaderHash: HeaderHash = Bytes.zero(HASH_SIZE).asOpaque();
   /** `H_r`: The state trie root hash before executing that block. */
-  public priorStateRoot: StateRootHash = Bytes.zero(HASH_SIZE).asOpaque();
+  public readonly priorStateRoot: StateRootHash = Bytes.zero(HASH_SIZE).asOpaque();
   /** `H_x`: The hash of block extrinsic. */
-  public extrinsicHash: ExtrinsicHash = Bytes.zero(HASH_SIZE).asOpaque();
+  public readonly extrinsicHash: ExtrinsicHash = Bytes.zero(HASH_SIZE).asOpaque();
   /** `H_t`: JAM time-slot index. */
-  public timeSlotIndex: TimeSlot = tryAsTimeSlot(0);
+  public readonly timeSlotIndex: TimeSlot = tryAsTimeSlot(0);
   /**
    * `H_e`: Key and entropy relevant to the following epoch in case the ticket
    *        contest does not complete adequately.
    */
-  public epochMarker: EpochMarker | null = null;
+  public readonly epochMarker: EpochMarker | null = null;
   /**
    * `H_w`: Winning tickets provides the series of 600 slot sealing "tickets"
    *        for the next epoch.
    */
-  public ticketsMarker: TicketsMarker | null = null;
+  public readonly ticketsMarker: TicketsMarker | null = null;
   /** `H_i`: Block author's index in the current validator set. */
-  public bandersnatchBlockAuthorIndex: ValidatorIndex = tryAsValidatorIndex(0);
+  public readonly bandersnatchBlockAuthorIndex: ValidatorIndex = tryAsValidatorIndex(0);
   /** `H_v`: Entropy-yielding VRF signature. */
-  public entropySource: BandersnatchVrfSignature = Bytes.zero(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque();
+  public readonly entropySource: BandersnatchVrfSignature = Bytes.zero(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque();
   /** `H_o`: Sequence of keys of newly misbehaving validators. */
-  public offendersMarker: Ed25519Key[] = [];
+  public readonly offendersMarker: Ed25519Key[] = [];
   /**
    * `H_s`: Block seal.
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/0d0c010d1101
    */
-  public seal: BandersnatchVrfSignature = Bytes.zero(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque();
+  public readonly seal: BandersnatchVrfSignature = Bytes.zero(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque();
 
   private constructor() {
     super();

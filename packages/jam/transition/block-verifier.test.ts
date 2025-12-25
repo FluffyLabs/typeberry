@@ -3,6 +3,7 @@ import {
   Block,
   type BlockView,
   type ExtrinsicHash,
+  Header,
   type HeaderHash,
   type StateRootHash,
   type TimeSlot,
@@ -47,16 +48,18 @@ describe("Block Verifier", async () => {
       prepareStateRoot?: boolean;
     } = {},
   ) => {
-    const block = testBlockView().materialize();
-    block.header.timeSlotIndex = timeSlot ?? DEFAULT_TIME_SLOT;
+    const baseBlock = testBlockView().materialize();
+    const timeSlotIndex = timeSlot ?? DEFAULT_TIME_SLOT;
+    const header = Header.create({ ...baseBlock.header, timeSlotIndex });
+    const block = Block.create({ ...baseBlock, header });
     const blockView = toBlockView(block);
-    const header = headerHash ?? DEFAULT_HEADER_HASH;
+    const headerHashOrDefault = headerHash ?? DEFAULT_HEADER_HASH;
     const stateRoot = stateRootHash ?? DEFAULT_STATE_ROOT;
-    db.insertBlock(new WithHash(header, blockView));
+    db.insertBlock(new WithHash(headerHashOrDefault, blockView));
     if (prepareStateRoot) {
-      db.setPostStateRoot(header, stateRoot);
+      db.setPostStateRoot(headerHashOrDefault, stateRoot);
     }
-    db.setBestHeaderHash(header);
+    db.setBestHeaderHash(headerHashOrDefault);
   };
 
   const prepareBlock = ({
@@ -71,16 +74,20 @@ describe("Block Verifier", async () => {
     correctExtrinsic?: boolean;
   } = {}) => {
     const block = testBlockView().materialize();
-    block.header.timeSlotIndex = timeSlot ?? tryAsTimeSlot(DEFAULT_TIME_SLOT + 1);
-    block.header.parentHeaderHash = parentHash ?? DEFAULT_HEADER_HASH;
-    block.header.priorStateRoot = priorStateRootHash ?? DEFAULT_STATE_ROOT;
-    if (correctExtrinsic) {
-      const extrinsicHash = hasher.extrinsic(testBlockView().extrinsic.view()).hash;
-      block.header.extrinsicHash = extrinsicHash;
-    } else {
-      block.header.extrinsicHash = DEFAULT_EXTRINSIC_HASH;
-    }
-    return block;
+
+    const extrinsicHash = correctExtrinsic
+      ? hasher.extrinsic(testBlockView().extrinsic.view()).hash
+      : DEFAULT_EXTRINSIC_HASH;
+
+    const header = Header.create({
+      ...block.header,
+      timeSlotIndex: timeSlot ?? tryAsTimeSlot(DEFAULT_TIME_SLOT + 1),
+      parentHeaderHash: parentHash ?? DEFAULT_HEADER_HASH,
+      priorStateRoot: priorStateRootHash ?? DEFAULT_STATE_ROOT,
+      extrinsicHash,
+    });
+
+    return Block.create({ ...block, header });
   };
 
   it("should return ParentNotFound error if parent block is not found", async () => {

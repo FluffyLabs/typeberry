@@ -299,18 +299,18 @@ type TestServiceInfo = {
       const offset = MIN_PUBLIC_SERVICE_INDEX;
 
       const createdIds: ServiceId[] = [];
-      let currentId = tryAsServiceId(0);
+      let currentId = tryAsServiceId(MIN_PUBLIC_SERVICE_INDEX);
 
       for (let i = 0; i < 10; i++) {
         createdIds.push(currentId);
-        currentId = tryAsServiceId(((currentId - offset + 1 + mod) % mod) + offset);
+        currentId = tryAsServiceId(((currentId - offset + 42 + mod) % mod) + offset);
       }
 
       // create no duplications
       assert.ok(!accumulate.hasDuplicatedServiceIdCreated(createdIds), "Should not trigger duplicated service id!");
 
       // create duplication
-      createdIds.push(tryAsServiceId(0));
+      createdIds.push(tryAsServiceId(MIN_PUBLIC_SERVICE_INDEX));
       assert.ok(accumulate.hasDuplicatedServiceIdCreated(createdIds), "Should detect duplicated service id!");
     });
   });

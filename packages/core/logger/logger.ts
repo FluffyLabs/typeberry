@@ -29,7 +29,7 @@ export class Logger {
   static new(fileName?: string, moduleName?: string) {
     const fName = fileName ?? "unknown";
     const module = moduleName ?? fName;
-    return new Logger(module.padStart(8, " "), GLOBAL_CONFIG);
+    return new Logger(module, GLOBAL_CONFIG);
   }
 
   /**
@@ -80,11 +80,9 @@ export class Logger {
 
   private getLevelAndName(): readonly [Level, string] {
     if (this.cachedLevelAndName === undefined) {
-      // since we pad module name for better alignment, we need to
-      // trim it for the lookup
-      const moduleTrimmed = this.moduleName.trim();
-      const level = findLevel(this.config.options, moduleTrimmed);
-      const shortName = moduleTrimmed.replace(this.config.options.workingDir, "");
+      const moduleName = this.moduleName;
+      const level = findLevel(this.config.options, moduleName);
+      const shortName = moduleName.replace(this.config.options.workingDir, "");
       this.cachedLevelAndName = [level, shortName];
     }
     return this.cachedLevelAndName;
