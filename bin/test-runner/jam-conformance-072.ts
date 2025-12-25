@@ -28,14 +28,6 @@ main(runners, "test-vectors/jam-conformance/fuzz-reports/0.7.2/traces", {
     // Preimage too big?
     "1766244251_1244/00000124.json",
 
-    // Invalid validator data?
-    "1766243493_1016/00000035.json",
-    "1766243493_1163/00000016.json",
-    "1766243493_2605/00000030.json",
-    "1766243493_8886/00000065.json",
-    "1766243493_8886/00000066.json",
-    "1766244556_6133/00012107.json",
-
     // Invalid extrinsic hash?
     "1766255635_1584/00000016.json",
 
