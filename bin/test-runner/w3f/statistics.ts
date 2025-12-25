@@ -7,6 +7,7 @@ import {
   type ValidatorIndex,
 } from "@typeberry/block";
 import { getExtrinsicFromJson } from "@typeberry/block-json";
+import { asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import {
@@ -22,8 +23,9 @@ import { JsonValidatorStatistics, validatorDataFromJson } from "@typeberry/state
 import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics.js";
 import { OK, Result } from "@typeberry/utils";
 
+type TestInput = Omit<Input, "reporters" | "currentValidatorData">;
 class TinyInput {
-  static fromJson = json.object<TinyInput, Input>(
+  static fromJson = json.object<TinyInput, TestInput>(
     {
       slot: "number",
       author_index: "number",
@@ -48,7 +50,7 @@ class TinyInput {
 }
 
 class FullInput {
-  static fromJson = json.object<FullInput, Input>(
+  static fromJson = json.object<FullInput, TestInput>(
     {
       slot: "number",
       author_index: "number",
@@ -109,7 +111,7 @@ export class StatisticsTestTiny {
     output: json.fromAny(() => null),
     post_state: TestState.fromJson,
   };
-  input!: Input;
+  input!: TestInput;
   pre_state!: TestState;
   output!: null;
   post_state!: TestState;
@@ -122,7 +124,7 @@ export class StatisticsTestFull {
     output: json.fromAny(() => null),
     post_state: TestState.fromJson,
   };
-  input!: Input;
+  input!: TestInput;
   pre_state!: TestState;
   output!: null;
   post_state!: TestState;
@@ -140,7 +142,11 @@ export async function runStatisticsTest(
   assert.deepStrictEqual(statistics.state, preState);
 
   // when
-  const update = statistics.transition(input);
+  const update = statistics.transition({
+    ...input,
+    currentValidatorData: preState.currentValidatorData,
+    reporters: asKnownSize([]),
+  });
   const state = InMemoryState.partial(spec, preState);
   assert.deepEqual(state.applyUpdate(update), Result.ok(OK));
 

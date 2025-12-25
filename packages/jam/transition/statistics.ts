@@ -15,6 +15,7 @@ import { type ChainSpec, EC_SEGMENT_SIZE } from "@typeberry/config";
 import { tryAsU16, tryAsU32, type U32 } from "@typeberry/numbers";
 import { ServiceStatistics, type State, StatisticsData, ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
+import type { Reporters } from "./reports/reports.js";
 
 export type Input = {
   slot: TimeSlot;
@@ -46,6 +47,8 @@ export type Input = {
    * https://graypaper.fluffylabs.dev/#/cc517d7/18dd0018dd00?v=0.6.5
    */
   transferStatistics: Map<ServiceId, CountAndGasUsed>;
+  reporters: Reporters;
+  currentValidatorData: State["currentValidatorData"];
 };
 
 export type CountAndGasUsed = {
@@ -239,15 +242,11 @@ export class Statistics {
      *
      * https://graypaper.fluffylabs.dev/#/1c979cb/19a00119a801?v=0.7.1
      */
-    const incrementedGuarantors = new Set<ValidatorIndex>();
-    for (const guarantee of extrinsic.guarantees) {
-      for (const { validatorIndex } of guarantee.credentials) {
-        if (!incrementedGuarantors.has(validatorIndex)) {
-          const newGuaranteesCount = current[validatorIndex].guarantees + 1;
-          current[validatorIndex].guarantees = tryAsU32(newGuaranteesCount);
-          incrementedGuarantors.add(validatorIndex);
-        }
-      }
+    const validatorKeys = input.currentValidatorData.map((v) => v.ed25519);
+    for (const reporter of input.reporters) {
+      const index = validatorKeys.findIndex((x) => x.isEqualTo(reporter));
+      const newGuaranteesCount = current[index].guarantees + 1;
+      current[index].guarantees = tryAsU32(newGuaranteesCount);
     }
 
     for (const { validatorIndex } of extrinsic.assurances) {
