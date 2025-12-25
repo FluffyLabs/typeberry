@@ -7,7 +7,8 @@ import {
   type ValidatorIndex,
 } from "@typeberry/block";
 import { getExtrinsicFromJson } from "@typeberry/block-json";
-import { asKnownSize } from "@typeberry/collections";
+import { bytesBlobComparator } from "@typeberry/bytes";
+import { asKnownSize, SortedSet } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import {
@@ -141,11 +142,17 @@ export async function runStatisticsTest(
   const statistics = new Statistics(spec, preState);
   assert.deepStrictEqual(statistics.state, preState);
 
+  const reporters = SortedSet.fromArray(
+    bytesBlobComparator,
+    input.extrinsic.guarantees
+      .flatMap((g) => g.credentials)
+      .map((c) => preState.currentValidatorData[c.validatorIndex].ed25519),
+  ).array;
   // when
   const update = statistics.transition({
     ...input,
     currentValidatorData: preState.currentValidatorData,
-    reporters: asKnownSize([]),
+    reporters: asKnownSize(reporters),
   });
   const state = InMemoryState.partial(spec, preState);
   assert.deepEqual(state.applyUpdate(update), Result.ok(OK));
