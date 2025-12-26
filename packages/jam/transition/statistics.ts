@@ -246,7 +246,7 @@ export class Statistics {
       if (index === -1) {
         /**
          * it should never happen because:
-         * 1. the exstrinsic is verified in reports transition
+         * 1. the extrinsic is verified in reports transition
          * 2. we use current validators set from safrole
          */
         continue;
