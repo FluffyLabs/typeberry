@@ -28,10 +28,6 @@ main(runners, "test-vectors/jam-conformance/fuzz-reports/0.7.2/traces", {
     // Block should be rejected
     "1766565819_2010/00000225.json",
 
-    // Rejecting for invalid work result error "output_oversize" - unspecified behavior
-    "1766565819_4872/00000040.json",
-    "1766565819_4872/00000041.json",
-
     // Rejecting for WorkItemsCount: valid behavior
     "1766244251_2939/00001634.json",
     "1766243861_2056/00000022.json",
