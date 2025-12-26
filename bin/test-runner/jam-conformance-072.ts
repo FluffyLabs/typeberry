@@ -28,23 +28,11 @@ main(runners, "test-vectors/jam-conformance/fuzz-reports/0.7.2/traces", {
     // Preimage too big?
     "1766244251_1244/00000124.json",
 
-    // Invalid validator data?
-    "1766243493_1016/00000035.json",
-    "1766243493_1163/00000016.json",
-    "1766243493_2605/00000030.json",
-    "1766243493_8886/00000065.json",
-    "1766243493_8886/00000066.json",
-    "1766244556_6133/00012107.json",
-
     // Invalid extrinsic hash?
     "1766255635_1584/00000016.json",
 
     // Block should be rejected
     "1766565819_2010/00000225.json",
-
-    // Rejecting for invalid work result error "output_oversize" - unspecified behavior
-    "1766565819_4872/00000040.json",
-    "1766565819_4872/00000041.json",
 
     // Rejecting for WorkItemsCount: valid behavior
     "1766244251_2939/00001634.json",
