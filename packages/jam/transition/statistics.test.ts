@@ -21,10 +21,25 @@ import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { asKnownSize, FixedSizeArray } from "@typeberry/collections";
 import { EC_SEGMENT_SIZE, tinyChainSpec } from "@typeberry/config";
-import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
+import {
+  BANDERSNATCH_KEY_BYTES,
+  BLS_KEY_BYTES,
+  ED25519_KEY_BYTES,
+  ED25519_SIGNATURE_BYTES,
+  type Ed25519Key,
+} from "@typeberry/crypto";
+import { currentValidatorData } from "@typeberry/disputes/disputes.test.data.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { isU16, isU32, tryAsU32 } from "@typeberry/numbers";
-import { CoreStatistics, ServiceStatistics, StatisticsData, tryAsPerCore, ValidatorStatistics } from "@typeberry/state";
+import {
+  CoreStatistics,
+  ServiceStatistics,
+  type State,
+  StatisticsData,
+  tryAsPerCore,
+  ValidatorData,
+  ValidatorStatistics,
+} from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
 import { Statistics, type StatisticsState } from "./statistics.js";
 import { copyAndUpdateState } from "./test.utils.js";
@@ -101,13 +116,23 @@ describe("Statistics", () => {
       state,
       validatorIndex,
       currentSlot: tryAsTimeSlot(currentSlot),
+      currentValidatorData: state.currentValidatorData,
+      reporters: asKnownSize([]),
     };
   }
 
   describe("epoch change", () => {
     it("should keep the same 'current' and 'last' statistics if epoch is not changed", () => {
       const emptyExtrinsic = getExtrinsic();
-      const { statistics, currentSlot, validatorIndex, currentStatistics, lastStatistics } = prepareData({
+      const {
+        statistics,
+        currentSlot,
+        validatorIndex,
+        currentStatistics,
+        lastStatistics,
+        currentValidatorData,
+        reporters,
+      } = prepareData({
         previousSlot: 0,
         currentSlot: 1,
       });
@@ -120,6 +145,8 @@ describe("Statistics", () => {
         availableReports: [],
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
+        currentValidatorData,
+        reporters,
       });
 
       const state = copyAndUpdateState(statistics.state, update);
@@ -131,10 +158,11 @@ describe("Statistics", () => {
     it("should create a new 'current' statistics and previous current should be 'last' when the epoch is changed", () => {
       const previousSlot = 1;
       const emptyExtrinsic = getExtrinsic();
-      const { statistics, currentSlot, validatorIndex, currentStatistics } = prepareData({
-        previousSlot,
-        currentSlot: previousSlot + tinyChainSpec.epochLength,
-      });
+      const { statistics, currentSlot, validatorIndex, currentStatistics, currentValidatorData, reporters } =
+        prepareData({
+          previousSlot,
+          currentSlot: previousSlot + tinyChainSpec.epochLength,
+        });
 
       assert.deepStrictEqual(statistics.state.statistics.current, currentStatistics);
 
@@ -146,6 +174,8 @@ describe("Statistics", () => {
         availableReports: [],
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
+        currentValidatorData,
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 
@@ -155,7 +185,7 @@ describe("Statistics", () => {
     it("should create a new current statistics object that have length equal to number of validators ", () => {
       const previousSlot = 1;
       const emptyExtrinsic = getExtrinsic();
-      const { statistics, currentSlot, validatorIndex } = prepareData({
+      const { statistics, currentSlot, validatorIndex, currentValidatorData, reporters } = prepareData({
         previousSlot,
         currentSlot: previousSlot + tinyChainSpec.epochLength,
       });
@@ -168,6 +198,8 @@ describe("Statistics", () => {
         availableReports: [],
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
+        currentValidatorData,
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 
@@ -203,7 +235,17 @@ describe("Statistics", () => {
       });
     }
 
-    function prepareData({ previousSlot, currentSlot }: { previousSlot: number; currentSlot: number }) {
+    function prepareData({
+      previousSlot,
+      currentSlot,
+      reporters,
+      currentValidatorData: validatorDataToOverride,
+    }: {
+      previousSlot: number;
+      currentSlot: number;
+      reporters?: readonly Ed25519Key[];
+      currentValidatorData?: State["currentValidatorData"];
+    }) {
       const validatorIndex = tryAsValidatorIndex(0);
       const serviceIndex = tryAsServiceId(0);
       const currentStatistics = emptyValidatorStatistics();
@@ -219,10 +261,12 @@ describe("Statistics", () => {
         cores: coreStatistics,
         services: serviceStatistics,
       });
+
+      const defaultReporters: readonly Ed25519Key[] = [];
       const state: StatisticsState = {
         statistics: statisticsData,
         timeslot: tryAsTimeSlot(previousSlot),
-        currentValidatorData: asOpaqueType([]),
+        currentValidatorData: validatorDataToOverride ?? currentValidatorData,
       };
       const statistics = new Statistics(tinyChainSpec, state);
 
@@ -236,15 +280,18 @@ describe("Statistics", () => {
         validatorIndex,
         serviceIndex,
         currentSlot: tryAsTimeSlot(currentSlot),
+        reporters: reporters ?? defaultReporters,
+        currentValidatorData: state.currentValidatorData,
       };
     }
 
     it("should increase number of blocks created by validator", () => {
       const emptyExtrinsic = getExtrinsic();
-      const { statistics, currentSlot, validatorIndex, currentStatistics } = prepareData({
-        previousSlot: 0,
-        currentSlot: 1,
-      });
+      const { statistics, currentSlot, validatorIndex, currentStatistics, currentValidatorData, reporters } =
+        prepareData({
+          previousSlot: 0,
+          currentSlot: 1,
+        });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1 };
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].blocks, 0);
@@ -257,6 +304,8 @@ describe("Statistics", () => {
         availableReports: [],
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
+        currentValidatorData,
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 
@@ -266,10 +315,11 @@ describe("Statistics", () => {
     it("should add tickets length from extrinstic to tickets in statistics", () => {
       const tickets = [1, 2, 3] as unknown as TicketsExtrinsic;
       const extrinsic = getExtrinsic({ tickets });
-      const { statistics, currentSlot, validatorIndex, currentStatistics } = prepareData({
-        previousSlot: 0,
-        currentSlot: 1,
-      });
+      const { statistics, currentSlot, validatorIndex, currentStatistics, currentValidatorData, reporters } =
+        prepareData({
+          previousSlot: 0,
+          currentSlot: 1,
+        });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1, tickets: tickets.length };
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].tickets, 0);
@@ -282,6 +332,8 @@ describe("Statistics", () => {
         availableReports: [],
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
+        currentValidatorData,
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 
@@ -289,10 +341,11 @@ describe("Statistics", () => {
     });
 
     it("should add preimages length from extrinstic to preImages in statistics", () => {
-      const { statistics, currentSlot, validatorIndex, currentStatistics } = prepareData({
-        previousSlot: 0,
-        currentSlot: 1,
-      });
+      const { statistics, currentSlot, validatorIndex, currentStatistics, currentValidatorData, reporters } =
+        prepareData({
+          previousSlot: 0,
+          currentSlot: 1,
+        });
       const preimages: PreimagesExtrinsic = asKnownSize([createPreimage(0), createPreimage(0), createPreimage(0)]);
       const assurances = asKnownSize([createAssurance(validatorIndex + 1)]) as unknown as AssurancesExtrinsic;
       const extrinsic = getExtrinsic({ preimages, assurances });
@@ -308,6 +361,8 @@ describe("Statistics", () => {
         availableReports: [],
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
+        currentValidatorData,
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 
@@ -317,10 +372,11 @@ describe("Statistics", () => {
     it("should add preimages size length from extrinstic to preImagesSize in statistics", () => {
       const preimages: PreimagesExtrinsic = asKnownSize([createPreimage(1), createPreimage(2), createPreimage(3)]);
       const extrinsic = getExtrinsic({ preimages });
-      const { statistics, currentSlot, validatorIndex, currentStatistics } = prepareData({
-        previousSlot: 0,
-        currentSlot: 1,
-      });
+      const { statistics, currentSlot, validatorIndex, currentStatistics, currentValidatorData, reporters } =
+        prepareData({
+          previousSlot: 0,
+          currentSlot: 1,
+        });
       const expectedStatistics = {
         ...currentStatistics[validatorIndex],
         blocks: 1,
@@ -338,29 +394,35 @@ describe("Statistics", () => {
         availableReports: [],
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
+        currentValidatorData,
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 
       assert.deepEqual(state.statistics.current[validatorIndex], expectedStatistics);
     });
 
-    it("should update guarantees for each validator based on guarantees from extrinstic, a maximum of once per validator", () => {
-      const { statistics, currentSlot, validatorIndex, currentStatistics } = prepareData({
-        previousSlot: 0,
-        currentSlot: 1,
-      });
+    it("should update guarantees for each validator based on reporters set from input, a maximum of once per validator", () => {
+      const createValidatorData = (seed: number) =>
+        ValidatorData.create({
+          ed25519: Bytes.fill(ED25519_KEY_BYTES, seed).asOpaque(),
+          bandersnatch: Bytes.zero(BANDERSNATCH_KEY_BYTES).asOpaque(),
+          bls: Bytes.zero(BLS_KEY_BYTES).asOpaque(),
+          metadata: Bytes.zero(1).asOpaque(),
+        });
+      const validatorsData = Array.from({ length: tinyChainSpec.validatorsCount }).map((_, index) =>
+        createValidatorData(index),
+      );
+      const { statistics, currentSlot, validatorIndex, currentStatistics, currentValidatorData, reporters } =
+        prepareData({
+          previousSlot: 0,
+          currentSlot: 1,
+          reporters: asKnownSize(validatorsData.map((v) => v.ed25519)),
+          currentValidatorData: tryAsPerValidator(validatorsData, tinyChainSpec),
+        });
       const validatorIndex2 = tryAsValidatorIndex(1);
       const validatorIndex3 = tryAsValidatorIndex(2);
-      const guarantees = [
-        {
-          report: createWorkReport(tryAsCoreIndex(0)),
-          credentials: [{ validatorIndex }, { validatorIndex: validatorIndex2 }],
-        },
-        {
-          report: createWorkReport(tryAsCoreIndex(1)),
-          credentials: [{ validatorIndex }, { validatorIndex: validatorIndex3 }],
-        },
-      ] as unknown as GuaranteesExtrinsic;
+      const guarantees = [] as unknown as GuaranteesExtrinsic;
       const extrinsic = getExtrinsic({ guarantees });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1, guarantees: 1 };
       const expectedStatistics2 = { ...currentStatistics[validatorIndex2], blocks: 0, guarantees: 1 };
@@ -378,6 +440,8 @@ describe("Statistics", () => {
         availableReports: [],
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
+        currentValidatorData,
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 
@@ -387,10 +451,11 @@ describe("Statistics", () => {
     });
 
     it("should update assurances for each validator based on assurances from extrinstic", () => {
-      const { statistics, currentSlot, validatorIndex, currentStatistics } = prepareData({
-        previousSlot: 0,
-        currentSlot: 1,
-      });
+      const { statistics, currentSlot, validatorIndex, currentStatistics, currentValidatorData, reporters } =
+        prepareData({
+          previousSlot: 0,
+          currentSlot: 1,
+        });
       const assurances = asKnownSize([createAssurance(validatorIndex)]) as unknown as AssurancesExtrinsic;
       const extrinsic = getExtrinsic({ assurances });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1, assurances: 1 };
@@ -405,6 +470,8 @@ describe("Statistics", () => {
         availableReports: [],
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
+        currentValidatorData,
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 
@@ -412,7 +479,7 @@ describe("Statistics", () => {
     });
 
     it("should update refine score of core statistics based on incoming work-reports", () => {
-      const { statistics, currentSlot, validatorIndex, coreStatistics } = prepareData({
+      const { statistics, currentSlot, validatorIndex, coreStatistics, currentValidatorData, reporters } = prepareData({
         previousSlot: 0,
         currentSlot: 1,
       });
@@ -432,6 +499,8 @@ describe("Statistics", () => {
         availableReports: [],
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
+        currentValidatorData,
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 
@@ -439,7 +508,7 @@ describe("Statistics", () => {
     });
 
     it("should update popularity score of core statistics based on assurances", () => {
-      const { statistics, currentSlot, validatorIndex, coreStatistics } = prepareData({
+      const { statistics, currentSlot, validatorIndex, coreStatistics, currentValidatorData, reporters } = prepareData({
         previousSlot: 0,
         currentSlot: 1,
       });
@@ -459,6 +528,8 @@ describe("Statistics", () => {
         availableReports: [],
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
+        currentValidatorData,
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 
@@ -466,7 +537,7 @@ describe("Statistics", () => {
     });
 
     it("should update data availability score of core statistics based on available work-reports", () => {
-      const { statistics, currentSlot, validatorIndex, coreStatistics } = prepareData({
+      const { statistics, currentSlot, validatorIndex, coreStatistics, currentValidatorData, reporters } = prepareData({
         previousSlot: 0,
         currentSlot: 1,
       });
@@ -486,6 +557,8 @@ describe("Statistics", () => {
         availableReports,
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
+        currentValidatorData,
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 
@@ -494,7 +567,15 @@ describe("Statistics", () => {
 
     it("should update provided score of service statistics based on extrinstic preimages", () => {
       const preimages: PreimagesExtrinsic = asKnownSize([createPreimage(1), createPreimage(2), createPreimage(3)]);
-      const { statistics, currentSlot, validatorIndex, serviceIndex, serviceStatistics } = prepareData({
+      const {
+        statistics,
+        currentSlot,
+        validatorIndex,
+        serviceIndex,
+        serviceStatistics,
+        currentValidatorData,
+        reporters,
+      } = prepareData({
         previousSlot: 0,
         currentSlot: 1,
       });
@@ -518,6 +599,8 @@ describe("Statistics", () => {
         availableReports: [],
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
+        currentValidatorData,
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 
@@ -525,7 +608,15 @@ describe("Statistics", () => {
     });
 
     it("should update accumulation score of service statistics based on accumulation statistics", () => {
-      const { statistics, currentSlot, validatorIndex, serviceIndex, serviceStatistics } = prepareData({
+      const {
+        statistics,
+        currentSlot,
+        validatorIndex,
+        serviceIndex,
+        serviceStatistics,
+        currentValidatorData,
+        reporters,
+      } = prepareData({
         previousSlot: 0,
         currentSlot: 1,
       });
@@ -548,6 +639,8 @@ describe("Statistics", () => {
         availableReports: [],
         accumulationStatistics,
         transferStatistics: new Map(),
+        currentValidatorData,
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 
@@ -555,7 +648,15 @@ describe("Statistics", () => {
     });
 
     it("should update on transfer score of service statistics based on on transfer statistics", () => {
-      const { statistics, currentSlot, validatorIndex, serviceIndex, serviceStatistics } = prepareData({
+      const {
+        statistics,
+        currentSlot,
+        validatorIndex,
+        serviceIndex,
+        serviceStatistics,
+        currentValidatorData,
+        reporters,
+      } = prepareData({
         previousSlot: 0,
         currentSlot: 1,
       });
@@ -578,6 +679,8 @@ describe("Statistics", () => {
         availableReports: [],
         accumulationStatistics: new Map(),
         transferStatistics,
+        currentValidatorData,
+        reporters,
       });
       const state = copyAndUpdateState(statistics.state, update);
 

@@ -8,12 +8,6 @@ main(runners, "test-vectors/jam-conformance/fuzz-reports/0.7.2/traces", {
     // genesis file is unparsable
     "genesis.json",
 
-    // Statistics error
-    "1766241814/00000179.json",
-    "1766243493_2605/00000031.json",
-    "1766243861_5589/00000208.json",
-    "1766243493_9727/00000075.json",
-
     // Guarantees: invalid signatures
     "1766243113/00000058.json",
     "1766243147/00000057.json",
