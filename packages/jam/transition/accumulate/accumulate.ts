@@ -11,7 +11,7 @@ import type { WorkReport } from "@typeberry/block/work-report.js";
 import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import { ArrayView, HashSet, SortedArray } from "@typeberry/collections";
-import type { ChainSpec, PvmBackend } from "@typeberry/config";
+import type { ChainSpec } from "@typeberry/config";
 import { type Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import type { PendingTransfer } from "@typeberry/jam-host-calls";
 import {
@@ -50,6 +50,7 @@ import {
   type ParallelAccumulationResult,
 } from "./accumulation-result-merge-utils.js";
 import type { Operand } from "./operand.js";
+import type { AccumulateOptions } from "./options.js";
 import { PvmExecutor } from "./pvm-executor.js";
 
 export const ACCUMULATION_ERROR = "duplicate service created";
@@ -85,8 +86,12 @@ export class Accumulate {
     public readonly chainSpec: ChainSpec,
     public readonly blake2b: Blake2b,
     public readonly state: AccumulateState,
-    public readonly pvm: PvmBackend,
-  ) {}
+    public readonly options: AccumulateOptions,
+  ) {
+    if (options.accumulateSequentially === true) {
+      logger.warn`⚠️ Parallel accumulation is disabled. Running in sequential mode.`;
+    }
+  }
 
   /**
    * Returns an index that determines how many WorkReports can be processed before exceeding a given gasLimit.
@@ -176,7 +181,7 @@ export class Accumulate {
       code,
       externalities,
       this.chainSpec,
-      this.pvm,
+      this.options.pvm,
     );
 
     const invocationArgs = Encoder.encodeObject(ARGS_CODEC, {
@@ -531,6 +536,10 @@ export class Accumulate {
 
         return resultEntry;
       });
+
+      if (this.options.accumulateSequentially === true) {
+        await promise;
+      }
 
       resultPromises[serviceIndex] = promise;
     }
