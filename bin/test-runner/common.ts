@@ -34,6 +34,7 @@ export function selectedPvmToBackend(pvm: SelectedPvm): PvmBackend {
 
 export type GlobalsOptions = {
   pvms: SelectedPvm[];
+  accumulateSequentially: boolean;
 };
 
 export class RunnerBuilder<T, V> implements Runner<T, V> {
@@ -95,6 +96,7 @@ export type RunOptions = {
   test: TestContext;
   chainSpec: ChainSpec;
   path: string;
+  accumulateSequentially: boolean;
 };
 
 export type RunFunction<T, V> = (test: T, options: RunOptions, variant: V) => Promise<void>;
@@ -134,15 +136,59 @@ export namespace testFile {
       };
 }
 
+const PVM_OPTION = "pvm";
+const ACCUMULATE_SEQUENTIALLY_OPTION = "accumulate-sequentially";
+const HELP_OPTION = "help";
+export const HELP_MESSAGE = `
+Usage: test-runner [options] [files...]
+
+Options:
+  --pvm <value>                Select PVM backend(s). Comma-separated list.
+                               Available: ${ALL_PVMS.join(", ")}
+                               Default: all PVMs
+
+  --accumulate-sequentially    Run accumulation sequentially instead of in parallel.
+                               Default: false
+
+  -h, --help                   Show this help message.
+
+Examples:
+  test-runner                           Run all tests with all PVMs
+  test-runner --pvm ananas              Run tests with ananas PVM only
+  test-runner --accumulate-sequentially Run tests with sequential accumulation
+  test-runner test.json                 Run specific test file
+`;
+
 export function parseArgs(argv: string[]) {
-  const PVM_OPTION = "pvm";
-  const parsed = minimist(argv);
+  const parsed = minimist(argv, {
+    boolean: [ACCUMULATE_SEQUENTIALLY_OPTION, HELP_OPTION],
+    alias: { h: HELP_OPTION },
+    default: { [ACCUMULATE_SEQUENTIALLY_OPTION]: false },
+  });
+
+  const shouldShowHelp = getBooleanOption(parsed[HELP_OPTION]);
+
+  if (shouldShowHelp) {
+    console.log(HELP_MESSAGE);
+    process.exit(0);
+  }
+
   const pvms = getPvms(parsed[PVM_OPTION]);
+  const accumulateSequentially = getBooleanOption(parsed[ACCUMULATE_SEQUENTIALLY_OPTION]);
 
   return {
     initialFiles: parsed._,
     pvms,
+    accumulateSequentially,
   };
+
+  function getBooleanOption(value: unknown): boolean {
+    if (value === true) {
+      return true;
+    }
+
+    return false;
+  }
 
   function getPvms(parsed: string | undefined): SelectedPvm[] {
     const allPvms = ALL_PVMS.slice();
@@ -171,12 +217,14 @@ export async function main(
   {
     initialFiles,
     pvms,
+    accumulateSequentially,
     patterns = [testFile.bin, testFile.json],
     accepted,
     ignored,
   }: {
     initialFiles: string[];
     pvms: SelectedPvm[];
+    accumulateSequentially: boolean;
     patterns?: (testFile.bin | testFile.json)[];
     accepted?: {
       [testFile.bin]?: string[];
@@ -233,7 +281,10 @@ export async function main(
       // 3. If the list is defined, we make sure that the path is on that list.
       (accepted[testFileContent.kind] ?? []).some((x) => absolutePath.includes(x));
 
-    const testVariants = prepareTest(runners, testFileContent, testFilePath, absolutePath, { pvms });
+    const testVariants = prepareTest(runners, testFileContent, testFilePath, absolutePath, {
+      pvms,
+      accumulateSequentially,
+    });
     for (const test of testVariants) {
       test.shouldSkip = !isAccepted;
       tests.push(test);
@@ -412,6 +463,7 @@ function prepareTest<T, V>(
               test: ctx,
               path: fullPath,
               chainSpec,
+              accumulateSequentially: globalOptions.accumulateSequentially,
             },
             variant,
           );

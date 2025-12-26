@@ -137,10 +137,11 @@ export class AccumulateTest {
 
 export async function runAccumulateTest(
   test: AccumulateTest,
-  { chainSpec }: RunOptions,
+  { chainSpec, accumulateSequentially }: RunOptions,
   variant: "ananas" | "builtin",
 ) {
   const pvm = variant === "ananas" ? PvmBackend.Ananas : PvmBackend.BuiltIn;
+  const options = { pvm, accumulateSequentially };
   /**
    * entropy has to be moved to input because state is incompatibile -
    * in test state we have: `entropy: EntropyHash;`
@@ -151,7 +152,7 @@ export async function runAccumulateTest(
 
   const post_state = TestState.toAccumulateState(test.post_state, chainSpec);
   const state = TestState.toAccumulateState(test.pre_state, chainSpec);
-  const accumulate = new Accumulate(chainSpec, await Blake2b.createHasher(), state, pvm);
+  const accumulate = new Accumulate(chainSpec, await Blake2b.createHasher(), state, options);
   const accumulateOutput = new AccumulateOutput();
   const result = await accumulate.transition({ ...test.input, entropy });
   if (result.isError) {
