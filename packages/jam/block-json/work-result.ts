@@ -15,9 +15,10 @@ const workExecResultFromJson = json.object<JsonWorkExecResult, WorkExecResult>(
     panic: json.optional(json.fromAny(() => null)),
     bad_code: json.optional(json.fromAny(() => null)),
     code_oversize: json.optional(json.fromAny(() => null)),
+    output_oversize: json.optional(json.fromAny(() => null)),
   },
   (val) => {
-    const { ok, out_of_gas, panic, bad_code, code_oversize } = val;
+    const { ok, out_of_gas, panic, bad_code, code_oversize, output_oversize } = val;
     if (ok !== undefined) {
       return new WorkExecResult(tryAsU32(WorkExecResultKind.ok), ok);
     }
@@ -33,6 +34,9 @@ const workExecResultFromJson = json.object<JsonWorkExecResult, WorkExecResult>(
     if (code_oversize === null) {
       return new WorkExecResult(tryAsU32(WorkExecResultKind.codeOversize));
     }
+    if (output_oversize === null) {
+      return new WorkExecResult(tryAsU32(WorkExecResultKind.digestTooBig));
+    }
 
     throw new Error("Invalid WorkExecResult");
   },
@@ -44,6 +48,7 @@ type JsonWorkExecResult = {
   panic?: null;
   bad_code?: null;
   code_oversize?: null;
+  output_oversize?: null;
 };
 
 const workRefineLoadFromJson = json.object<JsonWorkRefineLoad, WorkRefineLoad>(

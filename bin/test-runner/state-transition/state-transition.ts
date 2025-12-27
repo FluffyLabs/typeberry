@@ -97,7 +97,13 @@ export async function runStateTransition(testContent: StateTransition, options: 
     }),
   );
 
-  const stf = new OnChain(spec, preState, hasher, pvm, DbHeaderChain.new(blocksDb));
+  const stf = new OnChain(
+    spec,
+    preState,
+    hasher,
+    { pvm, accumulateSequentially: options.accumulateSequentially },
+    DbHeaderChain.new(blocksDb),
+  );
 
   // verify that we compute the state root exactly the same.
   assert.deepStrictEqual(testContent.pre_state.state_root.toString(), preStateRoot.toString());

@@ -44,9 +44,6 @@ export const W_C = 4_000_000;
 /** `W_M`: The maximum number of imports in a work-package. */
 export const W_M = 3_072;
 
-/** `W_R`: The maximum total size of all output blobs in a work-report, in octets. */
-export const W_R = 49_152;
-
 /** `W_T`: The size of a transfer memo in octets. */
 export const W_T = 128;
 
