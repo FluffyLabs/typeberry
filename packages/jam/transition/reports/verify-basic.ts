@@ -1,5 +1,6 @@
 import { MAX_REPORT_DEPENDENCIES } from "@typeberry/block/gp-constants.js";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
+import { WorkExecResultKind } from "@typeberry/block/work-result.js";
 import { OK, Result } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 
@@ -44,7 +45,11 @@ export function verifyReportsBasic(input: GuaranteesExtrinsicView): Result<OK, R
     const authOutputSize = reportView.authorizationOutput.view().length;
     let totalOutputsSize = 0;
     for (const item of reportView.results.view()) {
-      totalOutputsSize += item.view().result.view().okBlob?.raw.length ?? 0;
+      const workItemView = item.view();
+      const result = workItemView.result.materialize();
+      if (result.kind === WorkExecResultKind.ok) {
+        totalOutputsSize += result.okBlob?.raw.length ?? 0;
+      }
     }
     if (authOutputSize + totalOutputsSize > MAX_WORK_REPORT_SIZE_BYTES) {
       return Result.error(
