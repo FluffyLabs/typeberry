@@ -71,23 +71,20 @@ export async function main(
   );
 
   const baseConfig = { nodeName, chainSpec, blake2b, dbPath };
+  const importerParams = {
+    ...baseConfig,
+    workerParams: ImporterConfig.create({
+      pvm: config.pvmBackend,
+    }),
+  };
+
   const importerConfig = isInMemory
-    ? InMemWorkerConfig.new({
-        ...baseConfig,
-        workerParams: ImporterConfig.create({
-          pvm: config.pvmBackend,
-        }),
-      })
-    : LmdbWorkerConfig.new({
-        ...baseConfig,
-        workerParams: ImporterConfig.create({
-          pvm: config.pvmBackend,
-        }),
-      });
+    ? { type: "inmem" as const, config: InMemWorkerConfig.new(importerParams) }
+    : { type: "lmdb" as const, config: LmdbWorkerConfig.new(importerParams) };
 
   // Initialize the database with genesis state and block if there isn't one.
   logger.info`🛢️ Opening database at ${dbPath}`;
-  const rootDb = importerConfig.openDatabase({ readonly: false });
+  const rootDb = importerConfig.config.openDatabase({ readonly: false });
   await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
   // NOTE [ToDr] even though, we should be closing the database here,
   // it seems that opening it in the main thread for writing, and later
@@ -99,19 +96,16 @@ export async function main(
   let importer: ImporterApi;
   let closeImporter: () => Promise<void>;
 
-  if (isInMemory) {
+  if (importerConfig.type === "inmem") {
     ({ importer, finish: closeImporter } = await startImporterDirect(
       DirectWorkerConfig.new({
-        ...importerConfig,
+        ...importerConfig.config,
         blocksDb: rootDb.getBlocksDb(),
         statesDb: rootDb.getStatesDb(),
       }),
     ));
   } else {
-    if (!(importerConfig instanceof LmdbWorkerConfig)) {
-      throw new Error("Expected LmdbWorkerConfig in LMDB mode");
-    }
-    ({ importer, finish: closeImporter } = await spawnImporterWorker(importerConfig));
+    ({ importer, finish: closeImporter } = await spawnImporterWorker(importerConfig.config));
   }
 
   const bestHeader = new Listener<WithHash<HeaderHash, HeaderView>>();
