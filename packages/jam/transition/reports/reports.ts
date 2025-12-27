@@ -20,22 +20,9 @@ import { verifyPostSignatureChecks } from "./verify-post-signature.js";
 
 export type ReportsState = Pick<
   State,
-  | "availabilityAssignment"
-  | "currentValidatorData"
-  | "previousValidatorData"
-  | "entropy"
-  | "getService"
-  | "recentBlocks"
-  | "accumulationQueue"
-  | "recentlyAccumulated"
+  "availabilityAssignment" | "entropy" | "getService" | "recentBlocks" | "accumulationQueue" | "recentlyAccumulated"
 > &
   WithStateView<Pick<StateView, "authPoolsView">>;
-
-// NOTE: this is most likely part of the `disputesState`, but I'm not sure what
-// to do with that exactly. It's being passed in the JAM test vectors, but isn't used?
-// TODO [ToDr] Seems that section 11 does not specify when this should be updated.
-// I guess we need to check that later with the GP.
-// readonly offenders: KnownSizeArray<Ed25519Key, "0..ValidatorsCount">;
 
 /** Reports state update. */
 export type ReportsStateUpdate = Pick<ReportsState, "availabilityAssignment">;
@@ -153,7 +140,13 @@ export class Reports {
 
   verifyCredentials(input: ReportsInput, workReportHashes: KnownSizeArray<WorkReportHash, "Guarantees">) {
     return verifyCredentials(input.guarantees, workReportHashes, input.slot, (headerTimeSlot, guaranteeTimeSlot) =>
-      this.getGuarantorAssignment(headerTimeSlot, guaranteeTimeSlot, input.newEntropy),
+      this.getGuarantorAssignment(
+        headerTimeSlot,
+        guaranteeTimeSlot,
+        input.newEntropy,
+        input.currentValidatorData,
+        input.previousValidatorData,
+      ),
     );
   }
 
@@ -205,6 +198,8 @@ export class Reports {
     headerTimeSlot: TimeSlot,
     guaranteeTimeSlot: TimeSlot,
     newEntropy: SafroleStateUpdate["entropy"],
+    currentValidatorData: SafroleStateUpdate["currentValidatorData"],
+    previousValidatorData: SafroleStateUpdate["previousValidatorData"],
   ): Result<PerValidator<GuarantorAssignment>, ReportsError> {
     const epochLength = this.chainSpec.epochLength;
     const rotationPeriod = this.chainSpec.rotationPeriod;
@@ -232,7 +227,7 @@ export class Reports {
 
     // Default data for the current rotation
     let entropy = newEntropy[2];
-    let validatorData = this.state.currentValidatorData;
+    let validatorData = currentValidatorData;
     let timeSlot = headerTimeSlot;
 
     // we might need a different set of data
@@ -244,7 +239,7 @@ export class Reports {
       // if the epoch changed, we need to take previous entropy and previous validator data.
       if (isPreviousRotationPreviousEpoch(timeSlot, headerTimeSlot, epochLength)) {
         entropy = newEntropy[3];
-        validatorData = this.state.previousValidatorData;
+        validatorData = previousValidatorData;
       }
     }
 

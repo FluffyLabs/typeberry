@@ -57,4 +57,12 @@ export type ReportsInput = {
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/134201134201?v=0.7.2
    */
   offenders: HashSet<Ed25519Key>;
+  /**
+   * `κ' kappa prime` - Current validator data.
+   */
+  currentValidatorData: SafroleStateUpdate["currentValidatorData"];
+  /**
+   * `λ' lambda prime` - Previous validator data.
+   */
+  previousValidatorData: SafroleStateUpdate["previousValidatorData"];
 };

@@ -1,6 +1,7 @@
 import {
   type EntropyHash,
   type HeaderHash,
+  type PerValidator,
   type TimeSlot,
   tryAsPerEpochBlock,
   tryAsPerValidator,
@@ -65,7 +66,7 @@ class Input {
     recentBlocksPartialUpdate: ReportsState["recentBlocks"],
     assurancesAvailAssignment: ReportsState["availabilityAssignment"],
     offenders: HashSet<Ed25519Key>,
-  ): ReportsInput {
+  ): Omit<ReportsInput, "currentValidatorData" | "previousValidatorData"> {
     const view = guaranteesAsView(spec, input.guarantees, { disableCredentialsRangeCheck: true });
 
     return {
@@ -110,6 +111,8 @@ class TestState {
   ): {
     state: ReportsState;
     offenders: HashSet<Ed25519Key>;
+    currentValidatorData: PerValidator<ValidatorData>;
+    previousValidatorData: PerValidator<ValidatorData>;
   } {
     return {
       state: InMemoryState.partial(spec, {
@@ -122,8 +125,6 @@ class TestState {
           spec,
         ),
         availabilityAssignment: tryAsPerCore(pre.avail_assignments, spec),
-        currentValidatorData: tryAsPerValidator(pre.curr_validators, spec),
-        previousValidatorData: tryAsPerValidator(pre.prev_validators, spec),
         entropy: FixedSizeArray.new(pre.entropy, ENTROPY_ENTRIES),
         authPools: tryAsPerCore(
           pre.auth_pools.map((x) => asKnownSize(x)),
@@ -133,6 +134,8 @@ class TestState {
         services: new Map(pre.accounts.map((x) => [x.serviceId, x])),
       }),
       offenders: HashSet.from(pre.offenders),
+      currentValidatorData: tryAsPerValidator(pre.curr_validators, spec),
+      previousValidatorData: tryAsPerValidator(pre.prev_validators, spec),
     };
   }
 }
@@ -273,7 +276,11 @@ export async function runReportsTest(testContent: ReportsTest, { chainSpec: spec
 
   const reports = new Reports(spec, await Blake2b.createHasher(), preState.state, headerChain);
 
-  const output = await reports.transition(input);
+  const output = await reports.transition({
+    ...input,
+    currentValidatorData: preState.currentValidatorData,
+    previousValidatorData: preState.previousValidatorData,
+  });
   let state = reports.state;
   if (output.isOk) {
     state = copyAndUpdateState(state, output.ok.stateUpdate);

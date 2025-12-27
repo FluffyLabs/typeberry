@@ -8,21 +8,10 @@ main(runners, "test-vectors/jam-conformance/fuzz-reports/0.7.2/traces", {
     // genesis file is unparsable
     "genesis.json",
 
-    // Guarantees: invalid signatures
-    "1766243113/00000058.json",
-    "1766243147/00000057.json",
-    "1766243315_2078/00000121.json",
-    "1766243315_3530/00000076.json",
-    "1766243493_9922/00000031.json",
-    "1766243861_8319/00000119.json",
-    "1766243493_6113/00000035.json",
-    "1766479507_2200/00000229.json",
-    "1766479507_5115/00000087.json",
-
     // Invalid extrinsic hash?
     "1766255635_1584/00000016.json",
 
-    // Block should be rejected
+    // Block should be rejected?
     "1766565819_2010/00000225.json",
 
     // Rejecting for WorkItemsCount: valid behavior
