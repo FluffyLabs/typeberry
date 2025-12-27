@@ -21,7 +21,7 @@ export function verifyPostSignatureChecks(
      * No reports may be placed on cores with a report pending
      * availability on it.
      *
-     * https://graypaper.fluffylabs.dev/#/5f542d7/15ea0015ea00
+     * https://graypaper.fluffylabs.dev/#/ab2cdbd/155002155002?v=0.7.2
      */
     if (availabilityAssignment[coreIndex] !== null) {
       return Result.error(ReportsError.CoreEngaged, () => `Report pending availability at core: ${coreIndex}`);
@@ -32,7 +32,7 @@ export function verifyPostSignatureChecks(
      * in the authorizer pool of the core on which the work is
      * reported.
      *
-     * https://graypaper.fluffylabs.dev/#/5f542d7/15eb0015ed00
+     * https://graypaper.fluffylabs.dev/#/ab2cdbd/155102155302?v=0.7.2
      */
     const authorizerHash = report.authorizerHash;
     const authorizerPool = authPools.get(coreIndex);
@@ -46,10 +46,10 @@ export function verifyPostSignatureChecks(
 
     /**
      * We require that the gas allotted for accumulation of each
-     * work item in each work-report respects its service’s
+     * work-digest in each work-report respects its service’s
      * minimum gas requirements.
      *
-     * https://graypaper.fluffylabs.dev/#/5f542d7/15f80015fa00
+     * https://graypaper.fluffylabs.dev/#/ab2cdbd/156602156802?v=0.7.2
      */
     for (const result of report.results) {
       const service = services(result.serviceId);

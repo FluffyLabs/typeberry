@@ -28,9 +28,9 @@ export function verifyCredentials(
 ): Result<ed25519.Input[], ReportsError> {
   /**
    * Collect signatures payload for later verification
-   * and construct the `reporters set R` from that data.
+   * and construct the `reporters set G` from that data.
    *
-   * https://graypaper.fluffylabs.dev/#/5f542d7/15cf0015cf00
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/153002153002?v=0.7.2
    */
   const signaturesToVerify: ed25519.Input[] = [];
   const headerTimeSlot = slot;
@@ -44,7 +44,7 @@ export function verifyCredentials(
      * The credential is a sequence of two or three tuples of a
      * unique validator index and a signature.
      *
-     * https://graypaper.fluffylabs.dev/#/5f542d7/14b90214bb02
+     * https://graypaper.fluffylabs.dev/#/ab2cdbd/152b01152d01?v=0.7.2
      */
     const credentialsView = guaranteeView.credentials.view();
     if (
@@ -89,7 +89,8 @@ export function verifyCredentials(
 
       /**
        * Verify core assignment.
-       * https://graypaper.fluffylabs.dev/#/5f542d7/14e40214e602
+       *
+       * https://graypaper.fluffylabs.dev/#/ab2cdbd/155201155401?v=0.7.2
        */
       if (guarantorData.core !== coreIndex) {
         return Result.error(
@@ -116,7 +117,7 @@ const JAM_GUARANTEE = BytesBlob.blobFromString("jam_guarantee").raw;
  * The signature [...] whose message is the serialization of the hash
  * of the work-report.
  *
- * https://graypaper.fluffylabs.dev/#/5f542d7/155200155200
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/15a20115a201?v=0.7.2
  */
 function signingPayload(hash: WorkReportHash) {
   return BytesBlob.blobFromParts(JAM_GUARANTEE, hash.raw);

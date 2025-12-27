@@ -8,7 +8,7 @@ export function verifyReportsOrder(input: GuaranteesExtrinsicView, chainSpec: Ch
    * The core index of each guarantee must be unique and
    * guarantees must be in ascending order of this.
    *
-   * https://graypaper.fluffylabs.dev/#/5f542d7/146902146a02
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/15d60015d700?v=0.7.2
    */
   const noOfCores = chainSpec.coresCount;
   let lastCoreIndex = -1;
