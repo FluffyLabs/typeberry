@@ -65,7 +65,7 @@ export type Options =
     };
 
 const DEFAULT_START_LENGTH = 512; // 512B
-const MAX_LENGTH = 10 * 1024 * 1024; // 10MB
+const MAX_LENGTH = 20 * 1024 * 1024; // 20MB
 
 /**
  * JAM encoder.
@@ -455,7 +455,7 @@ export class Encoder {
       if (options.silent) {
         return;
       }
-      throw new Error(`The encoded size would reach the maximum of ${MAX_LENGTH}.`);
+      throw new Error(`The encoded size (${newLength}) would reach the maximum of ${MAX_LENGTH}.`);
     }
 
     if (newLength > this.destination.length) {
