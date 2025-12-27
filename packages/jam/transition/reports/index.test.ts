@@ -1,12 +1,12 @@
 import { describe, it } from "node:test";
-import { tryAsTimeSlot } from "@typeberry/block";
+import { tryAsPerValidator, tryAsTimeSlot } from "@typeberry/block";
 import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { asKnownSize, HashDictionary, HashSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { deepEqual } from "@typeberry/utils";
 import type { ReportsInput } from "./input.js";
-import { ENTROPY, guaranteesAsView, newReports } from "./test.utils.js";
+import { ENTROPY, guaranteesAsView, initialValidators, newReports } from "./test.utils.js";
 
 describe("Reports - top level", () => {
   it("should perform a transition with empty state", async () => {
@@ -19,6 +19,8 @@ describe("Reports - top level", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
 
     const res = await reports.transition(input);

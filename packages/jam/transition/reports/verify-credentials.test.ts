@@ -1,5 +1,5 @@
 import { describe, it } from "node:test";
-import { tryAsTimeSlot } from "@typeberry/block";
+import { tryAsPerValidator, tryAsTimeSlot } from "@typeberry/block";
 import { ReportGuarantee } from "@typeberry/block/guarantees.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashSet } from "@typeberry/collections";
@@ -39,6 +39,8 @@ describe("Reports.verifyCredentials", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks, // note: for full fidelity this should be partially updated state, not prior state as it is now
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const hashes = reports.workReportHashes(guarantees, await Blake2b.createHasher());
     const res = reports.verifyCredentials(input, hashes);
@@ -72,6 +74,8 @@ describe("Reports.verifyCredentials", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const hashes = reports.workReportHashes(guarantees, await Blake2b.createHasher());
     const res = reports.verifyCredentials(input, hashes);
@@ -101,6 +105,8 @@ describe("Reports.verifyCredentials", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const hashes = reports.workReportHashes(guarantees, await Blake2b.createHasher());
     const res = reports.verifyCredentials(input, hashes);
@@ -130,6 +136,8 @@ describe("Reports.verifyCredentials", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const hashes = reports.workReportHashes(guarantees, await Blake2b.createHasher());
     const res = reports.verifyCredentials(input, hashes);
@@ -159,6 +167,8 @@ describe("Reports.verifyCredentials", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const hashes = reports.workReportHashes(guarantees, await Blake2b.createHasher());
     const res = reports.verifyCredentials(input, hashes);
@@ -188,6 +198,8 @@ describe("Reports.verifyCredentials", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const hashes = reports.workReportHashes(guarantees, await Blake2b.createHasher());
     const res = reports.verifyCredentials(input, hashes);
@@ -217,6 +229,8 @@ describe("Reports.verifyCredentials", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const hashes = reports.workReportHashes(guarantees, await Blake2b.createHasher());
     const res = reports.verifyCredentials(input, hashes);

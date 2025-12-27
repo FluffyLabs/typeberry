@@ -4,7 +4,6 @@ import {
   type TimeSlot,
   tryAsCoreIndex,
   tryAsPerEpochBlock,
-  tryAsPerValidator,
   tryAsServiceGas,
   tryAsServiceId,
   tryAsTimeSlot,
@@ -199,8 +198,6 @@ function newReportsState({
       spec,
     ),
     availabilityAssignment: tryAsPerCore(coreAssignment, spec),
-    currentValidatorData: tryAsPerValidator(initialValidators(), spec),
-    previousValidatorData: tryAsPerValidator(initialValidators(), spec),
     entropy: ENTROPY,
     authPools: getAuthPools([1, 2, 3, 4], spec),
     recentBlocks: RecentBlocks.create({
