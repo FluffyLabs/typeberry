@@ -4,9 +4,9 @@
  * reports for it. This is borne out with V= 1023 validators
  * and C = 341 cores, since V/C = 3. The core index assigned to
  * each of the validators, as well as the validators’ Ed25519
- * keys are denoted by G.
+ * keys are denoted by M.
  *
- * https://graypaper.fluffylabs.dev/#/5f542d7/147601147e01
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/144c02145402?v=0.7.2
  */
 
 import {
@@ -29,12 +29,12 @@ export type RotationIndex = Opaque<number, "RotationIndex">;
 /**
  * Returns core assignments for each validator index.
  *
- * https://graypaper.fluffylabs.dev/#/5f542d7/14fd0114fd01
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/155300155d00?v=0.7.2
  */
 export function generateCoreAssignment(
   spec: ChainSpec,
   blake2b: Blake2b,
-  /** https://graypaper.fluffylabs.dev/#/5f542d7/149601149601 */
+  /** https://graypaper.fluffylabs.dev/#/ab2cdbd/147102147102?v=0.7.2 */
   eta2entropy: EntropyHash,
   /** timeslot */
   slot: TimeSlot,
@@ -47,7 +47,7 @@ export function rotationIndex(slot: TimeSlot, rotationPeriod: number): RotationI
   return asOpaqueType(Math.floor(slot / rotationPeriod));
 }
 
-/** https://graypaper.fluffylabs.dev/#/5f542d7/14c00114c001 */
+/** https://graypaper.fluffylabs.dev/#/ab2cdbd/151900151900?v=0.7.2 */
 function permute(
   blake2b: Blake2b,
   entropy: EntropyHash,
@@ -69,7 +69,7 @@ function permute(
   return asKnownSize(coreAssignment);
 }
 
-/** https://graypaper.fluffylabs.dev/#/5f542d7/14a50114a501 */
+/** https://graypaper.fluffylabs.dev/#/ab2cdbd/148002148002?v=0.7.2 */
 function rotate(cores: CoreIndex[], n: number, noOfCores: number) {
   // modulo `noOfCores` guarantees that we're within `CoreIndex` range.
   return cores.map((x) => asOpaqueType((x + n) % noOfCores));
