@@ -11,7 +11,7 @@ import {
   tryAsValidatorIndex,
 } from "@typeberry/block";
 import { type AssurancesExtrinsic, AvailabilityAssurance } from "@typeberry/block/assurances.js";
-import { I, T, W_M, W_R, W_X } from "@typeberry/block/gp-constants.js";
+import { I, T, W_M, W_X } from "@typeberry/block/gp-constants.js";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees.js";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage.js";
 import { testWorkReportHex } from "@typeberry/block/test-helpers.js";
@@ -41,6 +41,7 @@ import {
   ValidatorStatistics,
 } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
+import { MAX_WORK_REPORT_SIZE_BYTES } from "./reports/verify-basic.js";
 import { Statistics, type StatisticsState } from "./statistics.js";
 import { copyAndUpdateState } from "./test.utils.js";
 
@@ -59,11 +60,11 @@ describe("Statistics", () => {
     });
 
     it("max extrinsic size score formula should fit into U32", () => {
-      assert.strictEqual(isU32(W_R * I), true);
+      assert.strictEqual(isU32(MAX_WORK_REPORT_SIZE_BYTES * I), true);
     });
 
     it("max data availability score formula should fit into U32", () => {
-      assert.strictEqual(isU32(W_R + EC_SEGMENT_SIZE * ((W_M * 65) / 64)), true);
+      assert.strictEqual(isU32(MAX_WORK_REPORT_SIZE_BYTES + EC_SEGMENT_SIZE * ((W_M * 65) / 64)), true);
     });
   });
 
