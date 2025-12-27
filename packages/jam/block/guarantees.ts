@@ -14,7 +14,7 @@ import { WorkReport } from "./work-report.js";
  * Since GP defines that value explicitly as "two or three",
  * we do that as well.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/14b90214bb02
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/152b01152d01?v=0.7.2
  */
 export type REQUIRED_CREDENTIALS = 2 | 3;
 export const REQUIRED_CREDENTIALS_RANGE = [2, 3];
@@ -43,7 +43,7 @@ export class Credential extends WithDebug {
 /**
  * Tuple of work-report, a credential and it's corresponding timeslot.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/147102149102
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/15df00150301?v=0.7.2
  */
 export class ReportGuarantee extends WithDebug {
   static Codec = codec.Class(ReportGuarantee, {
@@ -70,7 +70,7 @@ export class ReportGuarantee extends WithDebug {
      * validator index and a signature.
      * Credentials must be ordered by their validator index.
      *
-     * https://graypaper.fluffylabs.dev/#/579bd12/14b90214bb02
+     * https://graypaper.fluffylabs.dev/#/ab2cdbd/152b01152d01?v=0.7.2
      */
     public readonly credentials: KnownSizeArray<Credential, `${REQUIRED_CREDENTIALS}`>,
   ) {
@@ -85,7 +85,7 @@ export const GuaranteesExtrinsicBounds = "[0..CoresCount)";
  * Each core index (within work-report) must be unique and guarantees
  * must be in ascending order of this.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/146402146702
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/15d10015d400?v=0.7.2
  */
 export type GuaranteesExtrinsic = KnownSizeArray<ReportGuarantee, typeof GuaranteesExtrinsicBounds>;
 
