@@ -19,10 +19,7 @@ main(runners, "test-vectors/jam-conformance/fuzz-reports/0.7.2/traces", {
     "1766479507_2200/00000229.json",
     "1766479507_5115/00000087.json",
 
-    // Invalid extrinsic hash?
-    "1766255635_1584/00000016.json",
-
-    // Block should be rejected
+    // Block should be rejected?
     "1766565819_2010/00000225.json",
 
     // Rejecting for WorkItemsCount: valid behavior

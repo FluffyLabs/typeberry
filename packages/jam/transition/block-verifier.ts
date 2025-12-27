@@ -62,7 +62,7 @@ export class BlockVerifier {
     }
 
     // Check if extrinsic is valid.
-    // https://graypaper.fluffylabs.dev/#/cc517d7/0cba000cba00?v=0.6.5
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/0cba000cba00?v=0.7.2
     const extrinsicHash = headerView.extrinsicHash.materialize();
     const extrinsicMerkleCommitment = this.hasher.extrinsic(block.extrinsic.view());
     if (!extrinsicHash.isEqualTo(extrinsicMerkleCommitment.hash)) {

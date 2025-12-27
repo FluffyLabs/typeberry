@@ -116,7 +116,8 @@ export async function runStateTransition(testContent: StateTransition, options: 
   // (i.e. no block history)
   const verificationResult = await verifier.verifyBlock(blockView, { skipParentAndStateRoot: true });
   if (verificationResult.isError) {
-    assert.fail(`Block verification error: ${resultToString(verificationResult)}`);
+    assert.ok(shouldBlockBeRejected, `Block verification error: ${resultToString(verificationResult)}`);
+    return;
   }
 
   const headerHash = verificationResult.ok;
