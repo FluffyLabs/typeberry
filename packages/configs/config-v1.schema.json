@@ -3,7 +3,7 @@
   "title": "Typeberry Configuration - v1",
   "description": "Configuration schema for Typeberry blockchain node",
   "type": "object",
-  "required": ["$schema", "version", "flavor", "chain_spec", "database_base_path", "authorship"],
+  "required": ["$schema", "version", "flavor", "chain_spec", "authorship"],
   "properties": {
     "version": {
       "type": "number",

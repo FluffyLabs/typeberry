@@ -25,13 +25,13 @@ export class DirectWorkerConfig<TParams = void, TBlocks = BlocksDb, TStates = St
     chainSpec,
     blocksDb,
     statesDb,
-    params,
+    workerParams: params,
   }: {
     nodeName: string;
     chainSpec: ChainSpec;
     blocksDb: B;
     statesDb: S;
-    params: T;
+    workerParams: T;
   }): DirectWorkerConfig<T, B, S> {
     return new DirectWorkerConfig(nodeName, chainSpec, params, blocksDb, statesDb);
   }
