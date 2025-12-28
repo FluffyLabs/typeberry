@@ -1,9 +1,15 @@
 import { isMainThread } from "node:worker_threads";
 import type { BlockView, HeaderHash, HeaderView, StateRootHash } from "@typeberry/block";
-import type { BlockAuthorshipConfig } from "@typeberry/block-authorship";
 import { type ChainSpec, PvmBackend } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
-import { deriveBandersnatchSecretKey, deriveEd25519SecretKey, trivialSeed } from "@typeberry/crypto/key-derivation.js";
+import {
+  type BandersnatchSecretSeed,
+  deriveBandersnatchSecretKey,
+  deriveEd25519SecretKey,
+  type Ed25519SecretSeed,
+  trivialSeed,
+} from "@typeberry/crypto/key-derivation.js";
+import type { BlocksDb, RootDb, SerializedStatesDb } from "@typeberry/database";
 import { Blake2b, type WithHash } from "@typeberry/hash";
 import { type ImporterApi, ImporterConfig } from "@typeberry/importer";
 import { NetworkingConfig } from "@typeberry/jam-network";
@@ -12,13 +18,21 @@ import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import type { Telemetry } from "@typeberry/telemetry";
 import { CURRENT_SUITE, CURRENT_VERSION, Result } from "@typeberry/utils";
-import { LmdbWorkerConfig } from "@typeberry/workers-api-node";
+import { DirectWorkerConfig } from "@typeberry/workers-api";
+import { InMemWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import { initializeExtensions } from "./extensions.js";
 import type { JamConfig, NetworkConfig } from "./jam-config.js";
 import * as metrics from "./metrics.js";
 import packageJson from "./package.json" with { type: "json" };
-import { spawnBlockGeneratorWorker, spawnImporterWorker, spawnNetworkWorker } from "./workers.js";
+import {
+  spawnBlockGeneratorWorker,
+  spawnImporterWorker,
+  spawnNetworkWorker,
+  startBlockGenerator,
+  startImporterDirect,
+  startNetwork,
+} from "./workers.js";
 
 export type NodeApi = {
   chainSpec: ChainSpec;
@@ -46,28 +60,31 @@ export async function main(
   logger.info`🖥️ PVM Backend: ${PvmBackend[config.pvmBackend]}.`;
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
-  if (config.node.databaseBasePath === undefined) {
-    throw new Error("Running with in-memory database is not supported yet.");
-  }
+  const nodeName = config.nodeName;
+  const isInMemory = config.node.databaseBasePath === undefined;
 
   const { dbPath, genesisHeaderHash } = getDatabasePath(
     blake2b,
-    config.nodeName,
+    nodeName,
     config.node.chainSpec.genesisHeader,
-    withRelPath(config.node.databaseBasePath),
+    withRelPath(config.node.databaseBasePath ?? "<in-memory>"),
   );
 
-  const baseConfig = { nodeName: config.nodeName, chainSpec, blake2b, dbPath };
-  const importerConfig = LmdbWorkerConfig.new({
+  const baseConfig = { nodeName, chainSpec, blake2b, dbPath };
+  const importerParams = {
     ...baseConfig,
     workerParams: ImporterConfig.create({
       pvm: config.pvmBackend,
     }),
-  });
+  };
+
+  const importerConfig = isInMemory
+    ? { type: "inmem" as const, config: InMemWorkerConfig.new(importerParams) }
+    : { type: "lmdb" as const, config: LmdbWorkerConfig.new(importerParams) };
 
   // Initialize the database with genesis state and block if there isn't one.
   logger.info`🛢️ Opening database at ${dbPath}`;
-  const rootDb = importerConfig.openDatabase({ readonly: false });
+  const rootDb = importerConfig.config.openDatabase({ readonly: false });
   await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
   // NOTE [ToDr] even though, we should be closing the database here,
   // it seems that opening it in the main thread for writing, and later
@@ -76,7 +93,21 @@ export async function main(
   // await rootDb.close();
 
   // Start block importer
-  const { importer, finish: closeImporter } = await spawnImporterWorker(importerConfig);
+  let importer: ImporterApi;
+  let closeImporter: () => Promise<void>;
+
+  if (importerConfig.type === "inmem") {
+    ({ importer, finish: closeImporter } = await startImporterDirect(
+      DirectWorkerConfig.new({
+        ...importerConfig.config,
+        blocksDb: rootDb.getBlocksDb(),
+        statesDb: rootDb.getStatesDb(),
+      }),
+    ));
+  } else {
+    ({ importer, finish: closeImporter } = await spawnImporterWorker(importerConfig.config));
+  }
+
   const bestHeader = new Listener<WithHash<HeaderHash, HeaderView>>();
   importer.setOnBestHeaderAnnouncement(async (header) => {
     const slot = header.data.timeSlotIndex.materialize();
@@ -85,45 +116,51 @@ export async function main(
   });
 
   // Start extensions
-  const closeExtensions = initializeExtensions({ chainSpec, bestHeader, nodeName: config.nodeName });
+  const closeExtensions = initializeExtensions({ chainSpec, bestHeader, nodeName });
 
   // Authorship initialization.
   // 1. load validator keys (bandersnatch, ed25519, bls)
   // 2. allow the validator to specify metadata.
   // 3. if we have validator keys, we should start the authorship module.
+  // NOTE: use trivialSeed to derive validator keys is safe
+  // because the authorship keys are only initialized when devValidatorIndex is specified (development mode),
+  // and trivial seeds are appropriate for test validators as defined in JIP-5.
   const validatorIndex = config.devValidatorIndex ?? "all";
+  const authorshipKeys = {
+    keys:
+      validatorIndex === "all"
+        ? Array.from({ length: chainSpec.validatorsCount })
+            .map((_, i) => trivialSeed(tryAsU32(i)))
+            .map((seed) => ({
+              bandersnatch: deriveBandersnatchSecretKey(seed, blake2b),
+              ed25519: deriveEd25519SecretKey(seed, blake2b),
+            }))
+        : [
+            {
+              bandersnatch: deriveBandersnatchSecretKey(trivialSeed(tryAsU32(validatorIndex)), blake2b),
+              ed25519: deriveEd25519SecretKey(trivialSeed(tryAsU32(validatorIndex)), blake2b),
+            },
+          ],
+  };
 
   const closeAuthorship = await initAuthorship(
     importer,
     config.isAuthoring,
-    LmdbWorkerConfig.new({
-      ...baseConfig,
-      workerParams: {
-        keys:
-          validatorIndex === "all"
-            ? Array.from({ length: chainSpec.validatorsCount })
-                .map((_, i) => trivialSeed(tryAsU32(i)))
-                .map((seed) => ({
-                  bandersnatch: deriveBandersnatchSecretKey(seed, blake2b),
-                  ed25519: deriveEd25519SecretKey(seed, blake2b),
-                }))
-            : [
-                {
-                  bandersnatch: deriveBandersnatchSecretKey(trivialSeed(tryAsU32(validatorIndex)), blake2b),
-                  ed25519: deriveEd25519SecretKey(trivialSeed(tryAsU32(validatorIndex)), blake2b),
-                },
-              ],
-      },
-    }),
+    rootDb,
+    baseConfig,
+    authorshipKeys,
+    isInMemory,
   );
 
   // Networking initialization
   const closeNetwork = await initNetwork(
     importer,
-    LmdbWorkerConfig.new({ ...baseConfig, workerParams: undefined }),
+    rootDb,
+    baseConfig,
     genesisHeaderHash,
     config.network,
     bestHeader,
+    isInMemory,
   );
 
   const api: NodeApi = {
@@ -164,7 +201,15 @@ export async function main(
 const initAuthorship = async (
   importer: ImporterApi,
   isAuthoring: boolean,
-  config: LmdbWorkerConfig<BlockAuthorshipConfig>,
+  rootDb: RootDb<BlocksDb, SerializedStatesDb>,
+  baseConfig: {
+    nodeName: string;
+    chainSpec: ChainSpec;
+    blake2b: Blake2b;
+    dbPath: string;
+  },
+  authorshipKeys: { keys: { bandersnatch: BandersnatchSecretSeed; ed25519: Ed25519SecretSeed }[] },
+  isInMemory: boolean,
 ) => {
   if (!isAuthoring) {
     logger.log`✍️  Authorship off: disabled`;
@@ -172,7 +217,21 @@ const initAuthorship = async (
   }
 
   logger.info`✍️  Starting block generator.`;
-  const { generator, finish } = await spawnBlockGeneratorWorker(config);
+  const { generator, finish } = isInMemory
+    ? await startBlockGenerator(
+        DirectWorkerConfig.new({
+          ...baseConfig,
+          blocksDb: rootDb.getBlocksDb(),
+          statesDb: rootDb.getStatesDb(),
+          workerParams: authorshipKeys,
+        }),
+      )
+    : await spawnBlockGeneratorWorker(
+        LmdbWorkerConfig.new({
+          ...baseConfig,
+          workerParams: authorshipKeys,
+        }),
+      );
 
   // relay blocks from generator to importer
   generator.setOnBlock(async (block) => {
@@ -185,10 +244,17 @@ const initAuthorship = async (
 
 const initNetwork = async (
   importer: ImporterApi,
-  baseConfig: LmdbWorkerConfig,
+  rootDb: RootDb<BlocksDb, SerializedStatesDb>,
+  baseConfig: {
+    nodeName: string;
+    chainSpec: ChainSpec;
+    blake2b: Blake2b;
+    dbPath: string;
+  },
   genesisHeaderHash: HeaderHash,
   networkConfig: NetworkConfig | null,
   bestHeader: Listener<WithHash<HeaderHash, HeaderView>>,
+  isInMemory: boolean,
 ) => {
   if (networkConfig === null) {
     logger.log`🛜 Networking off: no config`;
@@ -197,18 +263,29 @@ const initNetwork = async (
 
   const { key, host, port, bootnodes } = networkConfig;
 
-  const { network, finish } = await spawnNetworkWorker(
-    LmdbWorkerConfig.new({
-      ...baseConfig,
-      workerParams: NetworkingConfig.create({
-        genesisHeaderHash,
-        key,
-        host,
-        port: tryAsU16(port),
-        bootnodes: bootnodes.map((node) => node.toString()),
-      }),
-    }),
-  );
+  const networkingConfig = NetworkingConfig.create({
+    genesisHeaderHash,
+    key,
+    host,
+    port: tryAsU16(port),
+    bootnodes: bootnodes.map((node) => node.toString()),
+  });
+
+  const { network, finish } = isInMemory
+    ? await startNetwork(
+        DirectWorkerConfig.new({
+          ...baseConfig,
+          blocksDb: rootDb.getBlocksDb(),
+          statesDb: rootDb.getStatesDb(),
+          workerParams: networkingConfig,
+        }),
+      )
+    : await spawnNetworkWorker(
+        LmdbWorkerConfig.new({
+          ...baseConfig,
+          workerParams: networkingConfig,
+        }),
+      );
 
   // relay blocks from networking to importer
   network.setOnBlocks(async (newBlocks) => {
