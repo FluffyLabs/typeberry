@@ -43,7 +43,7 @@ Constructor overloading can be pretty misleading. To avoid confusion about how t
 object is created we should be using `static` builder methods.
 
 The constructor can (or even must!) be there anyway, but should not have any logic,
-rather should just assign a bunch of fields.
+rather should just assign a bunch of fields. It should also be private.
 
 The rest should stay in the build methods. Naming should follow Rust convention,
 with builder method names like: `Bytes.fromString` or `Bytes.withLength`, etc.
@@ -98,6 +98,24 @@ Note there is `subarray` function that should be preferred over `slice`.
    places - rather use explicit return types for this.
 3. Especially avoid catching exceptions coming from `check` and `ensure` since
    these might be removed in the production code.
+4. Do not create sub-classes of `Error` type to distinguish errors. Use `Result`
+   instead.
+
+# Dos and Don'ts
+
+### Dos
+
+1. Use `Result` type for returning errors, not exceptions.
+2. Use tagged unions for multiple different values.  
+3. Separate data from logic - use dumb containers and standalone functions.
+4. Use `static` builder methods and keep constructors private.
+5. Use sized integer types (`U16`, `U32`, etc).
+
+### Don'ts
+
+1. Do not use `instanceof`.
+2. Avoid using property existence (`in` operator) to detect types.
+3. Do not add methods to data objects.
 
 # Reviews
 
