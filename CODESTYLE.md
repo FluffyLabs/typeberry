@@ -103,15 +103,15 @@ Note there is `subarray` function that should be preferred over `slice`.
 
 # Dos and Don'ts
 
-### Dos
+## Dos
 
 1. Use `Result` type for returning errors, not exceptions.
-2. Use tagged unions for multiple different values.  
+2. Use tagged unions for multiple different values.
 3. Separate data from logic - use dumb containers and standalone functions.
 4. Use `static` builder methods and keep constructors private.
 5. Use sized integer types (`U16`, `U32`, etc).
 
-### Don'ts
+## Don'ts
 
 1. Do not use `instanceof`.
 2. Avoid using property existence (`in` operator) to detect types.
