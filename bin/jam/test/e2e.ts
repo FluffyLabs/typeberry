@@ -11,13 +11,27 @@ const logger = Logger.new(import.meta.filename, "jam:e2e");
 
 const bestBlockPattern = /🧊 Best block:.+#(\d+)/;
 
-test("JAM Node dev blocks", { timeout: TEST_TIMEOUT }, async () => {
+test("JAM Node dev blocks with In Memory", { timeout: TEST_TIMEOUT }, async () => {
   let jamProcess: ChildProcess | null = null;
   try {
+    // enable In Memory storage
     jamProcess = await start();
 
     // wait for specific output on the console
     await listenForBestBlocks("dev", jamProcess, (blockNum) => blockNum > TARGET_BLOCK);
+  } finally {
+    await terminate(jamProcess);
+  }
+});
+
+test("JAM Node dev blocks with LMDB", { timeout: TEST_TIMEOUT }, async () => {
+  let jamProcess: ChildProcess | null = null;
+  try {
+    // enable LMDB storage
+    jamProcess = await start({ devIndex: "all", args: ['--config=.database_base_path="./test-db"'] });
+
+    // wait for specific output on the console
+    await listenForBestBlocks("dev-lmdb", jamProcess, (blockNum) => blockNum > TARGET_BLOCK);
   } finally {
     await terminate(jamProcess);
   }
@@ -88,8 +102,9 @@ async function terminate(jamProcess: ChildProcess | null) {
   }
 }
 
-async function start(options: { devIndex: number | "all" | null } = { devIndex: "all" }) {
-  const args = options.devIndex === null ? ["--", "--config=dev", "--name=test"] : ["dev", `${options.devIndex}`];
+async function start(options: { devIndex: number | "all" | null; args?: string[] } = { devIndex: "all" }) {
+  const devArgs = options.devIndex === null ? ["--", "--config=dev", "--name=test"] : ["dev", `${options.devIndex}`];
+  const args = options.args !== undefined ? [...devArgs, ...options.args] : devArgs;
   const spawned = spawn("npm", ["start", ...args], {
     cwd: process.cwd(),
   });

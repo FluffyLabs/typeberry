@@ -2,7 +2,8 @@ import type { BlockView, CoreIndex, HeaderHash, ServiceId, TimeSlot } from "@typ
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { asKnownSize, HashSet } from "@typeberry/collections";
-import { type ChainSpec, PvmBackend } from "@typeberry/config";
+import type { ChainSpec } from "@typeberry/config";
+import { PvmBackend } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import type { BlocksDb } from "@typeberry/database";
 import { Disputes, type DisputesStateUpdate } from "@typeberry/disputes";
@@ -28,6 +29,7 @@ import { AccumulateOutput } from "./accumulate/accumulate-output.js";
 import {
   type ACCUMULATION_ERROR,
   Accumulate,
+  type AccumulateOptions,
   type AccumulateStateUpdate,
   DeferredTransfers,
   type DeferredTransfersErrorCode,
@@ -147,7 +149,7 @@ export class OnChain {
     public readonly chainSpec: ChainSpec,
     public readonly state: State & WithStateView,
     public readonly hasher: TransitionHasher,
-    pvm: PvmBackend,
+    options: AccumulateOptions,
     headerChain: HeaderChain,
   ) {
     const bandersnatch = BandernsatchWasm.new();
@@ -162,9 +164,9 @@ export class OnChain {
 
     this.reports = new Reports(chainSpec, hasher.blake2b, state, headerChain);
     this.assurances = new Assurances(chainSpec, state, hasher.blake2b);
-    this.accumulate = new Accumulate(chainSpec, hasher.blake2b, state, pvm);
+    this.accumulate = new Accumulate(chainSpec, hasher.blake2b, state, options);
     this.accumulateOutput = new AccumulateOutput();
-    this.deferredTransfers = new DeferredTransfers(chainSpec, hasher.blake2b, state, pvm);
+    this.deferredTransfers = new DeferredTransfers(chainSpec, hasher.blake2b, state, options.pvm);
     this.preimages = new Preimages(state, hasher.blake2b);
 
     this.authorization = new Authorization(chainSpec, state);
@@ -275,12 +277,14 @@ export class OnChain {
       recentBlocksPartialUpdate,
       assurancesAvailAssignment,
       offenders: offendersMark,
+      currentValidatorData,
+      previousValidatorData,
     });
     if (reportsResult.isError) {
       return stfError(StfErrorKind.Reports, reportsResult);
     }
-    // NOTE `reporters` are unused
-    const { reported: workPackages, reporters: _, stateUpdate: reportsUpdate, ...reportsRest } = reportsResult.ok;
+
+    const { reported: workPackages, reporters, stateUpdate: reportsUpdate, ...reportsRest } = reportsResult.ok;
     assertEmpty(reportsRest);
     const { availabilityAssignment: reportsAvailAssignment, ...reportsUpdateRest } = reportsUpdate;
     assertEmpty(reportsUpdateRest);
@@ -296,7 +300,7 @@ export class OnChain {
     const { preimages, ...preimagesRest } = preimagesResult.ok;
     assertEmpty(preimagesRest);
 
-    const timerAccumulate = measure(`import:accumulate (${PvmBackend[this.accumulate.pvm]})`);
+    const timerAccumulate = measure(`import:accumulate (${PvmBackend[this.accumulate.options.pvm]})`);
     // accumulate
     const accumulateResult = await this.accumulate.transition({
       slot: timeSlot,
@@ -381,6 +385,8 @@ export class OnChain {
       availableReports,
       accumulationStatistics,
       transferStatistics,
+      reporters: reporters,
+      currentValidatorData,
     });
     const { statistics, ...statisticsRest } = statisticsUpdate;
     assertEmpty(statisticsRest);

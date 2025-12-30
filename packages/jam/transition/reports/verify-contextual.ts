@@ -18,7 +18,7 @@ import type { HeaderChain, ReportsInput } from "./input.js";
 
 const logger = Logger.new(import.meta.filename, "stf:reports");
 
-/** https://graypaper.fluffylabs.dev/#/7e6ff6a/15eb0115eb01?v=0.6.7 */
+/** https://graypaper.fluffylabs.dev/#/ab2cdbd/158202158202?v=0.7.2 */
 export function verifyContextualValidity(
   input: ReportsInput,
   state: Pick<
@@ -51,8 +51,11 @@ export function verifyContextualValidity(
         return Result.error(ReportsError.BadServiceId, () => `No service with id: ${result.serviceId}`);
       }
 
-      // check service code hash
-      // https://graypaper.fluffylabs.dev/#/5f542d7/154b02154b02
+      /**
+       * Check service code hash
+       *
+       * https://graypaper.fluffylabs.dev/#/ab2cdbd/150804150804?v=0.7.2
+       */
       if (!result.codeHash.isEqualTo(service.getInfo().codeHash)) {
         return Result.error(
           ReportsError.BadCodeHash,
@@ -67,7 +70,7 @@ export function verifyContextualValidity(
    * There must be no duplicate work-package hashes (i.e.
    * two work-reports of the same package).
    *
-   * https://graypaper.fluffylabs.dev/#/5f542d7/151f01152101
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/159c02159e02?v=0.7.2
    */
   if (currentWorkPackages.size !== input.guarantees.length) {
     return Result.error(ReportsError.DuplicatePackage, () => "Duplicate work package detected.");
@@ -132,7 +135,7 @@ export function verifyContextualValidity(
   return Result.ok(currentWorkPackages);
 }
 
-/** https://graypaper.fluffylabs.dev/#/7e6ff6a/152502152502?v=0.6.7 */
+/** https://graypaper.fluffylabs.dev/#/ab2cdbd/15cd0215cd02?v=0.7.2 */
 function verifyRefineContexts(
   minLookupSlot: number,
   contexts: RefineContext[],
@@ -149,9 +152,9 @@ function verifyRefineContexts(
     /**
      * We require that the anchor block be within the last H
      * blocks and that its details be correct by ensuring that it
-     * appears within our most recent blocks β †:
+     * appears within our most recent blocks β†:
      *
-     * https://graypaper.fluffylabs.dev/#/5f542d7/152801152b01
+     * https://graypaper.fluffylabs.dev/#/ab2cdbd/15ad0215af02?v=0.7.2
      */
     const recentBlock = recentBlocks.get(context.anchor);
     if (recentBlock === undefined) {
@@ -183,7 +186,7 @@ function verifyRefineContexts(
      * We require that each lookup-anchor block be within the
      * last L timeslots.
      *
-     * https://graypaper.fluffylabs.dev/#/5f542d7/154601154701
+     * https://graypaper.fluffylabs.dev/#/ab2cdbd/15ce0215cf02?v=0.7.2
      */
     if (context.lookupAnchorSlot < minLookupSlot) {
       return Result.error(
@@ -198,7 +201,7 @@ function verifyRefineContexts(
      * on-chain state and must be checked by virtue of retaini
      * ing the series of the last L headers as the ancestor set A.
      *
-     * https://graypaper.fluffylabs.dev/#/5f542d7/155c01155f01
+     * https://graypaper.fluffylabs.dev/#/ab2cdbd/15e40215e702?v=0.7.2
      */
     const isInChain =
       recentBlocks.has(context.lookupAnchor) ||
@@ -240,7 +243,7 @@ function verifyDependencies({
      * segment-root lookup, be either in the extrinsic or in our
      * recent history.
      *
-     * https://graypaper.fluffylabs.dev/#/5f542d7/15ca0115cd01
+     * https://graypaper.fluffylabs.dev/#/ab2cdbd/156b03156e03?v=0.7.2
      */
     for (const preReqHash of dependencies) {
       if (currentWorkPackages.has(preReqHash)) {
@@ -281,7 +284,7 @@ function verifyWorkPackagesUniqueness(
   /**
    * Make sure that the package does not appear anywhere in the pipeline.
    *
-   * https://graypaper.fluffylabs.dev/#/5f542d7/159101159101
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/152803152803?v=0.7.2
    */
   // TODO [ToDr] [opti] this most likely should be cached and either
   // re-computed on invalidity or we could maintain additional
