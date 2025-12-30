@@ -1,5 +1,5 @@
 import { describe, it } from "node:test";
-import { tryAsTimeSlot } from "@typeberry/block";
+import { tryAsPerValidator, tryAsTimeSlot } from "@typeberry/block";
 import { ReportGuarantee } from "@typeberry/block/guarantees.js";
 import { WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { Bytes } from "@typeberry/bytes";
@@ -11,7 +11,15 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { NotYetAccumulatedReport } from "@typeberry/state";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
-import { ENTROPY, guaranteesAsView, initialServices, newCredential, newReports, newWorkReport } from "./test.utils.js";
+import {
+  ENTROPY,
+  guaranteesAsView,
+  initialServices,
+  initialValidators,
+  newCredential,
+  newReports,
+  newWorkReport,
+} from "./test.utils.js";
 
 describe("Reports.verifyContextualValidity", () => {
   it("should reject when code hash is not matching", async () => {
@@ -32,6 +40,8 @@ describe("Reports.verifyContextualValidity", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks, // note: for full fidelity this should be partially updated state, not prior state as it is now
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -67,6 +77,8 @@ describe("Reports.verifyContextualValidity", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -99,6 +111,8 @@ describe("Reports.verifyContextualValidity", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -132,6 +146,8 @@ describe("Reports.verifyContextualValidity", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -164,6 +180,8 @@ describe("Reports.verifyContextualValidity", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -198,6 +216,8 @@ describe("Reports.verifyContextualValidity", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -232,6 +252,8 @@ describe("Reports.verifyContextualValidity", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -268,6 +290,8 @@ describe("Reports.verifyContextualValidity", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -306,6 +330,8 @@ describe("Reports.verifyContextualValidity", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -349,6 +375,8 @@ describe("Reports.verifyContextualValidity", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const res = reports.verifyContextualValidity(input);
 
@@ -385,6 +413,8 @@ describe("Reports.verifyContextualValidity", () => {
       recentBlocksPartialUpdate: reports.state.recentBlocks,
       assurancesAvailAssignment: reports.state.availabilityAssignment,
       offenders: HashSet.new<Ed25519Key>(),
+      currentValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
+      previousValidatorData: tryAsPerValidator(initialValidators(), tinyChainSpec),
     };
     const res = reports.verifyContextualValidity(input);
 

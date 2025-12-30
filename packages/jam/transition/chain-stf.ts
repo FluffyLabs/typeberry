@@ -277,6 +277,8 @@ export class OnChain {
       recentBlocksPartialUpdate,
       assurancesAvailAssignment,
       offenders: offendersMark,
+      currentValidatorData,
+      previousValidatorData,
     });
     if (reportsResult.isError) {
       return stfError(StfErrorKind.Reports, reportsResult);

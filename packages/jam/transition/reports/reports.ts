@@ -20,22 +20,9 @@ import { verifyPostSignatureChecks } from "./verify-post-signature.js";
 
 export type ReportsState = Pick<
   State,
-  | "availabilityAssignment"
-  | "currentValidatorData"
-  | "previousValidatorData"
-  | "entropy"
-  | "getService"
-  | "recentBlocks"
-  | "accumulationQueue"
-  | "recentlyAccumulated"
+  "availabilityAssignment" | "entropy" | "getService" | "recentBlocks" | "accumulationQueue" | "recentlyAccumulated"
 > &
   WithStateView<Pick<StateView, "authPoolsView">>;
-
-// NOTE: this is most likely part of the `disputesState`, but I'm not sure what
-// to do with that exactly. It's being passed in the JAM test vectors, but isn't used?
-// TODO [ToDr] Seems that section 11 does not specify when this should be updated.
-// I guess we need to check that later with the GP.
-// readonly offenders: KnownSizeArray<Ed25519Key, "0..ValidatorsCount">;
 
 /** Reports state update. */
 export type ReportsStateUpdate = Pick<ReportsState, "availabilityAssignment">;
@@ -49,7 +36,7 @@ export type ReportsOutput = {
    * This dictionary has the same number of items as in the input guarantees extrinsic.
    */
   reported: HashDictionary<WorkPackageHash, WorkPackageInfo>;
-  /** A set `R` of work package reporters. */
+  /** A set `M` of work package reporters. */
   reporters: KnownSizeArray<Ed25519Key, "Guarantees * Credentials (at most `cores*3`)">;
 };
 
@@ -109,10 +96,11 @@ export class Reports {
     /**
      * ρ′ - equivalent to ρ‡, except where the extrinsic replaced
      * an entry. In the case an entry is replaced, the new value
-     * includes the present time τ ′ allowing for the value to be
+     * includes the present time τ' allowing for the value to be
      * replaced without respect to its availability once sufficient
      * time has elapsed.
-     * https://graypaper.fluffylabs.dev/#/1c979cb/161e00165900?v=0.7.1
+     *
+     * https://graypaper.fluffylabs.dev/#/ab2cdbd/161e00165900?v=0.7.2
      */
     const availabilityAssignment = input.assurancesAvailAssignment.slice();
 
@@ -152,7 +140,13 @@ export class Reports {
 
   verifyCredentials(input: ReportsInput, workReportHashes: KnownSizeArray<WorkReportHash, "Guarantees">) {
     return verifyCredentials(input.guarantees, workReportHashes, input.slot, (headerTimeSlot, guaranteeTimeSlot) =>
-      this.getGuarantorAssignment(headerTimeSlot, guaranteeTimeSlot, input.newEntropy),
+      this.getGuarantorAssignment(
+        headerTimeSlot,
+        guaranteeTimeSlot,
+        input.newEntropy,
+        input.currentValidatorData,
+        input.previousValidatorData,
+      ),
     );
   }
 
@@ -198,12 +192,14 @@ export class Reports {
    * Get the guarantor assignment (both core and validator data)
    * depending on the rotation.
    *
-   * https://graypaper.fluffylabs.dev/#/5f542d7/158200158200
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/15df0115df01?v=0.7.2
    */
   getGuarantorAssignment(
     headerTimeSlot: TimeSlot,
     guaranteeTimeSlot: TimeSlot,
     newEntropy: SafroleStateUpdate["entropy"],
+    currentValidatorData: SafroleStateUpdate["currentValidatorData"],
+    previousValidatorData: SafroleStateUpdate["previousValidatorData"],
   ): Result<PerValidator<GuarantorAssignment>, ReportsError> {
     const epochLength = this.chainSpec.epochLength;
     const rotationPeriod = this.chainSpec.rotationPeriod;
@@ -211,7 +207,7 @@ export class Reports {
     const guaranteeRotation = rotationIndex(guaranteeTimeSlot, rotationPeriod);
     const minTimeSlot = Math.max(0, headerRotation - 1) * rotationPeriod;
 
-    // https://graypaper.fluffylabs.dev/#/5f542d7/155e00156900
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/15980115be01?v=0.7.2
     if (guaranteeTimeSlot > headerTimeSlot) {
       return Result.error(
         ReportsError.FutureReportSlot,
@@ -227,11 +223,11 @@ export class Reports {
     }
 
     // TODO [ToDr] [opti] below code needs cache.
-    // The `G` and `G*` sets should only be computed once per rotation.
+    // The `M` and `M*` sets should only be computed once per rotation.
 
     // Default data for the current rotation
     let entropy = newEntropy[2];
-    let validatorData = this.state.currentValidatorData;
+    let validatorData = currentValidatorData;
     let timeSlot = headerTimeSlot;
 
     // we might need a different set of data
@@ -243,12 +239,12 @@ export class Reports {
       // if the epoch changed, we need to take previous entropy and previous validator data.
       if (isPreviousRotationPreviousEpoch(timeSlot, headerTimeSlot, epochLength)) {
         entropy = newEntropy[3];
-        validatorData = this.state.previousValidatorData;
+        validatorData = previousValidatorData;
       }
     }
 
     // we know which entropy, timeSlot and validatorData should be used,
-    // so we can compute `G` or `G*` here.
+    // so we can compute `M` or `M*` here.
     const coreAssignment = generateCoreAssignment(this.chainSpec, this.blake2b, entropy, timeSlot);
     return Result.ok(
       zip(coreAssignment, validatorData, (core, validator) => ({

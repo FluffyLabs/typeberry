@@ -1,18 +1,5 @@
 import type { EntropyHash } from "@typeberry/block";
-import {
-  G_I,
-  MAX_REPORT_DEPENDENCIES,
-  O,
-  Q,
-  T,
-  W_A,
-  W_B,
-  W_C,
-  W_M,
-  W_R,
-  W_T,
-  W_X,
-} from "@typeberry/block/gp-constants.js";
+import { G_I, MAX_REPORT_DEPENDENCIES, O, Q, T, W_A, W_B, W_C, W_M, W_T, W_X } from "@typeberry/block/gp-constants.js";
 import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
@@ -28,6 +15,7 @@ import {
 import { GAS_TO_INVOKE_WORK_REPORT } from "../accumulate/accumulate-state.js";
 import { Operand } from "../accumulate/operand.js";
 import { REPORT_TIMEOUT_GRACE_PERIOD } from "../assurances.js";
+import { MAX_WORK_REPORT_SIZE_BYTES } from "../reports/verify-basic.js";
 
 enum TransferOperandKind {
   OPERAND = 0,
@@ -44,47 +32,10 @@ export type TransferOrOperand =
       value: PendingTransfer;
     };
 
-const TRANSFER_OR_OPERAND = codec.custom<TransferOrOperand>(
-  {
-    name: "TransferOrOperand",
-    sizeHint: { bytes: 1, isExact: false },
-  },
-  (e, x) => {
-    e.varU32(tryAsU32(x.kind));
-    if (x.kind === TransferOperandKind.OPERAND) {
-      e.object(Operand.Codec, x.value);
-    }
-
-    if (x.kind === TransferOperandKind.TRANSFER) {
-      e.object(PendingTransfer.Codec, x.value);
-    }
-  },
-  (d) => {
-    const kind = d.varU32();
-    if (kind === TransferOperandKind.OPERAND) {
-      return {
-        kind: TransferOperandKind.OPERAND,
-        value: d.object(Operand.Codec),
-      };
-    }
-
-    if (kind === TransferOperandKind.TRANSFER) {
-      return { kind: TransferOperandKind.TRANSFER, value: d.object(PendingTransfer.Codec) };
-    }
-
-    throw new Error(`Unable to decode TransferOrOperand. Invalid kind: ${kind}.`);
-  },
-  (s) => {
-    const kind = s.decoder.varU32();
-    if (kind === TransferOperandKind.OPERAND) {
-      s.object(Operand.Codec);
-    }
-
-    if (kind === TransferOperandKind.TRANSFER) {
-      s.object(PendingTransfer.Codec);
-    }
-  },
-);
+const TRANSFER_OR_OPERAND = codec.union<TransferOperandKind, TransferOrOperand>("TransferOrOperand", {
+  [TransferOperandKind.OPERAND]: codec.object({ value: Operand.Codec }),
+  [TransferOperandKind.TRANSFER]: codec.object({ value: PendingTransfer.Codec }),
+});
 
 const TRANSFERS_AND_OPERANDS = codec.sequenceVarLen(TRANSFER_OR_OPERAND);
 
@@ -164,7 +115,7 @@ function getEncodedConstants(chainSpec: ChainSpec) {
     W_E: tryAsU32(chainSpec.erasureCodedPieceSize),
     W_M: tryAsU32(W_M),
     W_P: tryAsU32(chainSpec.numberECPiecesPerSegment),
-    W_R: tryAsU32(W_R),
+    W_R: tryAsU32(MAX_WORK_REPORT_SIZE_BYTES),
     W_T: tryAsU32(W_T),
     W_X: tryAsU32(W_X),
     Y: tryAsU32(chainSpec.contestLength),
