@@ -41,7 +41,7 @@ export default [
   },
   {
     input: setup.typesInput,
-    output: [{ file: setup.esmOutFile.replace(".js", ".d.ts"), format: "es" }],
+    output: [{ file: setup.esmOutFile.replace(".mjs", ".d.ts"), format: "es" }],
     plugins: [
       dts({
         respectExternal: true,

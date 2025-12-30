@@ -1,7 +1,7 @@
-import type { BytesBlob } from "@typeberry/bytes";
+import { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { tryAsU32, type U32 } from "@typeberry/numbers";
+import type { U32 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
 import type { ServiceGas, ServiceId } from "./common.js";
 import type { CodeHash } from "./hash.js";
@@ -24,39 +24,36 @@ export enum WorkExecResultKind {
   codeOversize = 6,
 }
 
+type WorkExecResultUnion =
+  | { kind: WorkExecResultKind.ok; okBlob: BytesBlob }
+  | { kind: WorkExecResultKind.outOfGas }
+  | { kind: WorkExecResultKind.panic }
+  | { kind: WorkExecResultKind.incorrectNumberOfExports }
+  | { kind: WorkExecResultKind.digestTooBig }
+  | { kind: WorkExecResultKind.badCode }
+  | { kind: WorkExecResultKind.codeOversize };
+
 /** The execution result of some work-package. */
 export class WorkExecResult extends WithDebug {
-  static Codec = codec.custom<WorkExecResult>(
-    {
-      name: "WorkExecResult",
-      sizeHint: { bytes: 1, isExact: false },
-    },
-    (e, x) => {
-      e.varU32(tryAsU32(x.kind));
-      if (x.kind === WorkExecResultKind.ok && x.okBlob !== null) {
-        e.bytesBlob(x.okBlob);
-      }
-    },
-    (d) => {
-      const kind = d.varU32();
-      if (kind === WorkExecResultKind.ok) {
-        const blob = d.bytesBlob();
-        return new WorkExecResult(kind, blob);
-      }
-
-      if (kind > WorkExecResultKind.codeOversize) {
-        throw new Error(`Invalid WorkExecResultKind: ${kind}`);
-      }
-
-      return new WorkExecResult(kind);
-    },
-    (s) => {
-      const kind = s.decoder.varU32();
-      if (kind === WorkExecResultKind.ok) {
-        s.bytesBlob();
-      }
-    },
-  );
+  static Codec = codec
+    .union<WorkExecResultKind, WorkExecResultUnion>("WorkExecResult", {
+      [WorkExecResultKind.ok]: codec.object({ okBlob: codec.blob }),
+      [WorkExecResultKind.outOfGas]: codec.object({}),
+      [WorkExecResultKind.panic]: codec.object({}),
+      [WorkExecResultKind.incorrectNumberOfExports]: codec.object({}),
+      [WorkExecResultKind.digestTooBig]: codec.object({}),
+      [WorkExecResultKind.badCode]: codec.object({}),
+      [WorkExecResultKind.codeOversize]: codec.object({}),
+    })
+    .convert<WorkExecResult>(
+      (x) => {
+        if (x.kind === WorkExecResultKind.ok) {
+          return { kind: WorkExecResultKind.ok, okBlob: x.okBlob ?? BytesBlob.empty() };
+        }
+        return { kind: x.kind };
+      },
+      (x) => new WorkExecResult(x.kind, x.kind === WorkExecResultKind.ok ? x.okBlob : null),
+    );
 
   constructor(
     /** The execution result tag. */

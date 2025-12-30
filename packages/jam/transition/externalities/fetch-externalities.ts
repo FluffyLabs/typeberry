@@ -32,47 +32,10 @@ export type TransferOrOperand =
       value: PendingTransfer;
     };
 
-const TRANSFER_OR_OPERAND = codec.custom<TransferOrOperand>(
-  {
-    name: "TransferOrOperand",
-    sizeHint: { bytes: 1, isExact: false },
-  },
-  (e, x) => {
-    e.varU32(tryAsU32(x.kind));
-    if (x.kind === TransferOperandKind.OPERAND) {
-      e.object(Operand.Codec, x.value);
-    }
-
-    if (x.kind === TransferOperandKind.TRANSFER) {
-      e.object(PendingTransfer.Codec, x.value);
-    }
-  },
-  (d) => {
-    const kind = d.varU32();
-    if (kind === TransferOperandKind.OPERAND) {
-      return {
-        kind: TransferOperandKind.OPERAND,
-        value: d.object(Operand.Codec),
-      };
-    }
-
-    if (kind === TransferOperandKind.TRANSFER) {
-      return { kind: TransferOperandKind.TRANSFER, value: d.object(PendingTransfer.Codec) };
-    }
-
-    throw new Error(`Unable to decode TransferOrOperand. Invalid kind: ${kind}.`);
-  },
-  (s) => {
-    const kind = s.decoder.varU32();
-    if (kind === TransferOperandKind.OPERAND) {
-      s.object(Operand.Codec);
-    }
-
-    if (kind === TransferOperandKind.TRANSFER) {
-      s.object(PendingTransfer.Codec);
-    }
-  },
-);
+const TRANSFER_OR_OPERAND = codec.union<TransferOperandKind, TransferOrOperand>("TransferOrOperand", {
+  [TransferOperandKind.OPERAND]: codec.object({ value: Operand.Codec }),
+  [TransferOperandKind.TRANSFER]: codec.object({ value: PendingTransfer.Codec }),
+});
 
 const TRANSFERS_AND_OPERANDS = codec.sequenceVarLen(TRANSFER_OR_OPERAND);
 
