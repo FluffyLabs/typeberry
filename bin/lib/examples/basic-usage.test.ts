@@ -1,21 +1,25 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { BytesBlob } from "@typeberry/bytes";
 
 describe("Basic Usage Examples", () => {
   it("should demonstrate importing from @typeberry/lib", async () => {
     // <!-- example:basic-import -->
     // Import from @typeberry/lib using subpath imports
-    const { Blake2b } = await import("@typeberry/lib/hash");
-    const { codec } = await import("@typeberry/lib/codec");
-    const { BytesBlob, Bytes } = await import("@typeberry/lib/bytes");
-    const { tryAsU8 } = await import("@typeberry/lib/numbers");
+    const config = await import("@typeberry/lib/config");
+    const { Decoder } = await import("@typeberry/lib/codec");
+    const { InMemoryState } = await import("@typeberry/lib/state");
+    const { Block, tryAsServiceId } = await import("@typeberry/lib/block");
 
-    // All imports work with both ESM and CommonJS
-    assert.ok(Blake2b);
-    assert.ok(codec);
-    assert.ok(BytesBlob);
-    assert.ok(Bytes);
-    assert.ok(tryAsU8);
+    // create empty in-memory state representation
+    const state = InMemoryState.empty(config.tinyChainSpec);
+    assert.equal(state.entropy.length, 4);
+    assert.equal(state.getService(tryAsServiceId(0)), null);
+
+    // attempt to decode block from an empty blob
+    assert.throws(() => {
+      Decoder.decodeObject(Block.Codec, BytesBlob.empty());
+    });
     // <!-- /example:basic-import -->
   });
 

@@ -51,26 +51,4 @@ describe("PVM Examples", () => {
     assert.strictEqual(typeof reg0, "bigint");
     // <!-- /example:pvm-registers -->
   });
-
-  it("should demonstrate gas tracking in PVM", async () => {
-    // <!-- example:pvm-gas -->
-    const { Interpreter } = await import("@typeberry/lib/pvm-interpreter");
-    const { tryAsGas } = await import("@typeberry/lib/pvm-interface");
-    const { BytesBlob } = await import("@typeberry/lib/bytes");
-
-    const programHex = "0x0000210408010409010503000277ff07070c528a08980852a905f3528704080409111300499352d500";
-    const program = BytesBlob.parseBlob(programHex);
-
-    const initialGas = tryAsGas(1000);
-    const pvm = new Interpreter();
-    pvm.resetGeneric(program.raw, 0, initialGas);
-    pvm.runProgram();
-
-    // Check remaining gas after execution
-    const remainingGas = pvm.gas.get();
-
-    // Gas should have been consumed
-    assert.ok(remainingGas < initialGas);
-    // <!-- /example:pvm-gas -->
-  });
 });

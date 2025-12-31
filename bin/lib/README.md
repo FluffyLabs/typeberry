@@ -84,19 +84,22 @@ All examples below are extracted from actual test files in `examples/` directory
 
 <!-- example-code:basic-import -->
 ```typescript
-import { Blake2b } from "@typeberry/lib/hash";
-import { codec } from "@typeberry/lib/codec";
-import { BytesBlob, Bytes } from "@typeberry/lib/bytes";
-import { tryAsU8 } from "@typeberry/lib/numbers";
+import { Decoder } from "@typeberry/lib/codec";
+import { InMemoryState } from "@typeberry/lib/state";
+import { Block, tryAsServiceId } from "@typeberry/lib/block";
 
 // Import from @typeberry/lib using subpath imports
+const config = await import("@typeberry/lib/config");
 
-// All imports work with both ESM and CommonJS
-assert.ok(Blake2b);
-assert.ok(codec);
-assert.ok(BytesBlob);
-assert.ok(Bytes);
-assert.ok(tryAsU8);
+// create empty in-memory state representation
+const state = InMemoryState.empty(config.tinyChainSpec);
+assert.equal(state.entropy.length, 4);
+assert.equal(state.getService(tryAsServiceId(0)), null);
+
+// attempt to decode block from an empty blob
+assert.throws(() => {
+  Decoder.decodeObject(Block.Codec, BytesBlob.empty());
+});
 ```
 <!-- /example-code:basic-import -->
 
@@ -188,22 +191,6 @@ assert.strictEqual(text, "Hello");
 ```
 <!-- /example-code:bytes-parsing -->
 
-### Bytes - Concatenation
-
-<!-- example-code:bytes-concat -->
-```typescript
-import { BytesBlob } from "@typeberry/lib/bytes";
-
-const bytes1 = new Uint8Array([1, 2, 3]);
-const bytes2 = new Uint8Array([4, 5, 6]);
-
-// Concatenate byte arrays
-const combined = BytesBlob.blobFromParts([bytes1, bytes2]);
-
-assert.deepStrictEqual(combined.raw, new Uint8Array([1, 2, 3, 4, 5, 6]));
-```
-<!-- /example-code:bytes-concat -->
-
 ### Bytes - Creating Bytes
 
 <!-- example-code:bytes-create -->
@@ -250,20 +237,23 @@ import { Interpreter } from "@typeberry/lib/pvm-interpreter";
 import { tryAsGas } from "@typeberry/lib/pvm-interface";
 import { BytesBlob } from "@typeberry/lib/bytes";
 
-// Load a PVM program from hex (SCALE-encoded program)
-const programHex =
-  "0x0000210408010409010503000277ff07070c528a08980852a905f3528704080409111300499352d500";
+// Load a PVM program from hex
+const programHex = "0x0000213308013309012803009577ff51070c648ac8980864a928f3648733083309013200499352d500";
 const program = BytesBlob.parseBlob(programHex);
 
 // Create interpreter and initialize with program
 const pvm = new Interpreter();
 pvm.resetGeneric(program.raw, 0, tryAsGas(1000));
 
+// dump the program data
+console.table(pvm.dumpProgram());
+
 // Run the program
 pvm.runProgram();
 
-// Program executed successfully (no exceptions thrown)
-assert.ok(true);
+// Program executed successfully
+assert.equal(pvm.getStatus(), Status.OOG);
+assert.equal(pvm.getPC(), 12);
 ```
 <!-- /example-code:pvm-basic -->
 
@@ -275,8 +265,7 @@ import { Interpreter } from "@typeberry/lib/pvm-interpreter";
 import { tryAsGas } from "@typeberry/lib/pvm-interface";
 import { BytesBlob } from "@typeberry/lib/bytes";
 
-const programHex =
-  "0x0000210408010409010503000277ff07070c528a08980852a905f3528704080409111300499352d500";
+const programHex = "0x0000210408010409010503000277ff07070c528a08980852a905f3528704080409111300499352d500";
 const program = BytesBlob.parseBlob(programHex);
 
 const pvm = new Interpreter();
@@ -299,8 +288,7 @@ import { Interpreter } from "@typeberry/lib/pvm-interpreter";
 import { tryAsGas } from "@typeberry/lib/pvm-interface";
 import { BytesBlob } from "@typeberry/lib/bytes";
 
-const programHex =
-  "0x0000210408010409010503000277ff07070c528a08980852a905f3528704080409111300499352d500";
+const programHex = "0x0000210408010409010503000277ff07070c528a08980852a905f3528704080409111300499352d500";
 const program = BytesBlob.parseBlob(programHex);
 
 const initialGas = tryAsGas(1000);

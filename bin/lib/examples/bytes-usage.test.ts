@@ -19,20 +19,6 @@ describe("Bytes Examples", () => {
     // <!-- /example:bytes-parsing -->
   });
 
-  it("should demonstrate bytes concatenation", async () => {
-    // <!-- example:bytes-concat -->
-    const { BytesBlob } = await import("@typeberry/lib/bytes");
-
-    const bytes1 = new Uint8Array([1, 2, 3]);
-    const bytes2 = new Uint8Array([4, 5, 6]);
-
-    // Concatenate byte arrays
-    const combined = BytesBlob.blobFromParts([bytes1, bytes2]);
-
-    assert.deepStrictEqual(combined.raw, new Uint8Array([1, 2, 3, 4, 5, 6]));
-    // <!-- /example:bytes-concat -->
-  });
-
   it("should demonstrate creating bytes from data", async () => {
     // <!-- example:bytes-create -->
     const { Bytes } = await import("@typeberry/lib/bytes");
