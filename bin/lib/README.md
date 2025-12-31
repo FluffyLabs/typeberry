@@ -117,6 +117,58 @@ assert.strictEqual(largeNumber, 1000000);
 ```
 <!-- /example-code:numbers -->
 
+### Hashing with Blake2b
+
+<!-- example-code:hash-blake2b -->
+```typescript
+import { Blake2b } from "@typeberry/lib/hash";
+
+// Create a Blake2b hasher
+const hasher = await Blake2b.createHasher();
+
+// Hash some data
+const data = new Uint8Array([1, 2, 3, 4, 5]);
+const hash = hasher.hashBytes(data);
+
+// hash is a 32-byte Blake2b hash
+assert.strictEqual(hash.length, 32);
+```
+<!-- /example-code:hash-blake2b -->
+
+### Hashing a String
+
+<!-- example-code:hash-string -->
+```typescript
+import { Blake2b } from "@typeberry/lib/hash";
+
+const hasher = await Blake2b.createHasher();
+
+// Hash a string directly
+const hash = hasher.hashString("Hello, world!");
+
+// Returns a 32-byte hash
+assert.strictEqual(hash.length, 32);
+```
+<!-- /example-code:hash-string -->
+
+### Hashing Multiple Blobs
+
+<!-- example-code:hash-multiple -->
+```typescript
+import { Blake2b } from "@typeberry/lib/hash";
+
+const hasher = await Blake2b.createHasher();
+
+// Hash multiple byte arrays together
+const data1 = new Uint8Array([1, 2, 3]);
+const data2 = new Uint8Array([4, 5, 6]);
+const hash = hasher.hashBlobs([data1, data2]);
+
+// Returns a single hash of all inputs
+assert.strictEqual(hash.length, 32);
+```
+<!-- /example-code:hash-multiple -->
+
 ### Bytes - Parsing Hex Strings
 
 <!-- example-code:bytes-parsing -->
@@ -189,3 +241,77 @@ const decoded = Decoder.decodeObject(hashSchema, encoded);
 assert.deepStrictEqual(decoded, testHash);
 ```
 <!-- /example-code:codec-basic -->
+
+### PVM Interpreter - Basic Usage
+
+<!-- example-code:pvm-basic -->
+```typescript
+import { Interpreter } from "@typeberry/lib/pvm-interpreter";
+import { tryAsGas } from "@typeberry/lib/pvm-interface";
+import { BytesBlob } from "@typeberry/lib/bytes";
+
+// Load a PVM program from hex (SCALE-encoded program)
+const programHex =
+  "0x0000210408010409010503000277ff07070c528a08980852a905f3528704080409111300499352d500";
+const program = BytesBlob.parseBlob(programHex);
+
+// Create interpreter and initialize with program
+const pvm = new Interpreter();
+pvm.resetGeneric(program.raw, 0, tryAsGas(1000));
+
+// Run the program
+pvm.runProgram();
+
+// Program executed successfully (no exceptions thrown)
+assert.ok(true);
+```
+<!-- /example-code:pvm-basic -->
+
+### PVM Interpreter - Accessing Registers
+
+<!-- example-code:pvm-registers -->
+```typescript
+import { Interpreter } from "@typeberry/lib/pvm-interpreter";
+import { tryAsGas } from "@typeberry/lib/pvm-interface";
+import { BytesBlob } from "@typeberry/lib/bytes";
+
+const programHex =
+  "0x0000210408010409010503000277ff07070c528a08980852a905f3528704080409111300499352d500";
+const program = BytesBlob.parseBlob(programHex);
+
+const pvm = new Interpreter();
+pvm.resetGeneric(program.raw, 0, tryAsGas(1000));
+pvm.runProgram();
+
+// Access register values after execution
+const reg0 = pvm.registers.getU64(0);
+
+// Registers contain BigInt values
+assert.strictEqual(typeof reg0, "bigint");
+```
+<!-- /example-code:pvm-registers -->
+
+### PVM Interpreter - Gas Tracking
+
+<!-- example-code:pvm-gas -->
+```typescript
+import { Interpreter } from "@typeberry/lib/pvm-interpreter";
+import { tryAsGas } from "@typeberry/lib/pvm-interface";
+import { BytesBlob } from "@typeberry/lib/bytes";
+
+const programHex =
+  "0x0000210408010409010503000277ff07070c528a08980852a905f3528704080409111300499352d500";
+const program = BytesBlob.parseBlob(programHex);
+
+const initialGas = tryAsGas(1000);
+const pvm = new Interpreter();
+pvm.resetGeneric(program.raw, 0, initialGas);
+pvm.runProgram();
+
+// Check remaining gas after execution
+const remainingGas = pvm.gas.get();
+
+// Gas should have been consumed
+assert.ok(remainingGas < initialGas);
+```
+<!-- /example-code:pvm-gas -->
