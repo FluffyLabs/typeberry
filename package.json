@@ -70,7 +70,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "docs": "npx typedoc",
+    "docs": "npm run docs --workspaces --if-present && npx typedoc",
     "qa": "biome ci && eslint .",
     "qa-fix": "npm run format; npm run lint",
     "format": "biome format --write",
@@ -99,8 +99,5 @@
   },
   "dependencies": {
     "rollup": "^4.53.2"
-  },
-  "exports": {
-    "lib": "./bin/lib/index.ts"
   }
 }

@@ -27,6 +27,11 @@ reviews:
   labeling_instructions: []
   path_filters: []
   path_instructions:
+    - path: 'bin/lib/index.ts'
+      instructions: |
+        Every new `export * as <name>` statement must have a corresponding entry point file
+        at `bin/lib/exports/<name>.ts` that re-exports the package (e.g., `export * from "@typeberry/<package>"`).
+        The builder will automatically detect these files and generate the appropriate exports.
     - path: 'packages/**/package.json'
       instructions: |
         Whenever a new package is added, the `packages/README.md` should be updated accordingly.

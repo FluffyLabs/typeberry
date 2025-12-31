@@ -4,7 +4,9 @@ Convenience package providing unified access to all Typeberry core packages.
 
 ## Overview
 
-`@typeberry/lib` is a meta-package that re-exports all Typeberry modules under namespaced identifiers. This simplifies imports when working with multiple Typeberry packages and ensures version compatibility across the entire stack.
+`@typeberry/lib` is a meta-package that re-exports all Typeberry modules through subpath imports. This simplifies imports when working with multiple Typeberry packages and ensures version compatibility across the entire stack.
+
+All imports use the pattern `@typeberry/lib/<module>` to access individual packages with full ESM and CommonJS support.
 
 ## Usage
 
@@ -19,87 +21,171 @@ npm install @typeberry/lib
 Instead of installing and importing individual packages:
 
 ```typescript
-// Without @typeberry/lib
+// Without @typeberry/lib - requires installing each package separately
 import { Blake2b } from "@typeberry/hash";
-import { Codec } from "@typeberry/codec";
+import { Encoder } from "@typeberry/codec";
 import { ed25519 } from "@typeberry/crypto";
 ```
 
-You can import everything from a single package:
+Import directly from `@typeberry/lib` using subpath imports:
 
 ```typescript
-// With @typeberry/lib
-import { hash, codec, crypto } from "@typeberry/lib";
+// With @typeberry/lib - single package installation
+import { Blake2b } from "@typeberry/lib/hash";
+import { Encoder } from "@typeberry/lib/codec";
+import { ed25519 } from "@typeberry/lib/crypto";
 
-const blake2b = await hash.Blake2b.createHasher();
-const descriptor = codec.Codec.from(schema);
-const keypair = await crypto.ed25519.generateKeypair();
+const blake2b = await Blake2b.createHasher();
+const encoded = Encoder.encodeObject(schema, value);
+const keypair = await ed25519.generateKeypair();
 ```
 
 ### Available Modules
 
-The following modules are available as namespaced exports:
+The following modules are available as subpath imports (e.g., `@typeberry/lib/block`):
 
 - `block` - Block structures and types
-- `block_json` - JSON serialization for blocks
+- `block-json` - JSON serialization for blocks
 - `bytes` - Byte array utilities
-- `codec` - SCALE codec implementation
+- `codec` - JAM/GP codec implementation
 - `collections` - Specialized data structures
 - `config` - Configuration types
-- `config_node` - Node configuration utilities
+- `config-node` - Node configuration utilities
 - `crypto` - Cryptographic primitives (Ed25519, Sr25519, BLS)
 - `database` - Database abstractions
-- `erasure_coding` - Erasure coding implementation
-- `fuzz_proto` - Fuzzing protocol support
+- `erasure-coding` - Erasure coding implementation
+- `fuzz-proto` - Fuzzing protocol support
 - `hash` - Hashing functions (Blake2b, etc.)
-- `jam_host_calls` - JAM-specific host calls
-- `json_parser` - JSON parsing utilities
+- `importer` - Typeberry importer utilities
+- `jam-host-calls` - JAM-specific host calls
+- `json-parser` - JSON parsing utilities
 - `logger` - Logging framework
 - `mmr` - Merkle Mountain Range implementation
 - `numbers` - Fixed-size numeric types
 - `ordering` - Ordering and comparison utilities
-- `pvm` - PVM debugger adapter
-- `pvm_host_calls` - PVM host call implementations
-- `pvm_interpreter` - PVM bytecode interpreter
-- `pvm_program` - PVM program utilities
-- `pvm_spi_decoder` - Standard PVM Interface decoder
+- `pvm-host-calls` - PVM host call implementations
+- `pvm-interface` - PVM interface and program utilities
+- `pvm-interpreter` - PVM bytecode interpreter
 - `shuffling` - Shuffling algorithms
 - `state` - State management
-- `state_json` - JSON serialization for state
-- `state_merkleization` - State Merkleization
-- `state_vectors` - State test vectors
+- `state-json` - JSON serialization for state
+- `state-merkleization` - State Merkleization
+- `state-vectors` - State test vectors
 - `transition` - State transition functions
 - `trie` - Trie data structures
 - `utils` - General utilities
+- `workers-api` - Workers API utilities
 
 ## Examples
 
-### Working with State and Crypto
+All examples below are extracted from actual test files in `examples/` directory, ensuring they compile and work correctly.
 
+### Basic Import
+
+<!-- example-code:basic-import -->
 ```typescript
-import { state, crypto, hash } from "@typeberry/lib";
+import { Blake2b } from "@typeberry/lib/hash";
+import { codec } from "@typeberry/lib/codec";
+import { BytesBlob, Bytes } from "@typeberry/lib/bytes";
+import { tryAsU8 } from "@typeberry/lib/numbers";
 
-const blake2b = await hash.Blake2b.createHasher();
-const stateRoot = await state.calculateStateRoot(stateData, blake2b);
-const signature = await crypto.ed25519.sign(message, secretKey);
+// Import from @typeberry/lib using subpath imports
+
+// All imports work with both ESM and CommonJS
+assert.ok(Blake2b);
+assert.ok(codec);
+assert.ok(BytesBlob);
+assert.ok(Bytes);
+assert.ok(tryAsU8);
 ```
+<!-- /example-code:basic-import -->
 
-### Encoding and Decoding
+### Working with Numbers
 
+<!-- example-code:numbers -->
 ```typescript
-import { codec, bytes } from "@typeberry/lib";
+import { tryAsU8, tryAsU32, isU8 } from "@typeberry/lib/numbers";
 
-const descriptor = codec.Codec.from(schema);
-const encoded = descriptor.encode(data);
-const decoded = descriptor.decode(encoded);
+// Create typed numbers
+const smallNumber = tryAsU8(42);
+const largeNumber = tryAsU32(1000000);
+
+// Type checking
+assert.ok(isU8(42));
+assert.strictEqual(smallNumber, 42);
+assert.strictEqual(largeNumber, 1000000);
 ```
+<!-- /example-code:numbers -->
 
-### PVM Operations
+### Bytes - Parsing Hex Strings
 
+<!-- example-code:bytes-parsing -->
 ```typescript
-import { pvm_interpreter, pvm_program, pvm_host_calls } from "@typeberry/lib";
+import { BytesBlob } from "@typeberry/lib/bytes";
 
-const program = pvm_program.PvmProgram.from(bytecode);
-const interpreter = new pvm_interpreter.Interpreter(program, hostCalls);
-const result = interpreter.run();
+// Parse hex string with 0x prefix
+const hexString = "0x48656c6c6f";
+const bytes = BytesBlob.parseBlob(hexString);
+
+// Convert to regular Uint8Array
+const data = bytes.raw;
+
+// Verify the data
+const text = new TextDecoder().decode(data);
+assert.strictEqual(text, "Hello");
 ```
+<!-- /example-code:bytes-parsing -->
+
+### Bytes - Concatenation
+
+<!-- example-code:bytes-concat -->
+```typescript
+import { BytesBlob } from "@typeberry/lib/bytes";
+
+const bytes1 = new Uint8Array([1, 2, 3]);
+const bytes2 = new Uint8Array([4, 5, 6]);
+
+// Concatenate byte arrays
+const combined = BytesBlob.blobFromParts([bytes1, bytes2]);
+
+assert.deepStrictEqual(combined.raw, new Uint8Array([1, 2, 3, 4, 5, 6]));
+```
+<!-- /example-code:bytes-concat -->
+
+### Bytes - Creating Bytes
+
+<!-- example-code:bytes-create -->
+```typescript
+import { Bytes } from "@typeberry/lib/bytes";
+
+// Create fixed-size bytes
+const data = Bytes.fill(32, 0x42);
+
+assert.strictEqual(data.length, 32);
+assert.strictEqual(data.raw[0], 0x42);
+```
+<!-- /example-code:bytes-create -->
+
+### JAM/GP Codec - Basic Usage
+
+<!-- example-code:codec-basic -->
+```typescript
+import { codec, Encoder, Decoder } from "@typeberry/lib/codec";
+import { Bytes } from "@typeberry/lib/bytes";
+
+// Define a schema for fixed-size bytes
+const hashSchema = codec.bytes(32);
+
+// Create test data
+
+const testHash = Bytes.fill(32, 0x42);
+
+// Encode data
+const encoded = Encoder.encodeObject(hashSchema, testHash);
+
+// Decode data
+const decoded = Decoder.decodeObject(hashSchema, encoded);
+
+assert.deepStrictEqual(decoded, testHash);
+```
+<!-- /example-code:codec-basic -->
