@@ -11,7 +11,11 @@ const externalDeps = ["lmdb", "@matrixai/quic", "node:fs", "node:assert", "node:
 
 // Mark all @typeberry/* packages as external to avoid bundling them
 const isExternal = (id) => {
-  return externalDeps.includes(id) || id.startsWith("@typeberry/") || id.startsWith("node:");
+  return (
+    externalDeps.includes(id) ||
+    (id.startsWith("@typeberry/") && !id.startsWith("@typeberry/native")) ||
+    id.startsWith("node:")
+  );
 };
 
 const createBaseBuild = (inputFile) => ({

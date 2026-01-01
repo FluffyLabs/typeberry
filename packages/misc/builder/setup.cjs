@@ -59,8 +59,6 @@ for (const [exportPath, exportValue] of Object.entries(sourceExports)) {
   }
 }
 
-const hasSubpathExports = subpathExports.length > 0;
-
 // Use the actual source file for main export, or generate a simple re-export
 let inputFile;
 if (mainExportSource && fs.existsSync(mainExportSource)) {
@@ -84,14 +82,12 @@ const exportsField = {
 };
 
 // Add subpath exports from source package.json
-if (hasSubpathExports) {
-  for (const subpath of subpathExports) {
-    exportsField[`./${subpath.name}`] = {
-      types: `./${subpath.name}.d.ts`,
-      import: `./${subpath.name}.mjs`,
-      require: `./${subpath.name}.cjs`,
-    };
-  }
+for (const subpath of subpathExports) {
+  exportsField[`./${subpath.name}`] = {
+    types: `./${subpath.name}.d.ts`,
+    import: `./${subpath.name}.mjs`,
+    require: `./${subpath.name}.cjs`,
+  };
 }
 
 // generate package.json
@@ -135,40 +131,32 @@ const entries = [
 ];
 
 // Add subpath entries from source package.json
-if (hasSubpathExports) {
-  for (const subpath of subpathExports) {
-    const sourceContent = fs.readFileSync(subpath.sourcePath, "utf-8").trim();
+for (const subpath of subpathExports) {
+  const sourceContent = fs.readFileSync(subpath.sourcePath, "utf-8").trim();
 
-    // Extract the package name from the export statement
-    const match = sourceContent.match(/export \* from ["']([^"']+)["']/);
-    if (!match) {
-      // Skip files that don't match the expected export pattern
-      continue;
-    }
-
-    const packageName = match[1];
-
-    // Generate files directly without rollup (simple re-exports don't need bundling)
-    // ESM (.mjs)
-    fs.writeFileSync(`${DIST}/${subpath.name}.mjs`, `export * from "${packageName}";\n`);
-
-    // CommonJS (.cjs)
-    fs.writeFileSync(`${DIST}/${subpath.name}.cjs`, `module.exports = require("${packageName}");\n`);
-
-    // TypeScript declarations (.d.ts)
-    fs.writeFileSync(`${DIST}/${subpath.name}.d.ts`, `export * from "${packageName}";\n`);
-
-    // Don't add to rollup entries (already generated)
+  // Extract the package name from the export statement
+  const match = sourceContent.match(/export \* from ["']([^"']+)["']/);
+  if (!match) {
+    // Skip files that don't match the expected export pattern
+    continue;
   }
+
+  const packageName = match[1];
+
+  // Generate files directly without rollup (simple re-exports don't need bundling)
+  // ESM (.mjs)
+  fs.writeFileSync(`${DIST}/${subpath.name}.mjs`, `export * from "${packageName}";\n`);
+
+  // CommonJS (.cjs)
+  fs.writeFileSync(`${DIST}/${subpath.name}.cjs`, `module.exports = require("${packageName}");\n`);
+
+  // TypeScript declarations (.d.ts)
+  fs.writeFileSync(`${DIST}/${subpath.name}.d.ts`, `export * from "${packageName}";\n`);
+
+  // Don't add to rollup entries (already generated)
 }
 
 module.exports = {
-  // Legacy single entry for backward compatibility
-  inputFile,
-  esmOutFile: `${DIST}/index.mjs`,
-  cjsOutFile: `${DIST}/index.cjs`,
-  typesInput: inputFile,
-  // New: multiple entries
   entries,
   DIST,
 };
