@@ -60,8 +60,8 @@ cd ../
 # copy worker wasm files
 cp **/*.wasm ./ || true # ignore overwrite errors
 
-# Make index.js executable and insert shebang
-echo '#!/usr/bin/env node' > ./temp.js && cat ./index.js >> ./temp.js && mv ./temp.js ./index.js
+# Make index.js executable and insert shebang with 8GB heap size
+echo '#!/usr/bin/env -S node --max-old-space-size=8192' > ./temp.js && cat ./index.js >> ./temp.js && mv ./temp.js ./index.js
 chmod +x ./index.js
 
 if [ -z "$IS_RELEASE" ]; then
