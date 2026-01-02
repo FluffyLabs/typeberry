@@ -1,6 +1,5 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { BytesBlob } from "@typeberry/bytes";
 
 describe("Basic Usage Examples", () => {
   it("should demonstrate importing from @typeberry/lib", async () => {
@@ -9,6 +8,7 @@ describe("Basic Usage Examples", () => {
     const config = await import("@typeberry/lib/config");
     const { Decoder } = await import("@typeberry/lib/codec");
     const { InMemoryState } = await import("@typeberry/lib/state");
+    const { BytesBlob } = await import("@typeberry/lib/bytes");
     const { Block, tryAsServiceId } = await import("@typeberry/lib/block");
 
     // create empty in-memory state representation

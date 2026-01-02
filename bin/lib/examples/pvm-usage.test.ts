@@ -2,13 +2,12 @@
 
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Status } from "@typeberry/pvm-interface";
 
 describe("PVM Examples", () => {
   it("should demonstrate running a PVM program", async () => {
     // <!-- example:pvm-basic -->
     const { Interpreter } = await import("@typeberry/lib/pvm-interpreter");
-    const { tryAsGas } = await import("@typeberry/lib/pvm-interface");
+    const { tryAsGas, Status } = await import("@typeberry/lib/pvm-interface");
     const { BytesBlob } = await import("@typeberry/lib/bytes");
 
     // Load a PVM program from hex

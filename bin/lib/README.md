@@ -86,6 +86,7 @@ All examples below are extracted from actual test files in `examples/` directory
 ```typescript
 import { Decoder } from "@typeberry/lib/codec";
 import { InMemoryState } from "@typeberry/lib/state";
+import { BytesBlob } from "@typeberry/lib/bytes";
 import { Block, tryAsServiceId } from "@typeberry/lib/block";
 
 // Import from @typeberry/lib using subpath imports
@@ -234,7 +235,7 @@ assert.deepStrictEqual(decoded, testHash);
 <!-- example-code:pvm-basic -->
 ```typescript
 import { Interpreter } from "@typeberry/lib/pvm-interpreter";
-import { tryAsGas } from "@typeberry/lib/pvm-interface";
+import { tryAsGas, Status } from "@typeberry/lib/pvm-interface";
 import { BytesBlob } from "@typeberry/lib/bytes";
 
 // Load a PVM program from hex
