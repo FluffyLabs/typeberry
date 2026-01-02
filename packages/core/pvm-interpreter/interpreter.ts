@@ -159,11 +159,8 @@ export class Interpreter implements IPvmInterpreter {
     }
   }
 
-  printProgram() {
-    const p = assemblify(this.code, this.mask);
-    // biome-ignore lint/suspicious/noConsole: We do want to print that.
-    console.table(p);
-    return p;
+  dumpProgram() {
+    return assemblify(this.code, this.mask);
   }
 
   runProgram() {

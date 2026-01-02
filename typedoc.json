@@ -4,6 +4,7 @@
   "includeVersion": true,
   "out": "./web/docs",
   "name": "Typeberry by Fluffy Labs",
+  "entryPoints": ["./bin/lib/exports/*"],
   "searchInComments": true,
   "searchInDocuments": true,
   "projectDocuments": [

@@ -15,7 +15,8 @@ const pvmAnanas = await AnanasInterpreter.new();
 pvmTb.resetGeneric(program, 0, tryAsGas(200n));
 pvmAnanas.resetGeneric(program, 0, tryAsGas(200n));
 
-const instructions = pvmTb.printProgram();
+const instructions = pvmTb.dumpProgram();
+console.table(instructions);
 
 let i = 0;
 let ananas = pvmAnanas.nextStep();

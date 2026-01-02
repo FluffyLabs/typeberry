@@ -1,5 +1,5 @@
 /** A return value of some comparator. */
-enum OrderingValue {
+export enum OrderingValue {
   /** `self < other` */
   Less = -1,
   /** `self === other` */

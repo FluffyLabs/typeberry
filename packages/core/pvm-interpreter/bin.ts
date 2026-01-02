@@ -2,11 +2,12 @@ import { tryAsGas } from "@typeberry/pvm-interface";
 import { Interpreter } from "./index.js";
 
 const program = new Uint8Array([
-  0, 0, 33, 4, 8, 1, 4, 9, 1, 5, 3, 0, 2, 119, 255, 7, 7, 12, 82, 138, 8, 152, 8, 82, 169, 5, 243, 82, 135, 4, 8, 4, 9,
-  17, 19, 0, 73, 147, 82, 213, 0,
+  0, 0, 33, 51, 8, 1, 51, 9, 1, 40, 3, 0, 149, 119, 255, 81, 7, 12, 100, 138, 200, 152, 8, 100, 169, 40, 243, 100, 135,
+  51, 8, 51, 9, 1, 50, 0, 73, 147, 82, 213, 0,
 ]);
 
 const pvm = new Interpreter();
 pvm.resetGeneric(program, 0, tryAsGas(1000));
-pvm.printProgram();
+// biome-ignore lint/suspicious/noConsole: We do want to print that.
+console.table(pvm.dumpProgram());
 pvm.runProgram();
