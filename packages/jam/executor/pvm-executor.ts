@@ -1,27 +1,35 @@
-import type { ServiceId } from "@typeberry/block";
+import type { ServiceGas, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec, PvmBackend } from "@typeberry/config";
-import { accumulate, refine, general } from "@typeberry/jam-host-calls";
+import { accumulate, general, refine } from "@typeberry/jam-host-calls";
 import type { PartialState } from "@typeberry/jam-host-calls/externalities/partial-state.js";
 import {
   type ProgramCounter,
-  RefineExternalities,
+  type RefineExternalities,
   tryAsProgramCounter,
 } from "@typeberry/jam-host-calls/externalities/refine-externalities.js";
 import { type HostCallHandler, HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
-import type { Gas } from "@typeberry/pvm-interface";
+import { tryAsGas } from "@typeberry/pvm-interface";
 
+/**
+ * Refine-specific host calls with common constructor.
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/2fa7022fa702?v=0.7.2
+ */
 const REFINE_HOST_CALL_CLASSES = [
-  refine.Export,
-  refine.Expunge,
   refine.HistoricalLookup,
-  refine.Invoke,
+  refine.Export,
   refine.Machine,
-  refine.Pages,
   refine.Peek,
-  refine.Poke
+  refine.Poke,
+  refine.Pages,
+  refine.Invoke,
+  refine.Expunge,
 ];
 
+/**
+ * Accumulate-specific host calls with common constructor.
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/30d00130d001?v=0.7.2
+ */
 const ACCUMULATE_HOST_CALL_CLASSES = [
   accumulate.Bless,
   accumulate.Assign,
@@ -38,13 +46,12 @@ const ACCUMULATE_HOST_CALL_CLASSES = [
   accumulate.Provide,
 ];
 
-type RefineHostCallExternalities = {
+export type RefineHostCallExternalities = {
   refine: RefineExternalities;
   fetchExternalities: general.IFetchExternalities;
-  serviceExternalities: general.AccountsInfo & general.AccountsLookup & general.AccountsWrite & general.AccountsRead;
 };
 
-type AccumulateHostCallExternalities = {
+export type AccumulateHostCallExternalities = {
   partialState: PartialState;
   fetchExternalities: general.IFetchExternalities;
   serviceExternalities: general.AccountsInfo & general.AccountsLookup & general.AccountsWrite & general.AccountsRead;
@@ -88,23 +95,16 @@ export class PvmExecutor {
   }
 
   /** Prepare refine host call handlers */
-  private static prepareRefineHostCalls(
-    serviceId: ServiceId,
-    externalities: RefineHostCallExternalities,
-  ) {
+  private static prepareRefineHostCalls(serviceId: ServiceId, externalities: RefineHostCallExternalities) {
     const refineHandlers: HostCallHandler[] = REFINE_HOST_CALL_CLASSES.map(
       (HandlerClass) => new HandlerClass(externalities.refine),
     );
 
-    // TODO todr check if all needed
+    /** https://graypaper.fluffylabs.dev/#/ab2cdbd/2fa7022fa702?v=0.7.2 */
     const generalHandlers: HostCallHandler[] = [
       new general.LogHostCall(serviceId),
       new general.GasHostCall(serviceId),
-      new general.Read(serviceId, externalities.serviceExternalities),
-      new general.Write(serviceId, externalities.serviceExternalities),
       new general.Fetch(serviceId, externalities.fetchExternalities),
-      new general.Lookup(serviceId, externalities.serviceExternalities),
-      new general.Info(serviceId, externalities.serviceExternalities),
     ];
 
     return refineHandlers.concat(generalHandlers);
@@ -120,6 +120,7 @@ export class PvmExecutor {
       (HandlerClass) => new HandlerClass(serviceId, externalities.partialState, chainSpec),
     );
 
+    /** https://graypaper.fluffylabs.dev/#/ab2cdbd/30d00130d001?v=0.7.2 */
     const generalHandlers: HostCallHandler[] = [
       new general.LogHostCall(serviceId),
       new general.GasHostCall(serviceId),
@@ -154,8 +155,8 @@ export class PvmExecutor {
    * @param gas gas limit
    * @returns `ReturnValue` object that can be a status or memory slice
    */
-  async run(args: BytesBlob, gas: Gas) {
-    return this.pvm.runProgram(this.serviceCode.raw, args.raw, Number(this.entrypoint), gas);
+  async run(args: BytesBlob, gas: ServiceGas) {
+    return this.pvm.runProgram(this.serviceCode.raw, args.raw, Number(this.entrypoint), tryAsGas(gas));
   }
 
   /** A utility function that can be used to prepare refine executor */

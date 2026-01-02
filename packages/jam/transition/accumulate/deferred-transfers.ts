@@ -8,7 +8,6 @@ import type { PendingTransfer } from "@typeberry/jam-host-calls";
 import { AccumulationStateUpdate, PartiallyUpdatedState } from "@typeberry/jam-host-calls";
 import { Logger } from "@typeberry/logger";
 import { sumU64, tryAsU32 } from "@typeberry/numbers";
-import { tryAsGas } from "@typeberry/pvm-interface";
 import { ServiceAccountInfo, type ServicesUpdate, type State } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
@@ -105,7 +104,7 @@ export class DeferredTransfers {
       );
 
       const fetchExternalities = FetchExternalities.createForOnTransfer({ entropy, transfers }, this.chainSpec);
-      let consumedGas = tryAsGas(0);
+      let consumedGas = tryAsServiceGas(0);
 
       const hasTransfers = transfers.length > 0;
       const isCodeCorrect = code !== null && code.length <= W_C;
@@ -131,7 +130,7 @@ export class DeferredTransfers {
         );
 
         const gas = transfers.reduce((acc, item) => acc + item.gas, 0n);
-        consumedGas = (await executor.run(args, tryAsGas(gas))).consumedGas;
+        consumedGas = (await executor.run(args, tryAsServiceGas(gas))).consumedGas;
       }
 
       transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(consumedGas) });

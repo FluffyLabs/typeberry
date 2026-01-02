@@ -16,7 +16,7 @@ import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { RefineContext, type WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
-import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
+import { WorkExecResult, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize, FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
 import { type ChainSpec, PvmBackend, PvmBackendNames, tinyChainSpec } from "@typeberry/config";
@@ -397,7 +397,7 @@ const createWorkReport = (
             importedSegments: tryAsU32(0),
           }),
           payloadHash: Bytes.zero(HASH_SIZE).asOpaque(),
-          result: new WorkExecResult(WorkExecResultKind.ok, BytesBlob.empty()),
+          result: WorkExecResult.ok(BytesBlob.empty()),
           serviceId,
         }),
       ],

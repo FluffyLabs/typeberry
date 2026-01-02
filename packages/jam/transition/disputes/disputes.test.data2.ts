@@ -3,7 +3,7 @@
 import { tryAsCoreIndex, tryAsPerValidator, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { RefineContext, type WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
-import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
+import { WorkExecResult, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
@@ -201,7 +201,7 @@ export function workReport(packageHash: WorkPackageHash, coreIndex: number) {
           codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
           payloadHash: Bytes.zero(HASH_SIZE).asOpaque(),
           gas: tryAsServiceGas(42),
-          result: new WorkExecResult(WorkExecResultKind.ok, BytesBlob.parseBlob("0x010203")),
+          result: WorkExecResult.ok(BytesBlob.parseBlob("0x010203")),
           load: WorkRefineLoad.create({
             gasUsed: tryAsServiceGas(0),
             importedSegments: tryAsU32(0),

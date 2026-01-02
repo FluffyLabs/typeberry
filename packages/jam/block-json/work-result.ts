@@ -20,19 +20,19 @@ const workExecResultFromJson = json.object<JsonWorkExecResult, WorkExecResult>(
   (val) => {
     const { ok, out_of_gas, panic, bad_code, code_oversize, output_oversize } = val;
     if (ok !== undefined) {
-      return new WorkExecResult(tryAsU32(WorkExecResultKind.ok), ok);
+      return WorkExecResult.ok(ok);
     }
     if (out_of_gas === null) {
-      return new WorkExecResult(tryAsU32(WorkExecResultKind.outOfGas));
+      return WorkExecResult.error(WorkExecResultKind.outOfGas);
     }
     if (panic === null) {
-      return new WorkExecResult(tryAsU32(WorkExecResultKind.panic));
+      return WorkExecResult.error(WorkExecResultKind.panic);
     }
     if (bad_code === null) {
-      return new WorkExecResult(tryAsU32(WorkExecResultKind.badCode));
+      return WorkExecResult.error(WorkExecResultKind.badCode);
     }
     if (code_oversize === null) {
-      return new WorkExecResult(tryAsU32(WorkExecResultKind.codeOversize));
+      return WorkExecResult.error(WorkExecResultKind.codeOversize);
     }
     if (output_oversize === null) {
       return new WorkExecResult(tryAsU32(WorkExecResultKind.digestTooBig));
