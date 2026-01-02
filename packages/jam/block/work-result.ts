@@ -55,7 +55,15 @@ export class WorkExecResult extends WithDebug {
       (x) => new WorkExecResult(x.kind, x.kind === WorkExecResultKind.ok ? x.okBlob : null),
     );
 
-  constructor(
+  static ok(blob: BytesBlob) {
+    return new WorkExecResult(WorkExecResultKind.ok, blob);
+  }
+
+  static error(kind: Exclude<WorkExecResultKind, WorkExecResultKind.ok>) {
+    return new WorkExecResult(kind, null);
+  }
+
+  private constructor(
     /** The execution result tag. */
     public readonly kind: WorkExecResultKind,
     /** Optional octet sequence - available only if `kind === ok` */

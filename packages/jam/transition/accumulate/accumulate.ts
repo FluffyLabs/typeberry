@@ -12,6 +12,7 @@ import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import { ArrayView, HashSet, SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import { PvmExecutor } from "@typeberry/executor";
 import { type Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import type { PendingTransfer } from "@typeberry/jam-host-calls";
 import {
@@ -20,7 +21,7 @@ import {
 } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
 import { MAX_VALUE_U64, sumU64, tryAsU32, type U32 } from "@typeberry/numbers";
-import { Status, tryAsGas } from "@typeberry/pvm-interface";
+import { ReturnStatus } from "@typeberry/pvm-host-calls";
 import {
   type AccumulationOutput,
   accumulationOutputComparator,
@@ -50,7 +51,6 @@ import {
 } from "./accumulation-result-merge-utils.js";
 import type { Operand } from "./operand.js";
 import type { AccumulateOptions } from "./options.js";
-import { PvmExecutor } from "./pvm-executor.js";
 
 export const ACCUMULATION_ERROR = "duplicate service created";
 export type ACCUMULATION_ERROR = typeof ACCUMULATION_ERROR;
@@ -188,7 +188,7 @@ export class Accumulate {
       serviceId,
       argsLength: tryAsU32(transfers.length + operands.length),
     });
-    const result = await executor.run(invocationArgs, tryAsGas(gas));
+    const result = await executor.run(invocationArgs, gas);
     const [newState, checkpoint] = partialState.getStateUpdates();
 
     /**
@@ -196,23 +196,19 @@ export class Accumulate {
      *
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/300002300002?v=0.6.7
      */
-    if (result.hasStatus()) {
-      const status = result.status;
-      if (status === Status.OOG || status === Status.PANIC) {
-        logger.trace`[${serviceId}] accumulate finished with ${Status[status]} reverting to checkpoint.`;
-        return Result.ok({ stateUpdate: checkpoint, consumedGas: tryAsServiceGas(result.consumedGas) });
-      }
-
-      logger.trace`[${serviceId}] accumulate finished with ${Status[status]}`;
+    if (result.status !== ReturnStatus.OK) {
+      logger.trace`[${serviceId}] accumulate finished with ${ReturnStatus[result.status]} reverting to checkpoint.`;
+      return Result.ok({ stateUpdate: checkpoint, consumedGas: tryAsServiceGas(result.consumedGas) });
     }
 
+    logger.trace`[${serviceId}] accumulate finished with ${ReturnStatus[result.status]}`;
     /**
      * PVM invocation returned a hash so we override whatever `yield` host call
      * provided.
      *
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/301202301202?v=0.6.7
      */
-    if (result.hasMemorySlice() && result.memorySlice.length === HASH_SIZE) {
+    if (result.memorySlice.length === HASH_SIZE) {
       const memorySlice = Bytes.fromBlob(result.memorySlice, HASH_SIZE);
       newState.yieldedRoot = memorySlice.asOpaque();
     }

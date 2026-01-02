@@ -3,7 +3,7 @@ import { tryAsCoreIndex, tryAsPerEpochBlock, tryAsServiceGas, tryAsServiceId, tr
 import { RefineContext, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
-import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
+import { WorkExecResult, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize, FixedSizeArray, HashSet } from "@typeberry/collections";
@@ -54,7 +54,7 @@ describe("accumulate-queue", () => {
               importedSegments: tryAsU32(0),
             }),
             payloadHash: Bytes.zero(HASH_SIZE).asOpaque(),
-            result: new WorkExecResult(WorkExecResultKind.ok, BytesBlob.empty()),
+            result: WorkExecResult.ok(BytesBlob.empty()),
             serviceId: tryAsServiceId(0),
           }),
         ],
