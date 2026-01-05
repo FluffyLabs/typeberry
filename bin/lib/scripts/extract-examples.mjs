@@ -24,7 +24,7 @@ function convertDynamicImportsToStatic(code) {
   let match;
   const regex = new RegExp(dynamicImportRegex);
   for (match of code.matchAll(regex)) {
-    const [fullMatch, imports_, modulePath] = match;
+    const [fullMatch, importsMatch, modulePathMatch] = match;
     if (!importMap.has(modulePath)) {
       importMap.set(modulePath, []);
     }
