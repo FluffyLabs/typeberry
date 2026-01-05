@@ -108,7 +108,7 @@ assert.throws(() => {
 
 <!-- example-code:numbers -->
 ```typescript
-import { tryAsU8, tryAsU32, isU8 } from "@typeberry/lib/numbers";
+import { isU8, tryAsU32, tryAsU8 } from "@typeberry/lib/numbers";
 
 // Create typed numbers
 const smallNumber = tryAsU8(42);
@@ -210,7 +210,7 @@ assert.strictEqual(data.raw[0], 0x42);
 
 <!-- example-code:codec-basic -->
 ```typescript
-import { codec, Encoder, Decoder } from "@typeberry/lib/codec";
+import { Decoder, Encoder, codec } from "@typeberry/lib/codec";
 import { Bytes } from "@typeberry/lib/bytes";
 
 // Define a schema for fixed-size bytes
@@ -235,7 +235,7 @@ assert.deepStrictEqual(decoded, testHash);
 <!-- example-code:pvm-basic -->
 ```typescript
 import { Interpreter } from "@typeberry/lib/pvm-interpreter";
-import { tryAsGas, Status } from "@typeberry/lib/pvm-interface";
+import { Status, tryAsGas } from "@typeberry/lib/pvm-interface";
 import { BytesBlob } from "@typeberry/lib/bytes";
 
 // Load a PVM program from hex

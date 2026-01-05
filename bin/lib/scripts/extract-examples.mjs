@@ -25,24 +25,24 @@ function convertDynamicImportsToStatic(code) {
   const regex = new RegExp(dynamicImportRegex);
   for (match of code.matchAll(regex)) {
     const [fullMatch, importsMatch, modulePathMatch] = match;
-    if (!importMap.has(modulePath)) {
-      importMap.set(modulePath, []);
+    if (!importMap.has(modulePathMatch)) {
+      importMap.set(modulePathMatch, []);
     }
     // Split and clean import names
-    const importNames = imports_
+    const importNames = importsMatch
       .split(",")
       .map((name) => name.trim())
       .filter((name) => name.length > 0);
-    importMap.get(modulePath).push(...importNames);
+    importMap.get(modulePathMatch).push(...importNames);
 
-    imports.push({ fullMatch, modulePath, imports: importNames });
+    imports.push({ fullMatch, modulePath: modulePathMatch, imports: importNames });
   }
 
   // Remove duplicate imports and build static import statements
   const staticImports = [];
   for (const [modulePath, importNames] of importMap) {
-    // Remove duplicates
-    const uniqueImports = [...new Set(importNames)];
+    // Remove duplicates and sort
+    const uniqueImports = [...new Set(importNames)].sort();
     staticImports.push(`import { ${uniqueImports.join(", ")} } from "${modulePath}";`);
   }
 
