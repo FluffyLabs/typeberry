@@ -1,3 +1,11 @@
+/**
+ * PVM host call implementations.
+ *
+ * This module provides the Polka Virtual Machine (PVM) host call interface,
+ * enabling guest programs to interact with the host environment.
+ *
+ * @module pvm-host-calls
+ */
 export { type HostCallHandler, PvmExecution, traceRegisters, tryAsHostCallIndex } from "./host-call-handler.js";
 export { HostCallMemory } from "./host-call-memory.js";
 export { HostCallRegisters } from "./host-call-registers.js";

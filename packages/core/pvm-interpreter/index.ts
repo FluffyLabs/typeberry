@@ -1,3 +1,11 @@
+/**
+ * Typeberry PVM interpreter.
+ *
+ * This module provides the Polka Virtual Machine interpreter that executes
+ * PVM bytecode with support for all standard PVM operations.
+ *
+ * @module pvm-interpreter
+ */
 export * as args from "./args-decoder/index.js";
 export * from "./basic-blocks/index.js";
 export * from "./debugger-adapter.js";

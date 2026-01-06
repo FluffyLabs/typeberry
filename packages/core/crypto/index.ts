@@ -1,3 +1,11 @@
+/**
+ * Cryptographic primitives and operations.
+ *
+ * This module provides cryptographic functionality including Ed25519, Sr25519,
+ * and BLS signature schemes, key generation, and signing operations.
+ *
+ * @module crypto
+ */
 export { bandersnatch as bandersnatchWasm, initAll as initWasm } from "@typeberry/native";
 export type {
   BandersnatchKey,

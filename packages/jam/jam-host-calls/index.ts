@@ -1,3 +1,11 @@
+/**
+ * JAM-specific host call implementations.
+ *
+ * This module provides the host call interface implementations specific to JAM,
+ * enabling communication between the host and guest environments.
+ *
+ * @module jam-host-calls
+ */
 export * as accumulate from "./accumulate/index.js";
 export * from "./externalities/partial-state.js";
 export * from "./externalities/pending-transfer.js";

@@ -77,7 +77,6 @@ const exportsField = {
   ".": {
     types: "./index.d.ts",
     import: "./index.mjs",
-    require: "./index.cjs",
   },
 };
 
@@ -86,7 +85,6 @@ for (const subpath of subpathExports) {
   exportsField[`./${subpath.name}`] = {
     types: `./${subpath.name}.d.ts`,
     import: `./${subpath.name}.mjs`,
-    require: `./${subpath.name}.cjs`,
   };
 }
 
@@ -97,8 +95,9 @@ const packageJson = JSON.stringify(
     version: isRelease
       ? originalPackageJson.version
       : `${originalPackageJson.version}-${commitHashResult.toString("utf8").trim()}`,
-    main: "index.cjs",
+    main: "index.mjs",
     types: "index.d.ts",
+    type: "module",
     author: originalPackageJson.author,
     license: originalPackageJson.license,
     sideEffects: false,
@@ -119,41 +118,31 @@ packages/**
 `,
 );
 
+// Copy README.md if it exists
+const readmePath = path.join(packageDir, "README.md");
+if (fs.existsSync(readmePath)) {
+  fs.copyFileSync(readmePath, path.join(DIST, "README.md"));
+}
+
 // Return configuration for all entry points
 const entries = [
   {
     name: "index",
     inputFile,
     esmOutFile: `${DIST}/index.mjs`,
-    cjsOutFile: `${DIST}/index.cjs`,
     typesInput: inputFile,
   },
 ];
 
 // Add subpath entries from source package.json
 for (const subpath of subpathExports) {
-  const sourceContent = fs.readFileSync(subpath.sourcePath, "utf-8").trim();
-
-  // Extract the package name from the export statement
-  const match = sourceContent.match(/export \* from ["']([^"']+)["']/);
-  if (!match) {
-    // Skip files that don't match the expected export pattern
-    continue;
-  }
-
-  const packageName = match[1];
-
-  // Generate files directly without rollup (simple re-exports don't need bundling)
-  // ESM (.mjs)
-  fs.writeFileSync(`${DIST}/${subpath.name}.mjs`, `export * from "${packageName}";\n`);
-
-  // CommonJS (.cjs)
-  fs.writeFileSync(`${DIST}/${subpath.name}.cjs`, `module.exports = require("${packageName}");\n`);
-
-  // TypeScript declarations (.d.ts)
-  fs.writeFileSync(`${DIST}/${subpath.name}.d.ts`, `export * from "${packageName}";\n`);
-
-  // Don't add to rollup entries (already generated)
+  // Add to rollup entries
+  entries.push({
+    name: subpath.name,
+    inputFile: subpath.sourcePath,
+    esmOutFile: `${DIST}/${subpath.name}.mjs`,
+    typesInput: subpath.sourcePath,
+  });
 }
 
 module.exports = {

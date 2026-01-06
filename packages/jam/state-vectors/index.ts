@@ -1,3 +1,11 @@
+/**
+ * State test vectors and fixtures.
+ *
+ * This module provides test vectors and fixtures for validating state
+ * operations and ensuring conformance with the JAM specification.
+ *
+ * @module state-vectors
+ */
 import { Block, Header, type StateRootHash } from "@typeberry/block";
 import { blockFromJson, fromJson, headerFromJson } from "@typeberry/block-json";
 import type { BytesBlob } from "@typeberry/bytes";
