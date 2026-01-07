@@ -74,8 +74,8 @@
     "docs": "npm run docs:examples",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
     "test:examples": "tsx --test examples/*.test.ts",
-    "build": "tsc -p ../../tsconfig.lib.json && node scripts/build.mjs",
-    "docs:examples": "node scripts/extract-examples.mjs",
+    "build": "tsc -p ../../tsconfig.lib.json && tsx scripts/build-lib.ts",
+    "docs:examples": "tsx scripts/extract-examples.ts",
     "prebuild": "npm run docs:examples"
   },
   "author": "Fluffy Labs",

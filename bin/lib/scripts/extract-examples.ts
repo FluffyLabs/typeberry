@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env tsx
 
 import fs from "node:fs";
 import path from "node:path";
@@ -13,15 +13,15 @@ const README_PATH = path.join(__dirname, "../README.md");
 /**
  * Convert dynamic imports to static imports for documentation
  */
-function convertDynamicImportsToStatic(code) {
+function convertDynamicImportsToStatic(code: string): string {
   // Match patterns like: const { X, Y } = await import("@typeberry/lib/module");
   const dynamicImportRegex = /const\s+\{([^}]+)\}\s+=\s+await\s+import\s*\(\s*["']([^"']+)["']\s*\)\s*;?/g;
 
   // Collect all imports
-  const imports = [];
-  const importMap = new Map();
+  const imports: Array<{ fullMatch: string; modulePath: string; imports: string[] }> = [];
+  const importMap = new Map<string, string[]>();
 
-  let match;
+  let match: RegExpMatchArray | null;
   const regex = new RegExp(dynamicImportRegex);
   for (match of code.matchAll(regex)) {
     const [fullMatch, importsMatch, modulePathMatch] = match;
@@ -33,13 +33,13 @@ function convertDynamicImportsToStatic(code) {
       .split(",")
       .map((name) => name.trim())
       .filter((name) => name.length > 0);
-    importMap.get(modulePathMatch).push(...importNames);
+    importMap.get(modulePathMatch)!.push(...importNames);
 
     imports.push({ fullMatch, modulePath: modulePathMatch, imports: importNames });
   }
 
   // Remove duplicate imports and build static import statements
-  const staticImports = [];
+  const staticImports: string[] = [];
   for (const [modulePath, importNames] of importMap) {
     // Remove duplicates and sort
     const uniqueImports = [...new Set(importNames)].sort();
@@ -73,9 +73,9 @@ function convertDynamicImportsToStatic(code) {
 /**
  * Extract code examples from test files
  */
-function extractExamples(filePath) {
+function extractExamples(filePath: string): Record<string, string> {
   const content = fs.readFileSync(filePath, "utf-8");
-  const examples = {};
+  const examples: Record<string, string> = {};
 
   // Match examples marked with <!-- example:name --> ... <!-- /example:name -->
   const exampleRegex = /\/\/ <!-- example:(\w+[-\w]*) -->([\s\S]*?)\/\/ <!-- \/example:\1 -->/g;
@@ -100,7 +100,7 @@ function extractExamples(filePath) {
     const minIndent = lines
       .filter((line) => line.trim() !== "")
       .reduce((min, line) => {
-        const indent = line.match(/^(\s*)/)[1].length;
+        const indent = line.match(/^(\s*)/)?.[1].length ?? 0;
         return Math.min(min, indent);
       }, Number.POSITIVE_INFINITY);
 
@@ -119,7 +119,7 @@ function extractExamples(filePath) {
 /**
  * Get all example test files
  */
-function getAllExampleFiles() {
+function getAllExampleFiles(): string[] {
   const files = fs.readdirSync(EXAMPLES_DIR);
   return files.filter((file) => file.endsWith(".test.ts")).map((file) => path.join(EXAMPLES_DIR, file));
 }
@@ -127,8 +127,8 @@ function getAllExampleFiles() {
 /**
  * Extract all examples from all test files
  */
-function extractAllExamples() {
-  const allExamples = {};
+function extractAllExamples(): Record<string, string> {
+  const allExamples: Record<string, string> = {};
   const files = getAllExampleFiles();
 
   for (const file of files) {
@@ -142,7 +142,7 @@ function extractAllExamples() {
 /**
  * Update README with extracted examples
  */
-function updateReadme(examples) {
+function updateReadme(examples: Record<string, string>): void {
   let readme = fs.readFileSync(README_PATH, "utf-8");
 
   // Replace example placeholders with actual code
