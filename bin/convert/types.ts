@@ -1,4 +1,4 @@
-import { Block, Header } from "@typeberry/block";
+import { Block, Header, tryAsTimeSlot } from "@typeberry/block";
 import { WorkItem } from "@typeberry/block/work-item.js";
 import { WorkPackage } from "@typeberry/block/work-package.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
@@ -179,7 +179,7 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     decode: StateTransition.Codec,
     json: () => StateTransition.fromJson,
     process: {
-      options: ["as-pre-state", "as-post-state", "as-fuzz-message", "as-block"],
+      options: ["as-pre-state", "as-post-state", "as-block-fuzz-message", "as-state-fuzz-message", "as-block"],
       run(spec: ChainSpec, data: unknown, option: string, blake2b) {
         const test = data as StateTransition;
         if (option === "as-pre-state") {
@@ -201,12 +201,33 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
           });
         }
 
-        if (option === "as-fuzz-message") {
+        if (option === "as-block-fuzz-message") {
           const encoded = Encoder.encodeObject(Block.Codec, test.block, spec);
           const blockView = Decoder.decodeObject(Block.Codec.View, encoded, spec);
           const msg: v1.MessageData = {
             type: v1.MessageType.ImportBlock,
             value: blockView,
+          };
+          return looseType({
+            value: msg,
+            encode: v1.messageCodec,
+          });
+        }
+
+        if (option === "as-state-fuzz-message") {
+          const init = v1.Initialize.create({
+            header: Header.empty(),
+            keyvals: test.pre_state.keyvals,
+            ancestry: [
+              v1.AncestryItem.create({
+                headerHash: test.block.header.parentHeaderHash,
+                slot: tryAsTimeSlot(test.block.header.timeSlotIndex - 1),
+              }),
+            ],
+          });
+          const msg: v1.MessageData = {
+            type: v1.MessageType.Initialize,
+            value: init,
           };
           return looseType({
             value: msg,
