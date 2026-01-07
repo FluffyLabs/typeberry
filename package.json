@@ -43,6 +43,7 @@
     "packages/jam/config-node",
     "packages/jam/database",
     "packages/jam/database-lmdb",
+    "packages/jam/executor",
     "packages/jam/fuzz-proto",
     "packages/jam/in-core",
     "packages/jam/jam-host-calls",
@@ -63,8 +64,7 @@
     "packages/workers/api-node",
     "packages/workers/block-authorship",
     "packages/workers/importer",
-    "packages/workers/jam-network",
-    "packages/jam/executor"
+    "packages/workers/jam-network"
   ],
   "engines": {
     "node": ">=22",

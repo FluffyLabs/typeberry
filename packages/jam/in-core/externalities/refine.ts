@@ -26,64 +26,64 @@ export class RefineExternalitiesImpl implements RefineExternalities {
 
   private constructor() {}
 
-  machineExpunge(machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>> {
+  machineExpunge(_machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>> {
     throw new Error("Method not implemented.");
   }
 
   machinePages(
-    machineIndex: MachineId,
-    pageStart: U64,
-    pageCount: U64,
-    requestType: MemoryOperation | null,
+    _machineIndex: MachineId,
+    _pageStart: U64,
+    _pageCount: U64,
+    _requestType: MemoryOperation | null,
   ): Promise<Result<OK, PagesError>> {
     throw new Error("Method not implemented.");
   }
 
-  machineVoidPages(machineIndex: MachineId, pageStart: U64, pageCount: U64): Promise<Result<OK, ZeroVoidError>> {
+  machineVoidPages(_machineIndex: MachineId, _pageStart: U64, _pageCount: U64): Promise<Result<OK, ZeroVoidError>> {
     throw new Error("Method not implemented.");
   }
 
-  machineZeroPages(machineIndex: MachineId, pageStart: U64, pageCount: U64): Promise<Result<OK, ZeroVoidError>> {
+  machineZeroPages(_machineIndex: MachineId, _pageStart: U64, _pageCount: U64): Promise<Result<OK, ZeroVoidError>> {
     throw new Error("Method not implemented.");
   }
 
   machinePeekFrom(
-    machineIndex: MachineId,
-    destinationStart: U64,
-    sourceStart: U64,
-    length: U64,
-    destination: HostCallMemory,
+    _machineIndex: MachineId,
+    _destinationStart: U64,
+    _sourceStart: U64,
+    _length: U64,
+    _destination: HostCallMemory,
   ): Promise<Result<OK, PeekPokeError>> {
     throw new Error("Method not implemented.");
   }
 
   machinePokeInto(
-    machineIndex: MachineId,
-    sourceStart: U64,
-    destinationStart: U64,
-    length: U64,
-    source: HostCallMemory,
+    _machineIndex: MachineId,
+    _sourceStart: U64,
+    _destinationStart: U64,
+    _length: U64,
+    _source: HostCallMemory,
   ): Promise<Result<OK, PeekPokeError>> {
     throw new Error("Method not implemented.");
   }
 
-  machineInit(code: BytesBlob, programCounter: ProgramCounter): Promise<Result<MachineId, ProgramDecoderError>> {
+  machineInit(_code: BytesBlob, _programCounter: ProgramCounter): Promise<Result<MachineId, ProgramDecoderError>> {
     throw new Error("Method not implemented.");
   }
 
   machineInvoke(
-    machineIndex: MachineId,
-    gas: BigGas,
-    registers: HostCallRegisters,
+    _machineIndex: MachineId,
+    _gas: BigGas,
+    _registers: HostCallRegisters,
   ): Promise<Result<MachineResult, NoMachineError>> {
     throw new Error("Method not implemented.");
   }
 
-  exportSegment(segment: Segment): Result<SegmentIndex, SegmentExportError> {
+  exportSegment(_segment: Segment): Result<SegmentIndex, SegmentExportError> {
     throw new Error("Method not implemented.");
   }
 
-  historicalLookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null> {
+  historicalLookup(_serviceId: ServiceId | null, _hash: Blake2bHash): Promise<BytesBlob | null> {
     throw new Error("Method not implemented.");
   }
 }

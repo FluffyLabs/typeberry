@@ -22,20 +22,25 @@ const workExecResultFromJson = json.object<JsonWorkExecResult, WorkExecResult>(
     if (ok !== undefined) {
       return WorkExecResult.ok(ok);
     }
+
     if (out_of_gas === null) {
       return WorkExecResult.error(WorkExecResultKind.outOfGas);
     }
+
     if (panic === null) {
       return WorkExecResult.error(WorkExecResultKind.panic);
     }
+
     if (bad_code === null) {
       return WorkExecResult.error(WorkExecResultKind.badCode);
     }
+
     if (code_oversize === null) {
       return WorkExecResult.error(WorkExecResultKind.codeOversize);
     }
+
     if (output_oversize === null) {
-      return new WorkExecResult(tryAsU32(WorkExecResultKind.digestTooBig));
+      return WorkExecResult.error(WorkExecResultKind.digestTooBig);
     }
 
     throw new Error("Invalid WorkExecResult");

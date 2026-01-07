@@ -1,13 +1,20 @@
 import {
+  type CodeHash,
   type CoreIndex,
   type Segment,
   type SegmentIndex,
+  type ServiceGas,
   type ServiceId,
   tryAsCoreIndex,
   tryAsServiceGas,
 } from "@typeberry/block";
 import { W_C } from "@typeberry/block/gp-constants.js";
-import { type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
+import {
+  type AuthorizerHash,
+  type RefineContext,
+  type WorkPackageHash,
+  WorkPackageInfo,
+} from "@typeberry/block/refine-context.js";
 import type { WorkItem, WorkItemExtrinsic } from "@typeberry/block/work-item.js";
 import type { WorkPackage } from "@typeberry/block/work-package.js";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
@@ -24,7 +31,7 @@ import { tryAsU8, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { ReturnStatus, type ReturnValue } from "@typeberry/pvm-host-calls";
 import type { State } from "@typeberry/state";
 import { FetchExternalities } from "@typeberry/transition/externalities/fetch-externalities.js";
-import { assertNever, Result } from "@typeberry/utils";
+import { assertEmpty, assertNever, Result } from "@typeberry/utils";
 import { RefineExternalitiesImpl } from "./externalities/refine.js";
 
 export type RefineResult = {
@@ -44,6 +51,8 @@ export enum RefineError {
   StateRootMismatch = 1,
   /** Lookup anchor state-slot does not match the one given in context. */
   InvalidLookupAnchorSlot = 2,
+  /** Authorization error. */
+  AuthorizationError = 3,
 }
 
 enum ServiceCodeError {
@@ -56,6 +65,14 @@ enum ServiceCodeError {
   /** Code blob is too big. */
   ServiceCodeTooBig = 3,
 }
+
+enum AuthorizationError {}
+
+type AuthorizationOk = {
+  authorizerHash: AuthorizerHash;
+  authorizationGasUsed: ServiceGas;
+  authorizationOutput: BytesBlob;
+};
 
 export type PerWorkItem<T> = KnownSizeArray<T, "for each work item">;
 
@@ -106,11 +123,13 @@ export class Refine {
     extrinsics: PerWorkItem<WorkItemExtrinsic[]>,
   ): Promise<Result<RefineResult, RefineError>> {
     const workPackageHash = workPackageAndHash.hash;
-    const workPackage = workPackageAndHash.data;
-    const context = workPackage.context;
+    const { context, authorization, authCodeHash, authCodeHost, parametrization, items, ...rest } =
+      workPackageAndHash.data;
+    assertEmpty(rest);
+
     // TODO [ToDr] Verify BEEFY when we have it
     // TODO [ToDr] Verify prerequisites
-    logger.log`[core:${core}] Attempting to refine work package with ${workPackage.items.length} items.`;
+    logger.log`[core:${core}] Attempting to refine work package with ${items.length} items.`;
 
     // TODO [ToDr] GP link
     // Verify anchor block
@@ -144,22 +163,44 @@ export class Refine {
       );
     }
 
-    // TODO [ToDr] Check authorization?
+    // Check authorization
+    const authResult = await this.authorizePackage(authorization, authCodeHost, authCodeHash, parametrization);
+    if (authResult.isError) {
+      return Result.error(
+        RefineError.AuthorizationError,
+        () => `Authorization error: ${AuthorizationError[authResult.error]}: ${authResult.details()}.`,
+      );
+    }
 
-    logger.log`[core:${core}] Proceeding with work items verification. Anchor=${context.anchor}`;
+    logger.log`[core:${core}] Authorized. Proceeding with work items verification. Anchor=${context.anchor}`;
 
-    const refineResults: Awaited<ReturnType<Refine["refineItem"]>>[] = [];
     // Verify the work items
-    for (const [idx, item] of workPackage.items.entries()) {
+    const refineResults: Awaited<ReturnType<Refine["refineItem"]>>[] = [];
+    for (const [idx, item] of items.entries()) {
       logger.info`[core:${core}][i:${idx}] Refining item for service ${item.service}.`;
 
       refineResults.push(await this.refineItem(state, idx, item, imports, extrinsics, core, workPackageHash));
     }
 
     // amalgamate the work report now
+    return Result.ok(
+      this.amalgamateWorkReport(asKnownSize(refineResults), authResult.ok, workPackageHash, context, core),
+    );
+  }
 
+  private amalgamateWorkReport(
+    refineResults: PerWorkItem<RefineItemResult>,
+    authResult: AuthorizationOk,
+    workPackageHash: WorkPackageHash,
+    context: RefineContext,
+    coreIndex: CoreIndex,
+  ) {
+    // unzip exports and work results for each work item
     const exports = refineResults.map((x) => x.exports);
     const results = refineResults.map((x) => x.result);
+
+    const { authorizerHash, authorizationGasUsed, authorizationOutput, ...authRest } = authResult;
+    assertEmpty(authRest);
 
     // TODO [ToDr] Compute erasure root
     const erasureRoot = Bytes.zero(HASH_SIZE);
@@ -167,12 +208,21 @@ export class Refine {
     const exportsRoot = Bytes.zero(HASH_SIZE).asOpaque();
     const exportsCount = exports.reduce((acc, x) => acc + x.length, 0);
 
-    const segmentRootLookup = [WorkPackageInfo.create({})];
+    // TODO [ToDr] Segment root lookup computation?
+    const segmentRootLookup = [
+      WorkPackageInfo.create({
+        workPackageHash,
+        segmentTreeRoot: exportsRoot,
+      }),
+    ];
 
-    return Result.ok({
+    // TODO [ToDr] Auditable work bundle length?
+    const workBundleLength = tryAsU32(0);
+
+    return {
       report: WorkReport.create({
         workPackageSpec: WorkPackageSpec.create({
-          length,
+          length: workBundleLength,
           hash: workPackageHash,
           erasureRoot,
           exportsRoot,
@@ -180,16 +230,34 @@ export class Refine {
           // exports per item and a limit for number of items
           exportsCount: tryAsU16(exportsCount),
         }),
-        context: workPackage.context,
-        coreIndex: core,
-        // TODO [ToDr] authorization
+        context,
+        coreIndex,
         authorizerHash,
         authorizationGasUsed,
-        authorizationOutput: workPackage.authorization,
+        authorizationOutput,
         segmentRootLookup,
+        // safe to convert, since we know that number of work items is limited
         results: FixedSizeArray.new(results, tryAsU8(refineResults.length)),
       }),
       exports: asKnownSize(exports),
+    };
+  }
+
+  private async authorizePackage(
+    _authorization: BytesBlob,
+    _authCodeHost: ServiceId,
+    _authCodeHash: CodeHash,
+    _parametrization: BytesBlob,
+  ): Promise<Result<AuthorizationOk, AuthorizationError>> {
+    // TODO [ToDr] Check authorization?
+    const authorizerHash = Bytes.zero(HASH_SIZE).asOpaque();
+    const authorizationGasUsed = tryAsServiceGas(0);
+    const authorizationOutput = BytesBlob.empty();
+
+    return Result.ok({
+      authorizerHash,
+      authorizationGasUsed,
+      authorizationOutput,
     });
   }
 
@@ -199,7 +267,7 @@ export class Refine {
     item: WorkItem,
     imports: PerWorkItem<ImportedSegment>,
     extrinsics: PerWorkItem<WorkItemExtrinsic[]>,
-    core: CoreIndex,
+    coreIndex: CoreIndex,
     workPackageHash: WorkPackageHash,
   ): Promise<RefineItemResult> {
     const payloadHash = this.blake2b.hashBytes(item.payload);
@@ -246,7 +314,7 @@ export class Refine {
 
     const args = Encoder.encodeObject(ARGS_CODEC, {
       serviceId: item.service,
-      core,
+      core: coreIndex,
       workItemIndex: tryAsU32(idx),
       payloadLength: tryAsU32(item.payload.length),
       packageHash: workPackageHash,
@@ -254,8 +322,7 @@ export class Refine {
 
     const execResult = await executor.run(args, item.refineGasLimit);
 
-    const result = this.extractWorkResult(execResult);
-
+    // TODO [ToDr] get exports from externalities
     const exports: Segment[] = [];
     if (exports.length !== item.exportCount) {
       return {
@@ -272,8 +339,9 @@ export class Refine {
       };
     }
 
+    const result = this.extractWorkResult(execResult);
+
     return {
-      // TODO [ToDr] exports from externalities
       exports,
       result: WorkResult.create({
         ...baseResult,
@@ -286,6 +354,7 @@ export class Refine {
       }),
     };
   }
+
   extractWorkResult(execResult: ReturnValue) {
     if (execResult.status === ReturnStatus.OK) {
       const slice = execResult.memorySlice;
