@@ -1,0 +1,11 @@
+# Ignore some top-level directories that are produced during build
+# but should not be published to npm
+benchmarks
+bin/lib/jam
+bin/lib/convert
+bin/lib/ipc2rpc
+bin/lib/pvm
+bin/lib/rpc
+bin/lib/tci
+bin/lib/test-runner
+

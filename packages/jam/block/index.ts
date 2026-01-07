@@ -4,8 +4,9 @@
  * This module provides the core block data structures used in the JAM protocol,
  * including block headers, bodies, and related types.
  *
- * @module block
+ * @packageDocumentation
  */
+
 export * as assurances from "./assurances.js";
 export * from "./block.js";
 export * as codecUtils from "./codec-utils.js";

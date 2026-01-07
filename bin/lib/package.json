@@ -38,6 +38,10 @@
     "./workers": "./exports/workers.js"
   },
   "dependencies": {
+    "@fluffylabs/anan-as": "^1.1.3",
+    "@noble/ed25519": "2.2.3",
+    "@typeberry/native": "0.0.4-4c0cd28",
+    "hash-wasm": "4.12.0",
     "@typeberry/block": "*",
     "@typeberry/block-json": "*",
     "@typeberry/bytes": "*",
