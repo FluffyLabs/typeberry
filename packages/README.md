@@ -78,7 +78,6 @@ Worker-related packages for background processing:
 Miscellaneous utilities and tools:
 
 - **benchmark** - Benchmarking tools
-- **builder** - Build utilities
 
 ## Adding New Packages
 
