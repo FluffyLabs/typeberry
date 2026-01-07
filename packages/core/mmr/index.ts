@@ -1,11 +1,3 @@
-/**
- * Merkle Mountain Range implementation.
- *
- * This module provides an implementation of Merkle Mountain Range (MMR),
- * a data structure for efficient append-only Merkle tree operations.
- *
- * @module mmr
- */
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 

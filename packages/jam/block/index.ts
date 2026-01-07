@@ -1,12 +1,3 @@
-/**
- * Block structures and types for JAM protocol.
- *
- * This module provides the core block data structures used in the JAM protocol,
- * including block headers, bodies, and related types.
- *
- * @packageDocumentation
- */
-
 export * as assurances from "./assurances.js";
 export * from "./block.js";
 export * as codecUtils from "./codec-utils.js";
