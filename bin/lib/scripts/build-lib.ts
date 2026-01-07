@@ -4,7 +4,7 @@
  * @typeberry/lib Build Script
  *
  * This script post-processes the TypeScript compilation output to create a distributable
- * package with relative imports instead of workspace imports.
+ * package using package.json "imports" field for internal package resolution.
  *
  * ## Build Process Overview
  *
@@ -20,9 +20,9 @@
  *
  * 3. **Import Rewriting**
  *    - Recursively processes all .js and .d.ts files in dist/lib/
- *    - Converts workspace imports to relative paths:
- *      - `@typeberry/bytes` → `../../../packages/core/bytes/index.js`
- *      - `@typeberry/pvm-interpreter/ops/math-consts.js` → `../../../core/pvm-interpreter/ops/math-consts.js`
+ *    - Converts workspace imports to internal imports by prepending #:
+ *      - `@typeberry/bytes` → `#@typeberry/bytes`
+ *      - `@typeberry/pvm-interpreter/ops/math-consts.js` → `#@typeberry/pvm-interpreter/ops/math-consts.js`
  *    - Preserves subpaths in imports (e.g., package/submodule)
  *
  * 4. **Package.json Generation**
@@ -30,30 +30,31 @@
  *      - Updates `main` and `types` to point to `./bin/lib/index.js` and `./bin/lib/index.d.ts`
  *      - Transforms `exports` to include both types and default fields
  *      - Removes workspace dependencies
- *      - Adds `@typeberry/native` dependency from crypto package
+ *      - Adds `imports` field to map `#<package-name>/*` to actual package locations
  *
  * 5. **Distribution Files**
  *    - Copies README.md to dist/lib/
  *    - Copies .npmignore to dist/lib/
  *
- * ## Why Relative Imports?
+ * ## Why Package.json Imports?
  *
- * The compiled package needs relative imports because:
- * - npm doesn't understand workspace references
- * - All packages are bundled together in dist/lib/
- * - Relative paths work in any environment without workspace configuration
+ * The compiled package uses the "imports" field because:
+ * - It provides a clean, maintainable way to handle internal package references
+ * - No need for complex relative path calculations
+ * - Node.js natively resolves these imports
+ * - Easier to understand and debug
  *
  * ## Output Structure
  *
  * ```
  * dist/lib/
- * ├── package.json       (transformed with relative paths)
+ * ├── package.json       (with "imports" field mapping #<package-name>/* to paths)
  * ├── README.md          (copied from bin/lib/)
  * ├── .npmignore         (copied from bin/lib/)
  * ├── bin/lib/           (compiled @typeberry/lib entry points)
  * │   ├── index.js
  * │   ├── index.d.ts
- * │   └── exports/       (re-export files with relative imports)
+ * │   └── exports/       (re-export files with # prefixed imports)
  * └── packages/          (all compiled workspace packages)
  *     ├── core/
  *     ├── jam/
@@ -112,7 +113,7 @@ function buildPackageMap(): Record<string, string> {
 
     const packageJson: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 
-    if (packageJson.name && packageJson.name.startsWith("@typeberry/")) {
+    if (packageJson.name) {
       packageMap[packageJson.name] = workspacePath;
     }
   }
@@ -121,83 +122,41 @@ function buildPackageMap(): Record<string, string> {
 }
 
 /**
- * Convert workspace import to relative path
+ * Extract package name from an import path
  *
- * Transforms a workspace import (e.g., "@typeberry/bytes") into a relative path
- * based on the current file's location and the package map.
+ * Handles both scoped and non-scoped packages:
+ * - Scoped: "@typeberry/bytes" → "@typeberry/bytes"
+ * - Scoped with subpath: "@typeberry/bytes/something.js" → "@typeberry/bytes"
+ * - Non-scoped: "lodash" → "lodash"
+ * - Non-scoped with subpath: "lodash/map.js" → "lodash"
  *
- * Supports both simple imports and imports with subpaths:
- * - Simple: "@typeberry/bytes" → "../../../packages/core/bytes/index.js"
- * - Subpath: "@typeberry/pvm-interpreter/ops/math.js" → "../../../core/pvm-interpreter/ops/math.js"
- *
- * @param importPath - The import path to convert (e.g., "@typeberry/bytes")
- * @param fromFile - The absolute path of the file containing the import
- * @param packageMap - Map of package names to their workspace paths
- * @returns The relative path to use in the import, or the original path if not convertible
- *
- * @example
- * // From: dist/lib/bin/lib/exports/bytes.js
- * // Import: "@typeberry/codec"
- * // Returns: "../../../packages/core/codec/index.js"
- *
- * @example
- * // From: dist/lib/packages/jam/jam-host-calls/accumulate/bless.test.js
- * // Import: "@typeberry/pvm-interpreter/ops/math-consts.js"
- * // Returns: "../../../core/pvm-interpreter/ops/math-consts.js"
+ * @param importPath - The import path to extract from
+ * @returns The package name
  */
-function convertImportPath(importPath: string, fromFile: string, packageMap: Record<string, string>): string {
-  if (!importPath.startsWith("@typeberry/")) {
-    return importPath;
+function extractPackageName(importPath: string): string {
+  if (importPath.startsWith("@")) {
+    // Scoped package: take first two segments (@scope/name)
+    const match = importPath.match(/^(@[^/]+\/[^/]+)/);
+    return match ? match[1] : importPath;
+  } else {
+    // Non-scoped package: take first segment
+    const match = importPath.match(/^([^/]+)/);
+    return match ? match[1] : importPath;
   }
-
-  // Extract the package name and any subpath
-  // Example: "@typeberry/pvm-interpreter/ops/math-consts.js"
-  // -> packageName = "@typeberry/pvm-interpreter", subPath = "/ops/math-consts.js"
-  const match = importPath.match(/^(@typeberry\/[^/]+)(\/.*)?$/);
-
-  if (!match) {
-    console.warn(`Warning: Invalid package path format: ${importPath} at ${fromFile}`);
-    return importPath;
-  }
-
-  const [, packageName, subPath = ""] = match;
-  const packagePath = packageMap[packageName];
-
-  if (!packagePath) {
-    console.warn(`Warning: No mapping found for ${packageName} at ${fromFile}`);
-    return importPath;
-  }
-
-  // Calculate relative path from the current file to the package
-  const fromDir = path.dirname(fromFile);
-
-  // If there's a subpath, append it; otherwise, use index.js
-  const targetPath = subPath
-    ? path.join(DIST_DIR, packagePath, subPath)
-    : path.join(DIST_DIR, packagePath, "index.js");
-
-  let relativePath = path.relative(fromDir, targetPath);
-
-  // Ensure the path starts with ./
-  if (!relativePath.startsWith(".")) {
-    relativePath = "./" + relativePath;
-  }
-
-  // Use forward slashes for imports
-  relativePath = relativePath.replace(/\\/g, "/");
-
-  return relativePath;
 }
 
 /**
  * Rewrite imports in a JavaScript or TypeScript declaration file
  *
- * Searches for all import/export statements that reference @typeberry packages
- * and replaces them with relative paths.
+ * Searches for all import/export statements and checks if they reference
+ * packages in the package map. If so, rewrites them to use # prefix
+ * which is resolved via package.json "imports" field.
  *
  * Handles both import and export statements:
- * - `import { X } from "@typeberry/bytes"`
- * - `export * from "@typeberry/codec"`
+ * - `import { X } from "@typeberry/bytes"` → `import { X } from "#@typeberry/bytes"`
+ * - `export * from "@typeberry/codec"` → `export * from "#@typeberry/codec"`
+ *
+ * External packages not in the package map are left unchanged.
  *
  * @param filePath - Absolute path to the file to process
  * @param packageMap - Map of package names to their workspace paths
@@ -206,16 +165,28 @@ function rewriteImports(filePath: string, packageMap: Record<string, string>): v
   let content = fs.readFileSync(filePath, "utf-8");
   let modified = false;
 
-  // Match: import ... from "@typeberry/...";
-  // Match: export ... from "@typeberry/...";
-  const importRegex = /((?:import|export)\s+(?:[\s\S]*?)\s+from\s+["'])(@typeberry\/[^"']+)(["'])/g;
+  // Match: import ... from "...";
+  // Match: export ... from "...";
+  const importRegex = /((?:import|export)\s+(?:[\s\S]*?)\s+from\s+["'])([^"']+)(["'])/g;
 
   content = content.replace(importRegex, (match, prefix, importPath, suffix) => {
-    const newPath = convertImportPath(importPath, filePath, packageMap);
-    if (newPath !== importPath) {
-      modified = true;
-      return prefix + newPath + suffix;
+    // Skip relative imports
+    if (importPath.startsWith(".")) {
+      return match;
     }
+
+    // Extract the package name from the import path
+    const packageName = extractPackageName(importPath);
+
+    // Only rewrite if this package is in our workspace
+    if (packageMap[packageName]) {
+      modified = true;
+      // Prepend # to the import path
+      const newImportPath = "#" + importPath;
+      return `${prefix}${newImportPath}${suffix}`;
+    }
+
+    // External package - leave unchanged
     return match;
   });
 
@@ -248,15 +219,55 @@ function processDirectory(dir: string, packageMap: Record<string, string>): void
 }
 
 /**
+ * Build the "imports" field for package.json
+ *
+ * Creates mappings from #<package-name>/* to the actual package locations in dist/lib/.
+ * Each package gets two entries:
+ * - Direct import: "#@typeberry/bytes" → "./packages/core/bytes/index.js"
+ * - Subpath import: "#@typeberry/bytes/*" → "./packages/core/bytes/*.js"
+ *
+ * @param packageMap - Map of package names to their workspace paths
+ * @returns The imports field object for package.json
+ *
+ * @example
+ * {
+ *   "#@typeberry/bytes": "./packages/core/bytes/index.js",
+ *   "#@typeberry/bytes/*": "./packages/core/bytes/*.js",
+ *   "#@typeberry/codec": "./packages/core/codec/index.js",
+ *   "#@typeberry/codec/*": "./packages/core/codec/*.js"
+ * }
+ */
+function buildImportsField(packageMap: Record<string, string>): Record<string, string> {
+  const imports: Record<string, string> = {};
+
+  for (const [packageName, packagePath] of Object.entries(packageMap)) {
+    // Prepend # to package name
+    const internalName = "#" + packageName;
+
+    // Direct import (e.g., import from "#@typeberry/bytes")
+    imports[internalName] = `./${packagePath}/index.js`;
+
+    // Subpath imports (e.g., import from "#@typeberry/bytes/something.js")
+    imports[`${internalName}/*`] = `./${packagePath}/*`;
+  }
+
+  return imports;
+}
+
+/**
  * Create and fix the package.json at dist/lib
  *
  * Transforms the source package.json from bin/lib/ into a distribution-ready format:
  * - Updates entry points to use ./bin/lib/ prefix
  * - Adds TypeScript type declarations to exports
  * - Removes workspace dependencies
+ * - Adds "imports" field to resolve #<package-name>/* references
  *
  * The resulting package.json uses the "exports" format with separate
- * type and default exports for each module.
+ * type and default exports for each module, and an "imports" field for
+ * internal package resolution.
+ *
+ * @param packageMap - Map of package names to their workspace paths
  *
  * @example
  * // Input exports (from bin/lib/package.json):
@@ -271,8 +282,17 @@ function processDirectory(dir: string, packageMap: Record<string, string>): void
  *     "default": "./bin/lib/exports/bytes.js"
  *   }
  * }
+ *
+ * // Output imports:
+ * {
+ *   "imports": {
+ *     "#@typeberry/bytes": "./packages/core/bytes/index.js",
+ *     "#@typeberry/bytes/*": "./packages/core/bytes/*.js",
+ *     ...
+ *   }
+ * }
  */
-function createDistPackageJson(): void {
+function createDistPackageJson(packageMap: Record<string, string>): void {
   const sourcePackageJsonPath = path.join(ROOT_DIR, "bin/lib/package.json");
   const targetPackageJsonPath = path.join(DIST_DIR, "package.json");
 
@@ -291,6 +311,7 @@ function createDistPackageJson(): void {
     types: "./bin/lib/index.d.ts",
     type: sourcePackageJson.type,
     exports: {},
+    imports: buildImportsField(packageMap),
     dependencies: Object.fromEntries(filteredDeps),
     author: sourcePackageJson.author,
     license: sourcePackageJson.license,
@@ -366,15 +387,15 @@ function copyDistributionFiles(): void {
 //
 // Process:
 // 1. Discover all workspace packages by reading package.json files
-// 2. Rewrite all @typeberry/* imports to relative paths in .js and .d.ts files
-// 3. Create a distribution package.json with proper exports and dependencies
+// 2. Rewrite all workspace package imports to #<package-name>/* in .js and .d.ts files
+// 3. Create a distribution package.json with "imports" field for resolution
 // 4. Copy README.md and .npmignore for npm publishing
 
 console.log("Building package map from workspace configuration...");
 const packageMap = buildPackageMap();
 console.log(`Found ${Object.keys(packageMap).length} packages in workspace`);
 
-console.log("\nRewriting workspace imports to relative paths...");
+console.log("\nRewriting workspace imports to internal imports...");
 console.log(`Processing: ${DIST_DIR}`);
 
 if (!fs.existsSync(DIST_DIR)) {
@@ -385,8 +406,8 @@ if (!fs.existsSync(DIST_DIR)) {
 
 processDirectory(DIST_DIR, packageMap);
 
-console.log("\nCreating distribution package.json...");
-createDistPackageJson();
+console.log("\nCreating distribution package.json with imports field...");
+createDistPackageJson(packageMap);
 
 console.log("\nCopying distribution files...");
 copyDistributionFiles();
