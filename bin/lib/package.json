@@ -17,12 +17,14 @@
     "./erasure-coding": "./exports/erasure-coding.js",
     "./fuzz-proto": "./exports/fuzz-proto.js",
     "./hash": "./exports/hash.js",
+    "./importer": "./exports/importer.js",
     "./jam-host-calls": "./exports/jam-host-calls.js",
     "./json-parser": "./exports/json-parser.js",
     "./logger": "./exports/logger.js",
     "./mmr": "./exports/mmr.js",
     "./numbers": "./exports/numbers.js",
     "./ordering": "./exports/ordering.js",
+    "./package.json": "./package.json",
     "./pvm-host-calls": "./exports/pvm-host-calls.js",
     "./pvm-interface": "./exports/pvm-interface.js",
     "./pvm-interpreter": "./exports/pvm-interpreter.js",
@@ -33,9 +35,8 @@
     "./state-vectors": "./exports/state-vectors.js",
     "./transition": "./exports/transition.js",
     "./trie": "./exports/trie.js",
-    "./typeberry": "./exports/typeberry.js",
     "./utils": "./exports/utils.js",
-    "./workers": "./exports/workers.js"
+    "./workers-api": "./exports/workers-api.js"
   },
   "dependencies": {
     "@fluffylabs/anan-as": "^1.1.3",

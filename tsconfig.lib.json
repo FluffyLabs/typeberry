@@ -4,10 +4,6 @@
     "outDir": "dist/lib",
     "noEmit": false,
     "declaration": true,
-    "declarationMap": true,
-    "paths": {
-      "@typeberry/bytes": ["./packages/core/bytes/"],
-      "@typeberry/codec": ["./packages/core/codec/"]
-    }
+    "declarationMap": true
   }
 }
