@@ -97,7 +97,7 @@ function buildPackageMap(): Record<string, string> {
   const rootPackageJsonPath = path.join(ROOT_DIR, "package.json");
   const rootPackageJson: PackageJson = JSON.parse(fs.readFileSync(rootPackageJsonPath, "utf-8"));
 
-  if (!rootPackageJson.workspaces) {
+  if (rootPackageJson.workspaces === undefined || rootPackageJson.workspaces === null) {
     throw new Error("No workspaces found in root package.json");
   }
 
@@ -107,13 +107,14 @@ function buildPackageMap(): Record<string, string> {
     const packageJsonPath = path.join(ROOT_DIR, workspacePath, "package.json");
 
     if (!fs.existsSync(packageJsonPath)) {
+      // biome-ignore lint/suspicious/noConsole: Build script requires console output
       console.warn(`Warning: No package.json found at ${workspacePath}`);
       continue;
     }
 
     const packageJson: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 
-    if (packageJson.name) {
+    if (packageJson.name !== undefined && packageJson.name !== null && packageJson.name !== "") {
       packageMap[packageJson.name] = workspacePath;
     }
   }
@@ -137,12 +138,11 @@ function extractPackageName(importPath: string): string {
   if (importPath.startsWith("@")) {
     // Scoped package: take first two segments (@scope/name)
     const match = importPath.match(/^(@[^/]+\/[^/]+)/);
-    return match ? match[1] : importPath;
-  } else {
-    // Non-scoped package: take first segment
-    const match = importPath.match(/^([^/]+)/);
-    return match ? match[1] : importPath;
+    return match !== null ? match[1] : importPath;
   }
+  // Non-scoped package: take first segment
+  const match = importPath.match(/^([^/]+)/);
+  return match !== null ? match[1] : importPath;
 }
 
 /**
@@ -171,7 +171,7 @@ function rewriteImports(filePath: string, packageMap: Record<string, string>): v
 
   content = content.replace(importRegex, (match, prefix, importPath, suffix) => {
     // Skip relative imports
-    if (importPath.startsWith(".")) {
+    if (typeof importPath === "string" && importPath.startsWith(".")) {
       return match;
     }
 
@@ -179,10 +179,10 @@ function rewriteImports(filePath: string, packageMap: Record<string, string>): v
     const packageName = extractPackageName(importPath);
 
     // Only rewrite if this package is in our workspace
-    if (packageMap[packageName]) {
+    if (packageMap[packageName] !== undefined && packageMap[packageName] !== "") {
       modified = true;
       // Prepend # to the import path
-      const newImportPath = "#" + importPath;
+      const newImportPath = `#${importPath}`;
       return `${prefix}${newImportPath}${suffix}`;
     }
 
@@ -242,7 +242,7 @@ function buildImportsField(packageMap: Record<string, string>): Record<string, s
 
   for (const [packageName, packagePath] of Object.entries(packageMap)) {
     // Prepend # to package name
-    const internalName = "#" + packageName;
+    const internalName = `#${packageName}`;
 
     // Direct import (e.g., import from "#@typeberry/bytes")
     imports[internalName] = `./${packagePath}/index.js`;
@@ -299,11 +299,22 @@ function createDistPackageJson(packageMap: Record<string, string>): void {
   const sourcePackageJson = JSON.parse(fs.readFileSync(sourcePackageJsonPath, "utf-8"));
 
   // Filter out workspace dependencies
-  const filteredDeps = Object.entries(sourcePackageJson.dependencies)
-    .filter(([_key, version]) => version !== "*");
+  const filteredDeps = Object.entries(sourcePackageJson.dependencies).filter(([_key, version]) => version !== "*");
 
   // Create the new package.json structure
-  const distPackageJson: any = {
+  const distPackageJson: {
+    name: string;
+    version: string;
+    description: string;
+    main: string;
+    types: string;
+    type: string;
+    exports: Record<string, unknown>;
+    imports: Record<string, string>;
+    dependencies: Record<string, unknown>;
+    author: string;
+    license: string;
+  } = {
     name: sourcePackageJson.name,
     version: sourcePackageJson.version,
     description: sourcePackageJson.description,
@@ -340,7 +351,7 @@ function createDistPackageJson(packageMap: Record<string, string>): void {
   }
 
   // Write the new package.json
-  fs.writeFileSync(targetPackageJsonPath, JSON.stringify(distPackageJson, null, 2) + "\n");
+  fs.writeFileSync(targetPackageJsonPath, `${JSON.stringify(distPackageJson, null, 2)}\n`);
   console.log(`✓ Created ${path.relative(ROOT_DIR, targetPackageJsonPath)}`);
 }
 
@@ -399,7 +410,9 @@ console.log("\nRewriting workspace imports to internal imports...");
 console.log(`Processing: ${DIST_DIR}`);
 
 if (!fs.existsSync(DIST_DIR)) {
+  // biome-ignore lint/suspicious/noConsole: Build script requires console output
   console.error(`Error: Directory not found: ${DIST_DIR}`);
+  // biome-ignore lint/suspicious/noConsole: Build script requires console output
   console.error("Please run TypeScript compilation (tsc) first.");
   process.exit(1);
 }

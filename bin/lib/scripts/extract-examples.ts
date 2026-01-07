@@ -33,7 +33,10 @@ function convertDynamicImportsToStatic(code: string): string {
       .split(",")
       .map((name) => name.trim())
       .filter((name) => name.length > 0);
-    importMap.get(modulePathMatch)!.push(...importNames);
+    const existingImports = importMap.get(modulePathMatch);
+    if (existingImports !== undefined) {
+      existingImports.push(...importNames);
+    }
 
     imports.push({ fullMatch, modulePath: modulePathMatch, imports: importNames });
   }
