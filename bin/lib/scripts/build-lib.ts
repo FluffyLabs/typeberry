@@ -224,7 +224,7 @@ function processDirectory(dir: string, packageMap: Record<string, string>): void
  * Creates mappings from #<package-name>/* to the actual package locations in dist/lib/.
  * Each package gets two entries:
  * - Direct import: "#@typeberry/bytes" → "./packages/core/bytes/index.js"
- * - Subpath import: "#@typeberry/bytes/*" → "./packages/core/bytes/*.js"
+ * - Subpath import: "#@typeberry/bytes/*" → "./packages/core/bytes/*"
  *
  * @param packageMap - Map of package names to their workspace paths
  * @returns The imports field object for package.json
@@ -232,9 +232,9 @@ function processDirectory(dir: string, packageMap: Record<string, string>): void
  * @example
  * {
  *   "#@typeberry/bytes": "./packages/core/bytes/index.js",
- *   "#@typeberry/bytes/*": "./packages/core/bytes/*.js",
+ *   "#@typeberry/bytes/*": "./packages/core/bytes/*",
  *   "#@typeberry/codec": "./packages/core/codec/index.js",
- *   "#@typeberry/codec/*": "./packages/core/codec/*.js"
+ *   "#@typeberry/codec/*": "./packages/core/codec/*"
  * }
  */
 function buildImportsField(packageMap: Record<string, string>): Record<string, string> {
@@ -287,7 +287,7 @@ function buildImportsField(packageMap: Record<string, string>): Record<string, s
  * {
  *   "imports": {
  *     "#@typeberry/bytes": "./packages/core/bytes/index.js",
- *     "#@typeberry/bytes/*": "./packages/core/bytes/*.js",
+ *     "#@typeberry/bytes/*": "./packages/core/bytes/*",
  *     ...
  *   }
  * }
