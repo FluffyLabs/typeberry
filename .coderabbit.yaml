@@ -65,7 +65,9 @@ reviews:
       instructions: |
         When making changes to code with comments containing links (in classes, constants, methods, etc.)
         to graypaper.fluffylabs.dev, ensure those links point to the current version for this update.
-
+    - path: 'package.json'
+      instructions: |
+        When the package version changes all deprecated code scheduled for removal at that version (marked using `@deprecated` comments) should also be removed.
   abort_on_close: true
   disable_cache: false
   auto_review:
