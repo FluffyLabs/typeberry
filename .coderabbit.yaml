@@ -67,8 +67,7 @@ reviews:
         to graypaper.fluffylabs.dev, ensure those links point to the current version for this update.
     - path: 'package.json'
       instructions: |
-        When a new version of a package is released, ensure that all deprecated code that was scheduled to be removed in this version is indeed removed. 
-        The information about deprecated code and its removal version can be found in comments or logged warnings.
+        When the package version changes all deprecated code scheduled for removal at that version (marked using `@deprecated` comments) should also be removed.
   abort_on_close: true
   disable_cache: false
   auto_review:
