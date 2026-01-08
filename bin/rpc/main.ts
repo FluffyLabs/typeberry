@@ -1,4 +1,6 @@
 /** biome-ignore-all lint/suspicious/noConsole: for displaying help */
+
+import { PvmBackend } from "@typeberry/config";
 import { loadConfig, NODE_DEFAULTS } from "@typeberry/config-node";
 import { LmdbRoot } from "@typeberry/database-lmdb";
 import { Blake2b } from "@typeberry/hash";
@@ -73,7 +75,9 @@ export async function main(args: string[]) {
   );
 
   const rootDb = new LmdbRoot(dbPath, true);
-  const server = new RpcServer(port, rootDb, spec, blake2b, handlers, validation.schemas);
+  // TODO [RPC] Make PvmBackend configurable via CLI args
+  const pvmBackend = PvmBackend.Ananas;
+  const server = new RpcServer(port, rootDb, spec, blake2b, pvmBackend, handlers, validation.schemas);
 
   process.on("SIGINT", async () => {
     await server.close();

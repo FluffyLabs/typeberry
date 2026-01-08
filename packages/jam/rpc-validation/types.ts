@@ -1,5 +1,6 @@
-import type { ChainSpec } from "@typeberry/config";
+import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
+import type { Blake2b } from "@typeberry/hash";
 import type { EnumerableState, State } from "@typeberry/state";
 import type WebSocket from "ws";
 import type { z } from "zod";
@@ -79,10 +80,16 @@ export type MethodWithNoArgsName = keyof {
 export type SchemaMapUnknown = Record<MethodName, { input: z.ZodTypeAny; output: z.ZodTypeAny }>;
 export type InputOf<M extends MethodName> = z.infer<SchemaMap[M]["input"]>;
 export type OutputOf<M extends MethodName> = z.infer<SchemaMap[M]["output"]>;
-export type GenericHandler<I, O> = (
-  input: I,
-  context: { db: DatabaseContext; chainSpec: ChainSpec; subscription: SubscriptionHandlerApi },
-) => Promise<O>;
+
+export interface HandlerContext {
+  db: DatabaseContext;
+  chainSpec: ChainSpec;
+  pvmBackend: PvmBackend;
+  blake2b: Blake2b;
+  subscription: SubscriptionHandlerApi;
+}
+
+export type GenericHandler<I, O> = (input: I, context: HandlerContext) => Promise<O>;
 export type Handler<M extends MethodName> = GenericHandler<InputOf<M>, OutputOf<M>>;
 export type HandlerMap = {
   [N in MethodName]: Handler<N>;

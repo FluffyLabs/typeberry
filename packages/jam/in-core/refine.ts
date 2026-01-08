@@ -103,7 +103,6 @@ export class Refine {
     private readonly states: StatesDb,
     private readonly pvmBackend: PvmBackend,
     private readonly blake2b: Blake2b,
-    // TODO: blocks, state?
   ) {}
 
   /**
@@ -119,7 +118,7 @@ export class Refine {
   async refine(
     workPackageAndHash: WithHash<WorkPackageHash, WorkPackage>,
     core: CoreIndex,
-    imports: PerWorkItem<ImportedSegment>,
+    imports: PerWorkItem<ImportedSegment[]>,
     extrinsics: PerWorkItem<WorkItemExtrinsic[]>,
   ): Promise<Result<RefineResult, RefineError>> {
     const workPackageHash = workPackageAndHash.hash;
@@ -127,7 +126,7 @@ export class Refine {
       workPackageAndHash.data;
     assertEmpty(rest);
 
-    // TODO [ToDr] Verify BEEFY when we have it
+    // TODO [ToDr] Verify BEEFY root
     // TODO [ToDr] Verify prerequisites
     logger.log`[core:${core}] Attempting to refine work package with ${items.length} items.`;
 
@@ -265,8 +264,8 @@ export class Refine {
     state: State,
     idx: number,
     item: WorkItem,
-    imports: PerWorkItem<ImportedSegment>,
-    extrinsics: PerWorkItem<WorkItemExtrinsic[]>,
+    allImports: PerWorkItem<ImportedSegment[]>,
+    allExtrinsics: PerWorkItem<WorkItemExtrinsic[]>,
     coreIndex: CoreIndex,
     workPackageHash: WorkPackageHash,
   ): Promise<RefineItemResult> {
@@ -277,6 +276,8 @@ export class Refine {
       payloadHash,
       gas: item.refineGasLimit,
     };
+    const imports = allImports[idx];
+    const extrinsics = allExtrinsics[idx];
     const baseLoad = {
       importedSegments: tryAsU32(imports.length),
       extrinsicCount: tryAsU32(extrinsics.length),
@@ -306,8 +307,8 @@ export class Refine {
     const code = maybeCode.ok;
     const externalities = this.createRefineExternalities({
       payload: item.payload,
-      imports,
-      extrinsics,
+      imports: allImports,
+      extrinsics: allExtrinsics,
     });
 
     const executor = await PvmExecutor.createRefineExecutor(item.service, code, externalities, this.pvmBackend);
@@ -415,7 +416,7 @@ export class Refine {
 
   private createRefineExternalities(args: {
     payload: BytesBlob;
-    imports: PerWorkItem<ImportedSegment>;
+    imports: PerWorkItem<ImportedSegment[]>;
     extrinsics: PerWorkItem<WorkItemExtrinsic[]>;
   }): RefineHostCallExternalities {
     // TODO [ToDr] Pass all required fetch data

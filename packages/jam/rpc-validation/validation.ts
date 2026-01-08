@@ -3,7 +3,9 @@ import z from "zod";
 
 export const JSON_RPC_VERSION = "2.0";
 export namespace validation {
-  const u32 = z.number().int().min(0).max(0xffffffff);
+  const u16 = z.number().int().min(0).max(0xffff);
+  const u32 = z.number().int().min(0).max(0xffff_ffff);
+
   const uint8Array = z.custom<Uint8Array>((v) => v instanceof Uint8Array); // this is needed because a simple z.instanceof(Uint8Array) automatically narrows the type down to Uint8Array<ArrayBuffer> whereas our Bytes.raw are effectively Uint8Array<ArrayBufferLike>
 
   export const hash = z.codec(
@@ -15,6 +17,7 @@ export namespace validation {
     },
   );
   export const slot = u32;
+  export const coreIndex = u16;
   export const blobArray = z.codec(z.base64(), uint8Array, {
     decode: (v) => Uint8Array.from(Buffer.from(v, "base64")),
     encode: (v) => Buffer.from(v).toString("base64"),
@@ -25,6 +28,11 @@ export namespace validation {
   export const blockDescriptor = z.object({
     header_hash: hash,
     slot: slot,
+  });
+
+  export const refineResult = z.object({
+    report: blobArray,
+    exports: blobArray,
   });
 
   export const parameters = z.object({
@@ -79,7 +87,16 @@ export namespace validation {
     output: z.boolean(),
   };
 
-  export const schemas = {
+  /** Non-standard typeberry extension methods. */
+  export const customSchemas = {
+    typeberry_refineWorkPackage: {
+      input: z.tuple([coreIndex, blobArray, z.array(blobArray)]),
+      output: refineResult,
+    },
+  };
+
+  /** JIP-2 (standardized) methods */
+  export const jip2Schemas = {
     beefyRoot: notImplementedSchema,
     submitPreimage: notImplementedSchema,
     submitWorkPackage: notImplementedSchema,
@@ -162,6 +179,11 @@ export namespace validation {
     unsubscribeServiceRequest: unsubscribeSchema,
     unsubscribeServiceValue: unsubscribeSchema,
     unsubscribeStatistics: unsubscribeSchema,
+  };
+
+  export const schemas = {
+    ...customSchemas,
+    ...jip2Schemas,
   } as const satisfies Record<string, { input: z.ZodTypeAny; output: z.ZodTypeAny }>;
 
   export const jsonRpcRequest = z.object({

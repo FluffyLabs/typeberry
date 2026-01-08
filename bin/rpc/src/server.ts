@@ -1,9 +1,10 @@
-import type { ChainSpec } from "@typeberry/config";
+import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import { LmdbBlocks, type LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import type { Blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import {
   type DatabaseContext,
+  type HandlerContext,
   type HandlerMap,
   type InputOf,
   JSON_RPC_VERSION,
@@ -55,6 +56,7 @@ export class RpcServer {
     private readonly rootDb: LmdbRoot,
     private readonly chainSpec: ChainSpec,
     private readonly blake2b: Blake2b,
+    private readonly pvmBackend: PvmBackend,
     private readonly handlers: HandlerMap,
     private readonly schemas: SchemaMap,
   ) {
@@ -193,13 +195,15 @@ export class RpcServer {
       states: this.states,
     };
 
-    return output.encode(
-      await handler(validatedParams, {
-        db,
-        chainSpec: this.chainSpec,
-        subscription: this.subscriptionManager.getHandlerApi(ws),
-      }),
-    ) as OutputOf<M>;
+    const context: HandlerContext = {
+      db,
+      chainSpec: this.chainSpec,
+      pvmBackend: this.pvmBackend,
+      blake2b: this.blake2b,
+      subscription: this.subscriptionManager.getHandlerApi(ws),
+    };
+
+    return output.encode(await handler(validatedParams, context)) as OutputOf<M>;
   }
 
   getLogger(): Logger {

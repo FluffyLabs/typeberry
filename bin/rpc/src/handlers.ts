@@ -18,9 +18,11 @@ import { subscribeServicePreimage } from "./handlers/subscribe-service-preimage.
 import { subscribeServiceRequest } from "./handlers/subscribe-service-request.js";
 import { subscribeServiceValue } from "./handlers/subscribe-service-value.js";
 import { subscribeStatistics } from "./handlers/subscribe-statistics.js";
+import { refineWorkPackage } from "./handlers/typeberry/refine-work-package.js";
 import { unsubscribe } from "./handlers/unsubscribe.js";
 
 export const handlers: HandlerMap = {
+  typeberry_refineWorkPackage: refineWorkPackage,
   beefyRoot: notImplemented,
   bestBlock,
   finalizedBlock,
