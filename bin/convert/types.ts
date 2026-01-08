@@ -209,7 +209,7 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
         }
 
         if (option === "as-fuzz-message") {
-          // biome-ignore lint/suspicious/noConsole: deprevation warning
+          // biome-ignore lint/suspicious/noConsole: deprecation warning
           console.warn(
             "⚠️  Warning: 'as-fuzz-message' is deprecated and will be removed in version 0.6.0. Use 'as-block-fuzz-message' instead.",
           );
