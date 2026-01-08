@@ -235,7 +235,7 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
             ancestry: [
               v1.AncestryItem.create({
                 headerHash: test.block.header.parentHeaderHash,
-                slot: tryAsTimeSlot(tryAsTimeSlot(Math.max(0, test.block.header.timeSlotIndex - 1))),
+                slot: tryAsTimeSlot(Math.max(0, test.block.header.timeSlotIndex - 1)),
               }),
             ],
           });
