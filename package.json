@@ -56,7 +56,6 @@
     "packages/jam/transition",
     "packages/jam/transition/disputes",
     "packages/misc/benchmark",
-    "packages/misc/builder",
     "packages/workers/api",
     "packages/workers/api-node",
     "packages/workers/block-authorship",
