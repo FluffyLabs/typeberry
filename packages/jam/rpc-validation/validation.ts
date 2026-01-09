@@ -83,6 +83,14 @@ export namespace validation {
     beefyRoot: notImplementedSchema,
     submitPreimage: notImplementedSchema,
     submitWorkPackage: notImplementedSchema,
+    workReport: notImplementedSchema,
+    submitWorkPackageBundle: notImplementedSchema,
+    workPackageStatus: notImplementedSchema,
+    subscribeWorkPackageStatus: notImplementedSchema,
+    fetchWorkPackageSegments: notImplementedSchema,
+    fetchSegments: notImplementedSchema,
+    syncState: notImplementedSchema,
+    subscribeSyncStatus: notImplementedSchema,
     bestBlock: {
       input: noArgs,
       output: blockDescriptor,
@@ -136,23 +144,23 @@ export namespace validation {
       output: z.string(),
     },
     subscribeServiceData: {
-      input: z.tuple([hash, serviceId]),
+      input: z.tuple([serviceId, z.boolean()]),
       output: z.string(),
     },
     subscribeServicePreimage: {
-      input: z.tuple([hash, serviceId, hash]),
+      input: z.tuple([serviceId, hash, z.boolean()]),
       output: z.string(),
     },
     subscribeServiceRequest: {
-      input: z.tuple([hash, serviceId, hash, preimageLength]),
+      input: z.tuple([serviceId, hash, preimageLength, z.boolean()]),
       output: z.string(),
     },
     subscribeServiceValue: {
-      input: z.tuple([hash, serviceId, blobArray]),
+      input: z.tuple([serviceId, blobArray, z.boolean()]),
       output: z.string(),
     },
     subscribeStatistics: {
-      input: z.tuple([hash]),
+      input: z.tuple([z.boolean()]),
       output: z.string(),
     },
     unsubscribeBestBlock: unsubscribeSchema,
