@@ -1,4 +1,4 @@
-import { Block, Header } from "@typeberry/block";
+import { Block, Header, tryAsTimeSlot } from "@typeberry/block";
 import { WorkItem } from "@typeberry/block/work-item.js";
 import { WorkPackage } from "@typeberry/block/work-package.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
@@ -179,7 +179,14 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     decode: StateTransition.Codec,
     json: () => StateTransition.fromJson,
     process: {
-      options: ["as-pre-state", "as-post-state", "as-fuzz-message", "as-block"],
+      options: [
+        "as-pre-state",
+        "as-post-state",
+        "as-fuzz-message",
+        "as-block-fuzz-message",
+        "as-state-fuzz-message",
+        "as-block",
+      ],
       run(spec: ChainSpec, data: unknown, option: string, blake2b) {
         const test = data as StateTransition;
         if (option === "as-pre-state") {
@@ -202,11 +209,39 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
         }
 
         if (option === "as-fuzz-message") {
+          // biome-ignore lint/suspicious/noConsole: deprecation warning
+          console.warn(
+            "⚠️  Warning: 'as-fuzz-message' is deprecated and will be removed in version 0.6.0. Use 'as-block-fuzz-message' instead.",
+          );
+        }
+
+        if (option === "as-block-fuzz-message" || option === "as-fuzz-message") {
           const encoded = Encoder.encodeObject(Block.Codec, test.block, spec);
           const blockView = Decoder.decodeObject(Block.Codec.View, encoded, spec);
           const msg: v1.MessageData = {
             type: v1.MessageType.ImportBlock,
             value: blockView,
+          };
+          return looseType({
+            value: msg,
+            encode: v1.messageCodec,
+          });
+        }
+
+        if (option === "as-state-fuzz-message") {
+          const init = v1.Initialize.create({
+            header: Header.empty(),
+            keyvals: test.pre_state.keyvals,
+            ancestry: [
+              v1.AncestryItem.create({
+                headerHash: test.block.header.parentHeaderHash,
+                slot: tryAsTimeSlot(Math.max(0, test.block.header.timeSlotIndex - 1)),
+              }),
+            ],
+          });
+          const msg: v1.MessageData = {
+            type: v1.MessageType.Initialize,
+            value: init,
           };
           return looseType({
             value: msg,
