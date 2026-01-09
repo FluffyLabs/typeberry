@@ -151,7 +151,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
     );
   });
 
-  it("client handles errors produced by the subscription", async () => {
+  it("client handles errors produced by the subscription", async (test) => {
     const handlers = server.getHandlers();
     const originalHandler = handlers.subscribeBestBlock;
     handlers.subscribeBestBlock = async (params, { subscription }) => {
@@ -164,7 +164,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
         params,
       );
     };
-    after(() => {
+    test.after(() => {
       handlers.subscribeBestBlock = originalHandler;
     });
     return new Promise<void>((resolve, reject) => {
