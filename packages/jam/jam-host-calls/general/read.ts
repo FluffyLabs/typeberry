@@ -84,6 +84,7 @@ export class Read implements HostCallHandler {
 
     if (chunk.length > 0) {
       logger.trace`[${this.currentServiceId}] READ(${serviceId}, ${rawKey}) <- ${BytesBlob.blobFrom(chunk).toStringTruncated()}`;
+      logger.insane`[${this.currentServiceId}] READ(${serviceId}, ${rawKey}) <- ${BytesBlob.blobFrom(chunk)}`;
     } else {
       // just a query for length of stored data
       logger.trace`[${this.currentServiceId}] READ(${serviceId}, ${rawKey}) <- (${valueLength} ${valueLength === 1n ? "byte" : "bytes"})`;
