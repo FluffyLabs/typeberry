@@ -10,7 +10,7 @@ import { type ImportedSegment, Refine } from "@typeberry/in-core";
 import { Logger } from "@typeberry/logger";
 import { type Handler, RpcError, RpcErrorCode } from "@typeberry/rpc-validation";
 
-const logger = Logger.new(import.meta.filename, "submitWorkPackage");
+const logger = Logger.new(import.meta.filename, "rpc");
 
 /**
  * Simulate package refinement.
@@ -31,7 +31,7 @@ export const refineWorkPackage: Handler<"typeberry_refineWorkPackage"> = async (
   const workPackageHash = blake2b.hashBytes(workPackageBlob).asOpaque();
   const workPackageAndHash = new WithHash(workPackageHash, workPackage);
 
-  logger.info`Submitting work package ${workPackageHash} to core ${coreIndex} with ${workPackage.items.length} items`;
+  logger.info`Refining work package ${workPackageHash} to core ${coreIndex} with ${workPackage.items.length} items`;
 
   // Convert extrinsics to the expected format (per work item)
   // For now, we assume the extrinsics are provided in a flat array and need to be
@@ -39,11 +39,8 @@ export const refineWorkPackage: Handler<"typeberry_refineWorkPackage"> = async (
   const extrinsics = distributeExtrinsics(workPackage, extrinsicsRaw);
 
   // For now, we don't have any imports - this would need to be fetched from DA layer
-  // TODO [RPC] Fetch imported segments from DA layer based on work items' importSegments
-  const emptyImports: ImportedSegment[] = workPackage.items.map(() => ({
-    index: 0 as never, // Empty import for now
-    data: BytesBlob.empty() as never,
-  }));
+  // TODO [ToDr] Fetch imported segments from DA layer based on work items' importSegments
+  const emptyImports: ImportedSegment[][] = workPackage.items.map(() => []);
   const imports = asKnownSize(emptyImports);
 
   // Create refine instance and process the work package

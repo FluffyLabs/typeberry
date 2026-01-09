@@ -386,7 +386,7 @@ export class Refine {
 
     // TODO [ToDr] GP link
     // TODO [ToDr] shall we rather use the old codehash instead
-    if (service.getInfo().codeHash.isEqualTo(item.codeHash)) {
+    if (!service.getInfo().codeHash.isEqualTo(item.codeHash)) {
       return Result.error(
         ServiceCodeError.ServiceCodeMismatch,
         () =>

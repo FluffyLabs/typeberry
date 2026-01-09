@@ -7,10 +7,11 @@ import { RefineContext } from "@typeberry/block/refine-context.js";
 import { WorkItem } from "@typeberry/block/work-item.js";
 import { tryAsWorkItemsCount, WorkPackage } from "@typeberry/block/work-package.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Encoder } from "@typeberry/codec";
 import { asKnownSize, FixedSizeArray } from "@typeberry/collections";
-import { PvmBackend, tinyChainSpec } from "@typeberry/config";
+import { type ChainSpec, PvmBackend, tinyChainSpec } from "@typeberry/config";
 import { InMemoryStates } from "@typeberry/database";
-import { Blake2b, HASH_SIZE, type WithHash } from "@typeberry/hash";
+import { Blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
 import { tryAsU16 } from "@typeberry/numbers";
 import { testState } from "@typeberry/state/test.utils.js";
 import { Refine, RefineError } from "./refine.js";
@@ -52,22 +53,25 @@ function createWorkPackage(anchorHash: HeaderHash, stateRoot: StateRootHash, loo
   });
 }
 
-function hashWorkPackage(workPackage: WorkPackage): WithHash<WorkPackageHash, WorkPackage> {
-  const workPackageHash = blake2b.hashBytes(BytesBlob.empty()).asOpaque<WorkPackageHash>();
-  return { hash: workPackageHash, data: workPackage };
+function hashWorkPackage(spec: ChainSpec, workPackage: WorkPackage): WithHash<WorkPackageHash, WorkPackage> {
+  const workPackageHash = blake2b
+    .hashBytes(Encoder.encodeObject(WorkPackage.Codec, workPackage, spec))
+    .asOpaque<WorkPackageHash>();
+  return new WithHash(workPackageHash, workPackage);
 }
 
 describe("Refine", () => {
   it("should return StateMissing error when anchor block state is not in DB", async () => {
-    const states = new InMemoryStates(tinyChainSpec);
-    const refine = new Refine(tinyChainSpec, states, PvmBackend.BuiltIn, blake2b);
+    const spec = tinyChainSpec;
+    const states = new InMemoryStates(spec);
+    const refine = new Refine(spec, states, PvmBackend.BuiltIn, blake2b);
 
     const anchorHash = Bytes.fill(HASH_SIZE, 1).asOpaque<HeaderHash>();
     const stateRoot = Bytes.zero(HASH_SIZE).asOpaque<StateRootHash>();
     const workPackage = createWorkPackage(anchorHash, stateRoot);
 
     const result = await refine.refine(
-      hashWorkPackage(workPackage),
+      hashWorkPackage(spec, workPackage),
       tryAsCoreIndex(0),
       asKnownSize([[]]),
       asKnownSize([[]]),
@@ -78,8 +82,9 @@ describe("Refine", () => {
   });
 
   it("should refine work package and produce a report when state is set up", async () => {
-    const states = new InMemoryStates(tinyChainSpec);
-    const refine = new Refine(tinyChainSpec, states, PvmBackend.BuiltIn, blake2b);
+    const spec = tinyChainSpec;
+    const states = new InMemoryStates(spec);
+    const refine = new Refine(spec, states, PvmBackend.BuiltIn, blake2b);
 
     const anchorHash = Bytes.fill(HASH_SIZE, 1).asOpaque<HeaderHash>();
     const state = testState();
@@ -89,7 +94,7 @@ describe("Refine", () => {
     const workPackage = createWorkPackage(anchorHash, correctStateRoot, state.timeslot);
 
     const result = await refine.refine(
-      hashWorkPackage(workPackage),
+      hashWorkPackage(spec, workPackage),
       tryAsCoreIndex(0),
       asKnownSize([[]]),
       asKnownSize([[]]),

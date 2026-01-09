@@ -172,7 +172,7 @@ export class PvmExecutor {
   ) {
     const hostCallHandlers = PvmExecutor.prepareRefineHostCalls(serviceId, externalities);
     const instances = await PvmExecutor.prepareBackend(pvm);
-    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ACCUMULATE, instances);
+    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.REFINE, instances);
   }
 
   /** A utility function that can be used to prepare accumulate executor */
