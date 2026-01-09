@@ -138,7 +138,7 @@ export class Refine {
     }
 
     const stateRoot = await this.states.getStateRoot(state);
-    if (stateRoot.isEqualTo(context.stateRoot)) {
+    if (!stateRoot.isEqualTo(context.stateRoot)) {
       return Result.error(
         RefineError.StateRootMismatch,
         () =>
