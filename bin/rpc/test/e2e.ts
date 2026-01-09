@@ -142,7 +142,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
   });
 
   it("client handles errors when subscription is being requested", async () => {
-    assert.rejects(async () =>
+    await assert.rejects(async () =>
       client.subscribe("subscribeServicePreimage", [
         0,
         hexToUint8Array("c16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c3d"), // invalid preimage hash
