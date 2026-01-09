@@ -23,6 +23,8 @@ import { unsubscribe } from "./handlers/unsubscribe.js";
 export const handlers: HandlerMap = {
   beefyRoot: notImplemented,
   bestBlock,
+  fetchSegments: notImplemented,
+  fetchWorkPackageSegments: notImplemented,
   finalizedBlock,
   listServices,
   parameters,
@@ -35,6 +37,7 @@ export const handlers: HandlerMap = {
   statistics,
   submitPreimage: notImplemented,
   submitWorkPackage: notImplemented,
+  submitWorkPackageBundle: notImplemented,
   subscribeBestBlock,
   subscribeFinalizedBlock,
   subscribeServiceData,
@@ -42,6 +45,9 @@ export const handlers: HandlerMap = {
   subscribeServiceRequest,
   subscribeServiceValue,
   subscribeStatistics,
+  subscribeSyncStatus: notImplemented,
+  subscribeWorkPackageStatus: notImplemented,
+  syncState: notImplemented,
   unsubscribeBestBlock: unsubscribe,
   unsubscribeFinalizedBlock: unsubscribe,
   unsubscribeServiceData: unsubscribe,
@@ -49,4 +55,6 @@ export const handlers: HandlerMap = {
   unsubscribeServiceRequest: unsubscribe,
   unsubscribeServiceValue: unsubscribe,
   unsubscribeStatistics: unsubscribe,
+  workPackageStatus: notImplemented,
+  workReport: notImplemented,
 };

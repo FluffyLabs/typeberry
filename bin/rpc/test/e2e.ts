@@ -1,8 +1,7 @@
 import assert from "node:assert";
 import { after, before, describe, it } from "node:test";
 import { RpcClient } from "@typeberry/rpc-client";
-import { type InputOf, JSON_RPC_VERSION, type MethodName, type OutputOf } from "@typeberry/rpc-validation";
-import type { WebSocket } from "ws";
+import { JSON_RPC_VERSION, validation } from "@typeberry/rpc-validation";
 import { main } from "../main.js";
 import type { RpcServer } from "../src/server.js";
 
@@ -130,12 +129,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
   });
 
   it("subscribes and unsubscribes to/from service preimage", async () => {
-    const bestBlock = await client.call("bestBlock");
-    const subscription = await client.subscribe("subscribeServicePreimage", [
-      bestBlock.header_hash,
-      0,
-      testPreimageHash,
-    ]);
+    const subscription = await client.subscribe("subscribeServicePreimage", [0, testPreimageHash, false]);
 
     try {
       const data = await new Promise<string>((resolve) =>
@@ -150,25 +144,29 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
   it("client handles errors when subscription is being requested", async () => {
     assert.rejects(async () =>
       client.subscribe("subscribeServicePreimage", [
-        hexToUint8Array("0000000000000000000000000000000000000000000000000000000000000000"),
         0,
         hexToUint8Array("c16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c3d"), // invalid preimage hash
+        false,
       ]),
     );
   });
 
   it("client handles errors produced by the subscription", async () => {
-    const originalCallHandler = server.callHandler;
-    server.callHandler = async <M extends MethodName>(
-      method: M,
-      validatedParams: InputOf<M>,
-      ws: WebSocket,
-    ): Promise<OutputOf<M>> => {
-      if (method === "bestBlock") {
-        throw new Error("Forced error for bestBlock");
-      }
-      return originalCallHandler.call(server, method, validatedParams, ws);
+    const handlers = server.getHandlers();
+    const originalHandler = handlers.subscribeBestBlock;
+    handlers.subscribeBestBlock = async (params, { subscription }) => {
+      return subscription.subscribe(
+        "subscribeBestBlock",
+        () => {
+          throw new Error("Forced error for bestBlock");
+        },
+        validation.schemas.bestBlock.output,
+        params,
+      );
     };
+    after(() => {
+      handlers.subscribeBestBlock = originalHandler;
+    });
     return new Promise<void>((resolve, reject) => {
       client.subscribe("subscribeBestBlock", []).then((subscription) => {
         subscription.on("data", async () => {
@@ -181,8 +179,6 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
           resolve();
         });
       });
-    }).finally(() => {
-      server.callHandler = originalCallHandler;
     });
   });
 
