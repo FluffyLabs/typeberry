@@ -35,6 +35,7 @@ export const ZERO_HASH = Bytes.zero(HASH_SIZE);
  * unnecessary re-hashing of the data.
  */
 export class WithHash<THash extends OpaqueHash, TData> extends WithDebug {
+  // TODO [ToDr] use static method and make constructor private
   constructor(
     public readonly hash: THash,
     public readonly data: TData,

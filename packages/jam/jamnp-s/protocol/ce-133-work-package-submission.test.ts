@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type CoreIndex, tryAsCoreIndex } from "@typeberry/block";
-import type { WorkItemExtrinsics } from "@typeberry/block/work-item.js";
+import type { WorkPackageExtrinsics } from "@typeberry/block/work-item.js";
 import { WorkPackage } from "@typeberry/block/work-package.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
@@ -15,7 +15,7 @@ describe("CE133", () => {
   it("should send a work package", async () => {
     const handlers = testClientServer();
 
-    let receivedData = {} as { coreIndex: CoreIndex; workPackage: WorkPackage; extrinsic: WorkItemExtrinsics };
+    let receivedData = {} as { coreIndex: CoreIndex; workPackage: WorkPackage; extrinsic: WorkPackageExtrinsics };
     const server = new ServerHandler((coreIndex, workPackage, extrinsic) => {
       receivedData = { coreIndex, workPackage, extrinsic };
     });
@@ -49,7 +49,7 @@ describe("CE133", () => {
 
 const testWorkPackage =
   "0x78563412022e5e165cc8bd586404257f5cd6f5a31177b5c951eb076c7c10174f90006eefc0564c5e0de0942589df4343ad1956da66797240e2a2f2d6f8116b5047768986f6967658df626fa39cbfb6014b50196d23bc2cfbfa71a7591ca7715472dd2b489329de635d4bbb8c47cdccbbc1285e48bf9dbad365af44b205343e99dea298f360751ab5b251361fbfd3ad5b0e84f051ccece6b00830aed31a5354e00b20b9ed21000000000501020304050a00010203040506070809020403020170a50829851e8f6a8c80f92806ae0e95eb7c06ad064e311cc39107b3219e532e2a000000000000002a00000000000000040005010203040503461236a7eb29dcffc1dd282ce1de0e0ed691fc80e91e02276fe8f778f088a1b80000e7cb536522c1c1b41fff8021055b774e929530941ea12c10f1213c56455f29ad0100b0a487a4adf6a0eda5d69ddd2f8b241cf44204f0ff793e993e5e553b7862a1dc020002381a0e351c5593018bbc87dd6694695caa1c0c1ddb24e70995da878d89495bf1100000006c437d85cd8327f42a35d427ede1b5871347d3aae7442f2df1ff80f834acf17a1100000008070605fcfc857dab216daf41f409c2012685846e4d34aedfeacaf84d9adfebda73fae64d000000000000004d00000000000000070003030201023e5d0bea78537414bd1cfdaeb0f22d743bcaba5dbffacbabce8457f4cd78f69b0000b7f8dffa65971832ec9e19719debc04b1ccd9ad27187a4943807ca756962481b01000380b628780612e8928705018d1ced53b2f76607ad026a86e4f36c99ac0491f8eb2000000047f142b4488bbd34e59afc60a0daedc6020e8be52a3cedecbd75e93ee9908adf21000000cc2f47030ff8a9fe8d02e8eb87e86d4db05b57258d30f9d81acb3b280d04e87722000000";
-const testExtrinsicData = (): WorkItemExtrinsics => {
+const testExtrinsicData = (): WorkPackageExtrinsics => {
   // this is coming from work items in the `testWorkPackage`;
   const lengths = [16, 17, 32, 33, 34];
   return asKnownSize(

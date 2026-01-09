@@ -2,8 +2,7 @@ import { type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/blo
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import type { ArrayView } from "@typeberry/collections";
 import type { PendingTransfer } from "@typeberry/jam-host-calls";
-import { sumU64, tryAsU32, type U32 } from "@typeberry/numbers";
-import { MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
+import { MAX_VALUE_U64, sumU64, tryAsU32, type U32 } from "@typeberry/numbers";
 import { Operand } from "./operand.js";
 
 class AccumulateDataItem {

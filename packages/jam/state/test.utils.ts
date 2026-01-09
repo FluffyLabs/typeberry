@@ -16,8 +16,7 @@ import { tinyChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { MAX_VALUE } from "@typeberry/pvm-interpreter/ops/math-consts.js";
+import { MAX_VALUE_U32, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import {
   AUTHORIZATION_QUEUE_SIZE,
@@ -354,7 +353,7 @@ export const testState = (): InMemoryState => {
       manager: tryAsServiceId(0),
       assigners: tryAsPerCore(new Array(spec.coresCount).fill(tryAsServiceId(0)), spec),
       delegator: tryAsServiceId(0),
-      registrar: tryAsServiceId(MAX_VALUE),
+      registrar: tryAsServiceId(MAX_VALUE_U32),
       autoAccumulateServices: new Map(),
     }),
   });

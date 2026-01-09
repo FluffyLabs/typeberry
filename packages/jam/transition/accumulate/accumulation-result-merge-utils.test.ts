@@ -17,8 +17,7 @@ import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES } from "@typeb
 import { HASH_SIZE } from "@typeberry/hash";
 import { AccumulationStateUpdate, PendingTransfer } from "@typeberry/jam-host-calls";
 import { TRANSFER_MEMO_BYTES } from "@typeberry/jam-host-calls/externalities/partial-state.js";
-import { tryAsU32, tryAsU64, type U64 } from "@typeberry/numbers";
-import { MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
+import { MAX_VALUE_U64, tryAsU32, tryAsU64, type U64 } from "@typeberry/numbers";
 import {
   AUTHORIZATION_QUEUE_SIZE,
   InMemoryState,

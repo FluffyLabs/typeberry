@@ -1,5 +1,5 @@
 import type { CoreIndex } from "@typeberry/block";
-import { type WorkItemExtrinsics, workItemExtrinsicsCodec } from "@typeberry/block/work-item.js";
+import { type WorkPackageExtrinsics, workItemExtrinsicsCodec } from "@typeberry/block/work-item.js";
 import { WorkPackage } from "@typeberry/block/work-package.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec, Decoder, Encoder } from "@typeberry/codec";
@@ -39,7 +39,7 @@ const logger = Logger.new(import.meta.filename, "protocol/ce-133");
 export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
-  constructor(private readonly onWorkPackage: (i: CoreIndex, w: WorkPackage, e: WorkItemExtrinsics) => void) {}
+  constructor(private readonly onWorkPackage: (i: CoreIndex, w: WorkPackage, e: WorkPackageExtrinsics) => void) {}
 
   public readonly workPackages = new Map<StreamId, CoreWorkPackage>();
 
@@ -79,7 +79,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     sender: StreamMessageSender,
     coreIndex: CoreIndex,
     workPackage: WorkPackage,
-    extrinsic: WorkItemExtrinsics,
+    extrinsic: WorkPackageExtrinsics,
   ) {
     const corePack = CoreWorkPackage.create({ coreIndex, workPackage });
     logger.trace`[${sender.streamId}] Sending work package: ${corePack}`;

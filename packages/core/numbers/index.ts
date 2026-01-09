@@ -13,16 +13,16 @@ export type FixedSizeNumber<Bytes extends number> = number & WithBytesRepresenta
 
 /** Unsigned integer that can be represented as one byte. */
 export type U8 = FixedSizeNumber<1>;
-const MAX_VALUE_U8 = 0xff;
+export const MAX_VALUE_U8 = 0xff;
 /** Unsigned integer that can be represented as two bytes. */
 export type U16 = FixedSizeNumber<2>;
-const MAX_VALUE_U16 = 0xffff;
+export const MAX_VALUE_U16 = 0xffff;
 /** Unsigned integer that can be represented as 4 bytes. */
 export type U32 = FixedSizeNumber<4>;
-const MAX_VALUE_U32 = 0xffff_ffff;
+export const MAX_VALUE_U32 = 0xffff_ffff;
 /** Unsigned integer that can be represented as 8 bytes. */
 export type U64 = bigint & WithBytesRepresentation<8>;
-const MAX_VALUE_U64 = 0xffff_ffff_ffff_ffffn;
+export const MAX_VALUE_U64 = 0xffff_ffff_ffff_ffffn;
 
 /** Attempt to cast an input number into U8. */
 export const tryAsU8 = (v: number): U8 => {

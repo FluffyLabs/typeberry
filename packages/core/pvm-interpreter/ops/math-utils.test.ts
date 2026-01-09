@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-
-import { MAX_VALUE, MAX_VALUE_U64 } from "./math-consts.js";
+import { MAX_VALUE_U32 } from "@typeberry/numbers";
+import { MAX_VALUE_I64 } from "./math-consts.js";
 import {
   addWithOverflowU32,
   addWithOverflowU64,
@@ -30,7 +30,7 @@ describe("math-utils", () => {
     });
 
     it("should add two numbers (big and small) without overflow", () => {
-      const a = MAX_VALUE;
+      const a = MAX_VALUE_U32;
       const b = 6;
       const expectedResult = 5;
 
@@ -50,9 +50,9 @@ describe("math-utils", () => {
     });
 
     it("should add max values with overflow", () => {
-      const a = MAX_VALUE;
-      const b = MAX_VALUE;
-      const expectedResult = MAX_VALUE - 1;
+      const a = MAX_VALUE_U32;
+      const b = MAX_VALUE_U32;
+      const expectedResult = MAX_VALUE_U32 - 1;
 
       const result = addWithOverflowU32(a, b);
 
@@ -74,7 +74,7 @@ describe("math-utils", () => {
     it("should subtract two numbers with overflow", () => {
       const a = 5;
       const b = 6;
-      const expectedResult = MAX_VALUE;
+      const expectedResult = MAX_VALUE_U32;
 
       const result = subU32(a, b);
 
@@ -146,8 +146,8 @@ describe("math-utils", () => {
     });
 
     it("should multiply two big positive numbers", () => {
-      const a = MAX_VALUE_U64;
-      const b = MAX_VALUE_U64;
+      const a = MAX_VALUE_I64;
+      const b = MAX_VALUE_I64;
       const expectedResult = 0x4000000000000000n;
 
       const result = mulUpperUU(a, b);
@@ -156,8 +156,8 @@ describe("math-utils", () => {
     });
 
     it("should multiply two big positive and negative numbers", () => {
-      const a = MAX_VALUE_U64;
-      const b = -MAX_VALUE_U64;
+      const a = MAX_VALUE_I64;
+      const b = -MAX_VALUE_I64;
       const expectedResult = 4611686018427387904n;
 
       const result = mulUpperUU(a, b);
@@ -166,8 +166,8 @@ describe("math-utils", () => {
     });
 
     it("should multiply two big negative and positive numbers", () => {
-      const a = -MAX_VALUE_U64;
-      const b = MAX_VALUE_U64;
+      const a = -MAX_VALUE_I64;
+      const b = MAX_VALUE_I64;
       const expectedResult = 4611686018427387904n;
 
       const result = mulUpperUU(a, b);
@@ -176,8 +176,8 @@ describe("math-utils", () => {
     });
 
     it("should multiply two big negative numbers", () => {
-      const a = -MAX_VALUE_U64;
-      const b = -MAX_VALUE_U64;
+      const a = -MAX_VALUE_I64;
+      const b = -MAX_VALUE_I64;
       const expectedResult = 0x4000000000000000n;
 
       const result = mulUpperUU(a, b);
@@ -228,8 +228,8 @@ describe("math-utils", () => {
     });
 
     it("should multiply two big positive numbers", () => {
-      const a = MAX_VALUE_U64;
-      const b = MAX_VALUE_U64;
+      const a = MAX_VALUE_I64;
+      const b = MAX_VALUE_I64;
       const expectedResult = 0x4000000000000000n;
 
       const result = mulUpperSU(a, b);

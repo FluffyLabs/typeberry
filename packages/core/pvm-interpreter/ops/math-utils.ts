@@ -1,26 +1,26 @@
+import { MAX_VALUE_U32 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
-import { MAX_VALUE } from "./math-consts.js";
 
 /**
  * Overflowing addition for two-complement representation of 32-bit signed numbers.
  */
 export function addWithOverflowU32(a: number, b: number) {
-  if (a > MAX_VALUE - b) {
+  if (a > MAX_VALUE_U32 - b) {
     /**
-     * MAX_VALUE is equal to 2 ** 32 - 1
-     * MAX_VALUE - ( (MAX_VALUE - a) + (MAX_VALUE - b) ) - 1
-     * = MAX_VALUE - (2MAX_VALUE - a - b) -1
-     * = MAX_VALUE - 2MAX_VALUE + a + b - 1
-     * = a + b - MAX_VALUE - 1
+     * MAX_VALUE_U32 is equal to 2 ** 32 - 1
+     * MAX_VALUE_U32 - ( (MAX_VALUE_U32 - a) + (MAX_VALUE_U32 - b) ) - 1
+     * = MAX_VALUE_U32 - (2MAX_VALUE_U32 - a - b) -1
+     * = MAX_VALUE_U32 - 2MAX_VALUE_U32 + a + b - 1
+     * = a + b - MAX_VALUE_U32 - 1
      * = a + b - 2 ** 32
-     * but we know that 2MAX_VALUE > a + b > MAX_VALUE so in this case:
+     * but we know that 2MAX_VALUE_U32 > a + b > MAX_VALUE_U32 so in this case:
      * a + b - 2 ** 32 <=> (a + b) % 2 ** 32
-     * = (a + b) % (MAX_VALUE + 1)
+     * = (a + b) % (MAX_VALUE_U32 + 1)
      */
-    const spaceToMaxA = MAX_VALUE - a;
-    const spaceToMaxB = MAX_VALUE - b;
+    const spaceToMaxA = MAX_VALUE_U32 - a;
+    const spaceToMaxB = MAX_VALUE_U32 - b;
     const overflowSum = spaceToMaxA + spaceToMaxB;
-    return MAX_VALUE - overflowSum - 1;
+    return MAX_VALUE_U32 - overflowSum - 1;
   }
 
   return a + b;
@@ -38,7 +38,7 @@ export function addWithOverflowU64(a: bigint, b: bigint) {
  */
 export function subU32(a: number, b: number) {
   if (b > a) {
-    return MAX_VALUE - b + a + 1;
+    return MAX_VALUE_U32 - b + a + 1;
   }
 
   return a - b;

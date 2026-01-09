@@ -6,34 +6,32 @@ import { HostCallRegisters } from "./host-call-registers.js";
 import type { HostCallsManager } from "./host-calls-manager.js";
 import type { InterpreterInstanceManager } from "./interpreter-instance-manager.js";
 
-class ReturnValue {
-  private constructor(
-    public consumedGas: Gas,
-    public status: Status | null,
-    public memorySlice: Uint8Array | null,
-  ) {
-    check`
-      ${(status === null && memorySlice !== null) || (status !== null && memorySlice === null)}
-      'status' and 'memorySlice' must not both be null or both be non-null — exactly one must be provided
-    `;
-  }
-
-  static fromStatus(consumedGas: Gas, status: Status) {
-    return new ReturnValue(consumedGas, status, null);
-  }
-
-  static fromMemorySlice(consumedGas: Gas, memorySlice: Uint8Array) {
-    return new ReturnValue(consumedGas, null, memorySlice);
-  }
-
-  hasMemorySlice(): this is this & { status: null; memorySlice: Uint8Array } {
-    return this.memorySlice instanceof Uint8Array && this.status === null;
-  }
-
-  hasStatus(): this is this & { status: Status; memorySlice: null } {
-    return !this.hasMemorySlice();
-  }
+/**
+ * Outer VM return status.
+ *
+ * This is a limited status returned by outer VM.
+ */
+export enum ReturnStatus {
+  /** Execution succesful. */
+  OK = 0,
+  /** Execution went out of gas. */
+  OOG = 1,
+  /** Execution trapped or panicked. */
+  PANIC = 2,
 }
+
+export type ReturnValue<TGas = Gas> = {
+  consumedGas: TGas;
+} & (
+  | {
+      status: ReturnStatus.OK;
+      memorySlice: Uint8Array;
+    }
+  | {
+      status: ReturnStatus.OOG | ReturnStatus.PANIC;
+    }
+);
+
 export class HostCalls {
   constructor(
     private pvmInstanceManager: InterpreterInstanceManager,
@@ -41,9 +39,9 @@ export class HostCalls {
   ) {}
 
   private getReturnValue(status: Status, pvmInstance: IPvmInterpreter): ReturnValue {
-    const gasConsumed = pvmInstance.gas.used();
+    const consumedGas = pvmInstance.gas.used();
     if (status === Status.OOG) {
-      return ReturnValue.fromStatus(gasConsumed, status);
+      return { consumedGas, status: ReturnStatus.OOG };
     }
 
     if (status === Status.HALT) {
@@ -58,16 +56,16 @@ export class HostCalls {
       const loadResult = memory.loadInto(result, address);
 
       if (loadResult.isError) {
-        return ReturnValue.fromMemorySlice(gasConsumed, new Uint8Array());
+        return { consumedGas, status: ReturnStatus.OK, memorySlice: new Uint8Array() };
       }
 
-      return ReturnValue.fromMemorySlice(gasConsumed, result);
+      return { consumedGas, status: ReturnStatus.OK, memorySlice: result };
     }
 
-    return ReturnValue.fromStatus(gasConsumed, Status.PANIC);
+    return { consumedGas, status: ReturnStatus.PANIC };
   }
 
-  private async execute(pvmInstance: IPvmInterpreter) {
+  private async execute(pvmInstance: IPvmInterpreter): Promise<ReturnValue> {
     pvmInstance.runProgram();
     for (;;) {
       let status = pvmInstance.getStatus();
@@ -94,7 +92,7 @@ export class HostCalls {
       const pcLog = `[PC: ${pvmInstance.getPC()}]`;
       if (underflow) {
         this.hostCalls.traceHostCall(`${pcLog} OOG`, index, hostCall, regs, gas.get());
-        return ReturnValue.fromStatus(gas.used(), Status.OOG);
+        return { consumedGas: gas.used(), status: ReturnStatus.OOG };
       }
       this.hostCalls.traceHostCall(`${pcLog} Invoking`, index, hostCall, regs, gasBefore);
       const result = await hostCall.execute(gas, regs, memory);

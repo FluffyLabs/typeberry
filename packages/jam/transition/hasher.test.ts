@@ -13,7 +13,7 @@ import { Credential, ReportGuarantee } from "@typeberry/block/guarantees.js";
 import { RefineContext, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
-import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
+import { WorkExecResult, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
@@ -95,7 +95,7 @@ describe("TransitionHasher", () => {
                     importedSegments: tryAsU32(result.refine_load.imports),
                   }),
                   payloadHash: Bytes.parseBytes(result.payload_hash, HASH_SIZE).asOpaque(),
-                  result: new WorkExecResult(WorkExecResultKind.ok, BytesBlob.parseBlob(result.result.ok)),
+                  result: WorkExecResult.ok(BytesBlob.parseBlob(result.result.ok)),
                   serviceId: tryAsServiceId(result.service_id),
                 }),
               ),

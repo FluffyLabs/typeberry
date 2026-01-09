@@ -12,6 +12,24 @@ import { MAX_NUMBER_OF_SEGMENTS, type SegmentIndex } from "./work-item-segment.j
 type WorkItemExtrinsicHash = Opaque<OpaqueHash, "ExtrinsicHash">;
 
 /**
+ * An opaque piece of data that the work item brings in.
+ *
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/1a1b001a1d00?v=0.7.2
+ */
+export type WorkItemExtrinsic = Opaque<BytesBlob, "Extrinsic">;
+
+/**
+ * Extrinsics that are needed by all [`WorkItem`]s and are specified via [`WorkItemExtrinsicSpec`].
+ *
+ * This is a flat-package of all extrinsics in a work package across all work items.
+ * For encoding it also requires the length of items to be known in advance.
+ */
+export type WorkPackageExtrinsics = KnownSizeArray<
+  Bytes<U32>,
+  "Count of all extrinsics within work items in a work package"
+>;
+
+/**
  * Definition of data segment that was exported by some work package earlier
  * and now is being imported by another work-item.
  */
@@ -58,13 +76,6 @@ export class WorkItemExtrinsicSpec extends WithDebug {
     super();
   }
 }
-/**
- * Extrinsics that are needed by [`WorkItem`]s and are specified via [`WorkItemExtrinsicSpec`].
- */
-export type WorkItemExtrinsics = KnownSizeArray<
-  Bytes<U32>,
-  "Count of all extrinsics within work items in a work package"
->;
 
 /**
  * To encode/decode extrinsics that are specified via [`WorkItemExtrinsicSpec`]
@@ -82,7 +93,7 @@ export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
     throw new Error("Unable to create a decoder, because the length of extrinsics overflows!");
   }
 
-  return codec.custom<WorkItemExtrinsics>(
+  return codec.custom<WorkPackageExtrinsics>(
     {
       name: "WorkItemExtrinsics",
       sizeHint: { bytes: sum.value, isExact: true },
