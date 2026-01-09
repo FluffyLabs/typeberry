@@ -129,11 +129,11 @@ export class DeferredTransfers {
           this.chainSpec,
         );
 
-        const gas = transfers.reduce((acc, item) => acc + item.gas, 0n);
-        consumedGas = (await executor.run(args, tryAsServiceGas(gas))).consumedGas;
+        const gas = tryAsServiceGas(transfers.reduce((acc, item) => acc + item.gas, 0n));
+        consumedGas = (await executor.run(args, gas)).consumedGas;
       }
 
-      transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(consumedGas) });
+      transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: consumedGas });
       const [updatedState] = partialState.getStateUpdates();
       currentStateUpdate = updatedState;
     }

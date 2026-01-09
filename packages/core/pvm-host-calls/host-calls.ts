@@ -1,4 +1,3 @@
-import { type ServiceGas, tryAsServiceGas } from "@typeberry/block";
 import { type Gas, type IPvmInterpreter, Status } from "@typeberry/pvm-interface";
 import { assertNever, check, safeAllocUint8Array } from "@typeberry/utils";
 import { PvmExecution, tryAsHostCallIndex } from "./host-call-handler.js";
@@ -21,8 +20,8 @@ export enum ReturnStatus {
   PANIC = 2,
 }
 
-export type ReturnValue = {
-  consumedGas: ServiceGas;
+export type ReturnValue<TGas = Gas> = {
+  consumedGas: TGas;
 } & (
   | {
       status: ReturnStatus.OK;
@@ -40,7 +39,7 @@ export class HostCalls {
   ) {}
 
   private getReturnValue(status: Status, pvmInstance: IPvmInterpreter): ReturnValue {
-    const consumedGas = tryAsServiceGas(pvmInstance.gas.used());
+    const consumedGas = pvmInstance.gas.used();
     if (status === Status.OOG) {
       return { consumedGas, status: ReturnStatus.OOG };
     }
@@ -93,7 +92,7 @@ export class HostCalls {
       const pcLog = `[PC: ${pvmInstance.getPC()}]`;
       if (underflow) {
         this.hostCalls.traceHostCall(`${pcLog} OOG`, index, hostCall, regs, gas.get());
-        return { consumedGas: tryAsServiceGas(gas.used()), status: ReturnStatus.OOG };
+        return { consumedGas: gas.used(), status: ReturnStatus.OOG };
       }
       this.hostCalls.traceHostCall(`${pcLog} Invoking`, index, hostCall, regs, gasBefore);
       const result = await hostCall.execute(gas, regs, memory);

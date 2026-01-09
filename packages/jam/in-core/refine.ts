@@ -24,11 +24,10 @@ import { codec, Encoder } from "@typeberry/codec";
 import { asKnownSize, FixedSizeArray, type KnownSizeArray } from "@typeberry/collections";
 import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import type { StatesDb } from "@typeberry/database";
-import { PvmExecutor, type RefineHostCallExternalities } from "@typeberry/executor";
+import { PvmExecutor, type RefineHostCallExternalities, ReturnStatus, type ReturnValue } from "@typeberry/executor";
 import { type Blake2b, HASH_SIZE, type WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { tryAsU8, tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { ReturnStatus, type ReturnValue } from "@typeberry/pvm-host-calls";
 import type { State } from "@typeberry/state";
 import { FetchExternalities } from "@typeberry/transition/externalities/fetch-externalities.js";
 import { assertEmpty, assertNever, Result } from "@typeberry/utils";
@@ -349,14 +348,14 @@ export class Refine {
         result,
         load: WorkRefineLoad.create({
           ...baseLoad,
-          gasUsed: execResult.consumedGas,
+          gasUsed: tryAsServiceGas(execResult.consumedGas),
           exportedSegments: tryAsU32(exports.length),
         }),
       }),
     };
   }
 
-  extractWorkResult(execResult: ReturnValue) {
+  extractWorkResult(execResult: ReturnValue<ServiceGas>) {
     if (execResult.status === ReturnStatus.OK) {
       const slice = execResult.memorySlice;
       // TODO [ToDr] Verify the output size and change digestTooBig?

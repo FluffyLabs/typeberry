@@ -12,7 +12,7 @@ import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import { ArrayView, HashSet, SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { PvmExecutor } from "@typeberry/executor";
+import { PvmExecutor, ReturnStatus } from "@typeberry/executor";
 import { type Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import type { PendingTransfer } from "@typeberry/jam-host-calls";
 import {
@@ -21,7 +21,6 @@ import {
 } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
 import { MAX_VALUE_U64, sumU64, tryAsU32, type U32 } from "@typeberry/numbers";
-import { ReturnStatus } from "@typeberry/pvm-host-calls";
 import {
   type AccumulationOutput,
   accumulationOutputComparator,

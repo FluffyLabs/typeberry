@@ -96,7 +96,6 @@ describe("Refine", () => {
     );
 
     assert.strictEqual(result.isOk, true);
-    assert.ok(result.ok.report);
     assert.strictEqual(result.ok.report.coreIndex, 0);
     assert.strictEqual(result.ok.report.results.length, 1);
   });

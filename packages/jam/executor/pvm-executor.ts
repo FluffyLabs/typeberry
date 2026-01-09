@@ -1,4 +1,4 @@
-import type { ServiceGas, ServiceId } from "@typeberry/block";
+import { type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import { accumulate, general, refine } from "@typeberry/jam-host-calls";
@@ -156,7 +156,11 @@ export class PvmExecutor {
    * @returns `ReturnValue` object that can be a status or memory slice
    */
   async run(args: BytesBlob, gas: ServiceGas) {
-    return this.pvm.runProgram(this.serviceCode.raw, args.raw, Number(this.entrypoint), tryAsGas(gas));
+    const ret = await this.pvm.runProgram(this.serviceCode.raw, args.raw, Number(this.entrypoint), tryAsGas(gas));
+    return {
+      ...ret,
+      consumedGas: tryAsServiceGas(ret.consumedGas),
+    };
   }
 
   /** A utility function that can be used to prepare refine executor */

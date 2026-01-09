@@ -9,6 +9,16 @@
   "dependencies": {
     "@typeberry/block": "*",
     "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/collections": "*",
+    "@typeberry/config": "*",
+    "@typeberry/database": "*",
+    "@typeberry/executor": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/state": "*",
+    "@typeberry/transition": "*",
     "@typeberry/utils": "*"
   },
   "author": "Fluffy Labs",
