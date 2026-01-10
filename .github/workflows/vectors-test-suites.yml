@@ -142,7 +142,7 @@ jobs:
           comment-tag: test-vectors-errors
 
       - name: Download all failure artifacts
-        if: ${{ contains(needs.test-vectors.result, 'failure') }}
+        if: ${{ needs.test-vectors.result == 'failure' }}
         uses: actions/download-artifact@v4
         with:
           path: artifacts
@@ -150,7 +150,7 @@ jobs:
           merge-multiple: false
 
       - name: Combine error results
-        if: ${{ contains(needs.test-vectors.result, 'failure') }}
+        if: ${{ needs.test-vectors.result == 'failure' }}
         run: |
           echo "## ❌ Test Vector Failures" > combined-errors.md
           echo "" >> combined-errors.md
@@ -169,7 +169,7 @@ jobs:
           done
 
       - name: Post error comment to PR
-        if: ${{ contains(needs.test-vectors.result, 'failure') && github.event.pull_request.head.repo.full_name == github.repository }}
+        if: ${{ needs.test-vectors.result == 'failure' && github.event.pull_request.head.repo.full_name == github.repository }}
         uses: thollander/actions-comment-pull-request@v3
         with:
           file-path: combined-errors.md
