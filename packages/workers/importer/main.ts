@@ -15,7 +15,14 @@ const blake2b = Blake2b.createHasher();
 
 export type Config = WorkerConfig<ImporterConfig, BlocksDb, StatesDb<SerializedState<LeafDb>>>;
 
-export async function createImporter(config: Config): Promise<{
+export type CreateImporterOptions = {
+  noVerify?: boolean;
+};
+
+export async function createImporter(
+  config: Config,
+  options: CreateImporterOptions = {},
+): Promise<{
   importer: Importer;
   db: ReturnType<Config["openDatabase"]>;
 }> {
@@ -26,7 +33,7 @@ export async function createImporter(config: Config): Promise<{
   const states = db.getStatesDb();
 
   const hasher = new TransitionHasher(await keccakHasher, await blake2b);
-  const importer = new Importer(chainSpec, pvm, hasher, logger, blocks, states);
+  const importer = new Importer(chainSpec, pvm, hasher, logger, blocks, states, options);
 
   return {
     importer,

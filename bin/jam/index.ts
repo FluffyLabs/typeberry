@@ -106,7 +106,8 @@ async function startNode(args: Arguments, withRelPath: (p: string) => string) {
   if (args.command === Command.FuzzTarget) {
     const version = args.args.version;
     const socket = args.args.socket;
-    return mainFuzz({ jamNodeConfig, version, socket }, withRelPath);
+    const noVerify = args.args.noVerify;
+    return mainFuzz({ jamNodeConfig, version, socket, noVerify }, withRelPath);
   }
 
   // Just import a bunch of blocks
