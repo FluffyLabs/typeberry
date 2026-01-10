@@ -26,6 +26,10 @@ const importerError = <Kind extends ImporterErrorKind, Err extends ImporterError
   nested: ErrorResult<Err>,
 ) => Result.taggedError<WithHash<HeaderHash, HeaderView>, Kind, Err>(ImporterErrorKind, kind, nested);
 
+export type ImporterOptions = {
+  noVerify?: boolean;
+};
+
 export class Importer {
   private readonly verifier: BlockVerifier;
   private readonly stf: OnChain;
@@ -43,6 +47,7 @@ export class Importer {
     private readonly logger: Logger,
     private readonly blocks: BlocksDb,
     private readonly states: StatesDb<SerializedState<LeafDb>>,
+    private readonly options: ImporterOptions = {},
   ) {
     this.metrics = metrics.createMetrics();
     const currentBestHeaderHash = this.blocks.getBestHeaderHash();
@@ -110,7 +115,9 @@ export class Importer {
 
     const timerVerify = measure("import:verify");
     const verifyStart = now();
-    const hash = await this.verifier.verifyBlock(block);
+    const hash = await this.verifier.verifyBlock(block, {
+      skipParentAndStateRoot: this.options.noVerify ?? false,
+    });
     const verifyDuration = now() - verifyStart;
     logger.log`${timerVerify()}`;
     if (hash.isError) {
