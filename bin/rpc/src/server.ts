@@ -4,6 +4,8 @@ import type { Blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import {
   type DatabaseContext,
+  type GenericHandler,
+  type Handler,
   type HandlerMap,
   type InputOf,
   JSON_RPC_VERSION,
@@ -14,10 +16,8 @@ import {
   type JsonRpcResponse,
   type JsonRpcResult,
   type MethodName,
-  type OutputOf,
   RpcError,
   type SchemaMap,
-  type SchemaMapUnknown,
   validation,
 } from "@typeberry/rpc-validation";
 import type { WebSocket } from "ws";
@@ -171,8 +171,10 @@ export class RpcServer {
     if (!(method in this.schemas)) {
       throw new RpcError(-32601, `Method not found: ${method}`);
     }
-    const validatedParams = this.validateCall(method as MethodName, params ?? []);
-    return this.callHandler(method as MethodName, validatedParams, ws);
+    const methodName = method as MethodName;
+    const handler = this.handlers[methodName] as Handler<MethodName>;
+    const validatedParams = this.validateCall(methodName, params ?? []);
+    return this.callHandler(handler, validatedParams, this.schemas[methodName].output, ws);
   }
 
   private validateCall<M extends MethodName>(method: M, params: unknown): InputOf<M> {
@@ -184,26 +186,33 @@ export class RpcServer {
     return parseResult.data as InputOf<M>;
   }
 
-  async callHandler<M extends MethodName>(method: M, validatedParams: InputOf<M>, ws: WebSocket): Promise<OutputOf<M>> {
-    const handler = this.handlers[method];
-    const { output } = this.schemas[method] as SchemaMapUnknown[M];
-
+  async callHandler<I, O>(
+    handler: GenericHandler<I, O>,
+    validatedParams: I,
+    outputSchema: z.ZodType<O>,
+    ws: WebSocket,
+  ): Promise<unknown> {
     const db: DatabaseContext = {
       blocks: this.blocks,
       states: this.states,
     };
 
-    return output.encode(
+    return outputSchema.encode(
       await handler(validatedParams, {
         db,
         chainSpec: this.chainSpec,
         subscription: this.subscriptionManager.getHandlerApi(ws),
       }),
-    ) as OutputOf<M>;
+    );
   }
 
   getLogger(): Logger {
     return this.logger;
+  }
+
+  // for testing only
+  getHandlers(): HandlerMap {
+    return this.handlers;
   }
 
   async close(): Promise<void> {
