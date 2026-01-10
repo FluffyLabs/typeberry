@@ -157,13 +157,8 @@ jobs:
           for dir in artifacts/*/; do
             if [ -d "$dir" ]; then
               name=$(basename "$dir")
-              echo "<details>" >> combined-errors.md
-              echo "<summary><strong>$name</strong></summary>" >> combined-errors.md
               echo "" >> combined-errors.md
-              echo '```' >> combined-errors.md
-              cat "$dir"*.txt >> combined-errors.md 2>/dev/null || echo "No output file found"
-              echo '```' >> combined-errors.md
-              echo "</details>" >> combined-errors.md
+              (cat "$dir"*.txt >> combined-errors.md 2>/dev/null) || (echo "No output file found: $name" >> combined-errors.md)
               echo "" >> combined-errors.md
             fi
           done
