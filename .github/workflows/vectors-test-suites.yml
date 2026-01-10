@@ -126,3 +126,46 @@ jobs:
           path: |
             ./dist/${{ matrix.output }}
           name: ${{ matrix.artifact_name }}
+
+  summary:
+    name: Post error summary
+    runs-on: self-hosted
+    needs: test-vectors
+    if: always()
+
+    steps:
+      - name: Delete previous error comment
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          mode: delete
+          comment-tag: test-vectors-errors
+
+      - name: Download all failure artifacts
+        if: ${{ needs.test-vectors.result == 'failure' }}
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: "*-results"
+          merge-multiple: false
+
+      - name: Combine error results
+        if: ${{ needs.test-vectors.result == 'failure' }}
+        run: |
+          echo "## ❌ Test Vector Failures" > combined-errors.md
+          echo "" >> combined-errors.md
+          for dir in artifacts/*/; do
+            if [ -d "$dir" ]; then
+              name=$(basename "$dir")
+              echo "" >> combined-errors.md
+              (cat "$dir"*.txt >> combined-errors.md 2>/dev/null) || (echo "No output file found: $name" >> combined-errors.md)
+              echo "" >> combined-errors.md
+            fi
+          done
+
+      - name: Post error comment to PR
+        if: ${{ needs.test-vectors.result == 'failure' && github.event.pull_request.head.repo.full_name == github.repository }}
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          file-path: combined-errors.md
+          comment-tag: test-vectors-errors
