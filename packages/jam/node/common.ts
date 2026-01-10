@@ -93,7 +93,7 @@ export async function initializeDatabase(
 
   // write to db
   // When noVerify is set, use ancestry[0][0] as the initial block hash (for fuzz-target mode)
-  const initialBlockHash = options.noVerify && ancestry.length > 0 ? ancestry[0][0] : genesisHeaderHash;
+  const initialBlockHash = (options.noVerify ?? false) && ancestry.length > 0 ? ancestry[0][0] : genesisHeaderHash;
   await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(initialBlockHash, blockView));
   // insert fake blocks for ancestry data
   for (const [hash, slot] of ancestry) {
