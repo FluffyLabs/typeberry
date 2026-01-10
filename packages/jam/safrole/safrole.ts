@@ -179,6 +179,15 @@ export class Safrole {
   public async prepareValidatorKeysForNextEpoch(postOffenders: ImmutableSortedSet<Ed25519Key>) {
     const stateEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
     const nextEpochStart = (stateEpoch + 1) * this.chainSpec.epochLength;
+
+    /**
+     * In real life, this would occur around ~2840,
+     * but this scenario appears in tests, so we need to handle it.
+     */
+    if (nextEpochStart >= 2 ** 32) {
+      return Result.ok(null);
+    }
+
     return await this.getValidatorKeys(tryAsTimeSlot(nextEpochStart), postOffenders);
   }
 
