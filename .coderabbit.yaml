@@ -32,13 +32,16 @@ reviews:
         Every new `export * as <name>` statement must have a corresponding entry point file
         at `bin/lib/exports/<name>.ts` that re-exports the package (e.g., `export * from "@typeberry/<package>"`).
         The builder will automatically detect these files and generate the appropriate exports.
-    - path: 'packages/**/package.json'
-      instructions: |
-        Whenever a new package is added, the `packages/README.md` should be updated accordingly.
+        Transitive, external dependencies of re-exported packages need to be added directly to `./bin/lib/package.json`.
     - path: 'packages/**/package.json'
       instructions: |
         Dependencies coming from the workspace (typically the ones starting with `@typeberry/`)
         must use `*` as version.
+        External dependencies must be added sparingly. If package is re-exported by `@typeberry/lib`,
+        the dependency must be browser-compatible and added directly to `./bin/lib/package.json` as well.
+    - path: 'packages/**/package.json'
+      instructions: |
+        Whenever a new package is added, the `packages/README.md` should be updated accordingly.
     - path: 'packages/core/**/*.ts'
       instructions: |
         Core packages must not import any JAM-related packages
