@@ -1,21 +1,23 @@
 import {
-  type InputOf,
+  type GenericHandler,
   JSON_RPC_VERSION,
   type JsonRpcSubscriptionNotification,
-  type MethodName,
   RpcError,
   RpcErrorCode,
+  type SubscribableMethodName,
   type Subscription,
   type SubscriptionHandlerApi,
   type SubscriptionId,
 } from "@typeberry/rpc-validation";
 import type WebSocket from "ws";
+import type z from "zod";
 import type { RpcServer } from "./server.js";
 
 const POLL_INTERVAL_MS = 1000;
 
 export class SubscriptionManager {
-  private subscriptions: Map<SubscriptionId, Subscription>;
+  // biome-ignore lint/suspicious/noExplicitAny: subscriptions must accept generic handlers
+  private subscriptions: Map<SubscriptionId, Subscription<any, any>>;
   private lastResults: Map<SubscriptionId, string>;
   private pollInterval: NodeJS.Timeout;
   private nextId: number;
@@ -33,7 +35,12 @@ export class SubscriptionManager {
       let notificationString: string;
 
       try {
-        const result = await this.server.callHandler(subscription.method, subscription.params, subscription.ws);
+        const result = await this.server.callHandler(
+          subscription.handler,
+          subscription.params,
+          subscription.outputSchema,
+          subscription.ws,
+        );
 
         const notification: JsonRpcSubscriptionNotification = {
           jsonrpc: JSON_RPC_VERSION,
@@ -59,11 +66,17 @@ export class SubscriptionManager {
     }
   }
 
-  private subscribe<M extends MethodName>(ws: WebSocket, method: M, params: InputOf<M>): SubscriptionId {
+  private subscribe<I, O>(
+    ws: WebSocket,
+    method: SubscribableMethodName,
+    handler: GenericHandler<I, O>,
+    outputSchema: z.ZodType<O>,
+    params: I,
+  ): SubscriptionId {
     const id = this.nextId++;
     const idHex = `0x${id.toString(16)}`;
 
-    this.subscriptions.set(idHex, { ws, method, params });
+    this.subscriptions.set(idHex, { ws, method, handler, outputSchema, params });
 
     ws.on("close", () => {
       if (this.subscriptions.has(idHex)) {
@@ -84,7 +97,7 @@ export class SubscriptionManager {
 
   getHandlerApi(ws: WebSocket): SubscriptionHandlerApi {
     return {
-      subscribe: (method, params) => this.subscribe(ws, method, params),
+      subscribe: (method, handler, outputSchema, params) => this.subscribe(ws, method, handler, outputSchema, params),
       unsubscribe: (id) => this.unsubscribe(ws, id),
     };
   }

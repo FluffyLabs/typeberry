@@ -88,16 +88,23 @@ export type HandlerMap = {
   [N in MethodName]: Handler<N>;
 };
 
-export type Subscription<M extends MethodName = MethodName> = {
+export type Subscription<I, O> = {
   ws: WebSocket;
-  method: M;
-  params: InputOf<M>;
+  method: SubscribableMethodName;
+  handler: GenericHandler<I, O>;
+  outputSchema: z.ZodType<O>;
+  params: I;
 };
 
 export type SubscriptionId = string;
 
 export type SubscriptionHandlerApi = {
-  subscribe: <M extends MethodName>(method: M, params: InputOf<M>) => SubscriptionId;
+  subscribe: <I, O>(
+    method: SubscribableMethodName,
+    handler: GenericHandler<I, O>,
+    outputSchema: z.ZodType<O>,
+    params: I,
+  ) => SubscriptionId;
   unsubscribe: (id: SubscriptionId) => boolean;
 };
 
