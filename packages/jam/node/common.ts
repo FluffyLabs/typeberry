@@ -53,7 +53,7 @@ export function getDatabasePath(
  * The function checks the genesis header
  */
 export type InitDbOptions = {
-  noVerify?: boolean;
+  initGenesisFromAncestry?: boolean;
 };
 
 export async function initializeDatabase(
@@ -92,8 +92,9 @@ export async function initializeDatabase(
   const { genesisStateSerialized, genesisStateRootHash } = loadGenesisState(spec, blake2b, config.genesisState);
 
   // write to db
-  // When noVerify is set, use ancestry[0][0] as the initial block hash (for fuzz-target mode)
-  const initialBlockHash = (options.noVerify ?? false) && ancestry.length > 0 ? ancestry[0][0] : genesisHeaderHash;
+  // When initGenesisFromAncestry is set, use ancestry[0][0] as the initial block hash (for fuzz-target mode)
+  const initialBlockHash =
+    (options.initGenesisFromAncestry ?? false) && ancestry.length > 0 ? ancestry[0][0] : genesisHeaderHash;
   await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(initialBlockHash, blockView));
   // insert fake blocks for ancestry data
   for (const [hash, slot] of ancestry) {

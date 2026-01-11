@@ -16,7 +16,7 @@ const blake2b = Blake2b.createHasher();
 export type Config = WorkerConfig<ImporterConfig, BlocksDb, StatesDb<SerializedState<LeafDb>>>;
 
 export type CreateImporterOptions = {
-  noVerify?: boolean;
+  initGenesisFromAncestry?: boolean;
 };
 
 export async function createImporter(

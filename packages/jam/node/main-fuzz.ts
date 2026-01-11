@@ -18,7 +18,7 @@ export type FuzzConfig = {
   version: FuzzVersion;
   jamNodeConfig: JamConfig;
   socket: string | null;
-  noVerify: boolean;
+  initGenesisFromAncestry: boolean;
 };
 
 const logger = Logger.new(import.meta.filename, "fuzztarget");
@@ -91,7 +91,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
           network: null,
         },
         withRelPath,
-        { noVerify: fuzzConfig.noVerify },
+        { initGenesisFromAncestry: fuzzConfig.initGenesisFromAncestry },
       );
       runningNode = newNode;
       return await newNode.getBestStateRootHash();

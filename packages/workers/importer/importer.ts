@@ -27,7 +27,7 @@ const importerError = <Kind extends ImporterErrorKind, Err extends ImporterError
 ) => Result.taggedError<WithHash<HeaderHash, HeaderView>, Kind, Err>(ImporterErrorKind, kind, nested);
 
 export type ImporterOptions = {
-  noVerify?: boolean;
+  initGenesisFromAncestry?: boolean;
 };
 
 export class Importer {
@@ -116,7 +116,7 @@ export class Importer {
     const timerVerify = measure("import:verify");
     const verifyStart = now();
     const hash = await this.verifier.verifyBlock(block, {
-      skipParentAndStateRoot: this.options.noVerify ?? false,
+      skipParentAndStateRoot: this.options.initGenesisFromAncestry ?? false,
     });
     const verifyDuration = now() - verifyStart;
     logger.log`${timerVerify()}`;

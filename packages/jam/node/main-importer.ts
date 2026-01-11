@@ -14,7 +14,7 @@ import packageJson from "./package.json" with { type: "json" };
 const zeroHash = Bytes.zero(HASH_SIZE).asOpaque<StateRootHash>();
 
 export type ImporterOptions = {
-  noVerify?: boolean;
+  initGenesisFromAncestry?: boolean;
 };
 
 export async function mainImporter(
@@ -62,11 +62,13 @@ export async function mainImporter(
   logger.info`🛢️ Opening database at ${dbPath}`;
   const rootDb = workerConfig.openDatabase({ readonly: false });
   await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry, {
-    noVerify: options.noVerify,
+    initGenesisFromAncestry: options.initGenesisFromAncestry,
   });
   await rootDb.close();
 
-  const { db, importer } = await createImporter(workerConfig, { noVerify: options.noVerify });
+  const { db, importer } = await createImporter(workerConfig, {
+    initGenesisFromAncestry: options.initGenesisFromAncestry,
+  });
   await importer.prepareForNextEpoch();
 
   const api: NodeApi = {

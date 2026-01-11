@@ -59,7 +59,7 @@ export type Arguments =
       SharedOptions & {
         socket: string | null;
         version: 1;
-        noVerify: boolean;
+        initGenesisFromAncestry: boolean;
       }
     >
   | CommandArgs<
@@ -147,11 +147,10 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
     case Command.FuzzTarget: {
       const data = parseSharedOptions(args);
       const { version } = parseValueOption(args, "version", "number", parseFuzzVersion, 1);
-      // minimist parses --no-X as { X: false }
-      const noVerify = args.verify === false;
-      delete args.verify;
-      if (noVerify) {
-        logger.warn`Verification mode is disabled for the fuzz target. This is unsafe and should only be used for debugging.`;
+      const initGenesisFromAncestry = args["init-genesis-from-ancestry"] === true;
+      delete args["init-genesis-from-ancestry"];
+      if (initGenesisFromAncestry) {
+        logger.warn`Init genesis from ancestry is enabled. Parent hash and state root verification is skipped.`;
       }
       const socket = args._.shift() ?? null;
       assertNoMoreArgs(args);
@@ -161,7 +160,7 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
           ...data,
           version,
           socket,
-          noVerify,
+          initGenesisFromAncestry,
         },
       };
     }
