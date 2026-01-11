@@ -13,7 +13,15 @@ import packageJson from "./package.json" with { type: "json" };
 
 const zeroHash = Bytes.zero(HASH_SIZE).asOpaque<StateRootHash>();
 
-export async function mainImporter(config: JamConfig, withRelPath: (v: string) => string): Promise<NodeApi> {
+export type ImporterOptions = {
+  initGenesisFromAncestry?: boolean;
+};
+
+export async function mainImporter(
+  config: JamConfig,
+  withRelPath: (v: string) => string,
+  options: ImporterOptions = {},
+): Promise<NodeApi> {
   await initWasm();
 
   logger.info`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
@@ -53,10 +61,14 @@ export async function mainImporter(config: JamConfig, withRelPath: (v: string) =
   // Initialize the database with genesis state and block if there isn't one.
   logger.info`🛢️ Opening database at ${dbPath}`;
   const rootDb = workerConfig.openDatabase({ readonly: false });
-  await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
+  await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry, {
+    initGenesisFromAncestry: options.initGenesisFromAncestry,
+  });
   await rootDb.close();
 
-  const { db, importer } = await createImporter(workerConfig);
+  const { db, importer } = await createImporter(workerConfig, {
+    initGenesisFromAncestry: options.initGenesisFromAncestry,
+  });
   await importer.prepareForNextEpoch();
 
   const api: NodeApi = {

@@ -52,6 +52,10 @@ export function getDatabasePath(
  *
  * The function checks the genesis header
  */
+export type InitDbOptions = {
+  initGenesisFromAncestry?: boolean;
+};
+
 export async function initializeDatabase(
   spec: ChainSpec,
   blake2b: Blake2b,
@@ -59,6 +63,7 @@ export async function initializeDatabase(
   rootDb: RootDb<BlocksDb, SerializedStatesDb>,
   config: JipChainSpec,
   ancestry: [HeaderHash, TimeSlot][],
+  options: InitDbOptions = {},
 ): Promise<void> {
   const blocks = rootDb.getBlocksDb();
   const states = rootDb.getStatesDb();
@@ -87,14 +92,17 @@ export async function initializeDatabase(
   const { genesisStateSerialized, genesisStateRootHash } = loadGenesisState(spec, blake2b, config.genesisState);
 
   // write to db
-  await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(genesisHeaderHash, blockView));
+  // When initGenesisFromAncestry is set, use ancestry[0][0] as the initial block hash (for fuzz-target mode)
+  const initialBlockHash =
+    (options.initGenesisFromAncestry ?? false) && ancestry.length > 0 ? ancestry[0][0] : genesisHeaderHash;
+  await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(initialBlockHash, blockView));
   // insert fake blocks for ancestry data
   for (const [hash, slot] of ancestry) {
     await blocks.insertBlock(new WithHash(hash, reencodeAsView(Block.Codec, emptyBlock(slot), spec)));
   }
-  await states.insertInitialState(genesisHeaderHash, genesisStateSerialized);
-  await blocks.setPostStateRoot(genesisHeaderHash, genesisStateRootHash);
-  await blocks.setBestHeaderHash(genesisHeaderHash);
+  await states.insertInitialState(initialBlockHash, genesisStateSerialized);
+  await blocks.setPostStateRoot(initialBlockHash, genesisStateRootHash);
+  await blocks.setBestHeaderHash(initialBlockHash);
 }
 
 function loadGenesisState(spec: ChainSpec, blake2b: Blake2b, data: JipChainSpec["genesisState"]) {
