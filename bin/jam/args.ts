@@ -63,7 +63,7 @@ export type Arguments =
   | CommandArgs<
       Command.Dev,
       SharedOptions & {
-        index: U16 | "all";
+        index: U16 | "all" | "all-fast-forward";
       }
     >
   | CommandArgs<
@@ -132,12 +132,13 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
         throw new Error("Missing dev-validator index.");
       }
 
-      if (indexOrAll === "all") {
-        return { command: Command.Dev, args: { ...data, index: "all" } };
+      if (indexOrAll === "all" || indexOrAll === "all-fast-forward") {
+        assertNoMoreArgs(args);
+        return { command: Command.Dev, args: { ...data, index: indexOrAll } };
       }
       const numIndex = Number(indexOrAll);
       if (!isU16(numIndex)) {
-        throw new Error(`Invalid dev-validator index: ${numIndex}, need U16 or "all"`);
+        throw new Error(`Invalid dev-validator index: ${numIndex}, need U16, "all" or "all-fast-forward"`);
       }
       assertNoMoreArgs(args);
       return { command: Command.Dev, args: { ...data, index: numIndex } };

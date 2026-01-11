@@ -20,7 +20,7 @@
     "minimist": "1.2.8"
   },
   "scripts": {
-    "start": "NODE_ENV=development NODE_OPTIONS='--max-old-space-size=8192' tsx ./index.ts",
+    "start": "NODE_ENV=development NODE_OPTIONS='--max-old-space-size=1536' tsx ./index.ts",
     "inspect": "NODE_ENV=development NODE_OPTIONS='--max-old-space-size=8192' tsx --inspect ./index.ts",
     "build": "./build-for-npm.sh",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",

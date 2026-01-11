@@ -146,6 +146,7 @@ export async function main(
   const closeAuthorship = await initAuthorship(
     importer,
     config.isAuthoring,
+    config.fastForward,
     rootDb,
     baseConfig,
     authorshipKeys,
@@ -201,6 +202,7 @@ export async function main(
 const initAuthorship = async (
   importer: ImporterApi,
   isAuthoring: boolean,
+  fastForward: boolean,
   rootDb: RootDb<BlocksDb, SerializedStatesDb>,
   baseConfig: {
     nodeName: string;
@@ -217,19 +219,20 @@ const initAuthorship = async (
   }
 
   logger.info`✍️  Starting block generator.`;
+  const workerParams = { ...authorshipKeys, fastForward };
   const { generator, finish } = isInMemory
     ? await startBlockGenerator(
         DirectWorkerConfig.new({
           ...baseConfig,
           blocksDb: rootDb.getBlocksDb(),
           statesDb: rootDb.getStatesDb(),
-          workerParams: authorshipKeys,
+          workerParams,
         }),
       )
     : await spawnBlockGeneratorWorker(
         LmdbWorkerConfig.new({
           ...baseConfig,
-          workerParams: authorshipKeys,
+          workerParams,
         }),
       );
 
