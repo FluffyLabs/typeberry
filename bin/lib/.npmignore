@@ -1,0 +1,12 @@
+# Ignore top-level directories not relevant to to @typeberry/lib.
+# Note this file is moved to top-level directory, hence the paths
+# here must include path as if it was in the root dir.
+benchmarks
+bin/jam
+bin/convert
+bin/ipc2rpc
+bin/pvm
+bin/rpc
+bin/tci
+bin/test-runner
+
