@@ -30,7 +30,8 @@ jobs:
       - name: Fetch only required submodule (w3f-davxy_070)
         working-directory: ./test-vectors
         run: |
-          git config url."https://github.com/".insteadOf "git@github.com:"
+          sed -i 's|git@github.com:|https://github.com/|g' .gitmodules
+          git submodule sync w3f-davxy_070
           git submodule update --init --depth 1 w3f-davxy_070
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
