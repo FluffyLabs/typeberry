@@ -27,7 +27,12 @@ jobs:
           repository: fluffylabs/test-vectors
           path: "./test-vectors"
           ref: ${{ env.TEST_VECTORS_REF }}
-          submodules: true
+      - name: Fetch only required submodule (w3f-davxy_070)
+        working-directory: ./test-vectors
+        run: |
+          sed -i 's|git@github.com:|https://github.com/|g' .gitmodules
+          git submodule sync w3f-davxy_070
+          git submodule update --init --depth 1 w3f-davxy_070
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
