@@ -62,6 +62,7 @@
  * ```
  */
 
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -74,7 +75,35 @@ const DIST_DIR = path.resolve(ROOT_DIR, "dist/lib");
 
 interface PackageJson {
   name?: string;
+  version?: string;
   workspaces?: string[];
+}
+
+/**
+ * Get the version string for the package
+ *
+ * If IS_RELEASE environment variable is set, uses the version from package.json as-is.
+ * Otherwise, appends the current git commit hash to create unique versions for each build.
+ *
+ * @param baseVersion - The base version from package.json
+ * @returns The version string to use for publishing
+ *
+ * @example
+ * // When IS_RELEASE is not set and commit is abc1234
+ * getVersion("0.5.1") // Returns "0.5.1-abc1234"
+ *
+ * // When IS_RELEASE is set
+ * getVersion("0.5.1") // Returns "0.5.1"
+ */
+function getVersion(baseVersion: string): string {
+  const isRelease = process.env.IS_RELEASE !== undefined;
+
+  if (isRelease) {
+    return baseVersion;
+  }
+
+  const commitHash = execSync("git rev-parse --short HEAD").toString("utf8").trim();
+  return `${baseVersion}-${commitHash}`;
 }
 
 /**
@@ -316,7 +345,7 @@ function createDistPackageJson(packageMap: Record<string, string>): void {
     license: string;
   } = {
     name: sourcePackageJson.name,
-    version: sourcePackageJson.version,
+    version: getVersion(sourcePackageJson.version),
     description: sourcePackageJson.description,
     main: "./bin/lib/index.js",
     types: "./bin/lib/index.d.ts",
