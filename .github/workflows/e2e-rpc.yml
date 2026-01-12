@@ -29,7 +29,9 @@ jobs:
           ref: ${{ env.TEST_VECTORS_REF }}
       - name: Fetch only required submodule (w3f-davxy_070)
         working-directory: ./test-vectors
-        run: git submodule update --init --depth 1 w3f-davxy_070
+        run: |
+          git config url."https://github.com/".insteadOf "git@github.com:"
+          git submodule update --init --depth 1 w3f-davxy_070
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
