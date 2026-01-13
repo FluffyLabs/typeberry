@@ -276,6 +276,7 @@ export class Fetch implements HostCallHandler {
     }
 
     logger.trace`[${this.currentServiceId}] FETCH(${kind}) <- ${value?.toStringTruncated()}`;
+    logger.insane`[${this.currentServiceId}] FETCH(${kind}) <- ${value}`;
 
     // write result
     regs.set(IN_OUT_REG, value === null ? HostCallResult.NONE : valueLength);
