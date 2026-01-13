@@ -1,5 +1,6 @@
 import { type PvmBackend, PvmBackendNames } from "@typeberry/config";
 import { DEFAULT_CONFIG, DEV_CONFIG, NODE_DEFAULTS } from "@typeberry/config-node";
+import { logger } from "@typeberry/node";
 import { isU16, type U16 } from "@typeberry/numbers";
 import minimist from "minimist";
 import packageJson from "./package.json" with { type: "json" };
@@ -58,6 +59,7 @@ export type Arguments =
       SharedOptions & {
         socket: string | null;
         version: 1;
+        initGenesisFromAncestry: boolean;
       }
     >
   | CommandArgs<
@@ -146,6 +148,11 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
     case Command.FuzzTarget: {
       const data = parseSharedOptions(args);
       const { version } = parseValueOption(args, "version", "number", parseFuzzVersion, 1);
+      const initGenesisFromAncestry = args["init-genesis-from-ancestry"] === true;
+      delete args["init-genesis-from-ancestry"];
+      if (initGenesisFromAncestry) {
+        logger.warn`Init genesis from ancestry is enabled. Parent hash and state root verification is skipped.`;
+      }
       const socket = args._.shift() ?? null;
       assertNoMoreArgs(args);
       return {
@@ -154,6 +161,7 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
           ...data,
           version,
           socket,
+          initGenesisFromAncestry,
         },
       };
     }
