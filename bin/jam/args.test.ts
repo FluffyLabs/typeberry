@@ -149,6 +149,7 @@ describe("CLI", () => {
         ...defaultOptions,
         config: ["dev"],
         index: tryAsU16(10),
+        isFastForward: false,
       },
     });
   });
