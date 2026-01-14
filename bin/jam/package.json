@@ -24,7 +24,9 @@
     "inspect": "NODE_ENV=development NODE_OPTIONS='--max-old-space-size=8192' tsx --inspect ./index.ts",
     "build": "./build-for-npm.sh",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
-    "test:e2e": "JAM_LOG=trace tsx --test test/e2e.ts"
+    "test:e2e": "JAM_LOG=trace tsx --test test/e2e.ts",
+    "start-tiny-network": "tsx ./start-tiny-network.ts",
+    "stop-tiny-network": "tsx ./stop-tiny-network.ts"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
