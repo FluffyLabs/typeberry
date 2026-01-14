@@ -10,7 +10,7 @@ export const HELP = `
 
 Usage:
   jam [options]
-  jam [options] dev <dev-validator-index>
+  jam [options] dev <dev-validator-index> [--fast-forward]
   jam [options] import <bin-or-json-blocks>
   jam [options] export <output-directory-or-file>
   jam [options] [--version=1] fuzz-target [socket-path=/tmp/jam_target.sock]
@@ -30,6 +30,7 @@ Options:
                         [default: ${NODE_DEFAULTS.config}]
   --pvm                 PVM Backend, one of: [${PvmBackendNames.join(", ")}].
                         [default: ${PvmBackendNames[NODE_DEFAULTS.pvm]}]
+  --fast-forward        (dev mode only) Generate blocks as fast as possible without waiting for real time.
 `;
 
 /** Command to execute. */
@@ -65,7 +66,8 @@ export type Arguments =
   | CommandArgs<
       Command.Dev,
       SharedOptions & {
-        index: U16 | "all" | "all-fast-forward";
+        index: U16 | "all";
+        isFastForward?: boolean;
       }
     >
   | CommandArgs<
@@ -134,16 +136,19 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
         throw new Error("Missing dev-validator index.");
       }
 
-      if (indexOrAll === "all" || indexOrAll === "all-fast-forward") {
+      const isFastForward = args["fast-forward"] === true;
+      delete args["fast-forward"];
+
+      if (indexOrAll === "all") {
         assertNoMoreArgs(args);
-        return { command: Command.Dev, args: { ...data, index: indexOrAll } };
+        return { command: Command.Dev, args: { ...data, index: indexOrAll, isFastForward } };
       }
       const numIndex = Number(indexOrAll);
       if (!isU16(numIndex)) {
-        throw new Error(`Invalid dev-validator index: ${numIndex}, need U16, "all" or "all-fast-forward"`);
+        throw new Error(`Invalid dev-validator index: ${numIndex}, need U16 or "all"`);
       }
       assertNoMoreArgs(args);
-      return { command: Command.Dev, args: { ...data, index: numIndex } };
+      return { command: Command.Dev, args: { ...data, index: numIndex, isFastForward } };
     }
     case Command.FuzzTarget: {
       const data = parseSharedOptions(args);

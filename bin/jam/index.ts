@@ -44,7 +44,7 @@ function getPortShift(args: Arguments) {
     return 0;
   }
 
-  if (args.args.index === "all" || args.args.index === "all-fast-forward") {
+  if (args.args.index === "all") {
     return -1;
   }
 
@@ -78,11 +78,11 @@ async function prepareConfigFile(
 
   const isDevMode = args.command === Command.Dev;
   const devIndex = isDevMode ? args.args.index : null;
-  const isFastForward = devIndex === "all-fast-forward";
+  const isFastForward = isDevMode ? args.args.isFastForward : false;
 
   return JamConfig.new({
     isAuthoring: isDevMode,
-    fastForward: isFastForward,
+    isFastForward,
     nodeName,
     nodeConfig,
     pvmBackend: args.args.pvm,
@@ -92,7 +92,7 @@ async function prepareConfigFile(
       port: devPort(devPortShift),
       bootnodes: devBootnodes.concat(nodeConfig.chainSpec.bootnodes ?? []),
     },
-    devValidatorIndex: isFastForward ? "all" : devIndex,
+    devValidatorIndex: devIndex,
   });
 }
 

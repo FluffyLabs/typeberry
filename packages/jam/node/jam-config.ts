@@ -22,7 +22,7 @@ export const DEFAULT_DEV_CONFIG = {
 export class JamConfig {
   static new({
     isAuthoring,
-    fastForward,
+    isFastForward,
     nodeName,
     nodeConfig,
     pvmBackend,
@@ -32,7 +32,7 @@ export class JamConfig {
     devValidatorIndex = null,
   }: {
     isAuthoring?: boolean;
-    fastForward?: boolean;
+    isFastForward?: boolean;
     nodeName: string;
     nodeConfig: NodeConfiguration;
     pvmBackend: PvmBackend;
@@ -44,7 +44,7 @@ export class JamConfig {
   }) {
     return new JamConfig(
       isAuthoring ?? false,
-      fastForward ?? false,
+      isFastForward ?? false,
       nodeName,
       nodeConfig,
       pvmBackend,
@@ -59,7 +59,7 @@ export class JamConfig {
     /** Whether we should be authoring blocks. */
     public readonly isAuthoring: boolean,
     /** Fast forward mode - generate blocks as fast as possible without waiting for real time. */
-    public readonly fastForward: boolean,
+    public readonly isFastForward: boolean,
     /** Node name. */
     public readonly nodeName: string,
     /** Node starting configuration. */
