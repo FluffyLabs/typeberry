@@ -190,15 +190,15 @@ export class BlobDictionary<K extends BytesBlob, V> extends WithDebug {
     let depth = 0;
 
     while (node !== undefined) {
-      const maybePathChunk = pathChunksGenerator.next().value;
-
       if (node.children instanceof ListChildren) {
-        const subkey = BytesBlob.blobFrom(key.raw.subarray(depth * CHUNK_SIZE));
+        const subkey = depth === 0 ? key : BytesBlob.blobFrom(key.raw.subarray(depth * CHUNK_SIZE));
         const child = node.children.find(subkey);
         if (child !== null) {
           return child.value;
         }
       }
+
+      const maybePathChunk = pathChunksGenerator.next().value;
 
       if (maybePathChunk === undefined) {
         return node.getLeaf()?.value;
@@ -419,10 +419,12 @@ export class ListChildren<K extends BytesBlob, V> {
   private constructor() {}
 
   find(key: SubKey<K>): Leaf<K, V> | null {
-    const result = this.children.find((item) => item[0].isEqualTo(key));
+    const result = this.children.find((item) => item[0] === key || item[0].isEqualTo(key));
+
     if (result !== undefined) {
       return result[1];
     }
+
     return null;
   }
 

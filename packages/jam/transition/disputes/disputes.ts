@@ -409,11 +409,13 @@ export class Disputes {
     const punishSetKeys = this.state.disputesRecords.punishSet;
     const currentValidatorKeys = this.state.currentValidatorData.map((v) => v.ed25519);
     const previousValidatorKeys = this.state.previousValidatorData.map((v) => v.ed25519);
-    const allValidatorKeys = currentValidatorKeys
-      .concat(previousValidatorKeys)
-      .filter((key) => !punishSetKeys.has(key));
+    const allValidatorKeysSet = HashSet.from(currentValidatorKeys.concat(previousValidatorKeys));
 
-    return HashSet.from(allValidatorKeys);
+    for (const key of punishSetKeys) {
+      allValidatorKeysSet.delete(key);
+    }
+
+    return allValidatorKeysSet;
   }
 
   /**
