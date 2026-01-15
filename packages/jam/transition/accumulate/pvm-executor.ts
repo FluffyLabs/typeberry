@@ -7,7 +7,7 @@ import {
   type ProgramCounter,
   tryAsProgramCounter,
 } from "@typeberry/jam-host-calls/externalities/refine-externalities.js";
-import { type HostCallHandler, HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
+import { type HostCallHandler, HostCalls, HostCallsExecutor, PvmInstanceManager } from "@typeberry/pvm-host-calls";
 import type { Gas } from "@typeberry/pvm-interface";
 
 const ACCUMULATE_HOST_CALL_CLASSES = [
@@ -48,7 +48,7 @@ namespace entrypoint {
  * PVM exectutor class that prepares PVM together with host call handlers to be run in requested context
  */
 export class PvmExecutor {
-  private readonly pvm: PvmHostCallExtension;
+  private readonly pvm: HostCallsExecutor;
   private hostCalls: HostCalls;
 
   private constructor(
@@ -61,7 +61,7 @@ export class PvmExecutor {
       missing: new general.Missing(),
       handlers: hostCallHandlers,
     });
-    this.pvm = new PvmHostCallExtension(pvmInstanceManager, this.hostCalls);
+    this.pvm = new HostCallsExecutor(pvmInstanceManager, this.hostCalls);
   }
 
   private static async prepareBackend(pvm: PvmBackend) {

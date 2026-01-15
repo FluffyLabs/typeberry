@@ -1,8 +1,12 @@
 import { tryAsU32, type U64 } from "@typeberry/numbers";
 import type { IMemory, PageFault } from "@typeberry/pvm-interface";
 import { OK, Result } from "@typeberry/utils";
+import type { IoTracker } from "./ecalli-io-tracker.js";
 
 export class HostCallMemory {
+  // Track successful memory reads and writes.
+  public ioTracker: IoTracker | null = null;
+
   constructor(private readonly memory: IMemory) {}
 
   /**
@@ -20,7 +24,11 @@ export class HostCallMemory {
     //
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/25ed0025ed00?v=0.7.2
     const address = tryAsU32(Number(regAddress & 0xffff_ffffn));
-    return this.memory.store(address, bytes);
+    const result = this.memory.store(address, bytes);
+    if (result.isOk && this.ioTracker !== null) {
+      this.ioTracker.memWrite(address, bytes);
+    }
+    return result;
   }
 
   /**
@@ -38,6 +46,10 @@ export class HostCallMemory {
     //
     // NOTE we are taking the the lower U32 part of the register, hence it's safe.
     const address = tryAsU32(Number(regAddress & 0xffff_ffffn));
-    return this.memory.read(address, output);
+    const result = this.memory.read(address, output);
+    if (result.isOk && this.ioTracker !== null) {
+      this.ioTracker.memRead(address, output);
+    }
+    return result;
   }
 }
