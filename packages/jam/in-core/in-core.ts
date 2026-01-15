@@ -80,8 +80,6 @@ export type ImportedSegment = {
   data: Segment;
 };
 
-export type RefineState = Pick<State, "getService">;
-
 const logger = Logger.new(import.meta.filename, "refine");
 
 /** https://graypaper.fluffylabs.dev/#/ab2cdbd/2ffe002ffe00?v=0.7.2 */
@@ -96,7 +94,7 @@ const ARGS_CODEC = codec.object({
   packageHash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
 });
 
-export class Refine {
+export class InCore {
   constructor(
     public readonly chainSpec: ChainSpec,
     private readonly states: StatesDb,
@@ -173,7 +171,7 @@ export class Refine {
     logger.log`[core:${core}] Authorized. Proceeding with work items verification. Anchor=${context.anchor}`;
 
     // Verify the work items
-    const refineResults: Awaited<ReturnType<Refine["refineItem"]>>[] = [];
+    const refineResults: Awaited<ReturnType<InCore["refineItem"]>>[] = [];
     for (const [idx, item] of items.entries()) {
       logger.info`[core:${core}][i:${idx}] Refining item for service ${item.service}.`;
 

@@ -14,7 +14,7 @@ import { InMemoryStates } from "@typeberry/database";
 import { Blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
 import { tryAsU16 } from "@typeberry/numbers";
 import { testState } from "@typeberry/state/test.utils.js";
-import { Refine, RefineError } from "./refine.js";
+import { InCore, RefineError } from "./in-core.js";
 
 let blake2b: Blake2b;
 
@@ -60,17 +60,17 @@ function hashWorkPackage(spec: ChainSpec, workPackage: WorkPackage): WithHash<Wo
   return new WithHash(workPackageHash, workPackage);
 }
 
-describe("Refine", () => {
+describe("InCore", () => {
   it("should return StateMissing error when anchor block state is not in DB", async () => {
     const spec = tinyChainSpec;
     const states = new InMemoryStates(spec);
-    const refine = new Refine(spec, states, PvmBackend.BuiltIn, blake2b);
+    const inCore = new InCore(spec, states, PvmBackend.BuiltIn, blake2b);
 
     const anchorHash = Bytes.fill(HASH_SIZE, 1).asOpaque<HeaderHash>();
     const stateRoot = Bytes.zero(HASH_SIZE).asOpaque<StateRootHash>();
     const workPackage = createWorkPackage(anchorHash, stateRoot);
 
-    const result = await refine.refine(
+    const result = await inCore.refine(
       hashWorkPackage(spec, workPackage),
       tryAsCoreIndex(0),
       asKnownSize([[]]),
@@ -84,7 +84,7 @@ describe("Refine", () => {
   it("should refine work package and produce a report when state is set up", async () => {
     const spec = tinyChainSpec;
     const states = new InMemoryStates(spec);
-    const refine = new Refine(spec, states, PvmBackend.BuiltIn, blake2b);
+    const inCore = new InCore(spec, states, PvmBackend.BuiltIn, blake2b);
 
     const anchorHash = Bytes.fill(HASH_SIZE, 1).asOpaque<HeaderHash>();
     const state = testState();
@@ -93,7 +93,7 @@ describe("Refine", () => {
     const correctStateRoot = await states.getStateRoot(state);
     const workPackage = createWorkPackage(anchorHash, correctStateRoot, state.timeslot);
 
-    const result = await refine.refine(
+    const result = await inCore.refine(
       hashWorkPackage(spec, workPackage),
       tryAsCoreIndex(0),
       asKnownSize([[]]),

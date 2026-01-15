@@ -6,7 +6,7 @@ import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { WithHash } from "@typeberry/hash";
-import { type ImportedSegment, Refine } from "@typeberry/in-core";
+import { type ImportedSegment, InCore } from "@typeberry/in-core";
 import { Logger } from "@typeberry/logger";
 import { type Handler, RpcError, RpcErrorCode } from "@typeberry/rpc-validation";
 
@@ -43,9 +43,9 @@ export const refineWorkPackage: Handler<"typeberry_refineWorkPackage"> = async (
   const emptyImports: ImportedSegment[][] = workPackage.items.map(() => []);
   const imports = asKnownSize(emptyImports);
 
-  // Create refine instance and process the work package
-  const refine = new Refine(chainSpec, db.states, pvmBackend, blake2b);
-  const result = await refine.refine(workPackageAndHash, coreIndex, imports, extrinsics);
+  // Create in-core instance and process the work package
+  const inCore = new InCore(chainSpec, db.states, pvmBackend, blake2b);
+  const result = await inCore.refine(workPackageAndHash, coreIndex, imports, extrinsics);
 
   if (result.isError) {
     throw new RpcError(RpcErrorCode.Other, `Refine error: ${result.details()}`);
