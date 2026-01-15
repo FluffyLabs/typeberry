@@ -38,19 +38,6 @@ export class SafroleSeal {
     headerView: HeaderView,
     state: SafroleSealState,
   ): Promise<Result<EntropyHash, SafroleSealError>> {
-    const result = await this.verifySeals(headerView, state);
-    if (result.isError) {
-      return result;
-    }
-
-    const [, entropyOutput] = result.ok;
-    return Result.ok(entropyOutput);
-  }
-
-  private async verifySeals(
-    headerView: HeaderView,
-    state: SafroleSealState,
-  ): Promise<Result<[EntropyHash, EntropyHash], SafroleSealError>> {
     // we use transitioned keys already
     const validatorIndex = headerView.bandersnatchBlockAuthorIndex.materialize();
     const authorKeys = state.currentValidatorData.at(validatorIndex);
@@ -80,10 +67,14 @@ export class SafroleSeal {
     entropy: EntropyHash,
     validatorData: ValidatorData,
     headerView: HeaderView,
-  ): Promise<Result<[EntropyHash, EntropyHash], SafroleSealError>> {
+  ): Promise<Result<EntropyHash, SafroleSealError>> {
     const index = timeSlot % tickets.length;
     const ticket = tickets.at(index);
-    const payload = BytesBlob.blobFromParts(JAM_TICKET_SEAL, entropy.raw, new Uint8Array([ticket?.attempt ?? 0]));
+    if (ticket === undefined) {
+      return Result.error(SafroleSealError.IncorrectSeal, () => "Safrole: missing ticket");
+    }
+
+    const payload = BytesBlob.blobFromParts(JAM_TICKET_SEAL, entropy.raw, new Uint8Array([ticket.attempt]));
     // verify seal and entropy source correctness
     const authorKey = validatorData.bandersnatch;
     const result = await bandersnatchVrf.verifyHeaderSeals(
@@ -101,14 +92,14 @@ export class SafroleSeal {
     }
 
     const [sealOutput, entropyOutput] = result.ok;
-    if (ticket === undefined || !ticket.id.isEqualTo(sealOutput)) {
+    if (!ticket.id.isEqualTo(sealOutput)) {
       return Result.error(
         SafroleSealError.InvalidTicket,
-        () => `Safrole: invalid ticket, expected ${ticket?.id} got ${sealOutput}`,
+        () => `Safrole: invalid ticket, expected ${ticket.id} got ${sealOutput}`,
       );
     }
 
-    return Result.ok([sealOutput, entropyOutput]);
+    return Result.ok(entropyOutput);
   }
 
   /** Fallback mode of Safrole. */
@@ -118,7 +109,7 @@ export class SafroleSeal {
     entropy: EntropyHash,
     authorKey: ValidatorData,
     headerView: HeaderView,
-  ): Promise<Result<[EntropyHash, EntropyHash], SafroleSealError>> {
+  ): Promise<Result<EntropyHash, SafroleSealError>> {
     const index = timeSlot % keys.length;
     const sealingKey = keys.at(index);
     const authorBandersnatchKey = authorKey.bandersnatch;
@@ -145,6 +136,7 @@ export class SafroleSeal {
       return Result.error(SafroleSealError.IncorrectSeal, () => "Safrole: incorrect seal with keys");
     }
 
-    return Result.ok(result.ok);
+    const [_, entropyOutput] = result.ok;
+    return Result.ok(entropyOutput);
   }
 }
