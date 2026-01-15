@@ -36,6 +36,7 @@ type CacheEntry = {
 
 const FUNCTIONS = {
   verifySeal,
+  verifyHeaderSeals,
   verifyTickets,
   getRingCommitment,
   generateSeal,
@@ -46,6 +47,34 @@ const FUNCTIONS = {
 // Ideally we would just export functions and figure out how to mock
 // properly in ESM.
 export default FUNCTIONS;
+
+async function verifyHeaderSeals(
+  bandersnatch: BandernsatchWasm,
+  authorKey: BandersnatchKey,
+  signature: BandersnatchVrfSignature,
+  payload: BytesBlob,
+  encodedUnsealedHeader: BytesBlob,
+  entropySignature: BandersnatchVrfSignature,
+  entropyPayloadPrefix: BytesBlob,
+): Promise<Result<[EntropyHash, EntropyHash], null>> {
+  const sealResult = await bandersnatch.verifyHeaderSeals(
+    authorKey.raw,
+    signature.raw,
+    payload.raw,
+    encodedUnsealedHeader.raw,
+    entropySignature.raw,
+    entropyPayloadPrefix.raw,
+  );
+
+  if (sealResult[RESULT_INDEX] === ResultValues.Error) {
+    return Result.error(null, () => "Bandersnatch VRF seal verification failed");
+  }
+
+  return Result.ok([
+    Bytes.fromBlob(sealResult.subarray(1, 33), HASH_SIZE).asOpaque(),
+    Bytes.fromBlob(sealResult.subarray(33), HASH_SIZE).asOpaque(),
+  ]);
+}
 
 async function verifySeal(
   bandersnatch: BandernsatchWasm,

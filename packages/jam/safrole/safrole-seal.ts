@@ -20,7 +20,6 @@ export enum SafroleSealError {
   InvalidValidator = 1,
   InvalidTicket = 2,
   IncorrectSeal = 3,
-  IncorrectEntropySource = 4,
 }
 
 export type SafroleSealState = Pick<State, "currentValidatorData" | "sealingKeySeries"> & {
@@ -39,38 +38,19 @@ export class SafroleSeal {
     headerView: HeaderView,
     state: SafroleSealState,
   ): Promise<Result<EntropyHash, SafroleSealError>> {
-    const sealResult = await this.verifySeal(headerView, state);
-    if (sealResult.isError) {
-      return sealResult;
+    const result = await this.verifySeals(headerView, state);
+    if (result.isError) {
+      return result;
     }
 
-    // verify entropySource
-    const payload = BytesBlob.blobFromParts(JAM_ENTROPY, sealResult.ok.raw);
-    const blockAuthorIndex = headerView.bandersnatchBlockAuthorIndex.materialize();
-    const blockAuthorKey = state.currentValidatorData.at(blockAuthorIndex)?.bandersnatch;
-
-    const entropySourceResult = await bandersnatchVrf.verifySeal(
-      await this.bandersnatch,
-      blockAuthorKey ?? BANDERSNATCH_ZERO_KEY,
-      headerView.entropySource.materialize(),
-      payload,
-      BytesBlob.blobFromNumbers([]),
-    );
-
-    if (entropySourceResult.isError) {
-      return Result.error(
-        SafroleSealError.IncorrectEntropySource,
-        () => "Safrole: incorrect entropy source in header seal",
-      );
-    }
-
-    return Result.ok(entropySourceResult.ok);
+    const [, entropyOutput] = result.ok;
+    return Result.ok(entropyOutput);
   }
 
-  private async verifySeal(
+  private async verifySeals(
     headerView: HeaderView,
     state: SafroleSealState,
-  ): Promise<Result<EntropyHash, SafroleSealError>> {
+  ): Promise<Result<[EntropyHash, EntropyHash], SafroleSealError>> {
     // we use transitioned keys already
     const validatorIndex = headerView.bandersnatchBlockAuthorIndex.materialize();
     const authorKeys = state.currentValidatorData.at(validatorIndex);
@@ -100,32 +80,35 @@ export class SafroleSeal {
     entropy: EntropyHash,
     validatorData: ValidatorData,
     headerView: HeaderView,
-  ): Promise<Result<EntropyHash, SafroleSealError>> {
+  ): Promise<Result<[EntropyHash, EntropyHash], SafroleSealError>> {
     const index = timeSlot % tickets.length;
     const ticket = tickets.at(index);
     const payload = BytesBlob.blobFromParts(JAM_TICKET_SEAL, entropy.raw, new Uint8Array([ticket?.attempt ?? 0]));
-    // verify seal correctness
+    // verify seal and entropy source correctness
     const authorKey = validatorData.bandersnatch;
-    const result = await bandersnatchVrf.verifySeal(
+    const result = await bandersnatchVrf.verifyHeaderSeals(
       await this.bandersnatch,
       authorKey ?? BANDERSNATCH_ZERO_KEY,
       headerView.seal.materialize(),
       payload,
       encodeUnsealedHeader(headerView),
+      headerView.entropySource.materialize(),
+      BytesBlob.blobFrom(JAM_ENTROPY),
     );
 
     if (result.isError) {
       return Result.error(SafroleSealError.IncorrectSeal, () => "Safrole: incorrect seal with ticket");
     }
 
-    if (ticket === undefined || !ticket.id.isEqualTo(result.ok)) {
+    const [sealOutput, entropyOutput] = result.ok;
+    if (ticket === undefined || !ticket.id.isEqualTo(sealOutput)) {
       return Result.error(
         SafroleSealError.InvalidTicket,
-        () => `Safrole: invalid ticket, expected ${ticket?.id} got ${result.ok}`,
+        () => `Safrole: invalid ticket, expected ${ticket?.id} got ${sealOutput}`,
       );
     }
 
-    return Result.ok(result.ok);
+    return Result.ok([sealOutput, entropyOutput]);
   }
 
   /** Fallback mode of Safrole. */
@@ -135,7 +118,7 @@ export class SafroleSeal {
     entropy: EntropyHash,
     authorKey: ValidatorData,
     headerView: HeaderView,
-  ): Promise<Result<EntropyHash, SafroleSealError>> {
+  ): Promise<Result<[EntropyHash, EntropyHash], SafroleSealError>> {
     const index = timeSlot % keys.length;
     const sealingKey = keys.at(index);
     const authorBandersnatchKey = authorKey.bandersnatch;
@@ -146,14 +129,16 @@ export class SafroleSeal {
       );
     }
 
-    // verify seal correctness
+    // verify seal and entropy source correctness
     const payload = BytesBlob.blobFromParts(JAM_FALLBACK_SEAL, entropy.raw);
-    const result = await bandersnatchVrf.verifySeal(
+    const result = await bandersnatchVrf.verifyHeaderSeals(
       await this.bandersnatch,
       authorBandersnatchKey,
       headerView.seal.materialize(),
       payload,
       encodeUnsealedHeader(headerView),
+      headerView.entropySource.materialize(),
+      BytesBlob.blobFrom(JAM_ENTROPY),
     );
 
     if (result.isError) {
