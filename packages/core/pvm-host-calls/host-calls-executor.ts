@@ -154,7 +154,6 @@ export class HostCallsExecutor {
         return this.getReturnValue(Status.OOG, pvmInstance, registers, memory);
       }
       if (result === undefined) {
-        pvmInstance.runProgram();
         continue;
       }
       assertNever(result);
