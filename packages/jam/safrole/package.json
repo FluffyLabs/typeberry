@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/safrole",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Safrole implementation based on the Gray Paper.",
   "main": "index.ts",
   "dependencies": {
@@ -11,6 +11,7 @@
     "@typeberry/config": "*",
     "@typeberry/crypto": "*",
     "@typeberry/hash": "*",
+    "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
     "@typeberry/ordering": "*",
     "@typeberry/state": "*",
