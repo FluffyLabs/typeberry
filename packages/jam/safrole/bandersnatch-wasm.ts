@@ -9,7 +9,7 @@ export class BandernsatchWasm {
   }
 
   async verifySeal(authorKey: Uint8Array, signature: Uint8Array, payload: Uint8Array, auxData: Uint8Array) {
-    return bandersnatchWasm.verify_seal(authorKey, signature, payload, auxData);
+    return bandersnatchWasm.verifySeal(authorKey, signature, payload, auxData);
   }
 
   async verifyHeaderSeals(
@@ -20,7 +20,7 @@ export class BandernsatchWasm {
     entropySeal: Uint8Array,
     entropyPayloadPrefix: Uint8Array,
   ) {
-    return bandersnatchWasm.verify_header_seals(
+    return bandersnatchWasm.verifyHeaderSeals(
       authorKey,
       headerSeal,
       headerSealPayload,
@@ -31,18 +31,18 @@ export class BandernsatchWasm {
   }
 
   async getRingCommitment(keys: Uint8Array) {
-    return bandersnatchWasm.ring_commitment(keys);
+    return bandersnatchWasm.ringCommitment(keys);
   }
 
   async batchVerifyTicket(ringSize: number, commitment: Uint8Array, ticketsData: Uint8Array, contextLength: number) {
-    return bandersnatchWasm.batch_verify_tickets(ringSize, commitment, ticketsData, contextLength);
+    return bandersnatchWasm.batchVerifyTickets(ringSize, commitment, ticketsData, contextLength);
   }
 
   async generateSeal(authorKey: Uint8Array, input: Uint8Array, auxData: Uint8Array) {
-    return bandersnatchWasm.generate_seal(authorKey, input, auxData);
+    return bandersnatchWasm.generateSeal(authorKey, input, auxData);
   }
 
   async getVrfOutputHash(authorKey: Uint8Array, input: Uint8Array) {
-    return bandersnatchWasm.vrf_output_hash(authorKey, input);
+    return bandersnatchWasm.vrfOutputHash(authorKey, input);
   }
 }
