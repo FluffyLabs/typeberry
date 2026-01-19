@@ -7,12 +7,12 @@ import { assertNever } from "@typeberry/utils";
 type ResolveFn = (pvm: IPvmInterpreter) => void;
 
 // TODO [MaSo] Delete this & also make host calls independent from intepreters.
-export class InterpreterInstanceManager {
+export class PvmInstanceManager {
   private waitingQueue: ResolveFn[] = [];
 
   private constructor(private readonly instances: IPvmInterpreter[]) {}
 
-  static async new(interpreter: PvmBackend): Promise<InterpreterInstanceManager> {
+  static async new(interpreter: PvmBackend): Promise<PvmInstanceManager> {
     const instances: IPvmInterpreter[] = [];
     switch (interpreter) {
       case PvmBackend.BuiltIn:
@@ -28,7 +28,7 @@ export class InterpreterInstanceManager {
       default:
         assertNever(interpreter);
     }
-    return new InterpreterInstanceManager(instances);
+    return new PvmInstanceManager(instances);
   }
 
   async getInstance(): Promise<IPvmInterpreter> {
