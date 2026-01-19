@@ -1,7 +1,7 @@
 import type { BlockView, HeaderHash, StateRootHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { PvmBackend } from "@typeberry/config";
-import { initWasm } from "@typeberry/crypto";
+import { bandersnatch, initWasm } from "@typeberry/crypto";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { createImporter } from "@typeberry/importer";
 import { CURRENT_SUITE, CURRENT_VERSION, Result, resultToString } from "@typeberry/utils";
@@ -23,10 +23,13 @@ export async function mainImporter(
   options: ImporterOptions = {},
 ): Promise<NodeApi> {
   await initWasm();
+  const bandesnatchNative = bandersnatch.checkNativeBindings();
 
   logger.info`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
   logger.info`🎸 Starting importer: ${config.nodeName}.`;
   logger.info`🖥️ PVM Backend: ${PvmBackend[config.pvmBackend]}.`;
+  logger.info`🐇 Bandersnatch ${bandesnatchNative.isOk ? "native 🚀" : `using wasm: ${bandesnatchNative.error}`}`;
+
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
   const nodeName = config.nodeName;
