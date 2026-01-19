@@ -44,7 +44,7 @@ describe("Bandersnatch verification", () => {
       );
 
       assert.strictEqual(result.isOk, true);
-      assert.deepStrictEqual(result.ok, expectedCommitment);
+      assert.strictEqual(result.ok.toString(), expectedCommitment.toString());
     });
   });
 
@@ -116,8 +116,8 @@ describe("Bandersnatch verification", () => {
         true,
       );
       assert.deepStrictEqual(
-        result.map((x) => x.entropyHash),
-        expectedIds,
+        result.map((x) => x.entropyHash.toString()),
+        expectedIds.map((x) => x.toString()),
       );
     });
 
@@ -169,8 +169,8 @@ describe("Bandersnatch verification", () => {
         [false, true, true],
       );
       assert.deepStrictEqual(
-        result.map((x) => x.entropyHash),
-        expectedIds,
+        result.map((x) => x.entropyHash.toString()),
+        expectedIds.map((x) => x.toString()),
       );
     });
   });

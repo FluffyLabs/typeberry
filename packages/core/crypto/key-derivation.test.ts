@@ -3,6 +3,7 @@ import { before, describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { Blake2b } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
+import { deepEqual } from "@typeberry/utils";
 import type { BandersnatchKey } from "./bandersnatch.js";
 import type { Ed25519Key } from "./ed25519.js";
 import { initWasm } from "./index.js";
@@ -405,7 +406,7 @@ describe("Key Derivation: Bandersnatch public key", () => {
     const seed = trivialSeed(tryAsU32(0));
     const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
-    assert.deepStrictEqual(
+    deepEqual(
       bandersnatch_public_key,
       Bytes.fromBlob(
         Bytes.parseBlobNoPrefix("ff71c6c03ff88adb5ed52c9681de1629a54e702fc14729f6b50d2f0a76f185b3").raw,
@@ -418,7 +419,7 @@ describe("Key Derivation: Bandersnatch public key", () => {
     const seed = trivialSeed(tryAsU32(1));
     const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
-    assert.deepStrictEqual(
+    deepEqual(
       bandersnatch_public_key,
       Bytes.fromBlob(
         Bytes.parseBlobNoPrefix("dee6d555b82024f1ccf8a1e37e60fa60fd40b1958c4bb3006af78647950e1b91").raw,
@@ -431,7 +432,7 @@ describe("Key Derivation: Bandersnatch public key", () => {
     const seed = trivialSeed(tryAsU32(2));
     const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
-    assert.deepStrictEqual(
+    deepEqual(
       bandersnatch_public_key,
       Bytes.fromBlob(
         Bytes.parseBlobNoPrefix("9326edb21e5541717fde24ec085000b28709847b8aab1ac51f84e94b37ca1b66").raw,
@@ -444,7 +445,7 @@ describe("Key Derivation: Bandersnatch public key", () => {
     const seed = trivialSeed(tryAsU32(3));
     const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
-    assert.deepStrictEqual(
+    deepEqual(
       bandersnatch_public_key,
       Bytes.fromBlob(
         Bytes.parseBlobNoPrefix("0746846d17469fb2f95ef365efcab9f4e22fa1feb53111c995376be8019981cc").raw,
@@ -457,7 +458,7 @@ describe("Key Derivation: Bandersnatch public key", () => {
     const seed = trivialSeed(tryAsU32(4));
     const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
-    assert.deepStrictEqual(
+    deepEqual(
       bandersnatch_public_key,
       Bytes.fromBlob(
         Bytes.parseBlobNoPrefix("151e5c8fe2b9d8a606966a79edd2f9e5db47e83947ce368ccba53bf6ba20a40b").raw,
@@ -470,7 +471,7 @@ describe("Key Derivation: Bandersnatch public key", () => {
     const seed = trivialSeed(tryAsU32(5));
     const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
-    assert.deepStrictEqual(
+    deepEqual(
       bandersnatch_public_key,
       Bytes.fromBlob(
         Bytes.parseBlobNoPrefix("2105650944fcd101621fd5bb3124c9fd191d114b7ad936c1d79d734f9f21392e").raw,
@@ -486,7 +487,7 @@ describe("Key Derivation: Bandersnatch public key", () => {
     ).asOpaque<KeySeed>();
     const bandersnatch_seed = deriveBandersnatchSecretKey(seed, blake2b);
     const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
-    assert.deepStrictEqual(
+    deepEqual(
       bandersnatch_public_key,
       Bytes.fromBlob(
         Bytes.parseBlobNoPrefix("299bdfd8d615aadd9e6c58718f9893a5144d60e897bc9da1f3d73c935715c650").raw,
