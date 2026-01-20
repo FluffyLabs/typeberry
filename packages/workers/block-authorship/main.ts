@@ -163,12 +163,13 @@ export async function main(config: Config, comms: GeneratorInternal) {
      * Assuming `slotDuration` is 6 sec it is safe till year 2786.
      * If `slotDuration` is 1 sec then it is safe till 2106.
      */
-    const timeSlot = isFastForward
-      ? tryAsTimeSlot(lastTimeSlot + 1)
-      : tryAsTimeSlot(Number(getTime() / 1000n / BigInt(chainSpec.slotDuration)));
+    const timeSlot =
+      isFastForward === true
+        ? tryAsTimeSlot(lastTimeSlot + 1)
+        : tryAsTimeSlot(Number(getTime() / 1000n / BigInt(chainSpec.slotDuration)));
 
     // In fastForward mode, skip if we already generated for this slot (waiting for import)
-    if (isFastForward && timeSlot <= lastGeneratedSlot) {
+    if (isFastForward === true && timeSlot <= lastGeneratedSlot) {
       continue;
     }
 
@@ -194,9 +195,12 @@ export async function main(config: Config, comms: GeneratorInternal) {
       lastGeneratedSlot = timeSlot;
       logger.trace`Sending block ${counter}`;
       await comms.sendBlock(newBlock);
+    } else if (isFastForward === true) {
+      // In fast-forward mode, if this slot is not ours, wait briefly for other validators to produce blocks
+      await setTimeout(10);
     }
 
-    if (!isFastForward) {
+    if (isFastForward === false) {
       await setTimeout(chainSpec.slotDuration * 1000);
     }
   }
