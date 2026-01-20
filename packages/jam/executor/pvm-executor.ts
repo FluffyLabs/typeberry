@@ -8,7 +8,7 @@ import {
   type RefineExternalities,
   tryAsProgramCounter,
 } from "@typeberry/jam-host-calls/externalities/refine-externalities.js";
-import { type HostCallHandler, HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
+import { type HostCallHandler, HostCalls, HostCallsExecutor, PvmInstanceManager } from "@typeberry/pvm-host-calls";
 import { tryAsGas } from "@typeberry/pvm-interface";
 
 /**
@@ -74,7 +74,7 @@ namespace entrypoint {
  * PVM exectutor class that prepares PVM together with host call handlers to be run in requested context
  */
 export class PvmExecutor {
-  private readonly pvm: PvmHostCallExtension;
+  private readonly pvm: HostCallsExecutor;
   private hostCalls: HostCalls;
 
   private constructor(
@@ -87,7 +87,7 @@ export class PvmExecutor {
       missing: new general.Missing(),
       handlers: hostCallHandlers,
     });
-    this.pvm = new PvmHostCallExtension(pvmInstanceManager, this.hostCalls);
+    this.pvm = new HostCallsExecutor(pvmInstanceManager, this.hostCalls);
   }
 
   private static async prepareBackend(pvm: PvmBackend) {
@@ -153,7 +153,7 @@ export class PvmExecutor {
    *
    * @param args additional arguments that will be placed in PVM memory before execution
    * @param gas gas limit
-   * @returns `ReturnValue` object that can be a status or memory slice
+   * @returns `ReturnValue` object containing consumed gas, status and an optional memory slice
    */
   async run(args: BytesBlob, gas: ServiceGas) {
     const ret = await this.pvm.runProgram(this.serviceCode.raw, args.raw, Number(this.entrypoint), tryAsGas(gas));
@@ -184,6 +184,7 @@ export class PvmExecutor {
     pvm: PvmBackend,
   ) {
     const hostCallHandlers = PvmExecutor.prepareAccumulateHostCalls(serviceId, externalities, chainSpec);
+
     const instances = await PvmExecutor.prepareBackend(pvm);
     return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ACCUMULATE, instances);
   }

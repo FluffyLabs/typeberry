@@ -1,6 +1,8 @@
-export { type HostCallHandler, PvmExecution, traceRegisters, tryAsHostCallIndex } from "./host-call-handler.js";
-export { HostCallMemory } from "./host-call-memory.js";
-export { HostCallRegisters } from "./host-call-registers.js";
-export { HostCalls as PvmHostCallExtension, ReturnStatus, type ReturnValue } from "./host-calls.js";
-export { HostCallsManager as HostCalls } from "./host-calls-manager.js";
-export { InterpreterInstanceManager as PvmInstanceManager } from "./interpreter-instance-manager.js";
+export * from "./ecalli-trace-logger.js";
+export * from "./host-call-handler.js";
+export * from "./host-call-handler.js";
+export * from "./host-call-memory.js";
+export * from "./host-call-registers.js";
+export * from "./host-calls.js";
+export * from "./host-calls-executor.js";
+export * from "./pvm-instance-manager.js";

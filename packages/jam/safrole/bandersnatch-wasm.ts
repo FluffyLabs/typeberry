@@ -12,6 +12,24 @@ export class BandernsatchWasm {
     return bandersnatchWasm.verify_seal(authorKey, signature, payload, auxData);
   }
 
+  async verifyHeaderSeals(
+    authorKey: Uint8Array,
+    headerSeal: Uint8Array,
+    headerSealPayload: Uint8Array,
+    unsealedHeader: Uint8Array,
+    entropySeal: Uint8Array,
+    entropyPayloadPrefix: Uint8Array,
+  ) {
+    return bandersnatchWasm.verify_header_seals(
+      authorKey,
+      headerSeal,
+      headerSealPayload,
+      unsealedHeader,
+      entropySeal,
+      entropyPayloadPrefix,
+    );
+  }
+
   async getRingCommitment(keys: Uint8Array) {
     return bandersnatchWasm.ring_commitment(keys);
   }
