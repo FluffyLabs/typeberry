@@ -42,18 +42,27 @@ export class HostCallsExecutor {
     private ioTracer: EcalliTraceLogger | null = EcalliTraceLogger.create(),
   ) {}
 
-  private getReturnValue(status: Status, pvmInstance: IPvmInterpreter): ReturnValue {
+  private getReturnValue(
+    status: Status,
+    pvmInstance: IPvmInterpreter,
+    registers: HostCallRegisters,
+    memory: HostCallMemory,
+  ): ReturnValue {
     const consumedGas = pvmInstance.gas.used();
+    const pc = pvmInstance.getPC();
+    const gas = pvmInstance.gas.get();
+
     if (status === Status.OOG) {
+      this.ioTracer?.logOog(pc, gas, registers);
       return { consumedGas, status: ReturnStatus.OOG };
     }
 
     if (status === Status.HALT) {
-      const regs = new HostCallRegisters(pvmInstance.registers.getAllEncoded());
-      const memory = new HostCallMemory(pvmInstance.memory);
-      const address = regs.get(7);
+      this.ioTracer?.logHalt(pc, gas, registers);
+
+      const address = registers.get(7);
       // NOTE we are taking the the lower U32 part of the register, hence it's safe.
-      const length = Number(regs.get(8) & 0xffff_ffffn);
+      const length = Number(registers.get(8) & 0xffff_ffffn);
 
       const result = safeAllocUint8Array(length);
 
@@ -66,70 +75,88 @@ export class HostCallsExecutor {
       return { consumedGas, status: ReturnStatus.OK, memorySlice: result };
     }
 
+    this.ioTracer?.logPanic(pvmInstance.getExitParam() ?? 0, pc, gas, registers);
     return { consumedGas, status: ReturnStatus.PANIC };
   }
 
-  private async execute(pvmInstance: IPvmInterpreter): Promise<ReturnValue> {
-    pvmInstance.runProgram();
+  private async execute(pvmInstance: IPvmInterpreter) {
+    const ioTracker = this.ioTracer?.tracker() ?? null;
+    const registers = new HostCallRegisters(pvmInstance.registers.getAllEncoded());
+    registers.ioTracker = ioTracker;
+    const memory = new HostCallMemory(pvmInstance.memory);
+    memory.ioTracker = ioTracker;
+
+    const gas = pvmInstance.gas;
+
+    // log start of execution (note the PVM initialisation should be logged already)
+    this.ioTracer?.logStart(pvmInstance.getPC(), pvmInstance.gas.get(), registers);
+
     for (;;) {
-      let status = pvmInstance.getStatus();
+      // execute program as much as we can
+      pvmInstance.runProgram();
+      // and update the PVM state
+      registers.setEncoded(pvmInstance.registers.getAllEncoded());
+      const status = pvmInstance.getStatus();
+      const pc = pvmInstance.getPC();
+      const exitParam = pvmInstance.getExitParam() ?? -1;
+
       if (status !== Status.HOST) {
-        return this.getReturnValue(status, pvmInstance);
+        return this.getReturnValue(status, pvmInstance, registers, memory);
       }
+
+      // get the PVM state now
       check`
-        ${pvmInstance.getExitParam() !== null}
+        ${exitParam !== -1}
         "We know that the exit param is not null, because the status is 'Status.HOST'
       `;
-      const hostCallIndex = pvmInstance.getExitParam() ?? -1;
-      const gas = pvmInstance.gas;
-      const regs = new HostCallRegisters(pvmInstance.registers.getAllEncoded());
-      const memory = new HostCallMemory(pvmInstance.memory);
-      const index = tryAsHostCallIndex(hostCallIndex);
+      const hostCallIndex = tryAsHostCallIndex(exitParam);
 
-      const hostCall = this.hostCalls.get(index);
-      const gasBefore = gas.get();
+      // retrieve the host call
+      const hostCall = this.hostCalls.get(hostCallIndex);
       // NOTE: `basicGasCost(regs)` function is for compatibility reasons: pre GP 0.7.2
       const basicGasCost =
-        typeof hostCall.basicGasCost === "number" ? hostCall.basicGasCost : hostCall.basicGasCost(regs);
+        typeof hostCall.basicGasCost === "number" ? hostCall.basicGasCost : hostCall.basicGasCost(registers);
+
+      // calculate gas
+      const gasBefore = gas.get();
       const underflow = gas.sub(basicGasCost);
 
-      const pcLog = `[PC: ${pvmInstance.getPC()}]`;
+      const pcLog = `[PC: ${pc}]`;
       if (underflow) {
-        this.hostCalls.traceHostCall(`${pcLog} OOG`, index, hostCall, regs, gas.get());
-        return { consumedGas: gas.used(), status: ReturnStatus.OOG };
+        const gasAfterBasicGas = gas.get();
+        this.hostCalls.traceHostCall(`${pcLog} OOG`, hostCallIndex, hostCall, registers, gasAfterBasicGas);
+        this.ioTracer?.logSetGas(gasAfterBasicGas);
+        return this.getReturnValue(Status.OOG, pvmInstance, registers, memory);
       }
-      this.hostCalls.traceHostCall(`${pcLog} Invoking`, index, hostCall, regs, gasBefore);
-      const result = await hostCall.execute(gas, regs, memory);
+
+      this.ioTracer?.logEcalli(hostCallIndex, pc, gasBefore, registers);
+      this.hostCalls.traceHostCall(`${pcLog} Invoking`, hostCallIndex, hostCall, registers, gasBefore);
+      ioTracker?.clear();
+      const result = await hostCall.execute(gas, registers, memory);
+
+      const gasAfter = gas.get();
+      this.ioTracer?.logHostActions(ioTracker, gasBefore, gasAfter);
       this.hostCalls.traceHostCall(
         result === undefined ? `${pcLog} Result` : `${pcLog} Status(${PvmExecution[result]})`,
-        index,
+        hostCallIndex,
         hostCall,
-        regs,
-        gas.get(),
+        registers,
+        gasAfter,
       );
-      pvmInstance.registers.setAllEncoded(regs.getEncoded());
+      pvmInstance.registers.setAllEncoded(registers.getEncoded());
 
       if (result === PvmExecution.Halt) {
-        status = Status.HALT;
-        return this.getReturnValue(status, pvmInstance);
+        return this.getReturnValue(Status.HALT, pvmInstance, registers, memory);
       }
-
       if (result === PvmExecution.Panic) {
-        status = Status.PANIC;
-        return this.getReturnValue(status, pvmInstance);
+        return this.getReturnValue(Status.PANIC, pvmInstance, registers, memory);
       }
-
       if (result === PvmExecution.OOG) {
-        status = Status.OOG;
-        return this.getReturnValue(status, pvmInstance);
+        return this.getReturnValue(Status.OOG, pvmInstance, registers, memory);
       }
-
       if (result === undefined) {
-        pvmInstance.runProgram();
-        status = pvmInstance.getStatus();
         continue;
       }
-
       assertNever(result);
     }
   }
