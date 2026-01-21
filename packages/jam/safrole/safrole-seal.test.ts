@@ -65,7 +65,7 @@ describe("Safrole Seal verification", () => {
       ).asOpaque(),
     });
 
-    assert.deepStrictEqual(result.isOk, true);
+    assert.strictEqual(result.isOk, true);
     assert.strictEqual(result.ok.toString(), "0xc13af3d0cbdb7174590f34518e3beb05708935ceaee242e7ba11a94ca87bd007");
   });
 
@@ -111,7 +111,7 @@ describe("Safrole Seal verification", () => {
       ).asOpaque(),
     });
 
-    assert.deepStrictEqual(result.isOk, true);
+    assert.strictEqual(result.isOk, true);
     assert.strictEqual(result.ok.toString(), "0xc13af3d0cbdb7174590f34518e3beb05708935ceaee242e7ba11a94ca87bd007");
   });
 });
