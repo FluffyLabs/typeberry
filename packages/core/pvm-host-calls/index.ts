@@ -1,6 +1,5 @@
 export * from "./ecalli-trace-logger.js";
 export * from "./host-call-handler.js";
-export * from "./host-call-handler.js";
 export * from "./host-call-memory.js";
 export * from "./host-call-registers.js";
 export * from "./host-calls.js";
