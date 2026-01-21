@@ -1,7 +1,6 @@
 import { Bytes } from "@typeberry/bytes";
 import { bandersnatch } from "@typeberry/native";
 import { check, OK, type Opaque, Result } from "@typeberry/utils";
-import { bandersnatchWasm } from "./index.js";
 
 /** Bandersnatch public key size. */
 export const BANDERSNATCH_KEY_BYTES = 32;
@@ -68,9 +67,9 @@ export function publicKey(seed: Uint8Array): BandersnatchKey {
 }
 
 export function checkNativeBindings(): Result<OK, string> {
-  if (bandersnatchWasm.isNativeBinding()) {
+  if (bandersnatch.isNativeBinding()) {
     return Result.ok(OK);
   }
   const error = "native binding error";
-  return Result.error(bandersnatchWasm.getNativeBindingError() ?? error, () => error);
+  return Result.error(bandersnatch.getNativeBindingError() ?? error, () => error);
 }
