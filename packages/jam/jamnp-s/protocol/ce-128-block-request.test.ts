@@ -7,7 +7,7 @@ import { Blake2b } from "@typeberry/hash";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { OK } from "@typeberry/utils";
 import { ClientHandler, Direction, ServerHandler, STREAM_KIND } from "./ce-128-block-request.js";
-import type { StreamId } from "./stream.js";
+import type { GlobalStreamKey } from "./stream.js";
 import { testClientServer } from "./test-utils.js";
 
 let HEADER_HASH: HeaderHash;
@@ -45,7 +45,7 @@ describe("CE 128: Block Request", () => {
 });
 
 const getBlockSequence = (
-  _streamId: StreamId,
+  _streamKey: GlobalStreamKey,
   _hash: HeaderHash,
   _direction: Direction,
   _maxBlocks: U32,

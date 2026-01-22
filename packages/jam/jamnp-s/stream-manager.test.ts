@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import type { BytesBlob } from "@typeberry/bytes";
+import type { PeerId } from "@typeberry/config";
 import { createDisconnectedPeer, TestManualStream } from "@typeberry/networking/testing.js";
 import { OK } from "@typeberry/utils";
 import type { GlobalStreamKey, StreamHandler, StreamId, StreamKind, StreamMessageSender } from "./protocol/stream.js";
@@ -30,8 +31,9 @@ describe("StreamManager", () => {
   describe("stream management", () => {
     it("should return null for unknown stream ID", () => {
       const manager = new StreamManager();
-
-      const peer = manager.getPeer(123 as StreamId);
+      const peerId = "peer1" as PeerId;
+      const streamId = 123 as StreamId;
+      const peer = manager.getPeer(`${peerId}:${streamId}`);
 
       assert.strictEqual(peer, null);
     });
