@@ -1,10 +1,20 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import type { IpcHandler } from "@typeberry/fuzz-proto";
-import type { StreamHandler, StreamId, StreamKind, StreamKindOf, StreamMessageSender } from "@typeberry/jamnp-s";
+import type {
+  GlobalStreamKey,
+  StreamHandler,
+  StreamId,
+  StreamKind,
+  StreamKindOf,
+  StreamMessageSender,
+} from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
+import type { PeerId } from "@typeberry/networking";
 import type { IpcSender } from "../server.js";
 import { NewStream, StreamEnvelope, StreamEnvelopeType } from "./stream.js";
+
+const IPC_PEER_ID = "ipc-peer" as PeerId;
 
 export type ResponseHandler = (err: Error | null, response?: BytesBlob) => void;
 
@@ -129,7 +139,7 @@ export class JamnpIpcHandler implements IpcHandler {
     // close the stream
     if (envelope.type === StreamEnvelopeType.Close) {
       const handler = this.streams.get(streamId);
-      handler?.onClose(streamId, false);
+      handler?.onClose(streamSender.globalKey, false);
       this.streams.delete(streamId);
       return;
     }
@@ -151,7 +161,8 @@ export class JamnpIpcHandler implements IpcHandler {
     logger.log`Closing the handler. Reason: ${error !== undefined ? error.message : "close"}.`;
     // Socket closed - we should probably clear everything.
     for (const [streamId, handler] of this.streams.entries()) {
-      handler.onClose(streamId, error === undefined);
+      const globalKey: GlobalStreamKey = `${IPC_PEER_ID}:${streamId}`;
+      handler.onClose(globalKey, error === undefined);
     }
     this.streams.clear();
 
@@ -172,10 +183,15 @@ export class JamnpIpcHandler implements IpcHandler {
 }
 
 class EnvelopeSender implements StreamMessageSender {
+  public readonly peerId: PeerId = IPC_PEER_ID;
+  public readonly globalKey: GlobalStreamKey;
+
   constructor(
     public readonly streamId: StreamId,
     private readonly sender: IpcSender,
-  ) {}
+  ) {
+    this.globalKey = `${this.peerId}:${streamId}`;
+  }
 
   open(newStream: NewStream) {
     const msg = Encoder.encodeObject(NewStream.Codec, newStream);

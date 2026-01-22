@@ -5,7 +5,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec, Decoder, Encoder } from "@typeberry/codec";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
+import { type GlobalStreamKey, type StreamHandler, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAMNP-S CE 133 Stream
@@ -41,15 +41,15 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 
   constructor(private readonly onWorkPackage: (i: CoreIndex, w: WorkPackage, e: WorkItemExtrinsics) => void) {}
 
-  public readonly workPackages = new Map<StreamId, CoreWorkPackage>();
+  public readonly workPackages = new Map<GlobalStreamKey, CoreWorkPackage>();
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
-    const streamId = sender.streamId;
+    const { globalKey } = sender;
     // initially we expect the `CoreWorkPackage`
-    const workPackage = this.workPackages.get(streamId);
+    const workPackage = this.workPackages.get(globalKey);
     if (workPackage === undefined) {
       const coreWorkPackage = Decoder.decodeObject(CoreWorkPackage.Codec, message);
-      this.workPackages.set(streamId, coreWorkPackage);
+      this.workPackages.set(globalKey, coreWorkPackage);
       return;
     }
     // next we expect extrinsics
@@ -60,8 +60,8 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
     sender.close();
   }
 
-  onClose(streamId: StreamId): void {
-    this.workPackages.delete(streamId);
+  onClose(globalKey: GlobalStreamKey): void {
+    this.workPackages.delete(globalKey);
   }
 }
 
@@ -73,7 +73,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     sender.close();
   }
 
-  onClose(): void {}
+  onClose(_globalKey: GlobalStreamKey): void {}
 
   sendWorkPackage(
     sender: StreamMessageSender,

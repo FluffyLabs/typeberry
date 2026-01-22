@@ -3,13 +3,13 @@ import { describe, it } from "node:test";
 import type { BytesBlob } from "@typeberry/bytes";
 import { createDisconnectedPeer, TestManualStream } from "@typeberry/networking/testing.js";
 import { OK } from "@typeberry/utils";
-import type { StreamHandler, StreamId, StreamKind, StreamMessageSender } from "./protocol/stream.js";
+import type { GlobalStreamKey, StreamHandler, StreamId, StreamKind, StreamMessageSender } from "./protocol/stream.js";
 import { StreamManager } from "./stream-manager.js";
 
 // Test StreamHandler implementation
 class TestStreamHandler implements StreamHandler {
   messages: Array<{ streamSender: StreamMessageSender; message: BytesBlob }> = [];
-  closeCalls: Array<{ streamId: StreamId; isError: boolean }> = [];
+  closeCalls: Array<{ globalKey: GlobalStreamKey; isError: boolean }> = [];
 
   constructor(public readonly kind: StreamKind) {}
 
@@ -17,8 +17,8 @@ class TestStreamHandler implements StreamHandler {
     this.messages.push({ streamSender, message });
   }
 
-  onClose(streamId: StreamId, isError: boolean): void {
-    this.closeCalls.push({ streamId, isError });
+  onClose(globalKey: GlobalStreamKey, isError: boolean): void {
+    this.closeCalls.push({ globalKey, isError });
   }
 }
 
@@ -109,11 +109,13 @@ describe("StreamManager", () => {
   describe("incoming streams", () => {
     it("should handle incoming stream with valid kind", async () => {
       const manager = new StreamManager();
-      const peer = createDisconnectedPeer("peer1");
+      const peerId = "peer1";
+      const peer = createDisconnectedPeer(peerId);
       const handler = createTestHandler(1 as StreamKind);
       manager.registerIncomingHandlers(handler);
+      const streamId = 42 as StreamId;
 
-      const stream = new TestManualStream(42);
+      const stream = new TestManualStream(streamId);
 
       // Simulate incoming stream with kind byte
       const kindData = new Uint8Array([1, 0x41, 0x42]); // kind=1, followed by some data
@@ -123,7 +125,7 @@ describe("StreamManager", () => {
       await manager.onIncomingStream(peer, stream);
 
       // Check that peer is tracked
-      const retrievedPeer = manager.getPeer(42 as StreamId);
+      const retrievedPeer = manager.getPeer(`${peerId}:${streamId}` as GlobalStreamKey);
       assert.strictEqual(retrievedPeer, peer);
     });
 

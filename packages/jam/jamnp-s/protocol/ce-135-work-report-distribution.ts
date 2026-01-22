@@ -8,7 +8,7 @@ import type { KnownSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import { type StreamHandler, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
+import { type GlobalStreamKey, type StreamHandler, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAMNP-S CE 135 Stream
@@ -63,7 +63,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
     sender.close();
   }
 
-  onClose() {}
+  onClose(_globalKey: GlobalStreamKey) {}
 }
 
 export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
@@ -76,7 +76,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     sender.close();
   }
 
-  onClose(): void {}
+  onClose(_globalKey: GlobalStreamKey): void {}
 
   sendWorkReport(sender: StreamMessageSender, workReport: GuaranteedWorkReport) {
     logger.trace`[${sender.streamId}] Sending guaranteed work report.`;

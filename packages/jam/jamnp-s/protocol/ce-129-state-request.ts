@@ -6,7 +6,7 @@ import { Logger } from "@typeberry/logger";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { TRUNCATED_KEY_BYTES, TrieNode } from "@typeberry/trie/nodes.js";
 import { WithDebug } from "@typeberry/utils";
-import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
+import { type GlobalStreamKey, type StreamHandler, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAM-SNP CE-129 stream.
@@ -83,8 +83,8 @@ const logger = Logger.new(import.meta.filename, "protocol/ce-129");
 export class Handler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
-  private readonly boundaryNodes: Map<StreamId, TrieNode[]> = new Map();
-  private readonly onResponse: Map<StreamId, (state: StateResponse) => void> = new Map();
+  private readonly boundaryNodes: Map<GlobalStreamKey, TrieNode[]> = new Map();
+  private readonly onResponse: Map<GlobalStreamKey, (state: StateResponse) => void> = new Map();
 
   constructor(
     private readonly isServer: boolean = false,
@@ -97,8 +97,9 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
   }
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
+    const { globalKey, streamId } = sender;
     if (this.isServer) {
-      logger.info`[${sender.streamId}][server]: Received request.`;
+      logger.info`[${streamId}][server]: Received request.`;
 
       if (this.getBoundaryNodes === undefined || this.getKeyValuePairs === undefined) {
         return;
@@ -109,7 +110,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       const boundaryNodes = this.getBoundaryNodes(request.headerHash, request.startKey, request.endKey);
       const keyValuePairs = this.getKeyValuePairs(request.headerHash, request.startKey, request.endKey);
 
-      logger.info`[${sender.streamId}][server]: <-- responding with boundary nodes and key value pairs.`;
+      logger.info`[${streamId}][server]: <-- responding with boundary nodes and key value pairs.`;
       sender.bufferAndSend(Encoder.encodeObject(codec.sequenceVarLen(trieNodeCodec), boundaryNodes));
       sender.bufferAndSend(Encoder.encodeObject(StateResponse.Codec, StateResponse.create({ keyValuePairs })));
       sender.close();
@@ -117,19 +118,19 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       return;
     }
 
-    if (!this.boundaryNodes.has(sender.streamId)) {
-      this.boundaryNodes.set(sender.streamId, Decoder.decodeObject(codec.sequenceVarLen(trieNodeCodec), message));
-      logger.info`[${sender.streamId}][client]: Received boundary nodes.`;
+    if (!this.boundaryNodes.has(globalKey)) {
+      this.boundaryNodes.set(globalKey, Decoder.decodeObject(codec.sequenceVarLen(trieNodeCodec), message));
+      logger.info`[${streamId}][client]: Received boundary nodes.`;
       return;
     }
 
-    this.onResponse.get(sender.streamId)?.(Decoder.decodeObject(StateResponse.Codec, message));
-    logger.info`[${sender.streamId}][client]: Received state values.`;
+    this.onResponse.get(globalKey)?.(Decoder.decodeObject(StateResponse.Codec, message));
+    logger.info`[${streamId}][client]: Received state values.`;
   }
 
-  onClose(streamId: StreamId) {
-    this.boundaryNodes.delete(streamId);
-    this.onResponse.delete(streamId);
+  onClose(globalKey: GlobalStreamKey) {
+    this.boundaryNodes.delete(globalKey);
+    this.onResponse.delete(globalKey);
   }
 
   getStateByKey(
@@ -138,10 +139,11 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     startKey: StateRequest["startKey"],
     onResponse: (state: StateResponse) => void,
   ) {
-    if (this.onResponse.has(sender.streamId)) {
+    const { globalKey } = sender;
+    if (this.onResponse.has(globalKey)) {
       throw new Error("It is disallowed to use the same stream for multiple requests.");
     }
-    this.onResponse.set(sender.streamId, onResponse);
+    this.onResponse.set(globalKey, onResponse);
     sender.bufferAndSend(
       Encoder.encodeObject(
         StateRequest.Codec,

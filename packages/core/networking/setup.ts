@@ -11,6 +11,7 @@ import {
   generateCertificate,
   type PeerInfo,
   privateKeyToPEM,
+  verifyCertificate,
 } from "./certificate.js";
 import { getQuicClientCrypto, getQuicServerCrypto } from "./crypto.js";
 import * as metrics from "./metrics.js";
@@ -101,30 +102,35 @@ export class Quic {
 
       networkMetrics.recordConnectingIn(peerAddress);
 
-      if (lastConnectedPeer.info === null) {
-        networkMetrics.recordConnectInFailed("no_peer_info");
+      // Get peer info directly from the connection's certificate chain
+      // This avoids race condition with the shared lastConnectedPeer object
+      const remoteCerts = conn.getRemoteCertsChain();
+      const verification = await verifyCertificate(remoteCerts);
+      if (verification.isError) {
+        networkMetrics.recordConnectInFailed("cert_verification_failed");
         await conn.stop();
         return;
       }
+      const peerInfo = verification.ok;
 
-      if (lastConnectedPeer.info.key.isEqualTo(key.pubKey)) {
+      if (peerInfo.key.isEqualTo(key.pubKey)) {
         logger.log`🛜 Rejecting connection from ourself from ${conn.remoteHost}:${conn.remotePort}`;
         networkMetrics.recordConnectionRefused(peerAddress);
         await conn.stop({ isApp: true, errorCode: CloseReason.ConnectionFromOurself });
         return;
       }
 
-      if (peers.isConnected(lastConnectedPeer.info.id)) {
-        logger.log`🛜 Rejecting duplicate connection with peer ${lastConnectedPeer.info.id} from ${conn.remoteHost}:${conn.remotePort}`;
+      if (peers.isConnected(peerInfo.id)) {
+        logger.log`🛜 Rejecting duplicate connection with peer ${peerInfo.id} from ${conn.remoteHost}:${conn.remotePort}`;
         networkMetrics.recordConnectionRefused(peerAddress);
-        await conn.stop({ isApp: true, errorCode: CloseReason.DuplicateConnection });
+        await conn.stop({ isApp: true, errorCode: CloseReason.DuplicateConnection, force: false });
         return;
       }
 
       logger.log`🛜 Server handshake with ${conn.remoteHost}:${conn.remotePort}`;
-      newPeer(conn, lastConnectedPeer.info, "in");
-      networkMetrics.recordConnectedIn(lastConnectedPeer.info.id);
-      lastConnectedPeer.info = null;
+
+      newPeer(conn, peerInfo, "in");
+      networkMetrics.recordConnectedIn(peerInfo.id);
       await conn.start();
     });
 

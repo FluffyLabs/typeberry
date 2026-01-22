@@ -5,7 +5,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
+import { type GlobalStreamKey, type StreamHandler, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAMNP-S UP 0 stream.
@@ -84,57 +84,57 @@ const logger = Logger.new(import.meta.filename, "protocol/up-0");
 export class Handler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
-  private readonly handshakes: Map<StreamId, Handshake> = new Map();
-  private readonly pendingHandshakes: Map<StreamId, boolean> = new Map();
+  private readonly handshakes: Map<GlobalStreamKey, Handshake> = new Map();
+  private readonly pendingHandshakes: Map<GlobalStreamKey, boolean> = new Map();
 
   constructor(
     private readonly spec: ChainSpec,
     private readonly getHandshake: () => Handshake,
-    private readonly onAnnouncement: (sender: StreamId, ann: Announcement) => void,
-    private readonly onHandshake: (sender: StreamId, handshake: Handshake) => void,
+    private readonly onAnnouncement: (sender: GlobalStreamKey, ann: Announcement) => void,
+    private readonly onHandshake: (sender: GlobalStreamKey, handshake: Handshake) => void,
   ) {}
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
-    const { streamId } = sender;
+    const { globalKey, streamId } = sender;
     // we expect a handshake first
-    if (!this.handshakes.has(streamId)) {
+    if (!this.handshakes.has(globalKey)) {
       const handshake = Decoder.decodeObject(Handshake.Codec, message);
-      this.handshakes.set(streamId, handshake);
+      this.handshakes.set(globalKey, handshake);
       // we didn't initiate this handshake, so let's respond
-      if (!this.pendingHandshakes.delete(streamId)) {
+      if (!this.pendingHandshakes.delete(globalKey)) {
         logger.log`[${streamId}] <-- responding with a handshake.`;
         sender.bufferAndSend(Encoder.encodeObject(Handshake.Codec, this.getHandshake()));
       }
-      this.onHandshake(streamId, handshake);
+      this.onHandshake(globalKey, handshake);
       return;
     }
 
     // it's just an announcement
     const annoucement = Decoder.decodeObject(Announcement.Codec, message, this.spec);
     logger.log`[${streamId}] --> got blocks announcement: ${annoucement.final}`;
-    this.onAnnouncement(streamId, annoucement);
+    this.onAnnouncement(globalKey, annoucement);
   }
 
-  onClose(streamId: StreamId): void {
-    this.handshakes.delete(streamId);
-    this.pendingHandshakes.delete(streamId);
+  onClose(globalKey: GlobalStreamKey): void {
+    this.handshakes.delete(globalKey);
+    this.pendingHandshakes.delete(globalKey);
   }
 
   sendHandshake(sender: StreamMessageSender) {
-    const { streamId } = sender;
-    if (this.handshakes.has(streamId) || this.pendingHandshakes.has(streamId)) {
+    const { globalKey, streamId } = sender;
+    if (this.handshakes.has(globalKey) || this.pendingHandshakes.has(globalKey)) {
       return;
     }
     const handshake = this.getHandshake();
     logger.trace`[${streamId}] <-- sending handshake`;
-    this.pendingHandshakes.set(sender.streamId, true);
+    this.pendingHandshakes.set(globalKey, true);
     sender.bufferAndSend(Encoder.encodeObject(Handshake.Codec, handshake));
   }
 
   sendAnnouncement(sender: StreamMessageSender, annoucement: Announcement) {
-    const { streamId } = sender;
+    const { globalKey, streamId } = sender;
     // only send announcement if we've handshaken
-    if (this.handshakes.has(streamId)) {
+    if (this.handshakes.has(globalKey)) {
       logger.trace`[${streamId}] <-- sending block announcement: ${annoucement.final}`;
       sender.bufferAndSend(Encoder.encodeObject(Announcement.Codec, annoucement, this.spec));
     } else {

@@ -1,8 +1,15 @@
 import type { BytesBlob } from "@typeberry/bytes";
+import type { PeerId } from "@typeberry/networking";
 import { tryAsU8, tryAsU32, type U8, type U32 } from "@typeberry/numbers";
 
 /** Unique stream identifier. */
 export type StreamId = U32;
+
+/**
+ * Globally unique stream key combining peer and stream IDs.
+ * StreamId alone is only unique within a single QUIC connection.
+ */
+export type GlobalStreamKey = `${PeerId}:${StreamId}`;
 /** Try to cast the number as `StreamId`. */
 export function tryAsStreamId(num: number): StreamId {
   return tryAsU32(num);
@@ -19,6 +26,12 @@ export function tryAsStreamKind<T extends number>(num: T): StreamKind<T & U8> {
 export interface StreamMessageSender {
   /** Stream Id information. */
   streamId: StreamId;
+
+  /** Peer Id for this stream's connection. */
+  peerId: PeerId;
+
+  /** Globally unique key for this stream (peerId:streamId). */
+  globalKey: GlobalStreamKey;
 
   /**
    * Send data blob to the other end.
@@ -41,8 +54,8 @@ export interface StreamHandler<TStreamKind extends StreamKind = StreamKind> {
   /** Handle message for that particular stream kind. */
   onStreamMessage(streamSender: StreamMessageSender, message: BytesBlob): void;
 
-  /** Handle closing of given `streamId`. */
-  onClose(streamId: StreamId, isError: boolean): void;
+  /** Handle closing of given stream. */
+  onClose(globalKey: GlobalStreamKey, isError: boolean): void;
 }
 
 /** Extract the stream kind out of the the handler type. */
