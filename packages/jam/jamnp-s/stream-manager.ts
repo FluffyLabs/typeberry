@@ -114,7 +114,7 @@ export class StreamManager {
     try {
       // We expect a one-byte identifier first.
       const data = await reader.read();
-      bytes = BytesBlob.blobFrom(data.value !== undefined ? Buffer.from(data.value) : new Uint8Array());
+      bytes = BytesBlob.blobFrom(data.value !== undefined ? data.value : new Uint8Array());
       logger.trace`🚰 --> [${peer.id}:${streamId}] Initial data: ${bytes}`;
     } finally {
       reader.releaseLock();
@@ -220,7 +220,7 @@ async function readStreamForever(
     // await for more data
     const data = await reader.read();
     isDone = data.done;
-    bytes = BytesBlob.blobFrom(data.value !== undefined ? Buffer.from(data.value) : new Uint8Array());
+    bytes = BytesBlob.blobFrom(data.value !== undefined ? data.value : new Uint8Array());
   }
 }
 
@@ -246,9 +246,7 @@ class QuicStreamSender implements StreamMessageSender {
     if (this.bufferedLength > MAX_OUTGOING_BUFFER_BYTES) {
       return false;
     }
-    // Copy the data to ensure it's not affected by future modifications to the underlying buffer
-    const dataCopy = BytesBlob.blobFrom(new Uint8Array(data.raw));
-    this.bufferedData.push({ data: dataCopy, addPrefix: prefixWithLength });
+    this.bufferedData.push({ data, addPrefix: prefixWithLength });
     this.bufferedLength += data.length;
     // some other async task already has a lock, so it will keep writing.
     if (this.currentWriterPromise !== null) {
