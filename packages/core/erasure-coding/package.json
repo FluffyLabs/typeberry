@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/erasure-coding",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Erasure encoding implementation",
   "main": "index.ts",
   "scripts": {
@@ -15,7 +15,7 @@
     "@typeberry/bytes": "*",
     "@typeberry/collections": "*",
     "@typeberry/config": "*",
-    "@typeberry/native": "0.0.4-4c0cd28",
+    "@typeberry/native": "^0.2.0-bd1a174",
     "@typeberry/utils": "*"
   }
 }

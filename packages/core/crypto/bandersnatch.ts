@@ -1,6 +1,6 @@
 import { Bytes } from "@typeberry/bytes";
 import { bandersnatch } from "@typeberry/native";
-import { check, type Opaque } from "@typeberry/utils";
+import { check, OK, type Opaque, Result } from "@typeberry/utils";
 
 /** Bandersnatch public key size. */
 export const BANDERSNATCH_KEY_BYTES = 32;
@@ -59,9 +59,17 @@ export type BlsKey = Opaque<Bytes<BLS_KEY_BYTES>, "BlsKey">;
 
 /** Derive a Bandersnatch public key from a seed. */
 export function publicKey(seed: Uint8Array): BandersnatchKey {
-  const key = bandersnatch.derive_public_key(seed);
+  const key = bandersnatch.derivePublicKey(seed);
 
   check`${key[0] === 0} Invalid Bandersnatch public key derived from seed`;
 
   return Bytes.fromBlob(key.subarray(1), BANDERSNATCH_KEY_BYTES).asOpaque();
+}
+
+export function checkNativeBindings(): Result<OK, string> {
+  if (bandersnatch.isNativeBinding()) {
+    return Result.ok(OK);
+  }
+  const error = "native binding error";
+  return Result.error(bandersnatch.getNativeBindingError() ?? error, () => error);
 }

@@ -1,12 +1,12 @@
 import { PvmBackend } from "@typeberry/config";
 import { tryAsGas } from "@typeberry/pvm-interface";
-import { HostCalls } from "./host-calls.js";
-import { HostCallsManager, NoopMissing } from "./host-calls-manager.js";
-import { InterpreterInstanceManager } from "./interpreter-instance-manager.js";
+import { HostCalls, NoopMissing } from "./host-calls.js";
+import { HostCallsExecutor } from "./host-calls-executor.js";
+import { PvmInstanceManager } from "./pvm-instance-manager.js";
 
-const hostCalls = new HostCallsManager({ missing: new NoopMissing(), handlers: [] });
-const pvmInstanceManager = await InterpreterInstanceManager.new(PvmBackend.BuiltIn);
-const pvmHostCallExtension = new HostCalls(pvmInstanceManager, hostCalls);
+const hostCalls = new HostCalls({ missing: new NoopMissing(), handlers: [] });
+const pvmInstanceManager = await PvmInstanceManager.new(PvmBackend.BuiltIn);
+const pvmHostCallExtension = new HostCallsExecutor(pvmInstanceManager, hostCalls);
 
 const program = new Uint8Array([
   0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x10, 0x1, 0x0, 0x0, 0xf9, 0x0, 0x0, 0x0, 0x0, 0x0, 0x80, 0xd9, 0x5, 0x12,
