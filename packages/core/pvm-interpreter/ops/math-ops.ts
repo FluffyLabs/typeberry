@@ -1,6 +1,6 @@
 import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
 import { type Registers, signExtend32To64 } from "../registers.js";
-import { MIN_VALUE } from "./math-consts.js";
+import { MIN_VALUE_I32 } from "./math-consts.js";
 import {
   addWithOverflowU32,
   addWithOverflowU64,
@@ -103,7 +103,7 @@ export class MathOps {
   divSignedU32(firstIndex: number, secondIndex: number, resultIndex: number) {
     if (this.regs.getLowerU32(secondIndex) === 0) {
       this.regs.setU64(resultIndex, 2n ** 64n - 1n);
-    } else if (this.regs.getLowerI32(secondIndex) === -1 && this.regs.getLowerI32(firstIndex) === MIN_VALUE) {
+    } else if (this.regs.getLowerI32(secondIndex) === -1 && this.regs.getLowerI32(firstIndex) === MIN_VALUE_I32) {
       this.regs.setU64(resultIndex, signExtend32To64(this.regs.getLowerU32(firstIndex)));
     } else {
       this.regs.setI64(
@@ -145,7 +145,7 @@ export class MathOps {
   remSignedU32(firstIndex: number, secondIndex: number, resultIndex: number) {
     if (this.regs.getLowerU32(secondIndex) === 0) {
       this.regs.setU64(resultIndex, BigInt(this.regs.getLowerI32(firstIndex)));
-    } else if (this.regs.getLowerI32(secondIndex) === -1 && this.regs.getLowerI32(firstIndex) === MIN_VALUE) {
+    } else if (this.regs.getLowerI32(secondIndex) === -1 && this.regs.getLowerI32(firstIndex) === MIN_VALUE_I32) {
       this.regs.setU64(resultIndex, 0n);
     } else {
       this.regs.setI64(

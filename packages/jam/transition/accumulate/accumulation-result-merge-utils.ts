@@ -1,8 +1,7 @@
 import { type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import { AccumulationStateUpdate, type PendingTransfer } from "@typeberry/jam-host-calls";
-import { sumU64 } from "@typeberry/numbers";
-import { MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
+import { MAX_VALUE_U64, sumU64 } from "@typeberry/numbers";
 import { PrivilegedServices, tryAsPerCore, UpdatePreimageKind } from "@typeberry/state";
 import type { AccumulateState } from "./accumulate-state.js";
 

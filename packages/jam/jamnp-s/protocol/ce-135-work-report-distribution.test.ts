@@ -5,7 +5,7 @@ import { Credential } from "@typeberry/block/guarantees.js";
 import { RefineContext } from "@typeberry/block/refine-context.js";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
-import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
+import { WorkExecResult, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize, FixedSizeArray } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
@@ -37,7 +37,7 @@ const MOCK_WORK_RESULT = WorkResult.create({
   codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
   payloadHash: Bytes.zero(HASH_SIZE),
   gas: tryAsServiceGas(1000n),
-  result: new WorkExecResult(WorkExecResultKind.ok, BytesBlob.blobFrom(new Uint8Array())),
+  result: WorkExecResult.ok(BytesBlob.empty()),
   load: WorkRefineLoad.create({
     gasUsed: tryAsServiceGas(10_000n),
     importedSegments: tryAsU32(1),

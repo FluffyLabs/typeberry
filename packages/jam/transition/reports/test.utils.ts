@@ -20,7 +20,7 @@ import {
 import { RefineContext, type WorkPackageHash, type WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import { testWorkReportHex } from "@typeberry/block/test-helpers.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
-import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
+import { WorkExecResult, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { codec, Decoder } from "@typeberry/codec";
 import { asKnownSize, FixedSizeArray, HashDictionary } from "@typeberry/collections";
@@ -100,8 +100,7 @@ export function newWorkReport({
           codeHash: x.codeHash,
           payloadHash: x.payloadHash,
           gas: x.gas,
-          result:
-            resultSize !== undefined ? new WorkExecResult(WorkExecResultKind.ok, Bytes.fill(resultSize, 0)) : x.result,
+          result: resultSize !== undefined ? WorkExecResult.ok(Bytes.fill(resultSize, 0)) : x.result,
           load: WorkRefineLoad.create({
             gasUsed: tryAsServiceGas(5),
             importedSegments: tryAsU32(0),

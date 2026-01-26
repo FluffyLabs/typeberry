@@ -3,14 +3,13 @@ import { describe, it } from "node:test";
 import { type ServiceGas, type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { codec, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
-import { tryAsU64, type U64 } from "@typeberry/numbers";
+import { MAX_VALUE_U32, MAX_VALUE_U64, tryAsU64, type U64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { tryAsGas } from "@typeberry/pvm-interface";
 import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
-import { MAX_VALUE, MAX_VALUE_U64 } from "@typeberry/pvm-interpreter/ops/math-consts.js";
 import { codecPerCore, type PerCore, tryAsPerCore } from "@typeberry/state";
 import { Compatibility, deepEqual, GpVersion, Result } from "@typeberry/utils";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
@@ -120,7 +119,7 @@ describe("HostCalls: Bless", () => {
           tryAsServiceId(5),
           tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
           tryAsServiceId(20),
-          tryAsServiceId(MAX_VALUE),
+          tryAsServiceId(MAX_VALUE_U32),
           new Map(entries),
         ],
       ]);
@@ -190,7 +189,7 @@ describe("HostCalls: Bless", () => {
           tryAsServiceId(5),
           tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
           tryAsServiceId(20),
-          tryAsServiceId(MAX_VALUE),
+          tryAsServiceId(MAX_VALUE_U32),
           new Map(entries),
         ],
       ]);
@@ -228,7 +227,7 @@ describe("HostCalls: Bless", () => {
           tryAsServiceId(5),
           tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
           tryAsServiceId(20),
-          tryAsServiceId(MAX_VALUE),
+          tryAsServiceId(MAX_VALUE_U32),
           new Map(entries),
         ],
       ]);

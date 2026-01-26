@@ -1,32 +1,25 @@
 {
-  "name": "@typeberry/transition",
-  "version": "0.5.3",
-  "description": "JAM state transition.",
+  "name": "@typeberry/in-core",
+  "version": "0.5.0",
+  "description": "In core execution utilities (refine phase).",
   "main": "index.ts",
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
   "dependencies": {
     "@typeberry/block": "*",
     "@typeberry/bytes": "*",
     "@typeberry/codec": "*",
     "@typeberry/collections": "*",
     "@typeberry/config": "*",
-    "@typeberry/crypto": "*",
     "@typeberry/database": "*",
-    "@typeberry/disputes": "*",
     "@typeberry/executor": "*",
     "@typeberry/hash": "*",
-    "@typeberry/jam-host-calls": "*",
     "@typeberry/logger": "*",
-    "@typeberry/mmr": "*",
     "@typeberry/numbers": "*",
-    "@typeberry/safrole": "*",
-    "@typeberry/shuffling": "*",
     "@typeberry/state": "*",
-    "@typeberry/state-merkleization": "*",
-    "@typeberry/trie": "*",
+    "@typeberry/transition": "*",
     "@typeberry/utils": "*"
-  },
-  "scripts": {
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
