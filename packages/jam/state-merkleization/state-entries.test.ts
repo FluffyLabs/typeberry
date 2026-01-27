@@ -7,7 +7,6 @@ import { Blake2b, HASH_SIZE, TRUNCATED_HASH_SIZE } from "@typeberry/hash";
 import type { State } from "@typeberry/state";
 import { tryAsPerCore } from "@typeberry/state/common.js";
 import { TEST_STATE, TEST_STATE_ROOT, testState } from "@typeberry/state/test.utils.js";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import { serializeStateUpdate } from "./serialize-state-update.js";
 import { SerializedState } from "./serialized-state.js";
 import { StateEntries } from "./state-entries.js";
@@ -56,12 +55,7 @@ describe("State Serialization", () => {
     const state = SerializedState.fromStateEntries(spec, blake2b, serialized);
     assert.deepStrictEqual(state.authPools, authPools);
 
-    const expectedRoot = Compatibility.selectIfGreaterOrEqual({
-      fallback: "0xcf33ddfb0987283f7614652d7eb4d3509e5efd93466a4b28ab4865cc912a66e1",
-      versions: {
-        [GpVersion.V0_7_1]: "0xf1dff0f8d8d5470aa6fc381d07e644f5b2f7a32bf06a7cf1dc664fe4b6298402",
-      },
-    });
+    const expectedRoot = "0xf1dff0f8d8d5470aa6fc381d07e644f5b2f7a32bf06a7cf1dc664fe4b6298402";
 
     assert.strictEqual(serialized.getRootHash(blake2b).toString(), expectedRoot);
   });

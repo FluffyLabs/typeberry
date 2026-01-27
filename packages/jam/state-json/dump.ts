@@ -50,7 +50,7 @@ type JsonStateDump = {
     chi_m: PrivilegedServices["manager"];
     chi_a: PrivilegedServices["assigners"];
     chi_v: PrivilegedServices["delegator"];
-    chi_r?: PrivilegedServices["registrar"];
+    chi_r: PrivilegedServices["registrar"];
     chi_g: PrivilegedServices["autoAccumulateServices"] | null;
   };
   pi: JsonStatisticsData;
@@ -83,7 +83,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
         chi_m: "number",
         chi_a: json.array("number"),
         chi_v: "number",
-        chi_r: json.optional("number"),
+        chi_r: "number",
         chi_g: json.nullable(
           json.map(
             "number",

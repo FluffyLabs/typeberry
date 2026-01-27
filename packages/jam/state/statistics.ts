@@ -7,9 +7,7 @@ import {
 } from "@typeberry/block";
 import { type CodecRecord, codec, type DescribedBy, type Descriptor } from "@typeberry/codec";
 import { tryAsU16, tryAsU32, tryAsU64, type U16, type U32 } from "@typeberry/numbers";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import { codecPerCore, type PerCore } from "./common.js";
-import { ignoreValueWithDefault } from "./service.js";
 
 /**
  * Activity Record of a single validator.
@@ -135,37 +133,17 @@ export class CoreStatistics {
  * https://graypaper.fluffylabs.dev/#/ab2cdbd/19e20219e202?v=0.7.2
  */
 export class ServiceStatistics {
-  static Codec = Compatibility.selectIfGreaterOrEqual({
-    fallback: codec.Class(ServiceStatistics, {
-      providedCount: codecVarU16,
-      providedSize: codec.varU32,
-      refinementCount: codec.varU32,
-      refinementGasUsed: codecVarGas,
-      imports: codecVarU16,
-      extrinsicCount: codecVarU16,
-      extrinsicSize: codec.varU32,
-      exports: codecVarU16,
-      accumulateCount: codec.varU32,
-      accumulateGasUsed: codecVarGas,
-      onTransfersCount: codec.varU32,
-      onTransfersGasUsed: codecVarGas,
-    }),
-    versions: {
-      [GpVersion.V0_7_1]: codec.Class(ServiceStatistics, {
-        providedCount: codecVarU16,
-        providedSize: codec.varU32,
-        refinementCount: codec.varU32,
-        refinementGasUsed: codecVarGas,
-        imports: codecVarU16,
-        extrinsicCount: codecVarU16,
-        extrinsicSize: codec.varU32,
-        exports: codecVarU16,
-        accumulateCount: codec.varU32,
-        accumulateGasUsed: codecVarGas,
-        onTransfersCount: ignoreValueWithDefault(tryAsU32(0)),
-        onTransfersGasUsed: ignoreValueWithDefault(tryAsServiceGas(0)),
-      }),
-    },
+  static Codec = codec.Class(ServiceStatistics, {
+    providedCount: codecVarU16,
+    providedSize: codec.varU32,
+    refinementCount: codec.varU32,
+    refinementGasUsed: codecVarGas,
+    imports: codecVarU16,
+    extrinsicCount: codecVarU16,
+    extrinsicSize: codec.varU32,
+    exports: codecVarU16,
+    accumulateCount: codec.varU32,
+    accumulateGasUsed: codecVarGas,
   });
 
   static create(v: CodecRecord<ServiceStatistics>) {
