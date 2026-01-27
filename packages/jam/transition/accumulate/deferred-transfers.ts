@@ -2,22 +2,18 @@ import { type EntropyHash, type ServiceId, type TimeSlot, tryAsServiceGas } from
 import { W_C } from "@typeberry/block/gp-constants.js";
 import { codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec, PvmBackend } from "@typeberry/config";
+import { PvmExecutor } from "@typeberry/executor";
 import type { Blake2b } from "@typeberry/hash";
-import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
-import {
-  AccumulationStateUpdate,
-  PartiallyUpdatedState,
-} from "@typeberry/jam-host-calls/externalities/state-update.js";
+import type { PendingTransfer } from "@typeberry/jam-host-calls";
+import { AccumulationStateUpdate, PartiallyUpdatedState } from "@typeberry/jam-host-calls";
 import { Logger } from "@typeberry/logger";
 import { sumU64, tryAsU32 } from "@typeberry/numbers";
-import { tryAsGas } from "@typeberry/pvm-interface";
 import { ServiceAccountInfo, type ServicesUpdate, type State } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
 import { FetchExternalities } from "../externalities/fetch-externalities.js";
 import type { CountAndGasUsed } from "../statistics.js";
 import { uniquePreserveOrder } from "./accumulate-utils.js";
-import { PvmExecutor } from "./pvm-executor.js";
 
 type DeferredTransfersInput = {
   pendingTransfers: PendingTransfer[];
@@ -108,7 +104,7 @@ export class DeferredTransfers {
       );
 
       const fetchExternalities = FetchExternalities.createForOnTransfer({ entropy, transfers }, this.chainSpec);
-      let consumedGas = tryAsGas(0);
+      let consumedGas = tryAsServiceGas(0);
 
       const hasTransfers = transfers.length > 0;
       const isCodeCorrect = code !== null && code.length <= W_C;
@@ -133,11 +129,11 @@ export class DeferredTransfers {
           this.chainSpec,
         );
 
-        const gas = transfers.reduce((acc, item) => acc + item.gas, 0n);
-        consumedGas = (await executor.run(args, tryAsGas(gas))).consumedGas;
+        const gas = tryAsServiceGas(transfers.reduce((acc, item) => acc + item.gas, 0n));
+        consumedGas = (await executor.run(args, gas)).consumedGas;
       }
 
-      transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(consumedGas) });
+      transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: consumedGas });
       const [updatedState] = partialState.getStateUpdates();
       currentStateUpdate = updatedState;
     }

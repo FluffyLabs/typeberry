@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { type EntropyHash, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
-import { WorkExecResult, WorkExecResultKind } from "@typeberry/block/work-result.js";
+import { WorkExecResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
@@ -25,7 +25,7 @@ describe("fetch-externalities", () => {
           exportsRoot: Bytes.fill(HASH_SIZE, i + 2).asOpaque(),
           hash: Bytes.fill(HASH_SIZE, i + 4).asOpaque(),
           payloadHash: Bytes.fill(HASH_SIZE, i + 5).asOpaque(),
-          result: new WorkExecResult(WorkExecResultKind.ok, BytesBlob.empty()),
+          result: WorkExecResult.ok(BytesBlob.empty()),
           gas: tryAsServiceGas(1_000),
         }),
       );

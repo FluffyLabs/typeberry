@@ -132,6 +132,7 @@ enum FetchContext {
   LegacyAccumulate = 1,
   /** @deprecated since 0.7.1 */
   LegacyOnTransfer = 2,
+  Refine = 3,
 }
 
 type LegacyAccumulateFetchData = {
@@ -153,13 +154,23 @@ type AccumulateFetchData = {
   operands: Operand[];
 };
 
-type FetchData = LegacyAccumulateFetchData | LegacyOnTransferFetchData | AccumulateFetchData;
+type RefineFetchData = {
+  context: FetchContext.Refine;
+  // TODO [ToDr] should this be available?
+  entropy: undefined;
+};
+
+// TODO [ToDr] Each context should have a separate interface with only relevant methods.
+// The common interface would be then just dispatching to the proper method from a sub-interface depending on context.
+// This will make it less error prone.
+type FetchData = LegacyAccumulateFetchData | LegacyOnTransferFetchData | AccumulateFetchData | RefineFetchData;
 
 export class FetchExternalities implements general.IFetchExternalities {
   private constructor(
     private fetchData: FetchData,
     private chainSpec: ChainSpec,
   ) {}
+
   static createForPre071Accumulate(
     fetchData: Omit<LegacyAccumulateFetchData, "context">,
     chainSpec: ChainSpec,
@@ -179,6 +190,10 @@ export class FetchExternalities implements general.IFetchExternalities {
     chainSpec: ChainSpec,
   ): FetchExternalities {
     return new FetchExternalities({ context: FetchContext.LegacyOnTransfer, ...fetchData }, chainSpec);
+  }
+
+  static createForRefine(fetchData: Omit<RefineFetchData, "context">, chainSpec: ChainSpec): FetchExternalities {
+    return new FetchExternalities({ context: FetchContext.Refine, ...fetchData }, chainSpec);
   }
 
   constants(): BytesBlob {
