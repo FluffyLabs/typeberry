@@ -153,6 +153,8 @@ export class JamnpIpcHandler implements IpcHandler {
     // reject stream messages without open ack first.
     if (this.pendingStreams.has(ipcStreamId)) {
       logger.warn`[${ipcStreamId}] got invalid type ${envelope.type}. Expected Open.`;
+      // closing the connection and removing the stream from pending.
+      this.pendingStreams.delete(ipcStreamId);
       streamSender.close();
       return;
     }
@@ -167,6 +169,8 @@ export class JamnpIpcHandler implements IpcHandler {
     if (envelope.type === StreamEnvelopeType.Close) {
       streamHandler.onClose(toStreamId(ipcStreamId), false);
       this.streams.delete(ipcStreamId);
+      // not really needed, but just for sure.
+      this.pendingStreams.delete(ipcStreamId);
       return;
     }
 
