@@ -155,6 +155,8 @@ export class JamnpIpcHandler implements IpcHandler {
       logger.warn`[${ipcStreamId}] got invalid type ${envelope.type}. Expected Open.`;
       // closing the connection and removing the stream from pending.
       this.pendingStreams.delete(ipcStreamId);
+      // the stream should not be in the collection yet, but we remove it just for safety.
+      this.streams.delete(ipcStreamId);
       streamSender.close();
       return;
     }
