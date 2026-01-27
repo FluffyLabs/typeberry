@@ -11,7 +11,7 @@ const IPC_PEER_ID = "ipc-peer" as PeerId;
 
 /** Construct a protocol-level StreamId from an IPC-level numeric stream ID. */
 function toStreamId(ipcStreamId: IpcStreamId): StreamId {
-  return `${IPC_PEER_ID}:${ipcStreamId}` as StreamId;
+  return tryAsStreamId(`${IPC_PEER_ID}:${ipcStreamId}`);
 }
 
 export type ResponseHandler = (err: Error | null, response?: BytesBlob) => void;

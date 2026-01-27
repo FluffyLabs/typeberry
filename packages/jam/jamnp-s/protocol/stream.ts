@@ -10,6 +10,17 @@ import type { Opaque } from "@typeberry/utils";
  */
 export type StreamId = Opaque<string, "streamId">;
 
+/** Cast a string as `StreamId`. Validates the `peerId:quicStreamId` format. */
+export function tryAsStreamId(id: string): StreamId {
+  const sep = id.lastIndexOf(":");
+  const peerId = id.slice(0, sep);
+  const quicStreamId = Number(id.slice(sep + 1));
+  if (peerId.length === 0 || !Number.isInteger(quicStreamId) || quicStreamId < 0) {
+    throw new Error(`Invalid StreamId: "${id}". Expected "peerId:quicStreamId".`);
+  }
+  return id as StreamId;
+}
+
 /** Unique stream kind. */
 export type StreamKind<T extends U8 = U8> = T;
 /** Try to cast the number as `StreamKind`. */

@@ -3,7 +3,13 @@ import { describe, it } from "node:test";
 import type { BytesBlob } from "@typeberry/bytes";
 import { createDisconnectedPeer, TestManualStream } from "@typeberry/networking/testing.js";
 import { OK } from "@typeberry/utils";
-import type { StreamHandler, StreamId, StreamKind, StreamMessageSender } from "./protocol/stream.js";
+import {
+  type StreamHandler,
+  type StreamId,
+  type StreamKind,
+  type StreamMessageSender,
+  tryAsStreamId,
+} from "./protocol/stream.js";
 import { StreamManager } from "./stream-manager.js";
 
 // Test StreamHandler implementation
@@ -30,7 +36,7 @@ describe("StreamManager", () => {
   describe("stream management", () => {
     it("should return null for unknown stream ID", () => {
       const manager = new StreamManager();
-      const peer = manager.getPeer("peer1:123" as StreamId);
+      const peer = manager.getPeer(tryAsStreamId("peer1:123"));
 
       assert.strictEqual(peer, null);
     });
@@ -124,7 +130,7 @@ describe("StreamManager", () => {
       await manager.onIncomingStream(peer, stream);
 
       // Check that peer is tracked
-      const retrievedPeer = manager.getPeer(`${peerId}:${quicStreamId}` as StreamId);
+      const retrievedPeer = manager.getPeer(tryAsStreamId(`${peerId}:${quicStreamId}`));
       assert.strictEqual(retrievedPeer, peer);
     });
 

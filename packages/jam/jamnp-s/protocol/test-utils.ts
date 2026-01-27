@@ -1,14 +1,21 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import type { PeerId } from "@typeberry/networking";
 import type { OK } from "@typeberry/utils";
-import type { StreamHandler, StreamId, StreamKind, StreamKindOf, StreamMessageSender } from "./stream.js";
+import {
+  type StreamHandler,
+  type StreamId,
+  type StreamKind,
+  type StreamKindOf,
+  type StreamMessageSender,
+  tryAsStreamId,
+} from "./stream.js";
 
 const TEST_PEER_ID = "test-peer" as PeerId;
 
 let nextTestStreamCounter = 0;
 
 function nextTestStreamId(): StreamId {
-  return `${TEST_PEER_ID}:${nextTestStreamCounter++}` as StreamId;
+  return tryAsStreamId(`${TEST_PEER_ID}:${nextTestStreamCounter++}`);
 }
 
 export class TestStreamSender implements StreamMessageSender {

@@ -18,6 +18,7 @@ import {
   type StreamKind,
   type StreamKindOf,
   type StreamMessageSender,
+  tryAsStreamId,
   tryAsStreamKind,
 } from "./protocol/stream.js";
 import { handleAsyncErrors } from "./utils.js";
@@ -137,7 +138,7 @@ export class StreamManager {
 
   private registerStream(peer: Peer, handler: StreamHandler, stream: Stream, initialData: BytesBlob): QuicStreamSender {
     const quicStreamId = tryAsU32(stream.streamId);
-    const streamId = `${peer.id}:${quicStreamId}` as StreamId;
+    const streamId = tryAsStreamId(`${peer.id}:${quicStreamId}`);
 
     // NOTE: `onError` callback may be called multiple times.
     const onError = (e: unknown, kind: StreamErrorKind) => {
