@@ -7,7 +7,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { tryAsU8, type U32 } from "@typeberry/numbers";
 import { Result, WithDebug } from "@typeberry/utils";
-import { type GlobalStreamKey, type StreamHandler, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
+import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAM-SNP CE-128 stream.
@@ -72,7 +72,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   constructor(
     private readonly chainSpec: ChainSpec,
     private readonly getBlockSequence: (
-      globalKey: GlobalStreamKey,
+      streamId: StreamId,
       hash: HeaderHash,
       direction: Direction,
       maxBlocks: U32,
@@ -81,9 +81,9 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     const request = Decoder.decodeObject(BlockRequest.Codec, message);
-    logger.log`[${sender.streamId}] Client has requested: ${request}`;
+    logger.log`[${sender.id}] Client has requested: ${request}`;
 
-    const blocks = this.getBlockSequence(sender.globalKey, request.headerHash, request.direction, request.maxBlocks);
+    const blocks = this.getBlockSequence(sender.id, request.headerHash, request.direction, request.maxBlocks);
 
     sender.bufferAndSend(
       Encoder.encodeObject(codec.sequenceFixLen(Block.Codec.View, blocks.length), blocks, this.chainSpec),
@@ -91,33 +91,33 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
     sender.close();
   }
 
-  onClose(_globalKey: GlobalStreamKey) {}
+  onClose(_streamId: StreamId) {}
 }
 
 export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
-  private promiseResolvers: Map<GlobalStreamKey, (value: BlockView[]) => void> = new Map();
-  private promiseRejectors: Map<GlobalStreamKey, (reason?: unknown) => void> = new Map();
+  private promiseResolvers: Map<StreamId, (value: BlockView[]) => void> = new Map();
+  private promiseRejectors: Map<StreamId, (reason?: unknown) => void> = new Map();
 
   constructor(private readonly chainSpec: ChainSpec) {}
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
-    const { globalKey, streamId } = sender;
-    if (!this.promiseResolvers.has(globalKey)) {
+    const { id } = sender;
+    if (!this.promiseResolvers.has(id)) {
       throw new Error("Received an unexpected message from the server.");
     }
     const blocks = Decoder.decodeSequence(Block.Codec.View, message, this.chainSpec);
-    logger.log`[${streamId}] Server returned ${blocks.length} blocks in ${message.length} bytes of data.`;
-    this.promiseResolvers.get(globalKey)?.(blocks);
-    this.promiseResolvers.delete(globalKey);
+    logger.log`[${id}] Server returned ${blocks.length} blocks in ${message.length} bytes of data.`;
+    this.promiseResolvers.get(id)?.(blocks);
+    this.promiseResolvers.delete(id);
   }
 
-  onClose(globalKey: GlobalStreamKey) {
-    this.promiseRejectors.get(globalKey)?.("Stream closed.");
+  onClose(streamId: StreamId) {
+    this.promiseRejectors.get(streamId)?.("Stream closed.");
 
-    this.promiseResolvers.delete(globalKey);
-    this.promiseRejectors.delete(globalKey);
+    this.promiseResolvers.delete(streamId);
+    this.promiseRejectors.delete(streamId);
   }
 
   async requestBlockSequence(
@@ -126,14 +126,14 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     direction: Direction,
     maxBlocks: U32,
   ): Promise<BlockView[]> {
-    const { globalKey } = sender;
-    if (this.promiseResolvers.has(globalKey)) {
+    const { id } = sender;
+    if (this.promiseResolvers.has(id)) {
       throw new Error("It is disallowed to use the same stream for multiple requests.");
     }
 
     return new Promise((resolve, reject) => {
-      this.promiseResolvers.set(globalKey, resolve);
-      this.promiseRejectors.set(globalKey, reject);
+      this.promiseResolvers.set(id, resolve);
+      this.promiseRejectors.set(id, reject);
 
       sender.bufferAndSend(
         Encoder.encodeObject(BlockRequest.Codec, BlockRequest.create({ headerHash, direction, maxBlocks })),

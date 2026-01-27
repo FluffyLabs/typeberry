@@ -3,7 +3,7 @@ import { Socket } from "node:net";
 import type { ChainSpec } from "@typeberry/config";
 import { JamnpIpcHandler } from "@typeberry/ext-ipc/jamnp/handler.js";
 import { IpcSender } from "@typeberry/ext-ipc/server.js";
-import { ce129, type GlobalStreamKey, up0 } from "@typeberry/jamnp-s";
+import { ce129, type StreamId, up0 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
 import { handleMessageFragmentation } from "@typeberry/networking";
 
@@ -13,8 +13,8 @@ export function startClient(
   spec: ChainSpec,
   socketPath: string,
   getHandshake: () => up0.Handshake,
-  onAnnouncement: (globalKey: GlobalStreamKey, ann: up0.Announcement) => void,
-  onHandshake: (globalKey: GlobalStreamKey, handshake: up0.Handshake) => void,
+  onAnnouncement: (streamId: StreamId, ann: up0.Announcement) => void,
+  onHandshake: (streamId: StreamId, handshake: up0.Handshake) => void,
 ): Promise<JamnpIpcHandler> {
   const client = new Socket();
 

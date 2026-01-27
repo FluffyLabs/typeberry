@@ -5,7 +5,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec, Decoder, Encoder } from "@typeberry/codec";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import { type GlobalStreamKey, type StreamHandler, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
+import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAMNP-S CE 133 Stream
@@ -41,15 +41,15 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 
   constructor(private readonly onWorkPackage: (i: CoreIndex, w: WorkPackage, e: WorkItemExtrinsics) => void) {}
 
-  public readonly workPackages = new Map<GlobalStreamKey, CoreWorkPackage>();
+  public readonly workPackages = new Map<StreamId, CoreWorkPackage>();
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
-    const { globalKey } = sender;
+    const { id } = sender;
     // initially we expect the `CoreWorkPackage`
-    const workPackage = this.workPackages.get(globalKey);
+    const workPackage = this.workPackages.get(id);
     if (workPackage === undefined) {
       const coreWorkPackage = Decoder.decodeObject(CoreWorkPackage.Codec, message);
-      this.workPackages.set(globalKey, coreWorkPackage);
+      this.workPackages.set(id, coreWorkPackage);
       return;
     }
     // next we expect extrinsics
@@ -60,8 +60,8 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
     sender.close();
   }
 
-  onClose(globalKey: GlobalStreamKey): void {
-    this.workPackages.delete(globalKey);
+  onClose(streamId: StreamId): void {
+    this.workPackages.delete(streamId);
   }
 }
 
@@ -69,11 +69,11 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
   onStreamMessage(sender: StreamMessageSender): void {
-    logger.warn`[${sender.streamId}] Got unexpected message on CE-133 stream. Closing.`;
+    logger.warn`[${sender.id}] Got unexpected message on CE-133 stream. Closing.`;
     sender.close();
   }
 
-  onClose(_globalKey: GlobalStreamKey): void {}
+  onClose(_streamId: StreamId): void {}
 
   sendWorkPackage(
     sender: StreamMessageSender,
@@ -82,9 +82,9 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     extrinsic: WorkItemExtrinsics,
   ) {
     const corePack = CoreWorkPackage.create({ coreIndex, workPackage });
-    logger.trace`[${sender.streamId}] Sending work package: ${corePack}`;
+    logger.trace`[${sender.id}] Sending work package: ${corePack}`;
     sender.bufferAndSend(Encoder.encodeObject(CoreWorkPackage.Codec, corePack));
-    logger.trace`[${sender.streamId}] Sending extrinsics: ${workPackage.items}`;
+    logger.trace`[${sender.id}] Sending extrinsics: ${workPackage.items}`;
     sender.bufferAndSend(Encoder.encodeObject(workItemExtrinsicsCodec(workPackage.items), extrinsic));
     // now close the connection
     sender.close();

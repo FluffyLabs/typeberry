@@ -16,7 +16,7 @@ import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { assertNever, OK } from "@typeberry/utils";
 import type { AuxData, Connections } from "../peers.js";
 import { BlockSequenceError, handleGetBlockSequence } from "../protocol/ce-128-block-request.js";
-import { ce128, type GlobalStreamKey, up0 } from "../protocol/index.js";
+import { ce128, type StreamId, up0 } from "../protocol/index.js";
 import type { StreamManager } from "../stream-manager.js";
 import { handleAsyncErrors } from "../utils.js";
 
@@ -49,14 +49,14 @@ export class SyncTask {
   ) {
     const syncTask = new SyncTask(spec, blake2b, streamManager, connections, blocks, onNewBlocks);
 
-    const getPeerForStream = (globalKey: GlobalStreamKey) => {
+    const getPeerForStream = (streamId: StreamId) => {
       // NOTE [ToDr] Needing to query stream manager for a peer might be a bit
       // wasteful, since we probably know the peer when we dispatch the
       // stream message, however it's nice that the current abstraction of
       // streams does not know anything about peers. Revisit if it gets ugly.
 
       // retrieve a peer for that stream
-      return streamManager.getPeer(globalKey);
+      return streamManager.getPeer(streamId);
     };
 
     const up0Handler = new up0.Handler(

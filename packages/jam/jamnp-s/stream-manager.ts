@@ -10,15 +10,14 @@ import {
   type StreamErrorCallback,
   StreamErrorKind,
 } from "@typeberry/networking";
+import { tryAsU32 } from "@typeberry/numbers";
 import type { OK } from "@typeberry/utils";
 import {
-  type GlobalStreamKey,
   type StreamHandler,
   type StreamId,
   type StreamKind,
   type StreamKindOf,
   type StreamMessageSender,
-  tryAsStreamId,
   tryAsStreamKind,
 } from "./protocol/stream.js";
 import { handleAsyncErrors } from "./utils.js";
@@ -33,7 +32,7 @@ export class StreamManager {
 
   /** A collection of open streams, peers and their handlers. */
   private readonly streams: Map<
-    GlobalStreamKey,
+    StreamId,
     {
       handler: StreamHandler;
       streamSender: QuicStreamSender;
@@ -42,7 +41,7 @@ export class StreamManager {
   > = new Map();
 
   /** Promises for stream background tasks (reading data). */
-  private readonly backgroundTasks: Map<GlobalStreamKey, Promise<void>> = new Map();
+  private readonly backgroundTasks: Map<StreamId, Promise<void>> = new Map();
 
   /** Add supported incoming handlers. */
   registerIncomingHandlers(...handlers: StreamHandler[]) {
@@ -59,8 +58,8 @@ export class StreamManager {
   }
 
   /** Get peer associated with a stream. */
-  getPeer(globalKey: GlobalStreamKey): Peer | null {
-    return this.streams.get(globalKey)?.peer ?? null;
+  getPeer(streamId: StreamId): Peer | null {
+    return this.streams.get(streamId)?.peer ?? null;
   }
 
   /** Wait until all of the streams are closed. */
@@ -137,22 +136,22 @@ export class StreamManager {
   }
 
   private registerStream(peer: Peer, handler: StreamHandler, stream: Stream, initialData: BytesBlob): QuicStreamSender {
-    const streamId = tryAsStreamId(stream.streamId);
-    const globalKey: GlobalStreamKey = `${peer.id}:${streamId}`;
+    const quicStreamId = tryAsU32(stream.streamId);
+    const streamId = `${peer.id}:${quicStreamId}` as StreamId;
 
     // NOTE: `onError` callback may be called multiple times.
     const onError = (e: unknown, kind: StreamErrorKind) => {
-      this.streams.delete(globalKey);
-      this.backgroundTasks.delete(globalKey);
+      this.streams.delete(streamId);
+      this.backgroundTasks.delete(streamId);
 
       if (kind === StreamErrorKind.Exception) {
-        logger.error`🚰 --- [${globalKey}] Stream error: ${e}. Disconnecting peer.`;
+        logger.error`🚰 --- [${streamId}] Stream error: ${e}. Disconnecting peer.`;
       }
 
       if (kind !== StreamErrorKind.LocalClose) {
         // whenever we have an error, we are going to inform the handler
         // and close the stream,
-        handler.onClose(globalKey, true);
+        handler.onClose(streamId, true);
         // but also disconnect from the peer.
         peer.disconnect();
       }
@@ -160,8 +159,8 @@ export class StreamManager {
 
     stream.addOnError(onError);
 
-    const quicStream = new QuicStreamSender(streamId, peer.id, stream, onError);
-    this.streams.set(globalKey, {
+    const quicStream = new QuicStreamSender(streamId, stream, onError);
+    this.streams.set(streamId, {
       handler,
       streamSender: quicStream,
       peer,
@@ -176,8 +175,8 @@ export class StreamManager {
 
     // there could be an error already during the first read, so
     // only insert the background task when it's still active.
-    if (this.streams.has(globalKey)) {
-      this.backgroundTasks.set(globalKey, readStreamPromise);
+    if (this.streams.has(streamId)) {
+      this.backgroundTasks.set(streamId, readStreamPromise);
     }
 
     return quicStream;
@@ -197,11 +196,11 @@ async function readStreamForever(
   const callback = handleMessageFragmentation(
     (data) => {
       const bytes = BytesBlob.blobFrom(new Uint8Array(data));
-      logger.trace`🚰 --> [${peer.id}:${quicStream.streamId}] ${bytes}`;
+      logger.trace`🚰 --> [${quicStream.id}] ${bytes}`;
       handler.onStreamMessage(quicStream, bytes);
     },
     () => {
-      logger.error`🚰 --> [${peer.id}:${quicStream.streamId}] got too much data. Disconnecting.`;
+      logger.error`🚰 --> [${quicStream.id}] got too much data. Disconnecting.`;
       peer.disconnect();
     },
   );
@@ -213,7 +212,7 @@ async function readStreamForever(
     callback(bytes.raw);
 
     if (isDone) {
-      logger.log`🚰 --> [${peer.id}:${quicStream.streamId}] remote finished.`;
+      logger.log`🚰 --> [${quicStream.id}] remote finished.`;
       return;
     }
 
@@ -230,16 +229,12 @@ class QuicStreamSender implements StreamMessageSender {
   private bufferedLength = 0;
   private bufferedData: { data: BytesBlob; addPrefix: boolean }[] = [];
   private currentWriterPromise: Promise<void> | null = null;
-  public readonly globalKey: GlobalStreamKey;
 
   constructor(
-    public readonly streamId: StreamId,
-    public readonly peerId: PeerId,
+    public readonly id: StreamId,
     private readonly internal: Stream,
     private readonly onError: StreamErrorCallback,
-  ) {
-    this.globalKey = `${peerId}:${streamId}`;
-  }
+  ) {}
 
   /** Send given piece of data to the other end. */
   bufferAndSend(data: BytesBlob, prefixWithLength = true): boolean {
@@ -263,7 +258,7 @@ class QuicStreamSender implements StreamMessageSender {
               return;
             }
             const { data, addPrefix } = chunk;
-            logger.trace`🚰 <-- [${this.streamId}] write: ${data}`;
+            logger.trace`🚰 <-- [${this.id}] write: ${data}`;
             if (addPrefix) {
               await writer.write(encodeMessageLength(data.raw));
             }
@@ -283,7 +278,7 @@ class QuicStreamSender implements StreamMessageSender {
   close(): void {
     handleAsyncErrors(
       async () => {
-        logger.trace`🚰 <-- [${this.streamId}] closing`;
+        logger.trace`🚰 <-- [${this.id}] closing`;
         if (this.currentWriterPromise !== null) {
           await this.currentWriterPromise;
         }

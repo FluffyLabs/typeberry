@@ -6,7 +6,7 @@ import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypt
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import { type GlobalStreamKey, type StreamHandler, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
+import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAMNP-S CE 134 Stream
@@ -72,7 +72,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
     ) => Promise<{ workReportHash: WorkReportHash; signature: Ed25519Signature }>,
   ) {}
 
-  private readonly requestsMap = new Map<GlobalStreamKey, WorkPackageSharingRequest>();
+  private readonly requestsMap = new Map<StreamId, WorkPackageSharingRequest>();
 
   private static sendWorkReport(
     sender: StreamMessageSender,
@@ -85,12 +85,12 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   }
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
-    const { globalKey, streamId } = sender;
-    const request = this.requestsMap.get(globalKey);
+    const { id } = sender;
+    const request = this.requestsMap.get(id);
 
     if (request === undefined) {
       const receivedRequest = Decoder.decodeObject(WorkPackageSharingRequest.Codec, message);
-      this.requestsMap.set(globalKey, receivedRequest);
+      this.requestsMap.set(id, receivedRequest);
       return;
     }
 
@@ -101,20 +101,20 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
         ServerHandler.sendWorkReport(sender, workReportHash, signature);
       })
       .catch((error) => {
-        logger.error`[${streamId}] Error processing work package: ${error}`;
-        this.onClose(globalKey);
+        logger.error`[${id}] Error processing work package: ${error}`;
+        this.onClose(id);
       });
   }
 
-  onClose(globalKey: GlobalStreamKey): void {
-    this.requestsMap.delete(globalKey);
+  onClose(streamId: StreamId): void {
+    this.requestsMap.delete(streamId);
   }
 }
 
 export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
   private readonly pendingRequests = new Map<
-    GlobalStreamKey,
+    StreamId,
     {
       resolve: (response: { workReportHash: WorkReportHash; signature: Ed25519Signature }) => void;
       reject: (error: Error) => void;
@@ -122,23 +122,23 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   >();
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
-    const { globalKey, streamId } = sender;
-    const pendingRequest = this.pendingRequests.get(globalKey);
+    const { id } = sender;
+    const pendingRequest = this.pendingRequests.get(id);
     if (pendingRequest === undefined) {
       throw new Error("Unexpected message received.");
     }
 
     const response = Decoder.decodeObject(WorkPackageSharingResponse.Codec, message);
-    logger.info`[${streamId}] Received work report hash and signature.`;
+    logger.info`[${id}] Received work report hash and signature.`;
     pendingRequest.resolve({ workReportHash: response.workReportHash, signature: response.signature });
     sender.close();
   }
 
-  onClose(globalKey: GlobalStreamKey): void {
-    const pendingRequest = this.pendingRequests.get(globalKey);
+  onClose(streamId: StreamId): void {
+    const pendingRequest = this.pendingRequests.get(streamId);
     if (pendingRequest !== undefined) {
       pendingRequest.reject(new Error("Stream closed."));
-      this.pendingRequests.delete(globalKey);
+      this.pendingRequests.delete(streamId);
     }
   }
 
@@ -148,15 +148,15 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     segmentsRootMappings: WorkPackageInfo[],
     workPackageBundle: WorkPackageBundle,
   ): Promise<{ workReportHash: WorkReportHash; signature: Ed25519Signature }> {
-    const { globalKey, streamId } = sender;
+    const { id } = sender;
     const request = WorkPackageSharingRequest.create({ coreIndex, segmentsRootMappings });
-    logger.trace`[${streamId}] Sending core index and segments-root mappings.`;
+    logger.trace`[${id}] Sending core index and segments-root mappings.`;
     sender.bufferAndSend(Encoder.encodeObject(WorkPackageSharingRequest.Codec, request));
-    logger.trace`[${streamId}] Sending work package bundle.`;
+    logger.trace`[${id}] Sending work package bundle.`;
     sender.bufferAndSend(Encoder.encodeObject(WorkPackageBundleCodec, workPackageBundle));
 
     return new Promise((resolve, reject) => {
-      this.pendingRequests.set(globalKey, { resolve, reject });
+      this.pendingRequests.set(id, { resolve, reject });
     });
   }
 }

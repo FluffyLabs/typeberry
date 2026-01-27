@@ -5,7 +5,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import { type GlobalStreamKey, type StreamHandler, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
+import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAMNP-S UP 0 stream.
@@ -84,61 +84,61 @@ const logger = Logger.new(import.meta.filename, "protocol/up-0");
 export class Handler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
-  private readonly handshakes: Map<GlobalStreamKey, Handshake> = new Map();
-  private readonly pendingHandshakes: Map<GlobalStreamKey, boolean> = new Map();
+  private readonly handshakes: Map<StreamId, Handshake> = new Map();
+  private readonly pendingHandshakes: Map<StreamId, boolean> = new Map();
 
   constructor(
     private readonly spec: ChainSpec,
     private readonly getHandshake: () => Handshake,
-    private readonly onAnnouncement: (sender: GlobalStreamKey, ann: Announcement) => void,
-    private readonly onHandshake: (sender: GlobalStreamKey, handshake: Handshake) => void,
+    private readonly onAnnouncement: (streamId: StreamId, ann: Announcement) => void,
+    private readonly onHandshake: (streamId: StreamId, handshake: Handshake) => void,
   ) {}
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
-    const { globalKey, streamId } = sender;
+    const { id } = sender;
     // we expect a handshake first
-    if (!this.handshakes.has(globalKey)) {
+    if (!this.handshakes.has(id)) {
       const handshake = Decoder.decodeObject(Handshake.Codec, message);
-      this.handshakes.set(globalKey, handshake);
+      this.handshakes.set(id, handshake);
       // we didn't initiate this handshake, so let's respond
-      if (!this.pendingHandshakes.delete(globalKey)) {
-        logger.log`[${streamId}] <-- responding with a handshake.`;
+      if (!this.pendingHandshakes.delete(id)) {
+        logger.log`[${id}] <-- responding with a handshake.`;
         sender.bufferAndSend(Encoder.encodeObject(Handshake.Codec, this.getHandshake()));
       }
-      this.onHandshake(globalKey, handshake);
+      this.onHandshake(id, handshake);
       return;
     }
 
     // it's just an announcement
     const annoucement = Decoder.decodeObject(Announcement.Codec, message, this.spec);
-    logger.log`[${streamId}] --> got blocks announcement: ${annoucement.final}`;
-    this.onAnnouncement(globalKey, annoucement);
+    logger.log`[${id}] --> got blocks announcement: ${annoucement.final}`;
+    this.onAnnouncement(id, annoucement);
   }
 
-  onClose(globalKey: GlobalStreamKey): void {
-    this.handshakes.delete(globalKey);
-    this.pendingHandshakes.delete(globalKey);
+  onClose(streamId: StreamId): void {
+    this.handshakes.delete(streamId);
+    this.pendingHandshakes.delete(streamId);
   }
 
   sendHandshake(sender: StreamMessageSender) {
-    const { globalKey, streamId } = sender;
-    if (this.handshakes.has(globalKey) || this.pendingHandshakes.has(globalKey)) {
+    const { id } = sender;
+    if (this.handshakes.has(id) || this.pendingHandshakes.has(id)) {
       return;
     }
     const handshake = this.getHandshake();
-    logger.trace`[${streamId}] <-- sending handshake`;
-    this.pendingHandshakes.set(globalKey, true);
+    logger.trace`[${id}] <-- sending handshake`;
+    this.pendingHandshakes.set(id, true);
     sender.bufferAndSend(Encoder.encodeObject(Handshake.Codec, handshake));
   }
 
   sendAnnouncement(sender: StreamMessageSender, annoucement: Announcement) {
-    const { globalKey, streamId } = sender;
+    const { id } = sender;
     // only send announcement if we've handshaken
-    if (this.handshakes.has(globalKey)) {
-      logger.trace`[${streamId}] <-- sending block announcement: ${annoucement.final}`;
+    if (this.handshakes.has(id)) {
+      logger.trace`[${id}] <-- sending block announcement: ${annoucement.final}`;
       sender.bufferAndSend(Encoder.encodeObject(Announcement.Codec, annoucement, this.spec));
     } else {
-      logger.warn`[${streamId}] <-- no handshake yet, skipping announcement.`;
+      logger.warn`[${id}] <-- no handshake yet, skipping announcement.`;
     }
   }
 }

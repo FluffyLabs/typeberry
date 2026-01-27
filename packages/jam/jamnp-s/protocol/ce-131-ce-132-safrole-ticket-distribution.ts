@@ -4,7 +4,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec, Decoder, Encoder } from "@typeberry/codec";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import { type GlobalStreamKey, type StreamHandler, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
+import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAM-SNP CE-131 and CE-132 streams.
@@ -47,23 +47,23 @@ export class ServerHandler<T extends STREAM_KIND> implements StreamHandler<T> {
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     const ticketDistribution = Decoder.decodeObject(TicketDistributionRequest.Codec, message);
-    logger.log`[${sender.streamId}][ce-${this.kind}] Received ticket for epoch ${ticketDistribution.epochIndex}`;
+    logger.log`[${sender.id}][ce-${this.kind}] Received ticket for epoch ${ticketDistribution.epochIndex}`;
     this.onTicketReceived(ticketDistribution.epochIndex, ticketDistribution.ticket);
     sender.close();
   }
 
-  onClose(_globalKey: GlobalStreamKey) {}
+  onClose(_streamId: StreamId) {}
 }
 
 export class ClientHandler<T extends STREAM_KIND> implements StreamHandler<T> {
   constructor(public readonly kind: T) {}
 
   onStreamMessage(sender: StreamMessageSender): void {
-    logger.warn`[${sender.streamId}][ce-${this.kind}] Unexpected message received. Closing.`;
+    logger.warn`[${sender.id}][ce-${this.kind}] Unexpected message received. Closing.`;
     sender.close();
   }
 
-  onClose(_globalKey: GlobalStreamKey) {}
+  onClose(_streamId: StreamId) {}
 
   sendTicket(sender: StreamMessageSender, epochIndex: Epoch, ticket: SignedTicket) {
     const request = TicketDistributionRequest.create({ epochIndex, ticket });

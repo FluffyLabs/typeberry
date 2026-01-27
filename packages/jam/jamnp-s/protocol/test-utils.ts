@@ -1,26 +1,22 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import type { PeerId } from "@typeberry/networking";
 import type { OK } from "@typeberry/utils";
-import {
-  type GlobalStreamKey,
-  type StreamHandler,
-  type StreamId,
-  type StreamKind,
-  type StreamKindOf,
-  type StreamMessageSender,
-  tryAsStreamId,
-} from "./stream.js";
+import type { StreamHandler, StreamId, StreamKind, StreamKindOf, StreamMessageSender } from "./stream.js";
 
 const TEST_PEER_ID = "test-peer" as PeerId;
+
+let nextTestStreamCounter = 0;
+
+function nextTestStreamId(): StreamId {
+  return `${TEST_PEER_ID}:${nextTestStreamCounter++}` as StreamId;
+}
 
 export class TestStreamSender implements StreamMessageSender {
   public readonly onSend: (data: BytesBlob) => void;
   public readonly onCloseCallback: () => void;
-  public readonly peerId: PeerId = TEST_PEER_ID;
-  public readonly globalKey: GlobalStreamKey;
 
   constructor(
-    public readonly streamId: StreamId,
+    public readonly id: StreamId,
     {
       onSend,
       onClose = () => {},
@@ -31,7 +27,6 @@ export class TestStreamSender implements StreamMessageSender {
   ) {
     this.onSend = onSend;
     this.onCloseCallback = onClose;
-    this.globalKey = `${this.peerId}:${streamId}`;
   }
 
   bufferAndSend(data: BytesBlob): boolean {
@@ -92,15 +87,7 @@ export class TestMessageHandler {
     streamKind: StreamKindOf<THandler>,
     work: (handler: THandler, sender: StreamMessageSender) => OK,
   ): void {
-    const getRandomStreamId = () => tryAsStreamId(Math.floor(Math.random() * 2 ** 16));
-    const streams = this.openStreams;
-    const streamId = (function findStreamId() {
-      const s = getRandomStreamId();
-      if (!streams.has(s)) {
-        return s;
-      }
-      return findStreamId();
-    })();
+    const streamId = nextTestStreamId();
 
     // since we are picking a non-existing stream id, there is no way of
     // conflicting here, so the `[handler, stream]` will be fresh.
@@ -134,8 +121,7 @@ export class TestMessageHandler {
       return;
     }
     this.openStreams.delete(id);
-    const globalKey: GlobalStreamKey = `${TEST_PEER_ID}:${id}`;
-    stream[0].onClose(globalKey, false);
+    stream[0].onClose(id, false);
   }
 
   private createStreamIfNotPresent(streamId: StreamId, kind: StreamKind): [StreamHandler, StreamMessageSender] {
@@ -150,11 +136,10 @@ export class TestMessageHandler {
       throw new Error(`Attempting to open stream with unregistered handler: ${kind}`);
     }
 
-    const globalKey: GlobalStreamKey = `${TEST_PEER_ID}:${streamId}`;
     const stream = this.newStream(streamId, kind, () => {
       setTimeout(() => {
         this.openStreams.delete(streamId);
-        handler.onClose(globalKey, false);
+        handler.onClose(streamId, false);
       }, SIMULATED_STREAM_TIMEOUT_MS);
     });
     this.openStreams.set(streamId, [handler, stream]);

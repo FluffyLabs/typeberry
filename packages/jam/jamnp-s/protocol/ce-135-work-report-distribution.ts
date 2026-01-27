@@ -8,7 +8,7 @@ import type { KnownSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import { type GlobalStreamKey, type StreamHandler, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
+import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAMNP-S CE 135 Stream
@@ -58,12 +58,12 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     const guaranteedWorkReport = Decoder.decodeObject(GuaranteedWorkReport.Codec, message, this.chainSpec);
-    logger.log`[${sender.streamId}] Received guaranteed work report.`;
+    logger.log`[${sender.id}] Received guaranteed work report.`;
     this.onWorkReport(guaranteedWorkReport);
     sender.close();
   }
 
-  onClose(_globalKey: GlobalStreamKey) {}
+  onClose(_streamId: StreamId) {}
 }
 
 export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
@@ -72,14 +72,14 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   constructor(private readonly chainSpec: ChainSpec) {}
 
   onStreamMessage(sender: StreamMessageSender): void {
-    logger.warn`[${sender.streamId}] Got unexpected message on CE-135 stream. Closing.`;
+    logger.warn`[${sender.id}] Got unexpected message on CE-135 stream. Closing.`;
     sender.close();
   }
 
-  onClose(_globalKey: GlobalStreamKey): void {}
+  onClose(_streamId: StreamId): void {}
 
   sendWorkReport(sender: StreamMessageSender, workReport: GuaranteedWorkReport) {
-    logger.trace`[${sender.streamId}] Sending guaranteed work report.`;
+    logger.trace`[${sender.id}] Sending guaranteed work report.`;
     sender.bufferAndSend(Encoder.encodeObject(GuaranteedWorkReport.Codec, workReport, this.chainSpec));
     sender.close();
   }
