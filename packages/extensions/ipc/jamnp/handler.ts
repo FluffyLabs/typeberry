@@ -1,7 +1,14 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import type { IpcHandler } from "@typeberry/fuzz-proto";
-import type { StreamHandler, StreamId, StreamKind, StreamKindOf, StreamMessageSender } from "@typeberry/jamnp-s";
+import {
+  type StreamHandler,
+  type StreamId,
+  type StreamKind,
+  type StreamKindOf,
+  type StreamMessageSender,
+  tryAsStreamId,
+} from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
 import type { PeerId } from "@typeberry/networking";
 import type { IpcSender } from "../server.js";

@@ -61,8 +61,6 @@ export class Quic {
       issuerKeyPair: keyPair,
     });
 
-    const lastConnectedPeer = peerVerification();
-
     // QUICConfig
     const config = {
       keepAliveIntervalTime: 3000,
@@ -71,7 +69,9 @@ export class Quic {
       cert: certToPEM(cert),
       key: privKeyPEM,
       verifyPeer: true,
-      verifyCallback: lastConnectedPeer.verifyCallback,
+      // Server accepts TLS and verifies the certificate in the connection handler
+      // (EventQUICServerConnection). Client overrides this with peerVerification() per dial.
+      verifyCallback: async () => undefined,
     };
 
     logger.info`🆔 Peer id: ** ${altNameRaw(key.pubKey)}@${host}:${port} ** (pubkey: ${key.pubKey})`;
@@ -102,8 +102,7 @@ export class Quic {
 
       networkMetrics.recordConnectingIn(peerAddress);
 
-      // Get peer info directly from the connection's certificate chain
-      // This avoids race condition with the shared lastConnectedPeer object
+      // Verify the peer's certificate and extract peer info.
       const remoteCerts = conn.getRemoteCertsChain();
       const verification = await verifyCertificate(remoteCerts);
       if (verification.isError) {
