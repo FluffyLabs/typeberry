@@ -187,13 +187,13 @@ export class JamnpIpcHandler implements IpcHandler {
 }
 
 class EnvelopeSender implements StreamMessageSender {
-  public readonly id: StreamId;
+  public readonly streamId: StreamId;
 
   constructor(
     private readonly ipcStreamId: IpcStreamId,
     private readonly sender: IpcSender,
   ) {
-    this.id = toStreamId(ipcStreamId);
+    this.streamId = toStreamId(ipcStreamId);
   }
 
   open(newStream: NewStream) {

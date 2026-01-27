@@ -23,7 +23,7 @@ export class TestStreamSender implements StreamMessageSender {
   public readonly onCloseCallback: () => void;
 
   constructor(
-    public readonly id: StreamId,
+    public readonly streamId: StreamId,
     {
       onSend,
       onClose = () => {},

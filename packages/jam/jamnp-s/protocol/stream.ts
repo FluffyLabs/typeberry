@@ -1,6 +1,6 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { tryAsU8, type U8 } from "@typeberry/numbers";
-import type { Opaque } from "@typeberry/utils";
+import { asOpaqueType, type Opaque } from "@typeberry/utils";
 
 /**
  * Globally unique stream identifier.
@@ -10,15 +10,9 @@ import type { Opaque } from "@typeberry/utils";
  */
 export type StreamId = Opaque<string, "streamId">;
 
-/** Cast a string as `StreamId`. Validates the `peerId:quicStreamId` format. */
+/** Cast a string as `StreamId`. */
 export function tryAsStreamId(id: string): StreamId {
-  const sep = id.lastIndexOf(":");
-  const peerId = id.slice(0, sep);
-  const quicStreamId = Number(id.slice(sep + 1));
-  if (peerId.length === 0 || !Number.isInteger(quicStreamId) || quicStreamId < 0) {
-    throw new Error(`Invalid StreamId: "${id}". Expected "peerId:quicStreamId".`);
-  }
-  return id as StreamId;
+  return asOpaqueType(id);
 }
 
 /** Unique stream kind. */
@@ -31,7 +25,7 @@ export function tryAsStreamKind<T extends number>(num: T): StreamKind<T & U8> {
 /** Abstraction over sending messages tied to a particular stream. */
 export interface StreamMessageSender {
   /** Globally unique stream identifier. */
-  id: StreamId;
+  streamId: StreamId;
 
   /**
    * Send data blob to the other end.

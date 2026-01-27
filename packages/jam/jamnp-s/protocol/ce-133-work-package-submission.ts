@@ -44,12 +44,12 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   public readonly workPackages = new Map<StreamId, CoreWorkPackage>();
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
-    const { id } = sender;
+    const { streamId } = sender;
     // initially we expect the `CoreWorkPackage`
-    const workPackage = this.workPackages.get(id);
+    const workPackage = this.workPackages.get(streamId);
     if (workPackage === undefined) {
       const coreWorkPackage = Decoder.decodeObject(CoreWorkPackage.Codec, message);
-      this.workPackages.set(id, coreWorkPackage);
+      this.workPackages.set(streamId, coreWorkPackage);
       return;
     }
     // next we expect extrinsics
@@ -69,7 +69,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
   onStreamMessage(sender: StreamMessageSender): void {
-    logger.warn`[${sender.id}] Got unexpected message on CE-133 stream. Closing.`;
+    logger.warn`[${sender.streamId}] Got unexpected message on CE-133 stream. Closing.`;
     sender.close();
   }
 
@@ -82,9 +82,9 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     extrinsic: WorkPackageExtrinsics,
   ) {
     const corePack = CoreWorkPackage.create({ coreIndex, workPackage });
-    logger.trace`[${sender.id}] Sending work package: ${corePack}`;
+    logger.trace`[${sender.streamId}] Sending work package: ${corePack}`;
     sender.bufferAndSend(Encoder.encodeObject(CoreWorkPackage.Codec, corePack));
-    logger.trace`[${sender.id}] Sending extrinsics: ${workPackage.items}`;
+    logger.trace`[${sender.streamId}] Sending extrinsics: ${workPackage.items}`;
     sender.bufferAndSend(Encoder.encodeObject(workItemExtrinsicsCodec(workPackage.items), extrinsic));
     // now close the connection
     sender.close();

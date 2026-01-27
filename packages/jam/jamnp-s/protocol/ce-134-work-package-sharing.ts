@@ -85,12 +85,12 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   }
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
-    const { id } = sender;
-    const request = this.requestsMap.get(id);
+    const { streamId } = sender;
+    const request = this.requestsMap.get(streamId);
 
     if (request === undefined) {
       const receivedRequest = Decoder.decodeObject(WorkPackageSharingRequest.Codec, message);
-      this.requestsMap.set(id, receivedRequest);
+      this.requestsMap.set(streamId, receivedRequest);
       return;
     }
 
@@ -101,8 +101,8 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
         ServerHandler.sendWorkReport(sender, workReportHash, signature);
       })
       .catch((error) => {
-        logger.error`[${id}] Error processing work package: ${error}`;
-        this.onClose(id);
+        logger.error`[${streamId}] Error processing work package: ${error}`;
+        this.onClose(streamId);
       });
   }
 
@@ -122,14 +122,14 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   >();
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
-    const { id } = sender;
-    const pendingRequest = this.pendingRequests.get(id);
+    const { streamId } = sender;
+    const pendingRequest = this.pendingRequests.get(streamId);
     if (pendingRequest === undefined) {
       throw new Error("Unexpected message received.");
     }
 
     const response = Decoder.decodeObject(WorkPackageSharingResponse.Codec, message);
-    logger.info`[${id}] Received work report hash and signature.`;
+    logger.info`[${streamId}] Received work report hash and signature.`;
     pendingRequest.resolve({ workReportHash: response.workReportHash, signature: response.signature });
     sender.close();
   }
@@ -148,15 +148,15 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     segmentsRootMappings: WorkPackageInfo[],
     workPackageBundle: WorkPackageBundle,
   ): Promise<{ workReportHash: WorkReportHash; signature: Ed25519Signature }> {
-    const { id } = sender;
+    const { streamId } = sender;
     const request = WorkPackageSharingRequest.create({ coreIndex, segmentsRootMappings });
-    logger.trace`[${id}] Sending core index and segments-root mappings.`;
+    logger.trace`[${streamId}] Sending core index and segments-root mappings.`;
     sender.bufferAndSend(Encoder.encodeObject(WorkPackageSharingRequest.Codec, request));
-    logger.trace`[${id}] Sending work package bundle.`;
+    logger.trace`[${streamId}] Sending work package bundle.`;
     sender.bufferAndSend(Encoder.encodeObject(WorkPackageBundleCodec, workPackageBundle));
 
     return new Promise((resolve, reject) => {
-      this.pendingRequests.set(id, { resolve, reject });
+      this.pendingRequests.set(streamId, { resolve, reject });
     });
   }
 }

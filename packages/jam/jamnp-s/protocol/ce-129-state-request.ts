@@ -97,9 +97,9 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
   }
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
-    const { id } = sender;
+    const { streamId } = sender;
     if (this.isServer) {
-      logger.info`[${id}][server]: Received request.`;
+      logger.info`[${streamId}][server]: Received request.`;
 
       if (this.getBoundaryNodes === undefined || this.getKeyValuePairs === undefined) {
         return;
@@ -110,7 +110,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       const boundaryNodes = this.getBoundaryNodes(request.headerHash, request.startKey, request.endKey);
       const keyValuePairs = this.getKeyValuePairs(request.headerHash, request.startKey, request.endKey);
 
-      logger.info`[${id}][server]: <-- responding with boundary nodes and key value pairs.`;
+      logger.info`[${streamId}][server]: <-- responding with boundary nodes and key value pairs.`;
       sender.bufferAndSend(Encoder.encodeObject(codec.sequenceVarLen(trieNodeCodec), boundaryNodes));
       sender.bufferAndSend(Encoder.encodeObject(StateResponse.Codec, StateResponse.create({ keyValuePairs })));
       sender.close();
@@ -118,14 +118,14 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       return;
     }
 
-    if (!this.boundaryNodes.has(id)) {
-      this.boundaryNodes.set(id, Decoder.decodeObject(codec.sequenceVarLen(trieNodeCodec), message));
-      logger.info`[${id}][client]: Received boundary nodes.`;
+    if (!this.boundaryNodes.has(streamId)) {
+      this.boundaryNodes.set(streamId, Decoder.decodeObject(codec.sequenceVarLen(trieNodeCodec), message));
+      logger.info`[${streamId}][client]: Received boundary nodes.`;
       return;
     }
 
-    this.onResponse.get(id)?.(Decoder.decodeObject(StateResponse.Codec, message));
-    logger.info`[${id}][client]: Received state values.`;
+    this.onResponse.get(streamId)?.(Decoder.decodeObject(StateResponse.Codec, message));
+    logger.info`[${streamId}][client]: Received state values.`;
   }
 
   onClose(streamId: StreamId) {
@@ -139,11 +139,11 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     startKey: StateRequest["startKey"],
     onResponse: (state: StateResponse) => void,
   ) {
-    const { id } = sender;
-    if (this.onResponse.has(id)) {
+    const { streamId } = sender;
+    if (this.onResponse.has(streamId)) {
       throw new Error("It is disallowed to use the same stream for multiple requests.");
     }
-    this.onResponse.set(id, onResponse);
+    this.onResponse.set(streamId, onResponse);
     sender.bufferAndSend(
       Encoder.encodeObject(
         StateRequest.Codec,

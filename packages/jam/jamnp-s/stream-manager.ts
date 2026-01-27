@@ -197,11 +197,11 @@ async function readStreamForever(
   const callback = handleMessageFragmentation(
     (data) => {
       const bytes = BytesBlob.blobFrom(new Uint8Array(data));
-      logger.trace`🚰 --> [${quicStream.id}] ${bytes}`;
+      logger.trace`🚰 --> [${quicStream.streamId}] ${bytes}`;
       handler.onStreamMessage(quicStream, bytes);
     },
     () => {
-      logger.error`🚰 --> [${quicStream.id}] got too much data. Disconnecting.`;
+      logger.error`🚰 --> [${quicStream.streamId}] got too much data. Disconnecting.`;
       peer.disconnect();
     },
   );
@@ -213,7 +213,7 @@ async function readStreamForever(
     callback(bytes.raw);
 
     if (isDone) {
-      logger.log`🚰 --> [${quicStream.id}] remote finished.`;
+      logger.log`🚰 --> [${quicStream.streamId}] remote finished.`;
       return;
     }
 
@@ -232,7 +232,7 @@ class QuicStreamSender implements StreamMessageSender {
   private currentWriterPromise: Promise<void> | null = null;
 
   constructor(
-    public readonly id: StreamId,
+    public readonly streamId: StreamId,
     private readonly internal: Stream,
     private readonly onError: StreamErrorCallback,
   ) {}
@@ -259,7 +259,7 @@ class QuicStreamSender implements StreamMessageSender {
               return;
             }
             const { data, addPrefix } = chunk;
-            logger.trace`🚰 <-- [${this.id}] write: ${data}`;
+            logger.trace`🚰 <-- [${this.streamId}] write: ${data}`;
             if (addPrefix) {
               await writer.write(encodeMessageLength(data.raw));
             }
@@ -279,7 +279,7 @@ class QuicStreamSender implements StreamMessageSender {
   close(): void {
     handleAsyncErrors(
       async () => {
-        logger.trace`🚰 <-- [${this.id}] closing`;
+        logger.trace`🚰 <-- [${this.streamId}] closing`;
         if (this.currentWriterPromise !== null) {
           await this.currentWriterPromise;
         }

@@ -95,24 +95,24 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
   ) {}
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
-    const { id } = sender;
+    const { streamId } = sender;
     // we expect a handshake first
-    if (!this.handshakes.has(id)) {
+    if (!this.handshakes.has(streamId)) {
       const handshake = Decoder.decodeObject(Handshake.Codec, message);
-      this.handshakes.set(id, handshake);
+      this.handshakes.set(streamId, handshake);
       // we didn't initiate this handshake, so let's respond
-      if (!this.pendingHandshakes.delete(id)) {
-        logger.log`[${id}] <-- responding with a handshake.`;
+      if (!this.pendingHandshakes.delete(streamId)) {
+        logger.log`[${streamId}] <-- responding with a handshake.`;
         sender.bufferAndSend(Encoder.encodeObject(Handshake.Codec, this.getHandshake()));
       }
-      this.onHandshake(id, handshake);
+      this.onHandshake(streamId, handshake);
       return;
     }
 
     // it's just an announcement
     const annoucement = Decoder.decodeObject(Announcement.Codec, message, this.spec);
-    logger.log`[${id}] --> got blocks announcement: ${annoucement.final}`;
-    this.onAnnouncement(id, annoucement);
+    logger.log`[${streamId}] --> got blocks announcement: ${annoucement.final}`;
+    this.onAnnouncement(streamId, annoucement);
   }
 
   onClose(streamId: StreamId): void {
@@ -121,24 +121,24 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
   }
 
   sendHandshake(sender: StreamMessageSender) {
-    const { id } = sender;
-    if (this.handshakes.has(id) || this.pendingHandshakes.has(id)) {
+    const { streamId } = sender;
+    if (this.handshakes.has(streamId) || this.pendingHandshakes.has(streamId)) {
       return;
     }
     const handshake = this.getHandshake();
-    logger.trace`[${id}] <-- sending handshake`;
-    this.pendingHandshakes.set(id, true);
+    logger.trace`[${streamId}] <-- sending handshake`;
+    this.pendingHandshakes.set(streamId, true);
     sender.bufferAndSend(Encoder.encodeObject(Handshake.Codec, handshake));
   }
 
   sendAnnouncement(sender: StreamMessageSender, annoucement: Announcement) {
-    const { id } = sender;
+    const { streamId } = sender;
     // only send announcement if we've handshaken
-    if (this.handshakes.has(id)) {
-      logger.trace`[${id}] <-- sending block announcement: ${annoucement.final}`;
+    if (this.handshakes.has(streamId)) {
+      logger.trace`[${streamId}] <-- sending block announcement: ${annoucement.final}`;
       sender.bufferAndSend(Encoder.encodeObject(Announcement.Codec, annoucement, this.spec));
     } else {
-      logger.warn`[${id}] <-- no handshake yet, skipping announcement.`;
+      logger.warn`[${streamId}] <-- no handshake yet, skipping announcement.`;
     }
   }
 }

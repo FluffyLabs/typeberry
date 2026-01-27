@@ -52,7 +52,7 @@ describe("StreamManager", () => {
       manager.withNewStream(peer, 1 as StreamKind, (h, sender) => {
         workCalled = true;
         assert.strictEqual(h, handler);
-        assert.strictEqual(typeof sender.id, "string");
+        assert.strictEqual(typeof sender.streamId, "string");
         senderFlush = sender.flush();
         return OK;
       });
