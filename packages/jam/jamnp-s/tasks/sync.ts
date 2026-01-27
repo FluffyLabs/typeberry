@@ -62,14 +62,14 @@ export class SyncTask {
     const up0Handler = new up0.Handler(
       spec,
       () => syncTask.getUp0Handshake(),
-      (globalKey, ann) => {
-        const peer = getPeerForStream(globalKey);
+      (streamId, ann) => {
+        const peer = getPeerForStream(streamId);
         if (peer !== null) {
           syncTask.onUp0Annoucement(peer, ann);
         }
       },
-      (globalKey, handshake) => {
-        const peer = getPeerForStream(globalKey);
+      (streamId, handshake) => {
+        const peer = getPeerForStream(streamId);
         if (peer !== null) {
           syncTask.onUp0Handshake(peer, handshake);
         }
@@ -79,8 +79,8 @@ export class SyncTask {
     // server mode
     streamManager.registerIncomingHandlers(up0Handler);
     streamManager.registerIncomingHandlers(
-      new ce128.ServerHandler(spec, (globalKey, hash, direction, maxBlocks) => {
-        const peer = streamManager.getPeer(globalKey);
+      new ce128.ServerHandler(spec, (streamId, hash, direction, maxBlocks) => {
+        const peer = streamManager.getPeer(streamId);
         if (peer !== null) {
           return syncTask.handleGetBlockSequence(peer, hash, direction, maxBlocks);
         }
