@@ -90,7 +90,7 @@ export class JamnpIpcHandler implements IpcHandler {
     }
 
     // pick a stream id
-    const getRandomIpcStreamId = () => Math.floor(Math.random() * 2 ** 16) as IpcStreamId;
+    const getRandomIpcStreamId = () => Math.floor(Math.random() * 2 ** 32) as IpcStreamId;
     const streams = this.streams;
     const ipcStreamId = (function findStreamId() {
       const s = getRandomIpcStreamId();
