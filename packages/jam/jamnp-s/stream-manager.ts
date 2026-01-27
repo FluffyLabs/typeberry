@@ -10,6 +10,7 @@ import {
   type StreamErrorCallback,
   StreamErrorKind,
 } from "@typeberry/networking";
+import { tryAsU32 } from "@typeberry/numbers";
 import type { OK } from "@typeberry/utils";
 import {
   type StreamHandler,
@@ -136,7 +137,8 @@ export class StreamManager {
   }
 
   private registerStream(peer: Peer, handler: StreamHandler, stream: Stream, initialData: BytesBlob): QuicStreamSender {
-    const streamId = tryAsStreamId(stream.streamId);
+    const quicStreamId = tryAsU32(stream.streamId);
+    const streamId = tryAsStreamId(`${peer.id}:${quicStreamId}`);
 
     // NOTE: `onError` callback may be called multiple times.
     const onError = (e: unknown, kind: StreamErrorKind) => {
@@ -144,7 +146,7 @@ export class StreamManager {
       this.backgroundTasks.delete(streamId);
 
       if (kind === StreamErrorKind.Exception) {
-        logger.error`🚰 --- [${peer.id}:${streamId}] Stream error: ${e}. Disconnecting peer.`;
+        logger.error`🚰 --- [${streamId}] Stream error: ${e}. Disconnecting peer.`;
       }
 
       if (kind !== StreamErrorKind.LocalClose) {
@@ -195,11 +197,11 @@ async function readStreamForever(
   const callback = handleMessageFragmentation(
     (data) => {
       const bytes = BytesBlob.blobFrom(new Uint8Array(data));
-      logger.trace`🚰 --> [${peer.id}:${quicStream.streamId}] ${bytes}`;
+      logger.trace`🚰 --> [${quicStream.streamId}] ${bytes}`;
       handler.onStreamMessage(quicStream, bytes);
     },
     () => {
-      logger.error`🚰 --> [${peer.id}:${quicStream.streamId}] got too much data. Disconnecting.`;
+      logger.error`🚰 --> [${quicStream.streamId}] got too much data. Disconnecting.`;
       peer.disconnect();
     },
   );
@@ -211,7 +213,7 @@ async function readStreamForever(
     callback(bytes.raw);
 
     if (isDone) {
-      logger.log`🚰 --> [${peer.id}:${quicStream.streamId}] remote finished.`;
+      logger.log`🚰 --> [${quicStream.streamId}] remote finished.`;
       return;
     }
 

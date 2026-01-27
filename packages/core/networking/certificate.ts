@@ -83,6 +83,7 @@ export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<Pee
   const key = Buffer.from(jwk.x ?? "", "base64url");
 
   if (!xc.verify(xc.publicKey)) {
+    logger.log`Certificate validation failed: incorrect signature`;
     return Result.error(VerifyCertError.IncorrectSignature, () => "Certificate validation failed: incorrect signature");
   }
 

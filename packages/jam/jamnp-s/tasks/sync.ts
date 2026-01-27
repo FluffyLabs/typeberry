@@ -80,7 +80,7 @@ export class SyncTask {
     streamManager.registerIncomingHandlers(up0Handler);
     streamManager.registerIncomingHandlers(
       new ce128.ServerHandler(spec, (streamId, hash, direction, maxBlocks) => {
-        const peer = getPeerForStream(streamId);
+        const peer = streamManager.getPeer(streamId);
         if (peer !== null) {
           return syncTask.handleGetBlockSequence(peer, hash, direction, maxBlocks);
         }

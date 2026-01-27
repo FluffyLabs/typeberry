@@ -1,10 +1,26 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import type { IpcHandler } from "@typeberry/fuzz-proto";
-import type { StreamHandler, StreamId, StreamKind, StreamKindOf, StreamMessageSender } from "@typeberry/jamnp-s";
+import {
+  type StreamHandler,
+  type StreamId,
+  type StreamKind,
+  type StreamKindOf,
+  type StreamMessageSender,
+  tryAsStreamId,
+} from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
+import type { PeerId } from "@typeberry/networking";
+import { assertNever } from "@typeberry/utils";
 import type { IpcSender } from "../server.js";
-import { NewStream, StreamEnvelope, StreamEnvelopeType } from "./stream.js";
+import { type IpcStreamId, NewStream, StreamEnvelope, StreamEnvelopeType } from "./stream.js";
+
+const IPC_PEER_ID = "ipc-peer" as PeerId;
+
+/** Construct a protocol-level StreamId from an IPC-level numeric stream ID. */
+function toStreamId(ipcStreamId: IpcStreamId): StreamId {
+  return tryAsStreamId(`${IPC_PEER_ID}:${ipcStreamId}`);
+}
 
 export type ResponseHandler = (err: Error | null, response?: BytesBlob) => void;
 
@@ -19,9 +35,9 @@ type OnEnd = {
 
 export class JamnpIpcHandler implements IpcHandler {
   /** already initiated streams */
-  private readonly streams: Map<StreamId, StreamHandler> = new Map();
+  private readonly streams: Map<IpcStreamId, StreamHandler> = new Map();
   /** streams awaiting confirmation from the other side. */
-  private readonly pendingStreams: Map<StreamId, boolean> = new Map();
+  private readonly pendingStreams: Map<IpcStreamId, boolean> = new Map();
   /** a collection of handlers for particular stream kind */
   private readonly streamHandlers: Map<StreamKind, StreamHandler> = new Map();
   /** termination promise + resolvers */
@@ -55,9 +71,9 @@ export class JamnpIpcHandler implements IpcHandler {
     work: (handler: THandler, sender: EnvelopeSender) => void,
   ): void {
     // find first stream id with given kind
-    for (const [streamId, handler] of this.streams.entries()) {
+    for (const [ipcStreamId, handler] of this.streams.entries()) {
       if (handler.kind === streamKind) {
-        work(handler as THandler, new EnvelopeSender(streamId, this.sender));
+        work(handler as THandler, new EnvelopeSender(ipcStreamId, this.sender));
         return;
       }
     }
@@ -75,10 +91,10 @@ export class JamnpIpcHandler implements IpcHandler {
     }
 
     // pick a stream id
-    const getRandomStreamId = () => Math.floor(Math.random() * 2 ** 16) as StreamId;
+    const getRandomIpcStreamId = () => Math.floor(Math.random() * 2 ** 32) as IpcStreamId;
     const streams = this.streams;
-    const streamId = (function findStreamId() {
-      const s = getRandomStreamId();
+    const ipcStreamId = (function findStreamId() {
+      const s = getRandomIpcStreamId();
       if (!streams.has(s)) {
         return s;
       }
@@ -86,10 +102,10 @@ export class JamnpIpcHandler implements IpcHandler {
     })();
 
     // register the stream
-    this.streams.set(streamId, handler);
-    this.pendingStreams.set(streamId, true);
+    this.streams.set(ipcStreamId, handler);
+    this.pendingStreams.set(ipcStreamId, true);
 
-    const sender = new EnvelopeSender(streamId, this.sender);
+    const sender = new EnvelopeSender(ipcStreamId, this.sender);
     sender.open(NewStream.create({ streamByte: kind }));
 
     work(handler as THandler, sender);
@@ -99,24 +115,24 @@ export class JamnpIpcHandler implements IpcHandler {
   async onSocketMessage(msg: Uint8Array): Promise<void> {
     // decode the message as `StreamEnvelope`
     const envelope = Decoder.decodeObject(StreamEnvelope.Codec, msg);
-    const streamId = envelope.streamId;
-    logger.log`[${streamId}] incoming message: ${envelope.type} ${envelope.data}`;
+    const ipcStreamId = envelope.streamId;
+    logger.log`[${ipcStreamId}] incoming message: ${envelope.type} ${envelope.data}`;
     // check if this is a already known stream id
-    const streamHandler = this.streams.get(streamId);
-    const streamSender = new EnvelopeSender(streamId, this.sender);
+    const streamHandler = this.streams.get(ipcStreamId);
+    const streamSender = new EnvelopeSender(ipcStreamId, this.sender);
     // we don't know that stream yet, so it has to be a new one
     if (streamHandler === undefined) {
       // closing or message of unknown stream - ignore.
       if (envelope.type !== StreamEnvelopeType.Open) {
-        logger.warn`[${streamId}] (unknown) got invalid type ${envelope.type}.`;
+        logger.warn`[${ipcStreamId}] (unknown) got invalid type ${envelope.type}.`;
         return;
       }
       const newStream = Decoder.decodeObject(NewStream.Codec, envelope.data);
       const handler = this.streamHandlers.get(newStream.streamByte);
       if (handler !== undefined) {
-        logger.log`[${streamId}] new stream for ${handler.kind}`;
+        logger.log`[${ipcStreamId}] new stream for ${handler.kind}`;
         // insert the stream
-        this.streams.set(streamId, handler);
+        this.streams.set(ipcStreamId, handler);
         // Just send back the same stream byte.
         streamSender.open(newStream);
         return;
@@ -126,34 +142,52 @@ export class JamnpIpcHandler implements IpcHandler {
       return;
     }
 
-    // close the stream
-    if (envelope.type === StreamEnvelopeType.Close) {
-      const handler = this.streams.get(streamId);
-      handler?.onClose(streamId, false);
-      this.streams.delete(streamId);
-      return;
-    }
-
-    if (envelope.type !== StreamEnvelopeType.Msg) {
+    if (envelope.type === StreamEnvelopeType.Open) {
       // display a warning but only if the stream was not pending for confirmation.
-      if (!this.pendingStreams.delete(streamId)) {
-        logger.warn`[${streamId}] got invalid type ${envelope.type}.`;
+      if (!this.pendingStreams.delete(ipcStreamId)) {
+        logger.warn`[${ipcStreamId}] got invalid type ${envelope.type}.`;
       }
       return;
     }
 
+    // reject stream messages without open ack first.
+    if (this.pendingStreams.has(ipcStreamId)) {
+      logger.warn`[${ipcStreamId}] got invalid type ${envelope.type}. Expected Open.`;
+      // closing the connection and removing the stream from pending.
+      this.pendingStreams.delete(ipcStreamId);
+      // the stream should not be in the collection yet, but we remove it just for safety.
+      this.streams.delete(ipcStreamId);
+      streamSender.close();
+      return;
+    }
+
     // this is a known stream, so just dispatch the message.
-    streamHandler.onStreamMessage(streamSender, envelope.data);
+    if (envelope.type === StreamEnvelopeType.Msg) {
+      streamHandler.onStreamMessage(streamSender, envelope.data);
+      return;
+    }
+
+    // close the stream
+    if (envelope.type === StreamEnvelopeType.Close) {
+      streamHandler.onClose(toStreamId(ipcStreamId), false);
+      this.streams.delete(ipcStreamId);
+      // not really needed, but just for sure.
+      this.pendingStreams.delete(ipcStreamId);
+      return;
+    }
+
+    assertNever(envelope.type);
   }
 
   /** Notify about termination of the underlying socket. */
   onClose({ error }: { error?: Error }) {
     logger.log`Closing the handler. Reason: ${error !== undefined ? error.message : "close"}.`;
     // Socket closed - we should probably clear everything.
-    for (const [streamId, handler] of this.streams.entries()) {
-      handler.onClose(streamId, error === undefined);
+    for (const [ipcStreamId, handler] of this.streams.entries()) {
+      handler.onClose(toStreamId(ipcStreamId), error !== undefined);
     }
     this.streams.clear();
+    this.pendingStreams.clear();
 
     // finish the handler.
     this.onEnd.finished = true;
@@ -172,17 +206,21 @@ export class JamnpIpcHandler implements IpcHandler {
 }
 
 class EnvelopeSender implements StreamMessageSender {
+  public readonly streamId: StreamId;
+
   constructor(
-    public readonly streamId: StreamId,
+    private readonly ipcStreamId: IpcStreamId,
     private readonly sender: IpcSender,
-  ) {}
+  ) {
+    this.streamId = toStreamId(ipcStreamId);
+  }
 
   open(newStream: NewStream) {
     const msg = Encoder.encodeObject(NewStream.Codec, newStream);
     this.sender.send(
       Encoder.encodeObject(
         StreamEnvelope.Codec,
-        StreamEnvelope.create({ streamId: this.streamId, type: StreamEnvelopeType.Open, data: msg }),
+        StreamEnvelope.create({ streamId: this.ipcStreamId, type: StreamEnvelopeType.Open, data: msg }),
       ),
     );
   }
@@ -191,7 +229,7 @@ class EnvelopeSender implements StreamMessageSender {
     this.sender.send(
       Encoder.encodeObject(
         StreamEnvelope.Codec,
-        StreamEnvelope.create({ streamId: this.streamId, type: StreamEnvelopeType.Msg, data: msg }),
+        StreamEnvelope.create({ streamId: this.ipcStreamId, type: StreamEnvelopeType.Msg, data: msg }),
       ),
     );
     // we are buffering until we run OOM
@@ -203,7 +241,7 @@ class EnvelopeSender implements StreamMessageSender {
       Encoder.encodeObject(
         StreamEnvelope.Codec,
         StreamEnvelope.create({
-          streamId: this.streamId,
+          streamId: this.ipcStreamId,
           type: StreamEnvelopeType.Close,
           data: BytesBlob.blobFromNumbers([]),
         }),

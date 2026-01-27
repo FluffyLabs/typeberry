@@ -44,7 +44,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   public readonly workPackages = new Map<StreamId, CoreWorkPackage>();
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
-    const streamId = sender.streamId;
+    const { streamId } = sender;
     // initially we expect the `CoreWorkPackage`
     const workPackage = this.workPackages.get(streamId);
     if (workPackage === undefined) {
@@ -73,7 +73,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     sender.close();
   }
 
-  onClose(): void {}
+  onClose(_streamId: StreamId): void {}
 
   sendWorkPackage(
     sender: StreamMessageSender,
