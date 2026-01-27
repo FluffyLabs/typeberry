@@ -11,6 +11,7 @@ import {
 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
 import type { PeerId } from "@typeberry/networking";
+import { assertNever } from "@typeberry/utils";
 import type { IpcSender } from "../server.js";
 import { type IpcStreamId, NewStream, StreamEnvelope, StreamEnvelopeType } from "./stream.js";
 
@@ -141,15 +142,7 @@ export class JamnpIpcHandler implements IpcHandler {
       return;
     }
 
-    // close the stream
-    if (envelope.type === StreamEnvelopeType.Close) {
-      const handler = this.streams.get(ipcStreamId);
-      handler?.onClose(toStreamId(ipcStreamId), false);
-      this.streams.delete(ipcStreamId);
-      return;
-    }
-
-    if (envelope.type !== StreamEnvelopeType.Msg) {
+    if (envelope.type === StreamEnvelopeType.Open) {
       // display a warning but only if the stream was not pending for confirmation.
       if (!this.pendingStreams.delete(ipcStreamId)) {
         logger.warn`[${ipcStreamId}] got invalid type ${envelope.type}.`;
@@ -157,8 +150,27 @@ export class JamnpIpcHandler implements IpcHandler {
       return;
     }
 
+    // reject stream messages without open ack first.
+    if (this.pendingStreams.has(ipcStreamId)) {
+      logger.warn`[${ipcStreamId}] got invalid type ${envelope.type}. Expected Open.`;
+      streamSender.close();
+      return;
+    }
+
     // this is a known stream, so just dispatch the message.
-    streamHandler.onStreamMessage(streamSender, envelope.data);
+    if (envelope.type === StreamEnvelopeType.Msg) {
+      streamHandler.onStreamMessage(streamSender, envelope.data);
+      return;
+    }
+
+    // close the stream
+    if (envelope.type === StreamEnvelopeType.Close) {
+      streamHandler.onClose(toStreamId(ipcStreamId), false);
+      this.streams.delete(ipcStreamId);
+      return;
+    }
+
+    assertNever(envelope.type);
   }
 
   /** Notify about termination of the underlying socket. */
@@ -169,6 +181,7 @@ export class JamnpIpcHandler implements IpcHandler {
       handler.onClose(toStreamId(ipcStreamId), error !== undefined);
     }
     this.streams.clear();
+    this.pendingStreams.clear();
 
     // finish the handler.
     this.onEnd.finished = true;
