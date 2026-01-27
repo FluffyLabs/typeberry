@@ -1,7 +1,7 @@
 import type { ServiceId } from "@typeberry/block";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecWithView, Decoder, ObjectView, type SequenceView } from "@typeberry/codec";
+import { type CodecWithView, Decoder, type SequenceView } from "@typeberry/codec";
 import type { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type {
@@ -113,7 +113,7 @@ export class SerializedStateView<T extends SerializedStateBackend> implements St
     if (!this.recentlyUsedServices.includes(id)) {
       this.recentlyUsedServices.push(id);
     }
-  
+
     return Decoder.decodeObject(serviceData.Codec.View, bytes, this.spec);
   }
 }
