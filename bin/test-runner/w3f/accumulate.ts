@@ -20,7 +20,7 @@ import { InMemoryState, NotYetAccumulatedReport, PrivilegedServices, tryAsPerCor
 import { JsonService } from "@typeberry/state-json/accounts.js";
 import { AccumulateOutput } from "@typeberry/transition/accumulate/accumulate-output.js";
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
-import { Compatibility, deepEqual, GpVersion, Result } from "@typeberry/utils";
+import { deepEqual, Result } from "@typeberry/utils";
 import type { RunOptions } from "../common.js";
 
 class Input {
@@ -50,7 +50,7 @@ class TestState {
         bless: "number",
         assign: json.array("number"),
         designate: "number",
-        register: json.optional("number"),
+        register: "number",
         always_acc: json.array({
           id: "number",
           gas: json.fromNumber((x) => tryAsServiceGas(x)),
@@ -69,7 +69,7 @@ class TestState {
     bless: ServiceId;
     assign: ServiceId[];
     designate: ServiceId;
-    register?: ServiceId;
+    register: ServiceId;
     always_acc: { id: ServiceId; gas: ServiceGas }[];
   };
   accounts!: InMemoryService[];
@@ -78,9 +78,6 @@ class TestState {
     { accounts, slot, ready_queue, accumulated, privileges }: TestState,
     chainSpec: ChainSpec,
   ): InMemoryState {
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && privileges.register === undefined) {
-      throw new Error("Privileges from version 0.7.1 must have `register` field!");
-    }
     const autoAccumulateServices = new Map(privileges.always_acc.map(({ gas, id }) => [id, gas]));
 
     return InMemoryState.partial(chainSpec, {

@@ -1,10 +1,4 @@
-import {
-  type EntropyHash,
-  type PerEpochBlock,
-  tryAsPerEpochBlock,
-  tryAsServiceGas,
-  tryAsServiceId,
-} from "@typeberry/block";
+import { type EntropyHash, type PerEpochBlock, tryAsPerEpochBlock, tryAsServiceGas } from "@typeberry/block";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { fromJson } from "@typeberry/block-json";
 import { Bytes } from "@typeberry/bytes";
@@ -24,7 +18,6 @@ import {
   type State,
   tryAsPerCore,
 } from "@typeberry/state";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import { JsonService } from "./accounts.js";
 import { accumulationOutput } from "./accumulation-output.js";
 import { availabilityAssignmentFromJson } from "./availability-assignment.js";
@@ -123,9 +116,6 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
       theta,
       accounts,
     }): InMemoryState => {
-      if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && chi.chi_r === undefined) {
-        throw new Error("Registrar is required in Privileges GP ^0.7.1");
-      }
       return InMemoryState.new(spec, {
         authPools: tryAsPerCore(
           alpha.map((perCore) => {
@@ -161,7 +151,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           manager: chi.chi_m,
           assigners: chi.chi_a,
           delegator: chi.chi_v,
-          registrar: chi.chi_r ?? tryAsServiceId(2 ** 32 - 1),
+          registrar: chi.chi_r,
           autoAccumulateServices: chi.chi_g ?? new Map(),
         }),
         statistics: JsonStatisticsData.toStatisticsData(spec, pi),

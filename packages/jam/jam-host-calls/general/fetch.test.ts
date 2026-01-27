@@ -8,7 +8,6 @@ import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-
 import { tryAsGas } from "@typeberry/pvm-interface";
 import { gasCounter, MemoryBuilder, tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import { emptyRegistersBuffer } from "../utils.js";
 import { Fetch, FetchKind, type IFetchExternalities } from "./fetch.js";
 import { HostCallResult } from "./results.js";
@@ -16,8 +15,6 @@ import { HostCallResult } from "./results.js";
 describe("Fetch", () => {
   const IN_OUT_REG = 7;
   const gas = gasCounter(tryAsGas(0));
-
-  const [itPre071, itPost071] = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? [it.skip, it] : [it, it.skip];
 
   it("should return PvmExecution.Panic if memory write fails", async () => {
     const currentServiceId = tryAsServiceId(10_000);
@@ -369,79 +366,7 @@ describe("Fetch", () => {
     assert.deepStrictEqual(fetchMock.workItemPayloadData, [[workItem]]);
   });
 
-  itPre071("should fetch all operands and write result to memory", async () => {
-    const currentServiceId = tryAsServiceId(10_000);
-    const blob = BytesBlob.blobFromNumbers([101, 102, 103]);
-    const fetchMock = new FetchMock();
-    fetchMock.allOperandsResponse = blob;
-
-    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.LegacyAllOperands);
-
-    const fetch = new Fetch(currentServiceId, fetchMock);
-    const result = await fetch.execute(gas, registers, memory);
-
-    assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.get(IN_OUT_REG), expectedLength);
-    assert.deepStrictEqual(readBack(), blob.raw);
-  });
-
-  itPre071("should fetch one operand and write result to memory", async () => {
-    const currentServiceId = tryAsServiceId(10_000);
-    const blob = BytesBlob.blobFromNumbers([115, 116, 117]);
-    const fetchMock = new FetchMock();
-    const index = tryAsU64(9);
-    fetchMock.oneOperandResponses.set(index.toString(), blob);
-
-    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.LegacyOneOperand);
-
-    registers.set(11, index);
-
-    const fetch = new Fetch(currentServiceId, fetchMock);
-    const result = await fetch.execute(gas, registers, memory);
-
-    assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.get(IN_OUT_REG), expectedLength);
-    assert.deepStrictEqual(readBack(), blob.raw);
-    assert.deepStrictEqual(fetchMock.oneOperandData, [[index]]);
-  });
-
-  itPre071("should fetch all transfers and write result to memory", async () => {
-    const currentServiceId = tryAsServiceId(10_000);
-    const blob = BytesBlob.blobFromNumbers([130, 131, 132]);
-    const fetchMock = new FetchMock();
-    fetchMock.allTransfersResponse = blob;
-
-    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.LegacyAllTransfers);
-
-    const fetch = new Fetch(currentServiceId, fetchMock);
-    const result = await fetch.execute(gas, registers, memory);
-
-    assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.get(IN_OUT_REG), expectedLength);
-    assert.deepStrictEqual(readBack(), blob.raw);
-  });
-
-  itPre071("should fetch one transfer and write result to memory", async () => {
-    const currentServiceId = tryAsServiceId(10_000);
-    const blob = BytesBlob.blobFromNumbers([140, 141, 142]);
-    const fetchMock = new FetchMock();
-    const index = tryAsU64(2);
-    fetchMock.oneTransferResponses.set(index.toString(), blob);
-
-    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.LegacyOneTransfer);
-
-    registers.set(11, index);
-
-    const fetch = new Fetch(currentServiceId, fetchMock);
-    const result = await fetch.execute(gas, registers, memory);
-
-    assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.get(IN_OUT_REG), expectedLength);
-    assert.deepStrictEqual(readBack(), blob.raw);
-    assert.deepStrictEqual(fetchMock.oneTransferData, [[index]]);
-  });
-
-  itPost071("should fetch all transfers and operands and write result to memory", async () => {
+  it("should fetch all transfers and operands and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([101, 102, 103]);
     const fetchMock = new FetchMock();
@@ -460,7 +385,7 @@ describe("Fetch", () => {
     assert.deepStrictEqual(readBack(), blob.raw);
   });
 
-  itPost071("should fetch one operand or transfer and write result to memory", async () => {
+  it("should fetch one operand or transfer and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([115, 116, 117]);
     const fetchMock = new FetchMock();

@@ -49,7 +49,7 @@ import {
   ValidatorData,
 } from "@typeberry/state";
 import { testState } from "@typeberry/state/test.utils.js";
-import { asOpaqueType, Compatibility, deepEqual, GpVersion, OK, Result } from "@typeberry/utils";
+import { asOpaqueType, deepEqual, OK, Result } from "@typeberry/utils";
 import { AccumulateExternalities } from "./accumulate-externalities.js";
 
 let blake2b: Blake2b;
@@ -62,9 +62,7 @@ function partiallyUpdatedState() {
   return new PartiallyUpdatedState(testState());
 }
 
-const INVALID_SERVICE_ID_ERROR = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-  ? "Either manager or delegator or registrar is not a valid service id."
-  : "Either manager or delegator is not a valid service id.";
+const INVALID_SERVICE_ID_ERROR = "Either manager or delegator or registrar is not a valid service id.";
 
 describe("PartialState.checkPreimageStatus", () => {
   it("should check preimage status from state", () => {
@@ -684,8 +682,6 @@ describe("PartialState.forgetPreimage", () => {
 });
 
 describe("PartialState.newService", () => {
-  const itPost071 = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? it : it.skip;
-
   it("should create a new service and update balance + next service ID", () => {
     const state = partiallyUpdatedState();
     const maybeService = state.state.services.get(tryAsServiceId(0));
@@ -766,14 +762,10 @@ describe("PartialState.newService", () => {
     assert.deepStrictEqual(state.stateUpdate.services.created, [expectedServiceId]);
 
     // Verify next service ID bumped
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      assert.deepStrictEqual(partialState.getNextNewServiceId(), tryAsServiceId(4294901556));
-    } else {
-      assert.deepStrictEqual(partialState.getNextNewServiceId(), tryAsServiceId(4294966836));
-    }
+    assert.deepStrictEqual(partialState.getNextNewServiceId(), tryAsServiceId(4294901556));
   });
 
-  itPost071("should create a new service with givent id and update balance + not changed next service ID", () => {
+  it("should create a new service with givent id and update balance + not changed next service ID", () => {
     const state = partiallyUpdatedState();
     const serviceId = 0;
     // setting registrar privileges for our service
@@ -979,7 +971,7 @@ describe("PartialState.newService", () => {
     assert.deepStrictEqual(state.stateUpdate.services.updated, new Map());
   });
 
-  itPost071("should return an error if attempting to create new service with selected id that already exists", () => {
+  it("should return an error if attempting to create new service with selected id that already exists", () => {
     const state = partiallyUpdatedState();
     const serviceId = 0;
     // setting registrar privileges for our service
@@ -1031,52 +1023,49 @@ describe("PartialState.newService", () => {
     assert.deepStrictEqual(partialState.getNextNewServiceId(), tryAsServiceId(10));
   });
 
-  itPost071(
-    "should create a new service with random id if service is unprivileged to select new service id + next service id",
-    () => {
-      const state = partiallyUpdatedState();
-      // setting different service than our privileged registrar
-      state.stateUpdate.privilegedServices = {
-        ...state.state.privilegedServices,
-        registrar: tryAsServiceId(1),
-      };
-      const maybeService = state.state.services.get(tryAsServiceId(0));
-      if (maybeService === undefined) {
-        throw new Error("Invalid service!");
-      }
+  it("should create a new service with random id if service is unprivileged to select new service id + next service id", () => {
+    const state = partiallyUpdatedState();
+    // setting different service than our privileged registrar
+    state.stateUpdate.privilegedServices = {
+      ...state.state.privilegedServices,
+      registrar: tryAsServiceId(1),
+    };
+    const maybeService = state.state.services.get(tryAsServiceId(0));
+    if (maybeService === undefined) {
+      throw new Error("Invalid service!");
+    }
 
-      const partialState = new AccumulateExternalities(
-        tinyChainSpec,
-        blake2b,
-        state,
-        tryAsServiceId(0),
-        tryAsServiceId(10),
-        tryAsTimeSlot(16),
-      );
+    const partialState = new AccumulateExternalities(
+      tinyChainSpec,
+      blake2b,
+      state,
+      tryAsServiceId(0),
+      tryAsServiceId(10),
+      tryAsTimeSlot(16),
+    );
 
-      const codeHash = Bytes.fill(HASH_SIZE, 0x12).asOpaque();
-      const codeLength = tryAsU64(1024);
-      const accumulateMinGas = tryAsServiceGas(10n);
-      const onTransferMinGas = tryAsServiceGas(20n);
-      const gratisStorage = tryAsU64(1024);
-      // selecting service id
-      const serviceId = tryAsU64(42);
+    const codeHash = Bytes.fill(HASH_SIZE, 0x12).asOpaque();
+    const codeLength = tryAsU64(1024);
+    const accumulateMinGas = tryAsServiceGas(10n);
+    const onTransferMinGas = tryAsServiceGas(20n);
+    const gratisStorage = tryAsU64(1024);
+    // selecting service id
+    const serviceId = tryAsU64(42);
 
-      // when
-      const result = partialState.newService(
-        codeHash,
-        codeLength,
-        accumulateMinGas,
-        onTransferMinGas,
-        gratisStorage,
-        serviceId,
-      );
+    // when
+    const result = partialState.newService(
+      codeHash,
+      codeLength,
+      accumulateMinGas,
+      onTransferMinGas,
+      gratisStorage,
+      serviceId,
+    );
 
-      // then
-      assert.deepStrictEqual(result, Result.ok(10));
-      assert.deepStrictEqual(partialState.getNextNewServiceId(), tryAsServiceId(4294901556));
-    },
-  );
+    // then
+    assert.deepStrictEqual(result, Result.ok(10));
+    assert.deepStrictEqual(partialState.getNextNewServiceId(), tryAsServiceId(4294901556));
+  });
 });
 
 describe("PartialState.updateValidatorsData", () => {
@@ -1214,8 +1203,6 @@ describe("PartialState.upgradeService", () => {
 });
 
 describe("PartialState.updateAuthorizationQueue", () => {
-  const itPost071 = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? it : it.skip;
-
   it("should update the authorization queue for a given core index", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
@@ -1241,7 +1228,7 @@ describe("PartialState.updateAuthorizationQueue", () => {
     assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), queue);
   });
 
-  itPost071("should return InvalidServiceId when given auth manager is invalid", () => {
+  it("should return InvalidServiceId when given auth manager is invalid", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
@@ -1338,8 +1325,6 @@ describe("PartialState.updateAuthorizationQueue", () => {
 });
 
 describe("PartialState.updatePrivilegedServices", () => {
-  const [itPre071, itPost071] = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? [it.skip, it] : [it, it.skip];
-
   it("should update privileged services", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
@@ -1382,108 +1367,6 @@ describe("PartialState.updatePrivilegedServices", () => {
       }),
     );
   });
-
-  itPre071("should return UnprivilegedError when current service is unprivileged", () => {
-    const state = partiallyUpdatedState();
-    state.state.privilegedServices = { ...state.state.privilegedServices, manager: tryAsServiceId(1) };
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
-
-    const manager = tryAsServiceId(1);
-    const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
-    const delegator = tryAsServiceId(3);
-    const registrar = tryAsServiceId(4);
-    const autoAccumulate = new Map([
-      [tryAsServiceId(4), tryAsServiceGas(10n)],
-      [tryAsServiceId(5), tryAsServiceGas(20n)],
-    ]);
-
-    // when
-    const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
-
-    // then
-    deepEqual(
-      result,
-      Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Service 0 is not manager"),
-    );
-    assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
-  });
-
-  itPre071(
-    "should return UnprivilegedError when current service is unprivileged and manager is invalid service id",
-    () => {
-      const state = partiallyUpdatedState();
-      state.state.privilegedServices = { ...state.state.privilegedServices, manager: tryAsServiceId(1) };
-      const partialState = new AccumulateExternalities(
-        tinyChainSpec,
-        blake2b,
-        state,
-        tryAsServiceId(0),
-        tryAsServiceId(10),
-        tryAsTimeSlot(16),
-      );
-
-      const manager: ServiceId | null = null;
-      const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
-      const delegator = tryAsServiceId(3);
-      const registrar = tryAsServiceId(4);
-      const autoAccumulate = new Map([
-        [tryAsServiceId(4), tryAsServiceGas(10n)],
-        [tryAsServiceId(5), tryAsServiceGas(20n)],
-      ]);
-
-      // when
-      const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
-
-      // then
-      deepEqual(
-        result,
-        Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Service 0 is not manager"),
-      );
-      assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
-    },
-  );
-
-  itPre071(
-    "should return UnprivilegedError when current service is unprivileged and validator is invalid service id",
-    () => {
-      const state = partiallyUpdatedState();
-      state.state.privilegedServices = { ...state.state.privilegedServices, manager: tryAsServiceId(1) };
-      const partialState = new AccumulateExternalities(
-        tinyChainSpec,
-        blake2b,
-        state,
-        tryAsServiceId(0),
-        tryAsServiceId(10),
-        tryAsTimeSlot(16),
-      );
-
-      const manager = tryAsServiceId(1);
-      const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
-      const delegator: ServiceId | null = null;
-      const registrar = tryAsServiceId(4);
-      const autoAccumulate = new Map([
-        [tryAsServiceId(4), tryAsServiceGas(10n)],
-        [tryAsServiceId(5), tryAsServiceGas(20n)],
-      ]);
-
-      // when
-      const result = partialState.updatePrivilegedServices(manager, assigners, delegator, registrar, autoAccumulate);
-
-      // then
-      deepEqual(
-        result,
-        Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Service 0 is not manager"),
-      );
-      assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
-    },
-  );
 
   it("should return InvalidService when given manager is invalid service id", () => {
     const state = partiallyUpdatedState();
@@ -1547,7 +1430,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     assert.deepStrictEqual(state.stateUpdate.privilegedServices, null);
   });
 
-  itPost071("should return InvalidService when given registrar is invalid service id", () => {
+  it("should return InvalidService when given registrar is invalid service id", () => {
     const state = partiallyUpdatedState();
     const partialState = new AccumulateExternalities(
       tinyChainSpec,

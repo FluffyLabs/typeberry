@@ -28,7 +28,6 @@ import { AccumulationOutput, accumulationOutputComparator } from "@typeberry/sta
 import { recentlyAccumulatedCodec } from "@typeberry/state/recently-accumulated.js";
 import { SafroleData, type SafroleDataView } from "@typeberry/state/safrole-data.js";
 import type { StateView } from "@typeberry/state/state-view.js";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import { type StateKey, StateKeyIdx, stateKeys } from "./keys.js";
 
 export type StateCodec<T, V = T> = {
@@ -184,9 +183,7 @@ export namespace serialize {
   /** C(255, s): https://graypaper.fluffylabs.dev/#/85129da/383103383103?v=0.6.3 */
   export const serviceData = (serviceId: ServiceId) => ({
     key: stateKeys.serviceInfo(serviceId),
-    Codec: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-      ? codecWithVersion(ServiceAccountInfo.Codec)
-      : ServiceAccountInfo.Codec,
+    Codec: codecWithVersion(ServiceAccountInfo.Codec),
   });
 
   /** https://graypaper.fluffylabs.dev/#/85129da/384803384803?v=0.6.3 */

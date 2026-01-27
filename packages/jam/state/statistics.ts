@@ -180,8 +180,6 @@ export class ServiceStatistics {
       v.extrinsicCount,
       v.accumulateCount,
       v.accumulateGasUsed,
-      v.onTransfersCount,
-      v.onTransfersGasUsed,
     );
   }
 
@@ -206,30 +204,13 @@ export class ServiceStatistics {
     public accumulateCount: U32,
     /** `a.1` */
     public accumulateGasUsed: ServiceGas,
-    /** `t.0` @deprecated since 0.7.1 */
-    public onTransfersCount: U32,
-    /** `t.1` @deprecated since 0.7.1 */
-    public onTransfersGasUsed: ServiceGas,
   ) {}
 
   static empty() {
     const zero = tryAsU32(0);
     const zero16 = tryAsU16(0);
     const zeroGas = tryAsServiceGas(0);
-    return new ServiceStatistics(
-      zero16,
-      zero,
-      zero,
-      zeroGas,
-      zero16,
-      zero16,
-      zero,
-      zero16,
-      zero,
-      zeroGas,
-      zero,
-      zeroGas,
-    );
+    return new ServiceStatistics(zero16, zero, zero, zeroGas, zero16, zero16, zero, zero16, zero, zeroGas);
   }
 }
 

@@ -10,7 +10,7 @@ import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
-import { Compatibility, GpVersion, Result } from "@typeberry/utils";
+import { Result } from "@typeberry/utils";
 import { NewServiceError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../general/results.js";
@@ -58,8 +58,6 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: New", () => {
-  const itPost071 = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? it : it.skip;
-
   it("should create a new service", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
@@ -154,7 +152,7 @@ describe("HostCalls: New", () => {
     assert.deepStrictEqual(accumulate.newServiceCalled.length, 1);
   });
 
-  itPost071("should create a new service with selected id", async () => {
+  it("should create a new service with selected id", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10); // service has registrar privilege
     const n = new New(serviceId, accumulate);
@@ -179,7 +177,7 @@ describe("HostCalls: New", () => {
     ]);
   });
 
-  itPost071("should create a new service with random id", async () => {
+  it("should create a new service with random id", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000); // service does not have registrar privilege
     const n = new New(serviceId, accumulate);
@@ -204,7 +202,7 @@ describe("HostCalls: New", () => {
     ]);
   });
 
-  itPost071("should fail when trying to set selected id, but service already exists", async () => {
+  it("should fail when trying to set selected id, but service already exists", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10);
     const n = new New(serviceId, accumulate);
