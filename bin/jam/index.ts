@@ -76,8 +76,13 @@ async function prepareConfigFile(
         )
       : [];
 
+  const isDevMode = args.command === Command.Dev;
+  const devIndex = isDevMode ? args.args.index : null;
+  const isFastForward = isDevMode ? args.args.isFastForward : false;
+
   return JamConfig.new({
-    isAuthoring: args.command === Command.Dev,
+    isAuthoring: isDevMode,
+    isFastForward,
     nodeName,
     nodeConfig,
     pvmBackend: args.args.pvm,
@@ -87,7 +92,7 @@ async function prepareConfigFile(
       port: devPort(devPortShift),
       bootnodes: devBootnodes.concat(nodeConfig.chainSpec.bootnodes ?? []),
     },
-    devValidatorIndex: args.command === Command.Dev ? args.args.index : null,
+    devValidatorIndex: devIndex,
   });
 }
 

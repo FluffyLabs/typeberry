@@ -143,6 +143,9 @@ export async function main(config: Config, comms: GeneratorInternal) {
     return Result.ok(state.sealingKeySeries);
   }
 
+  const isFastForward = config.workerParams.isFastForward;
+  let lastGeneratedSlot = startTimeSlot;
+
   while (!isFinished) {
     const hash = blocks.getBestHeaderHash();
     const state = states.getState(hash);
@@ -152,10 +155,24 @@ export async function main(config: Config, comms: GeneratorInternal) {
       continue;
     }
 
-    const time = getTime();
-    /** Assuming `slotDuration` is 6 sec it is safe till year 2786. If `slotDuration` is 1 sec then it is safe till 2106   */
-    const timeSlot = tryAsTimeSlot(Number(time / 1000n / BigInt(chainSpec.slotDuration)));
     const lastTimeSlot = state.timeslot;
+
+    /**
+     * In fastForward mode, use simulated time (next slot after current state).
+     * In normal mode, use wall clock time.
+     * Assuming `slotDuration` is 6 sec it is safe till year 2786.
+     * If `slotDuration` is 1 sec then it is safe till 2106.
+     */
+    const timeSlot =
+      isFastForward === true
+        ? tryAsTimeSlot(lastTimeSlot + 1)
+        : tryAsTimeSlot(Number(getTime() / 1000n / BigInt(chainSpec.slotDuration)));
+
+    // In fastForward mode, skip if we already generated for this slot (waiting for import)
+    if (isFastForward === true && timeSlot <= lastGeneratedSlot) {
+      continue;
+    }
+
     const isNewEpoch = isEpochChanged(lastTimeSlot, timeSlot);
     const selingKeySeriesResult = await getSealingKeySeries(isNewEpoch, timeSlot, state);
 
@@ -175,11 +192,17 @@ export async function main(config: Config, comms: GeneratorInternal) {
       const sealPayload = getSealPayload(selingKeySeriesResult.ok, entropy);
       const newBlock = await generator.nextBlockView(validatorIndex, key.bandersnatchSecret, sealPayload, timeSlot);
       counter += 1;
+      lastGeneratedSlot = timeSlot;
       logger.trace`Sending block ${counter}`;
       await comms.sendBlock(newBlock);
+    } else if (isFastForward === true) {
+      // In fast-forward mode, if this slot is not ours, wait briefly for other validators to produce blocks
+      await setTimeout(10);
     }
 
-    await setTimeout(chainSpec.slotDuration * 1000);
+    if (isFastForward === false) {
+      await setTimeout(chainSpec.slotDuration * 1000);
+    }
   }
 
   logger.info`🎁 Block Authorship finished. Closing channel.`;

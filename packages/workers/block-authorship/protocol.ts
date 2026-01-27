@@ -45,11 +45,15 @@ export class ValidatorSecrets {
 export class BlockAuthorshipConfig {
   static Codec = codec.Class(BlockAuthorshipConfig, {
     keys: codec.sequenceVarLen(ValidatorSecrets.Codec),
+    isFastForward: codec.bool,
   });
 
-  static create({ keys }: CodecRecord<BlockAuthorshipConfig>) {
-    return new BlockAuthorshipConfig(keys);
+  static create({ keys, isFastForward }: CodecRecord<BlockAuthorshipConfig>) {
+    return new BlockAuthorshipConfig(keys, isFastForward);
   }
 
-  private constructor(public readonly keys: ValidatorSecrets[]) {}
+  private constructor(
+    public readonly keys: ValidatorSecrets[],
+    public readonly isFastForward: boolean,
+  ) {}
 }
