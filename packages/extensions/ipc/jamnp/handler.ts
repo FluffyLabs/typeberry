@@ -166,7 +166,7 @@ export class JamnpIpcHandler implements IpcHandler {
     logger.log`Closing the handler. Reason: ${error !== undefined ? error.message : "close"}.`;
     // Socket closed - we should probably clear everything.
     for (const [ipcStreamId, handler] of this.streams.entries()) {
-      handler.onClose(toStreamId(ipcStreamId), error === undefined);
+      handler.onClose(toStreamId(ipcStreamId), error !== undefined);
     }
     this.streams.clear();
 
