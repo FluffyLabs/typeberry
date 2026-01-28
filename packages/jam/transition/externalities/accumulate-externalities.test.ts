@@ -765,7 +765,7 @@ describe("PartialState.newService", () => {
     assert.deepStrictEqual(partialState.getNextNewServiceId(), tryAsServiceId(4294901556));
   });
 
-  it("should create a new service with givent id and update balance + not changed next service ID", () => {
+  it("should create a new service with given id and update balance + not changed next service ID", () => {
     const state = partiallyUpdatedState();
     const serviceId = 0;
     // setting registrar privileges for our service
