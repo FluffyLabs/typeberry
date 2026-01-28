@@ -1,8 +1,6 @@
-import { type ServiceGas, type ServiceId, tryAsServiceId } from "@typeberry/block";
+import type { ServiceGas, ServiceId } from "@typeberry/block";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import { codecPerCore, type PerCore } from "./common.js";
-import { ignoreValueWithDefault } from "./service.js";
 
 /**
  * https://graypaper.fluffylabs.dev/#/ab2cdbd/114402114402?v=0.7.2
@@ -13,9 +11,7 @@ export class PrivilegedServices {
     manager: codec.u32.asOpaque<ServiceId>(),
     assigners: codecPerCore(codec.u32.asOpaque<ServiceId>()),
     delegator: codec.u32.asOpaque<ServiceId>(),
-    registrar: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-      ? codec.u32.asOpaque<ServiceId>()
-      : ignoreValueWithDefault(tryAsServiceId(2 ** 32 - 1)),
+    registrar: codec.u32.asOpaque<ServiceId>(),
     autoAccumulateServices: codec.dictionary(codec.u32.asOpaque<ServiceId>(), codec.u64.asOpaque<ServiceGas>(), {
       sortKeys: (a, b) => a - b,
     }),

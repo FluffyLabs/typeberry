@@ -40,13 +40,6 @@ export type Input = {
    * https://graypaper.fluffylabs.dev/#/cc517d7/171f05171f05?v=0.6.5
    */
   accumulationStatistics: Map<ServiceId, CountAndGasUsed>;
-  /**
-   * `X`: Deffered transfer statistics
-   * TODO [MaSo] Use fields from accumulation.
-   *
-   * https://graypaper.fluffylabs.dev/#/cc517d7/18dd0018dd00?v=0.6.5
-   */
-  transferStatistics: Map<ServiceId, CountAndGasUsed>;
   reporters: readonly Ed25519Key[];
   currentValidatorData: State["currentValidatorData"];
 };
@@ -182,7 +175,6 @@ export class Statistics {
     preimages: PreimagesExtrinsic,
     workResults: WorkResult[],
     accumulationKeys: MapIterator<ServiceId>,
-    transferKeys: MapIterator<ServiceId>,
   ) {
     const serviceIds = new Set<ServiceId>();
 
@@ -193,9 +185,6 @@ export class Statistics {
       serviceIds.add(workResult.serviceId);
     }
     for (const serviceId of accumulationKeys) {
-      serviceIds.add(serviceId);
-    }
-    for (const serviceId of transferKeys) {
       serviceIds.add(serviceId);
     }
 
@@ -303,7 +292,6 @@ export class Statistics {
       extrinsic.preimages,
       incomingReports.flatMap((wr) => wr.results),
       input.accumulationStatistics.keys(),
-      input.transferStatistics.keys(),
     );
 
     for (const serviceId of serviceIds) {
@@ -314,11 +302,6 @@ export class Statistics {
       const { count: providedCount, size: providedSize } = this.calculateProvidedScoreService(preimages);
 
       const { count: accumulatedCount, gasUsed: accumulatedGasUsed } = input.accumulationStatistics.get(serviceId) ?? {
-        count: tryAsU32(0),
-        gasUsed: tryAsServiceGas(0n),
-      };
-
-      const { count: transfersCount, gasUsed: transfersGasUsed } = input.transferStatistics.get(serviceId) ?? {
         count: tryAsU32(0),
         gasUsed: tryAsServiceGas(0n),
       };
@@ -340,8 +323,6 @@ export class Statistics {
       serviceStatistics.providedSize = providedSize;
       serviceStatistics.accumulateCount = accumulatedCount;
       serviceStatistics.accumulateGasUsed = accumulatedGasUsed;
-      serviceStatistics.onTransfersCount = transfersCount;
-      serviceStatistics.onTransfersGasUsed = transfersGasUsed;
 
       services.set(serviceId, serviceStatistics);
     }

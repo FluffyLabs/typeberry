@@ -40,7 +40,6 @@ class TinyInput {
         incomingReports: [],
         availableReports: [],
         accumulationStatistics: new Map(),
-        transferStatistics: new Map(),
       };
     },
   );
@@ -65,7 +64,6 @@ class FullInput {
         incomingReports: [],
         availableReports: [],
         accumulationStatistics: new Map(),
-        transferStatistics: new Map(),
       };
     },
   );

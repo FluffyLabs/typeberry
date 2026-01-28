@@ -1,4 +1,4 @@
-import type { BlockView, CoreIndex, HeaderHash, ServiceId, TimeSlot } from "@typeberry/block";
+import type { BlockView, CoreIndex, HeaderHash, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { asKnownSize, HashSet } from "@typeberry/collections";
@@ -14,25 +14,13 @@ import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
 import type { ServicesUpdate, State, WithStateView } from "@typeberry/state";
-import {
-  assertEmpty,
-  Compatibility,
-  check,
-  type ErrorResult,
-  GpVersion,
-  measure,
-  OK,
-  Result,
-  type TaggedError,
-} from "@typeberry/utils";
+import { assertEmpty, type ErrorResult, measure, OK, Result, type TaggedError } from "@typeberry/utils";
 import { AccumulateOutput } from "./accumulate/accumulate-output.js";
 import {
   type ACCUMULATION_ERROR,
   Accumulate,
   type AccumulateOptions,
   type AccumulateStateUpdate,
-  DeferredTransfers,
-  type DeferredTransfersErrorCode,
 } from "./accumulate/index.js";
 import { Assurances, type AssurancesError, type AssurancesStateUpdate } from "./assurances.js";
 import { Authorization, type AuthorizationStateUpdate } from "./authorization.js";
@@ -40,7 +28,7 @@ import type { TransitionHasher } from "./hasher.js";
 import { Preimages, type PreimagesErrorCode, type PreimagesStateUpdate } from "./preimages.js";
 import { RecentHistory, type RecentHistoryStateUpdate } from "./recent-history.js";
 import { type HeaderChain, Reports, type ReportsError, type ReportsStateUpdate } from "./reports/index.js";
-import { type CountAndGasUsed, Statistics, type StatisticsStateUpdate } from "./statistics.js";
+import { Statistics, type StatisticsStateUpdate } from "./statistics.js";
 
 export class DbHeaderChain implements HeaderChain {
   static new(blocks: BlocksDb) {
@@ -95,8 +83,7 @@ export enum StfErrorKind {
   Preimages = 4,
   SafroleSeal = 5,
   Accumulate = 6,
-  DeferredTransfers = 7,
-  Offenders = 8,
+  Offenders = 7,
 }
 
 export type StfError =
@@ -107,7 +94,6 @@ export type StfError =
   | TaggedError<StfErrorKind.Preimages, PreimagesErrorCode>
   | TaggedError<StfErrorKind.SafroleSeal, SafroleSealError>
   | TaggedError<StfErrorKind.Accumulate, ACCUMULATION_ERROR>
-  | TaggedError<StfErrorKind.DeferredTransfers, DeferredTransfersErrorCode>
   | TaggedError<StfErrorKind.Offenders, OFFENDERS_ERROR>;
 
 export const stfError = <Kind extends StfErrorKind, Err extends StfError["error"]>(
@@ -131,8 +117,6 @@ export class OnChain {
   // chapter 12: https://graypaper.fluffylabs.dev/#/68eaa1f/159f02159f02?v=0.6.4
   private readonly accumulate: Accumulate;
   private readonly accumulateOutput: AccumulateOutput;
-  // chapter 12.3: https://graypaper.fluffylabs.dev/#/68eaa1f/178203178203?v=0.6.4
-  private readonly deferredTransfers: DeferredTransfers;
   // chapter 12.4: https://graypaper.fluffylabs.dev/#/68eaa1f/18cc0018cc00?v=0.6.4
   private readonly preimages: Preimages;
   // after accumulation
@@ -166,7 +150,6 @@ export class OnChain {
     this.assurances = new Assurances(chainSpec, state, hasher.blake2b);
     this.accumulate = new Accumulate(chainSpec, hasher.blake2b, state, options);
     this.accumulateOutput = new AccumulateOutput();
-    this.deferredTransfers = new DeferredTransfers(chainSpec, hasher.blake2b, state, options.pvm);
     this.preimages = new Preimages(state, hasher.blake2b);
 
     this.authorization = new Authorization(chainSpec, state);
@@ -314,7 +297,6 @@ export class OnChain {
     const {
       stateUpdate: accumulateUpdate,
       accumulationStatistics,
-      pendingTransfers,
       accumulationOutputLog,
       ...accumulateRest
     } = accumulateResult.ok;
@@ -330,32 +312,7 @@ export class OnChain {
       ...servicesUpdateFromAccumulate
     } = accumulateUpdate;
 
-    let transferStatistics = new Map<ServiceId, CountAndGasUsed>();
-    let servicesUpdate: ServicesUpdate = { ...servicesUpdateFromAccumulate, preimages: accumulatePreimages };
-
-    if (!Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      const deferredTransfersResult = await this.deferredTransfers.transition({
-        entropy: entropy[0],
-        pendingTransfers,
-        servicesUpdate,
-        timeslot: timeSlot,
-      });
-
-      if (deferredTransfersResult.isError) {
-        return stfError(StfErrorKind.DeferredTransfers, deferredTransfersResult);
-      }
-
-      const {
-        servicesUpdate: servicesUpdateFromDeferredTransfers,
-        transferStatistics: transferStatisticsFromDeferredTransfers,
-        ...deferredTransfersRest
-      } = deferredTransfersResult.ok;
-      transferStatistics = transferStatisticsFromDeferredTransfers;
-      servicesUpdate = servicesUpdateFromDeferredTransfers;
-      assertEmpty(deferredTransfersRest);
-    } else {
-      check`${pendingTransfers.length === 0} All transfers should be already accumulated.`;
-    }
+    const servicesUpdate: ServicesUpdate = { ...servicesUpdateFromAccumulate, preimages: accumulatePreimages };
 
     const accumulateRoot = await this.accumulateOutput.transition({ accumulationOutputLog });
     // recent history
@@ -384,7 +341,6 @@ export class OnChain {
       incomingReports: extrinsic.guarantees.map((g) => g.report),
       availableReports,
       accumulationStatistics,
-      transferStatistics,
       reporters: reporters,
       currentValidatorData,
     });

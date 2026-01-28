@@ -145,7 +145,6 @@ describe("Statistics", () => {
         incomingReports: [],
         availableReports: [],
         accumulationStatistics: new Map(),
-        transferStatistics: new Map(),
         currentValidatorData,
         reporters,
       });
@@ -174,7 +173,6 @@ describe("Statistics", () => {
         incomingReports: [],
         availableReports: [],
         accumulationStatistics: new Map(),
-        transferStatistics: new Map(),
         currentValidatorData,
         reporters,
       });
@@ -198,7 +196,6 @@ describe("Statistics", () => {
         incomingReports: [],
         availableReports: [],
         accumulationStatistics: new Map(),
-        transferStatistics: new Map(),
         currentValidatorData,
         reporters,
       });
@@ -304,7 +301,6 @@ describe("Statistics", () => {
         incomingReports: [],
         availableReports: [],
         accumulationStatistics: new Map(),
-        transferStatistics: new Map(),
         currentValidatorData,
         reporters,
       });
@@ -332,7 +328,6 @@ describe("Statistics", () => {
         incomingReports: [],
         availableReports: [],
         accumulationStatistics: new Map(),
-        transferStatistics: new Map(),
         currentValidatorData,
         reporters,
       });
@@ -361,7 +356,6 @@ describe("Statistics", () => {
         incomingReports: [],
         availableReports: [],
         accumulationStatistics: new Map(),
-        transferStatistics: new Map(),
         currentValidatorData,
         reporters,
       });
@@ -394,7 +388,6 @@ describe("Statistics", () => {
         incomingReports: [],
         availableReports: [],
         accumulationStatistics: new Map(),
-        transferStatistics: new Map(),
         currentValidatorData,
         reporters,
       });
@@ -440,7 +433,6 @@ describe("Statistics", () => {
         incomingReports: [],
         availableReports: [],
         accumulationStatistics: new Map(),
-        transferStatistics: new Map(),
         currentValidatorData,
         reporters,
       });
@@ -470,7 +462,6 @@ describe("Statistics", () => {
         incomingReports: [],
         availableReports: [],
         accumulationStatistics: new Map(),
-        transferStatistics: new Map(),
         currentValidatorData,
         reporters,
       });
@@ -499,7 +490,6 @@ describe("Statistics", () => {
         incomingReports,
         availableReports: [],
         accumulationStatistics: new Map(),
-        transferStatistics: new Map(),
         currentValidatorData,
         reporters,
       });
@@ -528,7 +518,6 @@ describe("Statistics", () => {
         incomingReports: [],
         availableReports: [],
         accumulationStatistics: new Map(),
-        transferStatistics: new Map(),
         currentValidatorData,
         reporters,
       });
@@ -557,7 +546,6 @@ describe("Statistics", () => {
         incomingReports: asKnownSize([]),
         availableReports,
         accumulationStatistics: new Map(),
-        transferStatistics: new Map(),
         currentValidatorData,
         reporters,
       });
@@ -599,7 +587,6 @@ describe("Statistics", () => {
         incomingReports: [],
         availableReports: [],
         accumulationStatistics: new Map(),
-        transferStatistics: new Map(),
         currentValidatorData,
         reporters,
       });
@@ -639,47 +626,6 @@ describe("Statistics", () => {
         incomingReports: [],
         availableReports: [],
         accumulationStatistics,
-        transferStatistics: new Map(),
-        currentValidatorData,
-        reporters,
-      });
-      const state = copyAndUpdateState(statistics.state, update);
-
-      assert.deepEqual(state.statistics.services.get(serviceIndex), expectedStatistics);
-    });
-
-    it("should update on transfer score of service statistics based on on transfer statistics", () => {
-      const {
-        statistics,
-        currentSlot,
-        validatorIndex,
-        serviceIndex,
-        serviceStatistics,
-        currentValidatorData,
-        reporters,
-      } = prepareData({
-        previousSlot: 0,
-        currentSlot: 1,
-      });
-
-      const transferStatistics = new Map([[tryAsServiceId(0), countGasUsed(3, 7n)]]);
-
-      const expectedStatistics = {
-        ...serviceStatistics.get(serviceIndex),
-        onTransfersCount: 3,
-        onTransfersGasUsed: 7n,
-      };
-
-      assert.deepEqual(statistics.state.statistics.services.get(serviceIndex), serviceStatistics.get(serviceIndex));
-
-      const update = statistics.transition({
-        slot: currentSlot,
-        authorIndex: validatorIndex,
-        extrinsic: getExtrinsic(),
-        incomingReports: [],
-        availableReports: [],
-        accumulationStatistics: new Map(),
-        transferStatistics,
         currentValidatorData,
         reporters,
       });

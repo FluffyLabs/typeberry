@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { type ServiceGas, type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { codec, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
-import { MAX_VALUE_U32, MAX_VALUE_U64, tryAsU64, type U64 } from "@typeberry/numbers";
+import { MAX_VALUE_U64, tryAsU64, type U64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { tryAsGas } from "@typeberry/pvm-interface";
 import { gasCounter } from "@typeberry/pvm-interpreter/gas.js";
@@ -11,7 +11,7 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { codecPerCore, type PerCore, tryAsPerCore } from "@typeberry/state";
-import { Compatibility, deepEqual, GpVersion, Result } from "@typeberry/utils";
+import { deepEqual, Result } from "@typeberry/utils";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../general/results.js";
@@ -24,8 +24,8 @@ const MANAGER_REG = 7;
 const AUTHORIZATION_REG = 8;
 const VALIDATOR_REG = 9;
 const REGISTRAR_REG = 10;
-const DICTIONARY_START = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? 11 : 10;
-const DICTIONARY_COUNT = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? 12 : 11;
+const DICTIONARY_START = 11;
+const DICTIONARY_COUNT = 12;
 
 function prepareServiceGasMap() {
   const entries: [ServiceId, ServiceGas][] = [];
@@ -87,8 +87,6 @@ function prepareRegsAndMemory(
   };
 }
 describe("HostCalls: Bless", () => {
-  const itPost071 = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? it : it.skip;
-
   it("should set new privileged services and auto-accumulate services", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
@@ -103,27 +101,15 @@ describe("HostCalls: Bless", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      deepEqual(accumulate.privilegedServices, [
-        [
-          tryAsServiceId(5),
-          tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
-          tryAsServiceId(20),
-          tryAsServiceId(42),
-          new Map(entries),
-        ],
-      ]);
-    } else {
-      deepEqual(accumulate.privilegedServices, [
-        [
-          tryAsServiceId(5),
-          tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
-          tryAsServiceId(20),
-          tryAsServiceId(MAX_VALUE_U32),
-          new Map(entries),
-        ],
-      ]);
-    }
+    deepEqual(accumulate.privilegedServices, [
+      [
+        tryAsServiceId(5),
+        tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
+        tryAsServiceId(20),
+        tryAsServiceId(42),
+        new Map(entries),
+      ],
+    ]);
   });
 
   it("should return panic when dictionary is not readable", async () => {
@@ -173,27 +159,16 @@ describe("HostCalls: Bless", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      deepEqual(accumulate.privilegedServices, [
-        [
-          tryAsServiceId(5),
-          tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
-          tryAsServiceId(20),
-          tryAsServiceId(42),
-          new Map(entries),
-        ],
-      ]);
-    } else {
-      deepEqual(accumulate.privilegedServices, [
-        [
-          tryAsServiceId(5),
-          tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
-          tryAsServiceId(20),
-          tryAsServiceId(MAX_VALUE_U32),
-          new Map(entries),
-        ],
-      ]);
-    }
+
+    deepEqual(accumulate.privilegedServices, [
+      [
+        tryAsServiceId(5),
+        tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
+        tryAsServiceId(20),
+        tryAsServiceId(42),
+        new Map(entries),
+      ],
+    ]);
   });
 
   it("should auto-accumulate services when dictionary contains duplicates", async () => {
@@ -211,27 +186,15 @@ describe("HostCalls: Bless", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      deepEqual(accumulate.privilegedServices, [
-        [
-          tryAsServiceId(5),
-          tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
-          tryAsServiceId(20),
-          tryAsServiceId(42),
-          new Map(entries),
-        ],
-      ]);
-    } else {
-      deepEqual(accumulate.privilegedServices, [
-        [
-          tryAsServiceId(5),
-          tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
-          tryAsServiceId(20),
-          tryAsServiceId(MAX_VALUE_U32),
-          new Map(entries),
-        ],
-      ]);
-    }
+    deepEqual(accumulate.privilegedServices, [
+      [
+        tryAsServiceId(5),
+        tryAsPerCore([tryAsServiceId(10), tryAsServiceId(15)], tinyChainSpec),
+        tryAsServiceId(20),
+        tryAsServiceId(42),
+        new Map(entries),
+      ],
+    ]);
   });
 
   it("should return HUH when service is unprivileged", async () => {
@@ -297,7 +260,7 @@ describe("HostCalls: Bless", () => {
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
-  itPost071("should return WHO if given registrar is invalid", async () => {
+  it("should return WHO if given registrar is invalid", async () => {
     const accumulate = new PartialStateMock();
     accumulate.privilegedServicesResponse = Result.error(
       UpdatePrivilegesError.InvalidServiceId,

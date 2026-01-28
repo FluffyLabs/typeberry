@@ -7,7 +7,6 @@ import { HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { leBytesAsU32 } from "@typeberry/numbers";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 
 /**
  * A function that removes duplicates but does not change order - it keeps the first occurence.
@@ -71,9 +70,6 @@ export function generateNextServiceId(
 
   const result = blake2b.hashBytes(encoded).raw.subarray(0, 4);
   const number = leBytesAsU32(result) >>> 0;
-  const mod = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-    ? 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8
-    : 2 ** 32 - 2 ** 9;
-  const offset = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? MIN_PUBLIC_SERVICE_INDEX : 2 ** 8;
-  return tryAsServiceId((number % mod) + offset);
+  const mod = 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8;
+  return tryAsServiceId((number % mod) + MIN_PUBLIC_SERVICE_INDEX);
 }

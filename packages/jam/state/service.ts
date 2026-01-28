@@ -50,7 +50,7 @@ export const ignoreValueWithDefault = <T>(defaultValue: T) =>
   );
 
 /** Encode and decode object with leading version number. */
-export const codecWithVersion = <T>(val: Descriptor<T>): Descriptor<T> =>
+export const codecWithVersion = <T, V>(val: Descriptor<T, V>): Descriptor<T, V> =>
   Descriptor.new<T>(
     "withVersion",
     {
