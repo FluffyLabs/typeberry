@@ -74,7 +74,6 @@ export class Importer {
     }
   }
 
-  // TODO [ToDr] import block and get state root
   public async importBlockWithStateRoot(block: BlockView): Promise<Result<StateRootHash, ImporterError>> {
     const res = await this.importBlock(block);
     if (res.isOk) {
