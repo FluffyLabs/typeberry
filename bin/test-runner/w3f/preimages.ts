@@ -70,7 +70,17 @@ type JsonTestAccount = {
 };
 
 const testAccountFromJson = Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
-  ? json.object<JsonTestAccountPre072, TestAccountsMapEntry>(
+  ? json.object<JsonTestAccount, TestAccountsMapEntry>(
+      {
+        id: "number",
+        data: {
+          preimage_blobs: json.array(TestPreimagesItem.fromJson),
+          preimage_requests: json.array(TestHistoryItem.fromJson),
+        },
+      },
+      ({ data, id }) => TestAccountsMapEntry.create({ id, data }),
+    )
+  : json.object<JsonTestAccountPre072, TestAccountsMapEntry>(
       {
         id: "number",
         data: {
@@ -83,16 +93,6 @@ const testAccountFromJson = Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
           id,
           data: { preimage_blobs: data.preimages, preimage_requests: data.lookup_meta },
         }),
-    )
-  : json.object<JsonTestAccount, TestAccountsMapEntry>(
-      {
-        id: "number",
-        data: {
-          preimage_blobs: json.array(TestPreimagesItem.fromJson),
-          preimage_requests: json.array(TestHistoryItem.fromJson),
-        },
-      },
-      ({ data, id }) => TestAccountsMapEntry.create({ id, data }),
     );
 
 class TestAccountsMapEntry {
