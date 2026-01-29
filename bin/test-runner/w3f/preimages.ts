@@ -16,7 +16,7 @@ import {
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { Preimages, type PreimagesErrorCode } from "@typeberry/transition";
-import { deepEqual, OK, Result } from "@typeberry/utils";
+import { Compatibility, deepEqual, GpVersion, OK, Result } from "@typeberry/utils";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -53,24 +53,72 @@ class TestHistoryItem {
   value!: number[];
 }
 
-class TestAccountsMapEntry {
-  static fromJson: FromJson<TestAccountsMapEntry> = {
-    id: "number",
-    data: {
-      preimages: json.array(TestPreimagesItem.fromJson),
-      lookup_meta: json.array(TestHistoryItem.fromJson),
-    },
-  };
-  id!: number;
-  data!: {
+type JsonTestAccountPre072 = {
+  id: number;
+  data: {
     preimages: TestPreimagesItem[];
     lookup_meta: TestHistoryItem[];
+  };
+};
+
+type JsonTestAccount = {
+  id: number;
+  data: {
+    preimage_blobs: TestPreimagesItem[];
+    preimage_requests: TestHistoryItem[];
+  };
+};
+
+const testAccountFromJson = Compatibility.isGreaterOrEqual(GpVersion.V0_7_2)
+  ? json.object<JsonTestAccountPre072, TestAccountsMapEntry>(
+      {
+        id: "number",
+        data: {
+          preimages: json.array(TestPreimagesItem.fromJson),
+          lookup_meta: json.array(TestHistoryItem.fromJson),
+        },
+      },
+      ({ data, id }) =>
+        TestAccountsMapEntry.create({
+          id,
+          data: { preimage_blobs: data.preimages, preimage_requests: data.lookup_meta },
+        }),
+    )
+  : json.object<JsonTestAccount, TestAccountsMapEntry>(
+      {
+        id: "number",
+        data: {
+          preimage_blobs: json.array(TestPreimagesItem.fromJson),
+          preimage_requests: json.array(TestHistoryItem.fromJson),
+        },
+      },
+      ({ data, id }) => TestAccountsMapEntry.create({ id, data }),
+    );
+
+class TestAccountsMapEntry {
+  static create({
+    id,
+    data,
+  }: {
+    id: number;
+    data: { preimage_blobs: TestPreimagesItem[]; preimage_requests: TestHistoryItem[] };
+  }): TestAccountsMapEntry {
+    const entry = new TestAccountsMapEntry();
+    entry.id = id;
+    entry.data = data;
+    return entry;
+  }
+
+  id!: number;
+  data!: {
+    preimage_blobs: TestPreimagesItem[];
+    preimage_requests: TestHistoryItem[];
   };
 }
 
 class TestState {
   static fromJson: FromJson<TestState> = {
-    accounts: json.array(TestAccountsMapEntry.fromJson),
+    accounts: json.array(testAccountFromJson),
   };
   accounts!: TestAccountsMapEntry[];
 }
@@ -128,7 +176,7 @@ export async function runPreImagesTest(testContent: PreImagesTest) {
 
 function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry, blake2b: Blake2b): InMemoryService {
   const preimages = HashDictionary.fromEntries(
-    entry.data.preimages
+    entry.data.preimage_blobs
       .map((x) => {
         return PreimageItem.create({ hash: blake2b.hashBytes(x.blob).asOpaque(), blob: x.blob });
       })
@@ -136,7 +184,7 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry, blake2b: Bla
   );
 
   const lookupHistory = HashDictionary.new<PreimageHash, LookupHistoryItem[]>();
-  for (const item of entry.data.lookup_meta) {
+  for (const item of entry.data.preimage_requests) {
     const slots = tryAsLookupHistorySlots(item.value.map((slot) => tryAsTimeSlot(slot)));
 
     const arr = lookupHistory.get(item.key.hash) ?? [];
