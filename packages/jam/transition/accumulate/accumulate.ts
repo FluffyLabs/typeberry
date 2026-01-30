@@ -238,7 +238,7 @@ export class Accumulate {
 
     const serviceInfo = updatedState.getServiceInfo(serviceId);
     if (serviceInfo !== null) {
-      // update the balance from incoming tranfsers
+      // update the balance from incoming transfers
       const newBalance = sumU64(serviceInfo.balance, ...transfers.map((item) => item.amount));
 
       if (newBalance.overflow) {
