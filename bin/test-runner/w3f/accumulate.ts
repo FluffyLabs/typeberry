@@ -8,31 +8,24 @@ import {
   tryAsServiceGas,
   tryAsServiceId,
 } from "@typeberry/block";
-import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
-import { asKnownSize, HashDictionary, HashSet } from "@typeberry/collections";
+import { asKnownSize, HashSet } from "@typeberry/collections";
 import { type ChainSpec, PvmBackend, PvmBackendNames } from "@typeberry/config";
 import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { tryAsU32 } from "@typeberry/numbers";
 import {
-  InMemoryService,
+  type InMemoryService,
   InMemoryState,
-  LookupHistoryItem,
-  type LookupHistorySlots,
   NotYetAccumulatedReport,
   PrivilegedServices,
-  type ServiceAccountInfo,
-  StorageItem,
-  type StorageKey,
   tryAsPerCore,
 } from "@typeberry/state";
-import { JsonPreimageItem, JsonServiceInfo, JsonStorageItem } from "@typeberry/state-json/accounts.js";
+import { JsonService, JsonServicePre072 } from "@typeberry/state-json";
 import { AccumulateOutput } from "@typeberry/transition/accumulate/accumulate-output.js";
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
-import { asOpaqueType, deepEqual, Result } from "@typeberry/utils";
+import { Compatibility, deepEqual, GpVersion, Result } from "@typeberry/utils";
 import type { RunOptions } from "../common.js";
 
 class Input {
@@ -43,76 +36,6 @@ class Input {
 
   slot!: TimeSlot;
   reports!: WorkReport[];
-}
-
-type JsonPreimageStatus = {
-  key: {
-    hash: PreimageHash;
-    length: number;
-  };
-  value: LookupHistorySlots;
-};
-
-const preimageStatusFromJson = json.object<JsonPreimageStatus, LookupHistoryItem>(
-  {
-    key: {
-      hash: fromJson.bytes32(),
-      length: "number",
-    },
-    value: json.array("number"),
-  },
-  ({ key, value }) => new LookupHistoryItem(key.hash, tryAsU32(key.length), value),
-);
-
-class JsonService {
-  static fromJson = json.object<JsonService, InMemoryService>(
-    {
-      id: "number",
-      data: {
-        service: JsonServiceInfo.fromJson,
-        storage: json.optional(json.array(JsonStorageItem.fromJson)),
-        preimage_blobs: json.optional(json.array(JsonPreimageItem.fromJson)),
-        preimage_requests: json.optional(json.array(preimageStatusFromJson)),
-      },
-    },
-    ({ id, data }) => {
-      const preimages = HashDictionary.fromEntries((data.preimage_blobs ?? []).map((x) => [x.hash, x]));
-
-      const lookupHistory = HashDictionary.new<PreimageHash, LookupHistoryItem[]>();
-
-      for (const item of data.preimage_requests ?? []) {
-        const data = lookupHistory.get(item.hash) ?? [];
-        data.push(item);
-        lookupHistory.set(item.hash, data);
-      }
-
-      const storage = new Map<string, StorageItem>();
-
-      const entries = (data.storage ?? []).map(({ key, value }) => {
-        const opaqueKey: StorageKey = asOpaqueType(key);
-        return [opaqueKey, StorageItem.create({ key: opaqueKey, value })] as const;
-      });
-
-      for (const [key, item] of entries) {
-        storage.set(key.toString(), item);
-      }
-
-      return new InMemoryService(id, {
-        info: data.service,
-        preimages,
-        storage,
-        lookupHistory,
-      });
-    },
-  );
-
-  id!: ServiceId;
-  data!: {
-    service: ServiceAccountInfo;
-    storage?: JsonStorageItem[];
-    preimage_blobs?: JsonPreimageItem[];
-    preimage_requests?: LookupHistoryItem[];
-  };
 }
 
 class TestState {
@@ -138,7 +61,9 @@ class TestState {
           gas: json.fromNumber((x) => tryAsServiceGas(x)),
         }),
       },
-      accounts: json.array(JsonService.fromJson),
+      accounts: json.array(
+        Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) ? JsonService.fromJson : JsonServicePre072.fromJson,
+      ),
     },
     (x) => x,
   );

@@ -18,7 +18,7 @@ import {
   type State,
   tryAsPerCore,
 } from "@typeberry/state";
-import { JsonService } from "./accounts.js";
+import { JsonServicePre072 } from "./accounts.js";
 import { accumulationOutput } from "./accumulation-output.js";
 import { availabilityAssignmentFromJson } from "./availability-assignment.js";
 import { disputesRecordsFromJson } from "./disputes.js";
@@ -95,7 +95,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
       omega: json.array(json.array(notYetAccumulatedFromJson)),
       xi: json.array(json.array(fromJson.bytes32())),
       theta: json.nullable(json.array(accumulationOutput)),
-      accounts: json.array(JsonService.fromJson),
+      accounts: json.array(JsonServicePre072.fromJson),
     },
     ({
       alpha,
