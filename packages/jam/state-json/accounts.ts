@@ -24,7 +24,7 @@ import {
 } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
 
-class JsonServiceInfo {
+export class JsonServiceInfo {
   static fromJson = json.object<JsonServiceInfo, ServiceAccountInfo>(
     {
       version: "number",
@@ -79,7 +79,7 @@ class JsonServiceInfo {
   parent_service!: ServiceId;
 }
 
-class JsonPreimageItem {
+export class JsonPreimageItem {
   static fromJson = json.object<JsonPreimageItem, PreimageItem>(
     {
       hash: fromJson.bytes32(),
@@ -92,7 +92,7 @@ class JsonPreimageItem {
   blob!: BytesBlob;
 }
 
-class JsonStorageItem {
+export class JsonStorageItem {
   static fromJson = {
     key: json.fromString(BytesBlob.parseBlob),
     value: json.fromString(BytesBlob.parseBlob),
