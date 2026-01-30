@@ -3,6 +3,7 @@ import { runners } from "./w3f/runners.js";
 
 main(runners, "test-vectors/w3f_072", {
   ...parseArgs(process.argv.slice(2)),
+  patterns: [".json"],
   accepted: {
     ".json": ["traces", "codec", "stf"],
   },
