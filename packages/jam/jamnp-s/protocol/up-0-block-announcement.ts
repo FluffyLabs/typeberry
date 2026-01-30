@@ -90,8 +90,8 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
   constructor(
     private readonly spec: ChainSpec,
     private readonly getHandshake: () => Handshake,
-    private readonly onAnnouncement: (sender: StreamId, ann: Announcement) => void,
-    private readonly onHandshake: (sender: StreamId, handshake: Handshake) => void,
+    private readonly onAnnouncement: (streamId: StreamId, ann: Announcement) => void,
+    private readonly onHandshake: (streamId: StreamId, handshake: Handshake) => void,
   ) {}
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
@@ -127,7 +127,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     }
     const handshake = this.getHandshake();
     logger.trace`[${streamId}] <-- sending handshake`;
-    this.pendingHandshakes.set(sender.streamId, true);
+    this.pendingHandshakes.set(streamId, true);
     sender.bufferAndSend(Encoder.encodeObject(Handshake.Codec, handshake));
   }
 

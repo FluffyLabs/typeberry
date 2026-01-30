@@ -1,11 +1,18 @@
 import type { BytesBlob } from "@typeberry/bytes";
-import { tryAsU8, tryAsU32, type U8, type U32 } from "@typeberry/numbers";
+import { tryAsU8, type U8 } from "@typeberry/numbers";
+import { asOpaqueType, type Opaque } from "@typeberry/utils";
 
-/** Unique stream identifier. */
-export type StreamId = U32;
-/** Try to cast the number as `StreamId`. */
-export function tryAsStreamId(num: number): StreamId {
-  return tryAsU32(num);
+/**
+ * Globally unique stream identifier.
+ *
+ * Assigned during stream registration and used as the sole public
+ * identifier for a stream throughout the protocol layer.
+ */
+export type StreamId = Opaque<string, "streamId">;
+
+/** Cast a string as `StreamId`. */
+export function tryAsStreamId(id: string): StreamId {
+  return asOpaqueType(id);
 }
 
 /** Unique stream kind. */
@@ -17,7 +24,7 @@ export function tryAsStreamKind<T extends number>(num: T): StreamKind<T & U8> {
 
 /** Abstraction over sending messages tied to a particular stream. */
 export interface StreamMessageSender {
-  /** Stream Id information. */
+  /** Globally unique stream identifier. */
   streamId: StreamId;
 
   /**
@@ -41,7 +48,7 @@ export interface StreamHandler<TStreamKind extends StreamKind = StreamKind> {
   /** Handle message for that particular stream kind. */
   onStreamMessage(streamSender: StreamMessageSender, message: BytesBlob): void;
 
-  /** Handle closing of given `streamId`. */
+  /** Handle closing of given stream. */
   onClose(streamId: StreamId, isError: boolean): void;
 }
 

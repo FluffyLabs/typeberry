@@ -1,4 +1,5 @@
 import type { BytesBlob } from "@typeberry/bytes";
+import type { PeerId } from "@typeberry/networking";
 import type { OK } from "@typeberry/utils";
 import {
   type StreamHandler,
@@ -9,9 +10,17 @@ import {
   tryAsStreamId,
 } from "./stream.js";
 
+const TEST_PEER_ID = "test-peer" as PeerId;
+
+let nextTestStreamCounter = 0;
+
+function nextTestStreamId(): StreamId {
+  return tryAsStreamId(`${TEST_PEER_ID}:${nextTestStreamCounter++}`);
+}
+
 export class TestStreamSender implements StreamMessageSender {
   public readonly onSend: (data: BytesBlob) => void;
-  public readonly onClose: () => void;
+  public readonly onCloseCallback: () => void;
 
   constructor(
     public readonly streamId: StreamId,
@@ -24,7 +33,7 @@ export class TestStreamSender implements StreamMessageSender {
     },
   ) {
     this.onSend = onSend;
-    this.onClose = onClose;
+    this.onCloseCallback = onClose;
   }
 
   bufferAndSend(data: BytesBlob): boolean {
@@ -36,7 +45,7 @@ export class TestStreamSender implements StreamMessageSender {
 
   close(): void {
     setImmediate(() => {
-      this.onClose();
+      this.onCloseCallback();
     });
   }
 }
@@ -85,15 +94,7 @@ export class TestMessageHandler {
     streamKind: StreamKindOf<THandler>,
     work: (handler: THandler, sender: StreamMessageSender) => OK,
   ): void {
-    const getRandomStreamId = () => tryAsStreamId(Math.floor(Math.random() * 2 ** 16));
-    const streams = this.openStreams;
-    const streamId = (function findStreamId() {
-      const s = getRandomStreamId();
-      if (!streams.has(s)) {
-        return s;
-      }
-      return findStreamId();
-    })();
+    const streamId = nextTestStreamId();
 
     // since we are picking a non-existing stream id, there is no way of
     // conflicting here, so the `[handler, stream]` will be fresh.

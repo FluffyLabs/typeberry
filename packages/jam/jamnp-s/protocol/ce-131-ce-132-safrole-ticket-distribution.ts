@@ -4,7 +4,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec, Decoder, Encoder } from "@typeberry/codec";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import { type StreamHandler, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
+import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAM-SNP CE-131 and CE-132 streams.
@@ -52,7 +52,7 @@ export class ServerHandler<T extends STREAM_KIND> implements StreamHandler<T> {
     sender.close();
   }
 
-  onClose() {}
+  onClose(_streamId: StreamId) {}
 }
 
 export class ClientHandler<T extends STREAM_KIND> implements StreamHandler<T> {
@@ -63,7 +63,7 @@ export class ClientHandler<T extends STREAM_KIND> implements StreamHandler<T> {
     sender.close();
   }
 
-  onClose() {}
+  onClose(_streamId: StreamId) {}
 
   sendTicket(sender: StreamMessageSender, epochIndex: Epoch, ticket: SignedTicket) {
     const request = TicketDistributionRequest.create({ epochIndex, ticket });

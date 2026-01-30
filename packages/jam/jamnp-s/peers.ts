@@ -123,6 +123,8 @@ export class Connections {
       return;
     }
     if (markAsDisconnected) {
+      // abort any existing reconnect task
+      meta.backgroundTask.abort();
       // mark the peer as disconnected
       meta.peerRef = null;
       meta.backgroundTask = new AbortController();
@@ -158,6 +160,11 @@ export class Connections {
         return;
       }
 
+      // also check via network.peers to handle race with incoming connections
+      if (this.network.peers.isConnected(id)) {
+        return;
+      }
+
       // attempt to connect to the peer
       try {
         logger.trace`[${id}] Attempting to connect to peer at ${meta.address.host}:${meta.address.port}.`;
@@ -165,6 +172,10 @@ export class Connections {
         return;
       } catch (e) {
         if (signal.aborted) {
+          return;
+        }
+        // check if we got connected via incoming connection while dialing
+        if (this.network.peers.isConnected(id)) {
           return;
         }
         // failing to connect, will retry.

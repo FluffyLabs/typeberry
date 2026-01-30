@@ -1,9 +1,12 @@
 import { describe, it } from "node:test";
 import { tryAsTimeSlot } from "@typeberry/block";
 import { ReportGuarantee } from "@typeberry/block/guarantees.js";
+import type { WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes } from "@typeberry/bytes";
+import { FixedSizeArray } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
+import { tryAsU8, type U8 } from "@typeberry/numbers";
 import { asOpaqueType, deepEqual, OK } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 import { guaranteesAsView, newCredential, newWorkReport } from "./test.utils.js";
@@ -48,6 +51,38 @@ describe("Reports.verifyReportsBasic", () => {
       isError: true,
       error: ReportsError.WorkReportTooBig,
       details: () => "Work report at 0 too big. Got 0 + 49153, max: 49152",
+    });
+  });
+
+  it("should reject if report has invalid number of work results (0)", () => {
+    // Create a minimal work report with 0 results by manually constructing it
+    const emptyResults = FixedSizeArray.new<WorkResult, U8>([], tryAsU8(0));
+    const report = newWorkReport({ core: 0 });
+
+    // Bypass the type system to set 0 results
+    const invalidReport = {
+      ...report,
+      results: emptyResults,
+    };
+
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.create({
+        slot: tryAsTimeSlot(10),
+        report: invalidReport,
+        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const result = verifyReportsBasic(guarantees);
+
+    deepEqual(result, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.InvalidWorkItemsCount,
+      details: () => `Number of work results is invalid.
+          Got: 0,
+          expected between 1 and 16
+          `,
     });
   });
 

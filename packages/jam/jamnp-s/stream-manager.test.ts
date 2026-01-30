@@ -3,7 +3,13 @@ import { describe, it } from "node:test";
 import type { BytesBlob } from "@typeberry/bytes";
 import { createDisconnectedPeer, TestManualStream } from "@typeberry/networking/testing.js";
 import { OK } from "@typeberry/utils";
-import type { StreamHandler, StreamId, StreamKind, StreamMessageSender } from "./protocol/stream.js";
+import {
+  type StreamHandler,
+  type StreamId,
+  type StreamKind,
+  type StreamMessageSender,
+  tryAsStreamId,
+} from "./protocol/stream.js";
 import { StreamManager } from "./stream-manager.js";
 
 // Test StreamHandler implementation
@@ -30,8 +36,7 @@ describe("StreamManager", () => {
   describe("stream management", () => {
     it("should return null for unknown stream ID", () => {
       const manager = new StreamManager();
-
-      const peer = manager.getPeer(123 as StreamId);
+      const peer = manager.getPeer(tryAsStreamId("peer1:123"));
 
       assert.strictEqual(peer, null);
     });
@@ -47,7 +52,7 @@ describe("StreamManager", () => {
       manager.withNewStream(peer, 1 as StreamKind, (h, sender) => {
         workCalled = true;
         assert.strictEqual(h, handler);
-        assert.strictEqual(typeof sender.streamId, "number");
+        assert.strictEqual(typeof sender.streamId, "string");
         senderFlush = sender.flush();
         return OK;
       });
@@ -109,11 +114,13 @@ describe("StreamManager", () => {
   describe("incoming streams", () => {
     it("should handle incoming stream with valid kind", async () => {
       const manager = new StreamManager();
-      const peer = createDisconnectedPeer("peer1");
+      const peerId = "peer1";
+      const peer = createDisconnectedPeer(peerId);
       const handler = createTestHandler(1 as StreamKind);
       manager.registerIncomingHandlers(handler);
+      const quicStreamId = 42;
 
-      const stream = new TestManualStream(42);
+      const stream = new TestManualStream(quicStreamId);
 
       // Simulate incoming stream with kind byte
       const kindData = new Uint8Array([1, 0x41, 0x42]); // kind=1, followed by some data
@@ -123,7 +130,7 @@ describe("StreamManager", () => {
       await manager.onIncomingStream(peer, stream);
 
       // Check that peer is tracked
-      const retrievedPeer = manager.getPeer(42 as StreamId);
+      const retrievedPeer = manager.getPeer(tryAsStreamId(`${peerId}:${quicStreamId}`));
       assert.strictEqual(retrievedPeer, peer);
     });
 

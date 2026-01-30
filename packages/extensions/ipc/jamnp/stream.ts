@@ -1,7 +1,10 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import type { StreamId, StreamKind } from "@typeberry/jamnp-s";
-import { tryAsU8, type U8 } from "@typeberry/numbers";
+import type { StreamKind } from "@typeberry/jamnp-s";
+import { tryAsU8, type U8, type U32 } from "@typeberry/numbers";
+
+/** IPC-level stream identifier (u32), used for multiplexing streams over a single socket. */
+export type IpcStreamId = U32;
 
 export enum StreamEnvelopeType {
   Msg = 0,
@@ -35,7 +38,7 @@ export class StreamEnvelope {
   }
 
   private constructor(
-    public readonly streamId: StreamId,
+    public readonly streamId: IpcStreamId,
     public readonly type: StreamEnvelopeType,
     public readonly data: BytesBlob,
   ) {}

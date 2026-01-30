@@ -91,7 +91,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
     sender.close();
   }
 
-  onClose() {}
+  onClose(_streamId: StreamId) {}
 }
 
 export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
@@ -103,13 +103,14 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   constructor(private readonly chainSpec: ChainSpec) {}
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
-    if (!this.promiseResolvers.has(sender.streamId)) {
+    const { streamId } = sender;
+    if (!this.promiseResolvers.has(streamId)) {
       throw new Error("Received an unexpected message from the server.");
     }
     const blocks = Decoder.decodeSequence(Block.Codec.View, message, this.chainSpec);
-    logger.log`[${sender.streamId}] Server returned ${blocks.length} blocks in ${message.length} bytes of data.`;
-    this.promiseResolvers.get(sender.streamId)?.(blocks);
-    this.promiseResolvers.delete(sender.streamId);
+    logger.log`[${streamId}] Server returned ${blocks.length} blocks in ${message.length} bytes of data.`;
+    this.promiseResolvers.get(streamId)?.(blocks);
+    this.promiseResolvers.delete(streamId);
   }
 
   onClose(streamId: StreamId) {
@@ -125,13 +126,14 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     direction: Direction,
     maxBlocks: U32,
   ): Promise<BlockView[]> {
-    if (this.promiseResolvers.has(sender.streamId)) {
+    const { streamId } = sender;
+    if (this.promiseResolvers.has(streamId)) {
       throw new Error("It is disallowed to use the same stream for multiple requests.");
     }
 
     return new Promise((resolve, reject) => {
-      this.promiseResolvers.set(sender.streamId, resolve);
-      this.promiseRejectors.set(sender.streamId, reject);
+      this.promiseResolvers.set(streamId, resolve);
+      this.promiseRejectors.set(streamId, reject);
 
       sender.bufferAndSend(
         Encoder.encodeObject(BlockRequest.Codec, BlockRequest.create({ headerHash, direction, maxBlocks })),
