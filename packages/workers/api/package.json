@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/workers-api",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "Abstract workers' API utilities.",
   "main": "index.ts",
   "scripts": {
