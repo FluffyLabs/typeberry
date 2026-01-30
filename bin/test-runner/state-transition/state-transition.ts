@@ -39,7 +39,7 @@ function loadBlocks(testPath: string, spec: ChainSpec) {
         blocks.push(genesisBlock);
       } else {
         const test = Decoder.decodeObject(StateTransition.Codec, data, spec);
-        blocks.push(test.block);
+        blocks.push(test.block.materialize());
       }
     } catch {
       // some blocks might be invalid, but that's fine. We just ignore them.
@@ -80,11 +80,10 @@ export async function runStateTransition(testContent: StateTransition, options: 
   const preStateRoot = preState.backend.getRootHash(blake2b);
   const postStateRoot = postState.backend.getRootHash(blake2b);
 
-  const blockView = blockAsView(spec, testContent.block);
+  const blockView = testContent.block;
   const allBlocks = loadBlocks(options.path, spec);
-  const myBlockIndex = allBlocks.findIndex(
-    ({ header }) => header.timeSlotIndex === testContent.block.header.timeSlotIndex,
-  );
+  const timeStotIndex = testContent.block.header.view().timeSlotIndex.materialize();
+  const myBlockIndex = allBlocks.findIndex(({ header }) => header.timeSlotIndex === timeStotIndex);
   const previousBlocks = allBlocks.slice(0, myBlockIndex);
 
   const hasher = new TransitionHasher(await keccakHasher, blake2b);

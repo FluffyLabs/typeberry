@@ -48,4 +48,6 @@ export enum ReportsError {
   WorkReportTooBig = 22,
   /** Contains guarantee from validator that is proven to be an offender. */
   BannedValidator = 23,
+  /** Number of work items/results is invalid. */
+  InvalidWorkItemsCount = 24,
 }

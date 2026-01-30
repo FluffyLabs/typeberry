@@ -5,7 +5,7 @@ import { Logger } from "@typeberry/logger";
 import { assertNever, type Result } from "@typeberry/utils";
 import type { IpcHandler, IpcSender } from "../server.js";
 import {
-  type ErrorMessage,
+  ErrorMessage,
   Features,
   type Initialize,
   type KeyValue,
@@ -101,37 +101,58 @@ export class FuzzTarget implements IpcHandler {
       }
 
       case MessageType.Initialize: {
-        const stateRoot = await this.msgHandler.initialize(message.value);
-        response = {
-          type: MessageType.StateRoot,
-          value: stateRoot,
-        };
+        try {
+          const stateRoot = await this.msgHandler.initialize(message.value);
+          response = {
+            type: MessageType.StateRoot,
+            value: stateRoot,
+          };
+        } catch (e) {
+          response = {
+            type: MessageType.Error,
+            value: ErrorMessage.create({ message: `initialize error: ${e}` }),
+          };
+        }
         break;
       }
 
       case MessageType.ImportBlock: {
-        const result = await this.msgHandler.importBlock(message.value);
+        try {
+          const result = await this.msgHandler.importBlock(message.value);
 
-        if (result.isOk) {
-          response = {
-            type: MessageType.StateRoot,
-            value: result.ok,
-          };
-        } else {
+          if (result.isOk) {
+            response = {
+              type: MessageType.StateRoot,
+              value: result.ok,
+            };
+          } else {
+            response = {
+              type: MessageType.Error,
+              value: result.error,
+            };
+          }
+        } catch (e) {
           response = {
             type: MessageType.Error,
-            value: result.error,
+            value: ErrorMessage.create({ message: `importBlock error: ${e}` }),
           };
         }
         break;
       }
 
       case MessageType.GetState: {
-        const state = await this.msgHandler.getSerializedState(message.value);
-        response = {
-          type: MessageType.State,
-          value: state,
-        };
+        try {
+          const state = await this.msgHandler.getSerializedState(message.value);
+          response = {
+            type: MessageType.State,
+            value: state,
+          };
+        } catch (e) {
+          response = {
+            type: MessageType.Error,
+            value: ErrorMessage.create({ message: `getState error: ${e}` }),
+          };
+        }
         break;
       }
 
