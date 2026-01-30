@@ -180,25 +180,25 @@ export namespace serialize {
     extract: (s) => s.accumulationOutputLog,
   };
 
-  /** C(255, s): https://graypaper.fluffylabs.dev/#/85129da/383103383103?v=0.6.3 */
+  /** C(255, s): https://graypaper.fluffylabs.dev/#/ab2cdbd/3b7d033b7d03?v=0.7.2 */
   export const serviceData = (serviceId: ServiceId) => ({
     key: stateKeys.serviceInfo(serviceId),
     Codec: codecWithVersion(ServiceAccountInfo.Codec),
   });
 
-  /** https://graypaper.fluffylabs.dev/#/85129da/384803384803?v=0.6.3 */
+  /** https://graypaper.fluffylabs.dev/#/ab2cdbd/3bac033bac03?v=0.7.2 */
   export const serviceStorage = (blake2b: Blake2b, serviceId: ServiceId, key: StorageKey) => ({
     key: stateKeys.serviceStorage(blake2b, serviceId, key),
     Codec: dumpCodec,
   });
 
-  /** https://graypaper.fluffylabs.dev/#/85129da/385b03385b03?v=0.6.3 */
+  /** https://graypaper.fluffylabs.dev/#/ab2cdbd/3bc9033bc903?v=0.7.2 */
   export const servicePreimages = (blake2b: Blake2b, serviceId: ServiceId, hash: PreimageHash) => ({
     key: stateKeys.servicePreimage(blake2b, serviceId, hash),
     Codec: dumpCodec,
   });
 
-  /** https://graypaper.fluffylabs.dev/#/85129da/387603387603?v=0.6.3 */
+  /** https://graypaper.fluffylabs.dev/#/ab2cdbd/3bea033b0904?v=0.7.2 */
   export const serviceLookupHistory = (blake2b: Blake2b, serviceId: ServiceId, hash: PreimageHash, len: U32) => ({
     key: stateKeys.serviceLookupHistory(blake2b, serviceId, hash, len),
     Codec: codec.readonlyArray(codec.sequenceVarLen(codec.u32)),
