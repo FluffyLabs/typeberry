@@ -1,5 +1,5 @@
-import { Block, Header, type StateRootHash } from "@typeberry/block";
-import { blockFromJson, fromJson, headerFromJson } from "@typeberry/block-json";
+import { Block, type BlockView, Header, type StateRootHash } from "@typeberry/block";
+import { blockViewFromJson, fromJson, headerFromJson } from "@typeberry/block-json";
 import type { BytesBlob } from "@typeberry/bytes";
 import { codec } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
@@ -54,16 +54,16 @@ export class StateTransition {
   static fromJson: FromJson<StateTransition> = {
     pre_state: TestState.fromJson,
     post_state: TestState.fromJson,
-    block: blockFromJson(tinyChainSpec),
+    block: blockViewFromJson(tinyChainSpec),
   };
 
   static Codec = codec.object({
     pre_state: TestState.Codec,
-    block: Block.Codec,
+    block: Block.Codec.View,
     post_state: TestState.Codec,
   });
 
   pre_state!: TestState;
   post_state!: TestState;
-  block!: Block;
+  block!: BlockView;
 }

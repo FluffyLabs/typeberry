@@ -13,13 +13,18 @@ import { WorkItem } from "./work-item.js";
 /** Constrained by I=16 https://graypaper.fluffylabs.dev/#/68eaa1f/417a00417a00?v=0.6.4 */
 export type WorkItemsCount = U8;
 
-/** Verify the value is within the `WorkItemsCount` bounds. */
+/** Convert the value to `WorkItemsCount` bounds. */
 export function tryAsWorkItemsCount(len: number): WorkItemsCount {
   check`
-    ${len >= MIN_NUMBER_OF_WORK_ITEMS && len <= MAX_NUMBER_OF_WORK_ITEMS}
+    ${isWorkItemsCount(len)}
     WorkItemsCount: Expected '${MIN_NUMBER_OF_WORK_ITEMS} <= count <= ${MAX_NUMBER_OF_WORK_ITEMS}' got ${len}
   `;
   return tryAsU8(len);
+}
+
+/** Verify the value is within the `WorkItemsCount` bounds. */
+export function isWorkItemsCount(len: number): len is WorkItemsCount {
+  return len >= MIN_NUMBER_OF_WORK_ITEMS && len <= MAX_NUMBER_OF_WORK_ITEMS;
 }
 
 /** Minimal number of work items in the work package or results in work report. */

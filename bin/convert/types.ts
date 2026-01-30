@@ -3,7 +3,7 @@ import { WorkItem } from "@typeberry/block/work-item.js";
 import { WorkPackage } from "@typeberry/block/work-package.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
 import { blockFromJson, headerFromJson, workReportFromJson } from "@typeberry/block-json";
-import { codec, type Decode, Decoder, type Encode, Encoder } from "@typeberry/codec";
+import { codec, type Decode, type Encode, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { JipChainSpec } from "@typeberry/config-node";
 import { v1 } from "@typeberry/fuzz-proto";
@@ -204,7 +204,7 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
         if (option === "as-block") {
           return looseType({
             encode: Block.Codec,
-            value: test.block,
+            value: test.block.materialize(),
           });
         }
 
@@ -216,11 +216,9 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
         }
 
         if (option === "as-block-fuzz-message" || option === "as-fuzz-message") {
-          const encoded = Encoder.encodeObject(Block.Codec, test.block, spec);
-          const blockView = Decoder.decodeObject(Block.Codec.View, encoded, spec);
           const msg: v1.MessageData = {
             type: v1.MessageType.ImportBlock,
-            value: blockView,
+            value: test.block,
           };
           return looseType({
             value: msg,
@@ -229,13 +227,14 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
         }
 
         if (option === "as-state-fuzz-message") {
+          const blockHeader = test.block.header.materialize();
           const init = v1.Initialize.create({
             header: Header.empty(),
             keyvals: test.pre_state.keyvals,
             ancestry: [
               v1.AncestryItem.create({
-                headerHash: test.block.header.parentHeaderHash,
-                slot: tryAsTimeSlot(Math.max(0, test.block.header.timeSlotIndex - 1)),
+                headerHash: blockHeader.parentHeaderHash,
+                slot: tryAsTimeSlot(Math.max(0, blockHeader.timeSlotIndex - 1)),
               }),
             ],
           });

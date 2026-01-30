@@ -1,6 +1,6 @@
-import { Block } from "@typeberry/block";
+import { Block, reencodeAsView } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
-import { json } from "@typeberry/json-parser";
+import { json, parseFromJson } from "@typeberry/json-parser";
 import { getExtrinsicFromJson } from "./extrinsic.js";
 import { headerFromJson } from "./header.js";
 
@@ -12,3 +12,11 @@ export const blockFromJson = (spec: ChainSpec) =>
     },
     ({ header, extrinsic }) => Block.create({ header, extrinsic }),
   );
+
+export const blockViewFromJson = (spec: ChainSpec) => {
+  const parseBlock = blockFromJson(spec);
+  return json.fromAny((p) => {
+    const block = parseFromJson(p, parseBlock);
+    return reencodeAsView(Block.Codec, block, spec);
+  });
+};

@@ -1,5 +1,6 @@
 import { MAX_REPORT_DEPENDENCIES } from "@typeberry/block/gp-constants.js";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
+import { isWorkItemsCount, MAX_NUMBER_OF_WORK_ITEMS, MIN_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package.js";
 import { WorkExecResultKind } from "@typeberry/block/work-result.js";
 import { OK, Result } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
@@ -14,6 +15,18 @@ export const MAX_WORK_REPORT_SIZE_BYTES = 48 * 2 ** 10;
 export function verifyReportsBasic(input: GuaranteesExtrinsicView): Result<OK, ReportsError> {
   for (const guarantee of input) {
     const reportView = guarantee.view().report.view();
+    /**
+     * Make sure number of results is within correct range.
+     */
+    if (!isWorkItemsCount(reportView.results.view().length)) {
+      return Result.error(
+        ReportsError.InvalidWorkItemsCount,
+        () => `Number of work results is invalid.
+          Got: ${reportView.results.view().length},
+          expected between ${MIN_NUMBER_OF_WORK_ITEMS} and ${MAX_NUMBER_OF_WORK_ITEMS}
+          `,
+      );
+    }
     /**
      * We limit the sum of the number of items in the
      * segment-root lookup dictionary and the number of
