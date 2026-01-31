@@ -27,7 +27,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
   it("gets best block", async () => {
     const result = await client.call("bestBlock");
     assert.deepStrictEqual(result, {
-      header_hash: hexToUint8Array("1bcd4c4332d76ff8bf829c235e5f95b74b70a7c56abf26cdc483eb76b86d140c"),
+      header_hash: hexToUint8Array("9eb96a960cb553d5b27a63e6df4bf422c2781d8a013d9dcfbe32a30ef25afd52"),
       slot: 100,
     });
   });
@@ -36,7 +36,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
     // todo [seko] we're temporarily returning the best instead of finalized block
     const result = await client.call("finalizedBlock");
     assert.deepStrictEqual(result, {
-      header_hash: hexToUint8Array("1bcd4c4332d76ff8bf829c235e5f95b74b70a7c56abf26cdc483eb76b86d140c"),
+      header_hash: hexToUint8Array("9eb96a960cb553d5b27a63e6df4bf422c2781d8a013d9dcfbe32a30ef25afd52"),
       slot: 100,
     });
   });
@@ -45,7 +45,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
     const bestBlock = await client.call("bestBlock");
     const result = await client.call("parent", [bestBlock.header_hash]);
     assert.deepStrictEqual(result, {
-      header_hash: hexToUint8Array("a7e33db2e8080bfce7b30fbb8f91fb9bc6623ab05e733ed77cb3272f12a8e660"),
+      header_hash: hexToUint8Array("958ff3540f9641de3b7e1d89272c5979c0d7071817d9f5cd691d4f7fdb97e4d2"),
       slot: 99,
     });
   });
@@ -68,16 +68,17 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
   it("gets state root", async () => {
     const bestBlock = await client.call("bestBlock");
     const result = await client.call("stateRoot", [bestBlock.header_hash]);
-    assert.deepStrictEqual(result, hexToUint8Array("b5d79be6615927b35efa9671331e95617c5de08102db4685a07ff1fce9172e1a"));
+    assert.deepStrictEqual(result, hexToUint8Array("a685a3a56825043f0de06709e023d8fd83a8a311f3fe20b47fdd0f93706d1323"));
   });
 
   it("gets statistics", async () => {
     const bestBlock = await client.call("bestBlock");
     const result = await client.call("statistics", [bestBlock.header_hash]);
+
     assert.deepStrictEqual(
       result,
       hexToUint8Array(
-        "02000000000000000000000000000000030000000400000001000000000000000000000000000000040000000500000001000000000000000000000000000000030000000500000000000000000000000000000000000000030000000500000000000000000000000000000000000000040000000500000001000000000000000000000000000000040000000300000005000000000000000000000000000000040000000900000001000000000000000000000000000000020000000900000003000000000000000000000000000000040000000a00000000000000000000000000000000000000070000000b00000002000000000000000000000000000000060000000900000001000000000000000000000000000000060000000b000000000000000000000081a905000000008169c0fda50100000000000001c0fda50000000001c04ffb0000",
+        "01000000000000000000000000000000020000000500000002000000000000000000000000000000020000000500000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000500000001000000000000000000000000000000000000000300000001000000000000000000000000000000020000000300000002000000000000000000000000000000040000000a00000002000000000000000000000000000000060000000b00000003000000000000000000000000000000060000000c00000003000000000000000000000000000000040000000c00000001000000000000000000000000000000040000000a00000001000000000000000000000000000000060000000a000000000300128519008be9c30c0500000000000000000100000000000004c30c0500128519000000",
       ),
     );
   });
@@ -85,10 +86,11 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
   it("gets service data", async () => {
     const bestBlock = await client.call("bestBlock");
     const result = await client.call("serviceData", [bestBlock.header_hash, 0]);
+
     assert.deepStrictEqual(
       result,
       hexToUint8Array(
-        "2f46b4ee8c502d0b9e66c78823b4959e22c101d9a3d1b82554b1912cc11f6eb5ffffffffffffffff0a000000000000000a000000000000002d7a020000000000ffffffffffffffff0b000000000000006400000000000000",
+        "d1b097b4410b3a63446d7c57d093972a9744fcd2d74f4a5e2ec163610e6d6327ffffffffffffffff0a000000000000000a000000000000007c20020000000000ffffffffffffffff1a000000000000006200000000000000",
       ),
     );
   });
@@ -103,17 +105,18 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
     assert.deepStrictEqual(result, null);
   });
 
-  const testPreimageHash = hexToUint8Array("2f46b4ee8c502d0b9e66c78823b4959e22c101d9a3d1b82554b1912cc11f6eb5");
+  // The preimage hash comes from the post state of block 100 (can be extracted using the state viewer tool)
+  const testPreimageHash = hexToUint8Array("d1b097b4410b3a63446d7c57d093972a9744fcd2d74f4a5e2ec163610e6d6327");
 
   it("gets service preimage", async () => {
     const bestBlock = await client.call("bestBlock");
     const data = await client.call("servicePreimage", [bestBlock.header_hash, 0, testPreimageHash]);
-    assert.deepStrictEqual(data?.length, 116356);
+    assert.deepStrictEqual(data?.length, 137056);
   });
 
   it("gets service request", async () => {
     const bestBlock = await client.call("bestBlock");
-    const result = await client.call("serviceRequest", [bestBlock.header_hash, 0, testPreimageHash, 116356]);
+    const result = await client.call("serviceRequest", [bestBlock.header_hash, 0, testPreimageHash, 137056]);
     assert.deepStrictEqual(result, [0]);
   });
 
@@ -135,7 +138,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
       const data = await new Promise<string>((resolve) =>
         subscription.once("data", (result) => resolve(result as string)),
       );
-      assert.deepStrictEqual(data.length, 155144);
+      assert.deepStrictEqual(data.length, 182744);
     } finally {
       await subscription.unsubscribe();
     }

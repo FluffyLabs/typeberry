@@ -1,4 +1,4 @@
-import { type ServiceGas, type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
+import { type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import { codec, Decoder, tryAsExactBytes } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU64 } from "@typeberry/numbers";
@@ -6,14 +6,7 @@ import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typebe
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
 import { tryAsPerCore } from "@typeberry/state";
-import {
-  asOpaqueType,
-  assertNever,
-  Compatibility,
-  GpVersion,
-  lazyInspect,
-  safeAllocUint8Array,
-} from "@typeberry/utils";
+import { asOpaqueType, assertNever, lazyInspect, safeAllocUint8Array } from "@typeberry/utils";
 import { type PartialState, UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../general/results.js";
 import { logger } from "../logger.js";
@@ -40,9 +33,7 @@ const serviceIdAndGasCodec = codec.object({
 export class Bless implements HostCallHandler {
   index = tryAsHostCallIndex(14);
   basicGasCost = tryAsSmallGas(10);
-  tracedRegisters = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-    ? traceRegisters(IN_OUT_REG, 8, 9, 10, 11, 12)
-    : traceRegisters(IN_OUT_REG, 8, 9, 10, 11);
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10, 11, 12);
 
   constructor(
     public readonly currentServiceId: ServiceId,
@@ -58,13 +49,11 @@ export class Bless implements HostCallHandler {
     // `v`: manages validator keys
     const delegator = getServiceId(regs.get(9));
     // `r`: manages creation of new services with id within protected range
-    const registrar = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-      ? getServiceId(regs.get(10))
-      : tryAsServiceId(2 ** 32 - 1);
+    const registrar = getServiceId(regs.get(10));
     // `o`: memory offset
-    const sourceStart = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? regs.get(11) : regs.get(10);
+    const sourceStart = regs.get(11);
     // `n`: number of items in the auto-accumulate dictionary
-    const numberOfItems = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? regs.get(12) : regs.get(11);
+    const numberOfItems = regs.get(12);
 
     /*
      * `z`: array of key-value pairs serviceId -> gas that auto-accumulate every block

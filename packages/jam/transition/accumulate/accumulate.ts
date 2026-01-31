@@ -164,9 +164,7 @@ export class Accumulate {
       slot,
     );
 
-    const fetchExternalities = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-      ? FetchExternalities.createForAccumulate({ entropy, transfers, operands }, this.chainSpec)
-      : FetchExternalities.createForPre071Accumulate({ entropy, operands }, this.chainSpec);
+    const fetchExternalities = FetchExternalities.createForAccumulate({ entropy, transfers, operands }, this.chainSpec);
 
     const externalities = {
       partialState,
@@ -238,21 +236,18 @@ export class Accumulate {
 
     const updatedState = new PartiallyUpdatedState(this.state, inputStateUpdate);
 
-    // update service balance from incoming transfers
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      const serviceInfo = updatedState.getServiceInfo(serviceId);
-      if (serviceInfo !== null) {
-        // update the balance from incoming tranfsers
-        const newBalance = sumU64(serviceInfo.balance, ...transfers.map((item) => item.amount));
+    const serviceInfo = updatedState.getServiceInfo(serviceId);
+    if (serviceInfo !== null) {
+      // update the balance from incoming transfers
+      const newBalance = sumU64(serviceInfo.balance, ...transfers.map((item) => item.amount));
 
-        if (newBalance.overflow) {
-          logger.log`Accumulation failed because of overflowing balance ${serviceId}.`;
-          return { stateUpdate: null, consumedGas: tryAsServiceGas(0n) };
-        }
-
-        const newInfo = ServiceAccountInfo.create({ ...serviceInfo, balance: newBalance.value });
-        updatedState.updateServiceInfo(serviceId, newInfo);
+      if (newBalance.overflow) {
+        logger.log`Accumulation failed because of overflowing balance ${serviceId}.`;
+        return { stateUpdate: null, consumedGas: tryAsServiceGas(0n) };
       }
+
+      const newInfo = ServiceAccountInfo.create({ ...serviceInfo, balance: newBalance.value });
+      updatedState.updateServiceInfo(serviceId, newInfo);
     }
 
     const result = await this.pvmAccumulateInvocation(
@@ -629,7 +624,6 @@ export class Accumulate {
 
   async transition({ reports, slot, entropy }: AccumulateInput): Promise<Result<AccumulateResult, ACCUMULATION_ERROR>> {
     const statistics: Map<ServiceId, CountAndGasUsed> = new Map();
-    const legacyTransfers: PendingTransfer[] = [];
     const yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>> = new Map();
     const accumulateQueue = new AccumulateQueue(this.chainSpec, this.state);
     const toAccumulateImmediately = accumulateQueue.getWorkReportsToAccumulateImmediately(reports);
@@ -645,29 +639,17 @@ export class Accumulate {
     const gasLimit = this.getGasLimit();
     const autoAccumulateServices = this.state.privilegedServices.autoAccumulateServices;
 
-    const { accumulatedReports, gasCost, state, ...rest } = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-      ? await this.accumulateSequentially(
-          gasLimit,
-          accumulatableReports,
-          [],
-          slot,
-          entropy,
-          statistics,
-          AccumulationStateUpdate.empty(),
-          autoAccumulateServices,
-          yieldedRoots,
-        )
-      : await this.accumulateSequentiallyLegacy(
-          gasLimit,
-          accumulatableReports,
-          slot,
-          entropy,
-          statistics,
-          AccumulationStateUpdate.empty(),
-          autoAccumulateServices,
-          yieldedRoots,
-          legacyTransfers,
-        );
+    const { accumulatedReports, gasCost, state, ...rest } = await this.accumulateSequentially(
+      gasLimit,
+      accumulatableReports,
+      [],
+      slot,
+      entropy,
+      statistics,
+      AccumulationStateUpdate.empty(),
+      autoAccumulateServices,
+      yieldedRoots,
+    );
     // we can safely ignore top-level gas cost from accSequentially.
     const _gasCost = gasCost;
     assertEmpty(rest);
@@ -727,7 +709,6 @@ export class Accumulate {
         ...authQueues,
       },
       accumulationStatistics: statistics,
-      pendingTransfers: legacyTransfers,
       accumulationOutputLog: accumulationOutput,
     });
   }

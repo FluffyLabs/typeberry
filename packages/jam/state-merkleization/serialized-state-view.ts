@@ -113,6 +113,7 @@ export class SerializedStateView<T extends SerializedStateBackend> implements St
     if (!this.recentlyUsedServices.includes(id)) {
       this.recentlyUsedServices.push(id);
     }
+
     return Decoder.decodeObject(serviceData.Codec.View, bytes, this.spec);
   }
 }
