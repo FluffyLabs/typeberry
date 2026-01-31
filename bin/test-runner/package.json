@@ -35,11 +35,9 @@
   },
   "scripts": {
     "start": "tsx --test-timeout=900000 ./index.ts",
-    "w3f:0.7.0": "GP_VERSION=0.7.0 tsx ./w3f-070.ts",
-    "w3f-davxy:0.7.0": "GP_VERSION=0.7.0 tsx ./w3f-davxy-070.ts",
+    "w3f:0.7.2": "GP_VERSION=0.7.2 tsx ./w3f-072.ts",
     "w3f-davxy:0.7.1": "GP_VERSION=0.7.1 tsx ./w3f-davxy-071.ts",
     "w3f-davxy:0.7.2": "GP_VERSION=0.7.2 tsx ./w3f-davxy-072.ts",
-    "jam-conformance:0.7.0": "GP_VERSION=0.7.0 tsx ./jam-conformance-070.ts",
     "jam-conformance:0.7.1": "GP_VERSION=0.7.1 tsx ./jam-conformance-071.ts",
     "jam-conformance:0.7.2": "GP_VERSION=0.7.2 tsx ./jam-conformance-072.ts",
     "javajam:0.7.1": "GP_VERSION=0.7.1 tsx ./javajam-071.ts",

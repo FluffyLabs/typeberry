@@ -51,7 +51,7 @@ import {
   UpdatePreimage,
   type ValidatorData,
 } from "@typeberry/state";
-import { assertNever, Compatibility, check, GpVersion, OK, Result } from "@typeberry/utils";
+import { assertNever, check, OK, Result } from "@typeberry/utils";
 
 /**
  * Number of storage items required for ejection of the service.
@@ -157,10 +157,7 @@ export class AccumulateExternalities
   /** `check`: https://graypaper.fluffylabs.dev/#/ab2cdbd/30c60330c603?v=0.7.2 */
   private getNextAvailableServiceId(serviceId: ServiceId): ServiceId {
     let currentServiceId = serviceId;
-    const mod = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-      ? 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8
-      : 2 ** 32 - 2 ** 9;
-    const offset = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? MIN_PUBLIC_SERVICE_INDEX : 2 ** 8;
+    const mod = 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8;
 
     for (;;) {
       const service = this.getServiceInfo(currentServiceId);
@@ -169,7 +166,9 @@ export class AccumulateExternalities
         return currentServiceId;
       }
       // keep trying
-      currentServiceId = tryAsServiceId(((currentServiceId - offset + 1 + mod) % mod) + offset);
+      currentServiceId = tryAsServiceId(
+        ((currentServiceId - MIN_PUBLIC_SERVICE_INDEX + 1 + mod) % mod) + MIN_PUBLIC_SERVICE_INDEX,
+      );
     }
   }
 
@@ -462,31 +461,29 @@ export class AccumulateExternalities
       balance: tryAsU64(balanceLeftForCurrent),
     });
 
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      if (
-        wantedServiceId < MIN_PUBLIC_SERVICE_INDEX &&
-        this.currentServiceId === this.updatedState.getPrivilegedServices().registrar
-      ) {
-        // NOTE: It's safe to cast to `Number` here, bcs here service ID cannot be bigger than 2**16
-        const newServiceId = tryAsServiceId(Number(wantedServiceId));
-        if (this.getServiceInfo(newServiceId) !== null) {
-          return Result.error(
-            NewServiceError.RegistrarServiceIdAlreadyTaken,
-            () => `Service ID ${newServiceId} already taken`,
-          );
-        }
-        // add the new service with selected ID
-        // https://graypaper.fluffylabs.dev/#/ab2cdbd/36be0336c003?v=0.7.2
-        this.updatedState.createService(newServiceId, newAccount, newLookupItem);
-        // update the balance of current service
-        // https://graypaper.fluffylabs.dev/#/ab2cdbd/36c20336c403?v=0.7.2
-        this.updatedState.updateServiceInfo(this.currentServiceId, updatedCurrentAccount);
-        return Result.ok(newServiceId);
+    if (
+      wantedServiceId < MIN_PUBLIC_SERVICE_INDEX &&
+      this.currentServiceId === this.updatedState.getPrivilegedServices().registrar
+    ) {
+      // NOTE: It's safe to cast to `Number` here, bcs here service ID cannot be bigger than 2**16
+      const newServiceId = tryAsServiceId(Number(wantedServiceId));
+      if (this.getServiceInfo(newServiceId) !== null) {
+        return Result.error(
+          NewServiceError.RegistrarServiceIdAlreadyTaken,
+          () => `Service ID ${newServiceId} already taken`,
+        );
       }
-      // NOTE: in case the service is not a registrar or the requested serviceId is out of range,
-      // we completely ignore the `wantedServiceId` and assign a random one
+      // add the new service with selected ID
+      // https://graypaper.fluffylabs.dev/#/ab2cdbd/36be0336c003?v=0.7.2
+      this.updatedState.createService(newServiceId, newAccount, newLookupItem);
+      // update the balance of current service
+      // https://graypaper.fluffylabs.dev/#/ab2cdbd/36c20336c403?v=0.7.2
+      this.updatedState.updateServiceInfo(this.currentServiceId, updatedCurrentAccount);
+      return Result.ok(newServiceId);
     }
 
+    // NOTE: in case the service is not a registrar or the requested serviceId is out of range,
+    // we completely ignore the `wantedServiceId` and assign a random one
     const newServiceId = this.nextNewServiceId;
 
     // add the new service
@@ -557,7 +554,7 @@ export class AccumulateExternalities
       );
     }
 
-    if (assigners === null && Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
+    if (assigners === null) {
       logger.trace`The new auth manager is not a valid service id.`;
       return Result.error(
         UpdatePrivilegesError.InvalidServiceId,
@@ -576,35 +573,6 @@ export class AccumulateExternalities
     registrar: ServiceId | null,
     autoAccumulateServices: Map<ServiceId, ServiceGas>,
   ): Result<OK, UpdatePrivilegesError> {
-    if (!Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36d90036de00?v=0.6.7 */
-      const current = this.updatedState.getPrivilegedServices();
-      const isManager = current.manager === this.currentServiceId;
-      if (!isManager) {
-        return Result.error(
-          UpdatePrivilegesError.UnprivilegedService,
-          () => `Service ${this.currentServiceId} is not manager`,
-        );
-      }
-
-      if (manager === null || delegator === null) {
-        return Result.error(
-          UpdatePrivilegesError.InvalidServiceId,
-          () => "Either manager or delegator is not a valid service id.",
-        );
-      }
-
-      this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
-        manager,
-        assigners,
-        delegator,
-        registrar: registrar ?? tryAsServiceId(0),
-        autoAccumulateServices,
-      });
-
-      return Result.ok(OK);
-    }
-
     if (manager === null || delegator === null || registrar === null) {
       return Result.error(
         UpdatePrivilegesError.InvalidServiceId,
@@ -788,9 +756,6 @@ export class AccumulateExternalities
 }
 
 function bumpServiceId(serviceId: ServiceId): ServiceId {
-  const mod = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-    ? 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8
-    : 2 ** 32 - 2 ** 9;
-  const offset = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? MIN_PUBLIC_SERVICE_INDEX : 2 ** 8;
-  return tryAsServiceId(offset + ((serviceId - offset + 42 + mod) % mod));
+  const mod = 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8;
+  return tryAsServiceId(MIN_PUBLIC_SERVICE_INDEX + ((serviceId - MIN_PUBLIC_SERVICE_INDEX + 42 + mod) % mod));
 }

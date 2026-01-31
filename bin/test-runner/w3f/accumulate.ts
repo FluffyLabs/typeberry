@@ -15,9 +15,14 @@ import { asKnownSize, HashSet } from "@typeberry/collections";
 import { type ChainSpec, PvmBackend, PvmBackendNames } from "@typeberry/config";
 import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
-import type { InMemoryService } from "@typeberry/state";
-import { InMemoryState, NotYetAccumulatedReport, PrivilegedServices, tryAsPerCore } from "@typeberry/state";
-import { JsonService } from "@typeberry/state-json/accounts.js";
+import {
+  type InMemoryService,
+  InMemoryState,
+  NotYetAccumulatedReport,
+  PrivilegedServices,
+  tryAsPerCore,
+} from "@typeberry/state";
+import { JsonService, JsonServicePre072 } from "@typeberry/state-json";
 import { AccumulateOutput } from "@typeberry/transition/accumulate/accumulate-output.js";
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
 import { Compatibility, deepEqual, GpVersion, Result } from "@typeberry/utils";
@@ -50,13 +55,15 @@ class TestState {
         bless: "number",
         assign: json.array("number"),
         designate: "number",
-        register: json.optional("number"),
+        register: "number",
         always_acc: json.array({
           id: "number",
           gas: json.fromNumber((x) => tryAsServiceGas(x)),
         }),
       },
-      accounts: json.array(JsonService.fromJson),
+      accounts: json.array(
+        Compatibility.isGreaterOrEqual(GpVersion.V0_7_2) ? JsonService.fromJson : JsonServicePre072.fromJson,
+      ),
     },
     (x) => x,
   );
@@ -69,7 +76,7 @@ class TestState {
     bless: ServiceId;
     assign: ServiceId[];
     designate: ServiceId;
-    register?: ServiceId;
+    register: ServiceId;
     always_acc: { id: ServiceId; gas: ServiceGas }[];
   };
   accounts!: InMemoryService[];
@@ -78,9 +85,6 @@ class TestState {
     { accounts, slot, ready_queue, accumulated, privileges }: TestState,
     chainSpec: ChainSpec,
   ): InMemoryState {
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) && privileges.register === undefined) {
-      throw new Error("Privileges from version 0.7.1 must have `register` field!");
-    }
     const autoAccumulateServices = new Map(privileges.always_acc.map(({ gas, id }) => [id, gas]));
 
     return InMemoryState.partial(chainSpec, {

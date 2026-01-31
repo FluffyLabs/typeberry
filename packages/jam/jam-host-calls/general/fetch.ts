@@ -4,7 +4,6 @@ import { minU64, tryAsU64, type U32, type U64 } from "@typeberry/numbers";
 import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 import { logger } from "../logger.js";
 import { clampU64ToU32 } from "../utils.js";
 import { HostCallResult } from "./results.js";
@@ -160,20 +159,6 @@ export interface IFetchExternalities {
   workItemPayload(workItem: U64): BytesBlob | null;
 
   /**
-   * Get all accumulation operands (work results?).
-   *
-   * Is Authorized: <empty>
-   * Refine: <empty>
-   * Accumulate: `E(↕o)`
-   * On Transfer: <empty>
-   *
-   * @deprecated since 0.7.1
-   *
-   * https://graypaper.fluffylabs.dev/#/9a08063/32fb0132fb01?v=0.6.6
-   */
-  allOperands(): BytesBlob | null;
-
-  /**
    * Get all accumulation operands (work results?) and transfers.
    *
    * Is Authorized: <empty>
@@ -185,20 +170,6 @@ export interface IFetchExternalities {
   allTransfersAndOperands(): BytesBlob | null;
 
   /**
-   * Get one selected accumulation operand.
-   *
-   * Is Authorized: <empty>
-   * Refine: <empty>
-   * Accumulate: `E(o[omega_11])`
-   * On Transfer: <empty>
-   *
-   * @deprecated 0.7.1
-   *
-   * https://graypaper.fluffylabs.dev/#/9a08063/320202320202?v=0.6.6
-   */
-  oneOperand(operandIndex: U64): BytesBlob | null;
-
-  /**
    * Get one selected accumulation operand or transfer.
    *
    * Is Authorized: <empty>
@@ -208,34 +179,6 @@ export interface IFetchExternalities {
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/315503315503?v=0.7.2
    */
   oneTransferOrOperand(index: U64): BytesBlob | null;
-
-  /**
-   * Inspect all incoming transfers.
-   *
-   * Is Authorized: <empty>
-   * Refine: <empty>
-   * Accumulate: <empty>
-   * On Transfer: `E(↕t)`
-   *
-   * @deprecated 0.7.1
-   *
-   * https://graypaper.fluffylabs.dev/#/9a08063/320c02320c02?v=0.6.6
-   */
-  allTransfers(): BytesBlob | null;
-
-  /**
-   * Inspect one particular incoming transfers.
-   *
-   * Is Authorized: <empty>
-   * Refine: <empty>
-   * Accumulate: <empty>
-   * On Transfer: `E(t[omega_11])`
-   *
-   * @deprecated 0.7.1
-   *
-   * https://graypaper.fluffylabs.dev/#/9a08063/321302321302?v=0.6.6
-   */
-  oneTransfer(transferIndex: U64): BytesBlob | null;
 }
 
 const IN_OUT_REG = 7;
@@ -347,33 +290,13 @@ export class Fetch implements HostCallHandler {
       return this.fetch.workItemPayload(workItem);
     }
 
-    if (Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)) {
-      if (kind === FetchKind.AllTransfersAndOperands) {
-        return this.fetch.allTransfersAndOperands();
-      }
+    if (kind === FetchKind.AllTransfersAndOperands) {
+      return this.fetch.allTransfersAndOperands();
+    }
 
-      if (kind === FetchKind.OneTransferOrOperand) {
-        const index = regs.get(11);
-        return this.fetch.oneTransferOrOperand(index);
-      }
-    } else {
-      if (kind === FetchKind.LegacyAllOperands) {
-        return this.fetch.allOperands();
-      }
-
-      if (kind === FetchKind.LegacyOneOperand) {
-        const index = regs.get(11);
-        return this.fetch.oneOperand(index);
-      }
-
-      if (kind === FetchKind.LegacyAllTransfers) {
-        return this.fetch.allTransfers();
-      }
-
-      if (kind === FetchKind.LegacyOneTransfer) {
-        const index = regs.get(11);
-        return this.fetch.oneTransfer(index);
-      }
+    if (kind === FetchKind.OneTransferOrOperand) {
+      const index = regs.get(11);
+      return this.fetch.oneTransferOrOperand(index);
     }
 
     return null;
@@ -395,10 +318,6 @@ export enum FetchKind {
   AllWorkItems = 11,
   OneWorkItem = 12,
   WorkItemPayload = 13,
-  LegacyAllOperands = 14,
   AllTransfersAndOperands = 14,
-  LegacyOneOperand = 15,
   OneTransferOrOperand = 15,
-  LegacyAllTransfers = 16,
-  LegacyOneTransfer = 17,
 }

@@ -17,7 +17,7 @@ import { Operand } from "../accumulate/operand.js";
 import { REPORT_TIMEOUT_GRACE_PERIOD } from "../assurances.js";
 import { MAX_WORK_REPORT_SIZE_BYTES } from "../reports/verify-basic.js";
 
-enum TransferOperandKind {
+export enum TransferOperandKind {
   OPERAND = 0,
   TRANSFER = 1,
 }
@@ -32,7 +32,7 @@ export type TransferOrOperand =
       value: PendingTransfer;
     };
 
-const TRANSFER_OR_OPERAND = codec.union<TransferOperandKind, TransferOrOperand>("TransferOrOperand", {
+export const TRANSFER_OR_OPERAND = codec.union<TransferOperandKind, TransferOrOperand>("TransferOrOperand", {
   [TransferOperandKind.OPERAND]: codec.object({ value: Operand.Codec }),
   [TransferOperandKind.TRANSFER]: codec.object({ value: PendingTransfer.Codec }),
 });
@@ -128,24 +128,8 @@ function getEncodedConstants(chainSpec: ChainSpec) {
 
 enum FetchContext {
   Accumulate = 0,
-  /** @deprecated since 0.7.1 */
-  LegacyAccumulate = 1,
-  /** @deprecated since 0.7.1 */
-  LegacyOnTransfer = 2,
-  Refine = 3,
+  Refine = 1,
 }
-
-type LegacyAccumulateFetchData = {
-  context: FetchContext.LegacyAccumulate;
-  entropy: EntropyHash;
-  operands: Operand[];
-};
-
-type LegacyOnTransferFetchData = {
-  context: FetchContext.LegacyOnTransfer;
-  entropy: EntropyHash;
-  transfers: PendingTransfer[];
-};
 
 type AccumulateFetchData = {
   context: FetchContext.Accumulate;
@@ -163,7 +147,7 @@ type RefineFetchData = {
 // TODO [ToDr] Each context should have a separate interface with only relevant methods.
 // The common interface would be then just dispatching to the proper method from a sub-interface depending on context.
 // This will make it less error prone.
-type FetchData = LegacyAccumulateFetchData | LegacyOnTransferFetchData | AccumulateFetchData | RefineFetchData;
+type FetchData = AccumulateFetchData | RefineFetchData;
 
 export class FetchExternalities implements general.IFetchExternalities {
   private constructor(
@@ -171,25 +155,11 @@ export class FetchExternalities implements general.IFetchExternalities {
     private chainSpec: ChainSpec,
   ) {}
 
-  static createForPre071Accumulate(
-    fetchData: Omit<LegacyAccumulateFetchData, "context">,
-    chainSpec: ChainSpec,
-  ): FetchExternalities {
-    return new FetchExternalities({ context: FetchContext.LegacyAccumulate, ...fetchData }, chainSpec);
-  }
-
   static createForAccumulate(
     fetchData: Omit<AccumulateFetchData, "context">,
     chainSpec: ChainSpec,
   ): FetchExternalities {
     return new FetchExternalities({ context: FetchContext.Accumulate, ...fetchData }, chainSpec);
-  }
-
-  static createForOnTransfer(
-    fetchData: Omit<LegacyOnTransferFetchData, "context">,
-    chainSpec: ChainSpec,
-  ): FetchExternalities {
-    return new FetchExternalities({ context: FetchContext.LegacyOnTransfer, ...fetchData }, chainSpec);
   }
 
   static createForRefine(fetchData: Omit<RefineFetchData, "context">, chainSpec: ChainSpec): FetchExternalities {
@@ -246,66 +216,6 @@ export class FetchExternalities implements general.IFetchExternalities {
   }
 
   workItemPayload(_workItem: U64): BytesBlob | null {
-    return null;
-  }
-
-  allOperands(): BytesBlob | null {
-    if (this.fetchData.context === FetchContext.LegacyAccumulate) {
-      const operands = this.fetchData.operands;
-
-      return Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), operands, this.chainSpec);
-    }
-
-    return null;
-  }
-
-  oneOperand(operandIndex: U64): BytesBlob | null {
-    if (this.fetchData.context === FetchContext.LegacyAccumulate) {
-      const { operands } = this.fetchData;
-
-      if (operandIndex >= 2n ** 32n) {
-        return null;
-      }
-
-      const operand = operands[Number(operandIndex)];
-
-      if (operand === undefined) {
-        return null;
-      }
-
-      return Encoder.encodeObject(Operand.Codec, operand, this.chainSpec);
-    }
-
-    return null;
-  }
-
-  allTransfers(): BytesBlob | null {
-    if (this.fetchData.context === FetchContext.LegacyOnTransfer) {
-      const { transfers } = this.fetchData;
-
-      return Encoder.encodeObject(codec.sequenceVarLen(PendingTransfer.Codec), transfers, this.chainSpec);
-    }
-
-    return null;
-  }
-
-  oneTransfer(transferIndex: U64): BytesBlob | null {
-    if (this.fetchData.context === FetchContext.LegacyOnTransfer) {
-      const { transfers } = this.fetchData;
-
-      if (transferIndex >= 2n ** 32n) {
-        return null;
-      }
-
-      const transfer = transfers[Number(transferIndex)];
-
-      if (transfer === undefined) {
-        return null;
-      }
-
-      return Encoder.encodeObject(PendingTransfer.Codec, transfer, this.chainSpec);
-    }
-
     return null;
   }
 

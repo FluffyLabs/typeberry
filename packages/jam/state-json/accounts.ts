@@ -22,12 +22,12 @@ import {
   StorageItem,
   type StorageKey,
 } from "@typeberry/state";
-import { asOpaqueType, Compatibility, GpVersion } from "@typeberry/utils";
+import { asOpaqueType } from "@typeberry/utils";
 
 class JsonServiceInfo {
   static fromJson = json.object<JsonServiceInfo, ServiceAccountInfo>(
     {
-      ...(Compatibility.isGreaterOrEqual(GpVersion.V0_7_1) ? { version: "number" } : {}),
+      version: "number",
       code_hash: fromJson.bytes32(),
       balance: json.fromNumber((x) => tryAsU64(x)),
       min_item_gas: json.fromNumber((x) => tryAsServiceGas(x)),
@@ -66,7 +66,7 @@ class JsonServiceInfo {
     },
   );
 
-  version?: number;
+  version!: number;
   code_hash!: CodeHash;
   balance!: U64;
   min_item_gas!: ServiceGas;
@@ -102,7 +102,15 @@ class JsonStorageItem {
   value!: BytesBlob;
 }
 
-const lookupMetaFromJson = json.object<JsonLookupMeta, LookupHistoryItem>(
+type JsonPreimageStatus = {
+  key: {
+    hash: PreimageHash;
+    length: number;
+  };
+  value: LookupHistorySlots;
+};
+
+const preimageStatusFromJson = json.object<JsonPreimageStatus, LookupHistoryItem>(
   {
     key: {
       hash: fromJson.bytes32(),
@@ -110,10 +118,61 @@ const lookupMetaFromJson = json.object<JsonLookupMeta, LookupHistoryItem>(
     },
     value: json.array("number"),
   },
-  ({ key, value }) => new LookupHistoryItem(key.hash, key.length, value),
+  ({ key, value }) => new LookupHistoryItem(key.hash, tryAsU32(key.length), value),
 );
 
-const preimageStatusFromJson = json.object<JsonPreimageStatus, LookupHistoryItem>(
+export class JsonService {
+  static fromJson = json.object<JsonService, InMemoryService>(
+    {
+      id: "number",
+      data: {
+        service: JsonServiceInfo.fromJson,
+        storage: json.optional(json.array(JsonStorageItem.fromJson)),
+        preimage_blobs: json.optional(json.array(JsonPreimageItem.fromJson)),
+        preimage_requests: json.optional(json.array(preimageStatusFromJson)),
+      },
+    },
+    ({ id, data }) => {
+      const preimages = HashDictionary.fromEntries((data.preimage_blobs ?? []).map((x) => [x.hash, x]));
+
+      const lookupHistory = HashDictionary.new<PreimageHash, LookupHistoryItem[]>();
+
+      for (const item of data.preimage_requests ?? []) {
+        const data = lookupHistory.get(item.hash) ?? [];
+        data.push(item);
+        lookupHistory.set(item.hash, data);
+      }
+
+      const storage = new Map<string, StorageItem>();
+
+      const entries = (data.storage ?? []).map(({ key, value }) => {
+        const opaqueKey: StorageKey = asOpaqueType(key);
+        return [opaqueKey, StorageItem.create({ key: opaqueKey, value })] as const;
+      });
+
+      for (const [key, item] of entries) {
+        storage.set(key.toString(), item);
+      }
+
+      return new InMemoryService(id, {
+        info: data.service,
+        preimages,
+        storage,
+        lookupHistory,
+      });
+    },
+  );
+
+  id!: ServiceId;
+  data!: {
+    service: ServiceAccountInfo;
+    storage?: JsonStorageItem[];
+    preimage_blobs?: JsonPreimageItem[];
+    preimage_requests?: LookupHistoryItem[];
+  };
+}
+
+const preimageStatusFromJson072 = json.object<JsonPreimageStatusPre072, LookupHistoryItem>(
   {
     hash: fromJson.bytes32(),
     status: json.array("number"),
@@ -121,36 +180,21 @@ const preimageStatusFromJson = json.object<JsonPreimageStatus, LookupHistoryItem
   ({ hash, status }) => new LookupHistoryItem(hash, tryAsU32(0), status),
 );
 
-type JsonPreimageStatus = {
+type JsonPreimageStatusPre072 = {
   hash: PreimageHash;
   status: LookupHistorySlots;
 };
 
-type JsonLookupMeta = {
-  key: {
-    hash: PreimageHash;
-    length: U32;
-  };
-  value: LookupHistorySlots;
-};
-
-export class JsonService {
-  static fromJson = json.object<JsonService, InMemoryService>(
+export class JsonServicePre072 {
+  static fromJson = json.object<JsonServicePre072, InMemoryService>(
     {
       id: "number",
-      data: Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-        ? {
-            service: JsonServiceInfo.fromJson,
-            storage: json.optional(json.array(JsonStorageItem.fromJson)),
-            preimages_blob: json.optional(json.array(JsonPreimageItem.fromJson)),
-            preimages_status: json.optional(json.array(preimageStatusFromJson)),
-          }
-        : {
-            service: JsonServiceInfo.fromJson,
-            preimages: json.optional(json.array(JsonPreimageItem.fromJson)),
-            storage: json.optional(json.array(JsonStorageItem.fromJson)),
-            lookup_meta: json.optional(json.array(lookupMetaFromJson)),
-          },
+      data: {
+        service: JsonServiceInfo.fromJson,
+        storage: json.optional(json.array(JsonStorageItem.fromJson)),
+        preimages_blob: json.optional(json.array(JsonPreimageItem.fromJson)),
+        preimages_status: json.optional(json.array(preimageStatusFromJson072)),
+      },
     },
     ({ id, data }) => {
       const preimages = HashDictionary.fromEntries(

@@ -21,18 +21,17 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
   });
 
   it("Should check with env variable if env variable was set", () => {
-    const gpVersion = GpVersion.V0_7_0;
+    const gpVersion = GpVersion.V0_7_2;
     Compatibility.override(gpVersion);
 
     assert.equal(Compatibility.is(gpVersion), true);
   });
 
   it("Should check an order of versions (isGreaterOrEqual)", () => {
-    const gpVersion = GpVersion.V0_7_0;
+    const gpVersion = GpVersion.V0_7_1;
     Compatibility.override(gpVersion);
 
-    assert.equal(Compatibility.isGreaterOrEqual(GpVersion.V0_7_0), true);
-    assert.equal(Compatibility.isGreaterOrEqual(GpVersion.V0_7_1), false);
+    assert.equal(Compatibility.isGreaterOrEqual(GpVersion.V0_7_1), true);
     assert.equal(Compatibility.isGreaterOrEqual(GpVersion.V0_7_2), false);
   });
 
@@ -41,7 +40,7 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
     Compatibility.override(gpVersion);
 
     const record = {
-      [GpVersion.V0_7_0]: "low",
+      [GpVersion.V0_7_1]: "low",
       [GpVersion.V0_7_2]: "high",
     };
 
@@ -55,7 +54,6 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
     Compatibility.override(gpVersion);
 
     const record = {
-      [GpVersion.V0_7_0]: "low",
       [GpVersion.V0_7_1]: "mid",
       [GpVersion.V0_7_2]: "high",
     };
@@ -70,7 +68,6 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
     Compatibility.override(gpVersion);
 
     const record = {
-      [GpVersion.V0_7_0]: "low",
       [GpVersion.V0_7_1]: "mid",
       [GpVersion.V0_7_2]: "high",
     };
@@ -81,11 +78,10 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
   });
 
   it("Should return default if no version is greater or equal", () => {
-    const gpVersion = GpVersion.V0_7_0;
+    const gpVersion = GpVersion.V0_7_1;
     Compatibility.override(gpVersion);
 
     const record = {
-      [GpVersion.V0_7_1]: "mid",
       [GpVersion.V0_7_2]: "high",
     };
 
@@ -95,7 +91,7 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
   });
 
   it("Should return default if record is empty", () => {
-    const gpVersion = GpVersion.V0_7_0;
+    const gpVersion = GpVersion.V0_7_1;
     Compatibility.override(gpVersion);
 
     const result = Compatibility.selectIfGreaterOrEqual({ fallback: "default", versions: {} });

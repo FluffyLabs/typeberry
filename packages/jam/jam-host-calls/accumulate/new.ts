@@ -5,7 +5,7 @@ import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, traceRegisters, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type IGasCounter, tryAsSmallGas } from "@typeberry/pvm-interface";
-import { assertNever, Compatibility, GpVersion, resultToString } from "@typeberry/utils";
+import { assertNever, resultToString } from "@typeberry/utils";
 import { NewServiceError, type PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../general/results.js";
 import { logger } from "../logger.js";
@@ -20,9 +20,7 @@ const IN_OUT_REG = 7;
 export class New implements HostCallHandler {
   index = tryAsHostCallIndex(18);
   basicGasCost = tryAsSmallGas(10);
-  tracedRegisters = Compatibility.isGreaterOrEqual(GpVersion.V0_7_1)
-    ? traceRegisters(IN_OUT_REG, 8, 9, 10, 11, 12)
-    : traceRegisters(IN_OUT_REG, 8, 9, 10, 11);
+  tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10, 11, 12);
 
   constructor(
     public readonly currentServiceId: ServiceId,
