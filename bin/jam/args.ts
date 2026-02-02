@@ -13,7 +13,7 @@ Usage:
   jam [options] dev <dev-validator-index> [--fast-forward]
   jam [options] import <bin-or-json-blocks>
   jam [options] export <output-directory-or-file>
-  jam [options] [--version=1] fuzz-target [socket-path=/tmp/jam_target.sock]
+  jam [options] fuzz-target [--version=1] [--init-genesis-from-ancestry] [socket-path=/tmp/jam_target.sock]
 
 Options:
   --name                Override node name. Affects networking key and db location.
@@ -31,6 +31,7 @@ Options:
   --pvm                 PVM Backend, one of: [${PvmBackendNames.join(", ")}].
                         [default: ${PvmBackendNames[NODE_DEFAULTS.pvm]}]
   --fast-forward        (dev mode only) Generate blocks as fast as possible without waiting for real time.
+  --init-genesis-from-ancestry  (fuzz-target only) Skip parent hash and state root verification.
 `;
 
 /** Command to execute. */
