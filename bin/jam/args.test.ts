@@ -261,4 +261,18 @@ describe("CLI", () => {
       },
     });
   });
+
+  it("should parse fuzz-target with flags before command (space separated)", () => {
+    const args = parse(["--version", "1", "--init-genesis-from-ancestry", "fuzz-target"]);
+
+    deepEqual(args, {
+      command: Command.FuzzTarget,
+      args: {
+        ...defaultOptions,
+        version: 1,
+        socket: null,
+        initGenesisFromAncestry: true,
+      },
+    });
+  });
 });

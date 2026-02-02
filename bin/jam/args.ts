@@ -5,33 +5,42 @@ import { isU16, type U16 } from "@typeberry/numbers";
 import minimist from "minimist";
 import packageJson from "./package.json" with { type: "json" };
 
+export const ARGS = {
+  NAME: "name",
+  CONFIG: "config",
+  PVM: "pvm",
+  FAST_FORWARD: "fast-forward",
+  INIT_GENESIS_FROM_ANCESTRY: "init-genesis-from-ancestry",
+  VERSION: "version",
+} as const;
+
 export const HELP = `
 @typeberry/jam ${packageJson.version} by Fluffy Labs.
 
 Usage:
   jam [options]
-  jam [options] dev <dev-validator-index> [--fast-forward]
+  jam [options] dev <dev-validator-index> [--${ARGS.FAST_FORWARD}]
   jam [options] import <bin-or-json-blocks>
   jam [options] export <output-directory-or-file>
-  jam [options] fuzz-target [--version=1] [--init-genesis-from-ancestry] [socket-path=/tmp/jam_target.sock]
+  jam [options] fuzz-target [--${ARGS.VERSION}=1] [--${ARGS.INIT_GENESIS_FROM_ANCESTRY}] [socket-path=/tmp/jam_target.sock]
 
 Options:
-  --name                Override node name. Affects networking key and db location.
+  --${ARGS.NAME}                Override node name. Affects networking key and db location.
                         [default: ${NODE_DEFAULTS.name}]
-  --config              Configuration directives. If specified more than once, they are evaluated and merged from left to right.
+  --${ARGS.CONFIG}              Configuration directives. If specified more than once, they are evaluated and merged from left to right.
                         A configuration directive can be a path to a config file, an inline JSON object, a pseudo-jq query or one of predefined configs ['${DEV_CONFIG}', '${DEFAULT_CONFIG}'].
                         Pseudo-jq queries are a way to modify the config using a subset of jq syntax.
-                        Example: --config=dev --config=.chain_spec+={"bootnodes": []}      -- will modify only the bootnodes property of the chain spec (merge).
-                        Example: --config=dev --config=.chain_spec={"bootnodes": []}       -- will replace the entire chain spec property with the provided JSON object.
-                        Example: --config=dev --config=.chain_spec+=bootnodes.json         -- you may also use JSON files in your queries. This one will merge the contents of bootnodes.json onto the chain spec.
-                        Example: --config=dev --config={"chain_spec": { "bootnodes": [] }} -- will merge the provided JSON object onto the "dev" config.
-                        Example: --config=dev --config=bootnodes.json                      -- will merge the contents of bootnodes.json onto the "dev" config.
-                        Example: --config=custom-config.json                               -- will use the contents of custom-config.json as the config.
+                        Example: --${ARGS.CONFIG}=dev --${ARGS.CONFIG}=.chain_spec+={"bootnodes": []}      -- will modify only the bootnodes property of the chain spec (merge).
+                        Example: --${ARGS.CONFIG}=dev --${ARGS.CONFIG}=.chain_spec={"bootnodes": []}       -- will replace the entire chain spec property with the provided JSON object.
+                        Example: --${ARGS.CONFIG}=dev --${ARGS.CONFIG}=.chain_spec+=bootnodes.json         -- you may also use JSON files in your queries. This one will merge the contents of bootnodes.json onto the chain spec.
+                        Example: --${ARGS.CONFIG}=dev --${ARGS.CONFIG}={"chain_spec": { "bootnodes": [] }} -- will merge the provided JSON object onto the "dev" config.
+                        Example: --${ARGS.CONFIG}=dev --${ARGS.CONFIG}=bootnodes.json                      -- will merge the contents of bootnodes.json onto the "dev" config.
+                        Example: --${ARGS.CONFIG}=custom-config.json                               -- will use the contents of custom-config.json as the config.
                         [default: ${NODE_DEFAULTS.config}]
-  --pvm                 PVM Backend, one of: [${PvmBackendNames.join(", ")}].
+  --${ARGS.PVM}                 PVM Backend, one of: [${PvmBackendNames.join(", ")}].
                         [default: ${PvmBackendNames[NODE_DEFAULTS.pvm]}]
-  --fast-forward        (dev mode only) Generate blocks as fast as possible without waiting for real time.
-  --init-genesis-from-ancestry  (fuzz-target only) Skip parent hash and state root verification.
+  --${ARGS.FAST_FORWARD}        (dev mode only) Generate blocks as fast as possible without waiting for real time.
+  --${ARGS.INIT_GENESIS_FROM_ANCESTRY}  (fuzz-target only) Skip parent hash and state root verification.
 `;
 
 /** Command to execute. */
@@ -88,17 +97,17 @@ export function parseSharedOptions(
   args: minimist.ParsedArgs,
   defaultConfig: string[] = NODE_DEFAULTS.config,
 ): SharedOptions {
-  const { name } = parseStringOption(args, "name", (v) => v, NODE_DEFAULTS.name);
+  const { name } = parseStringOption(args, ARGS.NAME, (v) => v, NODE_DEFAULTS.name);
   const { config } = parseValueOptionAsArray(
     args,
-    "config",
+    ARGS.CONFIG,
     "string",
     (v: string) => (v === "" ? null : v),
     defaultConfig,
   );
   const { pvm } = parseStringOption(
     args,
-    "pvm",
+    ARGS.PVM,
     (v) => {
       const pvm = PvmBackendNames.indexOf(v);
       if (pvm >= 0) {
@@ -117,7 +126,17 @@ export function parseSharedOptions(
 }
 
 export function parseArgs(input: string[], withRelPath: (v: string) => string): Arguments | null {
-  const args = minimist(input);
+  const args = minimist(input, {
+    boolean: [ARGS.FAST_FORWARD, ARGS.INIT_GENESIS_FROM_ANCESTRY],
+  });
+
+  if (args[ARGS.FAST_FORWARD] === false) {
+    delete args[ARGS.FAST_FORWARD];
+  }
+  if (args[ARGS.INIT_GENESIS_FROM_ANCESTRY] === false) {
+    delete args[ARGS.INIT_GENESIS_FROM_ANCESTRY];
+  }
+
   const command = args._.shift() ?? Command.Run;
   const isHelp = args.help !== undefined;
   if (isHelp) {
@@ -137,8 +156,8 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
         throw new Error("Missing dev-validator index.");
       }
 
-      const isFastForward = args["fast-forward"] === true;
-      delete args["fast-forward"];
+      const isFastForward = args[ARGS.FAST_FORWARD] === true;
+      delete args[ARGS.FAST_FORWARD];
 
       if (indexOrAll === "all") {
         assertNoMoreArgs(args);
@@ -153,9 +172,9 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
     }
     case Command.FuzzTarget: {
       const data = parseSharedOptions(args);
-      const { version } = parseValueOption(args, "version", "number", parseFuzzVersion, 1);
-      const initGenesisFromAncestry = args["init-genesis-from-ancestry"] === true;
-      delete args["init-genesis-from-ancestry"];
+      const { version } = parseValueOption(args, ARGS.VERSION, "number", parseFuzzVersion, 1);
+      const initGenesisFromAncestry = args[ARGS.INIT_GENESIS_FROM_ANCESTRY] === true;
+      delete args[ARGS.INIT_GENESIS_FROM_ANCESTRY];
       if (initGenesisFromAncestry) {
         logger.warn`Init genesis from ancestry is enabled. Parent hash and state root verification is skipped.`;
       }
