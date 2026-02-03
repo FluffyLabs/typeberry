@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/jam",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "Typeberry - Typescript JAM implementation by Fluffy Labs team.",
   "main": "index.ts",
   "bin": "./index.ts",
