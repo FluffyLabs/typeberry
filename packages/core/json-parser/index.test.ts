@@ -187,7 +187,7 @@ test("JSON parser", async (t) => {
     );
   });
 
-  await t.test("map type missmatch", () => {
+  await t.test("map type mismatch", () => {
     const j = `{"k": [["a", "b"], ["c", "d"]]}`;
     class TestClass {
       static fromJson: FromJson<TestClass> = {
