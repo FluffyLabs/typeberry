@@ -166,4 +166,42 @@ test("JSON parser", async (t) => {
     assert.strictEqual(result.k, undefined);
     assert.strictEqual(result.v, true);
   });
+
+  await t.test("map", () => {
+    const j = `{"k": { "a": "b", "c": "d" } }`;
+    class TestClass {
+      static fromJson: FromJson<TestClass> = {
+        k: json.map("string", "string"),
+      };
+
+      k: Map<string, string> = new Map();
+    }
+
+    const result = parseFromJson<TestClass>(JSON.parse(j), TestClass.fromJson);
+    assert.deepStrictEqual(
+      result.k,
+      new Map([
+        ["a", "b"],
+        ["c", "d"],
+      ]),
+    );
+  });
+
+  await t.test("map type missmatch", () => {
+    const j = `{"k": [["a", "b"], ["c", "d"]]}`;
+    class TestClass {
+      static fromJson: FromJson<TestClass> = {
+        k: json.map("string", "string"),
+      };
+
+      k: Map<string, string> = new Map();
+    }
+
+    try {
+      parseFromJson<TestClass>(JSON.parse(j), TestClass.fromJson);
+      assert.fail("Expected error to be thrown");
+    } catch (e) {
+      assert.strictEqual(`${e}`, "Error: [<root>.k] Error while parsing the value: Error: Expected map, got array");
+    }
+  });
 });
