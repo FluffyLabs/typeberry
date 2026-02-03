@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/block-authorship",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "A test block generator simulating blocks received over the network.",
   "main": "index.ts",
   "dependencies": {

@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/fuzz-proto",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "Fuzzer protocol types.",
   "type": "module",
   "main": "index.ts",
