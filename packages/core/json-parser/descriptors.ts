@@ -70,6 +70,9 @@ export namespace json {
       if (typeof inJson !== "object" || inJson === null) {
         throw new Error("Expected map for parsing");
       }
+      if (Array.isArray(inJson)) {
+        throw new Error("Expected map, got array");
+      }
       const result = new Map<TKey, TValue>();
       for (const [key, value] of Object.entries(inJson)) {
         result.set(parseFromJson(key, K, `${context}.key`), parseFromJson(value, V, `${context}.value`));
