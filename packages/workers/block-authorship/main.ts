@@ -3,11 +3,13 @@ import {
   type EntropyHash,
   type PerValidator,
   type TimeSlot,
+  tryAsEpoch,
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
 import type { TicketAttempt } from "@typeberry/block/tickets.js";
 import { BytesBlob } from "@typeberry/bytes";
+import { HashSet } from "@typeberry/collections/hash-set.js";
 import { type BandersnatchKey, type Ed25519Key, initWasm } from "@typeberry/crypto";
 import {
   type BandersnatchSecretSeed,
@@ -26,6 +28,7 @@ import { asOpaqueType, assertNever, Result } from "@typeberry/utils";
 import type { WorkerConfig } from "@typeberry/workers-api";
 import { type BlockSealInput, Generator } from "./generator.js";
 import type { BlockAuthorshipConfig, GeneratorInternal } from "./protocol.js";
+import { generateTickets } from "./ticket-generator.js";
 
 const logger = Logger.new(import.meta.filename, "author");
 
@@ -145,6 +148,7 @@ export async function main(config: Config, comms: GeneratorInternal) {
 
   const isFastForward = config.workerParams.isFastForward;
   let lastGeneratedSlot = startTimeSlot;
+  let ticketsGeneratedForEpoch = -1;
 
   while (!isFinished) {
     const hash = blocks.getBestHeaderHash();
@@ -174,6 +178,46 @@ export async function main(config: Config, comms: GeneratorInternal) {
     }
 
     const isNewEpoch = isEpochChanged(lastTimeSlot, timeSlot);
+
+    // Generate tickets if within contest period and not yet generated for this epoch
+    const epoch = tryAsEpoch(Math.floor(timeSlot / chainSpec.epochLength));
+    const slotInEpoch = timeSlot % chainSpec.epochLength;
+    const shouldGenerateTickets = slotInEpoch < chainSpec.contestLength && ticketsGeneratedForEpoch !== epoch;
+
+    if (shouldGenerateTickets) {
+      const designatedValidatorData = state.designatedValidatorData;
+      const ringKeys = designatedValidatorData.map((data) => data.bandersnatch);
+      const designatedKeySet = HashSet.from(ringKeys);
+      const validatorKeys = keys
+        .filter((k) => designatedKeySet.has(k.bandersnatchPublic))
+        .map((k) => ({ secret: k.bandersnatchSecret, public: k.bandersnatchPublic }));
+
+      if (validatorKeys.length > 0) {
+        // If state is from the previous epoch, entropy hasn't been shifted yet (index 1).
+        // After epoch change, it has been shifted to index 2.
+        const ticketEntropy = isNewEpoch ? state.entropy[1] : state.entropy[2];
+
+        logger.log`Epoch ${epoch}, slot ${slotInEpoch}/${chainSpec.contestLength}. Generating tickets for ${validatorKeys.length} validators...`;
+
+        const ticketsResult = await generateTickets(
+          bandersnatch,
+          ringKeys,
+          validatorKeys,
+          ticketEntropy,
+          chainSpec.ticketsPerValidator,
+        );
+
+        if (ticketsResult.isError) {
+          logger.warn`Failed to generate tickets for epoch ${epoch}: ${ticketsResult.error}`;
+        } else {
+          logger.log`Generated ${ticketsResult.ok.length} tickets for epoch ${epoch}.`;
+          // TODO [MaSi]: Sending out tickets
+        }
+      }
+
+      ticketsGeneratedForEpoch = epoch;
+    }
+
     const selingKeySeriesResult = await getSealingKeySeries(isNewEpoch, timeSlot, state);
 
     if (selingKeySeriesResult.isError) {

@@ -2,7 +2,7 @@ import assert, { deepEqual } from "node:assert";
 import { before, describe, it } from "node:test";
 
 import { tryAsValidatorIndex } from "@typeberry/block";
-import { type SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
+import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
 import { BANDERSNATCH_KEY_BYTES, SEED_SIZE } from "@typeberry/crypto";
@@ -291,6 +291,44 @@ describe("Bandersnatch verification", () => {
       deepEqual(
         verificationResult,
         Result.ok(BytesBlob.parseBlob("0x000b0e5c06e70a23d6cfed372763de718b0c21119ea51f7afe1e69b0000de620")),
+      );
+    });
+  });
+
+  describe("generateTickets", () => {
+    it("should generate tickets that pass verification (consistency check)", async () => {
+      // Generate tickets and verify them - checks consistency between generate and verify
+      const secrets = [0, 1, 2].map((i) => Bytes.fill(SEED_SIZE, i).asOpaque());
+      const ringKeys = secrets.map((secret) => deriveBandersnatchPublicKey(secret));
+
+      const proverIndex = 0;
+      const entropy = Bytes.fill(HASH_SIZE, 123).asOpaque();
+
+      const genResult = await bandersnatchVrf.generateTickets(
+        await bandersnatchWasm,
+        ringKeys,
+        proverIndex,
+        secrets[proverIndex],
+        entropy,
+        tryAsTicketAttempt(2),
+      );
+
+      assert.ok(genResult.isOk);
+
+      const commitment = await bandersnatchVrf.getRingCommitment(await bandersnatchWasm, ringKeys);
+      assert.ok(commitment.isOk);
+
+      const verifyResult = await bandersnatchVrf.verifyTickets(
+        await bandersnatchWasm,
+        ringKeys.length,
+        commitment.ok,
+        genResult.ok,
+        entropy,
+      );
+
+      assert.ok(
+        verifyResult.every((r) => r.isValid),
+        "Generated tickets should pass verification",
       );
     });
   });

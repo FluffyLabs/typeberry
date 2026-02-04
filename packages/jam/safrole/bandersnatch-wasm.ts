@@ -45,4 +45,14 @@ export class BandernsatchWasm {
   async getVrfOutputHash(authorKey: Uint8Array, input: Uint8Array) {
     return bandersnatchWasm.vrfOutputHash(authorKey, input);
   }
+
+  async batchGenerateRingVrf(
+    ringKeys: Uint8Array,
+    proverKeyIndex: number,
+    secretSeed: Uint8Array,
+    inputsData: Uint8Array,
+    vrfInputDataLen: number,
+  ) {
+    return bandersnatchWasm.batchGenerateRingVrf(ringKeys, proverKeyIndex, secretSeed, inputsData, vrfInputDataLen);
+  }
 }
