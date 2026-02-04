@@ -54,7 +54,7 @@ describe("Ticket Generator", () => {
     mock.restoreAll();
   });
 
-  describe("generateTicketsForEpoch", () => {
+  describe("generateTickets", () => {
     it("should generate correct total number of tickets", async () => {
       const ringKeys = createMockRingKeys(3);
       const validatorKeys = createMockValidatorKeys(3);

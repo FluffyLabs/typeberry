@@ -2,7 +2,7 @@ import assert, { deepEqual } from "node:assert";
 import { before, describe, it } from "node:test";
 
 import { tryAsValidatorIndex } from "@typeberry/block";
-import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
+import { type SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
 import { BANDERSNATCH_KEY_BYTES, SEED_SIZE } from "@typeberry/crypto";
