@@ -278,76 +278,6 @@ export class Accumulate {
    * into a tuple of the number of work-results accumulated, a posterior state-context,
    * the resultant deferred-transfers and accumulation-output pairing.
    *
-   * https://graypaper.fluffylabs.dev/#/7e6ff6a/179d00179d00?v=0.6.7
-   */
-  private async accumulateSequentiallyLegacy(
-    gasLimit: ServiceGas,
-    reports: ArrayView<WorkReport>,
-    slot: TimeSlot,
-    entropy: EntropyHash,
-    statistics: Map<ServiceId, CountAndGasUsed>,
-    stateUpdate: AccumulationStateUpdate,
-    autoAccumulateServices: Map<ServiceId, ServiceGas>,
-    yieldedRoots: Map<ServiceId, HashSet<OpaqueHash>>,
-    transfers: PendingTransfer[],
-  ): Promise<SequentialAccumulationResult> {
-    const i = this.findReportCutoffIndex(gasLimit, reports);
-
-    if (i === 0) {
-      return {
-        accumulatedReports: tryAsU32(0),
-        gasCost: tryAsServiceGas(0),
-        state: stateUpdate,
-      };
-    }
-
-    const reportsToAccumulateInParallel = reports.subview(0, i);
-    const accumulateData = new AccumulateData(reportsToAccumulateInParallel, [], autoAccumulateServices);
-    const reportsToAccumulateSequentially = reports.subview(i);
-
-    const results = await this.accumulateInParallel(accumulateData, slot, entropy, stateUpdate);
-
-    this.updateStatistics(results, statistics, accumulateData);
-    this.updateYieldedRoots(results, yieldedRoots);
-    const {
-      state: stateAfterParallelAcc,
-      totalGasCost,
-      transfers: newTransfers,
-    } = mergePerallelAccumulationResults(this.chainSpec, this.state, stateUpdate, results);
-    transfers.push(...newTransfers);
-
-    // NOTE [ToDr] recursive invocation
-    const {
-      accumulatedReports,
-      gasCost: seqGasCost,
-      state,
-      ...seqRest
-    } = await this.accumulateSequentiallyLegacy(
-      tryAsServiceGas(gasLimit - totalGasCost),
-      reportsToAccumulateSequentially,
-      slot,
-      entropy,
-      statistics,
-      stateAfterParallelAcc,
-      new Map(),
-      yieldedRoots,
-      transfers,
-    );
-    assertEmpty(seqRest);
-
-    return {
-      accumulatedReports: tryAsU32(i + accumulatedReports),
-      gasCost: tryAsServiceGas(totalGasCost + seqGasCost),
-      state,
-    };
-  }
-
-  /**
-   * The outer accumulation function ∆+ which transforms a gas-limit, a sequence of work-reports,
-   * an initial partial-state and a dictionary of services enjoying free accumulation,
-   * into a tuple of the number of work-results accumulated, a posterior state-context,
-   * the resultant deferred-transfers and accumulation-output pairing.
-   *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/172901172901?v=0.7.2
    */
   private async accumulateSequentially(
@@ -363,7 +293,8 @@ export class Accumulate {
   ): Promise<SequentialAccumulationResult> {
     const i = this.findReportCutoffIndex(gasLimit, reports);
 
-    const n = transfers.length + i + reports.length;
+    /** https://graypaper.fluffylabs.dev/#/ab2cdbd/17e50117e501?v=0.7.2 */
+    const n = transfers.length + i + autoAccumulateServices.size;
 
     if (n === 0) {
       return {
@@ -388,11 +319,11 @@ export class Accumulate {
     } = mergePerallelAccumulationResults(this.chainSpec, this.state, stateUpdate, results);
 
     /**
-     * Gas limit from transfers is added to the next round of accumulation
+     * Gas limit from transfers (from `t`, not `t*`) is added to the next round of accumulation
      *
      * https://graypaper.fluffylabs.dev/#/ab2cdbd/172b02172b02?v=0.7.2
      */
-    const transfersGas = newTransfers.map((t) => t.gas);
+    const transfersGas = transfers.map((t) => t.gas);
     const { value: newGasLimit, overflow } = sumU64(tryAsServiceGas(gasLimit - totalGasCost), ...transfersGas);
     // NOTE [ToDr] recursive invocation
     const {
