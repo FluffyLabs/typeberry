@@ -219,4 +219,60 @@ describe("CLI", () => {
       },
     );
   });
+
+  it("should parse fuzz-target command", () => {
+    const args = parse(["fuzz-target"]);
+
+    deepEqual(args, {
+      command: Command.FuzzTarget,
+      args: {
+        ...defaultOptions,
+        version: 1,
+        socket: null,
+        initGenesisFromAncestry: false,
+      },
+    });
+  });
+
+  it("should parse fuzz-target with init-genesis-from-ancestry", () => {
+    const args = parse(["fuzz-target", "--init-genesis-from-ancestry"]);
+
+    deepEqual(args, {
+      command: Command.FuzzTarget,
+      args: {
+        ...defaultOptions,
+        version: 1,
+        socket: null,
+        initGenesisFromAncestry: true,
+      },
+    });
+  });
+
+  it("should parse fuzz-target with flags before command", () => {
+    const args = parse(["--init-genesis-from-ancestry", "--version=1", "fuzz-target"]);
+
+    deepEqual(args, {
+      command: Command.FuzzTarget,
+      args: {
+        ...defaultOptions,
+        version: 1,
+        socket: null,
+        initGenesisFromAncestry: true,
+      },
+    });
+  });
+
+  it("should parse fuzz-target with flags before command (space separated)", () => {
+    const args = parse(["--version", "1", "--init-genesis-from-ancestry", "fuzz-target"]);
+
+    deepEqual(args, {
+      command: Command.FuzzTarget,
+      args: {
+        ...defaultOptions,
+        version: 1,
+        socket: null,
+        initGenesisFromAncestry: true,
+      },
+    });
+  });
 });
