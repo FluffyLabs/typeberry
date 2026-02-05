@@ -197,7 +197,7 @@ export async function main(config: Config, comms: GeneratorInternal) {
         // After epoch change, it has been shifted to index 2.
         const ticketEntropy = isNewEpoch ? state.entropy[1] : state.entropy[2];
 
-        logger.log`Epoch ${epoch}, slot ${slotInEpoch}/${chainSpec.contestLength}. Generating tickets for ${validatorKeys.length} validators...`;
+        logger.info`Epoch ${epoch}, slot ${slotInEpoch}/${chainSpec.contestLength}. Generating tickets for ${validatorKeys.length} validators...`;
 
         const ticketsResult = await generateTickets(
           bandersnatch,
