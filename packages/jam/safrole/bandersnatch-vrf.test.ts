@@ -294,4 +294,42 @@ describe("Bandersnatch verification", () => {
       );
     });
   });
+
+  describe("generateTickets", () => {
+    it("should generate tickets that pass verification (consistency check)", async () => {
+      // Generate tickets and verify them - checks consistency between generate and verify
+      const secrets = [0, 1, 2].map((i) => Bytes.fill(SEED_SIZE, i).asOpaque());
+      const ringKeys = secrets.map((secret) => deriveBandersnatchPublicKey(secret));
+
+      const proverIndex = 0;
+      const entropy = Bytes.fill(HASH_SIZE, 123).asOpaque();
+
+      const genResult = await bandersnatchVrf.generateTickets(
+        await bandersnatchWasm,
+        ringKeys,
+        proverIndex,
+        secrets[proverIndex],
+        entropy,
+        tryAsTicketAttempt(2),
+      );
+
+      assert.ok(genResult.isOk);
+
+      const commitment = await bandersnatchVrf.getRingCommitment(await bandersnatchWasm, ringKeys);
+      assert.ok(commitment.isOk);
+
+      const verifyResult = await bandersnatchVrf.verifyTickets(
+        await bandersnatchWasm,
+        ringKeys.length,
+        commitment.ok,
+        genResult.ok,
+        entropy,
+      );
+
+      assert.ok(
+        verifyResult.every((r) => r.isValid),
+        "Generated tickets should pass verification",
+      );
+    });
+  });
 });
