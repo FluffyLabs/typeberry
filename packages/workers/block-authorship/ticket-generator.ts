@@ -1,9 +1,12 @@
 import type { EntropyHash } from "@typeberry/block";
 import { type SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import type { BandersnatchKey, BandersnatchSecretSeed } from "@typeberry/crypto";
+import { Logger } from "@typeberry/logger";
 import bandersnatchVrf from "@typeberry/safrole/bandersnatch-vrf.js";
 import type { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import { Result } from "@typeberry/utils";
+
+const logger = Logger.new(import.meta.filename, "tickets-generator");
 
 export enum TicketGeneratorError {
   TicketGenerationFailed = "TicketGenerationFailed",
@@ -33,7 +36,8 @@ export async function generateTickets(
   for (const validatorKey of validatorKeys) {
     const proverIndex = ringKeys.findIndex((k) => k.isEqualTo(validatorKey.public));
     if (proverIndex < 0) {
-      return Result.error(TicketGeneratorError.ValidatorNotInRing, () => "Validator public key not found in the ring");
+      logger.warn`Validator public key not found in the ring, skipping ticket generation for this key`;
+      continue;
     }
 
     const ticketResult = await bandersnatchVrf.generateTickets(
@@ -48,11 +52,15 @@ export async function generateTickets(
     if (ticketResult.isOk) {
       allTickets.push(...ticketResult.ok);
     } else {
-      return Result.error(
-        TicketGeneratorError.TicketGenerationFailed,
-        () => "Failed to generate tickets for validator",
-      );
+      logger.warn`Failed to generate tickets for validator, skipping`;
     }
+  }
+
+  if (validatorKeys.length > 0 && allTickets.length === 0) {
+    return Result.error(
+      TicketGeneratorError.TicketGenerationFailed,
+      () => "Failed to generate tickets for all validators",
+    );
   }
 
   return Result.ok(allTickets);

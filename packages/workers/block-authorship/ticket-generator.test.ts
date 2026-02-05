@@ -18,7 +18,7 @@ function createMockRingKeys(count: number) {
 
 function createMockValidatorKeys(count: number): ValidatorKey[] {
   return Array.from({ length: count }, (_, i) => ({
-    secret: Bytes.fill(BANDERSNATCH_KEY_BYTES, i).asOpaque(),
+    secret: Bytes.fill(SEED_SIZE, i).asOpaque(),
     public: Bytes.fill(BANDERSNATCH_KEY_BYTES, i).asOpaque(),
   }));
 }
@@ -103,7 +103,7 @@ describe("Ticket Generator", () => {
       assert.strictEqual(result.ok.length, 0);
     });
 
-    it("should error when validator is not in the ring", async () => {
+    it("should skip validators not in the ring and return tickets for valid ones", async () => {
       const ticketsPerValidator = 2;
       const ringKeys = createMockRingKeys(3);
       const correctValidatorKeys = createMockValidatorKeys(2);
@@ -123,8 +123,35 @@ describe("Ticket Generator", () => {
         ticketsPerValidator,
       );
 
+      assert.ok(result.isOk);
+      // Only the 2 valid validators should produce tickets
+      assert.strictEqual(result.ok.length, 4);
+    });
+
+    it("should error when all validators fail", async () => {
+      const ticketsPerValidator = 2;
+      const ringKeys = createMockRingKeys(3);
+      const invalidValidatorKeys: ValidatorKey[] = [
+        {
+          secret: Bytes.fill(SEED_SIZE, 99).asOpaque(),
+          public: Bytes.fill(BANDERSNATCH_KEY_BYTES, 99).asOpaque(),
+        },
+        {
+          secret: Bytes.fill(SEED_SIZE, 98).asOpaque(),
+          public: Bytes.fill(BANDERSNATCH_KEY_BYTES, 98).asOpaque(),
+        },
+      ];
+
+      const result = await generateTickets(
+        MOCK_BANDERSNATCH,
+        ringKeys,
+        invalidValidatorKeys,
+        MOCK_ENTROPY,
+        ticketsPerValidator,
+      );
+
       assert.ok(result.isError);
-      assert.strictEqual(result.error, TicketGeneratorError.ValidatorNotInRing);
+      assert.strictEqual(result.error, TicketGeneratorError.TicketGenerationFailed);
     });
   });
 });
