@@ -131,7 +131,7 @@ export class EcalliTraceLogger {
    */
   logSetReg(index: number, value: bigint): void {
     const paddedIdx = index.toString().padStart(2, "0");
-    this.output(`setreg r${paddedIdx} <- ${value.toString(16)}`);
+    this.output(`setreg r${paddedIdx} <- 0x${value.toString(16)}`);
   }
 
   /**
