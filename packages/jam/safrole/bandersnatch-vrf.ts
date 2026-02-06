@@ -1,8 +1,9 @@
-import type { EntropyHash } from "@typeberry/block";
-import type { SignedTicket } from "@typeberry/block/tickets.js";
+import type { EntropyHash, TicketAttempt } from "@typeberry/block";
+import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { BandersnatchKey, BandersnatchSecretSeed } from "@typeberry/crypto";
 import {
+  BANDERSNATCH_PROOF_BYTES,
   BANDERSNATCH_RING_ROOT_BYTES,
   BANDERSNATCH_VRF_SIGNATURE_BYTES,
   type BandersnatchRingRoot,
@@ -41,6 +42,7 @@ const FUNCTIONS = {
   getRingCommitment,
   generateSeal,
   getVrfOutputHash,
+  generateTickets,
 };
 
 // NOTE [ToDr] We export the entire object to allow mocking in tests.
@@ -195,4 +197,61 @@ async function getVrfOutputHash(
   }
 
   return Result.ok(Bytes.fromBlob(result.subarray(1), HASH_SIZE).asOpaque());
+}
+
+// One byte for result discriminator and the rest is the ring VRF signature.
+const GENERATE_RESULT_ENTRY_LENGTH = 1 + BANDERSNATCH_PROOF_BYTES;
+
+/**
+ * Generates signed tickets for all attempts at once using batch ring VRF.
+ */
+async function generateTickets(
+  bandersnatch: BandernsatchWasm,
+  ringKeys: BandersnatchKey[],
+  proverKeyIndex: number,
+  key: BandersnatchSecretSeed,
+  entropy: EntropyHash,
+  ticketsPerValidator: TicketAttempt,
+): Promise<Result<SignedTicket[], null>> {
+  // Build VRF inputs: JAM_TICKET_SEAL || entropy || attempt_byte for each attempt
+  const vrfInputParts: Uint8Array[] = [];
+  for (let attempt = 0; attempt < ticketsPerValidator; attempt++) {
+    vrfInputParts.push(BytesBlob.blobFromParts([JAM_TICKET_SEAL, entropy.raw, Uint8Array.of(attempt)]).raw);
+  }
+  const attemptLength = 1;
+  const vrfInputDataLen = JAM_TICKET_SEAL.length + entropy.length + attemptLength;
+  const inputsData = BytesBlob.blobFromParts(vrfInputParts).raw;
+  const ringKeysData = BytesBlob.blobFromParts(ringKeys.map((k) => k.raw)).raw;
+
+  const result = await bandersnatch.batchGenerateRingVrf(
+    ringKeysData,
+    proverKeyIndex,
+    key.raw,
+    inputsData,
+    vrfInputDataLen,
+  );
+
+  const tickets: SignedTicket[] = [];
+  for (let attempt = 0; attempt < ticketsPerValidator; attempt++) {
+    const offset = attempt * GENERATE_RESULT_ENTRY_LENGTH;
+    const resultByte = result[offset];
+
+    if (resultByte === ResultValues.Error) {
+      return Result.error(null, () => `Ring VRF proof generation failed for attempt ${attempt}`);
+    }
+
+    const signature = Bytes.fromBlob(
+      new Uint8Array(result.subarray(offset + 1, offset + GENERATE_RESULT_ENTRY_LENGTH)),
+      BANDERSNATCH_PROOF_BYTES,
+    ).asOpaque();
+
+    tickets.push(
+      SignedTicket.create({
+        attempt: tryAsTicketAttempt(attempt),
+        signature,
+      }),
+    );
+  }
+
+  return Result.ok(tickets);
 }

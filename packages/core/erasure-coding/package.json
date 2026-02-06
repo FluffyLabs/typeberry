@@ -15,7 +15,7 @@
     "@typeberry/bytes": "*",
     "@typeberry/collections": "*",
     "@typeberry/config": "*",
-    "@typeberry/native": "^0.2.0-bd1a174",
+    "@typeberry/native": "0.2.0-74dd7d7",
     "@typeberry/utils": "*"
   }
 }
