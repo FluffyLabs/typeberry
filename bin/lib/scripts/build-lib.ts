@@ -341,6 +341,7 @@ function createDistPackageJson(packageMap: Record<string, string>): void {
     exports: Record<string, unknown>;
     imports: Record<string, string>;
     dependencies: Record<string, unknown>;
+    repository: { type: string; url: string };
     author: string;
     license: string;
   } = {
@@ -353,6 +354,7 @@ function createDistPackageJson(packageMap: Record<string, string>): void {
     exports: {},
     imports: buildImportsField(packageMap),
     dependencies: Object.fromEntries(filteredDeps),
+    repository: sourcePackageJson.repository,
     author: sourcePackageJson.author,
     license: sourcePackageJson.license,
   };
