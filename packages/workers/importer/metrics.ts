@@ -1,5 +1,5 @@
 import { metrics } from "@opentelemetry/api";
-import packageJson from "./package.json" with { type: "json" };
+import { version } from "@typeberry/utils";
 
 /**
  * Block importer metrics for JAM implementation.
@@ -8,7 +8,7 @@ import packageJson from "./package.json" with { type: "json" };
  */
 
 export function createMetrics() {
-  const meter = metrics.getMeter(packageJson.name, packageJson.version);
+  const meter = metrics.getMeter("@typeberry/importer", version);
 
   const blockVerificationDuration = meter.createHistogram("jam.blockVerificationTime", {
     description: "Duration of block verification",

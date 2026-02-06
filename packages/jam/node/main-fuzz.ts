@@ -7,12 +7,11 @@ import { v1 as fuzzV1 } from "@typeberry/fuzz-proto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { StateEntries } from "@typeberry/state-merkleization";
-import { CURRENT_VERSION, Result } from "@typeberry/utils";
+import { CURRENT_VERSION, Result, version } from "@typeberry/utils";
 import { getChainSpec } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 import type { NodeApi } from "./main.js";
 import { mainImporter } from "./main-importer.js";
-import packageJson from "./package.json" with { type: "json" };
 
 export type FuzzConfig = {
   version: FuzzVersion;
@@ -26,7 +25,7 @@ const logger = Logger.new(import.meta.filename, "fuzztarget");
 export function getFuzzDetails() {
   return {
     nodeName: "@typeberry/jam",
-    nodeVersion: fuzzV1.Version.tryFromString(packageJson.version),
+    nodeVersion: fuzzV1.Version.tryFromString(version),
     gpVersion: fuzzV1.Version.tryFromString(CURRENT_VERSION.split("-")[0]),
   };
 }

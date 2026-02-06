@@ -1,9 +1,9 @@
+import { version } from "@typeberry/utils";
 import minimist from "minimist";
-import packageJson from "./package.json" with { type: "json" };
 import { SUPPORTED_TYPES, type SupportedType } from "./types.js";
 
 export const HELP = `
-@typeberry/convert ${packageJson.version} by Fluffy Labs.
+@typeberry/convert ${version} by Fluffy Labs.
 
 Usage:
   @typeberry/convert [options] <bin-hex-or-json-input-file> <type> [process] [output-format] [output-file]

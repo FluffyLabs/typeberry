@@ -1,5 +1,5 @@
 import { metrics } from "@opentelemetry/api";
-import packageJson from "./package.json" with { type: "json" };
+import { version } from "@typeberry/utils";
 
 /**
  * Block authoring metrics for JAM implementation.
@@ -8,7 +8,7 @@ import packageJson from "./package.json" with { type: "json" };
  */
 
 export function createMetrics() {
-  const meter = metrics.getMeter(packageJson.name, packageJson.version);
+  const meter = metrics.getMeter("@typeberry/block-authorship", version);
 
   const blockAuthoringDuration = meter.createHistogram("jam.blockAuthoringTime", {
     description: "Duration of block authoring process",

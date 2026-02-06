@@ -3,7 +3,7 @@ import { DEFAULT_CONFIG, DEV_CONFIG, NODE_DEFAULTS } from "@typeberry/config-nod
 import { logger } from "@typeberry/node";
 import { isU16, type U16 } from "@typeberry/numbers";
 import minimist from "minimist";
-import packageJson from "./package.json" with { type: "json" };
+import packageJson from "../../package.json" with { type: "json" };
 
 export const ARGS = {
   NAME: "name",

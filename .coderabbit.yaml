@@ -71,6 +71,10 @@ reviews:
     - path: 'package.json'
       instructions: |
         When the package version changes all deprecated code scheduled for removal at that version (marked using `@deprecated` comments) should also be removed.
+    - path: '**/*.ts'
+      instructions: |
+        Imports of `package.json` files are forbidden.
+        If you need the name or version, import `name` and `version` from `@typeberry/utils`.
   abort_on_close: true
   disable_cache: false
   auto_review:

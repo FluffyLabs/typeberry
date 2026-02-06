@@ -1,7 +1,7 @@
 import { Bytes } from "@typeberry/bytes";
 import { type PublicKeySeed, SEED_SIZE } from "@typeberry/crypto";
+import { version } from "@typeberry/utils";
 import minimist from "minimist";
-import packageJson from "./package.json" with { type: "json" };
 
 enum TciFlag {
   bandersnatch = "bandersnatch",
@@ -19,7 +19,7 @@ export const requiredSeedFlags = [TciFlag.bandersnatch, TciFlag.bls, TciFlag.ed2
 export type RequiredFlag = (typeof requiredSeedFlags)[number];
 
 export const HELP = `
-Cross-implementation compatible CLI for typeberry ${packageJson.version} by ${packageJson.author}
+Cross-implementation compatible CLI for typeberry ${version} by Fluffy Labs
 
 https://docs.jamcha.in/basics/cli-args
 
