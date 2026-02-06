@@ -84,6 +84,10 @@ cat > ./package.json << EOF
     "@matrixai/quic": "2.0.9"
   },
   "homepage": "https://typeberry.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FluffyLabs/typeberry"
+  },
   "author": "Fluffy Labs <hello@fluffylabs.dev>",
   "license": "MPL-2.0",
   "type": "module"
