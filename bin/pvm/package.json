@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/pvm",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "PVM program runner.",
   "main": "index.ts",
   "dependencies": {

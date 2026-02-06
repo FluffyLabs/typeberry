@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/test-runner",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "JAM-test-vectors runner.",
   "main": "index.ts",
   "dependencies": {
