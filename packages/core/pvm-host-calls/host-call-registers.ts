@@ -44,7 +44,7 @@ export class HostCallRegisters {
     const entries: string[] = [];
     for (const [idx, value] of values.entries()) {
       if (value !== 0n) {
-        entries.push(`r${idx.toString().padStart(2, "0")}=${value.toString(16)}`);
+        entries.push(`r${idx.toString().padStart(2, "0")}=0x${value.toString(16)}`);
       }
     }
     return entries.join(" ");
