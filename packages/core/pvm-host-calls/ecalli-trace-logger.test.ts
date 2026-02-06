@@ -63,7 +63,7 @@ describe("IoTraceLogger", () => {
 
       logger.logStart(0, tryAsSmallGas(10000), regs);
 
-      assert.strictEqual(lines[0], "start pc=0 gas=10000 r07=10 r09=10000");
+      assert.strictEqual(lines[0], "start pc=0 gas=10000 r07=0x10 r09=0x10000");
     });
 
     it("handles no non-zero registers", () => {
@@ -92,7 +92,7 @@ describe("IoTraceLogger", () => {
 
       logger.logEcalli(tryAsHostCallIndex(10), 42, tryAsSmallGas(10000), regs);
 
-      assert.strictEqual(lines[0], "ecalli=10 pc=42 gas=10000 r01=1 r03=1000");
+      assert.strictEqual(lines[0], "ecalli=10 pc=42 gas=10000 r01=0x1 r03=0x1000");
     });
 
     it("omits zero registers", () => {
@@ -108,7 +108,7 @@ describe("IoTraceLogger", () => {
 
       logger.logEcalli(tryAsHostCallIndex(5), 0, tryAsSmallGas(5000), regs);
 
-      assert.strictEqual(lines[0], "ecalli=5 pc=0 gas=5000 r01=1");
+      assert.strictEqual(lines[0], "ecalli=5 pc=0 gas=5000 r01=0x1");
     });
 
     it("handles no non-zero registers", () => {
@@ -152,7 +152,7 @@ describe("IoTraceLogger", () => {
 
       logger.logSetReg(0, 0x100n);
 
-      assert.strictEqual(lines[0], "setreg r00 <- 100");
+      assert.strictEqual(lines[0], "setreg r00 <- 0x100");
     });
 
     it("formats two-digit register index", () => {
@@ -161,7 +161,7 @@ describe("IoTraceLogger", () => {
 
       logger.logSetReg(12, 0x4n);
 
-      assert.strictEqual(lines[0], "setreg r12 <- 4");
+      assert.strictEqual(lines[0], "setreg r12 <- 0x4");
     });
   });
 
@@ -191,7 +191,7 @@ describe("IoTraceLogger", () => {
       assert.strictEqual(lines.length, 4);
       assert.strictEqual(lines[0], "memread 0x00001000 len=1 -> 0xcd");
       assert.strictEqual(lines[1], "memwrite 0x00002000 len=1 <- 0xab");
-      assert.strictEqual(lines[2], "setreg r00 <- 100");
+      assert.strictEqual(lines[2], "setreg r00 <- 0x100");
       assert.strictEqual(lines[3], "setgas <- 9950");
     });
 
@@ -229,7 +229,7 @@ describe("IoTraceLogger", () => {
       const regs = createRegisters(new Map([[0, 0x100n]]));
       logger.logHalt(42, tryAsSmallGas(9920), regs);
 
-      assert.strictEqual(lines[0], "HALT pc=42 gas=9920 r00=100");
+      assert.strictEqual(lines[0], "HALT pc=42 gas=9920 r00=0x100");
     });
 
     it("logs OOG", () => {
