@@ -45,9 +45,30 @@ jobs:
           echo "tag=next" >> $GITHUB_OUTPUT
         fi
 
+    - name: Get package version
+      id: pkg-version
+      working-directory: ./dist/${{ matrix.project }}
+      run: |
+        VERSION=$(node -p "require('./package.json').version")
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Check if version exists on npm
+      id: check-version
+      run: |
+        if npm view @typeberry/${{ matrix.project }}@${{ steps.pkg-version.outputs.version }} version 2>/dev/null; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Publish @typeberry/${{ matrix.project }}
+      if: steps.check-version.outputs.exists == 'false'
       working-directory: ./dist/${{ matrix.project }}
       run: npm publish --access public --tag ${{ steps.npm-tag.outputs.tag }}
+
+    - name: Tag existing version
+      if: steps.check-version.outputs.exists == 'true'
+      run: npm dist-tag add @typeberry/${{ matrix.project }}@${{ steps.pkg-version.outputs.version }} ${{ steps.npm-tag.outputs.tag }}
 
   publish-docker:
     if: github.event_name == 'release'
