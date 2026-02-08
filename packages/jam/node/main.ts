@@ -17,14 +17,13 @@ import { Listener } from "@typeberry/listener";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import type { Telemetry } from "@typeberry/telemetry";
-import { CURRENT_SUITE, CURRENT_VERSION, Result } from "@typeberry/utils";
+import { CURRENT_SUITE, CURRENT_VERSION, Result, version } from "@typeberry/utils";
 import { DirectWorkerConfig } from "@typeberry/workers-api";
 import { InMemWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import { initializeExtensions } from "./extensions.js";
 import type { JamConfig, NetworkConfig } from "./jam-config.js";
 import * as metrics from "./metrics.js";
-import packageJson from "./package.json" with { type: "json" };
 import {
   spawnBlockGeneratorWorker,
   spawnImporterWorker,
@@ -55,7 +54,7 @@ export async function main(
 
   const nodeMetrics = metrics.createMetrics();
 
-  logger.info`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
+  logger.info`🫐 Typeberry ${version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
   logger.info`🎸 Starting node: ${config.nodeName}.`;
   logger.info`🖥️ PVM Backend: ${PvmBackend[config.pvmBackend]}.`;
   const chainSpec = getChainSpec(config.node.flavor);

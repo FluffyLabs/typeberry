@@ -1,13 +1,11 @@
 import { describe, it } from "node:test";
 import { tryAsU8 } from "@typeberry/numbers";
-import { CURRENT_VERSION, deepEqual } from "@typeberry/utils";
-//eslint-disable-next-line import/no-relative-packages
-import pkg from "../../../package.json" with { type: "json" };
+import { CURRENT_VERSION, deepEqual, version } from "@typeberry/utils";
 import { getFuzzDetails } from "./main-fuzz.js";
 
 describe("fuzzing config", () => {
   it("should create config from current version", () => {
-    const [m, i, p] = pkg.version.split(".").map((x) => Number.parseInt(x, 10));
+    const [m, i, p] = version.split(".").map((x) => Number.parseInt(x, 10));
     const [gpM, gpI, gpP] = CURRENT_VERSION.split(".").map((x) => Number.parseInt(x, 10));
 
     const fuzzDetails = getFuzzDetails();

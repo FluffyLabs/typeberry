@@ -7,16 +7,15 @@ import { Blake2b } from "@typeberry/hash";
 import { parseSharedOptions } from "@typeberry/jam/args.js";
 import { getChainSpec, getDatabasePath } from "@typeberry/node";
 import { validation } from "@typeberry/rpc-validation";
-import { workspacePathFix } from "@typeberry/utils";
+import { version, workspacePathFix } from "@typeberry/utils";
 import minimist from "minimist";
-import packageJson from "./package.json" with { type: "json" };
 import { handlers } from "./src/handlers.js";
 import { RpcServer } from "./src/server.js";
 
 const DEFAULT_PORT = 19800;
 
 export const HELP = `
-@typeberry/rpc ${packageJson.version} by Fluffy Labs.
+@typeberry/rpc ${version} by Fluffy Labs.
 
 Usage:
   rpc [options]

@@ -45,6 +45,10 @@
   "dependencies": {
     "@fluffylabs/anan-as": "^1.1.5",
     "@noble/ed25519": "2.2.3",
+    "hash-wasm": "4.12.0",
+    "@typeberry/native": "0.0.4-4c0cd28",
+    "eventemitter3": "^5.0.1",
+    "@opentelemetry/api": "1.9.0",
     "@typeberry/block": "*",
     "@typeberry/block-json": "*",
     "@typeberry/bytes": "*",
@@ -62,7 +66,6 @@
     "@typeberry/json-parser": "*",
     "@typeberry/logger": "*",
     "@typeberry/mmr": "*",
-    "@typeberry/native": "0.0.4-4c0cd28",
     "@typeberry/numbers": "*",
     "@typeberry/ordering": "*",
     "@typeberry/pvm-host-calls": "*",
@@ -76,8 +79,7 @@
     "@typeberry/transition": "*",
     "@typeberry/trie": "*",
     "@typeberry/utils": "*",
-    "@typeberry/workers-api": "*",
-    "hash-wasm": "4.12.0"
+    "@typeberry/workers-api": "*"
   },
   "scripts": {
     "docs": "npm run docs:examples",
