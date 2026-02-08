@@ -99,7 +99,12 @@ export class AccumulateData {
       }
     }
 
-    return Array.from(merged);
+    /**
+     * Services have to be sorted
+     *
+     * https://graypaper.fluffylabs.dev/#/ab2cdbd/177003177003?v=0.7.2
+     */
+    return Array.from(merged).sort((a, b) => a - b);
   }
 
   /**

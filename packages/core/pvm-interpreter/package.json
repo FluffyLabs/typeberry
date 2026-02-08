@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/pvm-interpreter",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "A PVM implementation based on the Gray Paper.",
   "main": "index.ts",
   "dependencies": {
