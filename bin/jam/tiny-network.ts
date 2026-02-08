@@ -97,13 +97,13 @@ async function startTinyNetwork(fastForward: boolean, liveMode: boolean) {
 
       const nodeIndex = i;
       const color = getNodeColor(nodeIndex);
-      if (child.stdout) {
+      if (child.stdout !== null) {
         const rl = createInterface({ input: child.stdout });
         rl.on("line", (line: string) => {
           console.log(`${color}[node-${nodeIndex}]${RESET} ${line}`);
         });
       }
-      if (child.stderr) {
+      if (child.stderr !== null) {
         const rl = createInterface({ input: child.stderr });
         rl.on("line", (line: string) => {
           console.log(`${color}[node-${nodeIndex}]${RESET} ${line}`);
