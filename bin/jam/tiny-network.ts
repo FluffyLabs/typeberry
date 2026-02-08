@@ -7,7 +7,18 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { openSync } from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
+import { createInterface } from "node:readline";
 import { tinyChainSpec } from "@typeberry/config";
+
+// Generate distinct colors using 256-color palette
+function getNodeColor(nodeIndex: number): string {
+  // Handpicked distinct, bright colors that work well on dark terminals
+  const colors = [196, 46, 226, 51, 201, 208, 87, 135, 166, 39, 213, 118];
+  // Red, Green, Yellow, Cyan, Magenta, Orange, LightCyan, Purple, Brown, Blue, Pink, LightGreen
+  const colorIndex = colors[nodeIndex % colors.length];
+  return `\x1b[38;5;${colorIndex}m`;
+}
+const RESET = "\x1b[0m";
 
 const LOGS_DIR = "./logs";
 const NUM_NODES = tinyChainSpec.validatorsCount;
@@ -37,25 +48,32 @@ function stopAllNodes() {
   console.log("All nodes stopped.");
 }
 
-async function startTinyNetwork(fastForward: boolean) {
+async function startTinyNetwork(fastForward: boolean, liveMode: boolean) {
   if (fastForward) {
     console.log("Fast-forward mode enabled");
   }
-
-  // Clean up old logs
-  try {
-    await rm(LOGS_DIR, { recursive: true, force: true });
-    console.log("Cleaned up old logs");
-    console.log("");
-  } catch {
-    // Ignore if directory doesn't exist
+  if (liveMode) {
+    console.log("Live mode enabled - logs will be displayed in terminal with colors");
   }
 
-  // Create logs directory
-  await mkdir(LOGS_DIR, { recursive: true });
+  // Clean up old logs (only in file mode)
+  if (!liveMode) {
+    try {
+      await rm(LOGS_DIR, { recursive: true, force: true });
+      console.log("Cleaned up old logs");
+      console.log("");
+    } catch {
+      // Ignore if directory doesn't exist
+    }
+
+    // Create logs directory
+    await mkdir(LOGS_DIR, { recursive: true });
+  }
 
   console.log(`Starting ${NUM_NODES}-node JAM network...`);
-  console.log(`Logs will be written to: ${LOGS_DIR}`);
+  if (!liveMode) {
+    console.log(`Logs will be written to: ${LOGS_DIR}`);
+  }
   console.log("");
 
   // Start each node with staggered timing to avoid networking race conditions
@@ -68,13 +86,39 @@ async function startTinyNetwork(fastForward: boolean) {
 
     console.log(`  Starting node ${i}: npm ${nodeArgs.join(" ")}`);
 
-    const logFile = join(LOGS_DIR, `node-${i}.log`);
-    const logFd = openSync(logFile, "w");
+    let child: ChildProcess;
 
-    const child = spawn("npm", nodeArgs, {
-      stdio: ["ignore", logFd, logFd],
-      cwd: process.cwd(),
-    });
+    if (liveMode) {
+      // Live mode: pipe stdout/stderr and colorize
+      child = spawn("npm", nodeArgs, {
+        stdio: ["ignore", "pipe", "pipe"],
+        cwd: process.cwd(),
+      });
+
+      const nodeIndex = i;
+      const color = getNodeColor(nodeIndex);
+      if (child.stdout) {
+        const rl = createInterface({ input: child.stdout });
+        rl.on("line", (line: string) => {
+          console.log(`${color}[node-${nodeIndex}]${RESET} ${line}`);
+        });
+      }
+      if (child.stderr) {
+        const rl = createInterface({ input: child.stderr });
+        rl.on("line", (line: string) => {
+          console.log(`${color}[node-${nodeIndex}]${RESET} ${line}`);
+        });
+      }
+    } else {
+      // File mode: write to log files
+      const logFile = join(LOGS_DIR, `node-${i}.log`);
+      const logFd = openSync(logFile, "w");
+
+      child = spawn("npm", nodeArgs, {
+        stdio: ["ignore", logFd, logFd],
+        cwd: process.cwd(),
+      });
+    }
 
     children.push(child);
 
@@ -93,10 +137,12 @@ async function startTinyNetwork(fastForward: boolean) {
   console.log("");
   console.log("All nodes started successfully!");
   console.log("");
-  console.log("To view logs:");
-  console.log(`  tail -f ${LOGS_DIR}/node-0.log`);
-  console.log(`  tail -f ${LOGS_DIR}/node-*.log  # all logs`);
-  console.log("");
+  if (!liveMode) {
+    console.log("To view logs:");
+    console.log(`  tail -f ${LOGS_DIR}/node-0.log`);
+    console.log(`  tail -f ${LOGS_DIR}/node-*.log  # all logs`);
+    console.log("");
+  }
   console.log("Press Ctrl+C to stop all nodes.");
 
   // Keep the process running
@@ -106,6 +152,7 @@ async function startTinyNetwork(fastForward: boolean) {
 async function main() {
   const args = process.argv.slice(2);
   const fastForward = args.includes("--fast-forward");
+  const liveMode = args.includes("--live");
 
   // Handle termination signals
   process.on("SIGINT", () => {
@@ -118,7 +165,7 @@ async function main() {
     process.exit(0);
   });
 
-  await startTinyNetwork(fastForward);
+  await startTinyNetwork(fastForward, liveMode);
 }
 
 main().catch((err) => {
