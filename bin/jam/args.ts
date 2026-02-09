@@ -2,8 +2,8 @@ import { type PvmBackend, PvmBackendNames } from "@typeberry/config";
 import { DEFAULT_CONFIG, DEV_CONFIG, NODE_DEFAULTS } from "@typeberry/config-node";
 import { logger } from "@typeberry/node";
 import { isU16, type U16 } from "@typeberry/numbers";
+import { version } from "@typeberry/utils";
 import minimist from "minimist";
-import packageJson from "./package.json" with { type: "json" };
 
 export const ARGS = {
   NAME: "name",
@@ -15,7 +15,7 @@ export const ARGS = {
 } as const;
 
 export const HELP = `
-@typeberry/jam ${packageJson.version} by Fluffy Labs.
+@typeberry/jam ${version} by Fluffy Labs.
 
 Usage:
   jam [options]

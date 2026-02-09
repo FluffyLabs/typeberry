@@ -5,8 +5,7 @@ import { type IMetricReader, PeriodicExportingMetricReader } from "@opentelemetr
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic-conventions";
 import { Logger } from "@typeberry/logger";
-import { env } from "@typeberry/utils";
-import packageJson from "./package.json" with { type: "json" };
+import { env, version } from "@typeberry/utils";
 
 const logger = Logger.new(import.meta.filename, "tele");
 
@@ -21,7 +20,7 @@ export class Telemetry {
     const sdk = initializeTelemetry({
       isMain: config.isMain ?? false,
       serviceName: `typeberry-${config.nodeName}`,
-      serviceVersion: packageJson.version,
+      serviceVersion: version,
       enabled: env.OTEL_ENABLED !== "false",
       otlpEndpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "http://localhost:9090/api/v1/otlp",
       resourceAttributes: {
