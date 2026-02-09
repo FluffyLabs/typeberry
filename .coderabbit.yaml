@@ -76,6 +76,10 @@ reviews:
       instructions: |
         When a dependency version is changed it has to be changed in all `package.json` files uniformely (i.e. we want
         the same version everywhere).
+    - path: '**/*.ts'
+      instructions: |
+        Imports of `package.json` files are forbidden.
+        If you need the name or version, import `name` and `version` from `@typeberry/utils`.
   abort_on_close: true
   disable_cache: false
   auto_review:

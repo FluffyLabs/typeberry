@@ -4,12 +4,11 @@ import { PvmBackend } from "@typeberry/config";
 import { bandersnatch, initWasm } from "@typeberry/crypto";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { createImporter } from "@typeberry/importer";
-import { CURRENT_SUITE, CURRENT_VERSION, Result, resultToString } from "@typeberry/utils";
+import { CURRENT_SUITE, CURRENT_VERSION, Result, resultToString, version } from "@typeberry/utils";
 import { InMemWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 import type { NodeApi } from "./main.js";
-import packageJson from "./package.json" with { type: "json" };
 
 const zeroHash = Bytes.zero(HASH_SIZE).asOpaque<StateRootHash>();
 
@@ -25,7 +24,7 @@ export async function mainImporter(
   await initWasm();
   const bandesnatchNative = bandersnatch.checkNativeBindings();
 
-  logger.info`🫐 Typeberry ${packageJson.version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
+  logger.info`🫐 Typeberry ${version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
   logger.info`🎸 Starting importer: ${config.nodeName}.`;
   logger.info`🖥️ PVM Backend: ${PvmBackend[config.pvmBackend]}.`;
   logger.info`🐇 Bandersnatch ${bandesnatchNative.isOk ? "native 🚀" : `using wasm: ${bandesnatchNative.error}`}`;
