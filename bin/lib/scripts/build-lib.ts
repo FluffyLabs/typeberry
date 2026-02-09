@@ -96,7 +96,7 @@ interface PackageJson {
  * getVersion("0.5.1") // Returns "0.5.1"
  */
 function getVersion(baseVersion: string): string {
-  const isRelease = process.env.IS_RELEASE !== undefined;
+  const isRelease = Boolean(process.env.IS_RELEASE);
 
   if (isRelease) {
     return baseVersion;
