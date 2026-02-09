@@ -62,7 +62,7 @@
     "@typeberry/json-parser": "*",
     "@typeberry/logger": "*",
     "@typeberry/mmr": "*",
-    "@typeberry/native": "0.0.4-4c0cd28",
+    "@typeberry/native": "0.2.0-74dd7d7",
     "@typeberry/numbers": "*",
     "@typeberry/ordering": "*",
     "@typeberry/pvm-host-calls": "*",
