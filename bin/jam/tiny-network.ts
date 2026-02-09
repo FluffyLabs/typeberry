@@ -10,15 +10,21 @@ import { join } from "node:path";
 import { createInterface } from "node:readline";
 import { tinyChainSpec } from "@typeberry/config";
 
+// Check if terminal supports colors
+const supportsColors = process.stdout.isTTY && process.env.TERM !== "dumb";
+
 // Generate distinct colors using 256-color palette
 function getNodeColor(nodeIndex: number): string {
+  if (!supportsColors) {
+    return "";
+  }
   // Handpicked distinct, bright colors that work well on dark terminals
   const colors = [196, 46, 226, 51, 201, 208, 87, 135, 166, 39, 213, 118];
   // Red, Green, Yellow, Cyan, Magenta, Orange, LightCyan, Purple, Brown, Blue, Pink, LightGreen
   const colorIndex = colors[nodeIndex % colors.length];
   return `\x1b[38;5;${colorIndex}m`;
 }
-const RESET = "\x1b[0m";
+const RESET = supportsColors ? "\x1b[0m" : "";
 
 const LOGS_DIR = "./logs";
 const NUM_NODES = tinyChainSpec.validatorsCount;
@@ -106,7 +112,7 @@ async function startTinyNetwork(fastForward: boolean, liveMode: boolean) {
       if (child.stderr !== null) {
         const rl = createInterface({ input: child.stderr });
         rl.on("line", (line: string) => {
-          console.log(`${color}[node-${nodeIndex}]${RESET} ${line}`);
+          console.error(`${color}[node-${nodeIndex}]${RESET} ${line}`);
         });
       }
     } else {
