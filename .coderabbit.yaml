@@ -68,11 +68,11 @@ reviews:
       instructions: |
         When making changes to code with comments containing links (in classes, constants, methods, etc.)
         to graypaper.fluffylabs.dev, ensure those links point to the current version for this update.
-    - path: 'package.json'
+    - path: '**/package.json'
       instructions: |
         When the package version changes all deprecated code scheduled for removal at that version (marked using
         `@deprecated` comments) should also be removed.
-    - path: 'package.json'
+    - path: '**/package.json'
       instructions: |
         When a dependency version is changed it has to be changed in all `package.json` files uniformely (i.e. we want
         the same version everywhere).
