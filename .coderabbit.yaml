@@ -74,7 +74,7 @@ reviews:
         `@deprecated` comments) should also be removed.
     - path: '**/package.json'
       instructions: |
-        When a dependency version is changed it has to be changed in all `package.json` files uniformely (i.e. we want
+        When a dependency version is changed it has to be changed in all `package.json` files uniformly (i.e. we want
         the same version everywhere).
     - path: '**/*.ts'
       instructions: |
