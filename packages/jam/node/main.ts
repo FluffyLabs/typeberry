@@ -12,7 +12,7 @@ import {
 import type { BlocksDb, RootDb, SerializedStatesDb } from "@typeberry/database";
 import { Blake2b, type WithHash } from "@typeberry/hash";
 import { type ImporterApi, ImporterConfig } from "@typeberry/importer";
-import { NetworkingConfig } from "@typeberry/jam-network";
+import { type NetworkingApi, NetworkingConfig } from "@typeberry/jam-network";
 import { Listener } from "@typeberry/listener";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import type { StateEntries } from "@typeberry/state-merkleization";
@@ -142,6 +142,17 @@ export async function main(
           ],
   };
 
+  // Networking initialization (before authorship so we can relay tickets)
+  const { closeNetwork, networkApi } = await initNetwork(
+    importer,
+    rootDb,
+    baseConfig,
+    genesisHeaderHash,
+    config.network,
+    bestHeader,
+    isInMemory,
+  );
+
   const closeAuthorship = await initAuthorship(
     importer,
     config.isAuthoring,
@@ -150,17 +161,7 @@ export async function main(
     baseConfig,
     authorshipKeys,
     isInMemory,
-  );
-
-  // Networking initialization
-  const closeNetwork = await initNetwork(
-    importer,
-    rootDb,
-    baseConfig,
-    genesisHeaderHash,
-    config.network,
-    bestHeader,
-    isInMemory,
+    networkApi,
   );
 
   const api: NodeApi = {
@@ -179,14 +180,14 @@ export async function main(
       return importer.sendGetBestStateRootHash();
     },
     async close() {
-      logger.log`[main] ☠️ Closing the importer`;
-      await closeImporter();
-      logger.log`[main] ☠️  Closing the extensions`;
-      closeExtensions();
       logger.log`[main] ☠️  Closing the authorship module`;
       await closeAuthorship();
       logger.log`[main] ☠️  Closing the networking module`;
       await closeNetwork();
+      logger.log`[main] ☠️ Closing the importer`;
+      await closeImporter();
+      logger.log`[main] ☠️  Closing the extensions`;
+      closeExtensions();
       logger.log`[main] 🛢️ Closing the database`;
       await rootDb.close();
       logger.log`[main] 📳 Closing telemetry`;
@@ -211,6 +212,7 @@ const initAuthorship = async (
   },
   authorshipKeys: { keys: { bandersnatch: BandersnatchSecretSeed; ed25519: Ed25519SecretSeed }[] },
   isInMemory: boolean,
+  networkApi: NetworkingApi | null,
 ) => {
   if (!isAuthoring) {
     logger.log`✍️  Authorship off: disabled`;
@@ -241,6 +243,14 @@ const initAuthorship = async (
     await importer.sendImportBlock(block);
   });
 
+  // relay tickets from generator to network for distribution
+  generator.setOnTickets(async (ticketsMessage) => {
+    if (networkApi !== null) {
+      logger.log`✍️  Distributing ${ticketsMessage.tickets.length} tickets for epoch ${ticketsMessage.epochIndex}`;
+      await networkApi.sendNewTickets(ticketsMessage);
+    }
+  });
+
   return finish;
 };
 
@@ -260,7 +270,7 @@ const initNetwork = async (
 ) => {
   if (networkConfig === null) {
     logger.log`🛜 Networking off: no config`;
-    return () => Promise.resolve();
+    return { closeNetwork: () => Promise.resolve(), networkApi: null };
   }
 
   const { key, host, port, bootnodes } = networkConfig;
@@ -301,5 +311,5 @@ const initNetwork = async (
     network.sendNewHeader(header);
   });
 
-  return finish;
+  return { closeNetwork: finish, networkApi: network };
 };

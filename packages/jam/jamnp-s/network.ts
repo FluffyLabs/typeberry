@@ -10,6 +10,7 @@ import { OK } from "@typeberry/utils";
 import { type Bootnode, Connections } from "./peers.js";
 import { StreamManager } from "./stream-manager.js";
 import { SyncTask } from "./tasks/sync.js";
+import { TicketDistributionTask } from "./tasks/ticket-distribution.js";
 import { handleAsyncErrors } from "./utils.js";
 
 const logger = Logger.new(import.meta.filename, "jamnps");
@@ -40,6 +41,7 @@ export async function setup(
 
   // start the networking tasks
   const syncTask = SyncTask.start(spec, blake2b, streamManager, connections, blocks, onNewBlocks);
+  const ticketTask = TicketDistributionTask.start(streamManager, connections);
 
   setImmediate(async () => {
     while (network.isRunning) {
@@ -59,6 +61,7 @@ export async function setup(
   return {
     network,
     syncTask,
+    ticketTask,
     streamManager,
   };
 }

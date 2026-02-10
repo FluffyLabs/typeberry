@@ -48,6 +48,13 @@ export async function main(config: WorkerConfig<NetworkingConfig>, comms: Networ
     network.syncTask.broadcastHeader(header);
   });
 
+  // distribute tickets received from block authorship
+  comms.setOnNewTickets(async ({ epochIndex, tickets }) => {
+    for (const ticket of tickets) {
+      network.ticketTask.distributeTicket(epochIndex, ticket);
+    }
+  });
+
   await network.network.start();
 
   // stop the network when the worker is finishing.

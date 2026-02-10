@@ -210,8 +210,8 @@ export async function main(config: Config, comms: GeneratorInternal) {
         if (ticketsResult.isError) {
           logger.warn`Failed to generate tickets for epoch ${epoch}: ${ticketsResult.error}`;
         } else {
-          logger.log`Generated ${ticketsResult.ok.length} tickets for epoch ${epoch}.`;
-          // TODO [MaSi]: Sending out tickets
+          logger.log`Generated ${ticketsResult.ok.length} tickets for epoch ${epoch}. Distributing...`;
+          await comms.sendTickets({ epochIndex: epoch, tickets: ticketsResult.ok });
         }
       }
 
