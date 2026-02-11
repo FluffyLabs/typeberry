@@ -1,9 +1,11 @@
+import type { Worker } from "node:worker_threads";
 import * as blockAuthorship from "@typeberry/block-authorship";
+import { protocol } from "@typeberry/comms-authorship-network";
 import type { BlocksDb, LeafDb, StatesDb } from "@typeberry/database";
 import * as importer from "@typeberry/importer";
 import * as jamNetwork from "@typeberry/jam-network";
 import type { SerializedState } from "@typeberry/state-merkleization";
-import { type DirectWorkerConfig, startSameThread } from "@typeberry/workers-api";
+import { Channel, type DirectPort, type DirectWorkerConfig, startSameThread } from "@typeberry/workers-api";
 import { type LmdbWorkerConfig, spawnWorker } from "@typeberry/workers-api-node";
 
 export async function spawnImporterWorker(config: LmdbWorkerConfig<importer.ImporterConfig>) {
@@ -42,7 +44,7 @@ export async function startImporterDirect(
 }
 
 export async function spawnNetworkWorker(config: LmdbWorkerConfig<jamNetwork.NetworkingConfig>) {
-  const { api, workerFinished } = spawnWorker(
+  const { api, worker, workerFinished } = spawnWorker(
     jamNetwork.protocol,
     jamNetwork.WORKER,
     config,
@@ -51,6 +53,7 @@ export async function spawnNetworkWorker(config: LmdbWorkerConfig<jamNetwork.Net
 
   return {
     network: api,
+    worker,
     finish: async () => {
       await api.sendFinish();
       api.destroy();
@@ -61,13 +64,15 @@ export async function spawnNetworkWorker(config: LmdbWorkerConfig<jamNetwork.Net
 
 export async function startNetwork(
   config: DirectWorkerConfig<jamNetwork.NetworkingConfig>,
-): ReturnType<typeof spawnNetworkWorker> {
+  authorshipPort: DirectPort,
+): Promise<Omit<Awaited<ReturnType<typeof spawnNetworkWorker>>, "worker"> & { worker: Worker | null }> {
   const { api, internal } = startSameThread(jamNetwork.protocol);
+  const authorshipComms = Channel.rx(protocol, authorshipPort);
 
-  const networkFinish = jamNetwork.main(config, internal);
-
+  const networkFinish = jamNetwork.main(config, internal, authorshipComms);
   return {
     network: api,
+    worker: null,
     finish: async () => {
       await api.sendFinish();
       api.destroy();
@@ -77,7 +82,7 @@ export async function startNetwork(
 }
 
 export async function spawnBlockGeneratorWorker(config: LmdbWorkerConfig<blockAuthorship.BlockAuthorshipConfig>) {
-  const { api, workerFinished } = spawnWorker(
+  const { api, worker, workerFinished } = spawnWorker(
     blockAuthorship.protocol,
     blockAuthorship.WORKER,
     config,
@@ -86,6 +91,7 @@ export async function spawnBlockGeneratorWorker(config: LmdbWorkerConfig<blockAu
 
   return {
     generator: api,
+    worker,
     finish: async () => {
       await api.sendFinish();
       api.destroy();
@@ -96,12 +102,16 @@ export async function spawnBlockGeneratorWorker(config: LmdbWorkerConfig<blockAu
 
 export async function startBlockGenerator(
   config: DirectWorkerConfig<blockAuthorship.BlockAuthorshipConfig>,
-): ReturnType<typeof spawnBlockGeneratorWorker> {
+  networkingPort: DirectPort,
+): Promise<Omit<Awaited<ReturnType<typeof spawnBlockGeneratorWorker>>, "worker"> & { worker: Worker | null }> {
   const { api, internal } = startSameThread(blockAuthorship.protocol);
-  const finish = blockAuthorship.main(config, internal);
+
+  const networkingComms = Channel.tx(protocol, networkingPort);
+  const finish = blockAuthorship.main(config, internal, networkingComms);
 
   return {
     generator: api,
+    worker: null,
     finish: async () => {
       await api.sendFinish();
       api.destroy();

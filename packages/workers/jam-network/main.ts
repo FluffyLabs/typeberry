@@ -1,3 +1,4 @@
+import type { AuthorshipComms } from "@typeberry/comms-authorship-network";
 import { parseBootnode } from "@typeberry/config-node";
 import { ed25519, initWasm } from "@typeberry/crypto";
 import { setup } from "@typeberry/jamnp-s";
@@ -14,7 +15,11 @@ const logger = Logger.new(import.meta.filename, "net");
  * (using `typeberry/networking` package) and adding relevant JAMNP-s
  * stream handlers.
  */
-export async function main(config: WorkerConfig<NetworkingConfig>, comms: NetworkingInternal) {
+export async function main(
+  config: WorkerConfig<NetworkingConfig>,
+  comms: NetworkingInternal,
+  authorshipComms: AuthorshipComms,
+) {
   await initWasm();
   logger.trace`🛜 Network starting`;
 
@@ -48,10 +53,11 @@ export async function main(config: WorkerConfig<NetworkingConfig>, comms: Networ
     network.syncTask.broadcastHeader(header);
   });
 
-  // distribute tickets received from block authorship
-  comms.setOnNewTickets(async ({ epochIndex, tickets }) => {
+  // Handle tickets received directly from block-authorship (bypasses main thread)
+  authorshipComms.setOnTickets(async ({ epochIndex, tickets }) => {
+    logger.log`Received ${tickets.length} tickets directly from block-authorship for epoch ${epochIndex}`;
     for (const ticket of tickets) {
-      network.ticketTask.distributeTicket(epochIndex, ticket);
+      network.ticketTask.addTicket(epochIndex, ticket);
     }
   });
 

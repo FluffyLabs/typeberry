@@ -47,6 +47,8 @@ export async function setup(
     while (network.isRunning) {
       await setTimeout(3000);
       syncTask.maintainSync();
+      // distribute pending tickets to all peers
+      ticketTask.maintainDistribution();
     }
   });
 

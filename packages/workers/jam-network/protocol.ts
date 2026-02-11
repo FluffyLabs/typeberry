@@ -1,6 +1,5 @@
 import { Block, type HeaderHash, headerViewWithHashCodec } from "@typeberry/block";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { TicketsMessage } from "@typeberry/comms-authorship-network";
 import { ED25519_PRIV_KEY_BYTES, type Ed25519SecretSeed } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U16 } from "@typeberry/numbers";
@@ -44,10 +43,6 @@ export const protocol = createProtocol("net", {
   toWorker: {
     newHeader: {
       request: headerViewWithHashCodec,
-      response: codec.nothing,
-    },
-    newTickets: {
-      request: TicketsMessage.Codec,
       response: codec.nothing,
     },
     finish: {

@@ -12,14 +12,14 @@ import {
 import type { BlocksDb, RootDb, SerializedStatesDb } from "@typeberry/database";
 import { Blake2b, type WithHash } from "@typeberry/hash";
 import { type ImporterApi, ImporterConfig } from "@typeberry/importer";
-import { type NetworkingApi, NetworkingConfig } from "@typeberry/jam-network";
+import { NetworkingConfig } from "@typeberry/jam-network";
 import { Listener } from "@typeberry/listener";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import type { Telemetry } from "@typeberry/telemetry";
 import { CURRENT_SUITE, CURRENT_VERSION, Result, version } from "@typeberry/utils";
-import { DirectWorkerConfig } from "@typeberry/workers-api";
-import { InMemWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
+import { DirectPort, DirectWorkerConfig } from "@typeberry/workers-api";
+import { InMemWorkerConfig, LmdbWorkerConfig, ThreadPort } from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import { initializeExtensions } from "./extensions.js";
 import type { JamConfig, NetworkConfig } from "./jam-config.js";
@@ -78,8 +78,8 @@ export async function main(
   };
 
   const importerConfig = isInMemory
-    ? { type: "inmem" as const, config: InMemWorkerConfig.new(importerParams) }
-    : { type: "lmdb" as const, config: LmdbWorkerConfig.new(importerParams) };
+    ? { isInMemory, config: InMemWorkerConfig.new(importerParams) }
+    : { isInMemory, config: LmdbWorkerConfig.new(importerParams) };
 
   // Initialize the database with genesis state and block if there isn't one.
   logger.info`🛢️ Opening database at ${dbPath}`;
@@ -95,7 +95,7 @@ export async function main(
   let importer: ImporterApi;
   let closeImporter: () => Promise<void>;
 
-  if (importerConfig.type === "inmem") {
+  if (importerConfig.isInMemory) {
     ({ importer, finish: closeImporter } = await startImporterDirect(
       DirectWorkerConfig.new({
         ...importerConfig.config,
@@ -142,26 +142,41 @@ export async function main(
           ],
   };
 
+  const { networkingParams, authorshipParams } = isInMemory
+    ? (() => {
+        const [tx, rx] = DirectPort.pair();
+
+        return {
+          networkingParams: { isInMemory, rootDb, authorshipPort: tx },
+          authorshipParams: { isInMemory, rootDb, networkingPort: rx },
+        };
+      })()
+    : (() => {
+        const [tx, rx] = ThreadPort.pair(chainSpec);
+
+        return {
+          networkingParams: { isInMemory, rootDb, authorshipPort: tx },
+          authorshipParams: { isInMemory, rootDb, networkingPort: rx },
+        };
+      })();
+
   // Networking initialization (before authorship so we can relay tickets)
-  const { closeNetwork, networkApi } = await initNetwork(
+  const { closeNetwork } = await initNetwork(
     importer,
-    rootDb,
+    networkingParams,
     baseConfig,
     genesisHeaderHash,
     config.network,
     bestHeader,
-    isInMemory,
   );
 
-  const closeAuthorship = await initAuthorship(
+  const { closeAuthorship } = await initAuthorship(
     importer,
     config.isAuthoring,
     config.isFastForward,
-    rootDb,
+    authorshipParams,
     baseConfig,
     authorshipKeys,
-    isInMemory,
-    networkApi,
   );
 
   const api: NodeApi = {
@@ -203,7 +218,16 @@ const initAuthorship = async (
   importer: ImporterApi,
   isAuthoring: boolean,
   isFastForward: boolean,
-  rootDb: RootDb<BlocksDb, SerializedStatesDb>,
+  params:
+    | {
+        isInMemory: true;
+        rootDb: RootDb<BlocksDb, SerializedStatesDb>;
+        networkingPort: DirectPort;
+      }
+    | {
+        isInMemory: false;
+        networkingPort: ThreadPort;
+      },
   baseConfig: {
     nodeName: string;
     chainSpec: ChainSpec;
@@ -211,29 +235,29 @@ const initAuthorship = async (
     dbPath: string;
   },
   authorshipKeys: { keys: { bandersnatch: BandersnatchSecretSeed; ed25519: Ed25519SecretSeed }[] },
-  isInMemory: boolean,
-  networkApi: NetworkingApi | null,
 ) => {
   if (!isAuthoring) {
     logger.log`✍️  Authorship off: disabled`;
-    return () => Promise.resolve();
+    return { closeAuthorship: () => Promise.resolve(), authorshipWorker: null };
   }
 
   logger.info`✍️  Starting block generator.`;
   const workerParams = { ...authorshipKeys, isFastForward };
-  const { generator, finish } = isInMemory
+  const { generator, worker, finish } = params.isInMemory
     ? await startBlockGenerator(
         DirectWorkerConfig.new({
           ...baseConfig,
-          blocksDb: rootDb.getBlocksDb(),
-          statesDb: rootDb.getStatesDb(),
+          blocksDb: params.rootDb.getBlocksDb(),
+          statesDb: params.rootDb.getStatesDb(),
           workerParams,
         }),
+        params.networkingPort,
       )
     : await spawnBlockGeneratorWorker(
         LmdbWorkerConfig.new({
           ...baseConfig,
           workerParams,
+          ports: new Map([["networking", params.networkingPort]]),
         }),
       );
 
@@ -243,20 +267,21 @@ const initAuthorship = async (
     await importer.sendImportBlock(block);
   });
 
-  // relay tickets from generator to network for distribution
-  generator.setOnTickets(async (ticketsMessage) => {
-    if (networkApi !== null) {
-      logger.log`✍️  Distributing ${ticketsMessage.tickets.length} tickets for epoch ${ticketsMessage.epochIndex}`;
-      await networkApi.sendNewTickets(ticketsMessage);
-    }
-  });
-
-  return finish;
+  return { closeAuthorship: finish, authorshipWorker: worker };
 };
 
 const initNetwork = async (
   importer: ImporterApi,
-  rootDb: RootDb<BlocksDb, SerializedStatesDb>,
+  params:
+    | {
+        isInMemory: true;
+        rootDb: RootDb<BlocksDb, SerializedStatesDb>;
+        authorshipPort: DirectPort;
+      }
+    | {
+        isInMemory: false;
+        authorshipPort: ThreadPort;
+      },
   baseConfig: {
     nodeName: string;
     chainSpec: ChainSpec;
@@ -266,11 +291,10 @@ const initNetwork = async (
   genesisHeaderHash: HeaderHash,
   networkConfig: NetworkConfig | null,
   bestHeader: Listener<WithHash<HeaderHash, HeaderView>>,
-  isInMemory: boolean,
 ) => {
   if (networkConfig === null) {
     logger.log`🛜 Networking off: no config`;
-    return { closeNetwork: () => Promise.resolve(), networkApi: null };
+    return { closeNetwork: () => Promise.resolve(), networkApi: null, networkWorker: null };
   }
 
   const { key, host, port, bootnodes } = networkConfig;
@@ -283,19 +307,21 @@ const initNetwork = async (
     bootnodes: bootnodes.map((node) => node.toString()),
   });
 
-  const { network, finish } = isInMemory
+  const { network, worker, finish } = params.isInMemory
     ? await startNetwork(
         DirectWorkerConfig.new({
           ...baseConfig,
-          blocksDb: rootDb.getBlocksDb(),
-          statesDb: rootDb.getStatesDb(),
+          blocksDb: params.rootDb.getBlocksDb(),
+          statesDb: params.rootDb.getStatesDb(),
           workerParams: networkingConfig,
         }),
+        params.authorshipPort,
       )
     : await spawnNetworkWorker(
         LmdbWorkerConfig.new({
           ...baseConfig,
           workerParams: networkingConfig,
+          ports: new Map([["authorship", params.authorshipPort]]),
         }),
       );
 
@@ -311,5 +337,5 @@ const initNetwork = async (
     network.sendNewHeader(header);
   });
 
-  return { closeNetwork: finish, networkApi: network };
+  return { closeNetwork: finish, networkApi: network, networkWorker: worker };
 };

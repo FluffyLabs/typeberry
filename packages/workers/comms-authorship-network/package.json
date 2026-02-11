@@ -6,7 +6,8 @@
   "dependencies": {
     "@typeberry/block": "*",
     "@typeberry/codec": "*",
-    "@typeberry/utils": "*"
+    "@typeberry/utils": "*",
+    "@typeberry/workers-api": "*"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
