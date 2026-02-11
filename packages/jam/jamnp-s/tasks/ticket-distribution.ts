@@ -51,20 +51,6 @@ export class TicketDistributionTask {
    * Should be called periodically to distribute pending tickets to connected peers.
    */
   maintainDistribution() {
-    const peerCount = this.connections.getPeerCount();
-    if (peerCount === 0) {
-      return;
-    }
-
-    if (this.pendingTickets.length === 0) {
-      return;
-    }
-
-    logger.log`[maintain] Distributing ${this.pendingTickets.length} tickets to ${peerCount} peers`;
-
-    // Track how many tickets we sent
-    let sentCount = 0;
-
     // Iterate through all pending tickets
     for (let ticketIdx = 0; ticketIdx < this.pendingTickets.length; ticketIdx++) {
       const { epochIndex, ticket } = this.pendingTickets[ticketIdx];
@@ -96,7 +82,6 @@ export class TicketDistributionTask {
             (handler, sender) => {
               logger.log`[${peerInfo.peerId}] <-- Sending ticket for epoch ${epochIndex}`;
               handler.sendTicket(sender, epochIndex, ticket);
-              sentCount++;
               return OK;
             },
           );
@@ -105,8 +90,6 @@ export class TicketDistributionTask {
         }
       }
     }
-
-    logger.log`[maintain] Sent ${sentCount} tickets`;
   }
 
   /**

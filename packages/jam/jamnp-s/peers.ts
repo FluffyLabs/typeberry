@@ -82,13 +82,10 @@ export class Connections {
 
   /** Return peers that are currently connected. */
   *getConnectedPeers() {
-    const allPeers = Array.from(this.peerInfo.values());
-    const connectedPeers = allPeers.filter((p) => p.peerRef !== null);
-    if (connectedPeers.length === 0 && allPeers.length > 0) {
-      logger.log`[getConnectedPeers] ${allPeers.length} peers in peerInfo, but 0 connected. peerIds: ${allPeers.map((p) => p.peerId).join(", ")}`;
-    }
-    for (const peer of connectedPeers) {
-      yield peer;
+    for (const peer of this.peerInfo.values()) {
+      if (peer.peerRef !== null) {
+        yield peer;
+      }
     }
   }
 
