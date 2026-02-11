@@ -1,5 +1,6 @@
 import { isMainThread } from "node:worker_threads";
 import type { BlockView, HeaderHash, HeaderView, StateRootHash } from "@typeberry/block";
+import { AUTHORSHIP_NETWORK_PORT } from "@typeberry/comms-authorship-network";
 import { type ChainSpec, PvmBackend } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
 import {
@@ -321,7 +322,7 @@ const initNetwork = async (
         LmdbWorkerConfig.new({
           ...baseConfig,
           workerParams: networkingConfig,
-          ports: new Map([["authorship", params.authorshipPort]]),
+          ports: new Map([[AUTHORSHIP_NETWORK_PORT, params.authorshipPort]]),
         }),
       );
 

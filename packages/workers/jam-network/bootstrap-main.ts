@@ -1,4 +1,4 @@
-import { protocol as authorshipProtocol } from "@typeberry/comms-authorship-network";
+import { AUTHORSHIP_NETWORK_PORT, protocol as authorshipProtocol } from "@typeberry/comms-authorship-network";
 import { Telemetry } from "@typeberry/telemetry";
 import { Channel } from "@typeberry/workers-api";
 import { initWorker } from "@typeberry/workers-api-node";
@@ -13,7 +13,7 @@ const tele = Telemetry.initialize({
   worker: "network",
 });
 
-const port = config.ports.get("authorship-network");
+const port = config.ports.get(AUTHORSHIP_NETWORK_PORT);
 if (port === undefined) {
   throw new Error("Authorship network port not found in config");
 }

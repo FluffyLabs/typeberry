@@ -1,6 +1,7 @@
 import type { Epoch } from "@typeberry/block";
 import type { SignedTicket } from "@typeberry/block/tickets.js";
 import { Logger } from "@typeberry/logger";
+import type { PeerId } from "@typeberry/networking";
 import { OK } from "@typeberry/utils";
 import type { AuxData, Connections } from "../peers.js";
 import { ce131 } from "../protocol/index.js";
@@ -8,8 +9,14 @@ import type { StreamManager } from "../stream-manager.js";
 
 const logger = Logger.new(import.meta.filename, "net:tickets");
 
+/** Aux data shape: tracks epoch and which ticket indices have been sent to each peer */
+type TicketAuxData = {
+  epoch: Epoch;
+  seen: Set<number>;
+};
+
 /** Aux data to track which tickets have been sent to each peer (using indices) */
-const TICKET_AUX: AuxData<Set<number>> = {
+const TICKET_AUX: AuxData<TicketAuxData> = {
   id: Symbol("tickets"),
 };
 
@@ -48,9 +55,30 @@ export class TicketDistributionTask {
   ) {}
 
   /**
+   * Get or create aux data for a peer, lazily resetting if epoch changed.
+   * This handles disconnected peers that reconnect after an epoch change.
+   */
+  private getOrResetAuxData(peerId: PeerId, currentEpoch: Epoch): TicketAuxData {
+    const aux = this.connections.getAuxData(peerId, TICKET_AUX);
+
+    // If no aux data or epoch mismatch, create fresh aux data
+    if (aux === undefined || aux.epoch !== currentEpoch) {
+      const newAux: TicketAuxData = { epoch: currentEpoch, seen: new Set<number>() };
+      this.connections.setAuxData(peerId, TICKET_AUX, newAux);
+      return newAux;
+    }
+
+    return aux;
+  }
+
+  /**
    * Should be called periodically to distribute pending tickets to connected peers.
    */
   maintainDistribution() {
+    if (this.currentEpoch === null) {
+      return; // No tickets to distribute yet
+    }
+
     // Iterate through all pending tickets
     for (let ticketIdx = 0; ticketIdx < this.pendingTickets.length; ticketIdx++) {
       const { epochIndex, ticket } = this.pendingTickets[ticketIdx];
@@ -61,20 +89,15 @@ export class TicketDistributionTask {
           continue;
         }
 
+        // Get aux data, lazily resetting if epoch changed (handles reconnected peers)
+        const aux = this.getOrResetAuxData(peerInfo.peerId, this.currentEpoch);
+
         // Check if we already sent this ticket to this peer
-        const sentIndices = this.connections.getAuxData(peerInfo.peerId, TICKET_AUX);
-        if (sentIndices?.has(ticketIdx) === true) {
+        if (aux.seen.has(ticketIdx)) {
           continue; // Already sent
         }
 
-        // Mark as sent
-        this.connections.withAuxData(peerInfo.peerId, TICKET_AUX, (aux) => {
-          const newSet = aux ?? new Set<number>();
-          newSet.add(ticketIdx);
-          return newSet;
-        });
-
-        // Send the ticket
+        // Send the ticket - only mark as sent after successful send
         try {
           this.streamManager.withNewStream<ce131.ClientHandler<typeof ce131.STREAM_KIND_PROXY_TO_ALL>>(
             peerInfo.peerRef,
@@ -85,6 +108,9 @@ export class TicketDistributionTask {
               return OK;
             },
           );
+
+          // Mark as sent only after successful send, so failed sends will be retried
+          aux.seen.add(ticketIdx);
         } catch (e) {
           logger.warn`[${peerInfo.peerId}] Failed to send ticket for epoch ${epochIndex}: ${e}`;
         }
@@ -102,10 +128,10 @@ export class TicketDistributionTask {
     if (this.currentEpoch !== null && this.currentEpoch !== epochIndex) {
       logger.log`[addTicket] Epoch changed from ${this.currentEpoch} to ${epochIndex}, clearing ${this.pendingTickets.length} old tickets`;
       this.pendingTickets = [];
-      // Clear aux data for all peers
-      for (const peerInfo of this.connections.getConnectedPeers()) {
-        this.connections.withAuxData(peerInfo.peerId, TICKET_AUX, () => new Set<number>());
-      }
+      // Note: We don't need to clear aux data for all peers here.
+      // The aux data contains the epoch, so maintainDistribution will lazily
+      // reset it when it detects an epoch mismatch. This handles both connected
+      // and disconnected peers correctly.
     }
 
     this.currentEpoch = epochIndex;
