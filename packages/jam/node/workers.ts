@@ -77,6 +77,7 @@ export async function startNetwork(
       await api.sendFinish();
       api.destroy();
       await networkFinish;
+      authorshipComms.destroy();
     },
   };
 }
@@ -116,6 +117,7 @@ export async function startBlockGenerator(
       await api.sendFinish();
       api.destroy();
       await finish;
+      networkingComms.destroy();
     },
   };
 }

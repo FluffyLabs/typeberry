@@ -239,7 +239,13 @@ const initAuthorship = async (
 ) => {
   if (!isAuthoring) {
     logger.log`✍️  Authorship off: disabled`;
-    return { closeAuthorship: () => Promise.resolve(), authorshipWorker: null };
+    return {
+      closeAuthorship: () => {
+        params.networkingPort.close();
+        return Promise.resolve();
+      },
+      authorshipWorker: null,
+    };
   }
 
   logger.info`✍️  Starting block generator.`;
@@ -295,7 +301,14 @@ const initNetwork = async (
 ) => {
   if (networkConfig === null) {
     logger.log`🛜 Networking off: no config`;
-    return { closeNetwork: () => Promise.resolve(), networkApi: null, networkWorker: null };
+    return {
+      closeNetwork: () => {
+        params.authorshipPort.close();
+        return Promise.resolve();
+      },
+      networkApi: null,
+      networkWorker: null,
+    };
   }
 
   const { key, host, port, bootnodes } = networkConfig;
