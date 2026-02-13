@@ -103,7 +103,7 @@ export class TicketDistributionTask {
             peerInfo.peerRef,
             ce131.STREAM_KIND_PROXY_TO_ALL,
             (handler, sender) => {
-              logger.log`[${peerInfo.peerId}] <-- Sending ticket for epoch ${epochIndex}`;
+              logger.trace`[${peerInfo.peerId}] <-- Sending ticket for epoch ${epochIndex}`;
               handler.sendTicket(sender, epochIndex, ticket);
               return OK;
             },
@@ -151,12 +151,12 @@ export class TicketDistributionTask {
 
     if (!isDuplicate) {
       this.pendingTickets.push({ epochIndex, ticket });
-      logger.log`[addTicket] Added ticket for epoch ${epochIndex}, total: ${this.pendingTickets.length}`;
+      logger.info`[addTicket] Added ticket for epoch ${epochIndex}, total: ${this.pendingTickets.length}`;
     }
   }
 
   private onTicketReceived(epochIndex: Epoch, ticket: SignedTicket) {
-    logger.info`Received ticket for epoch ${epochIndex}, attempt ${ticket.attempt}`;
+    logger.trace`Received ticket for epoch ${epochIndex}, attempt ${ticket.attempt}`;
     // Add to pending queue for potential re-distribution
     this.addTicket(epochIndex, ticket);
   }
