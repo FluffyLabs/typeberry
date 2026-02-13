@@ -8,6 +8,7 @@
     "@typeberry/block": "*",
     "@typeberry/bytes": "*",
     "@typeberry/codec": "*",
+    "@typeberry/comms-authorship-network": "*",
     "@typeberry/collections": "*",
     "@typeberry/config": "*",
     "@typeberry/crypto": "*",

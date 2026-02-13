@@ -10,6 +10,7 @@ import {
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import { Blake2b } from "@typeberry/hash";
 import type { WorkerConfig } from "@typeberry/workers-api";
+import { ThreadPort, type TransferablePort } from "./port.js";
 
 /** A worker config that's usable in node.js and uses LMDB database backend. */
 export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, SerializedStatesDb> {
@@ -19,14 +20,16 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
     workerParams,
     dbPath,
     blake2b,
+    ports = new Map(),
   }: {
     nodeName: string;
     chainSpec: ChainSpec;
     workerParams: T;
     dbPath: string;
     blake2b: Blake2b;
+    ports?: Map<string, ThreadPort>;
   }) {
-    return new LmdbWorkerConfig(nodeName, chainSpec, workerParams, dbPath, blake2b);
+    return new LmdbWorkerConfig(nodeName, chainSpec, workerParams, dbPath, blake2b, ports);
   }
 
   /** Restore node config from a transferable config object. */
@@ -34,6 +37,9 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
     const blake2b = await Blake2b.createHasher();
     const chainSpec = new ChainSpec(config.chainSpec);
     const workerParams = Decoder.decodeObject(decodeParams, config.workerParams, chainSpec);
+    const ports = new Map(
+      config.workerPorts.map(([name, port]) => [name, ThreadPort.fromTransferable(chainSpec, port)]),
+    );
 
     return LmdbWorkerConfig.new({
       nodeName: config.nodeName,
@@ -41,6 +47,7 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
       workerParams,
       dbPath: config.dbPath,
       blake2b,
+      ports,
     });
   }
 
@@ -50,6 +57,7 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
     public readonly workerParams: T,
     public readonly dbPath: string,
     public readonly blake2b: Blake2b,
+    public readonly ports: Map<string, ThreadPort>,
   ) {}
 
   openDatabase(options: { readonly: boolean } = { readonly: true }): RootDb<BlocksDb, SerializedStatesDb> {
@@ -69,6 +77,7 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
       chainSpec: this.chainSpec,
       workerParams: Encoder.encodeObject(paramsCodec, this.workerParams, this.chainSpec).raw,
       dbPath: this.dbPath,
+      workerPorts: Array.from(this.ports.entries()).map(([name, port]) => [name, port.intoTransferable()]),
     };
   }
 }
@@ -79,6 +88,7 @@ export type TransferableConfig = {
   chainSpec: ChainSpec;
   workerParams: Uint8Array;
   dbPath: string;
+  workerPorts: [string, TransferablePort][];
 };
 
 /**

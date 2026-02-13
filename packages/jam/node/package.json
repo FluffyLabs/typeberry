@@ -11,6 +11,7 @@
     "@typeberry/bytes": "*",
     "@typeberry/codec": "*",
     "@typeberry/collections": "*",
+    "@typeberry/comms-authorship-network": "*",
     "@typeberry/config": "*",
     "@typeberry/config-node": "*",
     "@typeberry/configs": "*",

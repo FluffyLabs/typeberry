@@ -62,6 +62,7 @@
     "packages/workers/api",
     "packages/workers/api-node",
     "packages/workers/block-authorship",
+    "packages/workers/comms-authorship-network",
     "packages/workers/importer",
     "packages/workers/jam-network"
   ],
