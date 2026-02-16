@@ -1,7 +1,6 @@
 import type { Epoch } from "@typeberry/block";
 import type { SignedTicket } from "@typeberry/block/tickets.js";
 import { Logger } from "@typeberry/logger";
-import type { PeerId } from "@typeberry/networking";
 import { OK } from "@typeberry/utils";
 import type { AuxData, Connections } from "../peers.js";
 import { ce131 } from "../protocol/index.js";
@@ -55,23 +54,6 @@ export class TicketDistributionTask {
   ) {}
 
   /**
-   * Get or create aux data for a peer, lazily resetting if epoch changed.
-   * This handles disconnected peers that reconnect after an epoch change.
-   */
-  private getOrResetAuxData(peerId: PeerId, currentEpoch: Epoch): TicketAuxData {
-    const aux = this.connections.getAuxData(peerId, TICKET_AUX);
-
-    // If no aux data or epoch mismatch, create fresh aux data
-    if (aux === undefined || aux.epoch !== currentEpoch) {
-      const newAux: TicketAuxData = { epoch: currentEpoch, seen: new Set<number>() };
-      this.connections.setAuxData(peerId, TICKET_AUX, newAux);
-      return newAux;
-    }
-
-    return aux;
-  }
-
-  /**
    * Should be called periodically to distribute pending tickets to connected peers.
    */
   maintainDistribution() {
@@ -79,41 +61,47 @@ export class TicketDistributionTask {
       return; // No tickets to distribute yet
     }
 
+    /** `this` is mutable and TS can't narrow this.currentEpoch inside the callback closure */
+    const currentEpoch = this.currentEpoch;
+
     // Iterate through all pending tickets
     for (let ticketIdx = 0; ticketIdx < this.pendingTickets.length; ticketIdx++) {
       const { epochIndex, ticket } = this.pendingTickets[ticketIdx];
 
       // Try to send to each connected peer
       for (const peerInfo of this.connections.getConnectedPeers()) {
-        if (peerInfo.peerRef === null) {
-          continue;
-        }
+        this.connections.withAuxData(peerInfo.peerId, TICKET_AUX, (maybeAux) => {
+          const shouldReset = maybeAux === undefined || maybeAux.epoch !== currentEpoch;
+          const aux = shouldReset ? { epoch: currentEpoch, seen: new Set<number>() } : maybeAux;
 
-        // Get aux data, lazily resetting if epoch changed (handles reconnected peers)
-        const aux = this.getOrResetAuxData(peerInfo.peerId, this.currentEpoch);
+          if (peerInfo.peerRef === null) {
+            return aux;
+          }
 
-        // Check if we already sent this ticket to this peer
-        if (aux.seen.has(ticketIdx)) {
-          continue; // Already sent
-        }
+          // Check if we already sent this ticket to this peer
+          if (aux.seen.has(ticketIdx)) {
+            return aux; // Already sent
+          }
 
-        // Send the ticket - only mark as sent after successful send
-        try {
-          this.streamManager.withNewStream<ce131.ClientHandler<typeof ce131.STREAM_KIND_PROXY_TO_ALL>>(
-            peerInfo.peerRef,
-            ce131.STREAM_KIND_PROXY_TO_ALL,
-            (handler, sender) => {
-              logger.trace`[${peerInfo.peerId}] <-- Sending ticket for epoch ${epochIndex}`;
-              handler.sendTicket(sender, epochIndex, ticket);
-              return OK;
-            },
-          );
+          // Send the ticket - only mark as sent after successful send
+          try {
+            this.streamManager.withNewStream<ce131.ClientHandler<typeof ce131.STREAM_KIND_PROXY_TO_ALL>>(
+              peerInfo.peerRef,
+              ce131.STREAM_KIND_PROXY_TO_ALL,
+              (handler, sender) => {
+                logger.trace`[${peerInfo.peerId}] <-- Sending ticket for epoch ${epochIndex}`;
+                handler.sendTicket(sender, epochIndex, ticket);
+                return OK;
+              },
+            );
 
-          // Mark as sent only after successful send, so failed sends will be retried
-          aux.seen.add(ticketIdx);
-        } catch (e) {
-          logger.warn`[${peerInfo.peerId}] Failed to send ticket for epoch ${epochIndex}: ${e}`;
-        }
+            // Mark as sent only after successful send, so failed sends will be retried
+            aux.seen.add(ticketIdx);
+          } catch (e) {
+            logger.warn`[${peerInfo.peerId}] Failed to send ticket for epoch ${epochIndex}: ${e}`;
+          }
+          return aux;
+        });
       }
     }
   }
@@ -137,16 +125,8 @@ export class TicketDistributionTask {
     this.currentEpoch = epochIndex;
 
     // Deduplicate: check if ticket with same signature already exists
-    // Compare signatures by converting to hex strings
-    const signatureHex = Array.from(ticket.signature.raw)
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
     const isDuplicate = this.pendingTickets.some(
-      (pending) =>
-        pending.epochIndex === epochIndex &&
-        Array.from(pending.ticket.signature.raw)
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("") === signatureHex,
+      (pending) => pending.epochIndex === epochIndex && pending.ticket.signature.isEqualTo(ticket.signature),
     );
 
     if (!isDuplicate) {

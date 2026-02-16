@@ -1,7 +1,7 @@
 import { protocol as networkProtocol } from "@typeberry/comms-authorship-network";
 import { Telemetry } from "@typeberry/telemetry";
 import { Channel } from "@typeberry/workers-api";
-import { initWorker, ThreadPort } from "@typeberry/workers-api-node";
+import { initWorker } from "@typeberry/workers-api-node";
 import { main } from "./main.js";
 import { BlockAuthorshipConfig, protocol as mainProtocol } from "./protocol.js";
 
@@ -17,9 +17,11 @@ threadComms.once(async (msg) => {
   if (msg.threadName !== "block-authorship") {
     throw new Error(`Unexpected thread name: ${msg.threadName}`);
   }
-  const port = new ThreadPort(config.chainSpec, msg.port);
-  const authorshipComms = Channel.tx(networkProtocol, port);
-
-  await main(config, comms, authorshipComms);
+  const port = config.ports.get("network");
+  if (port === undefined) {
+    throw new Error("Network port not found in config");
+  }
+  const networkingComms = Channel.tx(networkProtocol, port);
+  await main(config, comms, networkingComms);
   await tele?.close();
 });

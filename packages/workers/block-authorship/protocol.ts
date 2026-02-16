@@ -1,6 +1,5 @@
 import { Block } from "@typeberry/block";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { TicketsMessage } from "@typeberry/comms-authorship-network";
 import {
   BANDERSNATCH_KEY_BYTES,
   type BandersnatchSecretSeed,
@@ -8,9 +7,6 @@ import {
   type Ed25519SecretSeed,
 } from "@typeberry/crypto";
 import { type Api, createProtocol, type Internal } from "@typeberry/workers-api";
-
-// Re-export for consumers
-export { TicketsMessage } from "@typeberry/comms-authorship-network";
 
 export type GeneratorInternal = Internal<typeof protocol>;
 export type GeneratorApi = Api<typeof protocol>;
@@ -25,10 +21,6 @@ export const protocol = createProtocol("block-authorship", {
   fromWorker: {
     block: {
       request: Block.Codec.View,
-      response: codec.nothing,
-    },
-    tickets: {
-      request: TicketsMessage.Codec,
       response: codec.nothing,
     },
   },

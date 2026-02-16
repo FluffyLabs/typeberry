@@ -264,7 +264,7 @@ const initAuthorship = async (
         LmdbWorkerConfig.new({
           ...baseConfig,
           workerParams,
-          ports: new Map([["networking", params.networkingPort]]),
+          ports: new Map([[AUTHORSHIP_NETWORK_PORT, params.networkingPort]]),
         }),
       );
 

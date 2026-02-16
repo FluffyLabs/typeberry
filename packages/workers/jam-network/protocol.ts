@@ -6,9 +6,6 @@ import type { U16 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
 import { type Api, createProtocol, type Internal } from "@typeberry/workers-api";
 
-// Re-export for consumers
-export { TicketsMessage } from "@typeberry/comms-authorship-network";
-
 /** Network-specific worker initialisatation. */
 export class NetworkingConfig extends WithDebug {
   static Codec = codec.Class(NetworkingConfig, {
