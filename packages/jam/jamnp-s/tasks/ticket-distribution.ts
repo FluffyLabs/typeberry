@@ -124,7 +124,15 @@ export class TicketDistributionTask {
 
     this.currentEpoch = epochIndex;
 
-    // Deduplicate: check if ticket with same signature already exists
+    /**
+     * Deduplicate: check if a ticket with the same signature already exists
+     *
+     * Here we are risking "poisoning" the local pendingTickets - i.e:
+     *  1. The adversary sees a signature and swaps the ticket attempt to something different.
+     *  2. This creates an invalid ticket, but prevents a valid ticket with the same signature from being included and distributed.
+     *
+     * TODO [MaSi]: The poisoning risk should be fixed during implementation of ticket validation.
+     */
     const isDuplicate = this.pendingTickets.some(
       (pending) => pending.epochIndex === epochIndex && pending.ticket.signature.isEqualTo(ticket.signature),
     );
