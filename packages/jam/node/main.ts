@@ -302,9 +302,8 @@ const initNetwork = async (
   if (networkConfig === null) {
     logger.log`🛜 Networking off: no config`;
     return {
-      closeNetwork: () => {
+      closeNetwork: async () => {
         params.authorshipPort.close();
-        return Promise.resolve();
       },
       networkApi: null,
       networkWorker: null,

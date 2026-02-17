@@ -13,15 +13,10 @@ const tele = Telemetry.initialize({
   nodeName: config.nodeName,
 });
 
-threadComms.once(async (msg) => {
-  if (msg.threadName !== "block-authorship") {
-    throw new Error(`Unexpected thread name: ${msg.threadName}`);
-  }
-  const port = config.ports.get(AUTHORSHIP_NETWORK_PORT);
-  if (port === undefined) {
-    throw new Error("Network port not found in config");
-  }
-  const networkingComms = Channel.tx(networkProtocol, port);
-  await main(config, comms, networkingComms);
-  await tele?.close();
-});
+const port = config.ports.get(AUTHORSHIP_NETWORK_PORT);
+if (port === undefined) {
+  throw new Error("Network port not found in config");
+}
+const networkingComms = Channel.tx(networkProtocol, port);
+await main(config, comms, networkingComms);
+await tele?.close();
