@@ -5,7 +5,7 @@ import { initWorker } from "@typeberry/workers-api-node";
 import { main } from "./main.js";
 import { BlockAuthorshipConfig, protocol as mainProtocol } from "./protocol.js";
 
-const { config, comms, threadComms } = await initWorker(mainProtocol, BlockAuthorshipConfig.Codec);
+const { config, comms } = await initWorker(mainProtocol, BlockAuthorshipConfig.Codec);
 
 // Initialize OpenTelemetry for this worker
 const tele = Telemetry.initialize({
