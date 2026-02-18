@@ -1,5 +1,6 @@
 import type { Epoch } from "@typeberry/block";
 import type { SignedTicket } from "@typeberry/block/tickets.js";
+import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";
 import { OK } from "@typeberry/utils";
 import type { AuxData, Connections } from "../peers.js";
@@ -27,18 +28,18 @@ const TICKET_AUX: AuxData<TicketAuxData> = {
  * and periodically distributed to peers that haven't received them yet.
  */
 export class TicketDistributionTask {
-  static start(streamManager: StreamManager, connections: Connections) {
+  static start(streamManager: StreamManager, connections: Connections, chainSpec: ChainSpec) {
     const task = new TicketDistributionTask(streamManager, connections);
 
     // server mode: receive tickets from peers
     streamManager.registerIncomingHandlers(
-      new ce131.ServerHandler(ce131.STREAM_KIND_PROXY_TO_ALL, (epochIndex, ticket) => {
+      new ce131.ServerHandler(chainSpec, ce131.STREAM_KIND_PROXY_TO_ALL, (epochIndex, ticket) => {
         task.onTicketReceived(epochIndex, ticket);
       }),
     );
 
     // client mode: send tickets to peers
-    streamManager.registerOutgoingHandlers(new ce131.ClientHandler(ce131.STREAM_KIND_PROXY_TO_ALL));
+    streamManager.registerOutgoingHandlers(new ce131.ClientHandler(chainSpec, ce131.STREAM_KIND_PROXY_TO_ALL));
 
     return task;
   }
