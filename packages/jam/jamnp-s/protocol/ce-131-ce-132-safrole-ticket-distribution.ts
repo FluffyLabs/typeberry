@@ -2,6 +2,7 @@ import type { Epoch } from "@typeberry/block";
 import { SignedTicket } from "@typeberry/block/tickets.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec, Decoder, Encoder } from "@typeberry/codec";
+import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
 import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
@@ -41,12 +42,13 @@ const logger = Logger.new(import.meta.filename, "protocol/ce-131-ce-132");
 
 export class ServerHandler<T extends STREAM_KIND> implements StreamHandler<T> {
   constructor(
+    private readonly chainSpec: ChainSpec,
     public readonly kind: T,
     private readonly onTicketReceived: (epochIndex: Epoch, ticket: SignedTicket) => void,
   ) {}
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
-    const ticketDistribution = Decoder.decodeObject(TicketDistributionRequest.Codec, message);
+    const ticketDistribution = Decoder.decodeObject(TicketDistributionRequest.Codec, message, this.chainSpec);
     logger.log`[${sender.streamId}][ce-${this.kind}] Received ticket for epoch ${ticketDistribution.epochIndex}`;
     this.onTicketReceived(ticketDistribution.epochIndex, ticketDistribution.ticket);
     sender.close();
@@ -56,7 +58,10 @@ export class ServerHandler<T extends STREAM_KIND> implements StreamHandler<T> {
 }
 
 export class ClientHandler<T extends STREAM_KIND> implements StreamHandler<T> {
-  constructor(public readonly kind: T) {}
+  constructor(
+    private readonly chainSpec: ChainSpec,
+    public readonly kind: T,
+  ) {}
 
   onStreamMessage(sender: StreamMessageSender): void {
     logger.warn`[${sender.streamId}][ce-${this.kind}] Unexpected message received. Closing.`;
@@ -67,7 +72,7 @@ export class ClientHandler<T extends STREAM_KIND> implements StreamHandler<T> {
 
   sendTicket(sender: StreamMessageSender, epochIndex: Epoch, ticket: SignedTicket) {
     const request = TicketDistributionRequest.create({ epochIndex, ticket });
-    sender.bufferAndSend(Encoder.encodeObject(TicketDistributionRequest.Codec, request));
+    sender.bufferAndSend(Encoder.encodeObject(TicketDistributionRequest.Codec, request, this.chainSpec));
     sender.close();
   }
 }

@@ -1,5 +1,6 @@
 import { type TicketAttempt, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { ChainSpec } from "@typeberry/config";
 import type { Ed25519Signature } from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";
 
@@ -21,12 +22,10 @@ export namespace fromJson {
 
   export const ed25519Signature = json.fromString<Ed25519Signature>((v) => Bytes.parseBytes(v, 64).asOpaque());
 
-  export const ticketAttempt = json.fromNumber((v) => {
-    if (v !== 0 && v !== 1 && v !== 2) {
-      throw new Error("Invalid TicketAttempt value.");
-    }
-    return tryAsTicketAttempt(v);
-  }) as FromJson<TicketAttempt>;
+  export const ticketAttempt = (spec: ChainSpec) =>
+    json.fromNumber((v) => {
+      return tryAsTicketAttempt(v, spec);
+    }) as FromJson<TicketAttempt>;
 
   export const uint8Array = json.fromAny((v) => {
     if (Array.isArray(v)) {
