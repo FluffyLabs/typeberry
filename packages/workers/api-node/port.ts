@@ -14,8 +14,18 @@ export type Message = {
 const MESSAGE_KEYS: (keyof Message)[] = ["eventName", "responseId", "data"];
 
 const logger = Logger.new(import.meta.filename, "workers/api");
-
+/** Transferable representation of a `ThreadPort`. */
+export type TransferablePort = {
+  threadId: number;
+  port: MessagePort;
+};
 export class ThreadPort implements Port {
+  static pair(spec: ChainSpec): [ThreadPort, ThreadPort] {
+    const { port1, port2 } = new MessageChannel();
+
+    return [new ThreadPort(spec, port1), new ThreadPort(spec, port2)];
+  }
+
   public readonly threadId = threadId;
   private readonly events = new EventEmitter();
 
@@ -33,6 +43,14 @@ export class ThreadPort implements Port {
       check`${this.events.listeners(eventName).length > 0} No listeners for received event ${eventName}!`;
       this.events.emit(eventName, responseId, data);
     });
+  }
+
+  static fromTransferable(spec: ChainSpec, { port }: TransferablePort) {
+    return new ThreadPort(spec, port);
+  }
+
+  intoTransferable(): TransferablePort {
+    return { threadId: this.threadId, port: this.port };
   }
 
   close(): void {

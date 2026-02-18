@@ -10,6 +10,7 @@ import {
 import type { TicketAttempt } from "@typeberry/block/tickets.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { HashSet } from "@typeberry/collections/hash-set.js";
+import type { NetworkingComms } from "@typeberry/comms-authorship-network";
 import { type BandersnatchKey, type Ed25519Key, initWasm } from "@typeberry/crypto";
 import {
   type BandersnatchSecretSeed,
@@ -50,7 +51,7 @@ type ValidatorPublicKeys = {
 
 type ValidatorKeys = ValidatorPrivateKeys & ValidatorPublicKeys;
 
-export async function main(config: Config, comms: GeneratorInternal) {
+export async function main(config: Config, comms: GeneratorInternal, networkingComms: NetworkingComms) {
   await initWasm();
   logger.info`🎁 Block Authorship running`;
   const chainSpec = config.chainSpec;
@@ -211,8 +212,10 @@ export async function main(config: Config, comms: GeneratorInternal) {
         if (ticketsResult.isError) {
           logger.warn`Failed to generate tickets for epoch ${epoch}: ${ticketsResult.error}`;
         } else {
-          logger.log`Generated ${ticketsResult.ok.length} tickets for epoch ${epoch}.`;
-          // TODO [MaSi]: Sending out tickets
+          logger.log`Generated ${ticketsResult.ok.length} tickets for epoch ${epoch}. Distributing...`;
+
+          // Send directly to network worker (bypasses main thread)
+          await networkingComms.sendTickets({ epochIndex: epoch, tickets: ticketsResult.ok });
         }
       }
 

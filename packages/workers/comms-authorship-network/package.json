@@ -1,0 +1,18 @@
+{
+  "name": "@typeberry/comms-authorship-network",
+  "version": "0.5.7",
+  "description": "The communication layer between the block authorship and network workers.",
+  "main": "index.ts",
+  "dependencies": {
+    "@typeberry/block": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/utils": "*",
+    "@typeberry/workers-api": "*"
+  },
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0",
+  "type": "module"
+}

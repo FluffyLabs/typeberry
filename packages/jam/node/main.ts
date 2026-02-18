@@ -1,5 +1,6 @@
 import { isMainThread } from "node:worker_threads";
 import type { BlockView, HeaderHash, HeaderView, StateRootHash } from "@typeberry/block";
+import { AUTHORSHIP_NETWORK_PORT } from "@typeberry/comms-authorship-network";
 import { type ChainSpec, PvmBackend } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
 import {
@@ -18,8 +19,8 @@ import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import type { Telemetry } from "@typeberry/telemetry";
 import { CURRENT_SUITE, CURRENT_VERSION, Result, version } from "@typeberry/utils";
-import { DirectWorkerConfig } from "@typeberry/workers-api";
-import { InMemWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
+import { DirectPort, DirectWorkerConfig } from "@typeberry/workers-api";
+import { InMemWorkerConfig, LmdbWorkerConfig, ThreadPort } from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import { initializeExtensions } from "./extensions.js";
 import type { JamConfig, NetworkConfig } from "./jam-config.js";
@@ -78,8 +79,8 @@ export async function main(
   };
 
   const importerConfig = isInMemory
-    ? { type: "inmem" as const, config: InMemWorkerConfig.new(importerParams) }
-    : { type: "lmdb" as const, config: LmdbWorkerConfig.new(importerParams) };
+    ? { isInMemory, config: InMemWorkerConfig.new(importerParams) }
+    : { isInMemory, config: LmdbWorkerConfig.new(importerParams) };
 
   // Initialize the database with genesis state and block if there isn't one.
   logger.info`🛢️ Opening database at ${dbPath}`;
@@ -95,7 +96,7 @@ export async function main(
   let importer: ImporterApi;
   let closeImporter: () => Promise<void>;
 
-  if (importerConfig.type === "inmem") {
+  if (importerConfig.isInMemory) {
     ({ importer, finish: closeImporter } = await startImporterDirect(
       DirectWorkerConfig.new({
         ...importerConfig.config,
@@ -142,25 +143,41 @@ export async function main(
           ],
   };
 
-  const closeAuthorship = await initAuthorship(
-    importer,
-    config.isAuthoring,
-    config.isFastForward,
-    rootDb,
-    baseConfig,
-    authorshipKeys,
-    isInMemory,
-  );
+  const { networkingParams, authorshipParams } = isInMemory
+    ? (() => {
+        const [tx, rx] = DirectPort.pair();
 
-  // Networking initialization
-  const closeNetwork = await initNetwork(
+        return {
+          networkingParams: { isInMemory, rootDb, authorshipPort: tx },
+          authorshipParams: { isInMemory, rootDb, networkingPort: rx },
+        };
+      })()
+    : (() => {
+        const [tx, rx] = ThreadPort.pair(chainSpec);
+
+        return {
+          networkingParams: { isInMemory, rootDb, authorshipPort: tx },
+          authorshipParams: { isInMemory, rootDb, networkingPort: rx },
+        };
+      })();
+
+  // Networking initialization (before authorship so we can relay tickets)
+  const { closeNetwork } = await initNetwork(
     importer,
-    rootDb,
+    networkingParams,
     baseConfig,
     genesisHeaderHash,
     config.network,
     bestHeader,
-    isInMemory,
+  );
+
+  const { closeAuthorship } = await initAuthorship(
+    importer,
+    config.isAuthoring,
+    config.isFastForward,
+    authorshipParams,
+    baseConfig,
+    authorshipKeys,
   );
 
   const api: NodeApi = {
@@ -179,14 +196,14 @@ export async function main(
       return importer.sendGetBestStateRootHash();
     },
     async close() {
-      logger.log`[main] ☠️ Closing the importer`;
-      await closeImporter();
-      logger.log`[main] ☠️  Closing the extensions`;
-      closeExtensions();
       logger.log`[main] ☠️  Closing the authorship module`;
       await closeAuthorship();
       logger.log`[main] ☠️  Closing the networking module`;
       await closeNetwork();
+      logger.log`[main] ☠️ Closing the importer`;
+      await closeImporter();
+      logger.log`[main] ☠️  Closing the extensions`;
+      closeExtensions();
       logger.log`[main] 🛢️ Closing the database`;
       await rootDb.close();
       logger.log`[main] 📳 Closing telemetry`;
@@ -202,7 +219,16 @@ const initAuthorship = async (
   importer: ImporterApi,
   isAuthoring: boolean,
   isFastForward: boolean,
-  rootDb: RootDb<BlocksDb, SerializedStatesDb>,
+  params:
+    | {
+        isInMemory: true;
+        rootDb: RootDb<BlocksDb, SerializedStatesDb>;
+        networkingPort: DirectPort;
+      }
+    | {
+        isInMemory: false;
+        networkingPort: ThreadPort;
+      },
   baseConfig: {
     nodeName: string;
     chainSpec: ChainSpec;
@@ -210,28 +236,35 @@ const initAuthorship = async (
     dbPath: string;
   },
   authorshipKeys: { keys: { bandersnatch: BandersnatchSecretSeed; ed25519: Ed25519SecretSeed }[] },
-  isInMemory: boolean,
 ) => {
   if (!isAuthoring) {
     logger.log`✍️  Authorship off: disabled`;
-    return () => Promise.resolve();
+    return {
+      closeAuthorship: () => {
+        params.networkingPort.close();
+        return Promise.resolve();
+      },
+      authorshipWorker: null,
+    };
   }
 
   logger.info`✍️  Starting block generator.`;
   const workerParams = { ...authorshipKeys, isFastForward };
-  const { generator, finish } = isInMemory
+  const { generator, worker, finish } = params.isInMemory
     ? await startBlockGenerator(
         DirectWorkerConfig.new({
           ...baseConfig,
-          blocksDb: rootDb.getBlocksDb(),
-          statesDb: rootDb.getStatesDb(),
+          blocksDb: params.rootDb.getBlocksDb(),
+          statesDb: params.rootDb.getStatesDb(),
           workerParams,
         }),
+        params.networkingPort,
       )
     : await spawnBlockGeneratorWorker(
         LmdbWorkerConfig.new({
           ...baseConfig,
           workerParams,
+          ports: new Map([[AUTHORSHIP_NETWORK_PORT, params.networkingPort]]),
         }),
       );
 
@@ -241,12 +274,21 @@ const initAuthorship = async (
     await importer.sendImportBlock(block);
   });
 
-  return finish;
+  return { closeAuthorship: finish, authorshipWorker: worker };
 };
 
 const initNetwork = async (
   importer: ImporterApi,
-  rootDb: RootDb<BlocksDb, SerializedStatesDb>,
+  params:
+    | {
+        isInMemory: true;
+        rootDb: RootDb<BlocksDb, SerializedStatesDb>;
+        authorshipPort: DirectPort;
+      }
+    | {
+        isInMemory: false;
+        authorshipPort: ThreadPort;
+      },
   baseConfig: {
     nodeName: string;
     chainSpec: ChainSpec;
@@ -256,11 +298,16 @@ const initNetwork = async (
   genesisHeaderHash: HeaderHash,
   networkConfig: NetworkConfig | null,
   bestHeader: Listener<WithHash<HeaderHash, HeaderView>>,
-  isInMemory: boolean,
 ) => {
   if (networkConfig === null) {
     logger.log`🛜 Networking off: no config`;
-    return () => Promise.resolve();
+    return {
+      closeNetwork: async () => {
+        params.authorshipPort.close();
+      },
+      networkApi: null,
+      networkWorker: null,
+    };
   }
 
   const { key, host, port, bootnodes } = networkConfig;
@@ -273,19 +320,21 @@ const initNetwork = async (
     bootnodes: bootnodes.map((node) => node.toString()),
   });
 
-  const { network, finish } = isInMemory
+  const { network, worker, finish } = params.isInMemory
     ? await startNetwork(
         DirectWorkerConfig.new({
           ...baseConfig,
-          blocksDb: rootDb.getBlocksDb(),
-          statesDb: rootDb.getStatesDb(),
+          blocksDb: params.rootDb.getBlocksDb(),
+          statesDb: params.rootDb.getStatesDb(),
           workerParams: networkingConfig,
         }),
+        params.authorshipPort,
       )
     : await spawnNetworkWorker(
         LmdbWorkerConfig.new({
           ...baseConfig,
           workerParams: networkingConfig,
+          ports: new Map([[AUTHORSHIP_NETWORK_PORT, params.authorshipPort]]),
         }),
       );
 
@@ -301,5 +350,5 @@ const initNetwork = async (
     network.sendNewHeader(header);
   });
 
-  return finish;
+  return { closeNetwork: finish, networkApi: network, networkWorker: worker };
 };
