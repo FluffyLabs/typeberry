@@ -19,6 +19,10 @@ export const STREAM_KIND_PROXY_TO_ALL = tryAsStreamKind(132);
 
 type STREAM_KIND = typeof STREAM_KIND_GENERATOR_TO_PROXY | typeof STREAM_KIND_PROXY_TO_ALL;
 
+/**
+ * Network protocol message for distributing a single ticket.
+ * Used in CE-131/CE-132 streams.
+ */
 export class TicketDistributionRequest extends WithDebug {
   static Codec = codec.Class(TicketDistributionRequest, {
     epochIndex: codec.u32.asOpaque<Epoch>(),

@@ -73,6 +73,7 @@ Worker-related packages for background processing:
 - **api** - API worker utilities
 - **api-node** - Node-specific API worker
 - **block-authorship** - Block generation worker
+- **comms-authorship-network** - Direct communication protocol between block-authorship and jam-network workers
 - **importer** - Data import worker
 - **jam-network** - JAM network worker
 
