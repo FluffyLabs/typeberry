@@ -2,7 +2,7 @@ import { Block, type BlockView, Header, type StateRootHash } from "@typeberry/bl
 import { blockViewFromJson, fromJson, headerFromJson } from "@typeberry/block-json";
 import type { BytesBlob } from "@typeberry/bytes";
 import { codec } from "@typeberry/codec";
-import { tinyChainSpec } from "@typeberry/config";
+import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, TRUNCATED_HASH_SIZE, type TruncatedHash } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 
@@ -36,10 +36,12 @@ export class TestState {
 }
 
 export class StateTransitionGenesis {
-  static fromJson: FromJson<StateTransitionGenesis> = {
-    header: headerFromJson,
-    state: TestState.fromJson,
-  };
+  static fromJson(spec: ChainSpec = tinyChainSpec): FromJson<StateTransitionGenesis> {
+    return {
+      header: headerFromJson(spec),
+      state: TestState.fromJson,
+    };
+  }
 
   static Codec = codec.object({
     header: Header.Codec,

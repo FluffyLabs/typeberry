@@ -67,7 +67,8 @@ export const runners = [
   runner("pvm", runPvmTest).fromJson(PvmTest.fromJson),
   runner("gas-cost-tests", runPvmGasCostTest).fromJson(PvmGasCostTest.fromJson),
   runner("reports", runReportsTest, tinyFull).fromJson(ReportsTest.fromJson),
-  runner("safrole", runSafroleTest, tinyFull).fromJson(SafroleTest.fromJson),
+  runner("safrole", runSafroleTest, tiny).fromJson(SafroleTest.fromJson(tinyChainSpec)),
+  runner("safrole", runSafroleTest, full).fromJson(SafroleTest.fromJson(fullChainSpec)),
   runner("shuffle", runShufflingTests).fromJson(shufflingTestsFromJson),
   runner("statistics/tiny", runStatisticsTestTiny, tiny).fromJson(StatisticsTestTiny.fromJson),
   runner("statistics/full", runStatisticsTestFull, full).fromJson(StatisticsTestFull.fromJson),
@@ -91,12 +92,14 @@ function codecRunners(flavor: "tiny" | "full") {
     runner(`codec/${flavor}/guarantees_extrinsic`, runGuaranteesExtrinsicTest, [spec]).fromJson(
       guaranteesExtrinsicFromJson,
     ),
-    runner(`codec/${flavor}/header`, runHeaderTest, [spec]).fromJson(headerFromJson),
+    runner(`codec/${flavor}/header`, runHeaderTest, [spec]).fromJson(headerFromJson(spec)),
     runner(`codec/${flavor}/preimages_extrinsic`, runPreimagesExtrinsicTest, [spec]).fromJson(
       preimagesExtrinsicFromJson,
     ),
     runner(`codec/${flavor}/refine_context`, runRefineContextTest, [spec]).fromJson(refineContextFromJson),
-    runner(`codec/${flavor}/tickets_extrinsic`, runTicketsExtrinsicTest, [spec]).fromJson(ticketsExtrinsicFromJson),
+    runner(`codec/${flavor}/tickets_extrinsic`, runTicketsExtrinsicTest, [spec]).fromJson(
+      ticketsExtrinsicFromJson(spec),
+    ),
     runner(`codec/${flavor}/work_item`, runWorkItemTest, [spec]).fromJson(workItemFromJson),
     runner(`codec/${flavor}/work_package`, runWorkPackageTest, [spec]).fromJson(workPackageFromJson),
     runner(`codec/${flavor}/work_report`, runWorkReportTest, [spec]).fromJson(workReportFromJson),

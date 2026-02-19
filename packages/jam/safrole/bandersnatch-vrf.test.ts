@@ -5,6 +5,7 @@ import { tryAsValidatorIndex } from "@typeberry/block";
 import { type SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
+import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, SEED_SIZE } from "@typeberry/crypto";
 import {
   BANDERSNATCH_PROOF_BYTES,
@@ -21,7 +22,7 @@ import { BandernsatchWasm } from "./bandersnatch-wasm.js";
 
 const bandersnatchWasm = BandernsatchWasm.new();
 
-const attempt = (v: number) => tryAsTicketAttempt(v);
+const attempt = (v: number) => tryAsTicketAttempt(v, tinyChainSpec);
 
 describe("Bandersnatch verification", () => {
   describe("getRingCommitment", () => {
@@ -310,7 +311,8 @@ describe("Bandersnatch verification", () => {
         proverIndex,
         secrets[proverIndex],
         entropy,
-        tryAsTicketAttempt(2),
+        tryAsTicketAttempt(2, tinyChainSpec),
+        tinyChainSpec,
       );
 
       assert.ok(genResult.isOk);

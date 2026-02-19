@@ -1,6 +1,7 @@
-import type { EntropyHash, TicketAttempt } from "@typeberry/block";
+import type { EntropyHash } from "@typeberry/block";
 import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { ChainSpec } from "@typeberry/config";
 import type { BandersnatchKey, BandersnatchSecretSeed } from "@typeberry/crypto";
 import {
   BANDERSNATCH_PROOF_BYTES,
@@ -211,7 +212,8 @@ async function generateTickets(
   proverKeyIndex: number,
   key: BandersnatchSecretSeed,
   entropy: EntropyHash,
-  ticketsPerValidator: TicketAttempt,
+  ticketsPerValidator: number,
+  chainSpec: ChainSpec,
 ): Promise<Result<SignedTicket[], null>> {
   // Build VRF inputs: JAM_TICKET_SEAL || entropy || attempt_byte for each attempt
   const vrfInputParts: Uint8Array[] = [];
@@ -247,7 +249,7 @@ async function generateTickets(
 
     tickets.push(
       SignedTicket.create({
-        attempt: tryAsTicketAttempt(attempt),
+        attempt: tryAsTicketAttempt(attempt, chainSpec),
         signature,
       }),
     );

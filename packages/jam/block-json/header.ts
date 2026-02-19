@@ -13,6 +13,7 @@ import {
 } from "@typeberry/block";
 import { Ticket } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
+import type { ChainSpec } from "@typeberry/config";
 import type { BandersnatchKey, Ed25519Key } from "@typeberry/crypto";
 import type { BandersnatchVrfSignature } from "@typeberry/crypto/bandersnatch.js";
 import { json } from "@typeberry/json-parser";
@@ -44,14 +45,6 @@ const epochMark = json.object<JsonEpochMarker, EpochMarker>(
   (x) => EpochMarker.create({ entropy: x.entropy, ticketsEntropy: x.tickets_entropy, validators: x.validators }),
 );
 
-const ticket = json.object<Ticket>(
-  {
-    id: fromJson.bytes32(),
-    attempt: fromJson.ticketAttempt,
-  },
-  (x) => Ticket.create({ id: x.id, attempt: x.attempt }),
-);
-
 type JsonHeader = {
   parent: HeaderHash;
   parent_state_root: StateRootHash;
@@ -65,47 +58,57 @@ type JsonHeader = {
   seal: BandersnatchVrfSignature;
 };
 
-export const headerFromJson = json.object<JsonHeader, Header>(
-  {
-    parent: fromJson.bytes32(),
-    parent_state_root: fromJson.bytes32(),
-    extrinsic_hash: fromJson.bytes32(),
-    slot: "number",
-    epoch_mark: json.optional(epochMark),
-    tickets_mark: json.optional(json.array(ticket)),
-    offenders_mark: json.array(fromJson.bytes32<Ed25519Key>()),
-    author_index: "number",
-    entropy_source: bandersnatchVrfSignature,
-    seal: bandersnatchVrfSignature,
-  },
-  ({
-    parent,
-    parent_state_root,
-    extrinsic_hash,
-    slot,
-    epoch_mark,
-    tickets_mark,
-    offenders_mark,
-    author_index,
-    entropy_source,
-    seal,
-  }) => {
-    const epochMarker = epoch_mark ?? null;
-    const ticketsMarker =
-      tickets_mark === undefined || tickets_mark === null
-        ? null
-        : TicketsMarker.create({ tickets: asOpaqueType(tickets_mark) });
-    return Header.create({
-      parentHeaderHash: parent,
-      priorStateRoot: parent_state_root,
-      extrinsicHash: extrinsic_hash,
-      timeSlotIndex: slot,
-      epochMarker,
-      ticketsMarker,
-      offendersMarker: offenders_mark,
-      bandersnatchBlockAuthorIndex: author_index,
-      entropySource: entropy_source,
+export const headerFromJson = (spec: ChainSpec) => {
+  const ticket = json.object<Ticket>(
+    {
+      id: fromJson.bytes32(),
+      attempt: fromJson.ticketAttempt(spec),
+    },
+    (x) => Ticket.create({ id: x.id, attempt: x.attempt }),
+  );
+
+  return json.object<JsonHeader, Header>(
+    {
+      parent: fromJson.bytes32(),
+      parent_state_root: fromJson.bytes32(),
+      extrinsic_hash: fromJson.bytes32(),
+      slot: "number",
+      epoch_mark: json.optional(epochMark),
+      tickets_mark: json.optional(json.array(ticket)),
+      offenders_mark: json.array(fromJson.bytes32<Ed25519Key>()),
+      author_index: "number",
+      entropy_source: bandersnatchVrfSignature,
+      seal: bandersnatchVrfSignature,
+    },
+    ({
+      parent,
+      parent_state_root,
+      extrinsic_hash,
+      slot,
+      epoch_mark,
+      tickets_mark,
+      offenders_mark,
+      author_index,
+      entropy_source,
       seal,
-    });
-  },
-);
+    }) => {
+      const epochMarker = epoch_mark ?? null;
+      const ticketsMarker =
+        tickets_mark === undefined || tickets_mark === null
+          ? null
+          : TicketsMarker.create({ tickets: asOpaqueType(tickets_mark) });
+      return Header.create({
+        parentHeaderHash: parent,
+        priorStateRoot: parent_state_root,
+        extrinsicHash: extrinsic_hash,
+        timeSlotIndex: slot,
+        epochMarker,
+        ticketsMarker,
+        offendersMarker: offenders_mark,
+        bandersnatchBlockAuthorIndex: author_index,
+        entropySource: entropy_source,
+        seal,
+      });
+    },
+  );
+};

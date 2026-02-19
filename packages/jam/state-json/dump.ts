@@ -68,8 +68,8 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
       beta: json.nullable(recentBlocksHistoryFromJson),
       gamma: {
         gamma_k: json.array(validatorDataFromJson),
-        gamma_a: json.array(ticketFromJson),
-        gamma_s: TicketsOrKeys.fromJson,
+        gamma_a: json.array(ticketFromJson(spec)),
+        gamma_s: TicketsOrKeys.fromJson(spec),
         gamma_z: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_RING_ROOT_BYTES).asOpaque()),
       },
       psi: disputesRecordsFromJson,
