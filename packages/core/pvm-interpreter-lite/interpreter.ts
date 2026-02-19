@@ -4,7 +4,7 @@ import { buildDispatchTable } from "./dispatch-table.js";
 import { createGasCounter } from "./gas.js";
 import { Memory } from "./memory.js";
 import { Page, PageAccess } from "./page.js";
-import { Program } from "./program.js";
+import { DecodeBufs, decodeProgram } from "./program.js";
 import { Registers } from "./registers.js";
 import { decodeSpi } from "./spi-decoder.js";
 import { EXIT_HALT, type InstructionHandler, type InterpreterContext } from "./types.js";
@@ -39,6 +39,7 @@ export class Interpreter implements IPvmInterpreter {
   private exitParam: number | null = null;
   private ctx: InterpreterContext;
   private readonly forceBigGas: boolean;
+  private readonly decodeBufs = new DecodeBufs();
 
   constructor(options?: InterpreterOptions) {
     this.forceBigGas = options?.debuggerMode === true;
@@ -57,7 +58,7 @@ export class Interpreter implements IPvmInterpreter {
   resetJam(spi: Uint8Array, args: Uint8Array, pc: number, gas: Gas, _hasMetadata = true): void {
     const spiData = decodeSpi(spi, args);
 
-    const prog = new Program(spiData.code);
+    const prog = decodeProgram(spiData.code);
     this.code = prog.code;
     this.skip = prog.skip;
     this.ctx.blocks = prog.blocks;
@@ -128,7 +129,7 @@ export class Interpreter implements IPvmInterpreter {
   }
 
   resetGeneric(rawProgram: Uint8Array, pc: number, gas: Gas): void {
-    const prog = new Program(rawProgram);
+    const prog = decodeProgram(rawProgram, this.decodeBufs);
 
     this.code = prog.code;
     this.skip = prog.skip;
