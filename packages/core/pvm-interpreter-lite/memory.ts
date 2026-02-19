@@ -68,7 +68,12 @@ export class Memory implements IMemory {
 
     // Fast path: single page (most common: 1-8 byte loads within one page)
     if (offset + len <= PAGE_SIZE) {
-      const page = pageNum === this.cachedPageNum ? this.cachedPage! : this.lookupAndCache(pageNum);
+      let page: Page | null = null;
+      if (pageNum === this.cachedPageNum && this.cachedPage !== null) {
+        page = this.cachedPage;
+      } else {
+        page = this.lookupAndCache(pageNum);
+      }
       if (page === null) {
         return pageNum < RESERVED_NUMBER_OF_PAGES ? 2 : 1;
       }
@@ -97,7 +102,12 @@ export class Memory implements IMemory {
 
     // Fast path: single page
     if (offset + len <= PAGE_SIZE) {
-      const page = pageNum === this.cachedPageNum ? this.cachedPage! : this.lookupAndCache(pageNum);
+      let page: Page | null = null;
+      if (pageNum === this.cachedPageNum && this.cachedPage !== null) {
+        page = this.cachedPage;
+      } else {
+        page = this.lookupAndCache(pageNum);
+      }
       if (page === null) {
         return pageNum < RESERVED_NUMBER_OF_PAGES ? 2 : 1;
       }

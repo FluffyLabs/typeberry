@@ -1,12 +1,12 @@
 import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { type Gas, type IGasCounter, type IPvmInterpreter, Status, tryAsGas } from "@typeberry/pvm-interface";
-import { Program as OldProgram } from "@typeberry/pvm-interpreter/program.js";
 import { buildDispatchTable } from "./dispatch-table.js";
 import { createGasCounter } from "./gas.js";
 import { Memory } from "./memory.js";
 import { Page, PageAccess } from "./page.js";
 import { Program } from "./program.js";
 import { Registers } from "./registers.js";
+import { decodeSpi } from "./spi-decoder.js";
 import { EXIT_HALT, type InstructionHandler, type InterpreterContext } from "./types.js";
 
 function exitCodeToStatus(code: number): Status {
@@ -54,10 +54,77 @@ export class Interpreter implements IPvmInterpreter {
     };
   }
 
-  resetJam(program: Uint8Array, args: Uint8Array, pc: number, gas: Gas, hasMetadata = true): void {
-    const p = OldProgram.fromSpi(program, args, hasMetadata);
-    // biome-ignore lint: accessing internal state of old interpreter's classes
-    this.resetGenericFromOld(p.code, pc, gas, p.registers, p.memory as any);
+  resetJam(spi: Uint8Array, args: Uint8Array, pc: number, gas: Gas, _hasMetadata = true): void {
+    const spiData = decodeSpi(spi, args);
+
+    const prog = new Program(spiData.code);
+    this.code = prog.code;
+    this.skip = prog.skip;
+    this.ctx.blocks = prog.blocks;
+    this.ctx.jumpTable = prog.jumpTable;
+    this.ctx.jumpTableSize = prog.jumpTableSize;
+
+    this.pc = pc;
+    this.gas = createGasCounter(gas, this.forceBigGas);
+    this.status = Status.OK;
+    this.exitParam = null;
+    this.ctx.exitParam = 0;
+    this.ctx.nextPc = 0;
+
+    this.registers.reset();
+    for (let i = 0; i < spiData.registers.length; i++) {
+      this.registers.setU64(i, spiData.registers[i]);
+    }
+
+    this.memory.reset();
+    this.memory.setSbrkState(spiData.sbrkIndex, spiData.heapEnd);
+
+    for (const seg of spiData.readonlySegments) {
+      this.setMemorySegment(seg, PageAccess.READ);
+    }
+    for (const seg of spiData.writeableSegments) {
+      this.setMemorySegment(seg, PageAccess.READ_WRITE);
+    }
+  }
+
+  private setMemorySegment(seg: { start: number; end: number; data: Uint8Array | null }, access: PageAccess): void {
+    if (seg.data !== null && seg.data.length > 0) {
+      let offset = 0;
+      let addr = seg.start;
+      while (addr < seg.end && offset < seg.data.length) {
+        const pageNum = addr >>> 12;
+        const pageOffset = addr & 0xfff;
+        const toCopy = Math.min(4096 - pageOffset, seg.data.length - offset);
+        let page = this.memory.getPage(pageNum);
+        if (page === undefined) {
+          const buf = this.memory.bufferPool.acquire();
+          if (seg.data !== null) {
+            buf.set(seg.data.subarray(offset, offset + toCopy), pageOffset);
+          }
+          this.memory.setPage(pageNum, new Page(buf, access));
+        } else {
+          if (access === PageAccess.READ_WRITE && !(page.access & 2)) {
+            const buf = this.memory.bufferPool.acquire();
+            buf.set(page.data);
+            page = new Page(buf, access);
+            this.memory.setPage(pageNum, page);
+          }
+          if (seg.data !== null) {
+            page.data.set(seg.data.subarray(offset, offset + toCopy), pageOffset);
+          }
+        }
+        offset += toCopy;
+        addr += toCopy;
+      }
+    } else {
+      for (let addr = seg.start; addr < seg.end; addr += 4096) {
+        const pageNum = addr >>> 12;
+        if (this.memory.getPage(pageNum) === undefined) {
+          const buf = this.memory.bufferPool.acquire();
+          this.memory.setPage(pageNum, new Page(buf, access));
+        }
+      }
+    }
   }
 
   resetGeneric(rawProgram: Uint8Array, pc: number, gas: Gas): void {
@@ -78,72 +145,6 @@ export class Interpreter implements IPvmInterpreter {
 
     this.registers.reset();
     this.memory.reset();
-  }
-
-  /**
-   * Reset using old-format registers and memory (from SPI decode).
-   * This bridges the gap between pvm-interpreter's Program.fromSpi output
-   * and our internal representation.
-   */
-  private resetGenericFromOld(
-    rawProgram: Uint8Array,
-    pc: number,
-    gas: Gas,
-    oldRegisters?: { getAllEncoded(): Uint8Array },
-    // biome-ignore lint: accessing internal state of old interpreter
-    oldMemory?: any,
-  ): void {
-    const prog = new Program(rawProgram);
-
-    this.code = prog.code;
-    this.skip = prog.skip;
-    this.ctx.blocks = prog.blocks;
-    this.ctx.jumpTable = prog.jumpTable;
-    this.ctx.jumpTableSize = prog.jumpTableSize;
-
-    this.pc = pc;
-    this.gas = createGasCounter(gas, this.forceBigGas);
-    this.status = Status.OK;
-    this.exitParam = null;
-    this.ctx.exitParam = 0;
-    this.ctx.nextPc = 0;
-
-    // Copy registers
-    if (oldRegisters !== undefined) {
-      this.registers.setAllEncoded(oldRegisters.getAllEncoded());
-    } else {
-      this.registers.reset();
-    }
-
-    // Copy memory from old interpreter's memory
-    this.memory.reset();
-    if (oldMemory !== undefined && oldMemory !== null) {
-      this.copyOldMemory(oldMemory);
-    }
-  }
-
-  private copyOldMemory(oldMemory: any): void {
-    const om = oldMemory;
-
-    // Copy sbrk state
-    if (om.sbrkIndex !== undefined && om.endHeapIndex !== undefined) {
-      this.memory.setSbrkState(om.sbrkIndex, om.endHeapIndex);
-    }
-
-    // Copy pages
-    if (om.memory !== undefined && om.memory !== null) {
-      for (const [pageNum, page] of om.memory) {
-        const dump = page.getPageDump();
-        if (page.isWriteable() === true) {
-          const buf = this.memory.bufferPool.acquire();
-          buf.set(dump.subarray(0, Math.min(dump.length, 4096)));
-          this.memory.setPage(pageNum, new Page(buf, PageAccess.READ_WRITE));
-        } else {
-          // Read-only: reference the data directly (zero-copy)
-          this.memory.setPage(pageNum, new Page(dump, PageAccess.READ));
-        }
-      }
-    }
   }
 
   runProgram(): void {

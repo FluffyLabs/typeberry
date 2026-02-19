@@ -4,9 +4,9 @@
   "description": "A high-performance PVM interpreter.",
   "main": "index.ts",
   "dependencies": {
+    "@typeberry/codec": "*",
     "@typeberry/numbers": "*",
     "@typeberry/pvm-interface": "*",
-    "@typeberry/pvm-interpreter": "*",
     "@typeberry/utils": "*"
   },
   "scripts": {
