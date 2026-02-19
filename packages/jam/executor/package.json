@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/executor",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "description": "JAM PVM execution entry point with host calls.",
   "main": "index.ts",
   "scripts": {
