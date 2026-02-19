@@ -26,6 +26,8 @@ function getNodeColor(nodeIndex: number): string {
 }
 const RESET = supportsColors ? "\x1b[0m" : "";
 
+const FAST_FORWARD_ARG = "--fast-forward";
+const LIVE_ARG = "--live";
 const LOGS_DIR = "./logs";
 const NUM_NODES = tinyChainSpec.validatorsCount;
 
@@ -54,7 +56,7 @@ function stopAllNodes() {
   console.log("All nodes stopped.");
 }
 
-async function startTinyNetwork(fastForward: boolean, liveMode: boolean) {
+async function startTinyNetwork(fastForward: boolean, liveMode: boolean, userArgs: string[]) {
   if (fastForward) {
     console.log("Fast-forward mode enabled");
   }
@@ -85,10 +87,11 @@ async function startTinyNetwork(fastForward: boolean, liveMode: boolean) {
   // Start each node with staggered timing to avoid networking race conditions
   // (see bin/jam/test/e2e.ts: "introducing some timeout, due to networking issues when started at the same time")
   for (let i = 0; i < NUM_NODES; i++) {
-    const nodeArgs = ["start", "--", "dev", String(i)];
+    const args = [...userArgs];
     if (fastForward) {
-      nodeArgs.push("--fast-forward");
+      args.push(FAST_FORWARD_ARG);
     }
+    const nodeArgs = ["start", "--", ...args, "dev", String(i)];
 
     console.log(`  Starting node ${i}: npm ${nodeArgs.join(" ")}`);
 
@@ -157,8 +160,9 @@ async function startTinyNetwork(fastForward: boolean, liveMode: boolean) {
 
 async function main() {
   const args = process.argv.slice(2);
-  const fastForward = args.includes("--fast-forward");
-  const liveMode = args.includes("--live");
+  const fastForward = args.includes(FAST_FORWARD_ARG);
+  const liveMode = args.includes(LIVE_ARG);
+  const userArgs = args.filter((a) => a !== FAST_FORWARD_ARG && a !== LIVE_ARG);
 
   // Handle termination signals
   process.on("SIGINT", () => {
@@ -171,7 +175,7 @@ async function main() {
     process.exit(0);
   });
 
-  await startTinyNetwork(fastForward, liveMode);
+  await startTinyNetwork(fastForward, liveMode, userArgs);
 }
 
 main().catch((err) => {
