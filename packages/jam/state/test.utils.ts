@@ -360,7 +360,7 @@ export const testState = (): InMemoryState => {
 const emptyHash = () => b32("0x0000000000000000000000000000000000000000000000000000000000000000");
 const testAuth = () => b32("0x0b27478648cd19b4f812f897a26976ecf312eac28508b4368d0c63ea949c7cb0");
 
-const attempt = (x: number) => tryAsTicketAttempt(x);
+const attempt = (x: number) => tryAsTicketAttempt(x, spec);
 const b32 = (s: string) => Bytes.parseBytes(s, HASH_SIZE).asOpaque();
 const repeat = <T>(len: number, factory: () => T) => Array.from({ length: len }, factory);
 

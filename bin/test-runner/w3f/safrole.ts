@@ -61,18 +61,20 @@ export enum TestErrorCode {
 }
 
 class JsonState {
-  static fromJson: FromJson<JsonState> = {
-    tau: "number",
-    eta: json.array(fromJson.bytes32()),
-    lambda: json.array(validatorDataFromJson),
-    kappa: json.array(validatorDataFromJson),
-    gamma_k: json.array(validatorDataFromJson),
-    iota: json.array(validatorDataFromJson),
-    gamma_a: json.array(ticketFromJson),
-    gamma_s: TicketsOrKeys.fromJson,
-    gamma_z: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_RING_ROOT_BYTES).asOpaque()),
-    post_offenders: json.array(fromJson.bytes32()),
-  };
+  static fromJson(spec: ChainSpec): FromJson<JsonState> {
+    return {
+      tau: "number",
+      eta: json.array(fromJson.bytes32()),
+      lambda: json.array(validatorDataFromJson),
+      kappa: json.array(validatorDataFromJson),
+      gamma_k: json.array(validatorDataFromJson),
+      iota: json.array(validatorDataFromJson),
+      gamma_a: json.array(ticketFromJson(spec)),
+      gamma_s: TicketsOrKeys.fromJson(spec),
+      gamma_z: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_RING_ROOT_BYTES).asOpaque()),
+      post_offenders: json.array(fromJson.bytes32()),
+    };
+  }
   // timeslot
   tau!: TimeSlot;
   // entropy
@@ -122,19 +124,23 @@ export class EpochMark {
 }
 
 export class OkOutput {
-  static fromJson: FromJson<OkOutput> = {
-    epoch_mark: json.optional(EpochMark.fromJson),
-    tickets_mark: json.optional<Ticket[]>(json.array(ticketFromJson)),
-  };
+  static fromJson(spec: ChainSpec): FromJson<OkOutput> {
+    return {
+      epoch_mark: json.optional(EpochMark.fromJson),
+      tickets_mark: json.optional<Ticket[]>(json.array(ticketFromJson(spec))),
+    };
+  }
   epoch_mark?: EpochMark | null;
   tickets_mark?: Ticket[] | null;
 }
 
 export class Output {
-  static fromJson: FromJson<Output> = {
-    ok: json.optional(OkOutput.fromJson),
-    err: json.optional("string"),
-  };
+  static fromJson(spec: ChainSpec): FromJson<Output> {
+    return {
+      ok: json.optional(OkOutput.fromJson(spec)),
+      err: json.optional("string"),
+    };
+  }
 
   ok?: OkOutput;
   err?: TestErrorCode;
@@ -196,12 +202,14 @@ class TestInput {
 }
 
 export class SafroleTest {
-  static fromJson: FromJson<SafroleTest> = {
-    input: TestInput.fromJson,
-    pre_state: JsonState.fromJson,
-    output: Output.fromJson,
-    post_state: JsonState.fromJson,
-  };
+  static fromJson(spec: ChainSpec): FromJson<SafroleTest> {
+    return {
+      input: TestInput.fromJson,
+      pre_state: JsonState.fromJson(spec),
+      output: Output.fromJson(spec),
+      post_state: JsonState.fromJson(spec),
+    };
+  }
 
   input!: TestInput;
   pre_state!: JsonState;

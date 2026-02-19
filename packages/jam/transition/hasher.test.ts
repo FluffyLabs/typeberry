@@ -53,7 +53,7 @@ describe("TransitionHasher", () => {
     function prepareTickets() {
       return rawTickets.map(({ attempt, signature }) =>
         SignedTicket.create({
-          attempt: tryAsTicketAttempt(attempt),
+          attempt: tryAsTicketAttempt(attempt, tinyChainSpec),
           signature: Bytes.parseBytes(signature, BANDERSNATCH_PROOF_BYTES).asOpaque(),
         }),
       );

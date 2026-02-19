@@ -4,6 +4,7 @@ import { setTimeout } from "node:timers/promises";
 import { type Epoch, tryAsEpoch } from "@typeberry/block";
 import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
+import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/crypto";
 import { Logger } from "@typeberry/logger";
 import { createTestPeerPair, MockNetwork } from "@typeberry/networking/testing.js";
@@ -23,7 +24,7 @@ function createTestTicket(attempt: number, signatureByte = 0): SignedTicket {
   signatureBytes.raw[0] = attempt;
   signatureBytes.raw[1] = signatureByte;
   return SignedTicket.create({
-    attempt: tryAsTicketAttempt(attempt),
+    attempt: tryAsTicketAttempt(attempt, tinyChainSpec),
     signature: signatureBytes.asOpaque(),
   });
 }
@@ -38,7 +39,7 @@ describe("TicketDistributionTask", () => {
     const receivedTickets: { epochIndex: Epoch; ticket: SignedTicket }[] = [];
 
     // Use real TicketDistributionTask
-    const ticketTask = TicketDistributionTask.start(streamManager, connections);
+    const ticketTask = TicketDistributionTask.start(streamManager, connections, tinyChainSpec);
 
     // Intercept received tickets by wrapping onTicketReceived behavior
     // The task already adds received tickets to pending queue via addTicket,

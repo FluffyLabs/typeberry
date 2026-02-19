@@ -56,7 +56,7 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     name: "header",
     encode: Header.Codec,
     decode: Header.Codec,
-    json: (_spec: ChainSpec) => headerFromJson,
+    json: (spec: ChainSpec) => headerFromJson(spec),
     process: {
       options: ["as-hash"],
       run(spec, data, option, blake2b) {
@@ -132,7 +132,7 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     name: "stf-genesis",
     encode: StateTransitionGenesis.Codec,
     decode: StateTransitionGenesis.Codec,
-    json: () => StateTransitionGenesis.fromJson,
+    json: (spec: ChainSpec) => StateTransitionGenesis.fromJson(spec),
     process: {
       options: ["as-state", "as-jip4", "as-fuzz-message"],
       run(spec: ChainSpec, data: unknown, option: string, blake2b) {

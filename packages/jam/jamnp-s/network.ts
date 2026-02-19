@@ -41,7 +41,7 @@ export async function setup(
 
   // start the networking tasks
   const syncTask = SyncTask.start(spec, blake2b, streamManager, connections, blocks, onNewBlocks);
-  const ticketTask = TicketDistributionTask.start(streamManager, connections);
+  const ticketTask = TicketDistributionTask.start(streamManager, connections, spec);
 
   setImmediate(async () => {
     while (network.isRunning) {
