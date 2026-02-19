@@ -31,6 +31,7 @@
     "packages/core/pvm-host-calls",
     "packages/core/pvm-interface",
     "packages/core/pvm-interpreter",
+    "packages/core/pvm-interpreter-lite",
     "packages/core/pvm-interpreter-ananas",
     "packages/core/shuffling",
     "packages/core/telemetry",
