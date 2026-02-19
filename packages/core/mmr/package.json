@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/mmr",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "description": "Merkle Mountain Range data structure.",
   "main": "index.ts",
   "scripts": {

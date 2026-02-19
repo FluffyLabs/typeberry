@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/comms-authorship-network",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "description": "The communication layer between the block authorship and network workers.",
   "main": "index.ts",
   "dependencies": {
