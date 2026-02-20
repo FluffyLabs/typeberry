@@ -1,6 +1,7 @@
 import { setTimeout } from "node:timers/promises";
 import {
   type EntropyHash,
+  type Epoch,
   type PerValidator,
   type TimeSlot,
   tryAsEpoch,
@@ -85,7 +86,20 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
     })),
   );
 
+  const initialHash = blocks.getBestHeaderHash();
+  const initialState = states.getState(initialHash);
+
   logger.info`Block authorship validator keys: ${keys.map(({ bandersnatchPublic }, index) => `\n ${index}: ${bandersnatchPublic.toString()}`)}`;
+  if (initialState !== null) {
+    const initialKeys = await getSealingKeySeries(
+      startTimeSlot % chainSpec.epochLength === 0,
+      startTimeSlot,
+      initialState,
+    );
+    if (initialKeys.isOk) {
+      logEpochBlockCreation(tryAsEpoch(Math.floor(startTimeSlot / chainSpec.epochLength)), initialKeys.ok);
+    }
+  }
 
   function getTime() {
     const currentTime = process.hrtime.bigint() / 1_000_000n;
@@ -132,6 +146,23 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
     const lastEpoch = Math.floor(lastTimeslot / chainSpec.epochLength);
     const currentEpoch = Math.floor(currentTimeslot / chainSpec.epochLength);
     return currentEpoch > lastEpoch;
+  }
+
+  function logEpochBlockCreation(epoch: Epoch, sealingKeySeries: SafroleSealingKeys) {
+    let isCreating = false;
+    const epochStart = epoch * chainSpec.epochLength;
+    const epochEnd = epochStart + chainSpec.epochLength;
+    for (let slot = epochStart; slot < epochEnd; slot++) {
+      const key = getKeyForCurrentSlot(sealingKeySeries, keys, tryAsTimeSlot(slot));
+      if (key !== null) {
+        isCreating = true;
+        logger.info`[EPOCH ${epoch}] Validator ${key.bandersnatchPublic.toString()} will author block at slot ${slot}`;
+      }
+    }
+
+    if (isCreating === false) {
+      logger.info`[EPOCH ${epoch}] No blocks to author for this epoch.`;
+    }
   }
 
   async function getSealingKeySeries(isNewEpoch: boolean, timeSlot: TimeSlot, state: State) {
@@ -182,6 +213,7 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
 
     // Generate tickets if within contest period and not yet generated for this epoch
     const epoch = tryAsEpoch(Math.floor(timeSlot / chainSpec.epochLength));
+
     const slotInEpoch = timeSlot % chainSpec.epochLength;
     const shouldGenerateTickets = slotInEpoch < chainSpec.contestLength && ticketsGeneratedForEpoch !== epoch;
 
@@ -227,6 +259,11 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
     if (selingKeySeriesResult.isError) {
       continue;
     }
+
+    if (isNewEpoch) {
+      logEpochBlockCreation(epoch, selingKeySeriesResult.ok);
+    }
+
     const key = getKeyForCurrentSlot(selingKeySeriesResult.ok, keys, timeSlot);
 
     if (key !== null && currentValidatorData !== undefined) {
