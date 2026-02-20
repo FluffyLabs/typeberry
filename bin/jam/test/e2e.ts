@@ -68,16 +68,15 @@ test("JAM Node network connection", { timeout: TEST_TIMEOUT }, async () => {
 test("JAM Node ticket distribution with LMDB and worker threads", { timeout: 120_000 }, async () => {
   const VALIDATOR_COUNT = tinyChainSpec.validatorsCount;
   const TICKETS_PER_VALIDATOR = tinyChainSpec.ticketsPerValidator;
-  const EPOCH_LENGTH = 12; // 12 blocks per epoch
+  const EPOCH_LENGTH = tinyChainSpec.contestLength;
   const TICKET_TEST_TIMEOUT = 120_000;
   const processes: ChildProcess[] = [];
-  const dbPaths: string[] = [];
+  const testDbParentPath = "./test-db-e2e-ticket-distribution";
 
   try {
     // Start 6 individual validator nodes, each with its own LMDB database and worker threads.
     for (let i = 0; i < VALIDATOR_COUNT; i++) {
-      const dbPath = `./test-db-threaded-${i}`;
-      dbPaths.push(dbPath);
+      const dbPath = `${testDbParentPath}/validator-${i}`;
       const proc = await start({
         devIndex: i,
         args: [`--config=.database_base_path="${dbPath}"`],
@@ -113,10 +112,8 @@ test("JAM Node ticket distribution with LMDB and worker threads", { timeout: 120
     logger.info`All ${VALIDATOR_COUNT} validators have at least ${EXPECTED_TICKETS} tickets after ${EPOCH_LENGTH} blocks`;
   } finally {
     await Promise.all(processes.map((proc) => terminate(proc)));
-    // clean up test databases
-    for (const dbPath of dbPaths) {
-      rmSync(dbPath, { recursive: true, force: true });
-    }
+    // clean up all test databases at once by removing parent folder
+    rmSync(testDbParentPath, { recursive: true, force: true });
   }
 });
 
@@ -135,10 +132,6 @@ async function collectLogsUntilBlock(
   let currentBlock = 0;
 
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(`(${prefix}) Timeout: reached block ${currentBlock}, expected ${targetBlock}`);
-    }, 110_000);
-
     // Buffer for incomplete lines across chunks
     let remainder = "";
 
@@ -164,22 +157,17 @@ async function collectLogsUntilBlock(
 
       // Resolve when target block is reached
       if (currentBlock >= targetBlock) {
-        clearTimeout(timeout);
-        // Flush any remaining full line from buffer before resolving
-        if (remainder !== "" && pattern.test(remainder)) {
-          matchedLines.push(remainder);
-        }
+        // Note: remainder is intentionally NOT flushed - it's an incomplete fragment
+        // Only fully-terminated lines (processed in the loop) are counted
         resolve(matchedLines);
       }
     };
 
     proc?.on("error", (err) => {
-      clearTimeout(timeout);
       reject(`(${prefix}) Failed to start process: ${err.message}`);
     });
 
     proc?.on("exit", (code) => {
-      clearTimeout(timeout);
       if (code !== 0 && code !== null) {
         reject(`(${prefix}) Process exited with code ${code}`);
       } else if (currentBlock >= targetBlock) {
