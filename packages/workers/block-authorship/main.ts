@@ -149,8 +149,9 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
 
   function logEpochBlockCreation(epoch: number, sealingKeySeries: SafroleSealingKeys) {
     let isCreating = false;
-    for (let slotInEpoch = 0; slotInEpoch < chainSpec.epochLength; slotInEpoch++) {
-      const slot = epoch * chainSpec.epochLength + slotInEpoch;
+    const epochStart = epoch * chainSpec.epochLength;
+    const epochEnd = epochStart + chainSpec.epochLength;
+    for (let slot = epochStart; slot < epochEnd; slot++) {
       const key = getKeyForCurrentSlot(sealingKeySeries, keys, tryAsTimeSlot(slot));
       if (key !== null) {
         isCreating = true;
