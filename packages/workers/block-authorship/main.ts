@@ -261,7 +261,6 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
     }
 
     if (isNewEpoch) {
-      console.log(lastTimeSlot, timeSlot);
       logEpochBlockCreation(epoch, selingKeySeriesResult.ok);
     }
 
