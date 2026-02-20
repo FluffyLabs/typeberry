@@ -1,6 +1,7 @@
 import { setTimeout } from "node:timers/promises";
 import {
   type EntropyHash,
+  type Epoch,
   type PerValidator,
   type TimeSlot,
   tryAsEpoch,
@@ -147,7 +148,7 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
     return currentEpoch > lastEpoch;
   }
 
-  function logEpochBlockCreation(epoch: number, sealingKeySeries: SafroleSealingKeys) {
+  function logEpochBlockCreation(epoch: Epoch, sealingKeySeries: SafroleSealingKeys) {
     let isCreating = false;
     const epochStart = epoch * chainSpec.epochLength;
     const epochEnd = epochStart + chainSpec.epochLength;
