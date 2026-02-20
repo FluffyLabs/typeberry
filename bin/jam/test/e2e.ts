@@ -139,9 +139,15 @@ async function collectLogsUntilBlock(
       reject(`(${prefix}) Timeout: reached block ${currentBlock}, expected ${targetBlock}`);
     }, 110_000);
 
+    // Buffer for incomplete lines across chunks
+    let remainder = "";
+
     const handleOutput = (data: Buffer) => {
-      const output = data.toString();
+      const output = remainder + data.toString();
       const lines = output.split("\n");
+
+      // Last element is incomplete line (or empty if output ends with \n)
+      remainder = lines.pop() ?? "";
 
       for (const line of lines) {
         // Check for new blocks
@@ -159,6 +165,10 @@ async function collectLogsUntilBlock(
       // Resolve when target block is reached
       if (currentBlock >= targetBlock) {
         clearTimeout(timeout);
+        // Flush any remaining full line from buffer before resolving
+        if (remainder && pattern.test(remainder)) {
+          matchedLines.push(remainder);
+        }
         resolve(matchedLines);
       }
     };
