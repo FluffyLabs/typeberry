@@ -68,8 +68,8 @@ test("JAM Node network connection", { timeout: TEST_TIMEOUT }, async () => {
 test("JAM Node ticket distribution with LMDB and worker threads", { timeout: 120_000 }, async () => {
   const VALIDATOR_COUNT = tinyChainSpec.validatorsCount;
   const TICKETS_PER_VALIDATOR = tinyChainSpec.ticketsPerValidator;
-  const EPOCH_LENGTH = tinyChainSpec.contestLength;
-  const TICKET_TEST_TIMEOUT = 120_000;
+  const EPOCH_LENGTH = tinyChainSpec.epochLength;
+  const TICKET_TEST_TIMEOUT = 110_000; // Shorter than test timeout (120s) to allow cleanup
   const processes: ChildProcess[] = [];
   const testDbParentPath = "./test-db-e2e-ticket-distribution";
 
