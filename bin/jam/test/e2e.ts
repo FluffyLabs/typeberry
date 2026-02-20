@@ -166,7 +166,7 @@ async function collectLogsUntilBlock(
       if (currentBlock >= targetBlock) {
         clearTimeout(timeout);
         // Flush any remaining full line from buffer before resolving
-        if (remainder && pattern.test(remainder)) {
+        if (remainder !== "" && pattern.test(remainder)) {
           matchedLines.push(remainder);
         }
         resolve(matchedLines);
