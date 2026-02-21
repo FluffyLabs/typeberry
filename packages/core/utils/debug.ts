@@ -64,6 +64,13 @@ export function assertEmpty<T extends Record<string, never>>(value: T) {
 
 /** Debug print an object. */
 export function inspect<T>(val: T): string {
+  return inspectInternal(val, new WeakSet());
+}
+
+/**
+ * Internal implementation of inspect with circular reference detection.
+ */
+function inspectInternal<T>(val: T, seen: WeakSet<object>): string {
   const nest = (v: string) =>
     v
       .split("\n")
@@ -80,11 +87,11 @@ export function inspect<T>(val: T): string {
   }
 
   if (Array.isArray(val)) {
-    return `[${val.map((x) => inspect(x))}]`;
+    return `[${val.map((x) => inspectInternal(x, seen))}]`;
   }
 
   if (val instanceof Map) {
-    return inspect(Array.from(val.entries()));
+    return inspectInternal(Array.from(val.entries()), seen);
   }
 
   if (typeof val === "number") {
@@ -94,6 +101,12 @@ export function inspect<T>(val: T): string {
   if (typeof val !== "object") {
     return `${val}`;
   }
+
+  // Check for circular references
+  if (seen.has(val)) {
+    return "<circular>";
+  }
+  seen.add(val);
 
   if (
     "toString" in val &&
@@ -110,7 +123,7 @@ export function inspect<T>(val: T): string {
   for (const k of keys) {
     if (typeof k === "string") {
       v += oneLine ? "" : "\n  ";
-      v += `${k}: ${nest(inspect(val[k as keyof T]))}`;
+      v += `${k}: ${nest(inspectInternal(val[k as keyof T], seen))}`;
       v += oneLine ? "," : "";
     }
   }
