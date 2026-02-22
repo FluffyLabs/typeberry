@@ -3,7 +3,8 @@ import { Bytes } from "@typeberry/bytes";
 import { PvmBackend } from "@typeberry/config";
 import { bandersnatch, initWasm } from "@typeberry/crypto";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
-import { createImporter } from "@typeberry/importer";
+import { createImporter, ImporterConfig } from "@typeberry/importer";
+import { tryAsU16 } from "@typeberry/numbers";
 import { CURRENT_SUITE, CURRENT_VERSION, Result, resultToString, version } from "@typeberry/utils";
 import { InMemWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
@@ -14,6 +15,7 @@ const zeroHash = Bytes.zero(HASH_SIZE).asOpaque<StateRootHash>();
 
 export type ImporterOptions = {
   initGenesisFromAncestry?: boolean;
+  dummyFinalityDepth?: number;
 };
 
 export async function mainImporter(
@@ -40,24 +42,24 @@ export async function mainImporter(
     withRelPath(config.node.databaseBasePath ?? "<in-memory>"),
   );
 
+  const workerParams = ImporterConfig.create({
+    pvm: config.pvmBackend,
+    dummyFinalityDepth: tryAsU16(options.dummyFinalityDepth ?? 0),
+  });
   const workerConfig =
     config.node.databaseBasePath === undefined
       ? InMemWorkerConfig.new({
           nodeName,
           chainSpec,
           blake2b,
-          workerParams: {
-            pvm: config.pvmBackend,
-          },
+          workerParams,
         })
       : LmdbWorkerConfig.new({
           nodeName,
           chainSpec,
           blake2b,
           dbPath,
-          workerParams: {
-            pvm: config.pvmBackend,
-          },
+          workerParams,
         });
 
   // Initialize the database with genesis state and block if there isn't one.

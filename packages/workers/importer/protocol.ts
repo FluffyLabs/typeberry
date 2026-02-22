@@ -3,7 +3,7 @@ import { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { PvmBackend } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { tryAsU8, tryAsU32 } from "@typeberry/numbers";
+import { tryAsU8, tryAsU16, tryAsU32, type U16 } from "@typeberry/numbers";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { Result } from "@typeberry/utils";
 import { type Api, createProtocol, type Internal } from "@typeberry/workers-api";
@@ -92,11 +92,16 @@ export class ImporterConfig {
         throw new Error(`Invalid PvmBackend: ${o}`);
       },
     ),
+    dummyFinalityDepth: codec.u16,
   });
 
-  static create({ pvm }: CodecRecord<ImporterConfig>) {
-    return new ImporterConfig(pvm);
+  static create({ pvm, dummyFinalityDepth }: CodecRecord<ImporterConfig>) {
+    return new ImporterConfig(pvm, dummyFinalityDepth);
   }
 
-  private constructor(public readonly pvm: PvmBackend) {}
+  private constructor(
+    public readonly pvm: PvmBackend,
+    /** Dummy finality depth. 0 means disabled, any positive value enables dummy finality with that depth. */
+    public readonly dummyFinalityDepth: U16 = tryAsU16(0),
+  ) {}
 }

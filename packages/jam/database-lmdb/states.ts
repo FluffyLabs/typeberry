@@ -154,6 +154,10 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>>, InitStates
     return SerializedState.new(this.spec, this.blake2b, leafDbResult.ok);
   }
 
+  markUnused(header: HeaderHash): void {
+    this.states.remove(header.raw);
+  }
+
   async close() {
     await Promise.all([this.states.close(), this.values.close()]);
   }

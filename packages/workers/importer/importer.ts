@@ -8,6 +8,7 @@ import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, BlockVerifierError } from "@typeberry/transition/block-verifier.js";
 import { DbHeaderChain, OnChain, type StfError } from "@typeberry/transition/chain-stf.js";
 import { type ErrorResult, measure, now, Result, resultToString, type TaggedError } from "@typeberry/utils";
+import type { Finalizer } from "./finality.js";
 import * as metrics from "./metrics.js";
 
 export enum ImporterErrorKind {
@@ -28,6 +29,7 @@ const importerError = <Kind extends ImporterErrorKind, Err extends ImporterError
 
 export type ImporterOptions = {
   initGenesisFromAncestry?: boolean;
+  finalizer?: Finalizer;
 };
 
 export class Importer {
@@ -184,6 +186,15 @@ export class Importer {
     logger.log`${timerDb()}`;
     // finally update the best block
     await this.blocks.setBestHeaderHash(headerHash);
+
+    // check for finality and prune old states
+    const finality = this.options.finalizer?.onBlockImported(headerHash) ?? null;
+    if (finality !== null) {
+      this.logger.info`🦭 Finalized block: ${finality.finalizedHash} (${finality.prunableStateHashes.length} to prune)`;
+      for (const hash of finality.prunableStateHashes) {
+        this.states.markUnused(hash);
+      }
+    }
 
     return Result.ok(new WithHash(headerHash, block.header.view()));
   }

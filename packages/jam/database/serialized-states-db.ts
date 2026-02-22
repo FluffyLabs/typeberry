@@ -104,5 +104,9 @@ export class InMemorySerializedStates implements StatesDb<SerializedState<LeafDb
     return SerializedState.new(this.spec, this.blake2b, leafDb);
   }
 
+  markUnused(header: HeaderHash): void {
+    this.db.delete(header);
+  }
+
   async close() {}
 }
