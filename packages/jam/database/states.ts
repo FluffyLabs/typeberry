@@ -46,6 +46,9 @@ export interface StatesDb<T extends State = State> {
   /** Retrieve posterior state of given header. */
   getState(header: HeaderHash): T | null;
 
+  /** Mark state as no longer needed. Backend may remove it asynchronously. */
+  markUnused(header: HeaderHash): void;
+
   /** Close the database and free resources. */
   close(): Promise<void>;
 }
@@ -97,6 +100,10 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
     }
 
     return InMemoryState.copyFrom(this.spec, state, state.intoServicesData());
+  }
+
+  markUnused(header: HeaderHash): void {
+    this.db.delete(header);
   }
 
   async close() {}

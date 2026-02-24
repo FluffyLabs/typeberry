@@ -90,7 +90,10 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
           network: null,
         },
         withRelPath,
-        { initGenesisFromAncestry: fuzzConfig.initGenesisFromAncestry },
+        {
+          initGenesisFromAncestry: fuzzConfig.initGenesisFromAncestry,
+          dummyFinalityDepth: 10_000,
+        },
       );
       runningNode = newNode;
       return await newNode.getBestStateRootHash();

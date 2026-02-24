@@ -6,6 +6,7 @@ import type { SerializedState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { Result, resultToString } from "@typeberry/utils";
 import type { WorkerConfig } from "@typeberry/workers-api";
+import { DummyFinalizer } from "./finality.js";
 import { Importer } from "./importer.js";
 import type { ImporterConfig, ImporterInternal } from "./protocol.js";
 
@@ -32,8 +33,14 @@ export async function createImporter(
   const blocks = db.getBlocksDb();
   const states = db.getStatesDb();
 
+  const dummyFinalityDepth = config.workerParams.dummyFinalityDepth ?? 0;
+  const finalizer = dummyFinalityDepth > 0 ? DummyFinalizer.create(blocks, dummyFinalityDepth) : undefined;
+
   const hasher = new TransitionHasher(await keccakHasher, await blake2b);
-  const importer = new Importer(chainSpec, pvm, hasher, logger, blocks, states, options);
+  const importer = new Importer(chainSpec, pvm, hasher, logger, blocks, states, {
+    ...options,
+    finalizer,
+  });
 
   return {
     importer,
