@@ -79,7 +79,7 @@ export class HostCallsExecutor {
     return { consumedGas, status: ReturnStatus.PANIC };
   }
 
-  private async execute(pvmInstance: IPvmInterpreter) {
+  private async execute(pvmInstance: IPvmInterpreter, initialPc: number) {
     const ioTracker = this.ioTracer?.tracker() ?? null;
     const registers = new HostCallRegisters(pvmInstance.registers.getAllEncoded());
     registers.ioTracker = ioTracker;
@@ -89,7 +89,7 @@ export class HostCallsExecutor {
     const gas = pvmInstance.gas;
 
     // log start of execution (note the PVM initialisation should be logged already)
-    this.ioTracer?.logStart(pvmInstance.getPC(), pvmInstance.gas.get(), registers);
+    this.ioTracer?.logStart(initialPc, pvmInstance.gas.get(), registers);
 
     for (;;) {
       // execute program as much as we can
@@ -167,7 +167,7 @@ export class HostCallsExecutor {
 
     try {
       this.ioTracer?.logProgram(program, args);
-      return await this.execute(pvmInstance);
+      return await this.execute(pvmInstance, initialPc);
     } finally {
       this.pvmInstanceManager.releaseInstance(pvmInstance);
     }
