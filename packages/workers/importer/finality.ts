@@ -33,7 +33,11 @@ export class DummyFinalizer implements Finalizer {
   private lastFinalizedHash: HeaderHash;
   private unfinalized: Chain[] = [];
 
-  constructor(
+  static create(blocks: BlocksDb, depth: number): DummyFinalizer {
+    return new DummyFinalizer(blocks, depth);
+  }
+
+  private constructor(
     private readonly blocks: BlocksDb,
     private readonly depth: number,
   ) {

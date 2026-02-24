@@ -34,7 +34,7 @@ export async function createImporter(
   const states = db.getStatesDb();
 
   const dummyFinalityDepth = config.workerParams.dummyFinalityDepth ?? 0;
-  const finalizer = dummyFinalityDepth > 0 ? new DummyFinalizer(blocks, dummyFinalityDepth) : undefined;
+  const finalizer = dummyFinalityDepth > 0 ? DummyFinalizer.create(blocks, dummyFinalityDepth) : undefined;
 
   const hasher = new TransitionHasher(await keccakHasher, await blake2b);
   const importer = new Importer(chainSpec, pvm, hasher, logger, blocks, states, {

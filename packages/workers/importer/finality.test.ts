@@ -31,7 +31,7 @@ function assertExists<T>(value: T): asserts value is NonNullable<T> {
  * Create a block with the given parent hash and slot, insert it into the db,
  * and return its hash.
  */
-function createBlock(db: InMemoryBlocks, parent: HeaderHash, slot = 0): HeaderHash {
+async function createBlock(db: InMemoryBlocks, parent: HeaderHash, slot = 0): Promise<HeaderHash> {
   const header = Header.create({
     ...Header.empty(),
     parentHeaderHash: parent,
@@ -52,17 +52,17 @@ function createBlock(db: InMemoryBlocks, parent: HeaderHash, slot = 0): HeaderHa
   const blockView = reencodeAsView(Block.Codec, block, tinyChainSpec);
   const headerHash = blake2b.hashBytes(blockView.header.view().encoded()).asOpaque<HeaderHash>();
 
-  db.insertBlock(new WithHash(headerHash, blockView));
+  await db.insertBlock(new WithHash(headerHash, blockView));
 
   return headerHash;
 }
 
 /** Build a linear chain of `length` blocks starting from `parentHash`. */
-function buildLinearChain(db: InMemoryBlocks, parentHash: HeaderHash, length: number): HeaderHash[] {
+async function buildLinearChain(db: InMemoryBlocks, parentHash: HeaderHash, length: number): Promise<HeaderHash[]> {
   const hashes: HeaderHash[] = [];
   let parent = parentHash;
   for (let i = 0; i < length; i++) {
-    const h = createBlock(db, parent, i);
+    const h = await createBlock(db, parent, i);
     hashes.push(h);
     parent = h;
   }
@@ -71,14 +71,14 @@ function buildLinearChain(db: InMemoryBlocks, parentHash: HeaderHash, length: nu
 
 describe("DummyFinalizer", () => {
   describe("linear chain", () => {
-    it("should return null when chain is shorter than depth", () => {
+    it("should return null when chain is shorter than depth", async () => {
       const db = InMemoryBlocks.new();
       const genesis = db.getBestHeaderHash();
 
-      const finalizer = new DummyFinalizer(db, 3);
+      const finalizer = DummyFinalizer.create(db, 3);
 
       // Build a chain of 3 blocks: genesis -> 1 -> 2 -> 3
-      const chain = buildLinearChain(db, genesis, 3);
+      const chain = await buildLinearChain(db, genesis, 3);
 
       // Import all 3 — chain length = depth, not > depth, so no finality.
       for (const h of chain) {
@@ -87,14 +87,14 @@ describe("DummyFinalizer", () => {
       }
     });
 
-    it("should finalize when chain exceeds depth", () => {
+    it("should finalize when chain exceeds depth", async () => {
       const db = InMemoryBlocks.new();
       const genesis = db.getBestHeaderHash();
 
-      const finalizer = new DummyFinalizer(db, 3);
+      const finalizer = DummyFinalizer.create(db, 3);
 
       // Build: genesis -> 1 -> 2 -> 3 -> 4
-      const chain = buildLinearChain(db, genesis, 4);
+      const chain = await buildLinearChain(db, genesis, 4);
 
       // First 3 imports: no finality.
       for (let i = 0; i < 3; i++) {
@@ -107,13 +107,13 @@ describe("DummyFinalizer", () => {
       assert.strictEqual(result.finalizedHash.isEqualTo(chain[0]), true);
     });
 
-    it("should prune the previously finalized block on first finality", () => {
+    it("should prune the previously finalized block on first finality", async () => {
       const db = InMemoryBlocks.new();
       const genesis = db.getBestHeaderHash();
 
-      const finalizer = new DummyFinalizer(db, 3);
+      const finalizer = DummyFinalizer.create(db, 3);
 
-      const chain = buildLinearChain(db, genesis, 4);
+      const chain = await buildLinearChain(db, genesis, 4);
       for (let i = 0; i < 3; i++) {
         finalizer.onBlockImported(chain[i]);
       }
@@ -125,14 +125,14 @@ describe("DummyFinalizer", () => {
       assert.ok(result.prunableStateHashes[0].isEqualTo(genesis));
     });
 
-    it("should advance finality one block at a time, pruning previous finalized each time", () => {
+    it("should advance finality one block at a time, pruning previous finalized each time", async () => {
       const db = InMemoryBlocks.new();
       const genesis = db.getBestHeaderHash();
 
-      const finalizer = new DummyFinalizer(db, 2);
+      const finalizer = DummyFinalizer.create(db, 2);
 
       // Build: genesis -> 1 -> 2 -> 3 -> 4 -> 5
-      const chain = buildLinearChain(db, genesis, 5);
+      const chain = await buildLinearChain(db, genesis, 5);
 
       // Import 1, 2: no finality (length <= depth)
       assert.strictEqual(finalizer.onBlockImported(chain[0]), null);
@@ -160,14 +160,14 @@ describe("DummyFinalizer", () => {
       assert.ok(r3.prunableStateHashes[0].isEqualTo(chain[1]));
     });
 
-    it("should advance finality on every import even when blocks arrive in a burst", () => {
+    it("should advance finality on every import even when blocks arrive in a burst", async () => {
       const db = InMemoryBlocks.new();
       const genesis = db.getBestHeaderHash();
 
-      const finalizer = new DummyFinalizer(db, 2);
+      const finalizer = DummyFinalizer.create(db, 2);
 
       // Build: genesis -> 1 -> 2 -> 3 -> 4 -> 5
-      const chain = buildLinearChain(db, genesis, 5);
+      const chain = await buildLinearChain(db, genesis, 5);
 
       // Import blocks 1..4 — finality fires on block 3 and block 4.
       assert.strictEqual(finalizer.onBlockImported(chain[0]), null);
@@ -191,13 +191,13 @@ describe("DummyFinalizer", () => {
   });
 
   describe("with depth=1", () => {
-    it("should finalize immediately after 2 blocks", () => {
+    it("should finalize immediately after 2 blocks", async () => {
       const db = InMemoryBlocks.new();
       const genesis = db.getBestHeaderHash();
 
-      const finalizer = new DummyFinalizer(db, 1);
+      const finalizer = DummyFinalizer.create(db, 1);
 
-      const chain = buildLinearChain(db, genesis, 3);
+      const chain = await buildLinearChain(db, genesis, 3);
 
       // Import 1: length=1, not > 1. No finality.
       assert.strictEqual(finalizer.onBlockImported(chain[0]), null);
@@ -215,20 +215,20 @@ describe("DummyFinalizer", () => {
   });
 
   describe("forks", () => {
-    it("should track two forks from the finalized block", () => {
+    it("should track two forks from the finalized block", async () => {
       const db = InMemoryBlocks.new();
       const genesis = db.getBestHeaderHash();
 
-      const finalizer = new DummyFinalizer(db, 2);
+      const finalizer = DummyFinalizer.create(db, 2);
 
       // Fork A: genesis -> A1 -> A2 -> A3
-      const a1 = createBlock(db, genesis, 1);
-      const a2 = createBlock(db, a1, 2);
-      const a3 = createBlock(db, a2, 3);
+      const a1 = await createBlock(db, genesis, 1);
+      const a2 = await createBlock(db, a1, 2);
+      const a3 = await createBlock(db, a2, 3);
 
       // Fork B: genesis -> B1 -> B2
-      const b1 = createBlock(db, genesis, 10);
-      const b2 = createBlock(db, b1, 11);
+      const b1 = await createBlock(db, genesis, 10);
+      const b2 = await createBlock(db, b1, 11);
 
       // Import A1, A2, B1, B2 — no finality yet.
       assert.strictEqual(finalizer.onBlockImported(a1), null);
@@ -251,19 +251,19 @@ describe("DummyFinalizer", () => {
       assert.ok(!prunedStrings.includes(a1.toString()), "A1 (finalized) should not be pruned");
     });
 
-    it("should keep alive forks that diverge after the finalized block", () => {
+    it("should keep alive forks that diverge after the finalized block", async () => {
       const db = InMemoryBlocks.new();
       const genesis = db.getBestHeaderHash();
 
-      const finalizer = new DummyFinalizer(db, 2);
+      const finalizer = DummyFinalizer.create(db, 2);
 
       // Main chain: genesis -> 1 -> 2 -> 3
-      const b1 = createBlock(db, genesis, 1);
-      const b2 = createBlock(db, b1, 2);
-      const b3 = createBlock(db, b2, 3);
+      const b1 = await createBlock(db, genesis, 1);
+      const b2 = await createBlock(db, b1, 2);
+      const b3 = await createBlock(db, b2, 3);
 
       // Fork from block 2: 2 -> F1
-      const f1 = createBlock(db, b2, 20);
+      const f1 = await createBlock(db, b2, 20);
 
       // Import 1, 2 — no finality yet (chain length 2 = depth 2).
       finalizer.onBlockImported(b1);
@@ -287,8 +287,8 @@ describe("DummyFinalizer", () => {
       assert.strictEqual(r2, null);
 
       // Extend the fork: F1 -> F2 -> F3
-      const f2 = createBlock(db, f1, 21);
-      const f3 = createBlock(db, f2, 22);
+      const f2 = await createBlock(db, f1, 21);
+      const f3 = await createBlock(db, f2, 22);
 
       // Import F2: fork chain becomes [b2, f1, f2], length=3 > depth=2.
       // Finalize b2 (index 0). Both chains contain b2, so both are alive.
@@ -313,18 +313,18 @@ describe("DummyFinalizer", () => {
       assert.ok(!pruned.includes(f3.toString()), "F3 should not be pruned (after finalized)");
     });
 
-    it("should prune a dead fork that diverged before the finalized block", () => {
+    it("should prune a dead fork that diverged before the finalized block", async () => {
       const db = InMemoryBlocks.new();
       const genesis = db.getBestHeaderHash();
 
-      const finalizer = new DummyFinalizer(db, 2);
+      const finalizer = DummyFinalizer.create(db, 2);
 
       // Main: genesis -> 1 -> 2 -> 3 -> 4
-      const chain = buildLinearChain(db, genesis, 4);
+      const chain = await buildLinearChain(db, genesis, 4);
 
       // Fork from genesis: genesis -> F1 -> F2
-      const f1 = createBlock(db, genesis, 100);
-      const f2 = createBlock(db, f1, 101);
+      const f1 = await createBlock(db, genesis, 100);
+      const f2 = await createBlock(db, f1, 101);
 
       // Import: 1, 2, F1, F2, 3 (finalize block 1), 4 (finalize block 2)
       finalizer.onBlockImported(chain[0]);
@@ -345,21 +345,21 @@ describe("DummyFinalizer", () => {
       assert.ok(pruned1.includes(f2.toString()), "F2 should be pruned");
     });
 
-    it("should handle fork from the middle of a chain", () => {
+    it("should handle fork from the middle of a chain", async () => {
       const db = InMemoryBlocks.new();
       const genesis = db.getBestHeaderHash();
 
-      const finalizer = new DummyFinalizer(db, 2);
+      const finalizer = DummyFinalizer.create(db, 2);
 
       // Main: genesis -> 1 -> 2 -> 3
-      const b1 = createBlock(db, genesis, 1);
-      const b2 = createBlock(db, b1, 2);
-      const b3 = createBlock(db, b2, 3);
+      const b1 = await createBlock(db, genesis, 1);
+      const b2 = await createBlock(db, b1, 2);
+      const b3 = await createBlock(db, b2, 3);
 
       // Fork from block 1: 1 -> F1 -> F2 -> F3
-      const f1 = createBlock(db, b1, 10);
-      const f2 = createBlock(db, f1, 11);
-      const f3 = createBlock(db, f2, 12);
+      const f1 = await createBlock(db, b1, 10);
+      const f2 = await createBlock(db, f1, 11);
+      const f3 = await createBlock(db, f2, 12);
 
       // Import main chain first.
       finalizer.onBlockImported(b1);
@@ -394,42 +394,42 @@ describe("DummyFinalizer", () => {
   });
 
   describe("edge cases", () => {
-    it("should return null for unknown block hash", () => {
+    it("should return null for unknown block hash", async () => {
       const db = InMemoryBlocks.new();
 
-      const finalizer = new DummyFinalizer(db, 3);
+      const finalizer = DummyFinalizer.create(db, 3);
       // Create a block hash that was never inserted into the db.
-      const unknownHash = createBlock(InMemoryBlocks.new(), db.getBestHeaderHash());
+      const unknownHash = await createBlock(InMemoryBlocks.new(), db.getBestHeaderHash());
       const result = finalizer.onBlockImported(unknownHash);
       assert.strictEqual(result, null);
     });
 
-    it("should return null for orphan block (parent not in any chain)", () => {
+    it("should return null for orphan block (parent not in any chain)", async () => {
       const db = InMemoryBlocks.new();
       const genesis = db.getBestHeaderHash();
 
-      const finalizer = new DummyFinalizer(db, 2);
+      const finalizer = DummyFinalizer.create(db, 2);
 
       // Block whose parent is some unknown hash not in any chain.
       // We create a separate db to get a "foreign" hash, then insert the orphan
       // into our db with that foreign hash as parent.
       const foreignDb = InMemoryBlocks.new();
-      const foreignParent = createBlock(foreignDb, genesis, 99);
+      const foreignParent = await createBlock(foreignDb, genesis, 99);
 
-      const orphan = createBlock(db, foreignParent, 50);
+      const orphan = await createBlock(db, foreignParent, 50);
 
       const result = finalizer.onBlockImported(orphan);
       assert.strictEqual(result, null);
     });
 
-    it("should always advance finality forward, never re-finalizing earlier blocks", () => {
+    it("should always advance finality forward, never re-finalizing earlier blocks", async () => {
       const db = InMemoryBlocks.new();
       const genesis = db.getBestHeaderHash();
 
-      const finalizer = new DummyFinalizer(db, 2);
+      const finalizer = DummyFinalizer.create(db, 2);
 
       // genesis -> 1 -> 2 -> 3 -> 4
-      const chain = buildLinearChain(db, genesis, 4);
+      const chain = await buildLinearChain(db, genesis, 4);
 
       finalizer.onBlockImported(chain[0]);
       finalizer.onBlockImported(chain[1]);
@@ -450,14 +450,14 @@ describe("DummyFinalizer", () => {
       assert.ok(!pruned.includes(chain[1].toString()), "Newly finalized block should not be pruned");
     });
 
-    it("should work with depth=0", () => {
+    it("should work with depth=0", async () => {
       const db = InMemoryBlocks.new();
       const genesis = db.getBestHeaderHash();
 
       // depth=0 means finalize as soon as any block exists.
-      const finalizer = new DummyFinalizer(db, 0);
+      const finalizer = DummyFinalizer.create(db, 0);
 
-      const b1 = createBlock(db, genesis, 1);
+      const b1 = await createBlock(db, genesis, 1);
 
       // Chain length = 1 > 0 → finalize block at index 1-1-0 = 0 → b1.
       // Genesis (prev finalized) is pruned.
