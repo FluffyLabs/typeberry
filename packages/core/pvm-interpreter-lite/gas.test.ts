@@ -55,9 +55,29 @@ describe("FastGasCounter", () => {
     assert.equal(gc.sub(tryAsGas(11)), true);
   });
 
-  it("set: throws error (not supported)", () => {
+  it("set: reduces gas to lower value", () => {
     const gc = new FastGasCounter(tryAsGas(10));
-    assert.throws(() => gc.set(tryAsGas(5)), /FastGasCounter.set\(\) is not supported/);
+    gc.set(tryAsGas(5));
+    assert.equal(Number(gc.get()), 5);
+  });
+
+  it("set: same value is allowed", () => {
+    const gc = new FastGasCounter(tryAsGas(10));
+    gc.set(tryAsGas(10));
+    assert.equal(Number(gc.get()), 10);
+  });
+
+  it("set: zero is allowed", () => {
+    const gc = new FastGasCounter(tryAsGas(10));
+    gc.set(tryAsGas(0));
+    assert.equal(Number(gc.get()), 0);
+    assert.equal(gc.subOne(), true); // OOG
+  });
+
+  it("set: throws when trying to increase gas", () => {
+    const gc = new FastGasCounter(tryAsGas(5));
+    gc.subOne(); // counter = 4
+    assert.throws(() => gc.set(tryAsGas(5)), /FastGasCounter.set\(\) cannot increase gas/);
   });
 });
 

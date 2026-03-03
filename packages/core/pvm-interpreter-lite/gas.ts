@@ -39,11 +39,17 @@ export class FastGasCounter implements IGasCounter {
   }
 
   /**
-   * FastGasCounter does not support set() — it cannot safely handle values > MAX_SAFE_INTEGER.
-   * Use BigGasCounter (via createGasCounter with forceBigGas) if you need set().
+   * Reduces gas to the given value. Only allowed if the new value is <= current gas.
+   * To increase gas arbitrarily, use BigGasCounter (via createGasCounter with forceBigGas).
    */
-  set(_g: Gas): void {
-    throw new Error("FastGasCounter.set() is not supported. Use createGasCounter with forceBigGas for debugger mode.");
+  set(g: Gas): void {
+    const newValBig = BigInt(g);
+    if (newValBig > BigInt(this.counter)) {
+      throw new Error(
+        "FastGasCounter.set() cannot increase gas. Use createGasCounter with forceBigGas for debugger mode.",
+      );
+    }
+    this.counter = Number(newValBig);
   }
 
   used(): Gas {
