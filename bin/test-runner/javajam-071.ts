@@ -6,7 +6,7 @@ const runners = [
   runner("state_transition", runStateTransition)
     .fromJson(StateTransition.fromJson)
     .fromBin(StateTransition.Codec)
-    .withVariants([SelectedPvm.Ananas, SelectedPvm.Builtin]),
+    .withVariants([SelectedPvm.Ananas, SelectedPvm.Builtin, SelectedPvm.Lite]),
 ].map((x) => x.build());
 
 main(runners, "test-vectors/javajam_071", {

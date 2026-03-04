@@ -19,14 +19,17 @@ export const logger = Logger.new(import.meta.filename, "test-runner");
 export enum SelectedPvm {
   Ananas = "ananas",
   Builtin = "builtin",
+  Lite = "lite",
 }
-export const ALL_PVMS = [SelectedPvm.Ananas, SelectedPvm.Builtin];
+export const ALL_PVMS = [SelectedPvm.Ananas, SelectedPvm.Builtin, SelectedPvm.Lite];
 export function selectedPvmToBackend(pvm: SelectedPvm): PvmBackend {
   switch (pvm) {
     case SelectedPvm.Ananas:
       return PvmBackend.Ananas;
     case SelectedPvm.Builtin:
       return PvmBackend.BuiltIn;
+    case SelectedPvm.Lite:
+      return PvmBackend.Lite;
     default:
       assertNever(pvm);
   }
