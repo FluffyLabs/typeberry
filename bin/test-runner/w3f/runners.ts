@@ -47,7 +47,7 @@ import { runShufflingTests, shufflingTestsFromJson } from "./shuffling.js";
 import { runStatisticsTestFull, runStatisticsTestTiny, StatisticsTestFull, StatisticsTestTiny } from "./statistics.js";
 import { runTrieTest, trieTestSuiteFromJson } from "./trie.js";
 
-const pvms: SelectedPvm[] = [SelectedPvm.Ananas, SelectedPvm.Builtin];
+const pvms: SelectedPvm[] = [SelectedPvm.Ananas, SelectedPvm.Builtin, SelectedPvm.Lite];
 const tiny = [tinyChainSpec];
 const full = [fullChainSpec];
 const tinyFull = [...tiny, ...full];
