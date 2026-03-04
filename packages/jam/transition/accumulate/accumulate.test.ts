@@ -46,7 +46,7 @@ type TestServiceInfo = {
   lastAccumulation?: TimeSlot;
 };
 
-[PvmBackend.BuiltIn, PvmBackend.Ananas].forEach((pvm) => {
+[PvmBackend.BuiltIn, PvmBackend.Ananas, PvmBackend.Lite].forEach((pvm) => {
   [false, true].forEach((accumulateSequentially) => {
     const options = { pvm, accumulateSequentially };
     describe(`accumulate: ${PvmBackendNames[pvm]} (sequential accumulation: ${accumulateSequentially})`, () => {

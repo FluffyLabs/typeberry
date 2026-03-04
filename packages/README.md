@@ -24,7 +24,8 @@ Contains fundamental packages that provide low-level functionality and utilities
 - **pvm-host-calls** - PVM host call implementations
 - **pvm-interface** - PVM interface definitions
 - **pvm-interpreter** - PVM interpreter functionality
-- **pvm-interpreter-ananas** - Ananas PVM interpreter implementation
+- **pvm-interpreter-ananas** - Ananas PVM interpreter implementation (AssemblyScript/WASM)
+- **pvm-interpreter-lite** - Lightweight PVM interpreter (`@fluffylabs/pvm-interpreter-lite`)
 - **shuffling** - Shuffling algorithms
 - **telemetry** - OpenTelemetry initialization utilities
 - **trie** - Trie data structure implementation
