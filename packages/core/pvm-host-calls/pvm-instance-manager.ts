@@ -1,3 +1,4 @@
+import { Interpreter as LiteInterpreter } from "@fluffylabs/pvm-interpreter-lite";
 import { PvmBackend } from "@typeberry/config";
 import type { IPvmInterpreter } from "@typeberry/pvm-interface";
 import { Interpreter } from "@typeberry/pvm-interpreter";
@@ -24,6 +25,9 @@ export class PvmInstanceManager {
         break;
       case PvmBackend.Ananas:
         instances.push(await AnanasInterpreter.new());
+        break;
+      case PvmBackend.Lite:
+        instances.push(new LiteInterpreter());
         break;
       default:
         assertNever(interpreter);

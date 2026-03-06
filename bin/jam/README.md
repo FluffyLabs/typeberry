@@ -113,12 +113,12 @@ jam --config=custom-config.json
 
 ### `--pvm`
 
-Select the PVM (Polkavm) backend to use. Available options: `wasmtime`, `interpreter`, `ananas`.
+Select the PVM (Polkavm) backend to use. Available options: `built-in`, `ananas`, `lite`.
 
 Default: `ananas`
 
 ```bash
-jam --pvm=wasmtime
+jam --pvm=lite
 ```
 
 ## Environment Variables

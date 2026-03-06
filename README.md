@@ -29,7 +29,7 @@ JAM Prize requirements
     - [x] Performance optimisations
 - [ ] Milestone 2
     - [x] Networking (partial)
-    - [x] Fast PVM (ananas)
+    - [x] Fast PVM (ananas, lite)
 - [ ] Milestone 3
     - [ ] PVM Recompiler
 - [ ] Milestone 4
@@ -107,6 +107,7 @@ $ npm start -w @typeberry/rpc
 - [PVM Debugger](https://github.com/fluffylabs/pvm-debugger) - load & inspect a PVM program
 - [Gray Paper Reader](https://github.com/fluffylabs/graypaper-reader) - view the Gray Paper
 - [Ananas](https://github.com/tomusdrw/anan-as) - AssemblyScript PVM interpreter
+- [Lite](https://www.npmjs.com/package/@fluffylabs/pvm-interpreter-lite) - Lightweight TypeScript PVM interpreter
 
 ### Formatting & linting
 
@@ -171,7 +172,7 @@ cases by altering the glob pattern in the path.
 
 #### Selecting PVM Backend
 
-By default, test vectors are run with both PVM backends (built-in and Ananas).
+By default, test vectors are run with all PVM backends (built-in, Ananas, and Lite).
 You can select a specific PVM backend using the `--pvm` option:
 
 ```bash
@@ -181,7 +182,10 @@ $ npm run w3f-davxy:0.7.1 -w @typeberry/test-runner -- --pvm builtin
 # Run tests with Ananas PVM only
 $ npm run w3f-davxy:0.7.1 -w @typeberry/test-runner -- --pvm ananas
 
-# Run tests with both PVMs (default)
+# Run tests with Lite PVM only
+$ npm run w3f-davxy:0.7.1 -w @typeberry/test-runner -- --pvm lite
+
+# Run tests with all PVMs (default)
 $ npm run w3f-davxy:0.7.1 -w @typeberry/test-runner
 ```
 
