@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
 
@@ -61,7 +61,7 @@ jobs:
     - name: Generate GitHub App Token
       if: steps.check_update.outputs.update_needed == 'true'
       id: app-token
-      uses: actions/create-github-app-token@v1
+      uses: actions/create-github-app-token@v2
       with:
         app-id: ${{ vars.PR_APP_ID }}
         private-key: ${{ secrets.PR_APP_PRIVATE_KEY }}

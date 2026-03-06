@@ -15,14 +15,14 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [24.x]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Load test ref
         run: .github/scripts/load-test-ref.sh
       - name: Checkout JAM test vectors
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: fluffylabs/test-vectors
           path: "./test-vectors"
@@ -34,7 +34,7 @@ jobs:
           git submodule sync w3f-davxy_072
           git submodule update --init --depth 1 w3f-davxy_072
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
