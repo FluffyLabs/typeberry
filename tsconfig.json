@@ -11,6 +11,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
-  "extends": "@tsconfig/node20/tsconfig.json",
+  "extends": "@tsconfig/node24/tsconfig.json",
   "exclude": ["dist", "node_modules"]
 }
