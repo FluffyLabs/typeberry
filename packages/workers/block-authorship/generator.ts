@@ -8,7 +8,9 @@ import {
 } from "@typeberry/block";
 import { type BlockView, Extrinsic } from "@typeberry/block/block.js";
 import { DisputesExtrinsic } from "@typeberry/block/disputes.js";
+import type { SignedTicket } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { HashSet } from "@typeberry/collections/hash-set.js";
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_VRF_SIGNATURE_BYTES, type BandersnatchSecretSeed } from "@typeberry/crypto";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
@@ -67,8 +69,9 @@ export class Generator {
     bandersnatchSecret: BandersnatchSecretSeed,
     sealPayload: BlockSealInput,
     timeSlot: TimeSlot,
+    pendingTickets: SignedTicket[] = [],
   ): Promise<BlockView> {
-    const newBlock = await this.nextBlock(validatorIndex, bandersnatchSecret, sealPayload, timeSlot);
+    const newBlock = await this.nextBlock(validatorIndex, bandersnatchSecret, sealPayload, timeSlot, pendingTickets);
     return reencodeAsView(Block.Codec, newBlock, this.chainSpec);
   }
 
@@ -99,11 +102,54 @@ export class Generator {
     return entropyHashResult;
   }
 
+  private async prepareTicketsExtrinsic(
+    pendingTickets: SignedTicket[],
+    state: ReturnType<Generator["getLastHeaderAndState"]>["lastState"],
+  ): Promise<SignedTicket[]> {
+    if (pendingTickets.length === 0) {
+      return [];
+    }
+
+    const verificationResults = await bandersnatchVrf.verifyTickets(
+      this.bandersnatch,
+      state.designatedValidatorData.length,
+      state.epochRoot,
+      pendingTickets,
+      state.entropy[2],
+    );
+
+    // Build a set of ticket IDs already in the state accumulator for fast lookup
+    const accumulatedIds = HashSet.from(state.ticketsAccumulator.map((t) => t.id));
+
+    // Combine tickets with their IDs, filter out invalid ones and those already accumulated
+    const withIds = pendingTickets
+      .map((ticket, i) => ({
+        ticket,
+        id: verificationResults[i].entropyHash,
+        isValid: verificationResults[i].isValid,
+      }))
+      .filter(({ isValid, id }) => isValid && !accumulatedIds.has(id));
+
+    // Sort by ID ascending (Ordering.value is -1/0/1, compatible with Array.sort)
+    withIds.sort((a, b) => a.id.compare(b.id).value);
+
+    // Deduplicate by ID
+    const deduped: typeof withIds = [];
+    for (const item of withIds) {
+      if (deduped.length === 0 || !deduped[deduped.length - 1].id.isEqualTo(item.id)) {
+        deduped.push(item);
+      }
+    }
+
+    return deduped.slice(0, this.chainSpec.maxTicketsPerExtrinsic).map(({ ticket }) => ticket);
+  }
+
   async nextBlock(
     validatorIndex: ValidatorIndex,
     bandersnatchSecret: BandersnatchSecretSeed,
     sealPayload: BlockSealInput,
     timeSlot: TimeSlot,
+    pendingTickets: SignedTicket[] = [],
   ) {
     this.metrics.recordBlockAuthoringStarted(timeSlot);
     const startTime = now();
@@ -133,9 +179,14 @@ export class Generator {
     const hasher = new TransitionHasher(this.keccakHasher, this.blake2b);
     const stateRoot = this.states.getStateRoot(lastState);
 
-    // TODO create extrinsic
+    const slotInEpoch = timeSlot % this.chainSpec.epochLength;
+    const isContestPeriod = slotInEpoch < this.chainSpec.contestLength;
+
+    // Include tickets only during contest period
+    const ticketsForExtrinsic = isContestPeriod ? await this.prepareTicketsExtrinsic(pendingTickets, lastState) : [];
+
     const extrinsic = Extrinsic.create({
-      tickets: asOpaqueType([]),
+      tickets: asOpaqueType(ticketsForExtrinsic),
       preimages: [],
       guarantees: asOpaqueType([]),
       assurances: asOpaqueType([]),
