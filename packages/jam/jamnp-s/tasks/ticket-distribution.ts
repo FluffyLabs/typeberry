@@ -144,9 +144,16 @@ export class TicketDistributionTask {
     }
   }
 
+  private onTicketReceivedCallback?: (epochIndex: Epoch, ticket: SignedTicket) => void;
+
+  setOnTicketReceived(cb: (epochIndex: Epoch, ticket: SignedTicket) => void) {
+    this.onTicketReceivedCallback = cb;
+  }
+
   private onTicketReceived(epochIndex: Epoch, ticket: SignedTicket) {
     logger.trace`Received ticket for epoch ${epochIndex}, attempt ${ticket.attempt}`;
     // Add to pending queue for potential re-distribution
     this.addTicket(epochIndex, ticket);
+    this.onTicketReceivedCallback?.(epochIndex, ticket);
   }
 }

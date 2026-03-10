@@ -21,8 +21,13 @@ export const protocol = createProtocol("authorship-network", {
       response: codec.nothing,
     },
   },
-  // Messages from jam-network to block-authorship (none for now)
-  fromWorker: {},
+  // Messages from jam-network to block-authorship
+  fromWorker: {
+    receivedTickets: {
+      request: TicketsMessage.Codec,
+      response: codec.nothing,
+    },
+  },
 });
 
 export type NetworkingComms = Api<typeof protocol>;
