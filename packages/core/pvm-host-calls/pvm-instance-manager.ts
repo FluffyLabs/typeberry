@@ -1,8 +1,8 @@
-import { Interpreter as LiteInterpreter } from "@fluffylabs/pvm-interpreter-lite";
 import { PvmBackend } from "@typeberry/config";
 import type { IPvmInterpreter } from "@typeberry/pvm-interface";
 import { Interpreter } from "@typeberry/pvm-interpreter";
 import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
+import { LiteInterpreter } from "@typeberry/pvm-interpreter-lite";
 import { assertNever } from "@typeberry/utils";
 
 type ResolveFn = (pvm: IPvmInterpreter) => void;
