@@ -226,7 +226,7 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
   }
 
   // Receive tickets from peers (via jam-network worker)
-  networkingComms.setOnReceivedTickets(({ epochIndex, tickets }) => {
+  networkingComms.setOnReceivedTickets(async ({ epochIndex, tickets }) => {
     logger.log`Received ${tickets.length} tickets from peers for epoch ${epochIndex}`;
     addToPool(epochIndex, tickets);
   });
