@@ -11,6 +11,7 @@
     "@typeberry/pvm-interface": "*",
     "@typeberry/pvm-interpreter": "*",
     "@typeberry/pvm-interpreter-ananas": "*",
+    "@typeberry/pvm-interpreter-lite": "*",
     "@typeberry/utils": "*"
   },
   "scripts": {

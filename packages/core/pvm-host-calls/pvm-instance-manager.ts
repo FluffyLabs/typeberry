@@ -2,6 +2,7 @@ import { PvmBackend } from "@typeberry/config";
 import type { IPvmInterpreter } from "@typeberry/pvm-interface";
 import { Interpreter } from "@typeberry/pvm-interpreter";
 import { AnanasInterpreter } from "@typeberry/pvm-interpreter-ananas";
+import { LiteInterpreter } from "@typeberry/pvm-interpreter-lite";
 import { assertNever } from "@typeberry/utils";
 
 type ResolveFn = (pvm: IPvmInterpreter) => void;
@@ -24,6 +25,9 @@ export class PvmInstanceManager {
         break;
       case PvmBackend.Ananas:
         instances.push(await AnanasInterpreter.new());
+        break;
+      case PvmBackend.Lite:
+        instances.push(new LiteInterpreter());
         break;
       default:
         assertNever(interpreter);
