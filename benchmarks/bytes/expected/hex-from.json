@@ -10,12 +10,12 @@
     },
     {
       "name": "parse hex from char codes",
-      "ops": 451492.2,
+      "ops": 452012.99,
       "margin": 5
     },
     {
       "name": "parse hex from string nibbles",
-      "ops": 237035.34,
+      "ops": 254337.32,
       "margin": 5
     }
   ],
