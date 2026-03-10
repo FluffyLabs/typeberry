@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/numbers",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "description": "Number types for typeberry data structures.",
   "main": "index.ts",
   "dependencies": {
