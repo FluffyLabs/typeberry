@@ -175,7 +175,9 @@ export class InCore {
     for (const [idx, item] of items.entries()) {
       logger.info`[core:${core}][i:${idx}] Refining item for service ${item.service}.`;
 
-      refineResults.push(await this.refineItem(state, idx, item, imports, extrinsics, core, workPackageHash));
+      refineResults.push(
+        await this.refineItem(state, lookupState, idx, item, imports, extrinsics, core, workPackageHash),
+      );
     }
 
     // amalgamate the work report now
@@ -259,6 +261,7 @@ export class InCore {
 
   private async refineItem(
     state: State,
+    lookupState: State,
     idx: number,
     item: WorkItem,
     allImports: PerWorkItem<ImportedSegment[]>,
@@ -306,6 +309,8 @@ export class InCore {
       payload: item.payload,
       imports: allImports,
       extrinsics: allExtrinsics,
+      currentServiceId: item.service,
+      lookupState,
     });
 
     const executor = await PvmExecutor.createRefineExecutor(item.service, code, externalities, this.pvmBackend);
@@ -415,6 +420,8 @@ export class InCore {
     payload: BytesBlob;
     imports: PerWorkItem<ImportedSegment[]>;
     extrinsics: PerWorkItem<WorkItemExtrinsic[]>;
+    currentServiceId: ServiceId;
+    lookupState: State;
   }): RefineHostCallExternalities {
     // TODO [ToDr] Pass all required fetch data
     const fetchExternalities = FetchExternalities.createForRefine(
@@ -424,7 +431,10 @@ export class InCore {
       },
       this.chainSpec,
     );
-    const refine = RefineExternalitiesImpl.create();
+    const refine = RefineExternalitiesImpl.create({
+      currentServiceId: args.currentServiceId,
+      lookupState: args.lookupState,
+    });
 
     return {
       fetchExternalities,

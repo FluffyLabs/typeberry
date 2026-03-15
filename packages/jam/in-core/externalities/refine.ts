@@ -17,14 +17,33 @@ import type { U64 } from "@typeberry/numbers";
 import type { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import type { BigGas } from "@typeberry/pvm-interface";
 import type { ProgramDecoderError } from "@typeberry/pvm-interpreter";
+import type { State } from "@typeberry/state";
 import type { OK, Result } from "@typeberry/utils";
 
+/**
+ * Parameters required to create a RefineExternalitiesImpl.
+ */
+export type RefineExternalitiesParams = {
+  /** The service currently being refined. */
+  currentServiceId: ServiceId;
+  /** State at the lookup anchor block, used for historical preimage lookups. */
+  lookupState: State;
+};
+
 export class RefineExternalitiesImpl implements RefineExternalities {
-  static create() {
-    return new RefineExternalitiesImpl();
+  /** Service being refined (used as default for historicalLookup). */
+  private readonly currentServiceId: ServiceId;
+  /** State at the lookup anchor for preimage lookups. */
+  private readonly lookupState: State;
+
+  static create(params: RefineExternalitiesParams) {
+    return new RefineExternalitiesImpl(params);
   }
 
-  private constructor() {}
+  private constructor(params: RefineExternalitiesParams) {
+    this.currentServiceId = params.currentServiceId;
+    this.lookupState = params.lookupState;
+  }
 
   machineExpunge(_machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>> {
     throw new Error("Method not implemented.");
@@ -83,7 +102,12 @@ export class RefineExternalitiesImpl implements RefineExternalities {
     throw new Error("Method not implemented.");
   }
 
-  historicalLookup(_serviceId: ServiceId | null, _hash: Blake2bHash): Promise<BytesBlob | null> {
-    throw new Error("Method not implemented.");
+  historicalLookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null> {
+    const sid = serviceId ?? this.currentServiceId;
+    const service = this.lookupState.getService(sid);
+    if (service === null) {
+      return Promise.resolve(null);
+    }
+    return Promise.resolve(service.getPreimage(hash.asOpaque()));
   }
 }
