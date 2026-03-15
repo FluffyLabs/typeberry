@@ -103,11 +103,14 @@ export class RefineExternalitiesImpl implements RefineExternalities {
   }
 
   historicalLookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null> {
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/33d70133f901?v=0.7.2
     const sid = serviceId ?? this.currentServiceId;
     const service = this.lookupState.getService(sid);
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/334802334802?v=0.7.2
     if (service === null) {
       return Promise.resolve(null);
     }
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/334f02334f02?v=0.7.2
     return Promise.resolve(service.getPreimage(hash.asOpaque()));
   }
 }

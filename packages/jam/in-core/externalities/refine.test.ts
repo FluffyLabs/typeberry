@@ -5,8 +5,9 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { InMemoryService, PreimageItem, ServiceAccountInfo, type State } from "@typeberry/state";
+import { InMemoryService, InMemoryState, PreimageItem, ServiceAccountInfo, type State } from "@typeberry/state";
 import { RefineExternalitiesImpl, type RefineExternalitiesParams } from "./refine.js";
+import { tinyChainSpec } from "@typeberry/config";
 
 /**
  * Create a mock State that has specified services with preimages.
@@ -51,12 +52,7 @@ function createMockState(
     );
   }
 
-  return {
-    getService(id: ServiceId) {
-      return serviceMap.get(id) ?? null;
-    },
-    // biome-ignore lint/suspicious/noExplicitAny: we only need getService for tests
-  } as any;
+  return InMemoryState.partial(tinyChainSpec, { services: serviceMap });
 }
 
 function createExt(overrides: Partial<RefineExternalitiesParams> = {}) {
@@ -94,8 +90,7 @@ describe("RefineExternalitiesImpl", () => {
     });
 
     it("should return null for non-existent service", async () => {
-      const lookupState = createMockState([{ id: 42 }]);
-      const ext = createExt({ lookupState });
+      const ext = createExt();
 
       const hash = Bytes.parseBytes(PREIMAGE_HASH, HASH_SIZE).asOpaque();
       const result = await ext.historicalLookup(tryAsServiceId(999), hash);
@@ -104,7 +99,7 @@ describe("RefineExternalitiesImpl", () => {
     });
 
     it("should return null for non-existent preimage hash", async () => {
-      const lookupState = createMockState([{ id: 42, preimages: [] }]);
+      const lookupState = createMockState([{ id: 42 }]);
       const ext = createExt({ lookupState });
 
       const hash = Bytes.parseBytes(PREIMAGE_HASH, HASH_SIZE).asOpaque();
