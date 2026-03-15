@@ -3,11 +3,11 @@ import { describe, it } from "node:test";
 import { type PreimageHash, type ServiceId, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
+import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { InMemoryService, InMemoryState, PreimageItem, ServiceAccountInfo, type State } from "@typeberry/state";
 import { RefineExternalitiesImpl, type RefineExternalitiesParams } from "./refine.js";
-import { tinyChainSpec } from "@typeberry/config";
 
 /**
  * Create a mock State that has specified services with preimages.
