@@ -15,6 +15,7 @@
     "@typeberry/database": "*",
     "@typeberry/executor": "*",
     "@typeberry/hash": "*",
+    "@typeberry/jam-host-calls": "*",
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
     "@typeberry/state": "*",
