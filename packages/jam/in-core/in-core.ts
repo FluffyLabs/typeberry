@@ -171,13 +171,24 @@ export class InCore {
     logger.log`[core:${core}] Authorized. Proceeding with work items verification. Anchor=${context.anchor}`;
 
     // Verify the work items
+    let exportOffset = 0;
     const refineResults: Awaited<ReturnType<InCore["refineItem"]>>[] = [];
     for (const [idx, item] of items.entries()) {
       logger.info`[core:${core}][i:${idx}] Refining item for service ${item.service}.`;
 
-      refineResults.push(
-        await this.refineItem(state, lookupState, idx, item, imports, extrinsics, core, workPackageHash),
+      const result = await this.refineItem(
+        state,
+        lookupState,
+        idx,
+        item,
+        imports,
+        extrinsics,
+        core,
+        workPackageHash,
+        exportOffset,
       );
+      refineResults.push(result);
+      exportOffset += result.exports.length;
     }
 
     // amalgamate the work report now
@@ -268,6 +279,7 @@ export class InCore {
     allExtrinsics: PerWorkItem<WorkItemExtrinsic[]>,
     coreIndex: CoreIndex,
     workPackageHash: WorkPackageHash,
+    exportOffset: number,
   ): Promise<RefineItemResult> {
     const payloadHash = this.blake2b.hashBytes(item.payload);
     const baseResult = {
@@ -305,12 +317,13 @@ export class InCore {
     }
 
     const code = maybeCode.ok;
-    const externalities = this.createRefineExternalities({
+    const { externalities, refineImpl } = this.createRefineExternalities({
       payload: item.payload,
       imports: allImports,
       extrinsics: allExtrinsics,
       currentServiceId: item.service,
       lookupState,
+      exportOffset,
     });
 
     const executor = await PvmExecutor.createRefineExecutor(item.service, code, externalities, this.pvmBackend);
@@ -325,8 +338,7 @@ export class InCore {
 
     const execResult = await executor.run(args, item.refineGasLimit);
 
-    // TODO [ToDr] get exports from externalities
-    const exports: Segment[] = [];
+    const exports: Segment[] = refineImpl.getExportedSegments();
     if (exports.length !== item.exportCount) {
       return {
         exports,
@@ -422,7 +434,8 @@ export class InCore {
     extrinsics: PerWorkItem<WorkItemExtrinsic[]>;
     currentServiceId: ServiceId;
     lookupState: State;
-  }): RefineHostCallExternalities {
+    exportOffset: number;
+  }): { externalities: RefineHostCallExternalities; refineImpl: RefineExternalitiesImpl } {
     // TODO [ToDr] Pass all required fetch data
     const fetchExternalities = FetchExternalities.createForRefine(
       {
@@ -431,14 +444,18 @@ export class InCore {
       },
       this.chainSpec,
     );
-    const refine = RefineExternalitiesImpl.create({
+    const refineImpl = RefineExternalitiesImpl.create({
       currentServiceId: args.currentServiceId,
       lookupState: args.lookupState,
+      exportOffset: args.exportOffset,
     });
 
     return {
-      fetchExternalities,
-      refine,
+      externalities: {
+        fetchExternalities,
+        refine: refineImpl,
+      },
+      refineImpl,
     };
   }
 }
