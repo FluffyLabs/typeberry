@@ -27,7 +27,7 @@ export const MAX_NUMBER_OF_IMPORTS_WP = 3072;
 export const MAX_NUMBER_OF_EXPORTS_WP = 3072;
 
 /**
- * `W_G = W_E * W_S`: Exported segment size in bytes.
+ * `W_G = W_E * W_P`: Exported segment size in bytes.
  * https://graypaper.fluffylabs.dev/#/ab2cdbd/449a00449b00?v=0.7.2
  */
 export const SEGMENT_BYTES = W_E * W_P;
