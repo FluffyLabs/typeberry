@@ -40,7 +40,7 @@ export type RefineResult = {
 
 export type RefineItemResult = {
   result: WorkResult;
-  exports: Segment[];
+  exports: readonly Segment[];
 };
 
 export enum RefineError {
@@ -338,7 +338,7 @@ export class InCore {
 
     const execResult = await executor.run(args, item.refineGasLimit);
 
-    const exports: Segment[] = externalities.refine.getExportedSegments();
+    const exports = externalities.refine.getExportedSegments();
     if (exports.length !== item.exportCount) {
       return {
         exports,
