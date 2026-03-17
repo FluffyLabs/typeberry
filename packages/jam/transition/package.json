@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/transition",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "description": "JAM state transition.",
   "main": "index.ts",
   "dependencies": {

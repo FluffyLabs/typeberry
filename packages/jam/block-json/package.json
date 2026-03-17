@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/block-json",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "description": "JSON definition of block",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",

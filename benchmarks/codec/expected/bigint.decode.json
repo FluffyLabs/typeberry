@@ -4,11 +4,11 @@
   "version": null,
   "results": null,
   "fastest": {
-    "name": "decode custom",
-    "index": 0
-  },
-  "slowest": {
     "name": "decode bigint",
     "index": 1
+  },
+  "slowest": {
+    "name": "decode custom",
+    "index": 0
   }
 }

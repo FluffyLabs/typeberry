@@ -12,7 +12,7 @@ concurrency:
 
 env:
   TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
-  NODE_VERSION: 22.x
+  NODE_VERSION: 24.x
 
 jobs:
   test-vectors:
@@ -58,11 +58,11 @@ jobs:
       GP_VERSION: ${{ matrix.gp_version }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Load test ref
         run: .github/scripts/load-test-ref.sh
       - name: Checkout JAM test vectors
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: fluffylabs/test-vectors
           path: "./test-vectors"
@@ -74,7 +74,7 @@ jobs:
           git submodule sync ${{ matrix.submodule }}
           git submodule update --init --depth 1 ${{ matrix.submodule }}
       - name: Use Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
