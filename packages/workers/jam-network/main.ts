@@ -61,6 +61,11 @@ export async function main(
     }
   });
 
+  // Relay tickets received from peers back to block-authorship
+  network.ticketTask.setOnTicketReceived((epochIndex, ticket) => {
+    authorshipComms.sendReceivedTickets({ epochIndex, tickets: [ticket] });
+  });
+
   await network.network.start();
 
   // stop the network when the worker is finishing.
