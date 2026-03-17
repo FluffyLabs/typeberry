@@ -76,6 +76,7 @@ export async function main(
     workerParams: ImporterConfig.create({
       pvm: config.pvmBackend,
       dummyFinalityDepth: tryAsU16(config.devValidatorIndex !== null ? 100 : 0),
+      pruneBlocks: false,
     }),
   };
 

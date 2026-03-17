@@ -25,6 +25,8 @@ export interface BlocksDb {
    * NOTE: this is not extrinsic hash!
    */
   getExtrinsic(hash: HeaderHash): ExtrinsicView | null;
+  /** Mark a block as no longer needed. Backend may remove its data. */
+  markUnused(hash: HeaderHash): void;
   /** Close the database and free resources. */
   close(): Promise<void>;
 }
@@ -84,6 +86,12 @@ export class InMemoryBlocks implements BlocksDb {
 
   getExtrinsic(hash: HeaderHash): ExtrinsicView | null {
     return this.extrinsicsByHeaderHash.get(hash) ?? null;
+  }
+
+  markUnused(hash: HeaderHash): void {
+    this.headersByHash.delete(hash);
+    this.extrinsicsByHeaderHash.delete(hash);
+    this.postStateRootByHeaderHash.delete(hash);
   }
 
   async close() {}

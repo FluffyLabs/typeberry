@@ -16,6 +16,7 @@ const zeroHash = Bytes.zero(HASH_SIZE).asOpaque<StateRootHash>();
 export type ImporterOptions = {
   initGenesisFromAncestry?: boolean;
   dummyFinalityDepth?: number;
+  pruneBlocks?: boolean;
 };
 
 export async function mainImporter(
@@ -45,6 +46,7 @@ export async function mainImporter(
   const workerParams = ImporterConfig.create({
     pvm: config.pvmBackend,
     dummyFinalityDepth: tryAsU16(options.dummyFinalityDepth ?? 0),
+    pruneBlocks: options.pruneBlocks ?? false,
   });
   const workerConfig =
     config.node.databaseBasePath === undefined

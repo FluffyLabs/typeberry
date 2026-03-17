@@ -30,6 +30,7 @@ const importerError = <Kind extends ImporterErrorKind, Err extends ImporterError
 export type ImporterOptions = {
   initGenesisFromAncestry?: boolean;
   finalizer?: Finalizer;
+  pruneBlocks?: boolean;
 };
 
 export class Importer {
@@ -187,12 +188,17 @@ export class Importer {
     // finally update the best block
     await this.blocks.setBestHeaderHash(headerHash);
 
-    // check for finality and prune old states
+    // check for finality and prune old states (and optionally blocks)
     const finality = this.options.finalizer?.onBlockImported(headerHash) ?? null;
     if (finality !== null) {
-      this.logger.info`🦭 Finalized block: ${finality.finalizedHash} (${finality.prunableStateHashes.length} to prune)`;
+      const pruneBlocks = this.options.pruneBlocks ?? false;
+      this.logger
+        .info`🦭 Finalized block: ${finality.finalizedHash} (${finality.prunableStateHashes.length} to prune, blocks: ${pruneBlocks})`;
       for (const hash of finality.prunableStateHashes) {
         this.states.markUnused(hash);
+        if (pruneBlocks) {
+          this.blocks.markUnused(hash);
+        }
       }
     }
 

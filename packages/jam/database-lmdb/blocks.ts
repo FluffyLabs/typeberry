@@ -91,6 +91,12 @@ export class LmdbBlocks implements BlocksDb {
     return Decoder.decodeObject(Extrinsic.Codec.View, data, this.chainSpec);
   }
 
+  markUnused(hash: HeaderHash): void {
+    this.headers.remove(hash.raw);
+    this.extrinsics.remove(hash.raw);
+    this.postStateRoots.remove(hash.raw);
+  }
+
   async close() {
     await Promise.all([this.headers.close(), this.extrinsics.close(), this.postStateRoots.close()]);
   }
