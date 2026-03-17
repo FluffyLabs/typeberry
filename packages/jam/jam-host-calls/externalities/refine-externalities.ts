@@ -108,7 +108,7 @@ export type SegmentExportError = typeof SegmentExportError;
 /** Host functions external invocations available during refine phase. */
 export interface RefineExternalities {
   /** Get the segments exported during this work item's refinement. */
-  getExportedSegments(): Segment[];
+  getExportedSegments(): readonly Segment[];
 
   /** Forget a previously started nested VM. */
   machineExpunge(machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>>;

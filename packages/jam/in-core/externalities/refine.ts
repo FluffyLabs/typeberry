@@ -58,7 +58,7 @@ export class RefineExternalitiesImpl implements RefineExternalities {
     this.exportOffset = params.exportOffset;
   }
 
-  getExportedSegments(): Segment[] {
+  getExportedSegments(): readonly Segment[] {
     return this.exportedSegments;
   }
 

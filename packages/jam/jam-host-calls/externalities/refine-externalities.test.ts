@@ -62,7 +62,7 @@ export class TestRefineExt implements RefineExternalities {
 
   private readonly exportSegments: Segment[] = [];
 
-  getExportedSegments(): Segment[] {
+  getExportedSegments(): readonly Segment[] {
     return this.exportSegments;
   }
 
