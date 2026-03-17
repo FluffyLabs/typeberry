@@ -44,7 +44,7 @@ export class RefineExternalitiesImpl implements RefineExternalities {
   /** State at the lookup anchor for preimage lookups. */
   private readonly lookupState: State;
   /** Segments exported by this work item during refinement. */
-  private exportedSegments: Segment[] = [];
+  private readonly exportedSegments: Segment[] = [];
   /** Offset for segment indexing (sum of exports from prior items). */
   private readonly exportOffset: number;
 
@@ -123,7 +123,7 @@ export class RefineExternalitiesImpl implements RefineExternalities {
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/335d03335d03?v=0.7.2
     const currentIndex = this.exportOffset + this.exportedSegments.length;
     if (currentIndex >= MAX_NUMBER_OF_EXPORTS_WP) {
-      return Result.error(SegmentExportError, () => "Maximum number of exported segments exceeded.");
+      return Result.error(SegmentExportError, () => `Maximum number of exported segments exceeded (offset: ${this.exportOffset}, exported: ${this.exportedSegments.length})`);
     }
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/337303337303?v=0.7.2
     this.exportedSegments.push(segment);
