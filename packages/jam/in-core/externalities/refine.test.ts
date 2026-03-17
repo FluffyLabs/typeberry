@@ -191,7 +191,7 @@ describe("RefineExternalitiesImpl", () => {
     it("should return SegmentExportError at exactly MAX_NUMBER_OF_EXPORTS_WP - 1 + 1", () => {
       const ext = createExt({ exportOffset: MAX_NUMBER_OF_EXPORTS_WP - 1 });
 
-      // This one should succeed (index = MAX_NUMBER_OF_SEGMENTS - 1)
+      // This one should succeed (index = MAX_NUMBER_OF_EXPORTS_WP - 1)
       const r1 = ext.exportSegment(createSegment(0x01));
       assert.strictEqual(r1.isOk, true);
       assert.strictEqual(r1.ok, MAX_NUMBER_OF_EXPORTS_WP - 1);
