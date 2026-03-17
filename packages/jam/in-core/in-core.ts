@@ -317,7 +317,7 @@ export class InCore {
     }
 
     const code = maybeCode.ok;
-    const { externalities, refineImpl } = this.createRefineExternalities({
+    const externalities = this.createRefineExternalities({
       payload: item.payload,
       imports: allImports,
       extrinsics: allExtrinsics,
@@ -338,7 +338,7 @@ export class InCore {
 
     const execResult = await executor.run(args, item.refineGasLimit);
 
-    const exports: Segment[] = refineImpl.getExportedSegments();
+    const exports: Segment[] = externalities.refine.getExportedSegments();
     if (exports.length !== item.exportCount) {
       return {
         exports,
@@ -435,7 +435,7 @@ export class InCore {
     currentServiceId: ServiceId;
     lookupState: State;
     exportOffset: number;
-  }): { externalities: RefineHostCallExternalities; refineImpl: RefineExternalitiesImpl } {
+  }): RefineHostCallExternalities {
     // TODO [ToDr] Pass all required fetch data
     const fetchExternalities = FetchExternalities.createForRefine(
       {
@@ -444,18 +444,15 @@ export class InCore {
       },
       this.chainSpec,
     );
-    const refineImpl = RefineExternalitiesImpl.create({
+    const refine = RefineExternalitiesImpl.create({
       currentServiceId: args.currentServiceId,
       lookupState: args.lookupState,
       exportOffset: args.exportOffset,
     });
 
     return {
-      externalities: {
-        fetchExternalities,
-        refine: refineImpl,
-      },
-      refineImpl,
+      fetchExternalities,
+      refine,
     };
   }
 }

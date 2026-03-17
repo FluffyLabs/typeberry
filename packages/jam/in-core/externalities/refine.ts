@@ -58,10 +58,6 @@ export class RefineExternalitiesImpl implements RefineExternalities {
     this.exportOffset = params.exportOffset;
   }
 
-  /**
-   * Get the segments exported during this work item's refinement.
-   * Called after PVM execution to collect exports for the work report.
-   */
   getExportedSegments(): Segment[] {
     return this.exportedSegments;
   }
@@ -123,7 +119,11 @@ export class RefineExternalitiesImpl implements RefineExternalities {
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/335d03335d03?v=0.7.2
     const currentIndex = this.exportOffset + this.exportedSegments.length;
     if (currentIndex >= MAX_NUMBER_OF_EXPORTS_WP) {
-      return Result.error(SegmentExportError, () => `Maximum number of exported segments exceeded (offset: ${this.exportOffset}, exported: ${this.exportedSegments.length})`);
+      return Result.error(
+        SegmentExportError,
+        () =>
+          `Maximum number of exported segments exceeded (offset: ${this.exportOffset}, exported: ${this.exportedSegments.length})`,
+      );
     }
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/337303337303?v=0.7.2
     this.exportedSegments.push(segment);
