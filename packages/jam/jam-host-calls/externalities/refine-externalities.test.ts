@@ -60,6 +60,12 @@ export class TestRefineExt implements RefineExternalities {
 
   public machineInvokeStatus: MachineStatus = { status: Status.OK };
 
+  private readonly exportSegments: Segment[] = [];
+
+  getExportedSegments(): Segment[] {
+    return this.exportSegments;
+  }
+
   machineExpunge(machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>> {
     const val = this.machineExpungeData.get(machineIndex);
     if (val === undefined) {
@@ -151,6 +157,7 @@ export class TestRefineExt implements RefineExternalities {
     if (result === undefined) {
       throw new Error(`Unexpected call to exportSegment with: ${segment}`);
     }
+    this.exportSegments.push(segment);
     return result;
   }
 

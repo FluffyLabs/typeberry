@@ -57,6 +57,7 @@ describe("HostCalls: Export", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), 15n);
+    assert.strictEqual(refine.getExportedSegments().length, 1);
   });
 
   it("should zero-pad when exported value is small", async () => {
@@ -75,6 +76,7 @@ describe("HostCalls: Export", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), 5n);
+    assert.strictEqual(refine.getExportedSegments().length, 1);
   });
 
   it("should panic if memory is not readable", async () => {
@@ -89,6 +91,7 @@ describe("HostCalls: Export", () => {
 
     // then
     assert.deepStrictEqual(result, PvmExecution.Panic);
+    assert.strictEqual(refine.getExportedSegments().length, 0);
   });
 
   it("should fail with FULL if export limit is reached", async () => {

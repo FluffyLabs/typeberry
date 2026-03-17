@@ -20,7 +20,7 @@ import { InMemoryService, InMemoryState, PreimageItem, ServiceAccountInfo, type 
 import { RefineExternalitiesImpl, type RefineExternalitiesParams } from "./refine.js";
 
 function createSegment(byte = 0xab): Segment {
-  return Bytes.fill(byte, SEGMENT_BYTES);
+  return Bytes.fill(SEGMENT_BYTES, byte);
 }
 
 function createSmallSegment(bytes: number[]): Segment {
