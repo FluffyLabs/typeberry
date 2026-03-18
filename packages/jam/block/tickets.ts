@@ -1,7 +1,6 @@
 import type { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU8, tryAsU32, type U8 } from "@typeberry/numbers";
@@ -14,23 +13,15 @@ import { codecKnownSizeArray, codecWithContext } from "./codec-utils.js";
  * Constrained by `N = 2`:
  * https://graypaper.fluffylabs.dev/#/579bd12/417200417400
  */
-export type TicketAttempt = Opaque<U8, "TicketAttempt[0|1|2]">;
-export function tryAsTicketAttempt(x: number, chainSpec: ChainSpec): TicketAttempt {
-  if (x >= chainSpec.ticketsPerValidator) {
-    throw new Error(`Ticket attempt ${x} is out of bounds [0, ${chainSpec.ticketsPerValidator})`);
-  }
+export type TicketAttempt = Opaque<U8, "TicketAttempt[u8]">;
+export function tryAsTicketAttempt(x: number): TicketAttempt {
   return asOpaqueType(tryAsU8(x));
 }
 
-const ticketAttemptCodec = codecWithContext((context) => {
-  return codec.varU32.convert<TicketAttempt>(
-    (x) => {
-      tryAsTicketAttempt(x, context);
-      return tryAsU32(x);
-    },
-    (x) => tryAsTicketAttempt(x, context),
-  );
-});
+const ticketAttemptCodec = codec.varU32.convert<TicketAttempt>(
+  (x) => tryAsU32(x),
+  (x) => tryAsTicketAttempt(x),
+);
 
 /* Bandersnatch-signed ticket contest entry. */
 export class SignedTicket extends WithDebug {

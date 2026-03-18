@@ -42,7 +42,7 @@ describe("Ticket Generator", () => {
         const tickets: SignedTicket[] = [];
         for (let attempt = 0; attempt < ticketsPerValidator; attempt++) {
           tickets.push({
-            attempt: tryAsTicketAttempt(attempt, tinyChainSpec),
+            attempt: tryAsTicketAttempt(attempt),
             signature: Bytes.zero(784).asOpaque(),
           } as SignedTicket);
         }
@@ -90,10 +90,10 @@ describe("Ticket Generator", () => {
 
       assert.ok(result.isOk);
       const tickets = result.ok;
-      assert.strictEqual(tickets[0].attempt, tryAsTicketAttempt(0, tinyChainSpec));
-      assert.strictEqual(tickets[1].attempt, tryAsTicketAttempt(1, tinyChainSpec));
-      assert.strictEqual(tickets[2].attempt, tryAsTicketAttempt(0, tinyChainSpec));
-      assert.strictEqual(tickets[3].attempt, tryAsTicketAttempt(1, tinyChainSpec));
+      assert.strictEqual(tickets[0].attempt, tryAsTicketAttempt(0));
+      assert.strictEqual(tickets[1].attempt, tryAsTicketAttempt(1));
+      assert.strictEqual(tickets[2].attempt, tryAsTicketAttempt(0));
+      assert.strictEqual(tickets[3].attempt, tryAsTicketAttempt(1));
     });
 
     it("should return empty array for no validator keys", async () => {

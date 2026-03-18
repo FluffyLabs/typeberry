@@ -249,7 +249,7 @@ async function generateTickets(
 
     tickets.push(
       SignedTicket.create({
-        attempt: tryAsTicketAttempt(attempt, chainSpec),
+        attempt: tryAsTicketAttempt(attempt),
         signature,
       }),
     );

@@ -24,7 +24,7 @@ function createTestTicket(attempt: number, signatureByte = 0): SignedTicket {
   signatureBytes.raw[0] = attempt;
   signatureBytes.raw[1] = signatureByte;
   return SignedTicket.create({
-    attempt: tryAsTicketAttempt(attempt, tinyChainSpec),
+    attempt: tryAsTicketAttempt(attempt),
     signature: signatureBytes.asOpaque(),
   });
 }

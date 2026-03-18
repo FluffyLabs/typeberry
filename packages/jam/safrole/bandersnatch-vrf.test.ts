@@ -22,7 +22,7 @@ import { BandernsatchWasm } from "./bandersnatch-wasm.js";
 
 const bandersnatchWasm = BandernsatchWasm.new();
 
-const attempt = (v: number) => tryAsTicketAttempt(v, tinyChainSpec);
+const attempt = (v: number) => tryAsTicketAttempt(v);
 
 describe("Bandersnatch verification", () => {
   describe("getRingCommitment", () => {
@@ -311,7 +311,7 @@ describe("Bandersnatch verification", () => {
         proverIndex,
         secrets[proverIndex],
         entropy,
-        tryAsTicketAttempt(2, tinyChainSpec),
+        tryAsTicketAttempt(2),
         tinyChainSpec,
       );
 

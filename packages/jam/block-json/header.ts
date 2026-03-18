@@ -13,7 +13,6 @@ import {
 } from "@typeberry/block";
 import { Ticket } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
-import type { ChainSpec } from "@typeberry/config";
 import type { BandersnatchKey, Ed25519Key } from "@typeberry/crypto";
 import type { BandersnatchVrfSignature } from "@typeberry/crypto/bandersnatch.js";
 import { json } from "@typeberry/json-parser";
@@ -58,16 +57,15 @@ type JsonHeader = {
   seal: BandersnatchVrfSignature;
 };
 
-export const headerFromJson = (spec: ChainSpec) => {
-  const ticket = json.object<Ticket>(
-    {
-      id: fromJson.bytes32(),
-      attempt: fromJson.ticketAttempt(spec),
-    },
-    (x) => Ticket.create({ id: x.id, attempt: x.attempt }),
-  );
+const ticket = json.object<Ticket>(
+  {
+    id: fromJson.bytes32(),
+    attempt: fromJson.ticketAttempt,
+  },
+  (x) => Ticket.create({ id: x.id, attempt: x.attempt }),
+);
 
-  return json.object<JsonHeader, Header>(
+export const headerFromJson = json.object<JsonHeader, Header>(
     {
       parent: fromJson.bytes32(),
       parent_state_root: fromJson.bytes32(),
@@ -111,4 +109,3 @@ export const headerFromJson = (spec: ChainSpec) => {
       });
     },
   );
-};
