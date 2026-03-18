@@ -1,13 +1,33 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type PreimageHash, type ServiceId, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import {
+  MAX_NUMBER_OF_EXPORTS_WP,
+  type PreimageHash,
+  SEGMENT_BYTES,
+  type Segment,
+  type ServiceId,
+  tryAsServiceGas,
+  tryAsServiceId,
+  tryAsTimeSlot,
+} from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
+import { SegmentExportError } from "@typeberry/jam-host-calls";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { InMemoryService, InMemoryState, PreimageItem, ServiceAccountInfo, type State } from "@typeberry/state";
 import { RefineExternalitiesImpl, type RefineExternalitiesParams } from "./refine.js";
+
+function createSegment(byte = 0xab): Segment {
+  return Bytes.fill(SEGMENT_BYTES, byte);
+}
+
+function createSmallSegment(bytes: number[]): Segment {
+  const data = new Uint8Array(SEGMENT_BYTES);
+  data.set(bytes);
+  return Bytes.fromBlob(data, SEGMENT_BYTES);
+}
 
 /**
  * Create a mock State that has specified services with preimages.
@@ -60,6 +80,7 @@ function createExt(overrides: Partial<RefineExternalitiesParams> = {}) {
   return RefineExternalitiesImpl.create({
     currentServiceId: tryAsServiceId(42),
     lookupState: overrides.lookupState ?? defaultState,
+    exportOffset: overrides.exportOffset ?? 0,
     ...overrides,
   });
 }
@@ -121,6 +142,74 @@ describe("RefineExternalitiesImpl", () => {
 
       assert.strictEqual(r1?.raw[0], 0x01);
       assert.strictEqual(r2?.raw[0], 0x02);
+    });
+  });
+
+  describe("exportSegment", () => {
+    it("should export a segment and return its index", () => {
+      const ext = createExt();
+      const segment = createSegment(0x01);
+      const result = ext.exportSegment(segment);
+
+      assert.strictEqual(result.isOk, true);
+      assert.strictEqual(result.ok, 0); // first export at offset 0
+      assert.strictEqual(ext.getExportedSegments().length, 1);
+    });
+
+    it("should return sequential indices for multiple exports", () => {
+      const ext = createExt();
+
+      const r1 = ext.exportSegment(createSegment(0x01));
+      const r2 = ext.exportSegment(createSegment(0x02));
+      const r3 = ext.exportSegment(createSegment(0x03));
+
+      assert.strictEqual(r1.isOk, true);
+      assert.strictEqual(r1.ok, 0);
+      assert.strictEqual(r2.isOk, true);
+      assert.strictEqual(r2.ok, 1);
+      assert.strictEqual(r3.isOk, true);
+      assert.strictEqual(r3.ok, 2);
+      assert.strictEqual(ext.getExportedSegments().length, 3);
+    });
+
+    it("should apply exportOffset to segment indices", () => {
+      const ext = createExt({ exportOffset: 100 });
+      const result = ext.exportSegment(createSegment());
+
+      assert.strictEqual(result.isOk, true);
+      assert.strictEqual(result.ok, 100);
+    });
+
+    it("should return SegmentExportError when MAX_NUMBER_OF_EXPORTS_WP exceeded", () => {
+      const ext = createExt({ exportOffset: MAX_NUMBER_OF_EXPORTS_WP });
+      const result = ext.exportSegment(createSegment());
+
+      assert.strictEqual(result.isError, true);
+      assert.strictEqual(result.error, SegmentExportError);
+    });
+
+    it("should return SegmentExportError at exactly MAX_NUMBER_OF_EXPORTS_WP - 1 + 1", () => {
+      const ext = createExt({ exportOffset: MAX_NUMBER_OF_EXPORTS_WP - 1 });
+
+      // This one should succeed (index = MAX_NUMBER_OF_EXPORTS_WP - 1)
+      const r1 = ext.exportSegment(createSegment(0x01));
+      assert.strictEqual(r1.isOk, true);
+      assert.strictEqual(r1.ok, MAX_NUMBER_OF_EXPORTS_WP - 1);
+
+      // This one should fail
+      const r2 = ext.exportSegment(createSegment(0x02));
+      assert.strictEqual(r2.isError, true);
+      assert.strictEqual(r2.error, SegmentExportError);
+    });
+
+    it("should store exact segment data", () => {
+      const ext = createExt();
+      const segment = createSmallSegment([1, 2, 3, 4, 5]);
+      ext.exportSegment(segment);
+
+      const exported = ext.getExportedSegments();
+      assert.strictEqual(exported.length, 1);
+      assert.deepStrictEqual(exported[0].raw.subarray(0, 5), new Uint8Array([1, 2, 3, 4, 5]));
     });
   });
 });
