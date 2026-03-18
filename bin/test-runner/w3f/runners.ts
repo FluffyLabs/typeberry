@@ -97,9 +97,7 @@ function codecRunners(flavor: "tiny" | "full") {
       preimagesExtrinsicFromJson,
     ),
     runner(`codec/${flavor}/refine_context`, runRefineContextTest, [spec]).fromJson(refineContextFromJson),
-    runner(`codec/${flavor}/tickets_extrinsic`, runTicketsExtrinsicTest, [spec]).fromJson(
-      ticketsExtrinsicFromJson,
-    ),
+    runner(`codec/${flavor}/tickets_extrinsic`, runTicketsExtrinsicTest, [spec]).fromJson(ticketsExtrinsicFromJson),
     runner(`codec/${flavor}/work_item`, runWorkItemTest, [spec]).fromJson(workItemFromJson),
     runner(`codec/${flavor}/work_package`, runWorkPackageTest, [spec]).fromJson(workPackageFromJson),
     runner(`codec/${flavor}/work_report`, runWorkReportTest, [spec]).fromJson(workReportFromJson),

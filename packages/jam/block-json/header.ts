@@ -66,46 +66,46 @@ const ticket = json.object<Ticket>(
 );
 
 export const headerFromJson = json.object<JsonHeader, Header>(
-    {
-      parent: fromJson.bytes32(),
-      parent_state_root: fromJson.bytes32(),
-      extrinsic_hash: fromJson.bytes32(),
-      slot: "number",
-      epoch_mark: json.optional(epochMark),
-      tickets_mark: json.optional(json.array(ticket)),
-      offenders_mark: json.array(fromJson.bytes32<Ed25519Key>()),
-      author_index: "number",
-      entropy_source: bandersnatchVrfSignature,
-      seal: bandersnatchVrfSignature,
-    },
-    ({
-      parent,
-      parent_state_root,
-      extrinsic_hash,
-      slot,
-      epoch_mark,
-      tickets_mark,
-      offenders_mark,
-      author_index,
-      entropy_source,
+  {
+    parent: fromJson.bytes32(),
+    parent_state_root: fromJson.bytes32(),
+    extrinsic_hash: fromJson.bytes32(),
+    slot: "number",
+    epoch_mark: json.optional(epochMark),
+    tickets_mark: json.optional(json.array(ticket)),
+    offenders_mark: json.array(fromJson.bytes32<Ed25519Key>()),
+    author_index: "number",
+    entropy_source: bandersnatchVrfSignature,
+    seal: bandersnatchVrfSignature,
+  },
+  ({
+    parent,
+    parent_state_root,
+    extrinsic_hash,
+    slot,
+    epoch_mark,
+    tickets_mark,
+    offenders_mark,
+    author_index,
+    entropy_source,
+    seal,
+  }) => {
+    const epochMarker = epoch_mark ?? null;
+    const ticketsMarker =
+      tickets_mark === undefined || tickets_mark === null
+        ? null
+        : TicketsMarker.create({ tickets: asOpaqueType(tickets_mark) });
+    return Header.create({
+      parentHeaderHash: parent,
+      priorStateRoot: parent_state_root,
+      extrinsicHash: extrinsic_hash,
+      timeSlotIndex: slot,
+      epochMarker,
+      ticketsMarker,
+      offendersMarker: offenders_mark,
+      bandersnatchBlockAuthorIndex: author_index,
+      entropySource: entropy_source,
       seal,
-    }) => {
-      const epochMarker = epoch_mark ?? null;
-      const ticketsMarker =
-        tickets_mark === undefined || tickets_mark === null
-          ? null
-          : TicketsMarker.create({ tickets: asOpaqueType(tickets_mark) });
-      return Header.create({
-        parentHeaderHash: parent,
-        priorStateRoot: parent_state_root,
-        extrinsicHash: extrinsic_hash,
-        timeSlotIndex: slot,
-        epochMarker,
-        ticketsMarker,
-        offendersMarker: offenders_mark,
-        bandersnatchBlockAuthorIndex: author_index,
-        entropySource: entropy_source,
-        seal,
-      });
-    },
-  );
+    });
+  },
+);

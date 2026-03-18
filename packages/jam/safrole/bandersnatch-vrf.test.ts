@@ -5,7 +5,6 @@ import { tryAsValidatorIndex } from "@typeberry/block";
 import { type SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
-import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, SEED_SIZE } from "@typeberry/crypto";
 import {
   BANDERSNATCH_PROOF_BYTES,
@@ -311,8 +310,7 @@ describe("Bandersnatch verification", () => {
         proverIndex,
         secrets[proverIndex],
         entropy,
-        tryAsTicketAttempt(2),
-        tinyChainSpec,
+        2,
       );
 
       assert.ok(genResult.isOk);
