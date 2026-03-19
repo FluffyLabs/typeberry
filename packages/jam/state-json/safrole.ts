@@ -6,20 +6,19 @@ import type { BandersnatchKey } from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state";
 
-export const ticketFromJson = (spec: ChainSpec): FromJson<Ticket> =>
-  json.object<Ticket>(
-    {
-      id: fromJson.bytes32(),
-      attempt: fromJson.ticketAttempt(spec),
-    },
-    Ticket.create,
-  );
+export const ticketFromJson: FromJson<Ticket> = json.object<Ticket>(
+  {
+    id: fromJson.bytes32(),
+    attempt: fromJson.ticketAttempt,
+  },
+  Ticket.create,
+);
 
 export class TicketsOrKeys {
-  static fromJson(spec: ChainSpec): FromJson<TicketsOrKeys> {
+  static fromJson(): FromJson<TicketsOrKeys> {
     return {
       keys: json.optional<BandersnatchKey[]>(json.array(fromJson.bytes32())),
-      tickets: json.optional<Ticket[]>(json.array(ticketFromJson(spec))),
+      tickets: json.optional<Ticket[]>(json.array(ticketFromJson)),
     };
   }
 
