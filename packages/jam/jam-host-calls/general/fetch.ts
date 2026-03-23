@@ -8,175 +8,205 @@ import { logger } from "../logger.js";
 import { clampU64ToU32 } from "../utils.js";
 import { HostCallResult } from "./results.js";
 
-/** Fetchable data. */
+/**
+ * Fetchable data.
+ *
+ * The fetch host call (ecalli 1) returns context-dependent data based on
+ * ω₁₀ (the kind selector). Each invocation context passes different
+ * parameters to Ω_Y, which determines which kinds return data vs NONE.
+ *
+ * Ω_Y signature: Ω_Y(ρ, φ, μ, p, n, r, i, ī, x̄, 𝐢, ...)
+ *
+ * Context parameter mapping
+ *   Is-Authorized: Ω_Y(ρ, φ, μ, 𝐩, ∅, ∅, ∅, ∅, ∅, ∅, ∅)
+ *   https://graypaper.fluffylabs.dev/#/ab2cdbd/2e43012e4301?v=0.7.2
+ *   Refine:        Ω_Y(ρ, φ, μ, p, H₀, r, i, ī, x̄, ∅, (m,e))
+ *   https://graypaper.fluffylabs.dev/#/ab2cdbd/2fe0012fe001?v=0.7.2
+ *   Accumulate:    Ω_Y(ρ, φ, μ, ∅, η'₀, ∅, ∅, ∅, ∅, 𝐢, (x,y))
+ *   https://graypaper.fluffylabs.dev/#/ab2cdbd/30c00030c000?v=0.7.2
+ *
+ * Kind availability per context:
+ *   Kind 0  (constants)      — all contexts
+ *   Kind 1  (n)              — Refine (H₀), Accumulate (η'₀)
+ *   Kind 2  (r)              — Refine only
+ *   Kind 3-4 (x̄ extrinsics) — Refine only
+ *   Kind 5-6 (ī imports)     — Refine only
+ *   Kind 7-13 (p work pkg)   — Is-Authorized, Refine
+ *   Kind 14-15 (𝐢 acc items) — Accumulate only
+ */
 export interface IFetchExternalities {
   /**
-   * Encoded constants info.
+   * Kind 0: Encoded constants info (𝐜).
    *
-   * https://graypaper.fluffylabs.dev/#/9a08063/32de0032e100?v=0.6.6
+   * Always available in all contexts. Returns a fixed encoding of protocol
+   * constants: item deposit, byte deposit, core count, gas limits, etc.
+   *
+   * GP: v = 𝐜 when φ₁₀ = 0
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/315001315001?v=0.7.2
    */
   constants(): BytesBlob;
 
   /**
-   * Entropy.
+   * Kind 1: Entropy pool (n).
    *
-   * Is Authorized: `p` (work package?)
-   * Refine: `H_0` (might change in the future)
-   * Accumulate: `eta_0 prime`
-   * On Transfer: `eta_0 prime`
+   * Is-Authorized: ∅ (not available)
+   * Refine: H₀ (header hash of anchor block)
+   * Accumulate: η'₀ (posterior entropy)
    *
-   * https://graypaper.fluffylabs.dev/#/9a08063/325501325501?v=0.6.6
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/314302314602?v=0.7.2
    */
   entropy(): BytesBlob | null;
 
   /**
+   * Kind 2: Authorizer trace (𝐫).
    *
-   * Authorizer trace.
+   * Is-Authorized: ∅ (not available)
+   * Refine: 𝐫 (authorizer trace — result of Is-Authorized)
+   * Accumulate: ∅ (not available)
    *
-   * Is Authorized: <empty>
-   * Refine: `r` - authorizer trace?
-   * Accumulate: <empty>
-   * On Transfer: <empty>
-   *
-   * https://graypaper.fluffylabs.dev/#/9a08063/325b01325b01?v=0.6.6
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/314902314902?v=0.7.2
    */
   authorizerTrace(): BytesBlob | null;
 
   /**
-   * Inspect currently refined or other work item's extrinsics.
+   * Kind 3 (other) / Kind 4 (my): Work-item extrinsics (x̄).
    *
-   * Is Authorized: <empty>
-   * Refine: `\over(x)[*]`
-   *   https://graypaper.fluffylabs.dev/#/9a08063/2fd8002fd800?v=0.6.6
-   * Accumulate: <empty>
-   * On Transfer: <empty>
+   * When workItem is null, uses Kind 4 (current work item's extrinsics).
+   * When workItem is provided, uses Kind 3 (other work item's extrinsics),
+   * with φ₁₁ = workItem, φ₁₂ = index.
    *
-   * Other: https://graypaper.fluffylabs.dev/#/9a08063/326801326801?v=0.6.6
-   *    My: https://graypaper.fluffylabs.dev/#/9a08063/327701327701?v=0.6.6
+   * Is-Authorized: ∅ (not available)
+   * Refine: x̄[φ₁₁][φ₁₂] (other) or x̄[i][φ₁₁] (my)
+   * Accumulate: ∅ (not available)
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/315402315402?v=0.7.2
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/317302317302?v=0.7.2
    */
   workItemExtrinsic(workItem: U64 | null, index: U64): BytesBlob | null;
 
   /**
-   * Inspect import segments from current or other work items.
+   * Kind 5 (other) / Kind 6 (my): Import segments (ī).
    *
-   * Is Authorized: <empty>
-   * Refine: `\over(i)[*]`
-   *   https://graypaper.fluffylabs.dev/#/9a08063/2e15012e1501?v=0.6.6
-   * Accumulate: <empty>
-   * On Transfer: <empty>
+   * When workItem is null, uses Kind 6 (current work item's imports).
+   * When workItem is provided, uses Kind 5 (other work item's imports),
+   * with φ₁₁ = workItem, φ₁₂ = index.
    *
-   * Other: https://graypaper.fluffylabs.dev/#/9a08063/328501328501?v=0.6.6
-   *    My: https://graypaper.fluffylabs.dev/#/9a08063/329601329601?v=0.6.6
+   * Is-Authorized: ∅ (not available)
+   * Refine: ī[φ₁₁][φ₁₂] (other) or ī[i][φ₁₁] (my)
+   * Accumulate: ∅ (not available)
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/318b02318b02?v=0.7.2
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/31aa0231aa02?v=0.7.2
    */
   workItemImport(workItem: U64 | null, index: U64): BytesBlob | null;
 
   /**
-   * Inspect encoding of the entire work package.
+   * Kind 7: Encoded work package
    *
-   * Is Authorized: <empty>
-   * Refine: `E(p)`
-   * Accumulate: <empty>
-   * On Transfer: <empty>
+   * Is-Authorized: E(𝐩) (the full work package being authorized)
+   * Refine: E(p)
+   * Accumulate: ∅ (not available)
    *
-   * https://graypaper.fluffylabs.dev/#/9a08063/329f0132a201?v=0.6.6
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/31c10231c102?v=0.7.2
    */
   workPackage(): BytesBlob | null;
 
   /**
-   * Inspect current work package's authorizer:
-   * authorizer code hash (`u`) and parametrization (`p`).
+   * Kind 8: Authorizer code hash and config
    *
-   * Is Authorized: <empty>
-   * Refine: `E(p_u, ↕p_p)`
-   * Accumulate: <empty>
-   * On Transfer: <empty>
+   * Returns the authorization code hash (32 bytes) concatenated with the
+   * authorizer configuration/parametrization blob.
    *
-   * https://graypaper.fluffylabs.dev/#/9a08063/32aa0132aa01?v=0.6.6
+   * Is-Authorized: p_f (from the work package being authorized)
+   * Refine: p_f
+   * Accumulate: ∅ (not available)
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/31c80231c802?v=0.7.2
    */
   authorizer(): BytesBlob | null;
 
   /**
-   * Inspect authorization token.
+   * Kind 9: Authorization token — p_j.
    *
-   * Is Authorized: <empty>
-   * Refine: `p_j`
-   * Accumulate: <empty>
-   * On Transfer: <empty>
+   * Is-Authorized: p_j (from the work package being authorized)
+   * Refine: p_j
+   * Accumulate: ∅ (not available)
    *
-   * https://graypaper.fluffylabs.dev/#/9a08063/32b10132b101?v=0.6.6
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/31cf0231cf02?v=0.7.2
    */
   authorizationToken(): BytesBlob | null;
 
   /**
-   * Inspect refine context.
+   * Kind 10: Refinement context — E(p_x).
    *
-   * Is Authorized: <empty>
-   * Refine: `p_x`
-   * Accumulate: <empty>
-   * On Transfer: <empty>
+   * Is-Authorized: E(p_x) (from the work package being authorized)
+   * Refine: E(p_x)
+   * Accumulate: ∅ (not available)
    *
-   * https://graypaper.fluffylabs.dev/#/9a08063/32b80132b801?v=0.6.6
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/31da0231da02?v=0.7.2
    */
   refineContext(): BytesBlob | null;
 
   /**
-   * Encoding (varlen sequence) of all work items.
+   * Kind 11: All work-item summaries — E(↕[S(w) | w ← p_w]).
    *
-   * Is Authorized: <empty>
-   * Refine: `E(↕[S(w): w <- p_w ]))`
-   *  `S(w)`: https://graypaper.fluffylabs.dev/#/9a08063/32db0132ea01?v=0.6.6
-   * Accumulate: <empty>
-   * On Transfer: <empty>
+   * Is-Authorized: from the work package being authorized
+   * Refine: from the current work package
+   * Accumulate: ∅ (not available)
    *
-   * https://graypaper.fluffylabs.dev/#/9a08063/32cd0132d001?v=0.6.6
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/31f40231f402?v=0.7.2
    */
   allWorkItems(): BytesBlob | null;
 
   /**
-   * Encoding of a single (selected) work item.
-   * `S(w)`: https://graypaper.fluffylabs.dev/#/9a08063/32db0132ea01?v=0.6.6
+   * Kind 12: Single work-item summary — S(p_w[φ₁₁]).
    *
-   * Is Authorized: <empty>
-   * Refine: `S(w)`
-   *   `S(w)`: https://graypaper.fluffylabs.dev/#/9a08063/32db0132ea01?v=0.6.6
-   * Accumulate: <empty>
-   * On Transfer: <empty>
+   * S(w) ≡ E(E₄(w_s), w_c, E₈(w_g, w_a), E₂(w_e, |w_i|, |w_x|), E₄(|w_y|)).
    *
-   * https://graypaper.fluffylabs.dev/#/9a08063/32d50132d501?v=0.6.6
+   * Is-Authorized: from the work package being authorized
+   * Refine: from the current work package
+   * Accumulate: ∅ (not available)
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/31fc0231fc02?v=0.7.2
    */
   oneWorkItem(workItem: U64): BytesBlob | null;
 
   /**
-   * Retrieve work item payload.
+   * Kind 13: Work-item payload — p_w[φ₁₁]_y.
    *
-   * Is Authorized: <empty>
-   * Refine: `p_w[omega_11]_y`
-   * Accumulate: <empty>
-   * On Transfer: <empty>
+   * Is-Authorized: from the work package being authorized
+   * Refine: from the current work package
+   * Accumulate: ∅ (not available)
    *
-   * https://graypaper.fluffylabs.dev/#/9a08063/32f00132f001?v=0.6.6
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/313b03313b03?v=0.7.2
    */
   workItemPayload(workItem: U64): BytesBlob | null;
 
   /**
-   * Get all accumulation operands (work results?) and transfers.
+   * Kind 14: All accumulation operands and transfers — E(↕𝐢).
    *
-   * Is Authorized: <empty>
-   * Refine: <empty>
-   * Accumulate: `E(↕i)`
+   * Returns a varlen-encoded sequence of tagged items (tag 0 = operand,
+   * tag 1 = transfer).
    *
-   * https://graypaper.fluffylabs.dev/#/ab2cdbd/314c03314c03?v=0.7.2
+   * Is-Authorized: ∅ (not available)
+   * Refine: ∅ (not available)
+   * Accumulate: E(↕𝐢)
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/314e03314e03?v=0.7.2
    */
   allTransfersAndOperands(): BytesBlob | null;
 
   /**
-   * Get one selected accumulation operand or transfer.
+   * Kind 15: Single accumulation operand or transfer — E(𝐢[φ₁₁]).
    *
-   * Is Authorized: <empty>
-   * Refine: <empty>
-   * Accumulate: `E(i[omega_11])`
+   * Each item is tagged: varint 0 = Operand, varint 1 = PendingTransfer.
    *
-   * https://graypaper.fluffylabs.dev/#/ab2cdbd/315503315503?v=0.7.2
+   * Is-Authorized: ∅ (not available)
+   * Refine: ∅ (not available)
+   * Accumulate: E(𝐢[φ₁₁])
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/315903315903?v=0.7.2
    */
   oneTransferOrOperand(index: U64): BytesBlob | null;
 }
