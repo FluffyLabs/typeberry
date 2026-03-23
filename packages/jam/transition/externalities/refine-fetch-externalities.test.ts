@@ -2,7 +2,6 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import { tryAsU64 } from "@typeberry/numbers";
 import { RefineFetchExternalities } from "./refine-fetch-externalities.js";
 
 describe("RefineFetchExternalities", () => {
@@ -23,26 +22,17 @@ describe("RefineFetchExternalities", () => {
     assert.notDeepStrictEqual(tinyConstants, fullConstants);
   });
 
-  it("should return null entropy", () => {
-    const fetchExternalities = prepareRefineData();
-
-    const entropy = fetchExternalities.entropy();
-
-    assert.strictEqual(entropy, null);
-  });
-
-  it("should return null for not-yet-implemented methods", () => {
-    const fetchExternalities = prepareRefineData();
-
-    assert.strictEqual(fetchExternalities.authorizerTrace(), null);
-    assert.strictEqual(fetchExternalities.workItemExtrinsic(null, tryAsU64(0)), null);
-    assert.strictEqual(fetchExternalities.workItemImport(null, tryAsU64(0)), null);
-    assert.strictEqual(fetchExternalities.workPackage(), null);
-    assert.strictEqual(fetchExternalities.authorizer(), null);
-    assert.strictEqual(fetchExternalities.authorizationToken(), null);
-    assert.strictEqual(fetchExternalities.refineContext(), null);
-    assert.strictEqual(fetchExternalities.allWorkItems(), null);
-    assert.strictEqual(fetchExternalities.oneWorkItem(tryAsU64(0)), null);
-    assert.strictEqual(fetchExternalities.workItemPayload(tryAsU64(0)), null);
-  });
+  // Pending implementation — these should assert against real fixture values once
+  // RefineFetchExternalities accepts and exposes the required refine inputs.
+  it.todo("should return entropy (H₀ header hash of anchor block)");
+  it.todo("should return authorizer trace");
+  it.todo("should return work item extrinsic");
+  it.todo("should return work item import");
+  it.todo("should return work package");
+  it.todo("should return authorizer");
+  it.todo("should return authorization token");
+  it.todo("should return refine context");
+  it.todo("should return all work items");
+  it.todo("should return one work item");
+  it.todo("should return work item payload");
 });

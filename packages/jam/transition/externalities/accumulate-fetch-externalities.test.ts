@@ -61,19 +61,19 @@ describe("AccumulateFetchExternalities", () => {
     ];
   };
 
-  // oneTransferOrOperand: operands first (index < operands.length), then transfers
+  // oneTransferOrOperand: transfers first, then operands (same as allTransfersAndOperands)
   const toOneTransferOrOperandAt = (
     operands: Operand[],
     transfers: PendingTransfer[],
     index: number,
   ): TransferOrOperand | null => {
-    if (index >= operands.length + transfers.length) {
+    if (index >= transfers.length + operands.length) {
       return null;
     }
-    if (index < operands.length) {
-      return { kind: TransferOperandKind.OPERAND, value: operands[index] };
+    if (index < transfers.length) {
+      return { kind: TransferOperandKind.TRANSFER, value: transfers[index] };
     }
-    return { kind: TransferOperandKind.TRANSFER, value: transfers[index - operands.length] };
+    return { kind: TransferOperandKind.OPERAND, value: operands[index - transfers.length] };
   };
 
   const encodeOneTransferOrOperand = (item: TransferOrOperand | null, chainSpec: ChainSpec): BytesBlob | null => {
@@ -152,7 +152,7 @@ describe("AccumulateFetchExternalities", () => {
     assert.deepStrictEqual(result, encodedExpected);
   });
 
-  it("should return one operand by index", () => {
+  it("should return one transfer by index (first range)", () => {
     const operands = prepareOperands(3);
     const transfers = prepareTransfers(2);
     const chainSpec = tinyChainSpec;
@@ -160,22 +160,22 @@ describe("AccumulateFetchExternalities", () => {
 
     const fetchExternalities = prepareAccumulateData({ operands, transfers, chainSpec });
 
-    // Operands come first (indices 0..2), then transfers (indices 3..4)
+    // Transfers come first (indices 0..1), then operands (indices 2..4)
     const result = fetchExternalities.oneTransferOrOperand(tryAsU64(0));
 
     assert.deepStrictEqual(result, encodedExpected);
   });
 
-  it("should return one transfer by index", () => {
+  it("should return one operand by index (second range)", () => {
     const operands = prepareOperands(3);
     const transfers = prepareTransfers(2);
     const chainSpec = tinyChainSpec;
-    const encodedExpected = encodeOneTransferOrOperand(toOneTransferOrOperandAt(operands, transfers, 3), chainSpec);
+    const encodedExpected = encodeOneTransferOrOperand(toOneTransferOrOperandAt(operands, transfers, 2), chainSpec);
 
     const fetchExternalities = prepareAccumulateData({ operands, transfers, chainSpec });
 
-    // Transfers start after operands, so index 3 is the first transfer
-    const result = fetchExternalities.oneTransferOrOperand(tryAsU64(3));
+    // Operands start after transfers, so index 2 is the first operand
+    const result = fetchExternalities.oneTransferOrOperand(tryAsU64(2));
 
     assert.deepStrictEqual(result, encodedExpected);
   });

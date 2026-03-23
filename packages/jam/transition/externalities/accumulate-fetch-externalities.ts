@@ -42,17 +42,18 @@ export class AccumulateFetchExternalities implements general.IAccumulateFetch {
   }
 
   oneTransferOrOperand(index: U64): BytesBlob | null {
-    if (index >= this.operands.length + this.transfers.length) {
+    if (index >= this.transfers.length + this.operands.length) {
       return null;
     }
 
-    const kind = index < this.operands.length ? TransferOperandKind.OPERAND : TransferOperandKind.TRANSFER;
+    // Transfers-first ordering, consistent with allTransfersAndOperands()
+    const kind = index < this.transfers.length ? TransferOperandKind.TRANSFER : TransferOperandKind.OPERAND;
     const transferOrOperand =
-      kind === TransferOperandKind.OPERAND
-        ? ({ kind: TransferOperandKind.OPERAND, value: this.operands[Number(index)] } as const)
+      kind === TransferOperandKind.TRANSFER
+        ? ({ kind: TransferOperandKind.TRANSFER, value: this.transfers[Number(index)] } as const)
         : ({
-            kind: TransferOperandKind.TRANSFER,
-            value: this.transfers[Number(index) - this.operands.length],
+            kind: TransferOperandKind.OPERAND,
+            value: this.operands[Number(index) - this.transfers.length],
           } as const);
 
     if (transferOrOperand.value === undefined) {
