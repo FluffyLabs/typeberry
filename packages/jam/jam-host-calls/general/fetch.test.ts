@@ -9,7 +9,7 @@ import { tryAsGas } from "@typeberry/pvm-interface";
 import { gasCounter, MemoryBuilder, tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { emptyRegistersBuffer } from "../utils.js";
-import { Fetch, FetchKind, type IFetchExternalities } from "./fetch.js";
+import { Fetch, FetchContext, FetchKind, type IAccumulateFetch, type IRefineFetch } from "./fetch.js";
 import { HostCallResult } from "./results.js";
 
 describe("Fetch", () => {
@@ -19,7 +19,7 @@ describe("Fetch", () => {
   it("should return PvmExecution.Panic if memory write fails", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([1, 2, 3]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     fetchMock.constantsResponse = blob;
 
     const badOffset = tryAsU64(0xfffff);
@@ -42,7 +42,7 @@ describe("Fetch", () => {
 
   it("should write empty result and set IN_OUT_REG to NONE if fetch returns null", async () => {
     const currentServiceId = tryAsServiceId(10_000);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     fetchMock.entropyResponse = null;
 
     const blob = BytesBlob.blobFromNumbers([]);
@@ -60,7 +60,7 @@ describe("Fetch", () => {
   it("should write nothing if offset >= blob length", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([1, 2, 3]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     fetchMock.constantsResponse = blob;
 
     const { registers, memory, readBack } = prepareRegsAndMemory(blob, FetchKind.Constants, 5, 2);
@@ -76,7 +76,7 @@ describe("Fetch", () => {
   it("should clamp offset + length to blob end", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([9, 8, 7, 6, 5]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     fetchMock.constantsResponse = blob;
 
     const { registers, memory, readBack } = prepareRegsAndMemory(blob, FetchKind.Constants, 3, 10);
@@ -93,7 +93,7 @@ describe("Fetch", () => {
   it("should return NONE and write nothing if fetch kind is unknown", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.empty();
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     fetchMock.constantsResponse = blob;
 
     const { registers, memory, readBack } = prepareRegsAndMemory(blob, FetchKind.Constants);
@@ -110,7 +110,7 @@ describe("Fetch", () => {
   it("should fetch constants and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([1, 2, 3, 4, 5]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     fetchMock.constantsResponse = blob;
 
     const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.Constants);
@@ -126,7 +126,7 @@ describe("Fetch", () => {
   it("should fetch entropy and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([10, 20, 30, 40]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     fetchMock.entropyResponse = blob;
 
     const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.Entropy);
@@ -142,7 +142,7 @@ describe("Fetch", () => {
   it("should fetch authorizer trace and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([9, 9, 9]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     fetchMock.authorizerTraceResponse = blob;
 
     const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.AuthorizerTrace);
@@ -158,7 +158,7 @@ describe("Fetch", () => {
   it("should fetch other work item extrinsics and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([42, 43, 44]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     const workItem = tryAsU64(123);
     const index = tryAsU64(7);
     const key = `${workItem}:${index}`;
@@ -184,7 +184,7 @@ describe("Fetch", () => {
   it("should fetch my extrinsics and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([11, 12, 13]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     const index = tryAsU64(5);
     const key = `null:${index}`;
     fetchMock.workItemExtrinsicResponses.set(key, blob);
@@ -205,7 +205,7 @@ describe("Fetch", () => {
   it("should fetch other work item imports and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([21, 22, 23]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     const workItem = tryAsU64(42);
     const index = tryAsU64(3);
     const key = `${workItem}:${index}`;
@@ -228,7 +228,7 @@ describe("Fetch", () => {
   it("should fetch my imports and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([31, 32, 33]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     const index = tryAsU64(8);
     const key = `null:${index}`;
     fetchMock.workItemImportResponses.set(key, blob);
@@ -249,7 +249,7 @@ describe("Fetch", () => {
   it("should fetch work package and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([100, 101, 102]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     fetchMock.workPackageResponse = blob;
 
     const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.WorkPackage);
@@ -265,7 +265,7 @@ describe("Fetch", () => {
   it("should fetch authorizer and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([201, 202, 203]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     fetchMock.authorizerResponse = blob;
 
     const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.Authorizer);
@@ -281,7 +281,7 @@ describe("Fetch", () => {
   it("should fetch authorization token and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([210, 211, 212]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     fetchMock.authorizationTokenResponse = blob;
 
     const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.AuthorizationToken);
@@ -297,7 +297,7 @@ describe("Fetch", () => {
   it("should fetch refine context and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([88, 89, 90]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     fetchMock.refineContextResponse = blob;
 
     const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.RefineContext);
@@ -313,7 +313,7 @@ describe("Fetch", () => {
   it("should fetch all work items and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([70, 71, 72]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     fetchMock.allWorkItemsResponse = blob;
 
     const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.AllWorkItems);
@@ -329,7 +329,7 @@ describe("Fetch", () => {
   it("should fetch one work item and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([33, 34, 35]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     const workItem = tryAsU64(55);
     fetchMock.oneWorkItemResponses.set(workItem.toString(), blob);
 
@@ -349,7 +349,7 @@ describe("Fetch", () => {
   it("should fetch work item payload and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([60, 61, 62]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new RefineFetchMock();
     const workItem = tryAsU64(77);
     fetchMock.workItemPayloadResponses.set(workItem.toString(), blob);
 
@@ -369,8 +369,8 @@ describe("Fetch", () => {
   it("should fetch all transfers and operands and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([101, 102, 103]);
-    const fetchMock = new FetchMock();
-    fetchMock.allTransfersAndOperandsResponses = blob;
+    const fetchMock = new AccumulateFetchMock();
+    fetchMock.allTransfersAndOperandsResponse = blob;
 
     const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(
       blob,
@@ -388,7 +388,7 @@ describe("Fetch", () => {
   it("should fetch one operand or transfer and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const blob = BytesBlob.blobFromNumbers([115, 116, 117]);
-    const fetchMock = new FetchMock();
+    const fetchMock = new AccumulateFetchMock();
     const index = tryAsU64(9);
     fetchMock.oneTransferOrOperandResponses.set(index.toString(), blob);
 
@@ -403,6 +403,51 @@ describe("Fetch", () => {
     assert.deepStrictEqual(registers.get(IN_OUT_REG), expectedLength);
     assert.deepStrictEqual(readBack(), blob.raw);
     assert.deepStrictEqual(fetchMock.oneTransferOrOperandData, [[index]]);
+  });
+
+  it("should return NONE for refine-only kinds in accumulate context", async () => {
+    const currentServiceId = tryAsServiceId(10_000);
+    const fetchMock = new AccumulateFetchMock();
+    const blob = BytesBlob.empty();
+
+    for (const kind of [
+      FetchKind.AuthorizerTrace,
+      FetchKind.OtherWorkItemExtrinsics,
+      FetchKind.MyExtrinsics,
+      FetchKind.OtherWorkItemImports,
+      FetchKind.MyImports,
+      FetchKind.WorkPackage,
+      FetchKind.Authorizer,
+      FetchKind.AuthorizationToken,
+      FetchKind.RefineContext,
+      FetchKind.AllWorkItems,
+      FetchKind.OneWorkItem,
+      FetchKind.WorkItemPayload,
+    ]) {
+      const { registers, memory } = prepareRegsAndMemory(blob, kind);
+
+      const fetch = new Fetch(currentServiceId, fetchMock);
+      const result = await fetch.execute(gas, registers, memory);
+
+      assert.strictEqual(result, undefined, `Expected undefined for kind ${kind}`);
+      assert.strictEqual(registers.get(IN_OUT_REG), HostCallResult.NONE, `Expected NONE for kind ${kind}`);
+    }
+  });
+
+  it("should return NONE for accumulate-only kinds in refine context", async () => {
+    const currentServiceId = tryAsServiceId(10_000);
+    const fetchMock = new RefineFetchMock();
+    const blob = BytesBlob.empty();
+
+    for (const kind of [FetchKind.AllTransfersAndOperands, FetchKind.OneTransferOrOperand]) {
+      const { registers, memory } = prepareRegsAndMemory(blob, kind);
+
+      const fetch = new Fetch(currentServiceId, fetchMock);
+      const result = await fetch.execute(gas, registers, memory);
+
+      assert.strictEqual(result, undefined, `Expected undefined for kind ${kind}`);
+      assert.strictEqual(registers.get(IN_OUT_REG), HostCallResult.NONE, `Expected NONE for kind ${kind}`);
+    }
   });
 
   function prepareRegsAndMemory(blob: BytesBlob, fetchKind: FetchKind, offset = 0, length: number = blob.length) {
@@ -435,14 +480,13 @@ describe("Fetch", () => {
   }
 });
 
-class FetchMock implements IFetchExternalities {
-  public readonly workItemExtrinsicData: Parameters<FetchMock["workItemExtrinsic"]>[] = [];
-  public readonly workItemImportData: Parameters<FetchMock["workItemImport"]>[] = [];
-  public readonly oneWorkItemData: Parameters<FetchMock["oneWorkItem"]>[] = [];
-  public readonly workItemPayloadData: Parameters<FetchMock["workItemPayload"]>[] = [];
-  public readonly oneOperandData: Parameters<FetchMock["oneOperand"]>[] = [];
-  public readonly oneTransferData: Parameters<FetchMock["oneTransfer"]>[] = [];
-  public readonly oneTransferOrOperandData: Parameters<FetchMock["oneTransferOrOperand"]>[] = [];
+class RefineFetchMock implements IRefineFetch {
+  readonly context = FetchContext.Refine;
+
+  public readonly workItemExtrinsicData: Parameters<RefineFetchMock["workItemExtrinsic"]>[] = [];
+  public readonly workItemImportData: Parameters<RefineFetchMock["workItemImport"]>[] = [];
+  public readonly oneWorkItemData: Parameters<RefineFetchMock["oneWorkItem"]>[] = [];
+  public readonly workItemPayloadData: Parameters<RefineFetchMock["workItemPayload"]>[] = [];
 
   public constantsResponse: BytesBlob | null = null;
   public entropyResponse: BytesBlob | null = null;
@@ -456,12 +500,6 @@ class FetchMock implements IFetchExternalities {
   public allWorkItemsResponse: BytesBlob | null = null;
   public oneWorkItemResponses: Map<string, BytesBlob | null> = new Map();
   public workItemPayloadResponses: Map<string, BytesBlob | null> = new Map();
-  public allOperandsResponse: BytesBlob | null = null;
-  public oneOperandResponses: Map<string, BytesBlob | null> = new Map();
-  public allTransfersResponse: BytesBlob | null = null;
-  public oneTransferResponses: Map<string, BytesBlob | null> = new Map();
-  public allTransfersAndOperandsResponses: BytesBlob | null = null;
-  public oneTransferOrOperandResponses: Map<string, BytesBlob | null> = new Map();
 
   constants(): BytesBlob {
     if (this.constantsResponse === null) {
@@ -533,35 +571,31 @@ class FetchMock implements IFetchExternalities {
     }
     return this.workItemPayloadResponses.get(key) ?? null;
   }
+}
 
-  allOperands(): BytesBlob | null {
-    return this.allOperandsResponse;
-  }
+class AccumulateFetchMock implements IAccumulateFetch {
+  readonly context = FetchContext.Accumulate;
 
-  oneOperand(operandIndex: U64): BytesBlob | null {
-    this.oneOperandData.push([operandIndex]);
-    const key = operandIndex.toString();
-    if (!this.oneOperandResponses.has(key)) {
-      throw new Error(`Missing mock response for oneOperand(${key})`);
+  public readonly oneTransferOrOperandData: Parameters<AccumulateFetchMock["oneTransferOrOperand"]>[] = [];
+
+  public constantsResponse: BytesBlob | null = null;
+  public entropyResponse: BytesBlob | null = null;
+  public allTransfersAndOperandsResponse: BytesBlob | null = null;
+  public oneTransferOrOperandResponses: Map<string, BytesBlob | null> = new Map();
+
+  constants(): BytesBlob {
+    if (this.constantsResponse === null) {
+      throw new Error("Unexpected call to constants.");
     }
-    return this.oneOperandResponses.get(key) ?? null;
+    return this.constantsResponse;
   }
 
-  allTransfers(): BytesBlob | null {
-    return this.allTransfersResponse;
-  }
-
-  oneTransfer(transferIndex: U64): BytesBlob | null {
-    this.oneTransferData.push([transferIndex]);
-    const key = transferIndex.toString();
-    if (!this.oneTransferResponses.has(key)) {
-      throw new Error(`Missing mock response for oneTransfer(${key})`);
-    }
-    return this.oneTransferResponses.get(key) ?? null;
+  entropy(): BytesBlob | null {
+    return this.entropyResponse;
   }
 
   allTransfersAndOperands(): BytesBlob | null {
-    return this.allTransfersAndOperandsResponses;
+    return this.allTransfersAndOperandsResponse;
   }
 
   oneTransferOrOperand(index: U64): BytesBlob | null {
