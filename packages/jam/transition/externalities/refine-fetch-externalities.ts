@@ -16,7 +16,7 @@ export class RefineFetchExternalities implements general.IRefineFetch {
   }
 
   // TODO [ToDr] Should return H₀ (zero hash)
-  entropy(): EntropyHash | null {
+  entropy(): EntropyHash {
     return Bytes.zero(HASH_SIZE).asOpaque();
   }
 

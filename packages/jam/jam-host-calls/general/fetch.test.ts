@@ -44,10 +44,10 @@ describe("Fetch", () => {
   it("should write empty result and set IN_OUT_REG to NONE if fetch returns null", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const fetchMock = new RefineFetchMock();
-    fetchMock.entropyResponse = null;
+    // authorizerTraceResponse is null by default — Kind 2 legitimately returns null
 
     const blob = BytesBlob.blobFromNumbers([]);
-    const { registers, memory, readBack } = prepareRegsAndMemory(blob, FetchKind.Entropy);
+    const { registers, memory, readBack } = prepareRegsAndMemory(blob, FetchKind.AuthorizerTrace);
 
     const fetch = new Fetch(currentServiceId, fetchMock);
     const result = await fetch.execute(gas, registers, memory);
@@ -509,7 +509,10 @@ class RefineFetchMock implements IRefineFetch {
     return this.constantsResponse;
   }
 
-  entropy(): EntropyHash | null {
+  entropy(): EntropyHash {
+    if (this.entropyResponse === null) {
+      throw new Error("Unexpected call to entropy.");
+    }
     return this.entropyResponse;
   }
 
@@ -591,7 +594,10 @@ class AccumulateFetchMock implements IAccumulateFetch {
     return this.constantsResponse;
   }
 
-  entropy(): EntropyHash | null {
+  entropy(): EntropyHash {
+    if (this.entropyResponse === null) {
+      throw new Error("Unexpected call to entropy.");
+    }
     return this.entropyResponse;
   }
 

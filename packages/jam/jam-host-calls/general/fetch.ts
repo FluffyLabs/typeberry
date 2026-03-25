@@ -131,7 +131,7 @@ export interface IRefineFetch {
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/2fe0012fe201?v=0.7.2
    */
-  entropy(): EntropyHash | null;
+  entropy(): EntropyHash;
 
   /**
    * Kind 2: Authorizer trace (𝐫).
@@ -235,7 +235,7 @@ export interface IAccumulateFetch {
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/314302314602?v=0.7.2
    */
-  entropy(): EntropyHash | null;
+  entropy(): EntropyHash;
 
   /**
    * Kind 14: All accumulation operands and transfers — E(↕𝐢).
