@@ -267,7 +267,7 @@ describe("RefineExternalitiesImpl", () => {
     it("should accept a non-zero program counter", async () => {
       const ext = createExt();
       const code = BytesBlob.blobFrom(MINIMAL_PROGRAM);
-      const pc = tryAsProgramCounter(0);
+      const pc = tryAsProgramCounter(1);
 
       const result = await ext.machineInit(code, pc);
       assert.strictEqual(result.isOk, true);
