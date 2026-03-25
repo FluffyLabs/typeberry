@@ -15,7 +15,7 @@ export class RefineFetchExternalities implements general.IRefineFetch {
     return getEncodedConstants(this.chainSpec);
   }
 
-  // TODO [ToDr] Should return H₀ (zero hash)
+  // Returns H₀ (zero hash)
   entropy(): EntropyHash {
     return Bytes.zero(HASH_SIZE).asOpaque();
   }
