@@ -3,7 +3,7 @@ import { type CodecRecord, codec, type DescribedBy } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU8, type U8 } from "@typeberry/numbers";
-import { check, WithDebug } from "@typeberry/utils";
+import { WithDebug } from "@typeberry/utils";
 import type { ServiceId } from "./common.js";
 import type { CodeHash } from "./hash.js";
 import { RefineContext } from "./refine-context.js";
@@ -13,12 +13,8 @@ import { WorkItem } from "./work-item.js";
 /** Constrained by I=16 https://graypaper.fluffylabs.dev/#/68eaa1f/417a00417a00?v=0.6.4 */
 export type WorkItemsCount = U8;
 
-/** Convert the value to `WorkItemsCount` bounds. */
+/** Convert the value to `WorkItemsCount`. Validation is done at runtime by `isWorkItemsCount`. */
 export function tryAsWorkItemsCount(len: number): WorkItemsCount {
-  check`
-    ${isWorkItemsCount(len)}
-    WorkItemsCount: Expected '${MIN_NUMBER_OF_WORK_ITEMS} <= count <= ${MAX_NUMBER_OF_WORK_ITEMS}' got ${len}
-  `;
   return tryAsU8(len);
 }
 

@@ -1,6 +1,5 @@
 import type { EntropyHash } from "@typeberry/block";
 import type { SignedTicket } from "@typeberry/block/tickets.js";
-import type { ChainSpec } from "@typeberry/config";
 import type { BandersnatchKey, BandersnatchSecretSeed } from "@typeberry/crypto";
 import { Logger } from "@typeberry/logger";
 import bandersnatchVrf from "@typeberry/safrole/bandersnatch-vrf.js";
@@ -31,7 +30,6 @@ export async function generateTickets(
   validatorKeys: ValidatorKey[],
   entropy: EntropyHash,
   ticketsPerValidator: number,
-  chainSpec: ChainSpec,
 ): Promise<Result<SignedTicket[], TicketGeneratorError>> {
   const allTickets: SignedTicket[] = [];
 
@@ -49,7 +47,6 @@ export async function generateTickets(
       validatorKey.secret,
       entropy,
       ticketsPerValidator,
-      chainSpec,
     );
 
     if (ticketResult.isOk) {

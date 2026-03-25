@@ -58,7 +58,7 @@ type JsonWorkExecResult = {
 
 const workRefineLoadFromJson = json.object<JsonWorkRefineLoad, WorkRefineLoad>(
   {
-    gas_used: json.fromNumber((x) => tryAsServiceGas(x)),
+    gas_used: json.fromBigInt((x) => tryAsServiceGas(x)),
     imports: "number",
     extrinsic_count: "number",
     extrinsic_size: "number",
@@ -66,7 +66,7 @@ const workRefineLoadFromJson = json.object<JsonWorkRefineLoad, WorkRefineLoad>(
   },
   ({ gas_used, imports, extrinsic_count, extrinsic_size, exports }) =>
     WorkRefineLoad.create({
-      gasUsed: tryAsServiceGas(gas_used),
+      gasUsed: gas_used,
       importedSegments: tryAsU32(imports),
       extrinsicCount: tryAsU32(extrinsic_count),
       extrinsicSize: tryAsU32(extrinsic_size),

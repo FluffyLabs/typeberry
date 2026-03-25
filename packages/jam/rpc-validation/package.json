@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/rpc-validation",
-  "version": "0.5.9",
+  "version": "0.5.10",
   "description": "Validation schemas and type definitions for Typeberry JAM JSON-RPC client and server.",
   "main": "index.ts",
   "dependencies": {

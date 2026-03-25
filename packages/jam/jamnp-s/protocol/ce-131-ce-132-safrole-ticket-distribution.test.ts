@@ -15,7 +15,7 @@ import { testClientServer } from "./test-utils.js";
 
 const TEST_EPOCH = tryAsEpoch(1);
 const TEST_TICKET = SignedTicket.create({
-  attempt: tryAsTicketAttempt(0, tinyChainSpec),
+  attempt: tryAsTicketAttempt(0),
   signature: Bytes.zero(BANDERSNATCH_PROOF_BYTES).asOpaque(),
 });
 
