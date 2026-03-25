@@ -17,7 +17,7 @@ export class AccumulateFetchExternalities implements general.IAccumulateFetch {
   readonly context = general.FetchContext.Accumulate;
 
   constructor(
-    private readonly entropy_: EntropyHash,
+    private readonly entropyHash: EntropyHash,
     private readonly transfers: PendingTransfer[],
     private readonly operands: Operand[],
     private readonly chainSpec: ChainSpec,
@@ -27,8 +27,8 @@ export class AccumulateFetchExternalities implements general.IAccumulateFetch {
     return getEncodedConstants(this.chainSpec);
   }
 
-  entropy(): BytesBlob {
-    return this.entropy_.asOpaque();
+  entropy(): EntropyHash {
+    return this.entropyHash;
   }
 
   allTransfersAndOperands(): BytesBlob | null {

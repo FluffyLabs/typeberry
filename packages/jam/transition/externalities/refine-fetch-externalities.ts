@@ -1,5 +1,7 @@
-import type { BytesBlob } from "@typeberry/bytes";
+import type { EntropyHash } from "@typeberry/block";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
+import { HASH_SIZE } from "@typeberry/hash";
 import { general } from "@typeberry/jam-host-calls";
 import type { U64 } from "@typeberry/numbers";
 import { getEncodedConstants } from "./fetch-externalities.js";
@@ -13,9 +15,9 @@ export class RefineFetchExternalities implements general.IRefineFetch {
     return getEncodedConstants(this.chainSpec);
   }
 
-  // TODO [ToDr] Should return H₀ (header hash of anchor block)
-  entropy(): BytesBlob | null {
-    return null;
+  // TODO [ToDr] Should return H₀ (zero hash)
+  entropy(): EntropyHash | null {
+    return Bytes.zero(HASH_SIZE).asOpaque();
   }
 
   authorizerTrace(): BytesBlob | null {

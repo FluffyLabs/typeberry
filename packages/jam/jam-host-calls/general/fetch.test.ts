@@ -1,8 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { tryAsServiceId } from "@typeberry/block";
-import { BytesBlob } from "@typeberry/bytes";
+import { type EntropyHash, tryAsServiceId } from "@typeberry/block";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU64, type U64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { tryAsGas } from "@typeberry/pvm-interface";
@@ -125,7 +126,7 @@ describe("Fetch", () => {
 
   it("should fetch entropy and write result to memory", async () => {
     const currentServiceId = tryAsServiceId(10_000);
-    const blob = BytesBlob.blobFromNumbers([10, 20, 30, 40]);
+    const blob: EntropyHash = Bytes.fill(HASH_SIZE, 10).asOpaque();
     const fetchMock = new RefineFetchMock();
     fetchMock.entropyResponse = blob;
 
@@ -489,7 +490,7 @@ class RefineFetchMock implements IRefineFetch {
   public readonly workItemPayloadData: Parameters<RefineFetchMock["workItemPayload"]>[] = [];
 
   public constantsResponse: BytesBlob | null = null;
-  public entropyResponse: BytesBlob | null = null;
+  public entropyResponse: EntropyHash | null = null;
   public authorizerTraceResponse: BytesBlob | null = null;
   public workItemExtrinsicResponses: Map<string, BytesBlob | null> = new Map();
   public workItemImportResponses: Map<string, BytesBlob | null> = new Map();
@@ -508,7 +509,7 @@ class RefineFetchMock implements IRefineFetch {
     return this.constantsResponse;
   }
 
-  entropy(): BytesBlob | null {
+  entropy(): EntropyHash | null {
     return this.entropyResponse;
   }
 
@@ -579,7 +580,7 @@ class AccumulateFetchMock implements IAccumulateFetch {
   public readonly oneTransferOrOperandData: Parameters<AccumulateFetchMock["oneTransferOrOperand"]>[] = [];
 
   public constantsResponse: BytesBlob | null = null;
-  public entropyResponse: BytesBlob | null = null;
+  public entropyResponse: EntropyHash | null = null;
   public allTransfersAndOperandsResponse: BytesBlob | null = null;
   public oneTransferOrOperandResponses: Map<string, BytesBlob | null> = new Map();
 
@@ -590,7 +591,7 @@ class AccumulateFetchMock implements IAccumulateFetch {
     return this.constantsResponse;
   }
 
-  entropy(): BytesBlob | null {
+  entropy(): EntropyHash | null {
     return this.entropyResponse;
   }
 

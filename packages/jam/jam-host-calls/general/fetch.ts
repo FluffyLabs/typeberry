@@ -1,4 +1,4 @@
-import type { ServiceId } from "@typeberry/block";
+import type { EntropyHash, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { minU64, tryAsU64, type U32, type U64 } from "@typeberry/numbers";
 import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
@@ -127,11 +127,11 @@ export interface IRefineFetch {
   constants(): BytesBlob;
 
   /**
-   * Kind 1: Entropy pool — H₀ (header hash of anchor block).
+   * Kind 1: Entropy pool — H₀ (zero hash).
    *
-   * https://graypaper.fluffylabs.dev/#/ab2cdbd/314302314602?v=0.7.2
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/2fe0012fe201?v=0.7.2
    */
-  entropy(): BytesBlob | null;
+  entropy(): EntropyHash | null;
 
   /**
    * Kind 2: Authorizer trace (𝐫).
@@ -235,7 +235,7 @@ export interface IAccumulateFetch {
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/314302314602?v=0.7.2
    */
-  entropy(): BytesBlob | null;
+  entropy(): EntropyHash | null;
 
   /**
    * Kind 14: All accumulation operands and transfers — E(↕𝐢).
