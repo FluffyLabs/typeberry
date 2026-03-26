@@ -17,12 +17,13 @@ import {
   type ProgramCounter,
   type RefineExternalities,
   SegmentExportError,
+  tryAsMachineId,
   type ZeroVoidError,
 } from "@typeberry/jam-host-calls";
 import type { U64 } from "@typeberry/numbers";
 import type { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
-import type { BigGas } from "@typeberry/pvm-interface";
-import type { ProgramDecoderError } from "@typeberry/pvm-interpreter";
+import { type BigGas, tryAsGas } from "@typeberry/pvm-interface";
+import { Interpreter, ProgramDecoder, type ProgramDecoderError } from "@typeberry/pvm-interpreter";
 import type { State } from "@typeberry/state";
 import { type OK, Result } from "@typeberry/utils";
 
@@ -39,6 +40,8 @@ export type RefineExternalitiesParams = {
 };
 
 export class RefineExternalitiesImpl implements RefineExternalities {
+  /** Map of inner PVM instances keyed by MachineId. */
+  private machines: Map<bigint, Interpreter> = new Map();
   /** Service being refined (used as default for historicalLookup). */
   private readonly currentServiceId: ServiceId;
   /** State at the lookup anchor for preimage lookups. */
@@ -103,8 +106,27 @@ export class RefineExternalitiesImpl implements RefineExternalities {
     throw new Error("Method not implemented.");
   }
 
-  machineInit(_code: BytesBlob, _programCounter: ProgramCounter): Promise<Result<MachineId, ProgramDecoderError>> {
-    throw new Error("Method not implemented.");
+  machineInit(code: BytesBlob, programCounter: ProgramCounter): Promise<Result<MachineId, ProgramDecoderError>> {
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/346400346400?v=0.7.2
+    const deblobResult = ProgramDecoder.deblob(code.raw);
+    if (deblobResult.isError) {
+      return Promise.resolve(Result.error(deblobResult.error, deblobResult.details));
+    }
+
+    const innerPvm = new Interpreter({ useSbrkGas: false });
+
+    innerPvm.resetGeneric(code.raw, Number(programCounter), tryAsGas(0));
+
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/348c00348c00?v=0.7.2
+    let id = 0n;
+    while (this.machines.has(id)) {
+      id++;
+    }
+
+    const machineId = tryAsMachineId(id);
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/340501340b01?v=0.7.2
+    this.machines.set(id, innerPvm);
+    return Promise.resolve(Result.ok(machineId));
   }
 
   machineInvoke(
