@@ -48,12 +48,12 @@ const ACCUMULATE_HOST_CALL_CLASSES = [
 
 export type RefineHostCallExternalities = {
   refine: RefineExternalities;
-  fetchExternalities: general.IFetchExternalities;
+  fetchExternalities: general.IRefineFetch;
 };
 
 export type AccumulateHostCallExternalities = {
   partialState: PartialState;
-  fetchExternalities: general.IFetchExternalities;
+  fetchExternalities: general.IAccumulateFetch;
   serviceExternalities: general.AccountsInfo & general.AccountsLookup & general.AccountsWrite & general.AccountsRead;
 };
 
