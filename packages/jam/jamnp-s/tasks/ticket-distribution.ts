@@ -144,7 +144,7 @@ export class TicketDistributionTask {
     }
   }
 
-  private onTicketReceivedCallback?: (epochIndex: Epoch, ticket: SignedTicket) => Promise<boolean>;
+  private onTicketReceivedCallback: ((epochIndex: Epoch, ticket: SignedTicket) => Promise<boolean>) | null = null;
 
   /**
    * Register a callback that validates a received ticket.
