@@ -7,7 +7,7 @@ import { type Opaque, WithDebug } from "@typeberry/utils";
 import { codecKnownSizeArray } from "./codec-utils.js";
 import type { ServiceGas, ServiceId } from "./common.js";
 import type { CodeHash } from "./hash.js";
-import { MAX_NUMBER_OF_SEGMENTS, type SegmentIndex } from "./work-item-segment.js";
+import { MAX_NUMBER_OF_IMPORTS_WP, type SegmentIndex } from "./work-item-segment.js";
 
 type WorkItemExtrinsicHash = Opaque<OpaqueHash, "ExtrinsicHash">;
 
@@ -126,13 +126,17 @@ export class WorkItem extends WithDebug {
     codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
     refineGasLimit: codec.u64.asOpaque<ServiceGas>(),
     accumulateGasLimit: codec.u64.asOpaque<ServiceGas>(),
+    // TODO: [MaSo] It should be validated to not exceed W_X
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/1a0b011a1c01?v=0.7.2
     exportCount: codec.u16,
     payload: codec.blob,
     importSegments: codecKnownSizeArray(ImportSpec.Codec, {
       minLength: 0,
-      maxLength: MAX_NUMBER_OF_SEGMENTS,
-      typicalLength: MAX_NUMBER_OF_SEGMENTS,
+      maxLength: MAX_NUMBER_OF_IMPORTS_WP,
+      typicalLength: MAX_NUMBER_OF_IMPORTS_WP,
     }),
+    // TODO: [MaSo] It should be validated to not exceed T = 128
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/1a0b011a1c01?v=0.7.2
     extrinsic: codec.sequenceVarLen(WorkItemExtrinsicSpec.Codec),
   });
 
@@ -175,7 +179,7 @@ export class WorkItem extends WithDebug {
     /** `a`: accumulate execution gas limit */
     public readonly accumulateGasLimit: ServiceGas,
     /** `i`: sequence of imported data segments, which identify a prior exported segment. */
-    public readonly importSegments: KnownSizeArray<ImportSpec, `Less than ${typeof MAX_NUMBER_OF_SEGMENTS}`>,
+    public readonly importSegments: KnownSizeArray<ImportSpec, `Less than ${typeof MAX_NUMBER_OF_IMPORTS_WP}`>,
     /** `x`: sequence of blob hashes and lengths to be introduced in this block */
     public readonly extrinsic: WorkItemExtrinsicSpec[],
     /** `e`: number of data segments exported by this work item. */

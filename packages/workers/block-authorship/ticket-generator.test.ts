@@ -2,7 +2,6 @@ import assert from "node:assert";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import { type SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
-import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, initWasm, SEED_SIZE } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import bandersnatchVrf from "@typeberry/safrole/bandersnatch-vrf.js";
@@ -42,7 +41,7 @@ describe("Ticket Generator", () => {
         const tickets: SignedTicket[] = [];
         for (let attempt = 0; attempt < ticketsPerValidator; attempt++) {
           tickets.push({
-            attempt: tryAsTicketAttempt(attempt, tinyChainSpec),
+            attempt: tryAsTicketAttempt(attempt),
             signature: Bytes.zero(784).asOpaque(),
           } as SignedTicket);
         }
@@ -67,7 +66,6 @@ describe("Ticket Generator", () => {
         validatorKeys,
         MOCK_ENTROPY,
         ticketsPerValidator,
-        tinyChainSpec,
       );
 
       assert.ok(result.isOk);
@@ -85,29 +83,21 @@ describe("Ticket Generator", () => {
         validatorKeys,
         MOCK_ENTROPY,
         ticketsPerValidator,
-        tinyChainSpec,
       );
 
       assert.ok(result.isOk);
       const tickets = result.ok;
-      assert.strictEqual(tickets[0].attempt, tryAsTicketAttempt(0, tinyChainSpec));
-      assert.strictEqual(tickets[1].attempt, tryAsTicketAttempt(1, tinyChainSpec));
-      assert.strictEqual(tickets[2].attempt, tryAsTicketAttempt(0, tinyChainSpec));
-      assert.strictEqual(tickets[3].attempt, tryAsTicketAttempt(1, tinyChainSpec));
+      assert.strictEqual(tickets[0].attempt, tryAsTicketAttempt(0));
+      assert.strictEqual(tickets[1].attempt, tryAsTicketAttempt(1));
+      assert.strictEqual(tickets[2].attempt, tryAsTicketAttempt(0));
+      assert.strictEqual(tickets[3].attempt, tryAsTicketAttempt(1));
     });
 
     it("should return empty array for no validator keys", async () => {
       const ringKeys = createMockRingKeys(3);
       const ticketsPerValidator = 2;
 
-      const result = await generateTickets(
-        MOCK_BANDERSNATCH,
-        ringKeys,
-        [],
-        MOCK_ENTROPY,
-        ticketsPerValidator,
-        tinyChainSpec,
-      );
+      const result = await generateTickets(MOCK_BANDERSNATCH, ringKeys, [], MOCK_ENTROPY, ticketsPerValidator);
 
       assert.ok(result.isOk);
       assert.strictEqual(result.ok.length, 0);
@@ -131,7 +121,6 @@ describe("Ticket Generator", () => {
         validatorKeys,
         MOCK_ENTROPY,
         ticketsPerValidator,
-        tinyChainSpec,
       );
 
       assert.ok(result.isOk);
@@ -159,7 +148,6 @@ describe("Ticket Generator", () => {
         invalidValidatorKeys,
         MOCK_ENTROPY,
         ticketsPerValidator,
-        tinyChainSpec,
       );
 
       assert.ok(result.isError);

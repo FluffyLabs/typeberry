@@ -93,6 +93,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
         {
           initGenesisFromAncestry: fuzzConfig.initGenesisFromAncestry,
           dummyFinalityDepth: 10_000,
+          pruneBlocks: true,
         },
       );
       runningNode = newNode;

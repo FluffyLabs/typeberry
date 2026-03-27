@@ -11,7 +11,7 @@ import { ticketsExtrinsicFromJson } from "./tickets-extrinsic.js";
 export const getExtrinsicFromJson = (ctx: ChainSpec) =>
   json.object<Extrinsic>(
     {
-      tickets: ticketsExtrinsicFromJson(ctx),
+      tickets: ticketsExtrinsicFromJson,
       preimages: preimagesExtrinsicFromJson,
       guarantees: guaranteesExtrinsicFromJson,
       assurances: getAssurancesExtrinsicFromJson(ctx),
