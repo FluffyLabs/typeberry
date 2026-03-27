@@ -144,16 +144,30 @@ export class TicketDistributionTask {
     }
   }
 
-  private onTicketReceivedCallback?: (epochIndex: Epoch, ticket: SignedTicket) => void;
+  private onTicketReceivedCallback?: (epochIndex: Epoch, ticket: SignedTicket) => Promise<boolean>;
 
-  setOnTicketReceived(cb: (epochIndex: Epoch, ticket: SignedTicket) => void) {
+  /**
+   * Register a callback that validates a received ticket.
+   * The ticket is only added to the redistribution pool if the callback returns `true`.
+   * This prevents redistribution of invalid tickets (e.g. those with a tampered `attempt` field).
+   */
+  setOnTicketReceived(cb: (epochIndex: Epoch, ticket: SignedTicket) => Promise<boolean>) {
     this.onTicketReceivedCallback = cb;
   }
 
   private onTicketReceived(epochIndex: Epoch, ticket: SignedTicket) {
     logger.trace`Received ticket for epoch ${epochIndex}, attempt ${ticket.attempt}`;
-    // Add to pending queue for potential re-distribution
-    this.addTicket(epochIndex, ticket);
-    this.onTicketReceivedCallback?.(epochIndex, ticket);
+    if (this.onTicketReceivedCallback) {
+      // Validate first; only redistribute if valid to avoid spreading tampered tickets.
+      this.onTicketReceivedCallback(epochIndex, ticket).then((isValid) => {
+        if (isValid) {
+          this.addTicket(epochIndex, ticket);
+        } else {
+          logger.warn`Dropping invalid ticket for epoch ${epochIndex} (validation failed)`;
+        }
+      });
+    } else {
+      this.addTicket(epochIndex, ticket);
+    }
   }
 }

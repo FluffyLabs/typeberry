@@ -1,5 +1,6 @@
 import {
   Block,
+  type EntropyHash,
   encodeUnsealedHeader,
   Header,
   reencodeAsView,
@@ -69,7 +70,7 @@ export class Generator {
     bandersnatchSecret: BandersnatchSecretSeed,
     sealPayload: BlockSealInput,
     timeSlot: TimeSlot,
-    pendingTickets: SignedTicket[] = [],
+    pendingTickets: { ticket: SignedTicket; id: EntropyHash }[] = [],
   ): Promise<BlockView> {
     const newBlock = await this.nextBlock(validatorIndex, bandersnatchSecret, sealPayload, timeSlot, pendingTickets);
     return reencodeAsView(Block.Codec, newBlock, this.chainSpec);
@@ -102,40 +103,37 @@ export class Generator {
     return entropyHashResult;
   }
 
-  private async prepareTicketsExtrinsic(
-    pendingTickets: SignedTicket[],
+  /**
+   * Selects tickets to include in the extrinsic from the pending pool.
+   *
+   * Tickets were already verified at receipt time (IDs pre-computed). This method:
+   * 1. Filters out tickets whose IDs are already in `state.ticketsAccumulator` (already processed).
+   * 2. Sorts remaining tickets by ID ascending (required by Safrole).
+   * 3. Deduplicates by ID (pool dedup is best-effort; reorgs can produce duplicates).
+   * 4. Returns at most `chainSpec.maxTicketsPerExtrinsic` tickets.
+   *
+   * Called only during the contest period (slotInEpoch < contestLength).
+   */
+  private prepareTicketsExtrinsic(
+    pendingTickets: { ticket: SignedTicket; id: EntropyHash }[],
     state: ReturnType<Generator["getLastHeaderAndState"]>["lastState"],
-  ): Promise<SignedTicket[]> {
+  ): SignedTicket[] {
     if (pendingTickets.length === 0) {
       return [];
     }
 
-    const verificationResults = await bandersnatchVrf.verifyTickets(
-      this.bandersnatch,
-      state.designatedValidatorData.length,
-      state.epochRoot,
-      pendingTickets,
-      state.entropy[2],
-    );
-
-    // Build a set of ticket IDs already in the state accumulator for fast lookup
+    // Tickets are already verified at receipt time — just filter, sort and slice.
+    // Build a set of ticket IDs already in the state accumulator for fast lookup.
     const accumulatedIds = HashSet.from(state.ticketsAccumulator.map((t) => t.id));
 
-    // Combine tickets with their IDs, filter out invalid ones and those already accumulated
-    const withIds = pendingTickets
-      .map((ticket, i) => ({
-        ticket,
-        id: verificationResults[i].entropyHash,
-        isValid: verificationResults[i].isValid,
-      }))
-      .filter(({ isValid, id }) => isValid && !accumulatedIds.has(id));
+    const filtered = pendingTickets.filter(({ id }) => !accumulatedIds.has(id));
 
-    // Sort by ID ascending (Ordering.value is -1/0/1, compatible with Array.sort)
-    withIds.sort((a, b) => a.id.compare(b.id).value);
+    // Sort by ID ascending
+    filtered.sort((a, b) => a.id.compare(b.id).value);
 
-    // Deduplicate by ID
-    const deduped: typeof withIds = [];
-    for (const item of withIds) {
+    // Deduplicate by ID (pool dedup is best-effort; state may produce duplicates across reorgs)
+    const deduped: typeof filtered = [];
+    for (const item of filtered) {
       if (deduped.length === 0 || !deduped[deduped.length - 1].id.isEqualTo(item.id)) {
         deduped.push(item);
       }
@@ -149,7 +147,7 @@ export class Generator {
     bandersnatchSecret: BandersnatchSecretSeed,
     sealPayload: BlockSealInput,
     timeSlot: TimeSlot,
-    pendingTickets: SignedTicket[] = [],
+    pendingTickets: { ticket: SignedTicket; id: EntropyHash }[] = [],
   ) {
     this.metrics.recordBlockAuthoringStarted(timeSlot);
     const startTime = now();
