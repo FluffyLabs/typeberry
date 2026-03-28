@@ -239,11 +239,11 @@ describe("Generator", () => {
       sig2.raw[0] = 2;
 
       const ticket1 = SignedTicket.create({
-        attempt: tryAsTicketAttempt(0, tinyChainSpec),
+        attempt: tryAsTicketAttempt(0),
         signature: sig1.asOpaque(),
       });
       const ticket2 = SignedTicket.create({
-        attempt: tryAsTicketAttempt(0, tinyChainSpec),
+        attempt: tryAsTicketAttempt(0),
         signature: sig2.asOpaque(),
       });
 
@@ -280,7 +280,7 @@ describe("Generator", () => {
 
       const sig1 = Bytes.zero(BANDERSNATCH_PROOF_BYTES);
       const ticket1 = SignedTicket.create({
-        attempt: tryAsTicketAttempt(0, tinyChainSpec),
+        attempt: tryAsTicketAttempt(0),
         signature: sig1.asOpaque(),
       });
 
@@ -303,7 +303,7 @@ describe("Generator", () => {
       const accumulatedId = Bytes.fill(HASH_SIZE, 0x01).asOpaque<EntropyHash>();
       const accumulatedTicket = Ticket.create({
         id: accumulatedId,
-        attempt: tryAsTicketAttempt(0, tinyChainSpec),
+        attempt: tryAsTicketAttempt(0),
       });
 
       const state = {
@@ -321,11 +321,11 @@ describe("Generator", () => {
       sig2.raw[0] = 2;
 
       const ticketAlreadyAccumulated = SignedTicket.create({
-        attempt: tryAsTicketAttempt(0, tinyChainSpec),
+        attempt: tryAsTicketAttempt(0),
         signature: sig1.asOpaque(),
       });
       const ticketNew = SignedTicket.create({
-        attempt: tryAsTicketAttempt(0, tinyChainSpec),
+        attempt: tryAsTicketAttempt(0),
         signature: sig2.asOpaque(),
       });
 
@@ -361,11 +361,11 @@ describe("Generator", () => {
 
       // Two different SignedTicket objects but with the same ID (e.g. duplicate from reorg)
       const ticketA = SignedTicket.create({
-        attempt: tryAsTicketAttempt(0, tinyChainSpec),
+        attempt: tryAsTicketAttempt(0),
         signature: sig1.asOpaque(),
       });
       const ticketB = SignedTicket.create({
-        attempt: tryAsTicketAttempt(0, tinyChainSpec),
+        attempt: tryAsTicketAttempt(0),
         signature: sig2.asOpaque(),
       });
       const duplicateId = Bytes.fill(HASH_SIZE, 0x05).asOpaque<EntropyHash>();
@@ -397,7 +397,7 @@ describe("Generator", () => {
         const sig = Bytes.zero(BANDERSNATCH_PROOF_BYTES);
         sig.raw[0] = sigByte;
         return {
-          ticket: SignedTicket.create({ attempt: tryAsTicketAttempt(0, tinyChainSpec), signature: sig.asOpaque() }),
+          ticket: SignedTicket.create({ attempt: tryAsTicketAttempt(0), signature: sig.asOpaque() }),
           id: Bytes.fill(HASH_SIZE, idByte).asOpaque<EntropyHash>(),
           sig: sig.asOpaque(),
         };
