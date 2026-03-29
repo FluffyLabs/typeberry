@@ -207,6 +207,13 @@ export type State = {
    * Retrieve details about single service.
    */
   getService(id: ServiceId): Service | null;
+
+  /**
+   * Async variant of getService. Used by worker threads that fetch
+   * service data from the main thread asynchronously.
+   * When not provided, callers fall back to the sync getService.
+   */
+  getServiceAsync?(id: ServiceId): Promise<Service | null>;
 };
 
 /** Service details. */

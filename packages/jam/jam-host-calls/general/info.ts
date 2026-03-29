@@ -15,7 +15,7 @@ import { HostCallResult } from "./results.js";
 /** Account data interface for info host calls. */
 export interface AccountsInfo {
   /** Get account info. */
-  getServiceInfo(serviceId: ServiceId | null): ServiceAccountInfo | null;
+  getServiceInfo(serviceId: ServiceId | null): Promise<ServiceAccountInfo | null>;
 }
 
 const IN_OUT_REG = 7;
@@ -60,7 +60,7 @@ export class Info implements HostCallHandler {
     const outputStart = regs.get(8);
 
     // v
-    const accountInfo = this.account.getServiceInfo(serviceId);
+    const accountInfo = await this.account.getServiceInfo(serviceId);
 
     const encodedInfo =
       accountInfo === null

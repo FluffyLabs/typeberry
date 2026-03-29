@@ -51,7 +51,7 @@ export class Provide implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const result = this.partialState.providePreimage(serviceId, preimage);
+    const result = await this.partialState.providePreimage(serviceId, preimage);
     logger.trace`[${this.currentServiceId}] PROVIDE(${serviceId}, ${preimage.toStringTruncated()}) <- ${resultToString(result)}`;
     logger.insane`[${this.currentServiceId}] PROVIDE(${serviceId}, ${preimage}) <- ${resultToString(result)}`;
 

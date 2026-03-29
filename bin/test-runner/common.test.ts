@@ -13,6 +13,7 @@ describe("test runner common", () => {
       initialFiles: ["file1.json", "file2.json"],
       pvms: [SelectedPvm.Ananas],
       accumulateSequentially: false,
+      accumulateWorkers: 1,
     });
   });
 
@@ -23,8 +24,9 @@ describe("test runner common", () => {
 
     deepEqual(result, {
       initialFiles: ["file1.json", "file2.json"],
-      pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin],
+      pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin, SelectedPvm.Lite],
       accumulateSequentially: false,
+      accumulateWorkers: 1,
     });
   });
 
@@ -36,7 +38,7 @@ describe("test runner common", () => {
         const _result = parseArgs(args);
       },
       {
-        message: "Unknown pvm value: invalid. Use one of ananas, builtin.",
+        message: "Unknown pvm value: invalid. Use one of ananas, builtin, lite.",
       },
     );
   });
@@ -48,8 +50,9 @@ describe("test runner common", () => {
 
     deepEqual(result, {
       initialFiles: ["file1.json"],
-      pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin],
+      pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin, SelectedPvm.Lite],
       accumulateSequentially: true,
+      accumulateWorkers: 1,
     });
   });
 
@@ -60,8 +63,9 @@ describe("test runner common", () => {
 
     deepEqual(result, {
       initialFiles: ["file1.json"],
-      pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin],
+      pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin, SelectedPvm.Lite],
       accumulateSequentially: true,
+      accumulateWorkers: 1,
     });
   });
 
@@ -72,8 +76,9 @@ describe("test runner common", () => {
 
     deepEqual(result, {
       initialFiles: ["file1.json"],
-      pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin],
+      pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin, SelectedPvm.Lite],
       accumulateSequentially: false,
+      accumulateWorkers: 1,
     });
   });
 

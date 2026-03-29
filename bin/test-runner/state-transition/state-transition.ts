@@ -86,7 +86,7 @@ export async function runStateTransition(testContent: StateTransition, options: 
     spec,
     preState,
     hasher,
-    { pvm, accumulateSequentially: options.accumulateSequentially },
+    { pvm, accumulateSequentially: options.accumulateSequentially, accumulateWorkers: options.accumulateWorkers },
     DbHeaderChain.new(blocksDb),
   );
 

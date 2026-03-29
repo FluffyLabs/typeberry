@@ -50,7 +50,7 @@ export class Query implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const result = this.partialState.checkPreimageStatus(hash.asOpaque(), length);
+    const result = await this.partialState.checkPreimageStatus(hash.asOpaque(), length);
     const zero = tryAsU64(0n);
 
     if (result === null) {

@@ -110,8 +110,8 @@ export class AccumulateExternalities
    *
    * Takes into account updates over the state.
    */
-  private getCurrentServiceInfo(): ServiceAccountInfo {
-    const serviceInfo = this.updatedState.getServiceInfo(this.currentServiceId);
+  private async getCurrentServiceInfo(): Promise<ServiceAccountInfo> {
+    const serviceInfo = await this.updatedState.getServiceInfoAsync(this.currentServiceId);
     if (serviceInfo === null) {
       throw new Error(`Missing service info for current service! ${this.currentServiceId}`);
     }
@@ -125,8 +125,8 @@ export class AccumulateExternalities
    *
    * Takes into account newly created services as well.
    */
-  getServiceInfo(destination: ServiceId | null): ServiceAccountInfo | null {
-    return this.updatedState.getServiceInfo(destination);
+  async getServiceInfo(destination: ServiceId | null): Promise<ServiceAccountInfo | null> {
+    return this.updatedState.getServiceInfoAsync(destination);
   }
 
   /**
@@ -142,8 +142,17 @@ export class AccumulateExternalities
    * - cannot be "freshly provided", since we defer updating the
    *   lookup status.
    */
-  private isPreviousCodeExpired(destination: ServiceId, previousCodeHash: PreimageHash, len: U64): [boolean, string] {
-    const slots = this.updatedState.getLookupHistory(this.currentTimeslot, destination, previousCodeHash, len);
+  private async isPreviousCodeExpired(
+    destination: ServiceId,
+    previousCodeHash: PreimageHash,
+    len: U64,
+  ): Promise<[boolean, string]> {
+    const slots = await this.updatedState.getLookupHistoryAsync(
+      this.currentTimeslot,
+      destination,
+      previousCodeHash,
+      len,
+    );
     const status = slots === null ? null : slotsToPreimageStatus(slots.slots);
     // The previous code needs to be forgotten and expired.
     if (status?.status !== PreimageStatusKind.Unavailable) {
@@ -160,7 +169,7 @@ export class AccumulateExternalities
     const mod = 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8;
 
     for (;;) {
-      const service = this.getServiceInfo(currentServiceId);
+      const service = this.updatedState.getServiceInfo(currentServiceId);
       // we found an empty id
       if (service === null) {
         return currentServiceId;
@@ -172,9 +181,14 @@ export class AccumulateExternalities
     }
   }
 
-  checkPreimageStatus(hash: PreimageHash, length: U64): PreimageStatus | null {
+  async checkPreimageStatus(hash: PreimageHash, length: U64): Promise<PreimageStatus | null> {
     // https://graypaper.fluffylabs.dev/#/9a08063/378102378102?v=0.6.6
-    const status = this.updatedState.getLookupHistory(this.currentTimeslot, this.currentServiceId, hash, length);
+    const status = await this.updatedState.getLookupHistoryAsync(
+      this.currentTimeslot,
+      this.currentServiceId,
+      hash,
+      length,
+    );
     if (status === null) {
       return null;
     }
@@ -182,8 +196,8 @@ export class AccumulateExternalities
     return slotsToPreimageStatus(status.slots);
   }
 
-  requestPreimage(hash: PreimageHash, length: U64): Result<OK, RequestPreimageError> {
-    const existingPreimage = this.updatedState.getLookupHistory(
+  async requestPreimage(hash: PreimageHash, length: U64): Promise<Result<OK, RequestPreimageError>> {
+    const existingPreimage = await this.updatedState.getLookupHistoryAsync(
       this.currentTimeslot,
       this.currentServiceId,
       hash,
@@ -207,7 +221,7 @@ export class AccumulateExternalities
 
     // make sure we have enough balance for this update
     // https://graypaper.fluffylabs.dev/#/9a08063/381201381601?v=0.6.6
-    const serviceInfo = this.getCurrentServiceInfo();
+    const serviceInfo = await this.getCurrentServiceInfo();
     const hasPreimage = existingPreimage !== null;
     const countDiff = hasPreimage ? 0 : 2;
     const lenDiff = length - BigInt(existingPreimage?.length ?? 0);
@@ -252,17 +266,22 @@ export class AccumulateExternalities
     return Result.ok(OK);
   }
 
-  forgetPreimage(hash: PreimageHash, length: U64): Result<OK, ForgetPreimageError> {
+  async forgetPreimage(hash: PreimageHash, length: U64): Promise<Result<OK, ForgetPreimageError>> {
     const serviceId = this.currentServiceId;
-    const status = this.updatedState.getLookupHistory(this.currentTimeslot, this.currentServiceId, hash, length);
+    const status = await this.updatedState.getLookupHistoryAsync(
+      this.currentTimeslot,
+      this.currentServiceId,
+      hash,
+      length,
+    );
     if (status === null) {
       return Result.error(ForgetPreimageError.NotFound, () => `Preimage not found: hash=${hash}, length=${length}`);
     }
 
     const s = slotsToPreimageStatus(status.slots);
 
-    const updateStorageUtilisation = () => {
-      const serviceInfo = this.getCurrentServiceInfo();
+    const updateStorageUtilisation = async () => {
+      const serviceInfo = await this.getCurrentServiceInfo();
       const items = serviceInfo.storageUtilisationCount - 2; // subtracting 1 for lookup history item and 1 for the preimage
       const bytes = serviceInfo.storageUtilisationBytes - length - LOOKUP_HISTORY_ENTRY_BYTES;
       return this.updatedState.updateServiceStorageUtilisation(this.currentServiceId, items, bytes, serviceInfo);
@@ -270,7 +289,7 @@ export class AccumulateExternalities
 
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/380802380802?v=0.7.2
     if (s.status === PreimageStatusKind.Requested) {
-      const res = updateStorageUtilisation();
+      const res = await updateStorageUtilisation();
       if (res.isError) {
         return Result.error(ForgetPreimageError.StorageUtilisationError, res.details);
       }
@@ -289,7 +308,7 @@ export class AccumulateExternalities
     if (s.status === PreimageStatusKind.Unavailable) {
       const y = s.data[1];
       if (y < t - this.chainSpec.preimageExpungePeriod) {
-        const res = updateStorageUtilisation();
+        const res = await updateStorageUtilisation();
         if (res.isError) {
           return Result.error(ForgetPreimageError.StorageUtilisationError, res.details);
         }
@@ -343,14 +362,14 @@ export class AccumulateExternalities
     assertNever(s);
   }
 
-  transfer(
+  async transfer(
     destinationId: ServiceId | null,
     amount: U64,
     gas: ServiceGas,
     memo: Bytes<TRANSFER_MEMO_BYTES>,
-  ): Result<OK, TransferError> {
-    const source = this.getCurrentServiceInfo();
-    const destination = this.getServiceInfo(destinationId);
+  ): Promise<Result<OK, TransferError>> {
+    const source = await this.getCurrentServiceInfo();
+    const destination = await this.getServiceInfo(destinationId);
     /** https://graypaper.fluffylabs.dev/#/9a08063/370401370401?v=0.6.6 */
     if (destination === null || destinationId === null) {
       return Result.error(TransferError.DestinationNotFound, () => `Destination service not found: ${destinationId}`);
@@ -397,14 +416,14 @@ export class AccumulateExternalities
     return Result.ok(OK);
   }
 
-  newService(
+  async newService(
     codeHash: CodeHash,
     codeLength: U64,
     accumulateMinGas: ServiceGas,
     onTransferMinGas: ServiceGas,
     gratisStorage: U64,
     wantedServiceId: U64,
-  ): Result<ServiceId, NewServiceError> {
+  ): Promise<Result<ServiceId, NewServiceError>> {
     // calculate the threshold. Storage is empty, one preimage requested.
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/115901115901?v=0.6.7
     const items = tryAsU32(2 * 1 + 0);
@@ -424,7 +443,7 @@ export class AccumulateExternalities
     // check if we have enough balance
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/369e0336a303?v=0.6.7
     const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes.value, gratisStorage);
-    const currentService = this.getCurrentServiceInfo();
+    const currentService = await this.getCurrentServiceInfo();
     const thresholdForCurrent = ServiceAccountInfo.calculateThresholdBalance(
       currentService.storageUtilisationCount,
       currentService.storageUtilisationBytes,
@@ -467,7 +486,7 @@ export class AccumulateExternalities
     ) {
       // NOTE: It's safe to cast to `Number` here, bcs here service ID cannot be bigger than 2**16
       const newServiceId = tryAsServiceId(Number(wantedServiceId));
-      if (this.getServiceInfo(newServiceId) !== null) {
+      if ((await this.getServiceInfo(newServiceId)) !== null) {
         return Result.error(
           NewServiceError.RegistrarServiceIdAlreadyTaken,
           () => `Service ID ${newServiceId} already taken`,
@@ -501,9 +520,9 @@ export class AccumulateExternalities
     return Result.ok(newServiceId);
   }
 
-  upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void {
+  async upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): Promise<void> {
     /** https://graypaper.fluffylabs.dev/#/9a08063/36c80336c803?v=0.6.6 */
-    const serviceInfo = this.getCurrentServiceInfo();
+    const serviceInfo = await this.getCurrentServiceInfo();
     this.updatedState.updateServiceInfo(
       this.currentServiceId,
       ServiceAccountInfo.create({
@@ -597,11 +616,11 @@ export class AccumulateExternalities
     this.updatedState.stateUpdate.yieldedRoot = hash;
   }
 
-  providePreimage(serviceId: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {
+  async providePreimage(serviceId: ServiceId | null, preimage: BytesBlob): Promise<Result<OK, ProvidePreimageError>> {
     // we need to explicitly check if service exists, since it's a different error.
     // we also check if it's in newly created
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/384e03384e03?v=0.7.2
-    const service = serviceId === null ? null : this.updatedState.getServiceInfo(serviceId);
+    const service = serviceId === null ? null : await this.updatedState.getServiceInfoAsync(serviceId);
     if (service === null || serviceId === null) {
       return Result.error(ProvidePreimageError.ServiceNotFound, () => `Service not found: ${serviceId}`);
     }
@@ -610,7 +629,7 @@ export class AccumulateExternalities
     const preimageHash = this.blake2b.hashBytes(preimage).asOpaque<PreimageHash>();
 
     // checking service internal lookup
-    const stateLookup = this.updatedState.getLookupHistory(
+    const stateLookup = await this.updatedState.getLookupHistoryAsync(
       this.currentTimeslot,
       serviceId,
       preimageHash,
@@ -624,7 +643,7 @@ export class AccumulateExternalities
     }
 
     // checking already provided preimages
-    const hasPreimage = this.updatedState.hasPreimage(serviceId, preimageHash);
+    const hasPreimage = await this.updatedState.hasPreimageAsync(serviceId, preimageHash);
     if (hasPreimage) {
       return Result.error(
         ProvidePreimageError.AlreadyProvided,
@@ -652,8 +671,8 @@ export class AccumulateExternalities
     return Result.ok(OK);
   }
 
-  eject(destination: ServiceId | null, previousCodeHash: PreimageHash): Result<OK, EjectError> {
-    const service = this.getServiceInfo(destination);
+  async eject(destination: ServiceId | null, previousCodeHash: PreimageHash): Promise<Result<OK, EjectError>> {
+    const service = await this.getServiceInfo(destination);
     const isRemoved =
       this.updatedState.stateUpdate.services.removed.find((serviceId) => serviceId === destination) !== undefined;
 
@@ -661,7 +680,7 @@ export class AccumulateExternalities
       return Result.error(EjectError.InvalidService, () => "Service missing");
     }
 
-    const currentService = this.getCurrentServiceInfo();
+    const currentService = await this.getCurrentServiceInfo();
 
     // check if the service expects to be ejected by us:
     const expectedCodeHash = Bytes.zero(HASH_SIZE).asOpaque<CodeHash>();
@@ -681,7 +700,7 @@ export class AccumulateExternalities
     );
 
     // check if we have a preimage with the entire storage.
-    const [isPreviousCodeExpired, errorReason] = this.isPreviousCodeExpired(destination, previousCodeHash, l);
+    const [isPreviousCodeExpired, errorReason] = await this.isPreviousCodeExpired(destination, previousCodeHash, l);
     if (!isPreviousCodeExpired) {
       return Result.error(EjectError.InvalidPreimage, () => `Previous code available: ${errorReason}`);
     }
@@ -714,16 +733,16 @@ export class AccumulateExternalities
     return Result.ok(OK);
   }
 
-  read(serviceId: ServiceId | null, rawKey: StorageKey): BytesBlob | null {
+  async read(serviceId: ServiceId | null, rawKey: StorageKey): Promise<BytesBlob | null> {
     if (serviceId === null) {
       return null;
     }
-    return this.updatedState.getStorage(serviceId, rawKey);
+    return this.updatedState.getStorageAsync(serviceId, rawKey);
   }
 
-  write(rawKey: StorageKey, data: BytesBlob | null): Result<number | null, "full"> {
+  async write(rawKey: StorageKey, data: BytesBlob | null): Promise<Result<number | null, "full">> {
     const rawKeyBytes = tryAsU64(rawKey.length);
-    const current = this.read(this.currentServiceId, rawKey);
+    const current = await this.read(this.currentServiceId, rawKey);
     const isAddingNew = current === null && data !== null;
     const isRemoving = current !== null && data === null;
     const countDiff = isAddingNew ? 1 : isRemoving ? -1 : 0;
@@ -733,7 +752,7 @@ export class AccumulateExternalities
     const keyDiffAdding = isAddingNew ? rawKeyBytes : 0n;
     const rawKeyDiff = keyDiffRemoving + keyDiffAdding;
 
-    const serviceInfo = this.getCurrentServiceInfo();
+    const serviceInfo = await this.getCurrentServiceInfo();
     const items = serviceInfo.storageUtilisationCount + countDiff;
     const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + baseStorageDiff + rawKeyDiff;
     const res = this.updatedState.updateServiceStorageUtilisation(this.currentServiceId, items, bytes, serviceInfo);
@@ -746,12 +765,12 @@ export class AccumulateExternalities
     return Result.ok(current === null ? null : current.length);
   }
 
-  lookup(serviceId: ServiceId | null, hash: PreimageHash): BytesBlob | null {
+  async lookup(serviceId: ServiceId | null, hash: PreimageHash): Promise<BytesBlob | null> {
     if (serviceId === null) {
       return null;
     }
 
-    return this.updatedState.getPreimage(serviceId, hash);
+    return this.updatedState.getPreimageAsync(serviceId, hash);
   }
 }
 
