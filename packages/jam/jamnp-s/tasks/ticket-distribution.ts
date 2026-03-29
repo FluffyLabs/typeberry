@@ -113,8 +113,15 @@ export class TicketDistributionTask {
    * Deduplicates tickets based on signature.
    */
   addTicket(epochIndex: Epoch, ticket: SignedTicket) {
-    // Check if epoch changed - if so, clear old tickets
-    if (this.currentEpoch !== null && this.currentEpoch !== epochIndex) {
+    // Drop tickets for older epochs (can happen when a delayed validation callback completes
+    // after the epoch has already advanced — accepting it would roll back currentEpoch).
+    if (this.currentEpoch !== null && epochIndex < this.currentEpoch) {
+      logger.warn`[addTicket] Ignoring ticket for old epoch ${epochIndex} (current: ${this.currentEpoch})`;
+      return;
+    }
+
+    // Epoch advanced — clear old tickets
+    if (this.currentEpoch !== null && epochIndex > this.currentEpoch) {
       logger.log`[addTicket] Epoch changed from ${this.currentEpoch} to ${epochIndex}, clearing ${this.pendingTickets.length} old tickets`;
       this.pendingTickets = [];
       // Note: We don't need to clear aux data for all peers here.
@@ -159,7 +166,10 @@ export class TicketDistributionTask {
     logger.trace`Received ticket for epoch ${epochIndex}, attempt ${ticket.attempt}`;
     if (this.onTicketReceivedCallback !== null) {
       // Validate first; only redistribute if valid to avoid spreading tampered tickets.
-      this.onTicketReceivedCallback(epochIndex, ticket)
+      // Wrap with Promise.resolve().then() to catch both sync throws and async rejections.
+      const cb = this.onTicketReceivedCallback;
+      Promise.resolve()
+        .then(() => cb(epochIndex, ticket))
         .then((isValid) => {
           if (isValid) {
             this.addTicket(epochIndex, ticket);
