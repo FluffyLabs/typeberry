@@ -155,7 +155,7 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>>, InitStates
   }
 
   markUnused(header: HeaderHash): void {
-    this.states.remove(header.raw);
+    this.states.removeSync(header.raw);
   }
 
   async close() {

@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/in-core",
-  "version": "0.5.9",
+  "version": "0.5.10",
   "description": "In core execution utilities (refine phase).",
   "main": "index.ts",
   "scripts": {
@@ -15,6 +15,7 @@
     "@typeberry/database": "*",
     "@typeberry/executor": "*",
     "@typeberry/hash": "*",
+    "@typeberry/jam-host-calls": "*",
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
     "@typeberry/state": "*",

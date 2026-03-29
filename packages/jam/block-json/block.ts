@@ -7,7 +7,7 @@ import { headerFromJson } from "./header.js";
 export const blockFromJson = (spec: ChainSpec) =>
   json.object<Block>(
     {
-      header: headerFromJson(spec),
+      header: headerFromJson,
       extrinsic: getExtrinsicFromJson(spec),
     },
     ({ header, extrinsic }) => Block.create({ header, extrinsic }),

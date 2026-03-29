@@ -96,15 +96,18 @@ export class ImporterConfig {
       },
     ),
     dummyFinalityDepth: codec.u16,
+    pruneBlocks: codec.bool,
   });
 
-  static create({ pvm, dummyFinalityDepth }: CodecRecord<ImporterConfig>) {
-    return new ImporterConfig(pvm, dummyFinalityDepth);
+  static create({ pvm, dummyFinalityDepth, pruneBlocks }: CodecRecord<ImporterConfig>) {
+    return new ImporterConfig(pvm, dummyFinalityDepth, pruneBlocks);
   }
 
   private constructor(
     public readonly pvm: PvmBackend,
     /** Dummy finality depth. 0 means disabled, any positive value enables dummy finality with that depth. */
     public readonly dummyFinalityDepth: U16 = tryAsU16(0),
+    /** Whether to prune block data (headers, extrinsics) alongside states on finality. */
+    public readonly pruneBlocks: boolean = false,
   ) {}
 }

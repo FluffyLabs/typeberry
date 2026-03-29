@@ -29,7 +29,7 @@ import { type Blake2b, HASH_SIZE, type WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { tryAsU8, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import type { State } from "@typeberry/state";
-import { FetchExternalities } from "@typeberry/transition/externalities/fetch-externalities.js";
+import { RefineFetchExternalities } from "@typeberry/transition/externalities/refine-fetch-externalities.js";
 import { assertEmpty, assertNever, Result } from "@typeberry/utils";
 import { RefineExternalitiesImpl } from "./externalities/refine.js";
 
@@ -40,7 +40,7 @@ export type RefineResult = {
 
 export type RefineItemResult = {
   result: WorkResult;
-  exports: Segment[];
+  exports: readonly Segment[];
 };
 
 export enum RefineError {
@@ -171,11 +171,24 @@ export class InCore {
     logger.log`[core:${core}] Authorized. Proceeding with work items verification. Anchor=${context.anchor}`;
 
     // Verify the work items
+    let exportOffset = 0;
     const refineResults: Awaited<ReturnType<InCore["refineItem"]>>[] = [];
     for (const [idx, item] of items.entries()) {
       logger.info`[core:${core}][i:${idx}] Refining item for service ${item.service}.`;
 
-      refineResults.push(await this.refineItem(state, idx, item, imports, extrinsics, core, workPackageHash));
+      const result = await this.refineItem(
+        state,
+        lookupState,
+        idx,
+        item,
+        imports,
+        extrinsics,
+        core,
+        workPackageHash,
+        exportOffset,
+      );
+      refineResults.push(result);
+      exportOffset += result.exports.length;
     }
 
     // amalgamate the work report now
@@ -259,12 +272,14 @@ export class InCore {
 
   private async refineItem(
     state: State,
+    lookupState: State,
     idx: number,
     item: WorkItem,
     allImports: PerWorkItem<ImportedSegment[]>,
     allExtrinsics: PerWorkItem<WorkItemExtrinsic[]>,
     coreIndex: CoreIndex,
     workPackageHash: WorkPackageHash,
+    exportOffset: number,
   ): Promise<RefineItemResult> {
     const payloadHash = this.blake2b.hashBytes(item.payload);
     const baseResult = {
@@ -306,6 +321,9 @@ export class InCore {
       payload: item.payload,
       imports: allImports,
       extrinsics: allExtrinsics,
+      currentServiceId: item.service,
+      lookupState,
+      exportOffset,
     });
 
     const executor = await PvmExecutor.createRefineExecutor(item.service, code, externalities, this.pvmBackend);
@@ -320,8 +338,7 @@ export class InCore {
 
     const execResult = await executor.run(args, item.refineGasLimit);
 
-    // TODO [ToDr] get exports from externalities
-    const exports: Segment[] = [];
+    const exports = externalities.refine.getExportedSegments();
     if (exports.length !== item.exportCount) {
       return {
         exports,
@@ -415,16 +432,17 @@ export class InCore {
     payload: BytesBlob;
     imports: PerWorkItem<ImportedSegment[]>;
     extrinsics: PerWorkItem<WorkItemExtrinsic[]>;
+    currentServiceId: ServiceId;
+    lookupState: State;
+    exportOffset: number;
   }): RefineHostCallExternalities {
     // TODO [ToDr] Pass all required fetch data
-    const fetchExternalities = FetchExternalities.createForRefine(
-      {
-        entropy: undefined,
-        ...args,
-      },
-      this.chainSpec,
-    );
-    const refine = RefineExternalitiesImpl.create();
+    const fetchExternalities = new RefineFetchExternalities(this.chainSpec);
+    const refine = RefineExternalitiesImpl.create({
+      currentServiceId: args.currentServiceId,
+      lookupState: args.lookupState,
+      exportOffset: args.exportOffset,
+    });
 
     return {
       fetchExternalities,

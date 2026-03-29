@@ -238,7 +238,6 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
           validatorKeys,
           ticketEntropy,
           chainSpec.ticketsPerValidator,
-          chainSpec,
         );
 
         if (ticketsResult.isError) {

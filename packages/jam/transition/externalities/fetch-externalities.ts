@@ -1,11 +1,10 @@
-import type { EntropyHash } from "@typeberry/block";
 import { G_I, MAX_REPORT_DEPENDENCIES, O, Q, T, W_A, W_B, W_C, W_M, W_T, W_X } from "@typeberry/block/gp-constants.js";
 import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { type general, PendingTransfer } from "@typeberry/jam-host-calls";
-import { tryAsU16, tryAsU32, tryAsU64, type U64 } from "@typeberry/numbers";
+import { PendingTransfer } from "@typeberry/jam-host-calls";
+import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   BASE_SERVICE_BALANCE,
   ELECTIVE_BYTE_BALANCE,
@@ -37,7 +36,7 @@ export const TRANSFER_OR_OPERAND = codec.union<TransferOperandKind, TransferOrOp
   [TransferOperandKind.TRANSFER]: codec.object({ value: PendingTransfer.Codec }),
 });
 
-const TRANSFERS_AND_OPERANDS = codec.sequenceVarLen(TRANSFER_OR_OPERAND);
+export const TRANSFERS_AND_OPERANDS = codec.sequenceVarLen(TRANSFER_OR_OPERAND);
 
 // https://github.com/gavofyork/graypaper/pull/414
 // 0.7.0 encoding is used for prior versions as well.
@@ -79,7 +78,7 @@ const CONSTANTS_CODEC = codec.object({
 
 const encodedConstantsCache = new Map<ChainSpec, BytesBlob>();
 
-function getEncodedConstants(chainSpec: ChainSpec) {
+export function getEncodedConstants(chainSpec: ChainSpec) {
   const constsFromCache = encodedConstantsCache.get(chainSpec);
   if (constsFromCache !== undefined) {
     return constsFromCache;
@@ -124,135 +123,4 @@ function getEncodedConstants(chainSpec: ChainSpec) {
   encodedConstantsCache.set(chainSpec, encodedConsts);
 
   return encodedConsts;
-}
-
-enum FetchContext {
-  Accumulate = 0,
-  Refine = 1,
-}
-
-type AccumulateFetchData = {
-  context: FetchContext.Accumulate;
-  entropy: EntropyHash;
-  transfers: PendingTransfer[];
-  operands: Operand[];
-};
-
-type RefineFetchData = {
-  context: FetchContext.Refine;
-  // TODO [ToDr] should this be available?
-  entropy: undefined;
-};
-
-// TODO [ToDr] Each context should have a separate interface with only relevant methods.
-// The common interface would be then just dispatching to the proper method from a sub-interface depending on context.
-// This will make it less error prone.
-type FetchData = AccumulateFetchData | RefineFetchData;
-
-export class FetchExternalities implements general.IFetchExternalities {
-  private constructor(
-    private fetchData: FetchData,
-    private chainSpec: ChainSpec,
-  ) {}
-
-  static createForAccumulate(
-    fetchData: Omit<AccumulateFetchData, "context">,
-    chainSpec: ChainSpec,
-  ): FetchExternalities {
-    return new FetchExternalities({ context: FetchContext.Accumulate, ...fetchData }, chainSpec);
-  }
-
-  static createForRefine(fetchData: Omit<RefineFetchData, "context">, chainSpec: ChainSpec): FetchExternalities {
-    return new FetchExternalities({ context: FetchContext.Refine, ...fetchData }, chainSpec);
-  }
-
-  constants(): BytesBlob {
-    return getEncodedConstants(this.chainSpec);
-  }
-
-  entropy(): BytesBlob | null {
-    const { entropy } = this.fetchData;
-    if (entropy === undefined) {
-      return null;
-    }
-
-    return entropy.asOpaque();
-  }
-
-  authorizerTrace(): BytesBlob | null {
-    return null;
-  }
-
-  workItemExtrinsic(_workItem: U64 | null, _index: U64): BytesBlob | null {
-    return null;
-  }
-
-  workItemImport(_workItem: U64 | null, _index: U64): BytesBlob | null {
-    return null;
-  }
-
-  workPackage(): BytesBlob | null {
-    return null;
-  }
-
-  authorizer(): BytesBlob | null {
-    return null;
-  }
-
-  authorizationToken(): BytesBlob | null {
-    return null;
-  }
-
-  refineContext(): BytesBlob | null {
-    return null;
-  }
-
-  allWorkItems(): BytesBlob | null {
-    return null;
-  }
-
-  oneWorkItem(_workItem: U64): BytesBlob | null {
-    return null;
-  }
-
-  workItemPayload(_workItem: U64): BytesBlob | null {
-    return null;
-  }
-
-  allTransfersAndOperands(): BytesBlob | null {
-    if (this.fetchData.context === FetchContext.Accumulate) {
-      const { transfers, operands } = this.fetchData;
-      const transfersAndOperands: TransferOrOperand[] = transfers
-        .map((transfer): TransferOrOperand => ({ kind: TransferOperandKind.TRANSFER, value: transfer }))
-        .concat(operands.map((operand): TransferOrOperand => ({ kind: TransferOperandKind.OPERAND, value: operand })));
-
-      return Encoder.encodeObject(TRANSFERS_AND_OPERANDS, transfersAndOperands, this.chainSpec);
-    }
-
-    return null;
-  }
-
-  oneTransferOrOperand(index: U64): BytesBlob | null {
-    if (this.fetchData.context === FetchContext.Accumulate) {
-      const { operands, transfers } = this.fetchData;
-
-      if (index >= operands.length + transfers.length) {
-        return null;
-      }
-
-      const kind = index < operands.length ? TransferOperandKind.OPERAND : TransferOperandKind.TRANSFER;
-      const transferOrOperand =
-        kind === TransferOperandKind.OPERAND
-          ? ({ kind: TransferOperandKind.OPERAND, value: operands[Number(index)] } as const)
-          : ({ kind: TransferOperandKind.TRANSFER, value: transfers[Number(index) - operands.length] } as const);
-
-      if (transferOrOperand.value === undefined) {
-        return null;
-      }
-
-      return Encoder.encodeObject(TRANSFER_OR_OPERAND, transferOrOperand, this.chainSpec);
-    }
-
-    return null;
-  }
 }
