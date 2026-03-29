@@ -315,6 +315,10 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
       tickets,
       getTicketEntropy(epochIndex, state),
     );
+    if (results.length !== tickets.length) {
+      logger.error`verifyTickets returned ${results.length} results for ${tickets.length} tickets`;
+      return false;
+    }
     const verified = tickets
       .map((ticket, i) => ({ ticket, id: results[i].entropyHash }))
       .filter((_, i) => results[i].isValid);

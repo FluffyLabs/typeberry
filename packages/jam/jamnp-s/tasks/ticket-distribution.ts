@@ -159,13 +159,17 @@ export class TicketDistributionTask {
     logger.trace`Received ticket for epoch ${epochIndex}, attempt ${ticket.attempt}`;
     if (this.onTicketReceivedCallback !== null) {
       // Validate first; only redistribute if valid to avoid spreading tampered tickets.
-      this.onTicketReceivedCallback(epochIndex, ticket).then((isValid) => {
-        if (isValid) {
-          this.addTicket(epochIndex, ticket);
-        } else {
-          logger.warn`Dropping invalid ticket for epoch ${epochIndex} (validation failed)`;
-        }
-      });
+      this.onTicketReceivedCallback(epochIndex, ticket)
+        .then((isValid) => {
+          if (isValid) {
+            this.addTicket(epochIndex, ticket);
+          } else {
+            logger.warn`Dropping invalid ticket for epoch ${epochIndex} (validation failed)`;
+          }
+        })
+        .catch((error) => {
+          logger.error`Error validating ticket for epoch ${epochIndex}, attempt ${ticket.attempt}: ${error}`;
+        });
     } else {
       this.addTicket(epochIndex, ticket);
     }
