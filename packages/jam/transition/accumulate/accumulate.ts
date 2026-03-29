@@ -50,6 +50,15 @@ import {
 } from "./accumulation-result-merge-utils.js";
 import type { Operand } from "./operand.js";
 import type { AccumulateOptions } from "./options.js";
+import { AccumulateWorkerPool } from "./worker/pool.js";
+import { type AccumulateRequest, MessageType } from "./worker/protocol.js";
+import {
+  deserializeAccumulationStateUpdate,
+  serializeAccumulationStateUpdate,
+  serializeOperand,
+  serializePendingTransfer,
+  serializePrivilegedServices,
+} from "./worker/serialization.js";
 
 export const ACCUMULATION_ERROR = "duplicate service created";
 export type ACCUMULATION_ERROR = typeof ACCUMULATION_ERROR;
@@ -80,6 +89,8 @@ const ARGS_CODEC = codec.object({
 });
 
 export class Accumulate {
+  private workerPool: AccumulateWorkerPool | null = null;
+
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly blake2b: Blake2b,
@@ -88,6 +99,11 @@ export class Accumulate {
   ) {
     if (options.accumulateSequentially === true) {
       logger.warn`⚠️ Parallel accumulation is disabled. Running in sequential mode.`;
+    }
+    if (options.accumulateWorkers > 0) {
+      this.workerPool = new AccumulateWorkerPool(options.accumulateWorkers);
+      this.workerPool.setGetServiceFn((serviceId) => this.state.getService(serviceId));
+      logger.log`Accumulate worker pool created with ${options.accumulateWorkers} workers.`;
     }
   }
 
@@ -423,6 +439,72 @@ export class Accumulate {
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/174602174602?v=0.7.2
    */
   private async accumulateInParallel(
+    accumulateData: AccumulateData,
+    slot: TimeSlot,
+    entropy: EntropyHash,
+    inputStateUpdate: AccumulationStateUpdate,
+  ): Promise<ParallelAccumulationResult> {
+    if (this.workerPool !== null) {
+      return this.accumulateInParallelViaWorkers(this.workerPool, accumulateData, slot, entropy, inputStateUpdate);
+    }
+    return this.accumulateInParallelInProcess(accumulateData, slot, entropy, inputStateUpdate);
+  }
+
+  private async accumulateInParallelViaWorkers(
+    workerPool: AccumulateWorkerPool,
+    accumulateData: AccumulateData,
+    slot: TimeSlot,
+    entropy: EntropyHash,
+    inputStateUpdate: AccumulationStateUpdate,
+  ): Promise<ParallelAccumulationResult> {
+    const serviceIds = accumulateData.getServiceIds();
+    const serviceIdsLength = serviceIds.length;
+    const serializedInputState = serializeAccumulationStateUpdate(inputStateUpdate);
+
+    const resultPromises: Promise<
+      readonly [ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }]
+    >[] = new Array(serviceIdsLength);
+
+    for (let serviceIndex = 0; serviceIndex < serviceIdsLength; serviceIndex += 1) {
+      const serviceId = serviceIds[serviceIndex];
+      const checkpoint = AccumulationStateUpdate.copyFrom(inputStateUpdate);
+
+      const request: AccumulateRequest = {
+        type: MessageType.AccumulateRequest,
+        serviceId,
+        transfers: accumulateData.getTransfers(serviceId).map(serializePendingTransfer),
+        operands: accumulateData.getOperands(serviceId).map(serializeOperand),
+        gasCost: accumulateData.getGasLimit(serviceId),
+        slot,
+        entropy: entropy.raw,
+        inputStateUpdate: serializedInputState,
+        privilegedServices: serializePrivilegedServices(this.state.privilegedServices),
+        chainSpec: this.chainSpec,
+        pvmBackend: this.options.pvm,
+      };
+
+      const promise = workerPool.dispatch(request).then((response) => {
+        if (response.error !== undefined) {
+          logger.warn`Worker error for service ${serviceId}: ${response.error}`;
+        }
+        const resultEntry: readonly [ServiceId, { consumedGas: ServiceGas; stateUpdate: AccumulationStateUpdate }] = [
+          serviceId,
+          {
+            consumedGas: response.consumedGas,
+            stateUpdate:
+              response.stateUpdate !== null ? deserializeAccumulationStateUpdate(response.stateUpdate) : checkpoint,
+          },
+        ];
+        return resultEntry;
+      });
+
+      resultPromises[serviceIndex] = promise;
+    }
+
+    return Promise.all(resultPromises).then((results) => new Map(results));
+  }
+
+  private async accumulateInParallelInProcess(
     accumulateData: AccumulateData,
     slot: TimeSlot,
     entropy: EntropyHash,

@@ -141,11 +141,11 @@ export class AccumulateTest {
 
 export async function runAccumulateTest(
   test: AccumulateTest,
-  { chainSpec, accumulateSequentially }: RunOptions,
+  { chainSpec, accumulateSequentially, accumulateWorkers }: RunOptions,
   variant: SelectedPvm,
 ) {
   const pvm = selectedPvmToBackend(variant);
-  const options = { pvm, accumulateSequentially };
+  const options = { pvm, accumulateSequentially, accumulateWorkers };
   /**
    * entropy has to be moved to input because state is incompatibile -
    * in test state we have: `entropy: EntropyHash;`

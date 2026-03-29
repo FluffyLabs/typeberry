@@ -40,7 +40,7 @@ export class Forget implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const result = this.partialState.forgetPreimage(hash.asOpaque(), length);
+    const result = await this.partialState.forgetPreimage(hash.asOpaque(), length);
     logger.trace`[${this.currentServiceId}] FORGET(${hash}, ${length}) <- ${resultToString(result)}`;
 
     if (result.isOk) {

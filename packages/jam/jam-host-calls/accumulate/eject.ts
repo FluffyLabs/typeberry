@@ -49,7 +49,7 @@ export class Eject implements HostCallHandler {
       return;
     }
 
-    const result = this.partialState.eject(serviceId, previousCodeHash);
+    const result = await this.partialState.eject(serviceId, previousCodeHash);
 
     // All good!
     if (result.isOk) {

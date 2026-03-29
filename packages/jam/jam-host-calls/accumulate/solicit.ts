@@ -39,7 +39,7 @@ export class Solicit implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const result = this.partialState.requestPreimage(hash.asOpaque(), length);
+    const result = await this.partialState.requestPreimage(hash.asOpaque(), length);
     logger.trace`[${this.currentServiceId}] SOLICIT(${hash}, ${length}) <- ${resultToString(result)}`;
 
     if (result.isOk) {

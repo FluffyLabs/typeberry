@@ -21,7 +21,7 @@ export interface AccountsWrite {
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/331002331402?v=0.6.6
    */
-  write(rawKey: BytesBlob, data: BytesBlob | null): Result<number | null, "full">;
+  write(rawKey: BytesBlob, data: BytesBlob | null): Promise<Result<number | null, "full">>;
 }
 
 const IN_OUT_REG = 7;
@@ -76,7 +76,7 @@ export class Write implements HostCallHandler {
     const maybeValue = valueLength === 0n ? null : BytesBlob.blobFrom(value);
 
     // a
-    const result = this.account.write(storageKey, maybeValue);
+    const result = await this.account.write(storageKey, maybeValue);
     logger.trace`[${this.currentServiceId}] WRITE(${storageKey}, ${maybeValue?.toStringTruncated() ?? "remove"}) <- ${resultToString(result)}`;
     logger.insane`[${this.currentServiceId}] WRITE(${storageKey}, ${maybeValue ?? "remove"}) <- ${resultToString(result)}`;
 

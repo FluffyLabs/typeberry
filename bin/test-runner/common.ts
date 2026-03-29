@@ -38,6 +38,7 @@ export function selectedPvmToBackend(pvm: SelectedPvm): PvmBackend {
 export type GlobalsOptions = {
   pvms: SelectedPvm[];
   accumulateSequentially: boolean;
+  accumulateWorkers: number;
 };
 
 export class RunnerBuilder<T, V> implements Runner<T, V> {
@@ -100,6 +101,7 @@ export type RunOptions = {
   chainSpec: ChainSpec;
   path: string;
   accumulateSequentially: boolean;
+  accumulateWorkers: number;
 };
 
 export type RunFunction<T, V> = (test: T, options: RunOptions, variant: V) => Promise<void>;
@@ -141,6 +143,7 @@ export namespace testFile {
 
 const PVM_OPTION = "pvm";
 const ACCUMULATE_SEQUENTIALLY_OPTION = "accumulate-sequentially";
+const ACCUMULATE_WORKERS_OPTION = "accumulate-workers";
 const HELP_OPTION = "help";
 export const HELP_MESSAGE = `
 Usage: test-runner [options] [files...]
@@ -152,6 +155,10 @@ Options:
 
   --accumulate-sequentially    Run accumulation sequentially instead of in parallel.
                                Default: false
+
+  --accumulate-workers <N>     Number of worker threads for accumulation.
+                               0 = no workers (current behavior), 1+ = worker threads.
+                               Default: 0
 
   -h, --help                   Show this help message.
 
@@ -166,7 +173,7 @@ export function parseArgs(argv: string[]) {
   const parsed = minimist(argv, {
     boolean: [ACCUMULATE_SEQUENTIALLY_OPTION, HELP_OPTION],
     alias: { h: HELP_OPTION },
-    default: { [ACCUMULATE_SEQUENTIALLY_OPTION]: false },
+    default: { [ACCUMULATE_SEQUENTIALLY_OPTION]: false, [ACCUMULATE_WORKERS_OPTION]: 1 },
   });
 
   const shouldShowHelp = getBooleanOption(parsed[HELP_OPTION]);
@@ -178,11 +185,13 @@ export function parseArgs(argv: string[]) {
 
   const pvms = getPvms(parsed[PVM_OPTION]);
   const accumulateSequentially = getBooleanOption(parsed[ACCUMULATE_SEQUENTIALLY_OPTION]);
+  const accumulateWorkers = Number(parsed[ACCUMULATE_WORKERS_OPTION]) || 0;
 
   return {
     initialFiles: parsed._,
     pvms,
     accumulateSequentially,
+    accumulateWorkers,
   };
 
   function getBooleanOption(value: unknown): boolean {
@@ -221,6 +230,7 @@ export async function main(
     initialFiles,
     pvms,
     accumulateSequentially,
+    accumulateWorkers,
     patterns = [testFile.bin, testFile.json],
     accepted,
     ignored,
@@ -228,6 +238,7 @@ export async function main(
     initialFiles: string[];
     pvms: SelectedPvm[];
     accumulateSequentially: boolean;
+    accumulateWorkers: number;
     patterns?: (testFile.bin | testFile.json)[];
     accepted?: {
       [testFile.bin]?: string[];
@@ -287,6 +298,7 @@ export async function main(
     const testVariants = prepareTest(runners, testFileContent, testFilePath, absolutePath, {
       pvms,
       accumulateSequentially,
+      accumulateWorkers,
     });
     for (const test of testVariants) {
       test.shouldSkip = !isAccepted;
@@ -467,6 +479,7 @@ function prepareTest<T, V>(
               path: fullPath,
               chainSpec,
               accumulateSequentially: globalOptions.accumulateSequentially,
+              accumulateWorkers: globalOptions.accumulateWorkers,
             },
             variant,
           );

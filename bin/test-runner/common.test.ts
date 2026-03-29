@@ -13,6 +13,7 @@ describe("test runner common", () => {
       initialFiles: ["file1.json", "file2.json"],
       pvms: [SelectedPvm.Ananas],
       accumulateSequentially: false,
+      accumulateWorkers: 1,
     });
   });
 
@@ -25,6 +26,7 @@ describe("test runner common", () => {
       initialFiles: ["file1.json", "file2.json"],
       pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin, SelectedPvm.Lite],
       accumulateSequentially: false,
+      accumulateWorkers: 1,
     });
   });
 
@@ -50,6 +52,7 @@ describe("test runner common", () => {
       initialFiles: ["file1.json"],
       pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin, SelectedPvm.Lite],
       accumulateSequentially: true,
+      accumulateWorkers: 1,
     });
   });
 
@@ -62,6 +65,7 @@ describe("test runner common", () => {
       initialFiles: ["file1.json"],
       pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin, SelectedPvm.Lite],
       accumulateSequentially: true,
+      accumulateWorkers: 1,
     });
   });
 
@@ -74,6 +78,7 @@ describe("test runner common", () => {
       initialFiles: ["file1.json"],
       pvms: [SelectedPvm.Ananas, SelectedPvm.Builtin, SelectedPvm.Lite],
       accumulateSequentially: false,
+      accumulateWorkers: 1,
     });
   });
 

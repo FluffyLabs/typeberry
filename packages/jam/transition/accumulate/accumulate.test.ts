@@ -48,7 +48,7 @@ type TestServiceInfo = {
 
 [PvmBackend.BuiltIn, PvmBackend.Ananas, PvmBackend.Lite].forEach((pvm) => {
   [false, true].forEach((accumulateSequentially) => {
-    const options = { pvm, accumulateSequentially };
+    const options = { pvm, accumulateSequentially, accumulateWorkers: 0 };
     describe(`accumulate: ${PvmBackendNames[pvm]} (sequential accumulation: ${accumulateSequentially})`, () => {
       // based on tiny/enqueue_and_unlock_chain_wraps-5.json
       it("should do correct state transition", async () => {
