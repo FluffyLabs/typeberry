@@ -8,7 +8,13 @@ import { MessageChannel, type MessagePort, Worker } from "node:worker_threads";
 import type { ServiceId } from "@typeberry/block";
 import { Logger } from "@typeberry/logger";
 import type { Service } from "@typeberry/state";
-import { type AccumulateRequest, type AccumulateResponse, type GetServiceRequest, MSG_GET_SERVICE_REQUEST, MSG_GET_SERVICE_RESPONSE } from "./protocol.js";
+import {
+  type AccumulateRequest,
+  type AccumulateResponse,
+  type GetServiceRequest,
+  MSG_GET_SERVICE_REQUEST,
+  MSG_GET_SERVICE_RESPONSE,
+} from "./protocol.js";
 import { type PlainService, serializeService } from "./serialization.js";
 
 const logger = Logger.new(import.meta.filename, "worker-pool");

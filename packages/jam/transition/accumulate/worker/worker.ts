@@ -25,7 +25,15 @@ import { AccumulateExternalities } from "../../externalities/accumulate-external
 import { AccumulateFetchExternalities } from "../../externalities/accumulate-fetch-externalities.js";
 import { generateNextServiceId } from "../accumulate-utils.js";
 import type { Operand } from "../operand.js";
-import { type AccumulateRequest, type AccumulateResponse, type GetServiceResponse, MSG_ACCUMULATE_REQUEST, MSG_ACCUMULATE_RESPONSE, MSG_GET_SERVICE_REQUEST, MSG_GET_SERVICE_RESPONSE } from "./protocol.js";
+import {
+  type AccumulateRequest,
+  type AccumulateResponse,
+  type GetServiceResponse,
+  MSG_ACCUMULATE_REQUEST,
+  MSG_ACCUMULATE_RESPONSE,
+  MSG_GET_SERVICE_REQUEST,
+  MSG_GET_SERVICE_RESPONSE,
+} from "./protocol.js";
 import {
   deserializeAccumulationStateUpdate,
   deserializeOperand,
