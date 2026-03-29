@@ -61,6 +61,12 @@ export async function main(
     }
   });
 
+  // Relay tickets received from peers back to block-authorship (one ticket at a time).
+  // Returns the validation result so ticket-distribution knows whether to redistribute.
+  network.ticketTask.setOnTicketReceived(async (epochIndex, ticket) => {
+    return await authorshipComms.sendReceivedTickets({ epochIndex, ticket });
+  });
+
   await network.network.start();
 
   // stop the network when the worker is finishing.
