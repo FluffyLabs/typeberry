@@ -51,7 +51,7 @@ import {
 import type { Operand } from "./operand.js";
 import type { AccumulateOptions } from "./options.js";
 import { AccumulateWorkerPool } from "./worker/pool.js";
-import { type AccumulateRequest, MessageType } from "./worker/protocol.js";
+import { type AccumulateRequest, MSG_ACCUMULATE_REQUEST } from "./worker/protocol.js";
 import {
   deserializeAccumulationStateUpdate,
   serializeAccumulationStateUpdate,
@@ -470,7 +470,7 @@ export class Accumulate {
       const checkpoint = AccumulationStateUpdate.copyFrom(inputStateUpdate);
 
       const request: AccumulateRequest = {
-        type: MessageType.AccumulateRequest,
+        type: MSG_ACCUMULATE_REQUEST,
         serviceId,
         transfers: accumulateData.getTransfers(serviceId).map(serializePendingTransfer),
         operands: accumulateData.getOperands(serviceId).map(serializeOperand),

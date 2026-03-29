@@ -8,7 +8,7 @@ import { MessageChannel, type MessagePort, Worker } from "node:worker_threads";
 import type { ServiceId } from "@typeberry/block";
 import { Logger } from "@typeberry/logger";
 import type { Service } from "@typeberry/state";
-import { type AccumulateRequest, type AccumulateResponse, type GetServiceRequest, MessageType } from "./protocol.js";
+import { type AccumulateRequest, type AccumulateResponse, type GetServiceRequest, MSG_GET_SERVICE_REQUEST, MSG_GET_SERVICE_RESPONSE } from "./protocol.js";
 import { type PlainService, serializeService } from "./serialization.js";
 
 const logger = Logger.new(import.meta.filename, "worker-pool");
@@ -42,7 +42,6 @@ export class AccumulateWorkerPool {
       const worker = new Worker(workerUrl, {
         workerData: { dataPort: workerPort },
         transferList: [workerPort],
-        execArgv: ["--import", "tsx"],
       });
 
       mainPort.on("message", (msg: AccumulateResponse | GetServiceRequest) => {
@@ -82,7 +81,7 @@ export class AccumulateWorkerPool {
   private handleWorkerMessage(workerIndex: number, msg: AccumulateResponse | GetServiceRequest) {
     const handle = this.workers[workerIndex];
 
-    if ((msg as GetServiceRequest).type === MessageType.GetServiceRequest) {
+    if ((msg as GetServiceRequest).type === MSG_GET_SERVICE_REQUEST) {
       this.handleGetServiceRequest(handle, msg as GetServiceRequest);
       return;
     }
@@ -103,7 +102,7 @@ export class AccumulateWorkerPool {
     const plainService: PlainService | null = service !== null ? serializeService(service) : null;
 
     handle.dataPort.postMessage({
-      type: MessageType.GetServiceResponse,
+      type: MSG_GET_SERVICE_RESPONSE,
       service: plainService,
     });
   }

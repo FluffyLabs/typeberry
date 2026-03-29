@@ -14,16 +14,14 @@ import type {
   PlainService,
 } from "./serialization.js";
 
-export enum MessageType {
-  AccumulateRequest = 0,
-  AccumulateResponse = 1,
-  GetServiceRequest = 2,
-  GetServiceResponse = 3,
-}
+export const MSG_ACCUMULATE_REQUEST = 0;
+export const MSG_ACCUMULATE_RESPONSE = 1;
+export const MSG_GET_SERVICE_REQUEST = 2;
+export const MSG_GET_SERVICE_RESPONSE = 3;
 
 /** Main → Worker: request to accumulate a single service. */
 export type AccumulateRequest = {
-  type: MessageType.AccumulateRequest;
+  type: typeof MSG_ACCUMULATE_REQUEST;
   serviceId: ServiceId;
   transfers: PlainPendingTransfer[];
   operands: PlainOperand[];
@@ -38,20 +36,20 @@ export type AccumulateRequest = {
 
 /** Worker → Main: result of accumulation. */
 export type AccumulateResponse = {
-  type: MessageType.AccumulateResponse;
+  type: typeof MSG_ACCUMULATE_RESPONSE;
   consumedGas: ServiceGas;
   stateUpdate: PlainAccumulationStateUpdate | null;
   error?: string;
 };
 
-/** Worker → Main: synchronous request for service data from base state. */
+/** Worker → Main: request for service data from base state. */
 export type GetServiceRequest = {
-  type: MessageType.GetServiceRequest;
+  type: typeof MSG_GET_SERVICE_REQUEST;
   serviceId: ServiceId;
 };
 
 /** Main → Worker: response with serialized service data. */
 export type GetServiceResponse = {
-  type: MessageType.GetServiceResponse;
+  type: typeof MSG_GET_SERVICE_RESPONSE;
   service: PlainService | null;
 };

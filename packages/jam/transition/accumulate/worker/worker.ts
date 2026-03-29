@@ -25,7 +25,7 @@ import { AccumulateExternalities } from "../../externalities/accumulate-external
 import { AccumulateFetchExternalities } from "../../externalities/accumulate-fetch-externalities.js";
 import { generateNextServiceId } from "../accumulate-utils.js";
 import type { Operand } from "../operand.js";
-import { type AccumulateRequest, type AccumulateResponse, type GetServiceResponse, MessageType } from "./protocol.js";
+import { type AccumulateRequest, type AccumulateResponse, type GetServiceResponse, MSG_ACCUMULATE_REQUEST, MSG_ACCUMULATE_RESPONSE, MSG_GET_SERVICE_REQUEST, MSG_GET_SERVICE_RESPONSE } from "./protocol.js";
 import {
   deserializeAccumulationStateUpdate,
   deserializeOperand,
@@ -74,7 +74,7 @@ function getServiceAsync(serviceId: ServiceId): Promise<Service | null> {
       serviceCache.set(serviceId, service);
       resolve(service);
     };
-    dataPort.postMessage({ type: MessageType.GetServiceRequest, serviceId });
+    dataPort.postMessage({ type: MSG_GET_SERVICE_REQUEST, serviceId });
   });
 }
 
@@ -119,7 +119,7 @@ async function runAccumulation(request: AccumulateRequest): Promise<AccumulateRe
 
     if (newBalance.overflow) {
       return {
-        type: MessageType.AccumulateResponse,
+        type: MSG_ACCUMULATE_RESPONSE,
         consumedGas: tryAsServiceGas(0n),
         stateUpdate: null,
       };
@@ -144,24 +144,25 @@ async function runAccumulation(request: AccumulateRequest): Promise<AccumulateRe
 
   if (result.isError) {
     return {
-      type: MessageType.AccumulateResponse,
+      type: MSG_ACCUMULATE_RESPONSE,
       consumedGas: tryAsServiceGas(0n),
       stateUpdate: serializeAccumulationStateUpdate(updatedState.stateUpdate),
     };
   }
 
   return {
-    type: MessageType.AccumulateResponse,
+    type: MSG_ACCUMULATE_RESPONSE,
     consumedGas: result.ok.consumedGas,
     stateUpdate: serializeAccumulationStateUpdate(result.ok.stateUpdate),
   };
 }
 
-enum PvmInvocationError {
-  NoService = 0,
-  NoPreimage = 1,
-  PreimageTooLong = 2,
-}
+const PvmInvocationError = {
+  NoService: 0,
+  NoPreimage: 1,
+  PreimageTooLong: 2,
+} as const;
+type PvmInvocationError = (typeof PvmInvocationError)[keyof typeof PvmInvocationError];
 
 async function pvmAccumulateInvocation(
   blake2b: Blake2b,
@@ -225,12 +226,12 @@ async function pvmAccumulateInvocation(
 // ── Message handler ──────────────────────────────────────────────────────────
 
 dataPort.on("message", (msg: AccumulateRequest | GetServiceResponse) => {
-  if ((msg as GetServiceResponse).type === MessageType.GetServiceResponse) {
+  if ((msg as GetServiceResponse).type === MSG_GET_SERVICE_RESPONSE) {
     handleGetServiceResponse(msg as GetServiceResponse);
     return;
   }
 
-  if ((msg as AccumulateRequest).type !== MessageType.AccumulateRequest) {
+  if ((msg as AccumulateRequest).type !== MSG_ACCUMULATE_REQUEST) {
     return;
   }
 
@@ -241,7 +242,7 @@ dataPort.on("message", (msg: AccumulateRequest | GetServiceResponse) => {
     .catch((err) => {
       const error = err instanceof Error ? err.message : String(err);
       dataPort.postMessage({
-        type: MessageType.AccumulateResponse,
+        type: MSG_ACCUMULATE_RESPONSE,
         consumedGas: tryAsServiceGas(0n),
         stateUpdate: null,
         error,
