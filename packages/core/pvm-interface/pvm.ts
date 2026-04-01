@@ -17,6 +17,9 @@ export interface IPvmInterpreter {
   /** Prepare SPI program to be executed. */
   resetJam(program: Uint8Array, args: Uint8Array, pc: number, gas: Gas): void;
 
+  /** Prepare a generic (non-SPI) program to be executed. */
+  resetGeneric(rawProgram: Uint8Array, pc: number, gas: Gas): void;
+
   /** Execute loaded program. */
   runProgram(): void;
 
