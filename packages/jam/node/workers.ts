@@ -8,10 +8,24 @@ import type { SerializedState } from "@typeberry/state-merkleization";
 import { Channel, type DirectPort, type DirectWorkerConfig, startSameThread } from "@typeberry/workers-api";
 import { type LmdbWorkerConfig, spawnWorker } from "@typeberry/workers-api-node";
 
+// Worker bootstraps differ: Node uses .mjs files that load tsx/esm/api (TS loader),
+// while bun handles .ts natively and can import bootstrap-main.ts directly.
+// We compute bun worker URLs here (not in the worker packages) to avoid ncc trying
+// to bundle bootstrap-main.ts during the npm build, which fails on top-level await.
+const isBun = "Bun" in globalThis;
+
+function workerUrl(nodeWorker: URL): URL {
+  if (!isBun) {
+    return nodeWorker;
+  }
+  // Replace the .mjs bootstrap with bootstrap-main.ts in the same directory
+  return new URL("./bootstrap-main.ts", nodeWorker);
+}
+
 export async function spawnImporterWorker(config: LmdbWorkerConfig<importer.ImporterConfig>) {
   const { api, workerFinished } = spawnWorker(
     importer.protocol,
-    importer.WORKER,
+    workerUrl(importer.WORKER),
     config,
     importer.ImporterConfig.Codec,
   );
@@ -46,7 +60,7 @@ export async function startImporterDirect(
 export async function spawnNetworkWorker(config: LmdbWorkerConfig<jamNetwork.NetworkingConfig>) {
   const { api, worker, workerFinished } = spawnWorker(
     jamNetwork.protocol,
-    jamNetwork.WORKER,
+    workerUrl(jamNetwork.WORKER),
     config,
     jamNetwork.NetworkingConfig.Codec,
   );
@@ -85,7 +99,7 @@ export async function startNetwork(
 export async function spawnBlockGeneratorWorker(config: LmdbWorkerConfig<blockAuthorship.BlockAuthorshipConfig>) {
   const { api, worker, workerFinished } = spawnWorker(
     blockAuthorship.protocol,
-    blockAuthorship.WORKER,
+    workerUrl(blockAuthorship.WORKER),
     config,
     blockAuthorship.BlockAuthorshipConfig.Codec,
   );
