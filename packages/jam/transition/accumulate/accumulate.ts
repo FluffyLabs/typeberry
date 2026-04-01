@@ -32,7 +32,7 @@ import {
 } from "@typeberry/state";
 import { assertEmpty, Compatibility, GpVersion, Result, TestSuite } from "@typeberry/utils";
 import { AccumulateExternalities } from "../externalities/accumulate-externalities.js";
-import { FetchExternalities } from "../externalities/index.js";
+import { AccumulateFetchExternalities } from "../externalities/accumulate-fetch-externalities.js";
 import type { CountAndGasUsed } from "../statistics.js";
 import { AccumulateData } from "./accumulate-data.js";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
@@ -164,7 +164,7 @@ export class Accumulate {
       slot,
     );
 
-    const fetchExternalities = FetchExternalities.createForAccumulate({ entropy, transfers, operands }, this.chainSpec);
+    const fetchExternalities = new AccumulateFetchExternalities(entropy, transfers, operands, this.chainSpec);
 
     const externalities = {
       partialState,
