@@ -448,6 +448,7 @@ export class InCore {
       currentServiceId: args.currentServiceId,
       lookupState: args.lookupState,
       exportOffset: args.exportOffset,
+      pvmBackend: this.pvmBackend,
     });
 
     return {

@@ -12,7 +12,7 @@ import {
 } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
-import { tinyChainSpec } from "@typeberry/config";
+import { PvmBackend, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { SegmentExportError, tryAsMachineId, tryAsProgramCounter } from "@typeberry/jam-host-calls";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
@@ -83,6 +83,7 @@ function createExt(overrides: Partial<RefineExternalitiesParams> = {}) {
     currentServiceId: tryAsServiceId(42),
     lookupState: overrides.lookupState ?? defaultState,
     exportOffset: overrides.exportOffset ?? 0,
+    pvmBackend: PvmBackend.BuiltIn,
     ...overrides,
   });
 }

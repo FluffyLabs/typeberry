@@ -6,6 +6,8 @@ import {
   tryAsSegmentIndex,
 } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
+import { SortedArray } from "@typeberry/collections";
+import type { PvmBackend } from "@typeberry/config";
 import type { Blake2bHash } from "@typeberry/hash";
 import {
   type MachineId,
@@ -21,11 +23,24 @@ import {
   type ZeroVoidError,
 } from "@typeberry/jam-host-calls";
 import type { U64 } from "@typeberry/numbers";
-import type { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
-import { type BigGas, tryAsGas } from "@typeberry/pvm-interface";
-import { Interpreter, ProgramDecoder, type ProgramDecoderError } from "@typeberry/pvm-interpreter";
+import { Ordering } from "@typeberry/ordering";
+import { type HostCallMemory, type HostCallRegisters, PvmInstanceManager } from "@typeberry/pvm-host-calls";
+import { type BigGas, type IPvmInterpreter, tryAsGas } from "@typeberry/pvm-interface";
+import { ProgramDecoder, type ProgramDecoderError } from "@typeberry/pvm-interpreter";
 import type { State } from "@typeberry/state";
 import { type OK, Result } from "@typeberry/utils";
+
+type MachineEntry = [MachineId, IPvmInterpreter];
+
+const machineComparator = (a: MachineEntry, b: MachineEntry) => {
+  if (a[0] < b[0]) {
+    return Ordering.Less;
+  }
+  if (a[0] > b[0]) {
+    return Ordering.Greater;
+  }
+  return Ordering.Equal;
+};
 
 /**
  * Parameters required to create a RefineExternalitiesImpl.
@@ -37,11 +52,13 @@ export type RefineExternalitiesParams = {
   lookupState: State;
   /** Export offset -- sum of exports from prior work items in this package. */
   exportOffset: number;
+  /** PVM backend to use for creating inner PVM instances. */
+  pvmBackend: PvmBackend;
 };
 
 export class RefineExternalitiesImpl implements RefineExternalities {
-  /** Map of inner PVM instances keyed by MachineId. */
-  private machines: Map<bigint, Interpreter> = new Map();
+  /** Inner PVM instances sorted by MachineId. */
+  private machines: SortedArray<MachineEntry> = SortedArray.fromSortedArray(machineComparator);
   /** Service being refined (used as default for historicalLookup). */
   private readonly currentServiceId: ServiceId;
   /** State at the lookup anchor for preimage lookups. */
@@ -50,6 +67,8 @@ export class RefineExternalitiesImpl implements RefineExternalities {
   private readonly exportedSegments: Segment[] = [];
   /** Offset for segment indexing (sum of exports from prior items). */
   private readonly exportOffset: number;
+  /** PVM backend for creating inner machines. */
+  private readonly pvmBackend: PvmBackend;
 
   static create(params: RefineExternalitiesParams) {
     return new RefineExternalitiesImpl(params);
@@ -59,6 +78,7 @@ export class RefineExternalitiesImpl implements RefineExternalities {
     this.currentServiceId = params.currentServiceId;
     this.lookupState = params.lookupState;
     this.exportOffset = params.exportOffset;
+    this.pvmBackend = params.pvmBackend;
   }
 
   getExportedSegments(): readonly Segment[] {
@@ -106,27 +126,36 @@ export class RefineExternalitiesImpl implements RefineExternalities {
     throw new Error("Method not implemented.");
   }
 
-  machineInit(code: BytesBlob, programCounter: ProgramCounter): Promise<Result<MachineId, ProgramDecoderError>> {
+  async machineInit(code: BytesBlob, programCounter: ProgramCounter): Promise<Result<MachineId, ProgramDecoderError>> {
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/346400346400?v=0.7.2
     const deblobResult = ProgramDecoder.deblob(code.raw);
     if (deblobResult.isError) {
-      return Promise.resolve(Result.error(deblobResult.error, deblobResult.details));
+      return Result.error(deblobResult.error, deblobResult.details);
     }
 
-    const innerPvm = new Interpreter({ useSbrkGas: false });
+    const manager = await PvmInstanceManager.new(this.pvmBackend);
+    const innerPvm = await manager.getInstance();
 
     innerPvm.resetGeneric(code.raw, Number(programCounter), tryAsGas(0));
 
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/348c00348c00?v=0.7.2
-    let id = 0n;
-    while (this.machines.has(id)) {
-      id++;
+    // Binary search for the minimal free MachineId
+    const arr = this.machines.array;
+    let low = 0;
+    let high = arr.length;
+    while (low < high) {
+      const mid = (low + high) >> 1;
+      if (arr[mid][0] > BigInt(mid)) {
+        high = mid;
+      } else {
+        low = mid + 1;
+      }
     }
 
-    const machineId = tryAsMachineId(id);
+    const machineId = tryAsMachineId(low);
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/340501340b01?v=0.7.2
-    this.machines.set(id, innerPvm);
-    return Promise.resolve(Result.ok(machineId));
+    this.machines.insert([machineId, innerPvm]);
+    return Result.ok(machineId);
   }
 
   machineInvoke(
