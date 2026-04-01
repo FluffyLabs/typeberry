@@ -102,5 +102,8 @@
   },
   "dependencies": {
     "rollup": "^4.53.2"
-  }
+  },
+  "trustedDependencies": [
+    "protobufjs"
+  ]
 }
