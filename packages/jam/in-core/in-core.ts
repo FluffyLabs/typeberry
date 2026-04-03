@@ -8,7 +8,7 @@ import {
   tryAsCoreIndex,
   tryAsServiceGas,
 } from "@typeberry/block";
-import { W_C } from "@typeberry/block/gp-constants.js";
+import { G_I, W_A, W_C } from "@typeberry/block/gp-constants.js";
 import {
   type AuthorizerHash,
   type RefineContext,
@@ -29,6 +29,7 @@ import { type Blake2b, HASH_SIZE, type WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { tryAsU8, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import type { State } from "@typeberry/state";
+import { IsAuthorizedFetchExternalities } from "@typeberry/transition/externalities/is-authorized-fetch-externalities.js";
 import { RefineFetchExternalities } from "@typeberry/transition/externalities/refine-fetch-externalities.js";
 import { assertEmpty, assertNever, Result } from "@typeberry/utils";
 import { RefineExternalitiesImpl } from "./externalities/refine.js";
@@ -65,7 +66,14 @@ enum ServiceCodeError {
   ServiceCodeTooBig = 3,
 }
 
-enum AuthorizationError {}
+enum AuthorizationError {
+  /** BAD: authorizer code not found (service or preimage missing). */
+  CodeNotFound = 0,
+  /** BIG: authorizer code exceeds W_A limit. */
+  CodeTooBig = 1,
+  /** PANIC/OOG: PVM execution failed. */
+  PvmFailed = 2,
+}
 
 type AuthorizationOk = {
   authorizerHash: AuthorizerHash;
@@ -83,7 +91,7 @@ export type ImportedSegment = {
 const logger = Logger.new(import.meta.filename, "refine");
 
 /** https://graypaper.fluffylabs.dev/#/ab2cdbd/2ffe002ffe00?v=0.7.2 */
-const ARGS_CODEC = codec.object({
+const REFINE_ARGS_CODEC = codec.object({
   core: codec.varU32.convert<CoreIndex>(
     (x) => tryAsU32(x),
     (x) => tryAsCoreIndex(x),
@@ -92,6 +100,9 @@ const ARGS_CODEC = codec.object({
   serviceId: codec.varU32.asOpaque<ServiceId>(),
   payloadLength: codec.varU32,
   packageHash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
+});
+const AUTH_ARGS_CODEC = codec.object({
+  coreIndex: codec.u16,
 });
 
 export class InCore {
@@ -119,7 +130,7 @@ export class InCore {
     extrinsics: PerWorkItem<WorkItemExtrinsic[]>,
   ): Promise<Result<RefineResult, RefineError>> {
     const workPackageHash = workPackageAndHash.hash;
-    const { context, authorization, authCodeHash, authCodeHost, parametrization, items, ...rest } =
+    const { context, authToken, authCodeHash, authCodeHost, authConfiguration, items, ...rest } =
       workPackageAndHash.data;
     assertEmpty(rest);
 
@@ -127,8 +138,9 @@ export class InCore {
     // TODO [ToDr] Verify prerequisites
     logger.log`[core:${core}] Attempting to refine work package with ${items.length} items.`;
 
-    // TODO [ToDr] GP link
     // Verify anchor block
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/15cd0215cd02?v=0.7.2
+    // TODO [ToDr] Validation
     const state = this.states.getState(context.anchor);
     if (state === null) {
       return Result.error(RefineError.StateMissing, () => `State at anchor block ${context.anchor} is missing.`);
@@ -160,7 +172,14 @@ export class InCore {
     }
 
     // Check authorization
-    const authResult = await this.authorizePackage(authorization, authCodeHost, authCodeHash, parametrization);
+    const authResult = await this.authorizePackage(
+      state,
+      core,
+      authToken,
+      authCodeHost,
+      authCodeHash,
+      authConfiguration,
+    );
     if (authResult.isError) {
       return Result.error(
         RefineError.AuthorizationError,
@@ -252,22 +271,83 @@ export class InCore {
     };
   }
 
+  /**
+   * IsAuthorized invocation.
+   *
+   * https://graypaper.fluffylabs.dev/#/ab2cdbd/2e64002e6400?v=0.7.2
+   */
   private async authorizePackage(
-    _authorization: BytesBlob,
-    _authCodeHost: ServiceId,
-    _authCodeHash: CodeHash,
-    _parametrization: BytesBlob,
+    state: State,
+    coreIndex: CoreIndex,
+    authToken: BytesBlob,
+    authCodeHost: ServiceId,
+    authCodeHash: CodeHash,
+    authConfiguration: BytesBlob,
   ): Promise<Result<AuthorizationOk, AuthorizationError>> {
-    // TODO [ToDr] Check authorization?
-    const authorizerHash = Bytes.zero(HASH_SIZE).asOpaque();
-    const authorizationGasUsed = tryAsServiceGas(0);
-    const authorizationOutput = BytesBlob.empty();
+    // Look up the authorizer code from the auth code host service
+    const service = state.getService(authCodeHost);
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/2eca002eca00?v=0.7.2
+    if (service === null) {
+      return Result.error(
+        AuthorizationError.CodeNotFound,
+        () => `Auth code host service ${authCodeHost} not found in state.`,
+      );
+    }
 
-    return Result.ok({
-      authorizerHash,
-      authorizationGasUsed,
-      authorizationOutput,
+    const code = service.getPreimage(authCodeHash.asOpaque());
+    if (code === null) {
+      return Result.error(
+        AuthorizationError.CodeNotFound,
+        () => `Auth code preimage ${authCodeHash} not found in service ${authCodeHost}.`,
+      );
+    }
+
+    // BIG: code exceeds W_A
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/2ed6002ed600?v=0.7.2
+    if (code.length > W_A) {
+      return Result.error(
+        AuthorizationError.CodeTooBig,
+        () => `Auth code is too big: ${code.length} bytes vs ${W_A} max.`,
+      );
+    }
+
+    // Prepare fetch externalities and executor
+    const fetchExternalities = new IsAuthorizedFetchExternalities(
+      this.chainSpec, {
+        authToken: authToken,
+        authConfiguration: authConfiguration,
+      }
+    );
+    const executor = await PvmExecutor.createIsAuthorizedExecutor(
+      authCodeHost,
+      code,
+      { fetchExternalities },
+      this.pvmBackend,
+    );
+
+    const args = Encoder.encodeObject(AUTH_ARGS_CODEC, {
+      coreIndex,
     });
+
+    // Run PVM with gas budget G_I
+    const gasLimit = tryAsServiceGas(G_I);
+    const execResult = await executor.run(args, gasLimit);
+
+    if (execResult.status !== ReturnStatus.OK) {
+      return Result.error(
+        AuthorizationError.PvmFailed,
+        () =>
+          `IsAuthorized PVM ${ReturnStatus[execResult.status]} (gas used: ${execResult.consumedGas}).`,
+      );
+    }
+
+    // Compute authorizer hash: blake2b(codeHash ++ configuration)
+    // https://graypaper-reader.netlify.app/#/ab2cdbd/1b81011b8401?v=0.7.2
+    const authorizerHash = this.blake2b.hashBlobs<AuthorizerHash>([authCodeHash, authConfiguration]);
+    const authorizationOutput = BytesBlob.blobFrom(execResult.memorySlice);
+    const authorizationGasUsed = tryAsServiceGas(execResult.consumedGas);
+
+    return Result.ok({ authorizerHash, authorizationGasUsed, authorizationOutput });
   }
 
   private async refineItem(
@@ -328,7 +408,7 @@ export class InCore {
 
     const executor = await PvmExecutor.createRefineExecutor(item.service, code, externalities, this.pvmBackend);
 
-    const args = Encoder.encodeObject(ARGS_CODEC, {
+    const args = Encoder.encodeObject(REFINE_ARGS_CODEC, {
       serviceId: item.service,
       core: coreIndex,
       workItemIndex: tryAsU32(idx),

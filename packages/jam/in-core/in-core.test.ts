@@ -37,10 +37,10 @@ function createWorkItem(serviceId = 1) {
 
 function createWorkPackage(anchorHash: HeaderHash, stateRoot: StateRootHash, lookupAnchorSlot = 0) {
   return WorkPackage.create({
-    authorization: BytesBlob.empty(),
+    authToken: BytesBlob.empty(),
     authCodeHost: tryAsServiceId(1),
     authCodeHash: Bytes.zero(HASH_SIZE).asOpaque(),
-    parametrization: BytesBlob.empty(),
+    authConfiguration: BytesBlob.empty(),
     context: RefineContext.create({
       anchor: anchorHash,
       stateRoot,
