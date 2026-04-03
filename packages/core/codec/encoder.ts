@@ -2,6 +2,7 @@ import type { BitVec } from "@typeberry/bytes";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { tryAsU32, type U32 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
+import { tryAsU8 } from "../numbers/index.js";
 
 /** Hint for how big the encoded object will be. */
 export type SizeHint = {
@@ -217,12 +218,12 @@ export class Encoder {
   }
 
   /**
-   * Encode a single boolean discriminator using variable encoding.
+   * Encode a single boolean discriminator using 1-byte encoding.
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/375300375300
    */
   bool(bool: boolean) {
-    this.varU32(tryAsU32(bool ? 1 : 0));
+    this.i8(tryAsU8(bool ? 1 : 0));
   }
 
   /**
