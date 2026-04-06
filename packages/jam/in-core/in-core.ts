@@ -312,12 +312,10 @@ export class InCore {
     }
 
     // Prepare fetch externalities and executor
-    const fetchExternalities = new IsAuthorizedFetchExternalities(
-      this.chainSpec, {
-        authToken: authToken,
-        authConfiguration: authConfiguration,
-      }
-    );
+    const fetchExternalities = new IsAuthorizedFetchExternalities(this.chainSpec, {
+      authToken,
+      authConfiguration,
+    });
     const executor = await PvmExecutor.createIsAuthorizedExecutor(
       authCodeHost,
       code,
@@ -341,8 +339,8 @@ export class InCore {
       );
     }
 
-    // Compute authorizer hash: blake2b(codeHash ++ configuration)
-    // https://graypaper-reader.netlify.app/#/ab2cdbd/1b81011b8401?v=0.7.2
+    // Compute authorizer hash: H(code_hash ++ configuration)
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/1b81011b8401?v=0.7.2
     const authorizerHash = this.blake2b.hashBlobs<AuthorizerHash>([authCodeHash, authConfiguration]);
     const authorizationOutput = BytesBlob.blobFrom(execResult.memorySlice);
     const authorizationGasUsed = tryAsServiceGas(execResult.consumedGas);

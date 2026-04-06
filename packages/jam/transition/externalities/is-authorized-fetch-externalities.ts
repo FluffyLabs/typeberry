@@ -10,9 +10,9 @@ export class IsAuthorizedFetchExternalities implements general.IIsAuthorizedFetc
   constructor(
     private readonly chainSpec: ChainSpec,
     private readonly params: {
-      authToken: BytesBlob,
-      authConfiguration: BytesBlob,
-    }
+      authToken: BytesBlob;
+      authConfiguration: BytesBlob;
+    },
   ) {}
 
   constants(): BytesBlob {
