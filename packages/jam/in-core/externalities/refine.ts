@@ -53,9 +53,9 @@ export type RefineExternalitiesParams = {
   /** Export offset -- sum of exports from prior work items in this package. */
   exportOffset: number;
   /**
-  * PVM backend to use for creating inner PVM instances.
-  * NIT: Could accept PVMInstanceManager
-  */
+   * PVM backend to use for creating inner PVM instances.
+   * NIT: Could accept PVMInstanceManager
+   */
   pvmBackend: PvmBackend;
 };
 
