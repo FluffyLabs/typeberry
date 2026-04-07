@@ -20,6 +20,7 @@ before(async () => {
 
 // Load the authorizer PVM fixture.
 // This authorizer checks that authToken === authConfiguration and returns "Auth=<token>".
+// https://github.com/tomusdrw/as-lan/blob/main/examples/authorizer/assembly/authorize.ts
 const AUTHORIZER_PVM = BytesBlob.blobFrom(readFileSync(resolve(import.meta.dirname, "fixtures/authorizer.pvm")));
 
 const AUTH_SERVICE_ID = tryAsServiceId(42);
