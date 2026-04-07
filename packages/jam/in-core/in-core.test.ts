@@ -1,6 +1,8 @@
 import assert from "node:assert";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { before, describe, it } from "node:test";
-import type { HeaderHash, StateRootHash } from "@typeberry/block";
+import type { CodeHash, HeaderHash, StateRootHash } from "@typeberry/block";
 import { tryAsCoreIndex, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import { RefineContext } from "@typeberry/block/refine-context.js";
@@ -8,13 +10,17 @@ import { WorkItem } from "@typeberry/block/work-item.js";
 import { tryAsWorkItemsCount, WorkPackage } from "@typeberry/block/work-package.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
-import { asKnownSize, FixedSizeArray } from "@typeberry/collections";
+import { asKnownSize, FixedSizeArray, HashDictionary } from "@typeberry/collections";
 import { type ChainSpec, PvmBackend, tinyChainSpec } from "@typeberry/config";
 import { InMemoryStates } from "@typeberry/database";
-import { Blake2b, HASH_SIZE, WithHash } from "@typeberry/hash";
-import { tryAsU16 } from "@typeberry/numbers";
-import { testState } from "@typeberry/state/test.utils.js";
+import { Blake2b, HASH_SIZE, type OpaqueHash, WithHash } from "@typeberry/hash";
+import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { InMemoryService, InMemoryState, PreimageItem, ServiceAccountInfo } from "@typeberry/state";
 import { InCore, RefineError } from "./in-core.js";
+
+// Load the authorizer PVM fixture (checks authToken === authConfiguration).
+const AUTHORIZER_PVM = BytesBlob.blobFrom(readFileSync(resolve(import.meta.dirname, "fixtures/authorizer.pvm")));
+const AUTH_SERVICE_ID = tryAsServiceId(1);
 
 let blake2b: Blake2b;
 
@@ -22,10 +28,36 @@ before(async () => {
   blake2b = await Blake2b.createHasher();
 });
 
-function createWorkItem(serviceId = 1) {
+function getAuthCodeHash() {
+  return blake2b.hashBytes(AUTHORIZER_PVM).asOpaque<CodeHash>();
+}
+
+function createService(serviceId: typeof AUTH_SERVICE_ID, codeHash: OpaqueHash, code: BytesBlob): InMemoryService {
+  return new InMemoryService(serviceId, {
+    info: ServiceAccountInfo.create({
+      codeHash: codeHash.asOpaque<CodeHash>(),
+      balance: tryAsU64(10_000_000_000),
+      accumulateMinGas: tryAsServiceGas(0n),
+      onTransferMinGas: tryAsServiceGas(0n),
+      storageUtilisationBytes: tryAsU64(0),
+      storageUtilisationCount: tryAsU32(0),
+      gratisStorage: tryAsU64(0),
+      created: tryAsTimeSlot(0),
+      lastAccumulation: tryAsTimeSlot(0),
+      parentService: tryAsServiceId(0),
+    }),
+    preimages: HashDictionary.fromEntries(
+      [PreimageItem.create({ hash: codeHash.asOpaque(), blob: code })].map((x) => [x.hash, x]),
+    ),
+    lookupHistory: HashDictionary.fromEntries([]),
+    storage: new Map(),
+  });
+}
+
+function createWorkItem(codeHash: CodeHash, serviceId = 1) {
   return WorkItem.create({
     service: tryAsServiceId(serviceId),
-    codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
+    codeHash,
     payload: BytesBlob.empty(),
     refineGasLimit: tryAsServiceGas(1_000_000),
     accumulateGasLimit: tryAsServiceGas(1_000_000),
@@ -35,11 +67,16 @@ function createWorkItem(serviceId = 1) {
   });
 }
 
-function createWorkPackage(anchorHash: HeaderHash, stateRoot: StateRootHash, lookupAnchorSlot = 0) {
+function createWorkPackage(
+  anchorHash: HeaderHash,
+  stateRoot: StateRootHash,
+  authCodeHash: CodeHash,
+  lookupAnchorSlot = 0,
+) {
   return WorkPackage.create({
     authToken: BytesBlob.empty(),
-    authCodeHost: tryAsServiceId(1),
-    authCodeHash: Bytes.zero(HASH_SIZE).asOpaque(),
+    authCodeHost: AUTH_SERVICE_ID,
+    authCodeHash,
     authConfiguration: BytesBlob.empty(),
     context: RefineContext.create({
       anchor: anchorHash,
@@ -49,7 +86,7 @@ function createWorkPackage(anchorHash: HeaderHash, stateRoot: StateRootHash, loo
       lookupAnchorSlot: tryAsTimeSlot(lookupAnchorSlot),
       prerequisites: [],
     }),
-    items: FixedSizeArray.new([createWorkItem()], tryAsWorkItemsCount(1)),
+    items: FixedSizeArray.new([createWorkItem(authCodeHash)], tryAsWorkItemsCount(1)),
   });
 }
 
@@ -68,7 +105,8 @@ describe("InCore", () => {
 
     const anchorHash = Bytes.fill(HASH_SIZE, 1).asOpaque<HeaderHash>();
     const stateRoot = Bytes.zero(HASH_SIZE).asOpaque<StateRootHash>();
-    const workPackage = createWorkPackage(anchorHash, stateRoot);
+    const authCodeHash = getAuthCodeHash();
+    const workPackage = createWorkPackage(anchorHash, stateRoot, authCodeHash);
 
     const result = await inCore.refine(
       hashWorkPackage(spec, workPackage),
@@ -86,12 +124,16 @@ describe("InCore", () => {
     const states = new InMemoryStates(spec);
     const inCore = new InCore(spec, states, PvmBackend.BuiltIn, blake2b);
 
+    const authCodeHash = getAuthCodeHash();
     const anchorHash = Bytes.fill(HASH_SIZE, 1).asOpaque<HeaderHash>();
-    const state = testState();
+    const state = InMemoryState.partial(spec, {
+      timeslot: tryAsTimeSlot(16),
+      services: new Map([[AUTH_SERVICE_ID, createService(AUTH_SERVICE_ID, authCodeHash, AUTHORIZER_PVM)]]),
+    });
     await states.insertInitialState(anchorHash, state);
 
     const correctStateRoot = await states.getStateRoot(state);
-    const workPackage = createWorkPackage(anchorHash, correctStateRoot, state.timeslot);
+    const workPackage = createWorkPackage(anchorHash, correctStateRoot, authCodeHash, state.timeslot);
 
     const result = await inCore.refine(
       hashWorkPackage(spec, workPackage),
@@ -100,7 +142,7 @@ describe("InCore", () => {
       asKnownSize([[]]),
     );
 
-    assert.strictEqual(result.isOk, true);
+    assert.strictEqual(result.isOk, true, `Expected OK but got error: ${result.isError ? result.details() : ""}`);
     assert.strictEqual(result.ok.report.coreIndex, 0);
     assert.strictEqual(result.ok.report.results.length, 1);
   });

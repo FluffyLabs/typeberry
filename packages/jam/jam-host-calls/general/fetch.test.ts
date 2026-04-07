@@ -44,10 +44,13 @@ describe("Fetch", () => {
   it("should write empty result and set IN_OUT_REG to NONE if fetch returns null", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const fetchMock = new RefineFetchMock();
-    // authorizerTraceResponse is null by default — Kind 2 legitimately returns null
+    // oneWorkItem returns null when the work item index has no mock response registered
 
     const blob = BytesBlob.blobFromNumbers([]);
-    const { registers, memory, readBack } = prepareRegsAndMemory(blob, FetchKind.AuthorizerTrace);
+    const { registers, memory, readBack } = prepareRegsAndMemory(blob, FetchKind.OneWorkItem);
+    // set work item index to one that has no response → oneWorkItem returns null
+    registers.set(11, tryAsU64(999));
+    fetchMock.oneWorkItemResponses.set("999", null);
 
     const fetch = new Fetch(currentServiceId, fetchMock);
     const result = await fetch.execute(gas, registers, memory);
