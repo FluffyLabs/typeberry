@@ -141,7 +141,7 @@ export class Refine {
     const exports = externalities.refine.getExportedSegments();
     if (exports.length !== item.exportCount) {
       return {
-        exports,
+        exports: [],
         result: WorkResult.create({
           ...baseResult,
           result: WorkExecResult.error(WorkExecResultKind.incorrectNumberOfExports),
