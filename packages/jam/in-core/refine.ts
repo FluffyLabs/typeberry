@@ -1,10 +1,19 @@
-import { type CoreIndex, type ServiceGas, type ServiceId, tryAsCoreIndex, tryAsServiceGas } from "@typeberry/block";
+import {
+  type CoreIndex,
+  type Segment,
+  type SegmentIndex,
+  type ServiceGas,
+  type ServiceId,
+  tryAsCoreIndex,
+  tryAsServiceGas,
+} from "@typeberry/block";
 import { W_C } from "@typeberry/block/gp-constants.js";
 import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import type { WorkItem, WorkItemExtrinsic } from "@typeberry/block/work-item.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
+import type { KnownSizeArray } from "@typeberry/collections";
 import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import { PvmExecutor, type RefineHostCallExternalities, ReturnStatus, type ReturnValue } from "@typeberry/executor";
 import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
@@ -13,7 +22,18 @@ import type { State } from "@typeberry/state";
 import { RefineFetchExternalities } from "@typeberry/transition/externalities/refine-fetch-externalities.js";
 import { assertNever, Result } from "@typeberry/utils";
 import { RefineExternalitiesImpl } from "./externalities/refine.js";
-import type { ImportedSegment, PerWorkItem, RefineItemResult } from "./in-core.js";
+
+export type RefineItemResult = {
+  result: WorkResult;
+  exports: readonly Segment[];
+};
+
+export type PerWorkItem<T> = KnownSizeArray<T, "for each work item">;
+
+export type ImportedSegment = {
+  index: SegmentIndex;
+  data: Segment;
+};
 
 enum ServiceCodeError {
   /** Service id is not found in the state. */

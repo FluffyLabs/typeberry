@@ -1,11 +1,10 @@
-import type { CoreIndex, Segment, SegmentIndex } from "@typeberry/block";
+import type { CoreIndex, Segment } from "@typeberry/block";
 import { type RefineContext, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/refine-context.js";
 import type { WorkItemExtrinsic } from "@typeberry/block/work-item.js";
 import type { WorkPackage } from "@typeberry/block/work-package.js";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
-import type { WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes } from "@typeberry/bytes";
-import { asKnownSize, FixedSizeArray, type KnownSizeArray } from "@typeberry/collections";
+import { asKnownSize, FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import type { StatesDb } from "@typeberry/database";
 import type { Blake2b, WithHash } from "@typeberry/hash";
@@ -14,16 +13,13 @@ import { Logger } from "@typeberry/logger";
 import { tryAsU8, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { assertEmpty, Result } from "@typeberry/utils";
 import { AuthorizationError, type AuthorizationOk, IsAuthorized } from "./is-authorized.js";
-import { Refine } from "./refine.js";
+import { type ImportedSegment, type PerWorkItem, Refine, type RefineItemResult } from "./refine.js";
+
+export type { ImportedSegment, PerWorkItem, RefineItemResult } from "./refine.js";
 
 export type RefineResult = {
   report: WorkReport;
   exports: PerWorkItem<Segment[]>;
-};
-
-export type RefineItemResult = {
-  result: WorkResult;
-  exports: readonly Segment[];
 };
 
 export enum RefineError {
@@ -36,13 +32,6 @@ export enum RefineError {
   /** Authorization error. */
   AuthorizationError = 3,
 }
-
-export type PerWorkItem<T> = KnownSizeArray<T, "for each work item">;
-
-export type ImportedSegment = {
-  index: SegmentIndex;
-  data: Segment;
-};
 
 const logger = Logger.new(import.meta.filename, "refine");
 
