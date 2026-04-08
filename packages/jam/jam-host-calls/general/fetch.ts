@@ -18,7 +18,7 @@ import { HostCallResult } from "./results.js";
  * Ω_Y signature: Ω_Y(ρ, φ, μ, p, n, r, i, ī, x̄, 𝐢, ...)
  *
  * Context parameter mapping
- *   Is-Authorized: Ω_Y(ρ, φ, μ, 𝐩, ∅, ∅, ∅, ∅, ∅, ∅, ∅)
+ *   IsAuthorized: Ω_Y(ρ, φ, μ, 𝐩, ∅, ∅, ∅, ∅, ∅, ∅, ∅)
  *   https://graypaper.fluffylabs.dev/#/ab2cdbd/2e43012e4301?v=0.7.2
  *   Refine:        Ω_Y(ρ, φ, μ, p, H₀, r, i, ī, x̄, ∅, (m,e))
  *   https://graypaper.fluffylabs.dev/#/ab2cdbd/2fe0012fe001?v=0.7.2
@@ -26,13 +26,13 @@ import { HostCallResult } from "./results.js";
  *   https://graypaper.fluffylabs.dev/#/ab2cdbd/30c00030c000?v=0.7.2
  *
  * Kind availability per context:
- *   Kind 0  (constants)      — all contexts
- *   Kind 1  (n)              — Refine (H₀), Accumulate (η'₀)
- *   Kind 2  (r)              — Refine only
- *   Kind 3-4 (x̄ extrinsics) — Refine only
- *   Kind 5-6 (ī imports)     — Refine only
- *   Kind 7-13 (p work pkg)   — Is-Authorized, Refine
- *   Kind 14-15 (𝐢 acc items) — Accumulate only
+ *   Kind 0  (constants)      - all contexts
+ *   Kind 1  (n)              - Refine (H₀), Accumulate (η'₀)
+ *   Kind 2  (r)              - Refine only
+ *   Kind 3-4 (x̄ extrinsics)  - Refine only
+ *   Kind 5-6 (ī imports)     - Refine only
+ *   Kind 7-13 (p work pkg)   - IsAuthorized, Refine
+ *   Kind 14-15 (𝐢 acc items) - Accumulate only
  */
 export enum FetchContext {
   IsAuthorized = "isAuthorized",
@@ -41,7 +41,7 @@ export enum FetchContext {
 }
 
 /**
- * Fetch externalities for the Is-Authorized context.
+ * Fetch externalities for the IsAuthorized context.
  *
  * Ω_Y(ρ, φ, μ, 𝐩, ∅, ∅, ∅, ∅, ∅, ∅, ∅)
  * https://graypaper.fluffylabs.dev/#/ab2cdbd/2e43012e4301?v=0.7.2
@@ -59,49 +59,49 @@ export interface IIsAuthorizedFetch {
   constants(): BytesBlob;
 
   /**
-   * Kind 7: Encoded work package — E(𝐩).
+   * Kind 7: Encoded work package - E(𝐩).
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/31c10231c102?v=0.7.2
    */
-  workPackage(): BytesBlob | null;
+  workPackage(): BytesBlob;
 
   /**
-   * Kind 8: Authorizer code hash and config — p_f.
+   * Kind 8: Authorizer configuration - p_f.
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/31c80231c802?v=0.7.2
    */
-  authorizer(): BytesBlob | null;
+  authConfiguration(): BytesBlob;
 
   /**
-   * Kind 9: Authorization token — p_j.
+   * Kind 9: Authorization token - p_j.
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/31cf0231cf02?v=0.7.2
    */
-  authorizationToken(): BytesBlob | null;
+  authToken(): BytesBlob;
 
   /**
-   * Kind 10: Refinement context — E(p_x).
+   * Kind 10: Refinement context - E(p_x).
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/31da0231da02?v=0.7.2
    */
-  refineContext(): BytesBlob | null;
+  refineContext(): BytesBlob;
 
   /**
-   * Kind 11: All work-item summaries — E(↕[S(w) | w ← p_w]).
+   * Kind 11: All work-item summaries - E(↕[S(w) | w ← p_w]).
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/31f40231f402?v=0.7.2
    */
-  allWorkItems(): BytesBlob | null;
+  allWorkItems(): BytesBlob;
 
   /**
-   * Kind 12: Single work-item summary — S(p_w[φ₁₁]).
+   * Kind 12: Single work-item summary - S(p_w[φ₁₁]).
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/31fc0231fc02?v=0.7.2
    */
   oneWorkItem(workItem: U64): BytesBlob | null;
 
   /**
-   * Kind 13: Work-item payload — p_w[φ₁₁]_y.
+   * Kind 13: Work-item payload - p_w[φ₁₁]_y.
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/313b03313b03?v=0.7.2
    */
@@ -127,7 +127,7 @@ export interface IRefineFetch {
   constants(): BytesBlob;
 
   /**
-   * Kind 1: Entropy pool — H₀ (zero hash).
+   * Kind 1: Entropy pool - H₀ (zero hash).
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/2fe0012fe201?v=0.7.2
    */
@@ -138,7 +138,7 @@ export interface IRefineFetch {
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/314902314902?v=0.7.2
    */
-  authorizerTrace(): BytesBlob | null;
+  authorizerTrace(): BytesBlob;
 
   /**
    * Kind 3 (other) / Kind 4 (my): Work-item extrinsics (x̄).
@@ -163,49 +163,49 @@ export interface IRefineFetch {
   workItemImport(workItem: U64 | null, index: U64): BytesBlob | null;
 
   /**
-   * Kind 7: Encoded work package — E(p).
+   * Kind 7: Encoded work package - E(p).
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/31c10231c102?v=0.7.2
    */
-  workPackage(): BytesBlob | null;
+  workPackage(): BytesBlob;
 
   /**
-   * Kind 8: Authorizer code hash and config — p_f.
+   * Kind 8: Authorizer configuration - p_f.
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/31c80231c802?v=0.7.2
    */
-  authorizer(): BytesBlob | null;
+  authConfiguration(): BytesBlob;
 
   /**
-   * Kind 9: Authorization token — p_j.
+   * Kind 9: Authorization token - p_j.
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/31cf0231cf02?v=0.7.2
    */
-  authorizationToken(): BytesBlob | null;
+  authToken(): BytesBlob;
 
   /**
-   * Kind 10: Refinement context — E(p_x).
+   * Kind 10: Refinement context - E(p_x).
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/31da0231da02?v=0.7.2
    */
-  refineContext(): BytesBlob | null;
+  refineContext(): BytesBlob;
 
   /**
-   * Kind 11: All work-item summaries — E(↕[S(w) | w ← p_w]).
+   * Kind 11: All work-item summaries - E(↕[S(w) | w ← p_w]).
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/31f40231f402?v=0.7.2
    */
-  allWorkItems(): BytesBlob | null;
+  allWorkItems(): BytesBlob;
 
   /**
-   * Kind 12: Single work-item summary — S(p_w[φ₁₁]).
+   * Kind 12: Single work-item summary - S(p_w[φ₁₁]).
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/31fc0231fc02?v=0.7.2
    */
   oneWorkItem(workItem: U64): BytesBlob | null;
 
   /**
-   * Kind 13: Work-item payload — p_w[φ₁₁]_y.
+   * Kind 13: Work-item payload - p_w[φ₁₁]_y.
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/313b03313b03?v=0.7.2
    */
@@ -231,21 +231,21 @@ export interface IAccumulateFetch {
   constants(): BytesBlob;
 
   /**
-   * Kind 1: Entropy pool — η'₀ (posterior entropy).
+   * Kind 1: Entropy pool - η'₀ (posterior entropy).
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/314302314602?v=0.7.2
    */
   entropy(): EntropyHash;
 
   /**
-   * Kind 14: All accumulation operands and transfers — E(↕𝐢).
+   * Kind 14: All accumulation operands and transfers - E(↕𝐢).
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/314e03314e03?v=0.7.2
    */
   allTransfersAndOperands(): BytesBlob | null;
 
   /**
-   * Kind 15: Single accumulation operand or transfer — E(𝐢[φ₁₁]).
+   * Kind 15: Single accumulation operand or transfer - E(𝐢[φ₁₁]).
    *
    * https://graypaper.fluffylabs.dev/#/ab2cdbd/315903315903?v=0.7.2
    */
@@ -304,12 +304,12 @@ export class Fetch implements HostCallHandler {
   private getValue(kind: U32, regs: HostCallRegisters): BytesBlob | null {
     const ext = this.fetch;
 
-    // Kind 0: constants — all contexts
+    // Kind 0: constants - all contexts
     if (kind === FetchKind.Constants) {
       return ext.constants();
     }
 
-    // Kind 1: entropy — Refine, Accumulate
+    // Kind 1: entropy - Refine, Accumulate
     if (kind === FetchKind.Entropy) {
       if (ext.context === FetchContext.IsAuthorized) {
         return null;
@@ -317,7 +317,7 @@ export class Fetch implements HostCallHandler {
       return ext.entropy();
     }
 
-    // Kind 2: authorizer trace — Refine only
+    // Kind 2: authorizer trace - Refine only
     if (kind === FetchKind.AuthorizerTrace) {
       if (ext.context !== FetchContext.Refine) {
         return null;
@@ -325,7 +325,7 @@ export class Fetch implements HostCallHandler {
       return ext.authorizerTrace();
     }
 
-    // Kind 3: other work item extrinsics — Refine only
+    // Kind 3: other work item extrinsics - Refine only
     if (kind === FetchKind.OtherWorkItemExtrinsics) {
       if (ext.context !== FetchContext.Refine) {
         return null;
@@ -335,7 +335,7 @@ export class Fetch implements HostCallHandler {
       return ext.workItemExtrinsic(workItem, index);
     }
 
-    // Kind 4: my extrinsics — Refine only
+    // Kind 4: my extrinsics - Refine only
     if (kind === FetchKind.MyExtrinsics) {
       if (ext.context !== FetchContext.Refine) {
         return null;
@@ -344,7 +344,7 @@ export class Fetch implements HostCallHandler {
       return ext.workItemExtrinsic(null, index);
     }
 
-    // Kind 5: other work item imports — Refine only
+    // Kind 5: other work item imports - Refine only
     if (kind === FetchKind.OtherWorkItemImports) {
       if (ext.context !== FetchContext.Refine) {
         return null;
@@ -354,7 +354,7 @@ export class Fetch implements HostCallHandler {
       return ext.workItemImport(workItem, index);
     }
 
-    // Kind 6: my imports — Refine only
+    // Kind 6: my imports - Refine only
     if (kind === FetchKind.MyImports) {
       if (ext.context !== FetchContext.Refine) {
         return null;
@@ -363,7 +363,7 @@ export class Fetch implements HostCallHandler {
       return ext.workItemImport(null, index);
     }
 
-    // Kind 7: work package — Is-Authorized, Refine
+    // Kind 7: work package - IsAuthorized, Refine
     if (kind === FetchKind.WorkPackage) {
       if (ext.context === FetchContext.Accumulate) {
         return null;
@@ -371,23 +371,23 @@ export class Fetch implements HostCallHandler {
       return ext.workPackage();
     }
 
-    // Kind 8: authorizer — Is-Authorized, Refine
-    if (kind === FetchKind.Authorizer) {
+    // Kind 8: auth configuration - IsAuthorized, Refine
+    if (kind === FetchKind.AuthConfiguration) {
       if (ext.context === FetchContext.Accumulate) {
         return null;
       }
-      return ext.authorizer();
+      return ext.authConfiguration();
     }
 
-    // Kind 9: authorization token — Is-Authorized, Refine
-    if (kind === FetchKind.AuthorizationToken) {
+    // Kind 9: authorization token - IsAuthorized, Refine
+    if (kind === FetchKind.AuthToken) {
       if (ext.context === FetchContext.Accumulate) {
         return null;
       }
-      return ext.authorizationToken();
+      return ext.authToken();
     }
 
-    // Kind 10: refine context — Is-Authorized, Refine
+    // Kind 10: refine context - IsAuthorized, Refine
     if (kind === FetchKind.RefineContext) {
       if (ext.context === FetchContext.Accumulate) {
         return null;
@@ -395,7 +395,7 @@ export class Fetch implements HostCallHandler {
       return ext.refineContext();
     }
 
-    // Kind 11: all work items — Is-Authorized, Refine
+    // Kind 11: all work items - IsAuthorized, Refine
     if (kind === FetchKind.AllWorkItems) {
       if (ext.context === FetchContext.Accumulate) {
         return null;
@@ -403,7 +403,7 @@ export class Fetch implements HostCallHandler {
       return ext.allWorkItems();
     }
 
-    // Kind 12: one work item — Is-Authorized, Refine
+    // Kind 12: one work item - IsAuthorized, Refine
     if (kind === FetchKind.OneWorkItem) {
       if (ext.context === FetchContext.Accumulate) {
         return null;
@@ -412,7 +412,7 @@ export class Fetch implements HostCallHandler {
       return ext.oneWorkItem(workItem);
     }
 
-    // Kind 13: work item payload — Is-Authorized, Refine
+    // Kind 13: work item payload - IsAuthorized, Refine
     if (kind === FetchKind.WorkItemPayload) {
       if (ext.context === FetchContext.Accumulate) {
         return null;
@@ -421,7 +421,7 @@ export class Fetch implements HostCallHandler {
       return ext.workItemPayload(workItem);
     }
 
-    // Kind 14: all transfers and operands — Accumulate only
+    // Kind 14: all transfers and operands - Accumulate only
     if (kind === FetchKind.AllTransfersAndOperands) {
       if (ext.context !== FetchContext.Accumulate) {
         return null;
@@ -429,7 +429,7 @@ export class Fetch implements HostCallHandler {
       return ext.allTransfersAndOperands();
     }
 
-    // Kind 15: one transfer or operand — Accumulate only
+    // Kind 15: one transfer or operand - Accumulate only
     if (kind === FetchKind.OneTransferOrOperand) {
       if (ext.context !== FetchContext.Accumulate) {
         return null;
@@ -451,8 +451,8 @@ export enum FetchKind {
   OtherWorkItemImports = 5,
   MyImports = 6,
   WorkPackage = 7,
-  Authorizer = 8,
-  AuthorizationToken = 9,
+  AuthConfiguration = 8,
+  AuthToken = 9,
   RefineContext = 10,
   AllWorkItems = 11,
   OneWorkItem = 12,
