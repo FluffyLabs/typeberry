@@ -53,32 +53,32 @@ export class PartialStateMock implements PartialState {
   public validatorDataResponse: Result<OK, UnprivilegedError> = Result.ok(OK);
   public providePreimageResponse: Result<OK, ProvidePreimageError> = Result.ok(OK);
 
-  eject(from: ServiceId | null, previousCode: PreimageHash): Result<OK, EjectError> {
+  async eject(from: ServiceId | null, previousCode: PreimageHash): Promise<Result<OK, EjectError>> {
     this.ejectData.push([from, previousCode]);
     return this.ejectReturnValue;
   }
 
-  checkPreimageStatus(hash: Blake2bHash, length: U64): PreimageStatus | null {
+  async checkPreimageStatus(hash: Blake2bHash, length: U64): Promise<PreimageStatus | null> {
     this.checkPreimageStatusData.push([hash, length]);
     return this.checkPreimageStatusResponse;
   }
 
-  requestPreimage(hash: Blake2bHash, length: U64): Result<OK, RequestPreimageError> {
+  async requestPreimage(hash: Blake2bHash, length: U64): Promise<Result<OK, RequestPreimageError>> {
     this.requestPreimageData.push([hash, length]);
     return this.requestPreimageResponse;
   }
 
-  forgetPreimage(hash: Blake2bHash, length: U64): Result<OK, ForgetPreimageError> {
+  async forgetPreimage(hash: Blake2bHash, length: U64): Promise<Result<OK, ForgetPreimageError>> {
     this.forgetPreimageData.push([hash, length]);
     return this.forgetPreimageResponse;
   }
 
-  transfer(
+  async transfer(
     destination: ServiceId | null,
     amount: U64,
     suppliedGas: ServiceGas,
     memo: Bytes<TRANSFER_MEMO_BYTES>,
-  ): Result<OK, TransferError> {
+  ): Promise<Result<OK, TransferError>> {
     if (destination === null) {
       return Result.error(TransferError.DestinationNotFound, () => "Mock: destination is null for transfer");
     }
@@ -90,19 +90,19 @@ export class PartialStateMock implements PartialState {
     return this.transferReturnValue;
   }
 
-  newService(
+  async newService(
     codeHash: CodeHash,
     codeLength: U64,
     gas: ServiceGas,
     balance: ServiceGas,
     gratisStorage: U64,
     serviceId: U64,
-  ): Result<ServiceId, NewServiceError> {
+  ): Promise<Result<ServiceId, NewServiceError>> {
     this.newServiceCalled.push([codeHash, codeLength, gas, balance, gratisStorage, serviceId]);
     return this.newServiceResponse;
   }
 
-  upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void {
+  async upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): Promise<void> {
     this.upgradeData.push([codeHash, gas, allowance]);
   }
 
@@ -145,7 +145,7 @@ export class PartialStateMock implements PartialState {
     this.yieldHash = hash;
   }
 
-  providePreimage(service: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {
+  async providePreimage(service: ServiceId | null, preimage: BytesBlob): Promise<Result<OK, ProvidePreimageError>> {
     if (service === null) {
       return Result.error(ProvidePreimageError.ServiceNotFound, () => "Mock: service is null for providePreimage");
     }

@@ -21,7 +21,7 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
   ]);
   public readonly details = new Map<ServiceId, ServiceAccountInfo>();
 
-  lookup(serviceId: ServiceId | null, hash: Blake2bHash): BytesBlob | null {
+  async lookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null> {
     if (serviceId === null) {
       return null;
     }
@@ -32,7 +32,7 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
     return preImage;
   }
 
-  read(serviceId: ServiceId | null, hash: StorageKey): BytesBlob | null {
+  async read(serviceId: ServiceId | null, hash: StorageKey): Promise<BytesBlob | null> {
     if (serviceId === null) {
       return null;
     }
@@ -43,7 +43,7 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
     return d;
   }
 
-  write(hash: StorageKey, data: BytesBlob | null): Result<number | null, "full"> {
+  async write(hash: StorageKey, data: BytesBlob | null): Promise<Result<number | null, "full">> {
     if (this.isStorageFull()) {
       return Result.error("full", () => "Test accounts: storage is full");
     }
@@ -72,7 +72,7 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
     );
   }
 
-  getServiceInfo(serviceId: ServiceId | null): ServiceAccountInfo | null {
+  async getServiceInfo(serviceId: ServiceId | null): Promise<ServiceAccountInfo | null> {
     if (serviceId === null) {
       return null;
     }

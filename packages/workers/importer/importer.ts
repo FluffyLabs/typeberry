@@ -60,7 +60,13 @@ export class Importer {
     }
 
     this.verifier = new BlockVerifier(hasher, blocks);
-    this.stf = new OnChain(spec, state, hasher, { pvm, accumulateSequentially: false }, DbHeaderChain.new(blocks));
+    this.stf = new OnChain(
+      spec,
+      state,
+      hasher,
+      { pvm, accumulateSequentially: false, accumulateWorkers: 1 },
+      DbHeaderChain.new(blocks),
+    );
     this.state = state;
     this.currentHash = currentBestHeaderHash;
     this.prepareForNextEpoch();

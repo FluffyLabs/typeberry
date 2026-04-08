@@ -12,7 +12,7 @@ import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import { asKnownSize, HashSet } from "@typeberry/collections";
-import { type ChainSpec, PvmBackend, PvmBackendNames } from "@typeberry/config";
+import { type ChainSpec, PvmBackendNames } from "@typeberry/config";
 import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import {
@@ -26,7 +26,7 @@ import { JsonService, JsonServicePre072 } from "@typeberry/state-json";
 import { AccumulateOutput } from "@typeberry/transition/accumulate/accumulate-output.js";
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
 import { Compatibility, deepEqual, GpVersion, Result } from "@typeberry/utils";
-import type { RunOptions } from "../common.js";
+import { type RunOptions, type SelectedPvm, selectedPvmToBackend } from "../common.js";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -141,11 +141,11 @@ export class AccumulateTest {
 
 export async function runAccumulateTest(
   test: AccumulateTest,
-  { chainSpec, accumulateSequentially }: RunOptions,
-  variant: "ananas" | "builtin",
+  { chainSpec, accumulateSequentially, accumulateWorkers }: RunOptions,
+  variant: SelectedPvm,
 ) {
-  const pvm = variant === "ananas" ? PvmBackend.Ananas : PvmBackend.BuiltIn;
-  const options = { pvm, accumulateSequentially };
+  const pvm = selectedPvmToBackend(variant);
+  const options = { pvm, accumulateSequentially, accumulateWorkers };
   /**
    * entropy has to be moved to input because state is incompatibile -
    * in test state we have: `entropy: EntropyHash;`

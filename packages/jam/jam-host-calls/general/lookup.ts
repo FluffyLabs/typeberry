@@ -13,7 +13,7 @@ import { HostCallResult } from "./results.js";
 /** Account data interface for lookup host calls. */
 export interface AccountsLookup {
   /** Lookup a preimage. */
-  lookup(serviceId: ServiceId | null, hash: Blake2bHash): BytesBlob | null;
+  lookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
 }
 
 const IN_OUT_REG = 7;
@@ -51,7 +51,7 @@ export class Lookup implements HostCallHandler {
     }
 
     // v
-    const preImage = this.account.lookup(serviceId, preImageHash);
+    const preImage = await this.account.lookup(serviceId, preImageHash);
 
     logger.trace`[${this.currentServiceId}] LOOKUP(${serviceId}, ${preImageHash}) <- ${preImage?.toStringTruncated() ?? "<missing>"}...`;
     logger.insane`[${this.currentServiceId}] LOOKUP(${serviceId}, ${preImageHash}) <- ${preImage ?? "<missing>"}`;

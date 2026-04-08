@@ -12,7 +12,7 @@ import { HostCallResult } from "./results.js";
 /** Account data interface for read host calls. */
 export interface AccountsRead {
   /** Read service storage. */
-  read(serviceId: ServiceId | null, rawKey: BytesBlob): BytesBlob | null;
+  read(serviceId: ServiceId | null, rawKey: BytesBlob): Promise<BytesBlob | null>;
 }
 
 const IN_OUT_REG = 7;
@@ -54,7 +54,7 @@ export class Read implements HostCallHandler {
     }
 
     // v
-    const value = this.account.read(serviceId, rawKey);
+    const value = await this.account.read(serviceId, rawKey);
 
     const valueLength = value === null ? tryAsU64(0) : tryAsU64(value.raw.length);
     const valueBlobOffset = regs.get(11);

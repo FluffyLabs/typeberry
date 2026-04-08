@@ -9,6 +9,7 @@ import {
   type AUTHORIZATION_QUEUE_SIZE,
   LookupHistoryItem,
   PrivilegedServices,
+  type Service,
   ServiceAccountInfo,
   type ServicesUpdate,
   type State,
@@ -137,7 +138,9 @@ export class AccumulationStateUpdate {
   }
 }
 
-type StateSlice = Pick<State, "getService" | "privilegedServices">;
+type StateSlice = Pick<State, "getService" | "privilegedServices"> & {
+  getServiceAsync?(id: ServiceId): Promise<Service | null>;
+};
 
 export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
   /** A collection of state updates. */
@@ -150,6 +153,14 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
   ) {
     this.stateUpdate =
       stateUpdate === undefined ? AccumulationStateUpdate.empty() : AccumulationStateUpdate.copyFrom(stateUpdate);
+  }
+
+  /** Resolve a service from base state, using async variant if available. */
+  private getServiceFromBase(id: ServiceId): Promise<Service | null> {
+    if (this.state.getServiceAsync !== undefined) {
+      return this.state.getServiceAsync(id);
+    }
+    return Promise.resolve(this.state.getService(id));
   }
 
   /**
@@ -282,6 +293,118 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     switch (action.kind) {
       case UpdatePreimageKind.Provide: {
         // casting to U32 is safe, since we compare with object we have in memory.
+        return new LookupHistoryItem(hash, updatedPreimage.length, tryAsLookupHistorySlots([currentTimeslot]));
+      }
+      case UpdatePreimageKind.Remove: {
+        return null;
+      }
+      case UpdatePreimageKind.UpdateOrAdd: {
+        return action.item;
+      }
+    }
+
+    assertNever(action);
+  }
+
+  // ── Async variants (for worker threads) ──────────────────────────────────
+
+  async getServiceInfoAsync(destination: ServiceId | null): Promise<ServiceAccountInfo | null> {
+    if (destination === null) {
+      return null;
+    }
+
+    const maybeUpdatedServiceInfo = this.stateUpdate.services.updated.get(destination);
+    if (maybeUpdatedServiceInfo !== undefined) {
+      return maybeUpdatedServiceInfo.action.account;
+    }
+
+    const maybeService = await this.getServiceFromBase(destination);
+    if (maybeService === null) {
+      return null;
+    }
+
+    return maybeService.getInfo();
+  }
+
+  async getStorageAsync(serviceId: ServiceId, rawKey: StorageKey): Promise<BytesBlob | null> {
+    const storages = this.stateUpdate.services.storage.get(serviceId) ?? [];
+    const item = storages.find((x) => x.key.isEqualTo(rawKey));
+    if (item !== undefined) {
+      return item.value;
+    }
+
+    const service = await this.getServiceFromBase(serviceId);
+    return service?.getStorage(rawKey) ?? null;
+  }
+
+  async hasPreimageAsync(serviceId: ServiceId, hash: PreimageHash): Promise<boolean> {
+    const preimages = this.stateUpdate.services.preimages.get(serviceId) ?? [];
+    const providedPreimage = preimages.find((p) => p.hash.isEqualTo(hash));
+    if (providedPreimage !== undefined) {
+      return true;
+    }
+
+    const service = await this.getServiceFromBase(serviceId);
+    if (service === null) {
+      return false;
+    }
+
+    return service.hasPreimage(hash);
+  }
+
+  async getPreimageAsync(serviceId: ServiceId, hash: PreimageHash): Promise<BytesBlob | null> {
+    const preimages = this.stateUpdate.services.preimages.get(serviceId) ?? [];
+    const freshlyProvided = preimages.find((x) => x.hash.isEqualTo(hash));
+    if (freshlyProvided !== undefined && freshlyProvided.action.kind === UpdatePreimageKind.Provide) {
+      return freshlyProvided.action.preimage.blob;
+    }
+
+    const service = await this.getServiceFromBase(serviceId);
+    return service?.getPreimage(hash) ?? null;
+  }
+
+  async getLookupHistoryAsync(
+    currentTimeslot: TimeSlot,
+    serviceId: ServiceId,
+    hash: PreimageHash,
+    length: U64,
+  ): Promise<LookupHistoryItem | null> {
+    const updatedService = this.stateUpdate.services.updated.get(serviceId);
+
+    if (updatedService !== undefined && updatedService.action.kind === UpdateServiceKind.Create) {
+      const lookupHistoryItem = updatedService.action.lookupHistory;
+
+      if (
+        lookupHistoryItem !== null &&
+        hash.isEqualTo(lookupHistoryItem.hash) &&
+        length === BigInt(lookupHistoryItem.length)
+      ) {
+        return lookupHistoryItem;
+      }
+    }
+
+    const preimages = this.stateUpdate.services.preimages.get(serviceId) ?? [];
+    const updatedPreimage = preimages.findLast(
+      (update) => update.hash.isEqualTo(hash) && BigInt(update.length) === length,
+    );
+
+    const stateFallback = async () => {
+      const service = await this.getServiceFromBase(serviceId);
+      const lenU32 = preimageLenAsU32(length);
+      if (lenU32 === null || service === null) {
+        return null;
+      }
+      const slots = service.getLookupHistory(hash, lenU32);
+      return slots === null ? null : new LookupHistoryItem(hash, lenU32, slots);
+    };
+
+    if (updatedPreimage === undefined) {
+      return stateFallback();
+    }
+
+    const { action } = updatedPreimage;
+    switch (action.kind) {
+      case UpdatePreimageKind.Provide: {
         return new LookupHistoryItem(hash, updatedPreimage.length, tryAsLookupHistorySlots([currentTimeslot]));
       }
       case UpdatePreimageKind.Remove: {

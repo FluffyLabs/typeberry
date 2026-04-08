@@ -50,7 +50,7 @@ export class New implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const assignedId = this.partialState.newService(
+    const assignedId = await this.partialState.newService(
       codeHash.asOpaque(),
       codeLength,
       gas,

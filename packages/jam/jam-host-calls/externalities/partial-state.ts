@@ -174,7 +174,7 @@ export interface PartialState {
    * States:
    * https://graypaper.fluffylabs.dev/#/579bd12/116f00116f00
    */
-  checkPreimageStatus(hash: PreimageHash, length: U64): PreimageStatus | null;
+  checkPreimageStatus(hash: PreimageHash, length: U64): Promise<PreimageStatus | null>;
 
   /**
    * Request (solicit) a preimage to be (re-)available.
@@ -182,21 +182,21 @@ export interface PartialState {
    * States:
    * https://graypaper.fluffylabs.dev/#/579bd12/116f00116f00
    */
-  requestPreimage(hash: PreimageHash, length: U64): Result<OK, RequestPreimageError>;
+  requestPreimage(hash: PreimageHash, length: U64): Promise<Result<OK, RequestPreimageError>>;
 
   /**
    * Mark a preimage hash as unavailable (forget it).
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/335602335602
    */
-  forgetPreimage(hash: PreimageHash, length: U64): Result<OK, ForgetPreimageError>;
+  forgetPreimage(hash: PreimageHash, length: U64): Promise<Result<OK, ForgetPreimageError>>;
 
   /**
    * Remove the provided source account and transfer the remaining account balance to current service.
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/37b60137b601?v=0.6.6
    */
-  eject(from: ServiceId | null, previousCode: PreimageHash): Result<OK, EjectError>;
+  eject(from: ServiceId | null, previousCode: PreimageHash): Promise<Result<OK, EjectError>>;
 
   /**
    * Transfer given `amount` of funds to the `destination`,
@@ -207,7 +207,7 @@ export interface PartialState {
     amount: U64,
     gas: ServiceGas,
     memo: Bytes<TRANSFER_MEMO_BYTES>,
-  ): Result<OK, TransferError>;
+  ): Promise<Result<OK, TransferError>>;
 
   /**
    * Create a new service with given codeHash, length, gas, allowance, gratisStorage and wantedServiceId.
@@ -230,10 +230,10 @@ export interface PartialState {
     allowance: ServiceGas,
     gratisStorage: U64,
     wantedServiceId: U64,
-  ): Result<ServiceId, NewServiceError>;
+  ): Promise<Result<ServiceId, NewServiceError>>;
 
   /** Upgrade code of currently running service. */
-  upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void;
+  upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): Promise<void>;
 
   /** Designate new validators given their key and meta data. */
   updateValidatorsData(validatorsData: PerValidator<ValidatorData>): Result<OK, UnprivilegedError>;
@@ -276,5 +276,5 @@ export interface PartialState {
   yield(hash: OpaqueHash): void;
 
   /** Provide a preimage for given service. */
-  providePreimage(service: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError>;
+  providePreimage(service: ServiceId | null, preimage: BytesBlob): Promise<Result<OK, ProvidePreimageError>>;
 }

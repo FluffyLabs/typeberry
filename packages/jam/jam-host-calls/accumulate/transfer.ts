@@ -61,7 +61,7 @@ export class Transfer implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const transferResult = this.partialState.transfer(destination, amount, transferGasFee, memo);
+    const transferResult = await this.partialState.transfer(destination, amount, transferGasFee, memo);
     logger.trace`[${this.currentServiceId}] TRANSFER(${destination}, ${amount}, ${transferGasFee}, ${memo}) <- ${resultToString(transferResult)}`;
 
     // All good!

@@ -43,7 +43,7 @@ export class Upgrade implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    this.partialState.upgradeService(codeHash.asOpaque(), gas, allowance);
+    await this.partialState.upgradeService(codeHash.asOpaque(), gas, allowance);
     logger.trace`[${this.currentServiceId}] UPGRADE(${codeHash}, ${gas}, ${allowance})`;
 
     regs.set(IN_OUT_REG, HostCallResult.OK);

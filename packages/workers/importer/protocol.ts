@@ -89,6 +89,9 @@ export class ImporterConfig {
         if (o === PvmBackend.Ananas) {
           return PvmBackend.Ananas;
         }
+        if (o === PvmBackend.Lite) {
+          return PvmBackend.Lite;
+        }
         throw new Error(`Invalid PvmBackend: ${o}`);
       },
     ),
