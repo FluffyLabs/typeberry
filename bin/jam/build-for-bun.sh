@@ -6,21 +6,21 @@ set -ex
 # PLATFORM_GNU adds -gnu suffix for linux native packages (e.g. linux-x64-gnu)
 : "${PLATFORM_GNU:=$PLATFORM}"
 
-VERSION=$(bun -e "console.log(require('./package.json').version)")
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
+VERSION="$(cd "$SCRIPT_DIR" && bun -e 'console.log(require("./package.json").version)')"
 
-# Start from the top-level project directory
-cd ../..
-
-DIST_FOLDER=./dist/jam-bun
-rm -rf "${DIST_FOLDER:?}" "./dist/jam-${PLATFORM}.zip"
+DIST_FOLDER="$ROOT_DIR/dist/jam-bun"
+rm -rf "${DIST_FOLDER:?}" "$ROOT_DIR/dist/jam-${PLATFORM}.zip"
 mkdir -p "$DIST_FOLDER"
 
 # Build the main binary. No --external flags — all JS is bundled.
 # Native .node loading is intercepted by bun-entry.ts which patches both
 # Module._resolveFilename and process.dlopen to redirect to sibling files.
 bun build --compile \
+  --target="bun-${PLATFORM}" \
   --outfile "$DIST_FOLDER/jam" \
-  ./bin/jam/bun-entry.ts
+  "$ROOT_DIR/bin/jam/bun-entry.ts"
 
 # Copy platform-specific native addons next to the binary.
 # lmdb uses node-gyp-build which looks for prebuilds/<platform>/ next to execPath.

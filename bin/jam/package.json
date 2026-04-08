@@ -21,7 +21,8 @@
     "@typeberry/telemetry": "*",
     "@typeberry/utils": "*",
     "@typeberry/workers-api": "*",
-    "minimist": "1.2.8"
+    "minimist": "1.2.8",
+    "reflect-metadata": "^0.2.2"
   },
   "scripts": {
     "start": "NODE_ENV=development bun run ./index.ts",
