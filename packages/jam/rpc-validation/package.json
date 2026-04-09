@@ -8,7 +8,7 @@
     "zod": "^4.1.13"
   },
   "scripts": {
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "bun test"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

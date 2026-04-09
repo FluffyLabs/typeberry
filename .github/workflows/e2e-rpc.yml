@@ -13,10 +13,6 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [24.x]
-
     steps:
       - uses: actions/checkout@v6
       - name: Load test ref
@@ -33,10 +29,7 @@ jobs:
           sed -i 's|git@github.com:|https://github.com/|g' .gitmodules
           git submodule sync w3f-davxy_072
           git submodule update --init --depth 1 w3f-davxy_072
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-      - run: npm ci
-      - run: npm run test:e2e -w @typeberry/rpc
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run --cwd bin/rpc test:e2e

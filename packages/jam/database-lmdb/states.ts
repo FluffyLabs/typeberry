@@ -101,15 +101,15 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>>, InitStates
     // (we could pre-allocate one buffer for all the leafs)
     const stateLeafs = BytesBlob.blobFromParts(leafs.array.map((x) => x.node.raw));
     // now we have the leaves and the values, so let's write it down to the DB.
-    const statesWrite = this.states.put(headerHash.raw, stateLeafs.raw);
-    const valuesWrite = this.values.transaction(() => {
-      for (const [hash, val] of values) {
-        this.values.put(hash.raw, val.raw);
-      }
-    });
-
+    // NOTE: We use synchronous operations because lmdb's async transaction()/put()
+    // never resolve under bun's event loop.
     try {
-      await Promise.all([valuesWrite, statesWrite]);
+      this.states.putSync(headerHash.raw, stateLeafs.raw);
+      this.values.transactionSync(() => {
+        for (const [hash, val] of values) {
+          this.values.putSync(hash.raw, val.raw);
+        }
+      });
     } catch (e) {
       logger.error`${e}`;
       return Result.error(StateUpdateError.Commit, () => `Failed to commit state update: ${e}`);

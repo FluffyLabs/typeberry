@@ -1,5 +1,6 @@
+import { mock } from "bun:test";
 import assert from "node:assert";
-import { describe, it, type Mock, mock } from "node:test";
+import { describe, it } from "node:test";
 import { type BlockView, type HeaderHash, type StateRootHash, tryAsTimeSlot } from "@typeberry/block";
 import { testBlockView } from "@typeberry/block/test-helpers.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
@@ -25,10 +26,11 @@ import {
 const spec = tinyChainSpec;
 
 class MockV1MessageHandler implements FuzzMessageHandler {
-  getPeerInfo: Mock<(value: PeerInfo) => Promise<PeerInfo>> = mock.fn();
-  initialize: Mock<(value: Initialize) => Promise<StateRootHash>> = mock.fn();
-  importBlock: Mock<(value: BlockView) => Promise<Result<StateRootHash, ErrorMessage>>> = mock.fn();
-  getSerializedState: Mock<(value: HeaderHash) => Promise<KeyValue[]>> = mock.fn();
+  getPeerInfo = mock() as ReturnType<typeof mock> & ((value: PeerInfo) => Promise<PeerInfo>);
+  initialize = mock() as ReturnType<typeof mock> & ((value: Initialize) => Promise<StateRootHash>);
+  importBlock = mock() as ReturnType<typeof mock> &
+    ((value: BlockView) => Promise<Result<StateRootHash, ErrorMessage>>);
+  getSerializedState = mock() as ReturnType<typeof mock> & ((value: HeaderHash) => Promise<KeyValue[]>);
 }
 
 class MockSender implements IpcSender {
@@ -92,7 +94,7 @@ describe("FuzzV1Target Handler", () => {
         value: responsePeerInfo,
       };
 
-      mockMessageHandler.getPeerInfo.mock.mockImplementation(async () => responsePeerInfo);
+      mockMessageHandler.getPeerInfo.mockImplementation(async () => responsePeerInfo);
 
       const fuzzTarget = FuzzTarget.new(mockMessageHandler, mockSender, spec);
       const testMessage = encode(incomingMessage);
@@ -150,7 +152,7 @@ describe("FuzzV1Target Handler", () => {
         value: expectedStateRoot,
       };
 
-      mockMessageHandler.initialize.mock.mockImplementation(async () => expectedStateRoot);
+      mockMessageHandler.initialize.mockImplementation(async () => expectedStateRoot);
 
       const fuzzTarget = FuzzTarget.new(mockMessageHandler, mockSender, spec);
       await completeHandshake(mockMessageHandler, mockSender, fuzzTarget);
@@ -160,8 +162,8 @@ describe("FuzzV1Target Handler", () => {
 
       await fuzzTarget.onSocketMessage(testMessage);
 
-      assert.strictEqual(mockMessageHandler.initialize.mock.callCount(), 1);
-      assert.deepStrictEqual(mockMessageHandler.initialize.mock.calls[0].arguments, [initialize]);
+      assert.strictEqual(mockMessageHandler.initialize.mock.calls.length, 1);
+      assert.deepStrictEqual(mockMessageHandler.initialize.mock.calls[0], [initialize]);
 
       assert.strictEqual(mockSender._sentData.length, 1);
       const sentMessage = decodeMessage(mockSender._sentData[0]);
@@ -188,7 +190,7 @@ describe("FuzzV1Target Handler", () => {
         value: expectedStateRoot,
       };
 
-      mockMessageHandler.importBlock.mock.mockImplementation(async () => Result.ok(expectedStateRoot));
+      mockMessageHandler.importBlock.mockImplementation(async () => Result.ok(expectedStateRoot));
 
       const fuzzTarget = FuzzTarget.new(mockMessageHandler, mockSender, spec);
       await completeHandshake(mockMessageHandler, mockSender, fuzzTarget);
@@ -198,7 +200,7 @@ describe("FuzzV1Target Handler", () => {
 
       await fuzzTarget.onSocketMessage(testMessage);
 
-      assert.strictEqual(mockMessageHandler.importBlock.mock.callCount(), 1);
+      assert.strictEqual(mockMessageHandler.importBlock.mock.calls.length, 1);
 
       assert.strictEqual(mockSender._sentData.length, 1);
       const sentMessage = decodeMessage(mockSender._sentData[0]);
@@ -223,7 +225,7 @@ describe("FuzzV1Target Handler", () => {
         value: expectedError,
       };
 
-      mockMessageHandler.importBlock.mock.mockImplementation(async () =>
+      mockMessageHandler.importBlock.mockImplementation(async () =>
         Result.error(expectedError, () => "Test: ImportBlock error"),
       );
 
@@ -235,7 +237,7 @@ describe("FuzzV1Target Handler", () => {
 
       await fuzzTarget.onSocketMessage(testMessage);
 
-      assert.strictEqual(mockMessageHandler.importBlock.mock.callCount(), 1);
+      assert.strictEqual(mockMessageHandler.importBlock.mock.calls.length, 1);
 
       assert.strictEqual(mockSender._sentData.length, 1);
       const sentMessage = decodeMessage(mockSender._sentData[0]);
@@ -271,7 +273,7 @@ describe("FuzzV1Target Handler", () => {
         value: keyValues,
       };
 
-      mockMessageHandler.getSerializedState.mock.mockImplementation(async () => keyValues);
+      mockMessageHandler.getSerializedState.mockImplementation(async () => keyValues);
 
       const fuzzTarget = FuzzTarget.new(mockMessageHandler, mockSender, spec);
       await completeHandshake(mockMessageHandler, mockSender, fuzzTarget);
@@ -281,8 +283,8 @@ describe("FuzzV1Target Handler", () => {
 
       await fuzzTarget.onSocketMessage(testMessage);
 
-      assert.strictEqual(mockMessageHandler.getSerializedState.mock.callCount(), 1);
-      assert.deepStrictEqual(mockMessageHandler.getSerializedState.mock.calls[0].arguments, [headerHash]);
+      assert.strictEqual(mockMessageHandler.getSerializedState.mock.calls.length, 1);
+      assert.deepStrictEqual(mockMessageHandler.getSerializedState.mock.calls[0], [headerHash]);
 
       assert.strictEqual(mockSender._sentData.length, 1);
       const sentMessage = decodeMessage(mockSender._sentData[0]);
@@ -385,10 +387,10 @@ describe("FuzzV1Target Handler", () => {
       assert.strictEqual(mockSender._closeCalled, 1);
 
       // Verify no handler methods were called
-      assert.strictEqual(mockMessageHandler.getPeerInfo.mock.callCount(), 0);
-      assert.strictEqual(mockMessageHandler.initialize.mock.callCount(), 0);
-      assert.strictEqual(mockMessageHandler.importBlock.mock.callCount(), 0);
-      assert.strictEqual(mockMessageHandler.getSerializedState.mock.callCount(), 0);
+      assert.strictEqual(mockMessageHandler.getPeerInfo.mock.calls.length, 0);
+      assert.strictEqual(mockMessageHandler.initialize.mock.calls.length, 0);
+      assert.strictEqual(mockMessageHandler.importBlock.mock.calls.length, 0);
+      assert.strictEqual(mockMessageHandler.getSerializedState.mock.calls.length, 0);
     });
   });
 
@@ -440,7 +442,7 @@ describe("FuzzV1Target Handler", () => {
       name: "test-target",
     });
 
-    mockMessageHandler.getPeerInfo.mock.mockImplementation(async () => responsePeerInfo);
+    mockMessageHandler.getPeerInfo.mockImplementation(async () => responsePeerInfo);
 
     const handshakeMessage: Message = {
       type: MessageType.PeerInfo,

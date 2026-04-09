@@ -1,5 +1,6 @@
+import { mock, spyOn } from "bun:test";
 import assert from "node:assert";
-import { after, before, beforeEach, describe, it, mock } from "node:test";
+import { after, before, beforeEach, describe, it } from "node:test";
 import { ArgumentType } from "../args-decoder/argument-type.js";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
 import { Instruction } from "../instruction.js";
@@ -11,13 +12,12 @@ describe("NoArgsDispatcher", () => {
   const instructionResult = new InstructionResult();
   const noArgsOps = NoArgsOps.new(instructionResult);
 
-  const mockFn = mock.fn();
+  const mockFn = mock();
 
   function mockAllMethods(obj: object) {
-    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(obj)) as (keyof typeof obj)[];
-
-    for (const method of methodNames) {
-      mock.method(obj, method, mockFn);
+    const target = obj as Record<string, (...args: unknown[]) => unknown>;
+    for (const method of Object.getOwnPropertyNames(Object.getPrototypeOf(obj))) {
+      spyOn(target, method).mockImplementation(mockFn);
     }
   }
 
@@ -26,11 +26,11 @@ describe("NoArgsDispatcher", () => {
   });
 
   after(() => {
-    mock.restoreAll();
+    mock.restore();
   });
 
   beforeEach(() => {
-    mockFn.mock.resetCalls();
+    mockFn.mockClear();
   });
 
   const relevantInstructions = Object.entries(Instruction)

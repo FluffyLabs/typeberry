@@ -16,23 +16,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [24]
         project: [lib, jam, convert]
 
     steps:
     - uses: actions/checkout@v6
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+    - name: Use Node.js (for npm publish)
       uses: actions/setup-node@v6
       with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        node-version: 24
         registry-url: 'https://registry.npmjs.org'
 
     - name: Install dependencies
-      run: npm ci
+      run: bun install --frozen-lockfile
 
     - name: Build @typeberry/${{ matrix.project }}
-      run: npm run build -w @typeberry/${{ matrix.project }}
+      run: bun run --cwd bin/${{ matrix.project }} build
       env:
         IS_RELEASE: ${{ github.event_name == 'release' && !github.event.release.prerelease && '1' || '' }}
 
@@ -49,7 +49,7 @@ jobs:
       id: pkg-version
       working-directory: ./dist/${{ matrix.project }}
       run: |
-        VERSION=$(node -p "require('./package.json').version")
+        VERSION=$(bun -e "console.log(require('./package.json').version)")
         echo "version=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Check if version exists on npm
@@ -79,6 +79,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
     - uses: docker/setup-buildx-action@v3
 
     - name: Log in to GitHub Container Registry
@@ -91,7 +93,7 @@ jobs:
     - name: Extract version from package.json
       id: version
       run: |
-        VERSION=$(node -p "require('./package.json').version")
+        VERSION=$(bun -e "console.log(require('./package.json').version)")
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Version: $VERSION"
 

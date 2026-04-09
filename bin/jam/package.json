@@ -28,7 +28,7 @@
     "start": "NODE_ENV=development bun run ./index.ts",
     "inspect": "NODE_ENV=development bun --inspect run ./index.ts",
     "build": "./build-for-npm.sh",
-    "test": "bun test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
+    "test": "bun test",
     "test:e2e": "JAM_LOG=trace bun test test/e2e.ts",
     "tiny-network": "bun run ./tiny-network.ts"
   },

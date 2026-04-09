@@ -1,5 +1,6 @@
+import { mock, spyOn } from "bun:test";
 import assert from "node:assert";
-import { after, before, beforeEach, describe, it, mock } from "node:test";
+import { after, before, beforeEach, describe, it } from "node:test";
 import type { TwoRegistersTwoImmediatesArgs } from "../args-decoder/args-decoder.js";
 import { ArgumentType } from "../args-decoder/argument-type.js";
 import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
@@ -22,21 +23,25 @@ describe("TwoRegsTwoImmsDispatcher", () => {
     const loadOps = LoadOps.new(regs, memory, instructionResult);
     const basicBlocks = new BasicBlocks();
     const dynamicJumpOps = DynamicJumpOps.new(regs, jumpTable, instructionResult, basicBlocks);
-    const loadImmediateMock = mock.fn();
-    const jumpIndMock = mock.fn();
+    const loadImmediateMock = mock();
+    const jumpIndMock = mock();
 
     after(() => {
-      mock.restoreAll();
+      mock.restore();
     });
 
     beforeEach(() => {
-      loadImmediateMock.mock.resetCalls();
-      jumpIndMock.mock.resetCalls();
+      loadImmediateMock.mockClear();
+      jumpIndMock.mockClear();
     });
 
     before(() => {
-      mock.method(dynamicJumpOps, "jumpInd", jumpIndMock);
-      mock.method(loadOps, "loadImmediate", loadImmediateMock);
+      spyOn(dynamicJumpOps as unknown as Record<string, (...args: unknown[]) => unknown>, "jumpInd").mockImplementation(
+        jumpIndMock,
+      );
+      spyOn(loadOps as unknown as Record<string, (...args: unknown[]) => unknown>, "loadImmediate").mockImplementation(
+        loadImmediateMock,
+      );
     });
 
     const argsMock = {
@@ -71,13 +76,12 @@ describe("TwoRegsTwoImmsDispatcher", () => {
     const jumpTable = JumpTable.fromRaw(1, new Uint8Array([1]));
     const basicBlocks = new BasicBlocks();
     const dynamicJumpOps = DynamicJumpOps.new(regs, jumpTable, instructionResult, basicBlocks);
-    const mockFn = mock.fn();
+    const mockFn = mock();
 
     function mockAllMethods(obj: object) {
-      const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(obj)) as (keyof typeof obj)[];
-
-      for (const method of methodNames) {
-        mock.method(obj, method, mockFn);
+      const target = obj as Record<string, (...args: unknown[]) => unknown>;
+      for (const method of Object.getOwnPropertyNames(Object.getPrototypeOf(obj))) {
+        spyOn(target, method).mockImplementation(mockFn);
       }
     }
 
@@ -87,11 +91,11 @@ describe("TwoRegsTwoImmsDispatcher", () => {
     });
 
     after(() => {
-      mock.restoreAll();
+      mock.restore();
     });
 
     beforeEach(() => {
-      mockFn.mock.resetCalls();
+      mockFn.mockClear();
     });
 
     const argsMock = {

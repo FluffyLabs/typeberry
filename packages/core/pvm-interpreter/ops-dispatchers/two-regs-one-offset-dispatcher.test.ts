@@ -1,5 +1,6 @@
+import { mock, spyOn } from "bun:test";
 import assert from "node:assert";
-import { test } from "node:test";
+import { after, before, beforeEach, describe, it } from "node:test";
 import type { TwoRegistersOneOffsetArgs } from "../args-decoder/args-decoder.js";
 import { ArgumentType } from "../args-decoder/argument-type.js";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
@@ -10,32 +11,31 @@ import { BranchOps } from "../ops/index.js";
 import { Registers } from "../registers.js";
 import { TwoRegsOneOffsetDispatcher } from "./two-regs-one-offset-dispatcher.js";
 
-test("TwoRegsOneOffsetDispatcher", async (t) => {
+describe("TwoRegsOneOffsetDispatcher", () => {
   const regs = Registers.empty();
   const instructionResult = new InstructionResult();
   const basicBlocks = new BasicBlocks();
   const branchOps = BranchOps.new(regs, instructionResult, basicBlocks);
 
-  const mockFn = t.mock.fn();
+  const mockFn = mock();
 
   function mockAllMethods(obj: object) {
-    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(obj)) as (keyof typeof obj)[];
-
-    for (const method of methodNames) {
-      t.mock.method(obj, method, mockFn);
+    const target = obj as Record<string, (...args: unknown[]) => unknown>;
+    for (const method of Object.getOwnPropertyNames(Object.getPrototypeOf(obj))) {
+      spyOn(target, method).mockImplementation(mockFn);
     }
   }
 
-  t.before(() => {
+  before(() => {
     mockAllMethods(branchOps);
   });
 
-  t.after(() => {
-    t.mock.restoreAll();
+  after(() => {
+    mock.restore();
   });
 
-  t.beforeEach(() => {
-    mockFn.mock.resetCalls();
+  beforeEach(() => {
+    mockFn.mockClear();
   });
 
   const argsMock = {} as TwoRegistersOneOffsetArgs;
@@ -45,7 +45,7 @@ test("TwoRegsOneOffsetDispatcher", async (t) => {
     .filter((entry) => instructionArgumentTypeMap[entry[1]] === ArgumentType.TWO_REGISTERS_ONE_OFFSET);
 
   for (const [name, instruction] of relevantInstructions) {
-    await t.test(`checks if instruction ${name} = ${instruction} is handled by TwoRegsOneOffsetDispatcher`, () => {
+    it(`checks if instruction ${name} = ${instruction} is handled by TwoRegsOneOffsetDispatcher`, () => {
       const dispatcher = new TwoRegsOneOffsetDispatcher(branchOps);
 
       dispatcher.dispatch(instruction, argsMock);
@@ -59,7 +59,7 @@ test("TwoRegsOneOffsetDispatcher", async (t) => {
     .filter((entry) => instructionArgumentTypeMap[entry[1]] !== ArgumentType.TWO_REGISTERS_ONE_OFFSET);
 
   for (const [name, instruction] of otherInstructions) {
-    await t.test(`checks if instruction ${name} = ${instruction} is not handled by TwoRegsOneOffsetDispatcher`, () => {
+    it(`checks if instruction ${name} = ${instruction} is not handled by TwoRegsOneOffsetDispatcher`, () => {
       const dispatcher = new TwoRegsOneOffsetDispatcher(branchOps);
 
       dispatcher.dispatch(instruction, argsMock);

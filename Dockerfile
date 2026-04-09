@@ -1,4 +1,4 @@
-FROM node:25-bookworm-slim
+FROM oven/bun:1.2-slim
 
 RUN useradd -d /app -m typeberry
 
@@ -6,6 +6,7 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+COPY bun.lock ./
 
 COPY tsconfig.json ./
 COPY start.sh ./
@@ -18,10 +19,7 @@ RUN chown -R typeberry /app
 USER typeberry
 
 # Install dependencies
-# Ideally this would be done only after copying package*.json files,
-# but if we do that the workspace is fucked up and it can't find any packages.
-# So until we have a proper TS->JS build, we probably need to live with that.
-RUN npm ci
+RUN bun install --frozen-lockfile
 
 # Make sure that anyone can create a database
 RUN mkdir ./database && chmod 777 ./database
