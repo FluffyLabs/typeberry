@@ -1,5 +1,6 @@
+import { mock, spyOn } from "bun:test";
 import assert from "node:assert";
-import { after, before, beforeEach, describe, it, mock } from "node:test";
+import { after, before, beforeEach, describe, it } from "node:test";
 import type { OneRegisterOneExtendedWidthImmediateArgs } from "../args-decoder/args-decoder.js";
 import { ArgumentType } from "../args-decoder/argument-type.js";
 import { ExtendedWitdthImmediateDecoder } from "../args-decoder/decoders/extended-with-immediate-decoder.js";
@@ -16,13 +17,12 @@ describe("OneRegOneExtImmDispatcher", () => {
   const memory = new Memory();
   const instructionResult = new InstructionResult();
   const loadOps = new LoadOps(regs, memory, instructionResult);
-  const mockFn = mock.fn();
+  const mockFn = mock();
 
   function mockAllMethods(obj: object) {
-    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(obj)) as (keyof typeof obj)[];
-
-    for (const method of methodNames) {
-      mock.method(obj, method, mockFn);
+    const target = obj as Record<string, (...args: unknown[]) => unknown>;
+    for (const method of Object.getOwnPropertyNames(Object.getPrototypeOf(obj))) {
+      spyOn(target, method).mockImplementation(mockFn);
     }
   }
 
@@ -31,11 +31,11 @@ describe("OneRegOneExtImmDispatcher", () => {
   });
 
   after(() => {
-    mock.restoreAll();
+    mock.restore();
   });
 
   beforeEach(() => {
-    mockFn.mock.resetCalls();
+    mockFn.mockClear();
   });
 
   const argsMock = {

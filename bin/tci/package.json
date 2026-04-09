@@ -5,8 +5,8 @@
   "main": "index.ts",
   "bin": "./index.ts",
   "scripts": {
-    "start": "NODE_ENV=development tsx ./index.ts",
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "start": "NODE_ENV=development bun run ./index.ts",
+    "test": "bun test"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

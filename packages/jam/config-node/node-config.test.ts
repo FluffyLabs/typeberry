@@ -1,6 +1,7 @@
+import { mock, spyOn } from "bun:test";
 import assert from "node:assert";
 import fs from "node:fs";
-import { beforeEach, describe, it, mock } from "node:test";
+import { beforeEach, describe, it } from "node:test";
 import { configs } from "@typeberry/configs";
 import polkajamConfig from "@typeberry/configs/typeberry-polkajam-dev.json" with { type: "json" };
 import { parseFromJson } from "@typeberry/json-parser";
@@ -76,7 +77,7 @@ describe("Load dev config", () => {
 
 describe("loadConfig", () => {
   beforeEach(() => {
-    mock.restoreAll();
+    mock.restore();
   });
 
   it("should load default config", () => {
@@ -108,23 +109,23 @@ describe("loadConfig", () => {
   });
 
   it("should load config from file if a valid file path is specified", () => {
-    mock.method(fs, "readFileSync", (src: string) => {
+    spyOn(fs, "readFileSync").mockImplementation(((src: string) => {
       if (src === withRelPath("file.json")) {
         return JSON.stringify(polkajamConfig);
       }
       throw new Error(`File ${src} not found`);
-    });
+    }) as typeof fs.readFileSync);
     const config = loadConfig(["file.json"], withRelPath);
     assert.deepStrictEqual(config, parseFromJson(polkajamConfig, NodeConfiguration.fromJson));
   });
 
   it("should load config from file and deep merge onto previous entries", () => {
-    mock.method(fs, "readFileSync", (src: string) => {
+    spyOn(fs, "readFileSync").mockImplementation(((src: string) => {
       if (src === withRelPath("file.json")) {
         return JSON.stringify({ chain_spec: { bootnodes: [] } });
       }
       throw new Error(`File ${src} not found`);
-    });
+    }) as typeof fs.readFileSync);
     const config = loadConfig(["default", "file.json"], withRelPath);
     assert.deepStrictEqual(
       config,
@@ -167,12 +168,12 @@ describe("loadConfig", () => {
   });
 
   it("should load config from files specified in a pseudo-jq query", () => {
-    mock.method(fs, "readFileSync", (src: string) => {
+    spyOn(fs, "readFileSync").mockImplementation(((src: string) => {
       if (src === withRelPath("file.json")) {
         return JSON.stringify({ bootnodes: [] });
       }
       throw new Error(`File ${src} not found`);
-    });
+    }) as typeof fs.readFileSync);
     const config = loadConfig(["default", ".chain_spec+=file.json"], withRelPath);
     assert.deepStrictEqual(
       config,
@@ -210,19 +211,21 @@ describe("loadConfig", () => {
   });
 
   it("should throw an error if an invalid json file is provided", () => {
-    mock.method(fs, "readFileSync", () => "invalid json");
+    spyOn(fs, "readFileSync").mockImplementation(((_src: string) => "invalid json") as typeof fs.readFileSync);
     assert.throws(
       () => loadConfig(["file.json"], withRelPath),
-      new Error(
-        `Unable to load config from file.json: SyntaxError: Unexpected token 'i', "invalid json" is not valid JSON`,
-      ),
+      (err: unknown) => {
+        assert(err instanceof Error);
+        assert(err.message.startsWith("Unable to load config from"));
+        return true;
+      },
     );
   });
 
   it("should throw an error if non-existing json file path is provided", () => {
-    mock.method(fs, "readFileSync", () => {
+    spyOn(fs, "readFileSync").mockImplementation((() => {
       throw new Error("File not found");
-    });
+    }) as typeof fs.readFileSync);
     assert.throws(
       () => loadConfig(["file.json"], withRelPath),
       new Error("Unable to load config from file.json: Error: File not found"),
@@ -230,19 +233,23 @@ describe("loadConfig", () => {
   });
 
   it("should throw an error if an invalid json file is provided using a pseudo-jq query", () => {
-    mock.method(fs, "readFileSync", () => "invalid json");
+    spyOn(fs, "readFileSync").mockImplementation(((_src: string) => "invalid json") as typeof fs.readFileSync);
     assert.throws(
       () => loadConfig(["default", ".chain_spec+=file.json"], withRelPath),
-      new Error(
-        `Error while processing '.chain_spec+=file.json': Error: Unable to load config from file.json: SyntaxError: Unexpected token 'i', "invalid json" is not valid JSON`,
-      ),
+      (err: unknown) => {
+        assert(err instanceof Error);
+        assert(
+          err.message.startsWith("Error while processing '.chain_spec+=file.json': Error: Unable to load config from"),
+        );
+        return true;
+      },
     );
   });
 
   it("should throw an error if non-existing json file path is provided using a pseudo-jq query", () => {
-    mock.method(fs, "readFileSync", () => {
+    spyOn(fs, "readFileSync").mockImplementation((() => {
       throw new Error("File not found");
-    });
+    }) as typeof fs.readFileSync);
     assert.throws(
       () => loadConfig(["default", ".chain_spec+=file.json"], withRelPath),
       new Error(
@@ -252,17 +259,23 @@ describe("loadConfig", () => {
   });
 
   it("should throw an error if the right side of a pseudo-jq query is not a valid json", () => {
-    mock.method(fs, "existsSync", () => false);
+    spyOn(fs, "existsSync").mockImplementation(() => false);
     assert.throws(
       () => loadConfig(["default", ".chain_spec+=invalid json"], withRelPath),
-      new Error(
-        `Error while processing '.chain_spec+=invalid json': Error: Unrecognized syntax 'invalid json': SyntaxError: Unexpected token 'i', "invalid json" is not valid JSON`,
-      ),
+      (err: unknown) => {
+        assert(err instanceof Error);
+        assert(
+          err.message.startsWith(
+            "Error while processing '.chain_spec+=invalid json': Error: Unrecognized syntax 'invalid json':",
+          ),
+        );
+        return true;
+      },
     );
   });
 
   it("should throw an error if the provided config is neither of the valid options (inline json, file path, pseudo-jq query)", () => {
-    mock.method(fs, "existsSync", () => false);
+    spyOn(fs, "existsSync").mockImplementation(() => false);
     assert.throws(
       () => loadConfig(["invalid config"], withRelPath),
       new Error("Error while processing 'invalid config': Error: Unrecognized syntax."),

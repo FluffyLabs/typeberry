@@ -16,10 +16,6 @@ jobs:
   benchmarks:
     runs-on: [self-hosted, benchmarks]
 
-    strategy:
-      matrix:
-        node-version: [24.x]
-
     steps:
       - name: Delete previous comment on PR
         # Don't attempt to comment if PR is coming from a fork.
@@ -29,18 +25,15 @@ jobs:
           mode: delete
           comment-tag: benchmarks
       - uses: actions/checkout@v6
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-      - run: npm ci
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
       - name: Benchmarks run
         uses: nick-fields/retry@v3
         with:
           timeout_minutes: 30
           max_attempts: 3
-          command: npm start -w @typeberry/benchmark
+          command: bun run --cwd packages/misc/benchmark start
       - name: Display results
         if: always()
         run: cat ./dist/benchmarks/results.txt

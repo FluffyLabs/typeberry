@@ -27,7 +27,6 @@ describe("FixedSizeArray", () => {
       },
       {
         name: "TypeError",
-        message: "Cannot add property 5, object is not extensible",
       },
     );
   });

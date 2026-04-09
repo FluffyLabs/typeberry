@@ -1,5 +1,6 @@
+import { mock, spyOn } from "bun:test";
 import assert from "node:assert";
-import { test } from "node:test";
+import { after, before, beforeEach, describe, it } from "node:test";
 import type { ThreeRegistersArgs } from "../args-decoder/args-decoder.js";
 import { ArgumentType } from "../args-decoder/argument-type.js";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
@@ -8,7 +9,7 @@ import { BitOps, BitRotationOps, BooleanOps, MathOps, MoveOps, ShiftOps } from "
 import { Registers } from "../registers.js";
 import { ThreeRegsDispatcher } from "./three-regs-dispatcher.js";
 
-test("ThreeRegsDispatcher", async (t) => {
+describe("ThreeRegsDispatcher", () => {
   const regs = new Registers();
   const mathOps = new MathOps(regs);
   const bitOps = new BitOps(regs);
@@ -17,17 +18,16 @@ test("ThreeRegsDispatcher", async (t) => {
   const moveOps = new MoveOps(regs);
   const bitRotationOps = new BitRotationOps(regs);
 
-  const mockFn = t.mock.fn();
+  const mockFn = mock();
 
   function mockAllMethods(obj: object) {
-    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(obj)) as (keyof typeof obj)[];
-
-    for (const method of methodNames) {
-      t.mock.method(obj, method, mockFn);
+    const target = obj as Record<string, (...args: unknown[]) => unknown>;
+    for (const method of Object.getOwnPropertyNames(Object.getPrototypeOf(obj))) {
+      spyOn(target, method).mockImplementation(mockFn);
     }
   }
 
-  t.before(() => {
+  before(() => {
     mockAllMethods(bitOps);
     mockAllMethods(booleanOps);
     mockAllMethods(moveOps);
@@ -37,12 +37,12 @@ test("ThreeRegsDispatcher", async (t) => {
     mockAllMethods(bitRotationOps);
   });
 
-  t.after(() => {
-    t.mock.restoreAll();
+  after(() => {
+    mock.restore();
   });
 
-  t.beforeEach(() => {
-    mockFn.mock.resetCalls();
+  beforeEach(() => {
+    mockFn.mockClear();
   });
 
   const threeRegsInstructions = Object.entries(Instruction)
@@ -50,7 +50,7 @@ test("ThreeRegsDispatcher", async (t) => {
     .filter((entry) => instructionArgumentTypeMap[entry[1]] === ArgumentType.THREE_REGISTERS);
 
   for (const [name, instruction] of threeRegsInstructions) {
-    await t.test(`checks if instruction ${name} = ${instruction} is handled by ThreeRegsDispatcher`, () => {
+    it(`checks if instruction ${name} = ${instruction} is handled by ThreeRegsDispatcher`, () => {
       const threeRegsDispatcher = new ThreeRegsDispatcher(
         mathOps,
         shiftOps,
@@ -71,7 +71,7 @@ test("ThreeRegsDispatcher", async (t) => {
     .filter((entry) => instructionArgumentTypeMap[entry[1]] !== ArgumentType.THREE_REGISTERS);
 
   for (const [name, instruction] of otherInstructions) {
-    await t.test(`checks if instruction ${name} = ${instruction} is not handled by ThreeRegsDispatcher`, () => {
+    it(`checks if instruction ${name} = ${instruction} is not handled by ThreeRegsDispatcher`, () => {
       const threeRegsDispatcher = new ThreeRegsDispatcher(
         mathOps,
         shiftOps,

@@ -4,7 +4,7 @@
   "description": "JAM PVM execution entry point with host calls.",
   "main": "index.ts",
   "scripts": {
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "bun test"
   },
   "dependencies": {
     "@typeberry/block": "*",

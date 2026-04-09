@@ -11,20 +11,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [24.x]
-
     steps:
       - uses: actions/checkout@v6
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-      - run: npm ci
-      - run: npm run qa
-      - run: npm test
-      - run: GP_VERSION=0.7.1 npm test
-      - run: GP_VERSION=0.7.2 npm test
-      - run: npm run docs
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run qa
+      - run: bun test
+      - run: GP_VERSION=0.7.1 bun test
+      - run: GP_VERSION=0.7.2 bun test
+      - run: bun run docs

@@ -1,5 +1,6 @@
+import { mock, spyOn } from "bun:test";
 import assert from "node:assert";
-import { after, before, beforeEach, describe, it, mock } from "node:test";
+import { after, before, beforeEach, describe, it } from "node:test";
 import type { OneRegisterOneImmediateOneOffsetArgs } from "../args-decoder/args-decoder.js";
 import { ArgumentType } from "../args-decoder/argument-type.js";
 import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
@@ -22,7 +23,7 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     const loadOps = new LoadOps(regs, memory, instructionResult);
 
     after(() => {
-      mock.restoreAll();
+      mock.restore();
     });
 
     const argsMock = {
@@ -30,10 +31,14 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     } as OneRegisterOneImmediateOneOffsetArgs;
 
     it("it should call BranchOps.jump and LoadOps.loadImmediate", () => {
-      const jumpMockFunction = mock.fn();
-      const loadImmMockFunction = mock.fn();
-      mock.method(branchOps, "jump", jumpMockFunction);
-      mock.method(loadOps, "loadImmediate", loadImmMockFunction);
+      const jumpMockFunction = mock();
+      const loadImmMockFunction = mock();
+      spyOn(branchOps as unknown as Record<string, (...args: unknown[]) => unknown>, "jump").mockImplementation(
+        jumpMockFunction,
+      );
+      spyOn(loadOps as unknown as Record<string, (...args: unknown[]) => unknown>, "loadImmediate").mockImplementation(
+        loadImmMockFunction,
+      );
       const oneRegOneImmOneOffsetDispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps, loadOps);
 
       oneRegOneImmOneOffsetDispatcher.dispatch(Instruction.LOAD_IMM_JUMP, argsMock);
@@ -43,8 +48,11 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     });
 
     it("it should call BranchOps.branchEqImmediate", () => {
-      const mockFunction = mock.fn();
-      mock.method(branchOps, "branchEqImmediate", mockFunction);
+      const mockFunction = mock();
+      spyOn(
+        branchOps as unknown as Record<string, (...args: unknown[]) => unknown>,
+        "branchEqImmediate",
+      ).mockImplementation(mockFunction);
       const oneRegOneImmOneOffsetDispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps, loadOps);
 
       oneRegOneImmOneOffsetDispatcher.dispatch(Instruction.BRANCH_EQ_IMM, argsMock);
@@ -53,8 +61,11 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     });
 
     it("it should call BranchOps.branchNeImmediate", () => {
-      const mockFunction = mock.fn();
-      mock.method(branchOps, "branchNeImmediate", mockFunction);
+      const mockFunction = mock();
+      spyOn(
+        branchOps as unknown as Record<string, (...args: unknown[]) => unknown>,
+        "branchNeImmediate",
+      ).mockImplementation(mockFunction);
       const oneRegOneImmOneOffsetDispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps, loadOps);
 
       oneRegOneImmOneOffsetDispatcher.dispatch(Instruction.BRANCH_NE_IMM, argsMock);
@@ -63,8 +74,11 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     });
 
     it("it should call BranchOps.branchLtUnsignedImmediate", () => {
-      const mockFunction = mock.fn();
-      mock.method(branchOps, "branchLtUnsignedImmediate", mockFunction);
+      const mockFunction = mock();
+      spyOn(
+        branchOps as unknown as Record<string, (...args: unknown[]) => unknown>,
+        "branchLtUnsignedImmediate",
+      ).mockImplementation(mockFunction);
       const oneRegOneImmOneOffsetDispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps, loadOps);
 
       oneRegOneImmOneOffsetDispatcher.dispatch(Instruction.BRANCH_LT_U_IMM, argsMock);
@@ -73,8 +87,11 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     });
 
     it("it should call BranchOps.branchLeUnsignedImmediate", () => {
-      const mockFunction = mock.fn();
-      mock.method(branchOps, "branchLeUnsignedImmediate", mockFunction);
+      const mockFunction = mock();
+      spyOn(
+        branchOps as unknown as Record<string, (...args: unknown[]) => unknown>,
+        "branchLeUnsignedImmediate",
+      ).mockImplementation(mockFunction);
       const oneRegOneImmOneOffsetDispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps, loadOps);
 
       oneRegOneImmOneOffsetDispatcher.dispatch(Instruction.BRANCH_LE_U_IMM, argsMock);
@@ -83,8 +100,11 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     });
 
     it("it should call BranchOps.branchGeUnsignedImmediate", () => {
-      const mockFunction = mock.fn();
-      mock.method(branchOps, "branchGeUnsignedImmediate", mockFunction);
+      const mockFunction = mock();
+      spyOn(
+        branchOps as unknown as Record<string, (...args: unknown[]) => unknown>,
+        "branchGeUnsignedImmediate",
+      ).mockImplementation(mockFunction);
       const oneRegOneImmOneOffsetDispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps, loadOps);
 
       oneRegOneImmOneOffsetDispatcher.dispatch(Instruction.BRANCH_GE_U_IMM, argsMock);
@@ -93,8 +113,11 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     });
 
     it("it should call BranchOps.branchGtUnsignedImmediate", () => {
-      const mockFunction = mock.fn();
-      mock.method(branchOps, "branchGtUnsignedImmediate", mockFunction);
+      const mockFunction = mock();
+      spyOn(
+        branchOps as unknown as Record<string, (...args: unknown[]) => unknown>,
+        "branchGtUnsignedImmediate",
+      ).mockImplementation(mockFunction);
       const oneRegOneImmOneOffsetDispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps, loadOps);
 
       oneRegOneImmOneOffsetDispatcher.dispatch(Instruction.BRANCH_GT_U_IMM, argsMock);
@@ -103,8 +126,11 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     });
 
     it("it should call BranchOps.branchLtSignedImmediate", () => {
-      const mockFunction = mock.fn();
-      mock.method(branchOps, "branchLtSignedImmediate", mockFunction);
+      const mockFunction = mock();
+      spyOn(
+        branchOps as unknown as Record<string, (...args: unknown[]) => unknown>,
+        "branchLtSignedImmediate",
+      ).mockImplementation(mockFunction);
       const oneRegOneImmOneOffsetDispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps, loadOps);
 
       oneRegOneImmOneOffsetDispatcher.dispatch(Instruction.BRANCH_LT_S_IMM, argsMock);
@@ -113,8 +139,11 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     });
 
     it("it should call BranchOps.branchLeSignedImmediate", () => {
-      const mockFunction = mock.fn();
-      mock.method(branchOps, "branchLeSignedImmediate", mockFunction);
+      const mockFunction = mock();
+      spyOn(
+        branchOps as unknown as Record<string, (...args: unknown[]) => unknown>,
+        "branchLeSignedImmediate",
+      ).mockImplementation(mockFunction);
       const oneRegOneImmOneOffsetDispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps, loadOps);
 
       oneRegOneImmOneOffsetDispatcher.dispatch(Instruction.BRANCH_LE_S_IMM, argsMock);
@@ -123,8 +152,11 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     });
 
     it("it should call BranchOps.branchGeSignedImmediate", () => {
-      const mockFunction = mock.fn();
-      mock.method(branchOps, "branchGeSignedImmediate", mockFunction);
+      const mockFunction = mock();
+      spyOn(
+        branchOps as unknown as Record<string, (...args: unknown[]) => unknown>,
+        "branchGeSignedImmediate",
+      ).mockImplementation(mockFunction);
       const oneRegOneImmOneOffsetDispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps, loadOps);
 
       oneRegOneImmOneOffsetDispatcher.dispatch(Instruction.BRANCH_GE_S_IMM, argsMock);
@@ -133,8 +165,11 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     });
 
     it("it should call BranchOps.branchGtSignedImmediate", () => {
-      const mockFunction = mock.fn();
-      mock.method(branchOps, "branchGtSignedImmediate", mockFunction);
+      const mockFunction = mock();
+      spyOn(
+        branchOps as unknown as Record<string, (...args: unknown[]) => unknown>,
+        "branchGtSignedImmediate",
+      ).mockImplementation(mockFunction);
       const oneRegOneImmOneOffsetDispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps, loadOps);
 
       oneRegOneImmOneOffsetDispatcher.dispatch(Instruction.BRANCH_GT_S_IMM, argsMock);
@@ -151,13 +186,12 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
     const loadOps = new LoadOps(regs, memory, instructionResult);
 
-    const mockFn = mock.fn();
+    const mockFn = mock();
 
     function mockAllMethods(obj: object) {
-      const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(obj)) as (keyof typeof obj)[];
-
-      for (const method of methodNames) {
-        mock.method(obj, method, mockFn);
+      const target = obj as Record<string, (...args: unknown[]) => unknown>;
+      for (const method of Object.getOwnPropertyNames(Object.getPrototypeOf(obj))) {
+        spyOn(target, method).mockImplementation(mockFn);
       }
     }
 
@@ -167,11 +201,11 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     });
 
     after(() => {
-      mock.restoreAll();
+      mock.restore();
     });
 
     beforeEach(() => {
-      mockFn.mock.resetCalls();
+      mockFn.mockClear();
     });
 
     const argsMock = {

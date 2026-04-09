@@ -1,5 +1,5 @@
 #!/bin/sh
 # Start script for Docker container
-# Forwards all arguments to npm start
+# Forwards all arguments to bun run start
 
-exec npm start -- "$@"
+exec bun run start -- "$@"

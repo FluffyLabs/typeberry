@@ -8,8 +8,8 @@
   "main": "index.ts",
   "type": "module",
   "scripts": {
-    "start": "tsx ./bin/test.ts",
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "start": "bun run ./bin/test.ts",
+    "test": "bun test"
   },
   "dependencies": {
     "@matrixai/quic": "2.0.9",

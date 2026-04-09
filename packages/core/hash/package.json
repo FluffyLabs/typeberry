@@ -9,7 +9,7 @@
     "hash-wasm": "4.12.0"
   },
   "scripts": {
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "bun test"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
