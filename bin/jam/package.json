@@ -29,7 +29,7 @@
     "inspect": "NODE_ENV=development bun --inspect run ./index.ts",
     "build": "./build-for-npm.sh",
     "test": "bun test",
-    "test:e2e": "JAM_LOG=trace bun test test/e2e.ts",
+    "test:e2e": "JAM_LOG=trace bun test ./test/e2e.ts",
     "tiny-network": "bun run ./tiny-network.ts"
   },
   "author": "Fluffy Labs",

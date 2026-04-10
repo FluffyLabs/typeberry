@@ -9,10 +9,12 @@ COPY package*.json ./
 COPY bun.lock ./
 
 COPY tsconfig.json ./
+COPY bunfig.toml ./
 COPY start.sh ./
 
 COPY bin/ ./bin/
 COPY packages/ ./packages/
+COPY benchmarks/ ./benchmarks/
 
 RUN chown -R typeberry /app
 
