@@ -17,7 +17,7 @@ const logger = Logger.new(import.meta.filename, "net");
 // https://github.com/MatrixAI/js-quic/blob/staging/tests/utils.ts#L16C9-L16C64
 // )
 const webcrypto = new peculiarWebcrypto.Crypto();
-x509.cryptoProvider.set(webcrypto);
+x509.cryptoProvider.set(webcrypto as unknown as Crypto);
 
 const CURVE_NAME = "Ed25519";
 const KEY_TYPE = "OKP"; // Offline Key Pair
@@ -108,8 +108,8 @@ export async function generateKeyPairEd25519(): Promise<{
   );
 
   return {
-    publicKey: await webcrypto.subtle.exportKey("jwk", keyPair.publicKey),
-    privateKey: await webcrypto.subtle.exportKey("jwk", keyPair.privateKey),
+    publicKey: (await webcrypto.subtle.exportKey("jwk", keyPair.publicKey)) as JsonWebKey,
+    privateKey: (await webcrypto.subtle.exportKey("jwk", keyPair.privateKey)) as JsonWebKey,
   };
 }
 

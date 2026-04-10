@@ -12,17 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
-    strategy:
-      matrix:
-        node-version: [24.x]
-
     steps:
     - uses: actions/checkout@v6
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v6
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+    - run: bun install --frozen-lockfile
     - name: Run JAM dev mode E2E test
-      run: npm run test:e2e -w @typeberry/jam
+      run: bun run --cwd bin/jam test:e2e

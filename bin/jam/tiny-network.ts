@@ -1,4 +1,4 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env bun
 // biome-ignore-all lint/suspicious/noConsole: bin file
 
 // Manage a tiny network of 6 JAM nodes

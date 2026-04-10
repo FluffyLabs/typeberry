@@ -1,5 +1,6 @@
+import { mock, spyOn } from "bun:test";
 import assert from "node:assert";
-import { afterEach, beforeEach, describe, it, mock } from "node:test";
+import { afterEach, beforeEach, describe, it } from "node:test";
 import { type SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
 import { BANDERSNATCH_KEY_BYTES, initWasm, SEED_SIZE } from "@typeberry/crypto";
@@ -27,9 +28,7 @@ describe("Ticket Generator", () => {
   beforeEach(async () => {
     await initWasm();
 
-    mock.method(
-      bandersnatchVrf,
-      "generateTickets",
+    spyOn(bandersnatchVrf, "generateTickets").mockImplementation(
       async (
         _bandersnatch: unknown,
         _ringKeys: unknown,
@@ -51,7 +50,7 @@ describe("Ticket Generator", () => {
   });
 
   afterEach(() => {
-    mock.restoreAll();
+    mock.restore();
   });
 
   describe("generateTickets", () => {

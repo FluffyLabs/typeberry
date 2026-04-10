@@ -1,30 +1,34 @@
 #!/bin/bash
 set -ex
 
-# This script compiles the project into "single" JS file
-# using @vercel/ncc. The result is in `./dist/convert`
+# This script bundles the project into a single JS file using bun build.
+# The result is in ./dist/convert
 
-VERSION=$(node -p "require('./package.json').version")
-DESCRIPTION=$(node -p "require('./package.json').description")
+VERSION=$(bun -e "console.log(require('./package.json').version)")
+DESCRIPTION=$(bun -e "console.log(require('./package.json').description)")
 
-# Start from the top-level project directory
-cd ../..
-
-DIST_FOLDER=./dist/convert
+# Resolve the top-level project directory (two levels up from bin/convert)
+ROOT=$(cd ../.. && pwd)
+DIST_FOLDER="$ROOT/dist/convert"
 
 # clean dist dir
-mkdir -p "${DIST_FOLDER}"
-rm -rf "${DIST_FOLDER:?}"/*
-# Build the main binary
-BUILD="npx @vercel/ncc build -s -d"
-$BUILD ./bin/convert/index.ts -o $DIST_FOLDER
+rm -rf "$DIST_FOLDER"
+mkdir -p "$DIST_FOLDER"
 
-cp ./LICENSE $DIST_FOLDER/
-cp ./README.md $DIST_FOLDER/
+# Build the main binary
+bun build --target=node \
+  --outfile "$DIST_FOLDER/index.js" \
+  "$ROOT/bin/convert/index.ts"
+
+cp "$ROOT/LICENSE" "$DIST_FOLDER/"
+cp "$ROOT/README.md" "$DIST_FOLDER/"
 
 # Make index.js executable and insert shebang
-echo '#!/usr/bin/env node' > $DIST_FOLDER/temp.js && cat $DIST_FOLDER/index.js >> $DIST_FOLDER/temp.js && mv $DIST_FOLDER/temp.js $DIST_FOLDER/index.js
-chmod +x $DIST_FOLDER/index.js
+TEMP="$DIST_FOLDER/temp.js"
+echo '#!/usr/bin/env node' > "$TEMP"
+cat "$DIST_FOLDER/index.js" >> "$TEMP"
+mv "$TEMP" "$DIST_FOLDER/index.js"
+chmod +x "$DIST_FOLDER/index.js"
 
 if [ -z "$IS_RELEASE" ]; then
   SHA=$(git rev-parse --short HEAD)
@@ -32,7 +36,7 @@ if [ -z "$IS_RELEASE" ]; then
 fi
 
 # build package.json file
-cat > $DIST_FOLDER/package.json << EOF
+cat > "$DIST_FOLDER/package.json" << EOF
 {
   "name": "@typeberry/convert",
   "version": "$VERSION",

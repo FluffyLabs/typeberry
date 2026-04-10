@@ -7,7 +7,7 @@ See other files as examples.
 # Running
 
 ```
-$ npm start -w @typeberry/benchmark
+$ bun run --cwd packages/misc/benchmark start
 ```
 
 The top-level `start` command of `@typeberry/benchmark` package will run all

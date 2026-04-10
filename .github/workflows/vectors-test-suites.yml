@@ -12,7 +12,6 @@ concurrency:
 
 env:
   TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
-  NODE_VERSION: 24.x
 
 jobs:
   test-vectors:
@@ -73,13 +72,14 @@ jobs:
           sed -i 's|git@github.com:|https://github.com/|g' .gitmodules
           git submodule sync ${{ matrix.submodule }}
           git submodule update --init --depth 1 ${{ matrix.submodule }}
-      - name: Use Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-      - run: npm ci
-      - run: npm start -w @typeberry/test-runner -- ${{ matrix.script }}
+      - name: Setup Bun
+        run: |
+          if ! command -v bun &>/dev/null; then
+            curl -fsSL https://bun.sh/install | bash
+            echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          fi
+      - run: bun install --frozen-lockfile
+      - run: bun run --cwd bin/test-runner start -- ${{ matrix.script }}
       - name: Display results
         if: always()
         run: cat ./dist/${{ matrix.output }}

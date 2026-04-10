@@ -14,6 +14,19 @@ function random() {
   return x - Math.floor(x);
 }
 
+function assertCodecEqual<T>(result: T, expected: T) {
+  if (result instanceof BitVec && expected instanceof BitVec) {
+    // BitVec comparison: compare bit-by-bit to avoid deepStrictEqual issues
+    // with private fields across bun versions/platforms.
+    assert.strictEqual(result.bitLength, expected.bitLength, "bitLength mismatch");
+    assert.deepStrictEqual(Array.from(result.raw), Array.from(expected.raw), "raw bytes mismatch");
+  } else if (result instanceof BytesBlob && expected instanceof BytesBlob) {
+    assert.deepStrictEqual(Array.from(result.raw), Array.from(expected.raw), "blob bytes mismatch");
+  } else {
+    assert.deepStrictEqual(result, expected);
+  }
+}
+
 describe("JAM encoder / decoder", () => {
   type Generator<T> = {
     generate: () => T;
@@ -88,7 +101,7 @@ describe("JAM encoder / decoder", () => {
         // decoding
         const result = g.descriptor.decode(decoder);
         decoder.finish();
-        assert.deepStrictEqual(result, expected);
+        assertCodecEqual(result, expected);
       });
     }
   }

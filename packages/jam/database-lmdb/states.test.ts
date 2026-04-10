@@ -37,7 +37,8 @@ function createTempDir(suffix = "lmdb"): string {
   return fs.mkdtempSync(`typeberry-${suffix}`);
 }
 
-describe("LMDB States database", () => {
+// Blake2b WASM initialization in before() can be slow on first run
+describe("LMDB States database", { timeout: 30_000 }, () => {
   let tmpDir = "";
   beforeEach(() => {
     tmpDir = createTempDir();
