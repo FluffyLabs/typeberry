@@ -252,7 +252,7 @@ async function start(
   const devArgs = options.devIndex === null ? ["--", "--config=dev", "--name=test"] : ["dev", `${options.devIndex}`];
   const args = options.args !== undefined ? [...devArgs, ...options.args] : devArgs;
   const processTimeout = options.timeout ?? TEST_TIMEOUT;
-  const spawned = spawn("npm", ["start", ...args], {
+  const spawned = spawn("bun", ["run", "start", ...args], {
     cwd: process.cwd(),
   });
   const timeout = setTimeout(() => {

@@ -73,7 +73,11 @@ jobs:
           git submodule sync ${{ matrix.submodule }}
           git submodule update --init --depth 1 ${{ matrix.submodule }}
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        run: |
+          if ! command -v bun &>/dev/null; then
+            curl -fsSL https://bun.sh/install | bash
+            echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          fi
       - run: bun install --frozen-lockfile
       - run: bun run --cwd bin/test-runner start -- ${{ matrix.script }}
       - name: Display results

@@ -26,7 +26,11 @@ jobs:
           comment-tag: benchmarks
       - uses: actions/checkout@v6
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        run: |
+          if ! command -v bun &>/dev/null; then
+            curl -fsSL https://bun.sh/install | bash
+            echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          fi
       - run: bun install --frozen-lockfile
       - name: Benchmarks run
         uses: nick-fields/retry@v3
