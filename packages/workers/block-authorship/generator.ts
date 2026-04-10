@@ -1,5 +1,6 @@
 import {
   Block,
+  type EntropyHash,
   encodeUnsealedHeader,
   Header,
   reencodeAsView,
@@ -8,7 +9,9 @@ import {
 } from "@typeberry/block";
 import { type BlockView, Extrinsic } from "@typeberry/block/block.js";
 import { DisputesExtrinsic } from "@typeberry/block/disputes.js";
+import type { SignedTicket } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { HashSet } from "@typeberry/collections/hash-set.js";
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_VRF_SIGNATURE_BYTES, type BandersnatchSecretSeed } from "@typeberry/crypto";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
@@ -67,8 +70,9 @@ export class Generator {
     bandersnatchSecret: BandersnatchSecretSeed,
     sealPayload: BlockSealInput,
     timeSlot: TimeSlot,
+    pendingTickets: { ticket: SignedTicket; id: EntropyHash }[] = [],
   ): Promise<BlockView> {
-    const newBlock = await this.nextBlock(validatorIndex, bandersnatchSecret, sealPayload, timeSlot);
+    const newBlock = await this.nextBlock(validatorIndex, bandersnatchSecret, sealPayload, timeSlot, pendingTickets);
     return reencodeAsView(Block.Codec, newBlock, this.chainSpec);
   }
 
@@ -99,11 +103,51 @@ export class Generator {
     return entropyHashResult;
   }
 
+  /**
+   * Selects tickets to include in the extrinsic from the pending pool.
+   *
+   * Tickets were already verified at receipt time (IDs pre-computed). This method:
+   * 1. Filters out tickets whose IDs are already in `state.ticketsAccumulator` (already processed).
+   * 2. Sorts remaining tickets by ID ascending (required by Safrole).
+   * 3. Deduplicates by ID (pool dedup is best-effort; reorgs can produce duplicates).
+   * 4. Returns at most `chainSpec.maxTicketsPerExtrinsic` tickets.
+   *
+   * Called only during the contest period (slotInEpoch < contestLength).
+   */
+  private prepareTicketsExtrinsic(
+    pendingTickets: { ticket: SignedTicket; id: EntropyHash }[],
+    state: ReturnType<Generator["getLastHeaderAndState"]>["lastState"],
+  ): SignedTicket[] {
+    if (pendingTickets.length === 0) {
+      return [];
+    }
+
+    // Tickets are already verified at receipt time — just filter, sort and slice.
+    // Build a set of ticket IDs already in the state accumulator for fast lookup.
+    const accumulatedIds = HashSet.from(state.ticketsAccumulator.map((t) => t.id));
+
+    const filtered = pendingTickets.filter(({ id }) => !accumulatedIds.has(id));
+
+    // Sort by ID ascending
+    filtered.sort((a, b) => a.id.compare(b.id).value);
+
+    // Deduplicate by ID (pool dedup is best-effort; state may produce duplicates across reorgs)
+    const deduped: typeof filtered = [];
+    for (const item of filtered) {
+      if (deduped.length === 0 || !deduped[deduped.length - 1].id.isEqualTo(item.id)) {
+        deduped.push(item);
+      }
+    }
+
+    return deduped.slice(0, this.chainSpec.maxTicketsPerExtrinsic).map(({ ticket }) => ticket);
+  }
+
   async nextBlock(
     validatorIndex: ValidatorIndex,
     bandersnatchSecret: BandersnatchSecretSeed,
     sealPayload: BlockSealInput,
     timeSlot: TimeSlot,
+    pendingTickets: { ticket: SignedTicket; id: EntropyHash }[] = [],
   ) {
     this.metrics.recordBlockAuthoringStarted(timeSlot);
     const startTime = now();
@@ -133,9 +177,14 @@ export class Generator {
     const hasher = new TransitionHasher(this.keccakHasher, this.blake2b);
     const stateRoot = this.states.getStateRoot(lastState);
 
-    // TODO create extrinsic
+    const slotInEpoch = timeSlot % this.chainSpec.epochLength;
+    const isContestPeriod = slotInEpoch < this.chainSpec.contestLength;
+
+    // Include tickets only during contest period
+    const ticketsForExtrinsic = isContestPeriod ? await this.prepareTicketsExtrinsic(pendingTickets, lastState) : [];
+
     const extrinsic = Extrinsic.create({
-      tickets: asOpaqueType([]),
+      tickets: asOpaqueType(ticketsForExtrinsic),
       preimages: [],
       guarantees: asOpaqueType([]),
       assurances: asOpaqueType([]),

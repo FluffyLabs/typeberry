@@ -1,6 +1,6 @@
 import { codec } from "@typeberry/codec";
 import { type Api, createProtocol, type Internal } from "@typeberry/workers-api";
-import { TicketsMessage } from "./tickets-message.js";
+import { ReceivedTicketMessage, TicketsMessage } from "./tickets-message.js";
 
 /**
  * Port name for authorship-network direct communication.
@@ -21,8 +21,15 @@ export const protocol = createProtocol("authorship-network", {
       response: codec.nothing,
     },
   },
-  // Messages from jam-network to block-authorship (none for now)
-  fromWorker: {},
+  // Messages from jam-network to block-authorship (one ticket per relay).
+  // Response indicates whether the ticket passed validation — used by jam-network
+  // to decide whether to redistribute the ticket to other peers.
+  fromWorker: {
+    receivedTickets: {
+      request: ReceivedTicketMessage.Codec,
+      response: codec.bool,
+    },
+  },
 });
 
 export type NetworkingComms = Api<typeof protocol>;
