@@ -12,6 +12,7 @@ import type { Blake2bHash } from "@typeberry/hash";
 import {
   type MachineId,
   type MachineResult,
+  type MachineStatus,
   type MemoryOperation,
   NoMachineError,
   type PagesError,
@@ -23,10 +24,10 @@ import {
   tryAsProgramCounter,
   type ZeroVoidError,
 } from "@typeberry/jam-host-calls";
-import type { U64 } from "@typeberry/numbers";
+import { tryAsU64, type U64 } from "@typeberry/numbers";
 import { Ordering } from "@typeberry/ordering";
-import { type HostCallMemory, type HostCallRegisters, PvmInstanceManager } from "@typeberry/pvm-host-calls";
-import { type BigGas, type IPvmInterpreter, tryAsGas } from "@typeberry/pvm-interface";
+import { type HostCallMemory, HostCallRegisters, PvmInstanceManager } from "@typeberry/pvm-host-calls";
+import { type BigGas, type IPvmInterpreter, Status, tryAsBigGas, tryAsGas } from "@typeberry/pvm-interface";
 import { ProgramDecoder, type ProgramDecoderError } from "@typeberry/pvm-interpreter";
 import type { State } from "@typeberry/state";
 import { type OK, Result } from "@typeberry/utils";
@@ -170,11 +171,40 @@ export class RefineExternalitiesImpl implements RefineExternalities {
   }
 
   machineInvoke(
-    _machineIndex: MachineId,
-    _gas: BigGas,
-    _registers: HostCallRegisters,
+    machineIndex: MachineId,
+    gas: BigGas,
+    registers: HostCallRegisters,
   ): Promise<Result<MachineResult, NoMachineError>> {
-    throw new Error("Method not implemented.");
+    const entry = this.machines.findExact([machineIndex, undefined as unknown as IPvmInterpreter]);
+    if (entry === undefined) {
+      return Promise.resolve(Result.error(NoMachineError, () => `Machine not found (id: ${machineIndex})`));
+    }
+
+    const innerPvm = entry[1];
+
+    // Prepare inner PVM
+    innerPvm.registers.setAllEncoded(registers.getEncoded());
+    innerPvm.gas.set(gas);
+
+    // Execute program
+    innerPvm.runProgram();
+
+    // Status
+    const status = innerPvm.getStatus();
+    const exitParam = innerPvm.getExitParam();
+    const remainingGas = tryAsBigGas(innerPvm.gas.get());
+    const outRegisters = new HostCallRegisters(new Uint8Array(innerPvm.registers.getAllEncoded()));
+
+    let machineStatus: MachineStatus;
+    if (status === Status.HOST) {
+      machineStatus = { status, hostCallIndex: tryAsU64(exitParam ?? 0) };
+    } else if (status === Status.FAULT) {
+      machineStatus = { status, address: tryAsU64(exitParam ?? 0) };
+    } else {
+      machineStatus = { status };
+    }
+
+    return Promise.resolve(Result.ok({ result: machineStatus, gas: remainingGas, registers: outRegisters }));
   }
 
   exportSegment(segment: Segment): Result<SegmentIndex, SegmentExportError> {
