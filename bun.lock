@@ -940,6 +940,9 @@
   "trustedDependencies": [
     "protobufjs",
   ],
+  "patchedDependencies": {
+    "@matrixai/quic@2.0.9": "patches/@matrixai%2Fquic@2.0.9.patch",
+  },
   "packages": {
     "@arrows/array": ["@arrows/array@1.4.1", "", { "dependencies": { "@arrows/composition": "^1.2.2" } }, "sha512-MGYS8xi3c4tTy1ivhrVntFvufoNzje0PchjEz6G/SsWRgUKxL4tKwS6iPdO8vsaJYldagAeWMd5KRD0aX3Q39g=="],
 

@@ -1,0 +1,14 @@
+diff --git a/dist/QUICClient.js b/dist/QUICClient.js
+index 2e8c6b71df4ffaab4397556bb1a225c27dbce5e0..53c0bb3ff4d88d91cc770a04d112aa73d0f38628 100644
+--- a/dist/QUICClient.js
++++ b/dist/QUICClient.js
+@@ -331,6 +331,9 @@ let QUICClient = class QUICClient {
+                 // Thrown when no route to the host is available.
+                 // Falls through
+                 case 'EHOSTUNREACH':
++                // Thrown on Linux/bun when sending UDP to a closed port (ICMP port unreachable).
++                // Bun propagates this as a send() rejection unlike Node which emits a socket error event.
++                case 'ECONNREFUSED':
+                     {
+                         this.dispatchEvent(new events.EventQUICClientErrorSend(`${events.EventQUICClientErrorSend.name}-${evt.detail.id}`, {
+                             detail: e,

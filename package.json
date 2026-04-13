@@ -104,5 +104,8 @@
   },
   "trustedDependencies": [
     "protobufjs"
-  ]
+  ],
+  "patchedDependencies": {
+    "@matrixai/quic@2.0.9": "patches/@matrixai%2Fquic@2.0.9.patch"
+  }
 }

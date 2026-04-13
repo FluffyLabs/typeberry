@@ -28,7 +28,11 @@ jobs:
       - name: Setup Bun
         run: |
           if ! command -v bun &>/dev/null; then
-            curl -fsSL https://bun.sh/install | bash
+            mkdir -p "$HOME/.bun/bin"
+            curl -fsSL -o /tmp/bun.zip "https://github.com/oven-sh/bun/releases/latest/download/bun-linux-x64.zip"
+            python3 -c "import zipfile; zipfile.ZipFile('/tmp/bun.zip').extractall('/tmp/bun-extract')"
+            mv /tmp/bun-extract/bun-linux-x64/bun "$HOME/.bun/bin/bun"
+            chmod +x "$HOME/.bun/bin/bun"
             echo "$HOME/.bun/bin" >> $GITHUB_PATH
           fi
       - run: bun install --frozen-lockfile
