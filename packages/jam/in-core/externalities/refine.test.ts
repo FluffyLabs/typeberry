@@ -274,4 +274,72 @@ describe("RefineExternalitiesImpl", () => {
       assert.strictEqual(result.isOk, true);
     });
   });
+
+  describe("machineExpunge", () => {
+    it("should remove machine and return its program counter (0)", async () => {
+      const ext = createExt();
+      const code = BytesBlob.blobFrom(MINIMAL_PROGRAM);
+      const initResult = await ext.machineInit(code, tryAsProgramCounter(0));
+      assert.strictEqual(initResult.isOk, true);
+
+      const machineId = initResult.ok;
+      const result = await ext.machineExpunge(machineId);
+
+      assert.strictEqual(result.isOk, true);
+      // PC should be 0 since we initialized with PC=0
+      assert.strictEqual(result.ok, tryAsProgramCounter(0));
+    });
+
+    it("should remove machine and return its program counter (10)", async () => {
+      const ext = createExt();
+      const code = BytesBlob.blobFrom(MINIMAL_PROGRAM);
+      const initResult = await ext.machineInit(code, tryAsProgramCounter(10));
+      assert.strictEqual(initResult.isOk, true);
+
+      const machineId = initResult.ok;
+      const result = await ext.machineExpunge(machineId);
+
+      assert.strictEqual(result.isOk, true);
+      // PC should be 10 since we initialized with PC=10
+      assert.strictEqual(result.ok, tryAsProgramCounter(10));
+    });
+
+    it("should return NoMachineError for non-existent machine", async () => {
+      const ext = createExt();
+      const result = await ext.machineExpunge(tryAsMachineId(999));
+
+      assert.strictEqual(result.isError, true);
+    });
+
+    it("should not allow double expunge", async () => {
+      const ext = createExt();
+      const code = BytesBlob.blobFrom(MINIMAL_PROGRAM);
+      const initResult = await ext.machineInit(code, tryAsProgramCounter(0));
+
+      assert.strictEqual(initResult.isOk, true);
+      const machineId = initResult.ok;
+
+      const r1 = await ext.machineExpunge(machineId);
+      assert.strictEqual(r1.isOk, true);
+
+      const r2 = await ext.machineExpunge(machineId);
+      assert.strictEqual(r2.isError, true);
+    });
+
+    it("should remove exact machine from multiple and return its program counter (10)", async () => {
+      const ext = createExt();
+      const code = BytesBlob.blobFrom(MINIMAL_PROGRAM);
+      await ext.machineInit(code, tryAsProgramCounter(0));
+      const initResult = await ext.machineInit(code, tryAsProgramCounter(10));
+      await ext.machineInit(code, tryAsProgramCounter(20));
+      assert.strictEqual(initResult.isOk, true);
+
+      const machineId = initResult.ok;
+      const result = await ext.machineExpunge(machineId);
+
+      assert.strictEqual(result.isOk, true);
+      // PC should be 10 since we initialized with PC=10
+      assert.strictEqual(result.ok, tryAsProgramCounter(10));
+    });
+  });
 });

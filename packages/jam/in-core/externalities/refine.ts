@@ -20,6 +20,7 @@ import {
   type RefineExternalities,
   SegmentExportError,
   tryAsMachineId,
+  tryAsProgramCounter,
   type ZeroVoidError,
 } from "@typeberry/jam-host-calls";
 import type { U64 } from "@typeberry/numbers";
@@ -89,12 +90,13 @@ export class RefineExternalitiesImpl implements RefineExternalities {
   }
 
   machineExpunge(machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>> {
-    const innerPvm = this.machines.get(machineIndex);
-    if (innerPvm === undefined) {
+    // We just care about machineIndex
+    const entry = this.machines.findExact([machineIndex, undefined as unknown as IPvmInterpreter]);
+    if (entry === undefined) {
       return Promise.resolve(Result.error(NoMachineError, () => `Machine not found (id: ${machineIndex})`));
     }
-    const pc = tryAsProgramCounter(innerPvm.getPC());
-    this.machines.delete(machineIndex);
+    const pc = tryAsProgramCounter(entry[1].getPC());
+    this.machines.removeOne(entry);
     return Promise.resolve(Result.ok(pc));
   }
 
