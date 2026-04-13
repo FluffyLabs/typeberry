@@ -29,7 +29,7 @@ import { type Blake2b, HASH_SIZE, type WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { tryAsU8, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import type { State } from "@typeberry/state";
-import { FetchExternalities } from "@typeberry/transition/externalities/fetch-externalities.js";
+import { RefineFetchExternalities } from "@typeberry/transition/externalities/refine-fetch-externalities.js";
 import { assertEmpty, assertNever, Result } from "@typeberry/utils";
 import { RefineExternalitiesImpl } from "./externalities/refine.js";
 
@@ -437,17 +437,12 @@ export class InCore {
     exportOffset: number;
   }): RefineHostCallExternalities {
     // TODO [ToDr] Pass all required fetch data
-    const fetchExternalities = FetchExternalities.createForRefine(
-      {
-        entropy: undefined,
-        ...args,
-      },
-      this.chainSpec,
-    );
+    const fetchExternalities = new RefineFetchExternalities(this.chainSpec);
     const refine = RefineExternalitiesImpl.create({
       currentServiceId: args.currentServiceId,
       lookupState: args.lookupState,
       exportOffset: args.exportOffset,
+      pvmBackend: this.pvmBackend,
     });
 
     return {

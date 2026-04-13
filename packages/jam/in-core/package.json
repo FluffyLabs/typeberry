@@ -18,6 +18,8 @@
     "@typeberry/jam-host-calls": "*",
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
+    "@typeberry/ordering": "*",
+    "@typeberry/pvm-host-calls": "*",
     "@typeberry/pvm-interface": "*",
     "@typeberry/pvm-interpreter": "*",
     "@typeberry/state": "*",
