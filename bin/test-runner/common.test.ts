@@ -1,6 +1,6 @@
 import { spyOn } from "bun:test";
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { describe, it } from "bun:test";
 import { deepEqual } from "@typeberry/utils";
 import { HELP_MESSAGE, parseArgs, SelectedPvm } from "./common.js";
 

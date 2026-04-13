@@ -3,8 +3,8 @@ import "json-bigint-patch";
 import { fail } from "node:assert";
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import test, { type TestContext } from "node:test";
 import util from "node:util";
+import { describe, it } from "bun:test";
 import { type Decode, Decoder } from "@typeberry/codec";
 import { type ChainSpec, PvmBackend, tinyChainSpec } from "@typeberry/config";
 import { initWasm } from "@typeberry/crypto";
@@ -97,7 +97,6 @@ export function runner<T, V = never>(path: string, run: RunFunction<T, V>, chain
 }
 
 export type RunOptions = {
-  test: TestContext;
   chainSpec: ChainSpec;
   path: string;
   accumulateSequentially: boolean;
@@ -305,38 +304,25 @@ export async function main(
 
   const pathToReplace = new RegExp(`.*${directoryToScan}/`);
 
+  const timeout = 5 * 60 * 1000;
   logger.info`Running ${tests.length} tests.`;
-  // run in parallel and generate results.
   for (const [testGroupName, testRunners] of aggregated.entries()) {
-    // split large suites into parts
     const batchSize = 50;
     const totalBatches = Math.ceil(testRunners.length / batchSize);
     for (let i = 0; i < totalBatches; i += 1) {
-      // NOTE: we use `setImmediate` here, to make sure to start each suite
-      // separately (faster feedback in the console when running tests).
-      setImmediate(() => {
-        const testName = `${testGroupName} tests [${i + 1}/${totalBatches}]`;
-        logger.info`Running ${testName}`;
-        const timeout = 5 * 60 * 1000;
-        test.describe(
-          testName,
-          {
-            concurrency: 100,
-            timeout,
-          },
-          () => {
-            const runnersBatch = testRunners.slice(i * batchSize, (i + 1) * batchSize);
-            for (const runner of runnersBatch) {
-              const fileName = runner.file.replace(pathToReplace, "");
-              const testCase = `${runner.variant}` !== "" ? `[${runner.variant}] ${fileName}` : fileName;
-              if (runner.shouldSkip) {
-                test.it.skip(testCase, runner.test);
-              } else {
-                test.it(testCase, { timeout }, runner.test);
-              }
-            }
-          },
-        );
+      const testName = `${testGroupName} tests [${i + 1}/${totalBatches}]`;
+      logger.info`Running ${testName}`;
+      describe(testName, () => {
+        const runnersBatch = testRunners.slice(i * batchSize, (i + 1) * batchSize);
+        for (const runner of runnersBatch) {
+          const fileName = runner.file.replace(pathToReplace, "");
+          const testCase = `${runner.variant}` !== "" ? `[${runner.variant}] ${fileName}` : fileName;
+          if (runner.shouldSkip) {
+            it.skip(testCase, runner.test);
+          } else {
+            it(testCase, runner.test, timeout);
+          }
+        }
       });
     }
   }
@@ -361,7 +347,7 @@ type TestAndRunner<V> = {
   runner: string;
   file: string;
   variant: V;
-  test: (ctx: TestContext) => Promise<void>;
+  test: () => Promise<void>;
 };
 
 function prepareTest<T, V>(
@@ -458,13 +444,12 @@ function prepareTest<T, V>(
         runner: path,
         file: fileName,
         variant,
-        test: (ctx) => {
+        test: () => {
           logger.log`[${path}:${variant}] running test from ${fileName} (spec: ${chainSpec.name})`;
           logger.trace` ${util.inspect(parsedTest, true, 2)}`;
           return run(
             parsedTest,
             {
-              test: ctx,
               path: fullPath,
               chainSpec,
               accumulateSequentially: globalOptions.accumulateSequentially,

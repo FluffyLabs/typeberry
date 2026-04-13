@@ -35,12 +35,12 @@
   },
   "scripts": {
     "start": "bun run ./index.ts",
-    "w3f:0.7.2": "GP_VERSION=0.7.2 bun run ./w3f-072.ts",
-    "w3f-davxy:0.7.1": "GP_VERSION=0.7.1 bun run ./w3f-davxy-071.ts",
-    "w3f-davxy:0.7.2": "GP_VERSION=0.7.2 bun run ./w3f-davxy-072.ts",
-    "jam-conformance:0.7.1": "GP_VERSION=0.7.1 bun run ./jam-conformance-071.ts",
-    "jam-conformance:0.7.2": "GP_VERSION=0.7.2 bun run ./jam-conformance-072.ts",
-    "javajam:0.7.1": "GP_VERSION=0.7.1 bun run ./javajam-071.ts",
+    "w3f:0.7.2": "GP_VERSION=0.7.2 bun test ./w3f-072.ts",
+    "w3f-davxy:0.7.1": "GP_VERSION=0.7.1 bun test ./w3f-davxy-071.ts",
+    "w3f-davxy:0.7.2": "GP_VERSION=0.7.2 bun test ./w3f-davxy-072.ts",
+    "jam-conformance:0.7.1": "GP_VERSION=0.7.1 bun test ./jam-conformance-071.ts",
+    "jam-conformance:0.7.2": "GP_VERSION=0.7.2 bun test ./jam-conformance-072.ts",
+    "javajam:0.7.1": "GP_VERSION=0.7.1 bun test ./javajam-071.ts",
     "test": "bun test"
   },
   "author": "Fluffy Labs",

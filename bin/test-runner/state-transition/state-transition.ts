@@ -11,8 +11,11 @@ import { StateTransition, StateTransitionGenesis } from "@typeberry/state-vector
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { DbHeaderChain, OnChain } from "@typeberry/transition/chain-stf.js";
+import { Logger } from "@typeberry/logger";
 import { deepEqual, resultToString } from "@typeberry/utils";
 import { type RunOptions, type SelectedPvm, selectedPvmToBackend } from "../common.js";
+
+const logger = Logger.new(import.meta.filename, "state-transition");
 import { loadState } from "./state-loader.js";
 
 const keccakHasher = keccak.KeccakHasher.create();
@@ -125,7 +128,7 @@ export async function runStateTransition(testContent: StateTransition, options: 
 
   // some conformance test vectors have an empty state, we run them, yet do not perform any assertions.
   if (testContent.post_state.keyvals.length === 0) {
-    options.test.skip(`Successfuly run a test vector with empty post state!. Please verify: ${options.path}`);
+    logger.warn`Successfuly run a test vector with empty post state!. Please verify: ${options.path}`;
     return;
   }
 

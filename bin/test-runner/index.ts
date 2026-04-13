@@ -1,7 +1,4 @@
 import fs from "node:fs";
-import { run } from "node:test";
-import { spec } from "node:test/reporters";
-import { Reporter } from "./reporter.js";
 
 const distDir = `${import.meta.dirname}/../../dist`;
 try {
@@ -15,22 +12,22 @@ if (suiteToRun === undefined) {
   throw new Error("Provide 1 argument with a suite filename to run.");
 }
 
-const stream = run({
-  files: [`${import.meta.dirname}/${suiteToRun}`],
-  argv: process.argv.slice(3),
-  timeout: 25 * 60 * 1000,
-  concurrency: true,
-}).on("test:fail", () => {
-  process.exitCode = 1;
+const suitePath = `${import.meta.dirname}/${suiteToRun}`;
+const outputFile = `${distDir}/${suiteToRun.replace(".ts", "")}.txt`;
+
+const proc = Bun.spawn(["bun", "test", suitePath, "--timeout", "300000", ...process.argv.slice(3)], {
+  cwd: import.meta.dirname,
+  stdout: "inherit",
+  stderr: "inherit",
+  env: {
+    ...process.env,
+  },
 });
 
-stream.compose(new spec()).pipe(process.stdout);
+const exitCode = await proc.exited;
 
-const reporter = Reporter.new(suiteToRun);
-const fileStream = fs.createWriteStream(`${distDir}/${suiteToRun.replace(".ts", "")}.txt`, { flags: "a" });
-stream
-  .compose(reporter)
-  .on("end", () => {
-    reporter.finalize(fileStream);
-  })
-  .pipe(fileStream);
+// Write a summary to the output file
+const status = exitCode === 0 ? "OK" : "FAILED";
+fs.writeFileSync(outputFile, `### ${suiteToRun} ${status}\n`);
+
+process.exit(exitCode);

@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { it } from "node:test";
+import { it } from "bun:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type Ed25519Key, ed25519, initWasm } from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";
