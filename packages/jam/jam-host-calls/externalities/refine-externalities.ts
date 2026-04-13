@@ -110,7 +110,7 @@ export interface RefineExternalities {
   /** Get the segments exported during this work item's refinement. */
   getExportedSegments(): readonly Segment[];
 
-  /** Forget a previously started nested VM. */
+  /** Forget a previously started nested VM. Return its current program counter.*/
   machineExpunge(machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>>;
 
   /** Set given range of pages as non-accessible and re-initialize them with zeros. */

@@ -13,13 +13,14 @@ import {
   type MachineId,
   type MachineResult,
   type MemoryOperation,
-  type NoMachineError,
+  NoMachineError,
   type PagesError,
   type PeekPokeError,
   type ProgramCounter,
   type RefineExternalities,
   SegmentExportError,
   tryAsMachineId,
+  tryAsProgramCounter,
   type ZeroVoidError,
 } from "@typeberry/jam-host-calls";
 import type { U64 } from "@typeberry/numbers";
@@ -88,8 +89,15 @@ export class RefineExternalitiesImpl implements RefineExternalities {
     return this.exportedSegments;
   }
 
-  machineExpunge(_machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>> {
-    throw new Error("Method not implemented.");
+  machineExpunge(machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>> {
+    // We just care about machineIndex
+    const entry = this.machines.findExact([machineIndex, undefined as unknown as IPvmInterpreter]);
+    if (entry === undefined) {
+      return Promise.resolve(Result.error(NoMachineError, () => `Machine not found (id: ${machineIndex})`));
+    }
+    const pc = tryAsProgramCounter(entry[1].getPC());
+    this.machines.removeOne(entry);
+    return Promise.resolve(Result.ok(pc));
   }
 
   machinePages(
