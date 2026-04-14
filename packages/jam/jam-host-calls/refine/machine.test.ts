@@ -11,7 +11,6 @@ import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.j
 import { type ProgramCounter, tryAsMachineId, tryAsProgramCounter } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Machine } from "./machine.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -22,7 +21,7 @@ const PC_REG = 9;
 
 function prepareRegsAndMemory(code: BytesBlob, pc: ProgramCounter, { skipCode = false }: { skipCode?: boolean } = {}) {
   const memStart = 2 ** 20;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(CODE_START_REG, tryAsU64(memStart));
   registers.set(CODE_LEN_REG, tryAsU64(code.length));
   registers.set(PC_REG, pc);

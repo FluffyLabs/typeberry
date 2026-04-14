@@ -12,7 +12,6 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { HistoricalLookup } from "./historical-lookup.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -32,7 +31,7 @@ function prepareRegsAndMemory(
 ) {
   const hashAddress = 2 ** 16;
   const memStart = 2 ** 20;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
   registers.set(HASH_START_REG, tryAsU64(hashAddress));
   registers.set(DEST_START_REG, tryAsU64(memStart));

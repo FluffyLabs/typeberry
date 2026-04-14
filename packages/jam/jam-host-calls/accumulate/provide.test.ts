@@ -11,7 +11,6 @@ import { deepEqual, Result } from "@typeberry/utils";
 import { ProvidePreimageError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Provide } from "./provide.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -25,7 +24,7 @@ function prepareRegsAndMemory(
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
   const preimageStart = 2 ** 16;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(RESULT_REG, tryAsU64(service));
   registers.set(PREIMAGE_START_REG, tryAsU64(preimageStart));
   registers.set(LENGTH_REG, tryAsU64(preimage.length));

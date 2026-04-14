@@ -18,7 +18,6 @@ import { Result } from "@typeberry/utils";
 import { UpdatePrivilegesError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Assign } from "./assign.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -33,7 +32,7 @@ function prepareRegsAndMemory(
   { skipAuthQueue = false, assigners = null }: { skipAuthQueue?: boolean; assigners?: bigint | number | null } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(CORE_INDEX_REG, tryAsU64(coreIndex));
   registers.set(AUTH_QUEUE_START_REG, tryAsU64(memStart));
   if (assigners !== null) {

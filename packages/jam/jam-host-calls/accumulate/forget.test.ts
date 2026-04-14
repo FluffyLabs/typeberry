@@ -14,7 +14,6 @@ import { Result } from "@typeberry/utils";
 import { ForgetPreimageError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Forget } from "./forget.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -28,7 +27,7 @@ function prepareRegsAndMemory(
   { skipPreimageHash = false }: { skipPreimageHash?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(HASH_START_REG, tryAsU64(memStart));
   registers.set(LENGTH_REG, preimageLength);
 

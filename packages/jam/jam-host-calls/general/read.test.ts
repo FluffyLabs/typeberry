@@ -11,7 +11,6 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import { asOpaqueType, OK, Result } from "@typeberry/utils";
 import { TestAccounts } from "../externalities/test-accounts.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Read } from "./read.js";
 import { HostCallResult } from "./results.js";
 
@@ -43,7 +42,7 @@ function prepareRegsAndMemory(
 ) {
   const keyAddress = 2 ** 20;
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   if (serviceId !== undefined) {
     registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
   } else {

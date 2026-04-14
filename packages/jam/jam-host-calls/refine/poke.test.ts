@@ -9,14 +9,13 @@ import { OK, Result } from "@typeberry/utils";
 import { type MachineId, PeekPokeError, tryAsMachineId } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Poke } from "./poke.js";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 
 function prepareRegsAndMemory(machineId: MachineId, sourceStart: number, destinationStart: number, length: number) {
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(7, machineId);
   registers.set(8, tryAsU64(sourceStart));
   registers.set(9, tryAsU64(destinationStart));

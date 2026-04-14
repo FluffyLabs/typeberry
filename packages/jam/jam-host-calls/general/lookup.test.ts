@@ -11,7 +11,6 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import { TestAccounts } from "../externalities/test-accounts.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Lookup } from "./lookup.js";
 import { HostCallResult } from "./results.js";
 
@@ -46,7 +45,7 @@ function prepareRegsAndMemory(
     preimageLength = 0,
   }: { skipKey?: boolean; skipValue?: boolean; preimageOffset?: number; preimageLength?: number } = {},
 ) {
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
   registers.set(HASH_ADDRESS_REG, tryAsU64(PREIMAGE_HASH_ADDRESS));
   registers.set(DEST_ADDRESS_REG, tryAsU64(DESTINATION_MEM_ADDRESS));

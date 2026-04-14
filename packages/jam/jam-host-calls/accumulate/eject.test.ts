@@ -15,7 +15,6 @@ import { deepEqual, OK, Result } from "@typeberry/utils";
 import { EjectError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Eject } from "./eject.js";
 
 const RESULT_REG = 7;
@@ -28,7 +27,7 @@ function prepareRegsAndMemory(
   { skipHash = false }: { skipHash?: boolean } = {},
 ) {
   const hashStart = 2 ** 16;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(SOURCE_REG, tryAsU64(source));
   registers.set(HASH_START_REG, tryAsU64(hashStart));
 

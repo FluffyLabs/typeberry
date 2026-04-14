@@ -15,14 +15,13 @@ import {
 } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Expunge } from "./expunge.js";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 
 function prepareRegsAndMemory(machineId: MachineId) {
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(7, machineId);
 
   const builder = new MemoryBuilder();

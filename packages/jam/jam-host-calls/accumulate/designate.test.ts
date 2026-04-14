@@ -17,7 +17,6 @@ import { Result } from "@typeberry/utils";
 import { UnprivilegedError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Designate } from "./designate.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -29,7 +28,7 @@ function prepareRegsAndMemory(
   { skipValidators = false }: { skipValidators?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(VALIDATORS_DATA_START_REG, tryAsU64(memStart));
 
   const builder = new MemoryBuilder();

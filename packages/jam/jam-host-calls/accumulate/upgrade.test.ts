@@ -12,7 +12,6 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Upgrade } from "./upgrade.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -28,7 +27,7 @@ function prepareRegsAndMemory(
   { skipCodeHash = false }: { skipCodeHash?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(CODE_HASH_START_REG, tryAsU64(memStart));
   registers.set(GAS_REG, gas);
   registers.set(BALANCE_REG, balance);

@@ -81,7 +81,7 @@ export class HostCallsExecutor {
 
   private async execute(pvmInstance: IPvmInterpreter, initialPc: number) {
     const ioTracker = this.ioTracer?.tracker() ?? null;
-    const registers = new HostCallRegisters(pvmInstance.registers.getAllEncoded());
+    const registers = HostCallRegisters.fromRaw(pvmInstance.registers.getAllEncoded());
     registers.ioTracker = ioTracker;
     const memory = new HostCallMemory(pvmInstance.memory);
     memory.ioTracker = ioTracker;

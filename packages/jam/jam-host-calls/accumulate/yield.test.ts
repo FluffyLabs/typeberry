@@ -10,7 +10,6 @@ import { gasCounter, MemoryBuilder, tryAsMemoryIndex, tryAsSbrkIndex } from "@ty
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Yield } from "./yield.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -22,7 +21,7 @@ function prepareRegsAndMemory(
   data: BytesBlob,
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(HASH_START_REG, tryAsU64(hashStart));
 
   const builder = new MemoryBuilder();

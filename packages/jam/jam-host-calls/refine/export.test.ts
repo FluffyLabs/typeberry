@@ -13,7 +13,6 @@ import { Result } from "@typeberry/utils";
 import { SegmentExportError } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Export } from "./export.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -27,7 +26,7 @@ function prepareRegsAndMemory(
   { skipSegment = false }: { skipSegment?: boolean } = {},
 ) {
   const memStart = 2 ** 23;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(SEGMENT_START_REG, tryAsU64(memStart));
   registers.set(SEGMENT_LENGTH_REG, tryAsU64(segmentLength));
 

@@ -12,7 +12,6 @@ import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.j
 import { ServiceAccountInfo } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
 import { TestAccounts } from "../externalities/test-accounts.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { HostCallResult } from "./results.js";
 import { Write } from "./write.js";
 
@@ -53,7 +52,7 @@ function prepareRegsAndMemory(
 ) {
   const keyAddress = 2 ** 18;
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(KEY_START_REG, tryAsU64(keyAddress));
   registers.set(KEY_LEN_REG, tryAsU64(key.length));
   registers.set(DEST_START_REG, tryAsU64(memStart));

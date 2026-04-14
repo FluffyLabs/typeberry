@@ -14,7 +14,6 @@ import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { TRANSFER_MEMO_BYTES, TransferError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Transfer } from "./transfer.js";
 
 const RESULT_REG = 7;
@@ -31,7 +30,7 @@ function prepareRegsAndMemory(
   { skipMemo = false }: { skipMemo?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(DESTINATION_REG, tryAsU64(destination));
   registers.set(AMOUNT_REG, amount);
   registers.set(ON_TRANSFER_GAS_REG, gas);

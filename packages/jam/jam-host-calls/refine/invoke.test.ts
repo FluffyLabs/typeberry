@@ -17,7 +17,6 @@ import {
 } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Invoke } from "./invoke.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -34,7 +33,7 @@ function prepareRegsAndMemory(
   data: BytesBlob,
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(MACHINE_INDEX_REG, machineIndex);
   registers.set(DEST_REG, tryAsU64(destinationStart));
 

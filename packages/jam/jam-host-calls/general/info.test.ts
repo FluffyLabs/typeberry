@@ -12,7 +12,6 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { TestAccounts } from "../externalities/test-accounts.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { codecServiceAccountInfoWithThresholdBalance, Info, LEN_REG } from "./info.js";
 import { HostCallResult } from "./results.js";
 
@@ -27,7 +26,7 @@ const serviceAccountInfoSize = tryAsExactBytes(codecServiceAccountInfoWithThresh
 function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = serviceAccountInfoSize) {
   const pageStart = 2 ** 16;
   const memStart = pageStart + PAGE_SIZE - accountInfoLength - 1;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
   registers.set(DEST_START_REG, tryAsU64(memStart));
   registers.set(LEN_REG, tryAsU64(serviceAccountInfoSize));

@@ -9,7 +9,6 @@ import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-
 import { tryAsGas } from "@typeberry/pvm-interface";
 import { gasCounter, MemoryBuilder, tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Fetch, FetchContext, FetchKind, type IAccumulateFetch, type IRefineFetch } from "./fetch.js";
 import { HostCallResult } from "./results.js";
 
@@ -25,7 +24,7 @@ describe("Fetch", () => {
 
     const badOffset = tryAsU64(0xfffff);
 
-    const registers = new HostCallRegisters(emptyRegistersBuffer());
+    const registers = HostCallRegisters.empty();
     registers.set(IN_OUT_REG, badOffset);
     registers.set(8, tryAsU64(0));
     registers.set(9, tryAsU64(blob.length));
@@ -456,7 +455,7 @@ describe("Fetch", () => {
     const memOffset = tryAsU64(pageStart + 1234);
     const blobLength = tryAsU64(blob.length);
 
-    const registers = new HostCallRegisters(emptyRegistersBuffer());
+    const registers = HostCallRegisters.empty();
     registers.set(IN_OUT_REG, memOffset);
     registers.set(8, tryAsU64(offset));
     registers.set(9, tryAsU64(length));

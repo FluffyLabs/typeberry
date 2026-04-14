@@ -11,7 +11,6 @@ import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.j
 import { type PreimageStatus, PreimageStatusKind } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Query } from "./query.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -27,7 +26,7 @@ function prepareRegsAndMemory(
   data: BytesBlob,
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(HASH_START_REG, tryAsU64(hashStart));
   registers.set(LENGTH_REG, tryAsU64(length));
 
