@@ -191,15 +191,15 @@ export class RefineExternalitiesImpl implements RefineExternalities {
 
     // Status
     const status = innerPvm.getStatus();
-    const exitParam = innerPvm.getExitParam();
+    const exitParam = innerPvm.getExitParam() ?? 0;
     const remainingGas = tryAsBigGas(innerPvm.gas.get());
     const outRegisters = new HostCallRegisters(new Uint8Array(innerPvm.registers.getAllEncoded()));
 
     let machineStatus: MachineStatus;
     if (status === Status.HOST) {
-      machineStatus = { status, hostCallIndex: tryAsU64(exitParam ?? 0) };
+      machineStatus = { status, hostCallIndex: tryAsU64(exitParam) };
     } else if (status === Status.FAULT) {
-      machineStatus = { status, address: tryAsU64(exitParam ?? 0) };
+      machineStatus = { status, address: tryAsU64(exitParam) };
     } else {
       machineStatus = { status };
     }
