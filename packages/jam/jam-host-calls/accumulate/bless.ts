@@ -44,8 +44,8 @@ export class Bless implements HostCallHandler {
   async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `m`: manager service (can change privileged services)
     const manager = getServiceId(regs.get(IN_OUT_REG));
-    // `a`: manages authorization queue
-    const authorization = regs.get(8);
+    // `a`: mem pointer for collection of auth queue assigners (one per core)
+    const assignersPtr = regs.get(8);
     // `v`: manages validator keys
     const delegator = getServiceId(regs.get(9));
     // `r`: manages creation of new services with id within protected range
@@ -79,29 +79,29 @@ export class Bless implements HostCallHandler {
     }
     // https://graypaper.fluffylabs.dev/#/7e6ff6a/367200367200?v=0.6.7
     const res = safeAllocUint8Array(tryAsExactBytes(codec.u32.sizeHint) * this.chainSpec.coresCount);
-    const authorizersDecoder = Decoder.fromBlob(res);
-    const memoryReadResult = memory.loadInto(res, authorization);
+    const assignersDecoder = Decoder.fromBlob(res);
+    const memoryReadResult = memory.loadInto(res, assignersPtr);
     if (memoryReadResult.isError) {
       logger.trace`[${this.currentServiceId}] BLESS(m: ${manager}, v: ${delegator}, r: ${registrar}, ${lazyInspect(autoAccumulate)}) <- PANIC`;
       return PvmExecution.Panic;
     }
 
     // `a`
-    const authorizers = tryAsPerCore(
-      authorizersDecoder.sequenceFixLen(codec.u32.asOpaque<ServiceId>(), this.chainSpec.coresCount),
+    const assigners = tryAsPerCore(
+      assignersDecoder.sequenceFixLen(codec.u32.asOpaque<ServiceId>(), this.chainSpec.coresCount),
       this.chainSpec,
     );
 
     const updateResult = this.partialState.updatePrivilegedServices(
       manager,
-      authorizers,
+      assigners,
       delegator,
       registrar,
       autoAccumulate,
     );
 
     if (updateResult.isOk) {
-      logger.trace`[${this.currentServiceId}] BLESS(m: ${manager}, a: [${authorizers}], v: ${delegator}, r: ${registrar}, ${lazyInspect(autoAccumulate)}) <- OK`;
+      logger.trace`[${this.currentServiceId}] BLESS(m: ${manager}, a: [${assigners}], v: ${delegator}, r: ${registrar}, ${lazyInspect(autoAccumulate)}) <- OK`;
       regs.set(IN_OUT_REG, HostCallResult.OK);
       return;
     }
@@ -110,13 +110,13 @@ export class Bless implements HostCallHandler {
 
     // NOTE: `UpdatePrivilegesError.UnprivilegedService` won't happen in 0.7.1+
     if (e === UpdatePrivilegesError.UnprivilegedService) {
-      logger.trace`[${this.currentServiceId}] BLESS(m: ${manager}, a: [${authorizers}], v: ${delegator}, r: ${registrar}, ${lazyInspect(autoAccumulate)}) <- HUH`;
+      logger.trace`[${this.currentServiceId}] BLESS(m: ${manager}, a: [${assigners}], v: ${delegator}, r: ${registrar}, ${lazyInspect(autoAccumulate)}) <- HUH`;
       regs.set(IN_OUT_REG, HostCallResult.HUH);
       return;
     }
 
     if (e === UpdatePrivilegesError.InvalidServiceId) {
-      logger.trace`[${this.currentServiceId}] BLESS(m: ${manager}, a: [${authorizers}], v: ${delegator}, r: ${registrar}, ${lazyInspect(autoAccumulate)}) <- WHO`;
+      logger.trace`[${this.currentServiceId}] BLESS(m: ${manager}, a: [${assigners}], v: ${delegator}, r: ${registrar}, ${lazyInspect(autoAccumulate)}) <- WHO`;
       regs.set(IN_OUT_REG, HostCallResult.WHO);
       return;
     }
