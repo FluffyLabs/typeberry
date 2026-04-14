@@ -13,7 +13,7 @@ import { MIN_PUBLIC_SERVICE_INDEX } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import type { FixedSizeArray } from "@typeberry/collections";
+import { asKnownSize, type FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import {
@@ -539,22 +539,24 @@ export class AccumulateExternalities
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>,
-    assigners: ServiceId | null,
+    newAssigner: ServiceId | null,
   ): Result<OK, UpdatePrivilegesError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36a40136a401?v=0.6.7 */
 
     // NOTE `coreIndex` is already verified in the HC, so this is infallible.
-    const currentAssigners = this.updatedState.getPrivilegedServices().assigners[coreIndex];
+    const privilegedServices = this.updatedState.getPrivilegedServices();
+    const currentAssigners = privilegedServices.assigners;
+    const assigner = currentAssigners[coreIndex];
 
-    if (currentAssigners !== this.currentServiceId) {
-      logger.trace`Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentAssigners}) and cannot update authorization queue.`;
+    if (assigner !== this.currentServiceId) {
+      logger.trace`Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${assigner}) and cannot update authorization queue.`;
       return Result.error(
         UpdatePrivilegesError.UnprivilegedService,
-        () => `Service ${this.currentServiceId} not assigner for core ${coreIndex} (expected: ${currentAssigners})`,
+        () => `Service ${this.currentServiceId} not assigner for core ${coreIndex} (expected: ${assigner})`,
       );
     }
 
-    if (assigners === null) {
+    if (newAssigner === null) {
       logger.trace`The new auth manager is not a valid service id.`;
       return Result.error(
         UpdatePrivilegesError.InvalidServiceId,
@@ -562,7 +564,17 @@ export class AccumulateExternalities
       );
     }
 
+    // update the authorization queue
     this.updatedState.stateUpdate.authorizationQueues.set(coreIndex, authQueue);
+    // move permissions to the new assigner
+    const assigners = currentAssigners.slice();
+    assigners[coreIndex] = newAssigner;
+    this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
+      ...privilegedServices,
+      // since coreindex is validated, we do not alter the size,
+      // hence it's safe to convert back
+      assigners: asKnownSize(assigners),
+    });
     return Result.ok(OK);
   }
 
