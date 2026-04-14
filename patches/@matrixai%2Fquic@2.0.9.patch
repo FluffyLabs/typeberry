@@ -1,3 +1,6 @@
+diff --git a/node_modules/@matrixai/quic/.bun-tag-b9828ed181d34d78 b/.bun-tag-b9828ed181d34d78
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/dist/QUICClient.js b/dist/QUICClient.js
 index 2e8c6b71df4ffaab4397556bb1a225c27dbce5e0..53c0bb3ff4d88d91cc770a04d112aa73d0f38628 100644
 --- a/dist/QUICClient.js
@@ -12,3 +15,28 @@ index 2e8c6b71df4ffaab4397556bb1a225c27dbce5e0..53c0bb3ff4d88d91cc770a04d112aa73
                      {
                          this.dispatchEvent(new events.EventQUICClientErrorSend(`${events.EventQUICClientErrorSend.name}-${evt.detail.id}`, {
                              detail: e,
+diff --git a/dist/QUICSocket.js b/dist/QUICSocket.js
+index 1915d62d619e81207b4082d628fdcbec642ecd6e..2cb76b17bdf864775d6d988461e92ec9de5474a5 100644
+--- a/dist/QUICSocket.js
++++ b/dist/QUICSocket.js
+@@ -243,10 +243,16 @@ let QUICSocket = class QUICSocket {
+             });
+         }
+         this.socket.removeListener('error', rejectErrorP);
+-        // The dgram socket's error events might just be informational
+-        // They don't necessarily correspond to an error
+-        // Therefore we don't bother listening for it
+-        // Unless we were propagating default events upwards
++        // Bun propagates ICMP port-unreachable as an error event on the dgram
++        // socket (ECONNREFUSED), unlike Node which silently ignores it.
++        // We add a handler to prevent it from becoming an uncaught exception.
++        this.socket.on('error', (err) => {
++            if (err.code === 'ECONNREFUSED') {
++                this.logger.info(`Ignoring ECONNREFUSED on socket: ${err.message}`);
++                return;
++            }
++            this.dispatchEvent(new events.EventQUICSocketError(events.EventQUICSocketError.name, { detail: err }));
++        });
+         const socketAddress = this.socket.address();
+         // This is the resolved IP, not the original hostname
+         this._host = socketAddress.address;

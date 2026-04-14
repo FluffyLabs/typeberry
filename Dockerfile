@@ -12,6 +12,7 @@ COPY tsconfig.json ./
 COPY bunfig.toml ./
 COPY start.sh ./
 
+COPY patches/ ./patches/
 COPY bin/ ./bin/
 COPY packages/ ./packages/
 COPY benchmarks/ ./benchmarks/
