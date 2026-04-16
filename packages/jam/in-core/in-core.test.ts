@@ -33,7 +33,7 @@ function getAuthCodeHash() {
 }
 
 function createService(serviceId: typeof AUTH_SERVICE_ID, codeHash: OpaqueHash, code: BytesBlob): InMemoryService {
-  return new InMemoryService(serviceId, {
+  return InMemoryService.new(serviceId, {
     info: ServiceAccountInfo.create({
       codeHash: codeHash.asOpaque<CodeHash>(),
       balance: tryAsU64(10_000_000_000),

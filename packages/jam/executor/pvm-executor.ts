@@ -141,9 +141,9 @@ export class PvmExecutor {
   /** Prepare is-authorized host call handlers */
   private static prepareIsAuthorizedHostCalls(serviceId: ServiceId, externalities: IsAuthorizedHostCallExternalities) {
     const generalHandlers: HostCallHandler[] = [
-      new general.LogHostCall(serviceId),
-      new general.GasHostCall(serviceId),
-      new general.Fetch(serviceId, externalities.fetchExternalities),
+      general.LogHostCall.new(serviceId),
+      general.GasHostCall.new(serviceId),
+      general.Fetch.new(serviceId, externalities.fetchExternalities),
     ];
 
     return generalHandlers;

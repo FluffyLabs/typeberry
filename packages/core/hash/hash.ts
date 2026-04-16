@@ -50,9 +50,8 @@ export class WithHash<THash extends OpaqueHash, TData> extends WithDebug {
 /**
  * Extension of [`WithHash`] additionally containing an encoded version of the object.
  */
-// @ts-expect-error TS2417: static new() signature differs from parent (requires extra `encoded` param)
 export class WithHashAndBytes<THash extends OpaqueHash, TData> extends WithHash<THash, TData> {
-  static new<THash extends OpaqueHash, TData>(hash: THash, data: TData, encoded: BytesBlob) {
+  static create<THash extends OpaqueHash, TData>(hash: THash, data: TData, encoded: BytesBlob) {
     return new WithHashAndBytes(hash, data, encoded);
   }
 

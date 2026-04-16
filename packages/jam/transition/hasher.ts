@@ -65,6 +65,6 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
 
     const encoded = BytesBlob.blobFromParts([et.raw, ep.raw, eg.raw, ea.raw, ed.raw]);
 
-    return WithHashAndBytes.new(this.blake2b.hashBytes(encoded).asOpaque(), extrinsicView, encoded);
+    return WithHashAndBytes.create(this.blake2b.hashBytes(encoded).asOpaque(), extrinsicView, encoded);
   }
 }
