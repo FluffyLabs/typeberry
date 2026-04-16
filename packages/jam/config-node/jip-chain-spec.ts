@@ -20,7 +20,7 @@ export function parseBootnode(v: string): Bootnode {
   }
 
   // TODO [ToDr] we should probably validate the name!
-  return new Bootnode(asOpaqueType(name), ip, portNumber);
+  return Bootnode.new(asOpaqueType(name), ip, portNumber);
 }
 
 /**

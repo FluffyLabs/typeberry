@@ -34,7 +34,7 @@ function prepareRegsAndMemory(
   if (!skipSegment) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + 2 * PAGE_SIZE), segment.raw);
   }
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
     memory,
@@ -44,7 +44,7 @@ function prepareRegsAndMemory(
 describe("HostCalls: Export", () => {
   it("should export a segment", async () => {
     const refine = new TestRefineExt();
-    const exp = new Export(refine);
+    const exp = Export.new(refine);
     exp.currentServiceId = tryAsServiceId(10_000);
     const segment = Bytes.fill(SEGMENT_BYTES, 15).asOpaque();
     const { registers, memory } = prepareRegsAndMemory(segment);
@@ -61,7 +61,7 @@ describe("HostCalls: Export", () => {
 
   it("should zero-pad when exported value is small", async () => {
     const refine = new TestRefineExt();
-    const exp = new Export(refine);
+    const exp = Export.new(refine);
     exp.currentServiceId = tryAsServiceId(10_000);
     const segment = Bytes.fill(SEGMENT_BYTES, 15).asOpaque();
     const { registers, memory } = prepareRegsAndMemory(segment, 2);
@@ -80,7 +80,7 @@ describe("HostCalls: Export", () => {
 
   it("should panic if memory is not readable", async () => {
     const refine = new TestRefineExt();
-    const exp = new Export(refine);
+    const exp = Export.new(refine);
     exp.currentServiceId = tryAsServiceId(10_000);
     const segment: Segment = Bytes.fill(SEGMENT_BYTES, 15).asOpaque();
     const { registers, memory } = prepareRegsAndMemory(segment, segment.length, { skipSegment: true });
@@ -95,7 +95,7 @@ describe("HostCalls: Export", () => {
 
   it("should fail with FULL if export limit is reached", async () => {
     const refine = new TestRefineExt();
-    const exp = new Export(refine);
+    const exp = Export.new(refine);
     exp.currentServiceId = tryAsServiceId(10_000);
     const segment: Segment = Bytes.fill(SEGMENT_BYTES, 15).asOpaque();
     const { registers, memory } = prepareRegsAndMemory(segment);

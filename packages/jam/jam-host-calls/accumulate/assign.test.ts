@@ -52,7 +52,7 @@ function prepareRegsAndMemory(
   if (!skipAuthQueue) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
   }
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
     memory,
@@ -63,7 +63,7 @@ describe("HostCalls: Assign", () => {
   it("should assign authorization queue to a core", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const assign = new Assign(serviceId, accumulate, tinyChainSpec);
+    const assign = Assign.new(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [
       Bytes.fill(HASH_SIZE, 1),
       Bytes.fill(HASH_SIZE, 2),
@@ -92,7 +92,7 @@ describe("HostCalls: Assign", () => {
   it("should return an error if core index is too large", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const assign = new Assign(serviceId, accumulate, tinyChainSpec);
+    const assign = Assign.new(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(3), []);
 
     // when
@@ -107,7 +107,7 @@ describe("HostCalls: Assign", () => {
   it("should return an error if core index is waay too large", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const assign = new Assign(serviceId, accumulate, tinyChainSpec);
+    const assign = Assign.new(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(3), []);
     registers.set(CORE_INDEX_REG, tryAsU64(2 ** 16 + 3));
 
@@ -123,7 +123,7 @@ describe("HostCalls: Assign", () => {
   it("should return panic if data not readable", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const assign = new Assign(serviceId, accumulate, tinyChainSpec);
+    const assign = Assign.new(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(3), [], { skipAuthQueue: true });
 
     // when
@@ -141,7 +141,7 @@ describe("HostCalls: Assign", () => {
       () => "Test: unprivileged service attempting assign",
     );
     const serviceId = tryAsServiceId(10_000);
-    const assign = new Assign(serviceId, accumulate, tinyChainSpec);
+    const assign = Assign.new(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { assigners: 0 });
 
     // when
@@ -160,7 +160,7 @@ describe("HostCalls: Assign", () => {
       () => "Test: invalid service ID for assign",
     );
     const serviceId = tryAsServiceId(10_000);
-    const assign = new Assign(serviceId, accumulate, tinyChainSpec);
+    const assign = Assign.new(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [], { assigners: null });
 
     // when

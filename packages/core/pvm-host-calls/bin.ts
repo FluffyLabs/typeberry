@@ -6,7 +6,7 @@ import { PvmInstanceManager } from "./pvm-instance-manager.js";
 
 const hostCalls = HostCalls.new({ missing: new NoopMissing(), handlers: [] });
 const pvmInstanceManager = await PvmInstanceManager.new(PvmBackend.BuiltIn);
-const pvmHostCallExtension = new HostCallsExecutor(pvmInstanceManager, hostCalls);
+const pvmHostCallExtension = HostCallsExecutor.new(pvmInstanceManager, hostCalls);
 
 const program = new Uint8Array([
   0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x10, 0x1, 0x0, 0x0, 0xf9, 0x0, 0x0, 0x0, 0x0, 0x0, 0x80, 0xd9, 0x5, 0x12,

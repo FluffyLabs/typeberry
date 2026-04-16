@@ -57,14 +57,14 @@ function hashWorkPackage(spec: ChainSpec, workPackage: WorkPackage): WithHash<Wo
   const workPackageHash = blake2b
     .hashBytes(Encoder.encodeObject(WorkPackage.Codec, workPackage, spec))
     .asOpaque<WorkPackageHash>();
-  return new WithHash(workPackageHash, workPackage);
+  return WithHash.new(workPackageHash, workPackage);
 }
 
 describe("InCore", () => {
   it("should return StateMissing error when anchor block state is not in DB", async () => {
     const spec = tinyChainSpec;
-    const states = new InMemoryStates(spec);
-    const inCore = new InCore(spec, states, PvmBackend.BuiltIn, blake2b);
+    const states = InMemoryStates.new(spec);
+    const inCore = InCore.new(spec, states, PvmBackend.BuiltIn, blake2b);
 
     const anchorHash = Bytes.fill(HASH_SIZE, 1).asOpaque<HeaderHash>();
     const stateRoot = Bytes.zero(HASH_SIZE).asOpaque<StateRootHash>();
@@ -83,8 +83,8 @@ describe("InCore", () => {
 
   it("should refine work package and produce a report when state is set up", async () => {
     const spec = tinyChainSpec;
-    const states = new InMemoryStates(spec);
-    const inCore = new InCore(spec, states, PvmBackend.BuiltIn, blake2b);
+    const states = InMemoryStates.new(spec);
+    const inCore = InCore.new(spec, states, PvmBackend.BuiltIn, blake2b);
 
     const anchorHash = Bytes.fill(HASH_SIZE, 1).asOpaque<HeaderHash>();
     const state = testState();

@@ -189,7 +189,7 @@ class HeaderViewWithHash extends WithHash<HeaderHash, HeaderView> {
   });
 
   static create({ hash, data }: CodecRecord<HeaderViewWithHash>) {
-    return new WithHash(hash, data);
+    return WithHash.new(hash, data);
   }
 }
 /** Encoding of header + hash. */

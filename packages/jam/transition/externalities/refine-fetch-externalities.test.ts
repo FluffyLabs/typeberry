@@ -7,7 +7,7 @@ import { RefineFetchExternalities } from "./refine-fetch-externalities.js";
 describe("RefineFetchExternalities", () => {
   const prepareRefineData = ({ chainSpec }: { chainSpec?: ChainSpec } = {}) => {
     const defaultChainSpec = tinyChainSpec;
-    return new RefineFetchExternalities(chainSpec ?? defaultChainSpec);
+    return RefineFetchExternalities.new(chainSpec ?? defaultChainSpec);
   };
 
   it("should return different constants for different chain specs", () => {

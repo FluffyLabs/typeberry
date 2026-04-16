@@ -51,7 +51,7 @@ function prepareRegsAndMemory(
   if (!skipValidators) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
   }
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers: registers,
     memory,
@@ -62,7 +62,7 @@ describe("HostCalls: Designate", () => {
   it("should fail when no data in memory", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const designate = new Designate(serviceId, accumulate, tinyChainSpec);
+    const designate = Designate.new(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory([], { skipValidators: true });
 
     // when
@@ -76,7 +76,7 @@ describe("HostCalls: Designate", () => {
   it("should designate new validator set", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const designate = new Designate(serviceId, accumulate, tinyChainSpec);
+    const designate = Designate.new(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory([
       ValidatorData.create({
         ed25519: Bytes.fill(ED25519_KEY_BYTES, 1).asOpaque(),
@@ -126,7 +126,7 @@ describe("HostCalls: Designate", () => {
       () => "Test: unprivileged service attempting designate",
     );
     const serviceId = tryAsServiceId(10_000);
-    const designate = new Designate(serviceId, accumulate, tinyChainSpec);
+    const designate = Designate.new(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory([
       ValidatorData.create({
         ed25519: Bytes.fill(ED25519_KEY_BYTES, 1).asOpaque(),

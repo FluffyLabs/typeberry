@@ -208,7 +208,11 @@ export function tryAsLookupHistorySlots(items: readonly TimeSlot[]): LookupHisto
 
 /** https://graypaper.fluffylabs.dev/#/5f542d7/115400115800 */
 export class LookupHistoryItem {
-  constructor(
+  static new(hash: PreimageHash, length: U32, slots: LookupHistorySlots) {
+    return new LookupHistoryItem(hash, length, slots);
+  }
+
+  private constructor(
     public readonly hash: PreimageHash,
     public readonly length: U32,
     /**

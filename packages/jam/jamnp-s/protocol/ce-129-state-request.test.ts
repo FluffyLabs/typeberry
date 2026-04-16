@@ -26,8 +26,8 @@ describe("CE 129: State Request", () => {
   it("sends a state request and receives a response", async () => {
     const handlers = testClientServer();
 
-    handlers.server.registerHandlers(new Handler(true, getBoundaryNodes, getKeyValuePairs));
-    handlers.client.registerHandlers(new Handler());
+    handlers.server.registerHandlers(Handler.new(true, getBoundaryNodes, getKeyValuePairs));
+    handlers.client.registerHandlers(Handler.new());
 
     const receivedData: KeyValuePair[] = await new Promise((resolve) => {
       handlers.client.withNewStream(STREAM_KIND, (handler: Handler, sender) => {
@@ -38,7 +38,7 @@ describe("CE 129: State Request", () => {
       });
     });
 
-    assert.deepStrictEqual(receivedData, [new KeyValuePair(KEY, EXPECTED_VALUE)]);
+    assert.deepStrictEqual(receivedData, [KeyValuePair.new(KEY, EXPECTED_VALUE)]);
   });
 });
 
@@ -51,5 +51,5 @@ const getKeyValuePairs = (_hash: HeaderHash, startKey: Key) => {
   if (KEY.isEqualTo(startKey)) {
     value = EXPECTED_VALUE;
   }
-  return [new KeyValuePair(startKey, value)];
+  return [KeyValuePair.new(startKey, value)];
 };

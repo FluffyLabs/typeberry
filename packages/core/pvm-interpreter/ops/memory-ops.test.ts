@@ -11,9 +11,9 @@ import { MemoryOps } from "./memory-ops.js";
 describe("MemoryOps", () => {
   function prepareData(pagesToAllocate: number, lengthRegisterValue = PAGE_SIZE) {
     const regs = Registers.empty();
-    const memory = new Memory();
+    const memory = Memory.new();
     const instructionResult = new InstructionResult();
-    const memoryOps = new MemoryOps(regs, memory, instructionResult);
+    const memoryOps = MemoryOps.new(regs, memory, instructionResult);
     const resultIndex = 1;
     const lengthIndex = 0;
     regs.setU32(lengthIndex, lengthRegisterValue);

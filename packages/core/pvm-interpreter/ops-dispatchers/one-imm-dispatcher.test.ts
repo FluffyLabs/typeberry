@@ -12,7 +12,7 @@ import { OneImmDispatcher } from "./one-imm-dispatcher.js";
 describe("OneImmDispatcher", () => {
   describe("check if it handles expected instructions", () => {
     const instructionResult = new InstructionResult();
-    const hostCallOps = new HostCallOps(instructionResult);
+    const hostCallOps = HostCallOps.new(instructionResult);
     const hostCallMock = mock.fn();
 
     after(() => {
@@ -28,7 +28,7 @@ describe("OneImmDispatcher", () => {
     });
 
     const argsMock = {
-      immediateDecoder: new ImmediateDecoder(),
+      immediateDecoder: ImmediateDecoder.new(),
     } as OneImmediateArgs;
 
     it("should call HostCallOps.hostCall", () => {
@@ -42,7 +42,7 @@ describe("OneImmDispatcher", () => {
 
   describe("check if it handles other instructions than expected", () => {
     const instructionResult = new InstructionResult();
-    const hostCallOps = new HostCallOps(instructionResult);
+    const hostCallOps = HostCallOps.new(instructionResult);
     const mockFn = mock.fn();
 
     function mockAllMethods(obj: object) {
@@ -66,7 +66,7 @@ describe("OneImmDispatcher", () => {
     });
 
     const argsMock = {
-      immediateDecoder: new ImmediateDecoder(),
+      immediateDecoder: ImmediateDecoder.new(),
     } as OneImmediateArgs;
 
     const otherInstructions = Object.entries(Instruction)

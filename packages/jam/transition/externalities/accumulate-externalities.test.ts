@@ -60,7 +60,7 @@ before(async () => {
 });
 
 function partiallyUpdatedState() {
-  return new PartiallyUpdatedState(testState());
+  return PartiallyUpdatedState.new(testState());
 }
 
 const INVALID_SERVICE_ID_ERROR = "Either manager or delegator or registrar is not a valid service id.";
@@ -109,7 +109,7 @@ describe("PartialState.checkPreimageStatus", () => {
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
-        lookupHistory: new LookupHistoryItem(preimageHash, tryAsU32(Number(length)), tryAsLookupHistorySlots([])),
+        lookupHistory: LookupHistoryItem.new(preimageHash, tryAsU32(Number(length)), tryAsLookupHistorySlots([])),
       }),
     );
     state.stateUpdate.services.preimages.set(serviceId, updates);
@@ -151,7 +151,7 @@ describe("PartialState.requestPreimage", () => {
           serviceId,
           [
             UpdatePreimage.updateOrAdd({
-              lookupHistory: new LookupHistoryItem(preimageHash, tryAsU32(5), tryAsLookupHistorySlots([])),
+              lookupHistory: LookupHistoryItem.new(preimageHash, tryAsU32(5), tryAsLookupHistorySlots([])),
             }),
           ],
         ],
@@ -203,7 +203,7 @@ describe("PartialState.requestPreimage", () => {
           serviceId,
           [
             UpdatePreimage.updateOrAdd({
-              lookupHistory: new LookupHistoryItem(preimageHash, tryAsU32(5), tryAsLookupHistorySlots([])),
+              lookupHistory: LookupHistoryItem.new(preimageHash, tryAsU32(5), tryAsLookupHistorySlots([])),
             }),
           ],
         ],
@@ -342,7 +342,7 @@ describe("PartialState.forgetPreimage", () => {
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
-        lookupHistory: new LookupHistoryItem(
+        lookupHistory: LookupHistoryItem.new(
           hash,
           tryAsU32(Number(length)),
           tryAsLookupHistorySlots([tryAsTimeSlot(0), tryAsTimeSlot(1)]),
@@ -392,7 +392,7 @@ describe("PartialState.forgetPreimage", () => {
           serviceId,
           [
             UpdatePreimage.updateOrAdd({
-              lookupHistory: new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([])),
+              lookupHistory: LookupHistoryItem.new(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([])),
             }),
             UpdatePreimage.remove({
               hash,
@@ -426,7 +426,7 @@ describe("PartialState.forgetPreimage", () => {
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
-        lookupHistory: new LookupHistoryItem(
+        lookupHistory: LookupHistoryItem.new(
           hash,
           tryAsU32(Number(length)),
           tryAsLookupHistorySlots([oldSlot, oldSlot]),
@@ -444,7 +444,7 @@ describe("PartialState.forgetPreimage", () => {
           serviceId,
           [
             UpdatePreimage.updateOrAdd({
-              lookupHistory: new LookupHistoryItem(
+              lookupHistory: LookupHistoryItem.new(
                 hash,
                 tryAsU32(Number(length)),
                 tryAsLookupHistorySlots([oldSlot, oldSlot]),
@@ -482,7 +482,7 @@ describe("PartialState.forgetPreimage", () => {
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
-        lookupHistory: new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([recentSlot])),
+        lookupHistory: LookupHistoryItem.new(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([recentSlot])),
       }),
     );
     state.stateUpdate.services.preimages.set(serviceId, updates);
@@ -513,7 +513,7 @@ describe("PartialState.forgetPreimage", () => {
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
-        lookupHistory: new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([availableSlot])),
+        lookupHistory: LookupHistoryItem.new(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([availableSlot])),
       }),
     );
     state.stateUpdate.services.preimages.set(serviceId, updates);
@@ -528,14 +528,14 @@ describe("PartialState.forgetPreimage", () => {
           serviceId,
           [
             UpdatePreimage.updateOrAdd({
-              lookupHistory: new LookupHistoryItem(
+              lookupHistory: LookupHistoryItem.new(
                 hash,
                 tryAsU32(Number(length)),
                 tryAsLookupHistorySlots([availableSlot]),
               ),
             }),
             UpdatePreimage.updateOrAdd({
-              lookupHistory: new LookupHistoryItem(
+              lookupHistory: LookupHistoryItem.new(
                 hash,
                 tryAsU32(Number(length)),
                 tryAsLookupHistorySlots([availableSlot, state.state.timeslot]),
@@ -570,7 +570,7 @@ describe("PartialState.forgetPreimage", () => {
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
-        lookupHistory: new LookupHistoryItem(
+        lookupHistory: LookupHistoryItem.new(
           hash,
           tryAsU32(Number(length)),
           tryAsLookupHistorySlots([tryAsTimeSlot(0), y, z]),
@@ -589,14 +589,14 @@ describe("PartialState.forgetPreimage", () => {
           serviceId,
           [
             UpdatePreimage.updateOrAdd({
-              lookupHistory: new LookupHistoryItem(
+              lookupHistory: LookupHistoryItem.new(
                 hash,
                 tryAsU32(Number(length)),
                 tryAsLookupHistorySlots([tryAsTimeSlot(0), y, z]),
               ),
             }),
             UpdatePreimage.updateOrAdd({
-              lookupHistory: new LookupHistoryItem(
+              lookupHistory: LookupHistoryItem.new(
                 hash,
                 tryAsU32(Number(length)),
                 tryAsLookupHistorySlots([z, state.state.timeslot]),
@@ -631,7 +631,7 @@ describe("PartialState.forgetPreimage", () => {
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
-        lookupHistory: new LookupHistoryItem(
+        lookupHistory: LookupHistoryItem.new(
           hash,
           tryAsU32(Number(length)),
           tryAsLookupHistorySlots([tryAsTimeSlot(0), y, z]),
@@ -665,7 +665,7 @@ describe("PartialState.forgetPreimage", () => {
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
-        lookupHistory: new LookupHistoryItem(
+        lookupHistory: LookupHistoryItem.new(
           hash,
           tryAsU32(Number(length)),
           tryAsLookupHistorySlots([tryAsTimeSlot(0), tryAsTimeSlot(1)]),
@@ -755,7 +755,7 @@ describe("PartialState.newService", () => {
               lastAccumulation: tryAsTimeSlot(0),
               parentService: service.serviceId,
             }),
-            lookupHistory: new LookupHistoryItem(codeHash, codeLength, tryAsLookupHistorySlots([])),
+            lookupHistory: LookupHistoryItem.new(codeHash, codeLength, tryAsLookupHistorySlots([])),
           }),
         ],
       ]),
@@ -846,7 +846,7 @@ describe("PartialState.newService", () => {
               lastAccumulation: tryAsTimeSlot(0),
               parentService: service.serviceId,
             }),
-            lookupHistory: new LookupHistoryItem(codeHash, codeLength, tryAsLookupHistorySlots([])),
+            lookupHistory: LookupHistoryItem.new(codeHash, codeLength, tryAsLookupHistorySlots([])),
           }),
         ],
       ]),
@@ -1774,7 +1774,7 @@ describe("PartialState.providePreimage", () => {
         ? [
             [
               preimage.hash,
-              [new LookupHistoryItem(preimage.hash, tryAsU32(preimage.blob.length), tryAsLookupHistorySlots([]))],
+              [LookupHistoryItem.new(preimage.hash, tryAsU32(preimage.blob.length), tryAsLookupHistorySlots([]))],
             ],
           ]
         : [],
@@ -2189,7 +2189,7 @@ describe("PartialState.eject", () => {
     let lookupHistory = HashDictionary.new<PreimageHash, LookupHistoryItem[]>();
     if (overrides.tombstone !== undefined) {
       const { hash, length, slots } = overrides.tombstone;
-      const item = new LookupHistoryItem(hash, length, slots);
+      const item = LookupHistoryItem.new(hash, length, slots);
       lookupHistory = HashDictionary.fromEntries([[hash, [item]]]);
       if (item.slots.length === 1 || item.slots.length === 2) {
         preimages = HashDictionary.fromEntries([
@@ -2554,7 +2554,7 @@ describe("AccumulateServiceExternalities", () => {
 
     const state = InMemoryState.empty(tinyChainSpec);
     state.services = services;
-    return new PartiallyUpdatedState(state);
+    return PartiallyUpdatedState.new(state);
   };
 
   const prepareService = (

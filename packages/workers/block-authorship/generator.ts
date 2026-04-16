@@ -151,7 +151,7 @@ export class Generator {
     }
 
     // retrieve data from previous block
-    const hasher = new TransitionHasher(this.keccakHasher, this.blake2b);
+    const hasher = TransitionHasher.new(this.keccakHasher, this.blake2b);
     const stateRoot = this.states.getStateRoot(lastState);
 
     // TODO create extrinsic

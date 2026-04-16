@@ -79,7 +79,7 @@ function prepareRegsAndMemory(
     builder.setReadablePages(tryAsMemoryIndex(memAuthStart), tryAsMemoryIndex(memAuthStart + PAGE_SIZE), dataAuth.raw);
   }
 
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
     memory,
@@ -89,7 +89,7 @@ describe("HostCalls: Bless", () => {
   it("should set new privileged services and auto-accumulate services", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const bless = new Bless(serviceId, accumulate, tinyChainSpec);
+    const bless = Bless.new(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasMap();
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers);
@@ -114,7 +114,7 @@ describe("HostCalls: Bless", () => {
   it("should return panic when dictionary is not readable", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const bless = new Bless(serviceId, accumulate, tinyChainSpec);
+    const bless = Bless.new(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasMap();
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers, { skipDictionary: true });
@@ -130,7 +130,7 @@ describe("HostCalls: Bless", () => {
   it("should return panic when authorizers are not readable", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const bless = new Bless(serviceId, accumulate, tinyChainSpec);
+    const bless = Bless.new(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasMap();
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers, { skipAuth: true });
@@ -146,7 +146,7 @@ describe("HostCalls: Bless", () => {
   it("should auto-accumulate services when dictionary is out of order", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const bless = new Bless(serviceId, accumulate, tinyChainSpec);
+    const bless = Bless.new(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasMap();
     entries.push([tryAsServiceId(5), tryAsServiceGas(10_000)]);
     const authorizers = prepareAuthorizers();
@@ -173,7 +173,7 @@ describe("HostCalls: Bless", () => {
   it("should auto-accumulate services when dictionary contains duplicates", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const bless = new Bless(serviceId, accumulate, tinyChainSpec);
+    const bless = Bless.new(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasMap();
     entries.push(entries[entries.length - 1]);
     const authorizers = prepareAuthorizers();
@@ -203,7 +203,7 @@ describe("HostCalls: Bless", () => {
       () => "Test: unprivileged service attempting bless",
     );
     const serviceId = tryAsServiceId(11_000);
-    const bless = new Bless(serviceId, accumulate, tinyChainSpec);
+    const bless = Bless.new(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasMap();
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers);
@@ -224,7 +224,7 @@ describe("HostCalls: Bless", () => {
       () => "Test: invalid manager service ID for bless",
     );
     const serviceId = tryAsServiceId(11_000);
-    const bless = new Bless(serviceId, accumulate, tinyChainSpec);
+    const bless = Bless.new(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasMap();
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers, { manager: tryAsU64(MAX_VALUE_U64) });
@@ -245,7 +245,7 @@ describe("HostCalls: Bless", () => {
       () => "Test: invalid validator service ID for bless",
     );
     const serviceId = tryAsServiceId(11_000);
-    const bless = new Bless(serviceId, accumulate, tinyChainSpec);
+    const bless = Bless.new(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasMap();
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers, { validator: tryAsU64(MAX_VALUE_U64) });
@@ -266,7 +266,7 @@ describe("HostCalls: Bless", () => {
       () => "Test: invalid registrar service ID for bless",
     );
     const serviceId = tryAsServiceId(11_000);
-    const bless = new Bless(serviceId, accumulate, tinyChainSpec);
+    const bless = Bless.new(serviceId, accumulate, tinyChainSpec);
     const entries = prepareServiceGasMap();
     const authorizers = prepareAuthorizers();
     const { registers, memory } = prepareRegsAndMemory(entries, authorizers, { registrar: tryAsU64(MAX_VALUE_U64) });

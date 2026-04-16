@@ -24,8 +24,8 @@ describe("CE 128: Block Request", () => {
   it("sends a block request and receives a sequence of blocks", async () => {
     const handlers = testClientServer();
 
-    handlers.server.registerHandlers(new ServerHandler(tinyChainSpec, getBlockSequence));
-    handlers.client.registerHandlers(new ClientHandler(tinyChainSpec));
+    handlers.server.registerHandlers(ServerHandler.new(tinyChainSpec, getBlockSequence));
+    handlers.client.registerHandlers(ClientHandler.new(tinyChainSpec));
 
     const receivedData: BlockView[] = await new Promise((resolve) => {
       handlers.client.withNewStream(STREAM_KIND, (handler: ClientHandler, sender) => {

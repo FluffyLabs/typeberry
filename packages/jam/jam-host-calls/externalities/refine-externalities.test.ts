@@ -26,37 +26,37 @@ import {
 } from "./refine-externalities.js";
 
 export class TestRefineExt implements RefineExternalities {
-  public readonly exportSegmentData: MultiMap<[Segment], Result<SegmentIndex, SegmentExportError>> = new MultiMap(1, [
+  public readonly exportSegmentData: MultiMap<[Segment], Result<SegmentIndex, SegmentExportError>> = MultiMap.new(1, [
     (segment) => segment.toString(),
   ]);
-  public readonly historicalLookupData: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
+  public readonly historicalLookupData: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = MultiMap.new(2, [
     null,
     (key) => key.toString(),
   ]);
 
   public readonly machineInvokeData: Map<MachineId, MachineInstance> = new Map();
-  public readonly machineStartData: MultiMap<[BytesBlob, ProgramCounter], MachineId> = new MultiMap(2, [
+  public readonly machineStartData: MultiMap<[BytesBlob, ProgramCounter], MachineId> = MultiMap.new(2, [
     (code) => code.toString(),
     null,
   ]);
   public readonly machineExpungeData: MultiMap<
     Parameters<TestRefineExt["machineExpunge"]>,
     Result<ProgramCounter, NoMachineError>
-  > = new MultiMap(1);
+  > = MultiMap.new(1);
   public readonly machinePeekData: MultiMap<Parameters<TestRefineExt["machinePeekFrom"]>, Result<OK, PeekPokeError>> =
-    new MultiMap(5);
+    MultiMap.new(5);
   public readonly machinePokeData: MultiMap<Parameters<TestRefineExt["machinePokeInto"]>, Result<OK, PeekPokeError>> =
-    new MultiMap(5);
+    MultiMap.new(5);
   public readonly machineVoidPagesData: MultiMap<
     Parameters<TestRefineExt["machineVoidPages"]>,
     Result<OK, ZeroVoidError>
-  > = new MultiMap(3);
+  > = MultiMap.new(3);
   public readonly machineZeroPagesData: MultiMap<
     Parameters<TestRefineExt["machineZeroPages"]>,
     Result<OK, ZeroVoidError>
-  > = new MultiMap(3);
+  > = MultiMap.new(3);
   public readonly machinePagesData: MultiMap<Parameters<TestRefineExt["machinePages"]>, Result<OK, PagesError>> =
-    new MultiMap(4);
+    MultiMap.new(4);
 
   public machineInvokeStatus: MachineStatus = { status: Status.OK };
 

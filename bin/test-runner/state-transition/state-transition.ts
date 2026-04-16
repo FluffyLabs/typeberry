@@ -72,13 +72,13 @@ export async function runStateTransition(testContent: StateTransition, options: 
   const myBlockIndex = allBlocks.findIndex(({ header }) => header.timeSlotIndex === timeStotIndex);
   const previousBlocks = allBlocks.slice(0, myBlockIndex);
 
-  const hasher = new TransitionHasher(await keccakHasher, blake2b);
+  const hasher = TransitionHasher.new(await keccakHasher, blake2b);
 
   const blocksDb = InMemoryBlocks.fromBlocks(
     previousBlocks.map((block) => {
       const blockView = blockAsView(spec, block);
       const headerHash = hasher.header(blockView.header.view());
-      return new WithHash(headerHash.hash, blockView);
+      return WithHash.new(headerHash.hash, blockView);
     }),
   );
 
@@ -96,7 +96,7 @@ export async function runStateTransition(testContent: StateTransition, options: 
 
   const shouldBlockBeRejected = testContent.pre_state.state_root.isEqualTo(testContent.post_state.state_root);
 
-  const verifier = new BlockVerifier(stf.hasher, blocksDb);
+  const verifier = BlockVerifier.new(stf.hasher, blocksDb);
   // NOTE [ToDr] we skip full verification here, since we can run tests in isolation
   // (i.e. no block history)
   const verificationResult = await verifier.verifyBlock(blockView, { skipParentAndStateRoot: true });

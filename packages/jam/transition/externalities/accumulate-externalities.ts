@@ -255,7 +255,7 @@ export class AccumulateExternalities
       this.updatedState.updatePreimage(
         this.currentServiceId,
         UpdatePreimage.updateOrAdd({
-          lookupHistory: new LookupHistoryItem(hash, clampedLength, tryAsLookupHistorySlots([])),
+          lookupHistory: LookupHistoryItem.new(hash, clampedLength, tryAsLookupHistorySlots([])),
         }),
       );
     } else {
@@ -263,7 +263,7 @@ export class AccumulateExternalities
       this.updatedState.updatePreimage(
         this.currentServiceId,
         UpdatePreimage.updateOrAdd({
-          lookupHistory: new LookupHistoryItem(
+          lookupHistory: LookupHistoryItem.new(
             hash,
             clampedLength,
             tryAsLookupHistorySlots([...existingPreimage.slots, this.currentTimeslot]),
@@ -337,7 +337,7 @@ export class AccumulateExternalities
       this.updatedState.updatePreimage(
         serviceId,
         UpdatePreimage.updateOrAdd({
-          lookupHistory: new LookupHistoryItem(status.hash, status.length, tryAsLookupHistorySlots([s.data[0], t])),
+          lookupHistory: LookupHistoryItem.new(status.hash, status.length, tryAsLookupHistorySlots([s.data[0], t])),
         }),
       );
       return Result.ok(OK);
@@ -350,7 +350,7 @@ export class AccumulateExternalities
         this.updatedState.updatePreimage(
           serviceId,
           UpdatePreimage.updateOrAdd({
-            lookupHistory: new LookupHistoryItem(status.hash, status.length, tryAsLookupHistorySlots([s.data[2], t])),
+            lookupHistory: LookupHistoryItem.new(status.hash, status.length, tryAsLookupHistorySlots([s.data[2], t])),
           }),
         );
 
@@ -476,7 +476,7 @@ export class AccumulateExternalities
       parentService: this.currentServiceId,
     });
 
-    const newLookupItem = new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([]));
+    const newLookupItem = LookupHistoryItem.new(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([]));
 
     // `s`: https://graypaper.fluffylabs.dev/#/ab2cdbd/361003361003?v=0.7.2
     const updatedCurrentAccount = ServiceAccountInfo.create({

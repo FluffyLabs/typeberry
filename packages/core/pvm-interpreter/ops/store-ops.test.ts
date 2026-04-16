@@ -37,10 +37,10 @@ describe("StoreOps", () => {
         initialMemory,
       )
       .finalize(tryAsMemoryIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
-    const storeOps = new StoreOps(regs, memory, instructionResult);
+    const storeOps = StoreOps.new(regs, memory, instructionResult);
     const expectedPage = getExpectedPage(address, bigintToUint8ArrayLE(valueToStore, noOfBytes), 32);
 
-    const immediate = new ImmediateDecoder();
+    const immediate = ImmediateDecoder.new();
     immediate.setBytes(bigintToUint8ArrayLE(valueToStore, noOfBytes));
 
     return { storeOps, address, registerIndex, memory, expectedPage, immediate };
@@ -151,13 +151,13 @@ describe("StoreOps", () => {
         initialMemory,
       )
       .finalize(tryAsMemoryIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
-    const storeOps = new StoreOps(regs, memory, instructionResult);
+    const storeOps = StoreOps.new(regs, memory, instructionResult);
     const expectedPage = getExpectedPage(address, bigintToUint8ArrayLE(valueToStore, noOfBytes), 32);
 
-    const valueImmediate = new ImmediateDecoder();
+    const valueImmediate = ImmediateDecoder.new();
     valueImmediate.setBytes(bigintToUint8ArrayLE(valueToStore, noOfBytes));
 
-    const addressImmediate = new ImmediateDecoder();
+    const addressImmediate = ImmediateDecoder.new();
     addressImmediate.setBytes(bigintToUint8ArrayLE(addressImmediateValue));
 
     return {

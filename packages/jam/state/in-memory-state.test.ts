@@ -392,7 +392,7 @@ describe("InMemoryState", () => {
 
     // Now UpdateOrAdd with different slot but same length
     const slot2 = tryAsTimeSlot(2);
-    const newItem = new LookupHistoryItem(hash, tryAsU32(blob.length), tryAsLookupHistorySlots([slot2]));
+    const newItem = LookupHistoryItem.new(hash, tryAsU32(blob.length), tryAsLookupHistorySlots([slot2]));
 
     result = state.applyUpdate({
       preimages: new Map([
@@ -615,7 +615,7 @@ describe("InMemoryState", () => {
     const slot2 = tryAsTimeSlot(2);
     const length1 = tryAsU32(blob.length);
     const length2 = tryAsU32(blob.length + 1); // simulate different-length record
-    const secondItem = new LookupHistoryItem(hash, length2, tryAsLookupHistorySlots([slot2]));
+    const secondItem = LookupHistoryItem.new(hash, length2, tryAsLookupHistorySlots([slot2]));
 
     result = state.applyUpdate({
       preimages: new Map([

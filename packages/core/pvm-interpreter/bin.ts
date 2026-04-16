@@ -6,7 +6,7 @@ const program = new Uint8Array([
   51, 8, 51, 9, 1, 50, 0, 73, 147, 82, 213, 0,
 ]);
 
-const pvm = new Interpreter();
+const pvm = Interpreter.new();
 pvm.resetGeneric(program, 0, tryAsGas(1000));
 // biome-ignore lint/suspicious/noConsole: We do want to print that.
 console.table(pvm.dumpProgram());

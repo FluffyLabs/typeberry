@@ -22,7 +22,11 @@ type Ananas = Awaited<ReturnType<typeof instantiate>>;
 const INF_STEPS = 2 ** 32 - 1;
 
 class AnanasRegisters implements IRegisters {
-  constructor(private readonly instance: Ananas) {}
+  static new(instance: Ananas) {
+    return new AnanasRegisters(instance);
+  }
+
+  private constructor(private readonly instance: Ananas) {}
 
   getAllEncoded(): Uint8Array {
     return this.instance.getRegisters();
@@ -42,7 +46,11 @@ class AnanasRegisters implements IRegisters {
 }
 
 class AnanasMemory implements IMemory {
-  constructor(private readonly instance: Ananas) {}
+  static new(instance: Ananas) {
+    return new AnanasMemory(instance);
+  }
+
+  private constructor(private readonly instance: Ananas) {}
 
   store(address: U32, bytes: Uint8Array): Result<OK, PageFault> {
     if (this.instance.setMemory(address, bytes)) {
@@ -67,7 +75,11 @@ class AnanasMemory implements IMemory {
 class AnanasGasCounter implements IGasCounter {
   initialGas: Gas = tryAsGas(0n);
 
-  constructor(private readonly instance: Ananas) {}
+  static new(instance: Ananas) {
+    return new AnanasGasCounter(instance);
+  }
+
+  private constructor(private readonly instance: Ananas) {}
 
   get(): Gas {
     return tryAsGas(this.instance.getGasLeft());
@@ -104,9 +116,9 @@ export class AnanasInterpreter implements IPvmInterpreter {
   readonly gas: AnanasGasCounter;
 
   private constructor(private readonly instance: Ananas) {
-    this.registers = new AnanasRegisters(instance);
-    this.memory = new AnanasMemory(instance);
-    this.gas = new AnanasGasCounter(instance);
+    this.registers = AnanasRegisters.new(instance);
+    this.memory = AnanasMemory.new(instance);
+    this.gas = AnanasGasCounter.new(instance);
   }
 
   static async new() {

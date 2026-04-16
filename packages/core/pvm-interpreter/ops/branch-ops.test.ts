@@ -17,15 +17,15 @@ describe("BranchOps", () => {
     const instructionResult = new InstructionResult();
     const code = new Uint8Array([Instruction.ADD_32, 5, 6, Instruction.SUB_32, 5, 6]);
     const basicBlocks = new BasicBlocks();
-    basicBlocks.reset(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
+    basicBlocks.reset(code, Mask.new(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
     instructionResult.nextPc = initialNextPc;
-    const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
+    const branchOps = BranchOps.new(regs, instructionResult, basicBlocks);
     const firstRegisterIndex = 0;
     const secondRegisterIndex = 1;
     regs.setU64(firstRegisterIndex, firstValue);
     regs.setU64(secondRegisterIndex, secondValue);
 
-    const immediate = new ImmediateDecoder();
+    const immediate = ImmediateDecoder.new();
     immediate.setBytes(bigintToUint8ArrayLE(secondValue));
 
     return { regs, instructionResult, branchOps, firstRegisterIndex, secondRegisterIndex, immediate };

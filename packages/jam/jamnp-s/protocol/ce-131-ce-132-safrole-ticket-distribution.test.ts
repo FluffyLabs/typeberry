@@ -25,13 +25,13 @@ describe("CE 131 and CE 132: Safrole Ticket Distribution", () => {
 
     await new Promise((resolve) => {
       handlers.server.registerHandlers(
-        new ServerHandler(tinyChainSpec, STREAM_KIND_GENERATOR_TO_PROXY, (epochIndex: Epoch, ticket: SignedTicket) => {
+        ServerHandler.new(tinyChainSpec, STREAM_KIND_GENERATOR_TO_PROXY, (epochIndex: Epoch, ticket: SignedTicket) => {
           assert.strictEqual(epochIndex, TEST_EPOCH);
           assert.deepStrictEqual(ticket, TEST_TICKET);
           resolve(undefined);
         }),
       );
-      handlers.client.registerHandlers(new ClientHandler(tinyChainSpec, STREAM_KIND_GENERATOR_TO_PROXY));
+      handlers.client.registerHandlers(ClientHandler.new(tinyChainSpec, STREAM_KIND_GENERATOR_TO_PROXY));
 
       handlers.client.withNewStream(
         STREAM_KIND_GENERATOR_TO_PROXY,

@@ -27,7 +27,7 @@ function prepareRegsAndMemory(machineId: MachineId, pageStart: U64, pageCount: U
   registers.set(10, requestType);
 
   const builder = new MemoryBuilder();
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
 
   return {
     registers,
@@ -43,7 +43,7 @@ function prepareTest(
   requestType: number,
 ) {
   const refine = new TestRefineExt();
-  const pages = new Pages(refine);
+  const pages = Pages.new(refine);
   pages.currentServiceId = tryAsServiceId(10_000);
   const machineIndex = tryAsMachineId(machineId);
   const start = tryAsU64(pageStart);

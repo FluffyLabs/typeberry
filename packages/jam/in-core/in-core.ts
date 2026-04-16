@@ -95,7 +95,11 @@ const ARGS_CODEC = codec.object({
 });
 
 export class InCore {
-  constructor(
+  static new(chainSpec: ChainSpec, states: StatesDb, pvmBackend: PvmBackend, blake2b: Blake2b) {
+    return new InCore(chainSpec, states, pvmBackend, blake2b);
+  }
+
+  private constructor(
     public readonly chainSpec: ChainSpec,
     private readonly states: StatesDb,
     private readonly pvmBackend: PvmBackend,
@@ -437,7 +441,7 @@ export class InCore {
     exportOffset: number;
   }): RefineHostCallExternalities {
     // TODO [ToDr] Pass all required fetch data
-    const fetchExternalities = new RefineFetchExternalities(this.chainSpec);
+    const fetchExternalities = RefineFetchExternalities.new(this.chainSpec);
     const refine = RefineExternalitiesImpl.create({
       currentServiceId: args.currentServiceId,
       lookupState: args.lookupState,

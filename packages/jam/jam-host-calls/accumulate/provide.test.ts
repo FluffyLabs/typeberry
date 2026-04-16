@@ -38,7 +38,7 @@ function prepareRegsAndMemory(
     );
   }
 
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
     memory,
@@ -49,7 +49,7 @@ describe("HostCalls: Provide", () => {
   it("should return panic if memory is unreadable", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const provide = new Provide(currentServiceId, accumulate);
+    const provide = Provide.new(currentServiceId, accumulate);
     const serviceId = tryAsServiceId(15_000);
     const preimage = BytesBlob.blobFromNumbers([0xaa, 0xbb, 0xcc, 0xdd]);
 
@@ -64,7 +64,7 @@ describe("HostCalls: Provide", () => {
   it("should return WHO if service not found", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const provide = new Provide(currentServiceId, accumulate);
+    const provide = Provide.new(currentServiceId, accumulate);
     const serviceId = tryAsServiceId(15_000);
     const preimage = BytesBlob.blobFromNumbers([0xaa, 0xbb, 0xcc, 0xdd]);
     accumulate.providePreimageResponse = Result.error(
@@ -88,7 +88,7 @@ describe("HostCalls: Provide", () => {
   it("should return HUH if preimage was not previously requested", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const provide = new Provide(currentServiceId, accumulate);
+    const provide = Provide.new(currentServiceId, accumulate);
     const serviceId = tryAsServiceId(15_000);
     const preimage = BytesBlob.blobFromNumbers([0xaa, 0xbb, 0xcc, 0xdd]);
     accumulate.providePreimageResponse = Result.error(
@@ -112,7 +112,7 @@ describe("HostCalls: Provide", () => {
   it("should return HUH if preimage already provided", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const provide = new Provide(currentServiceId, accumulate);
+    const provide = Provide.new(currentServiceId, accumulate);
     const serviceId = tryAsServiceId(15_000);
     const preimage = BytesBlob.blobFromNumbers([0xaa, 0xbb, 0xcc, 0xdd]);
     accumulate.providePreimageResponse = Result.error(
@@ -136,7 +136,7 @@ describe("HostCalls: Provide", () => {
   it("should return OK if preimage was not provided before (for other service)", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const provide = new Provide(currentServiceId, accumulate);
+    const provide = Provide.new(currentServiceId, accumulate);
     const serviceId = tryAsServiceId(15_000);
     const preimage = BytesBlob.blobFromNumbers([0xaa, 0xbb, 0xcc, 0xdd]);
 
@@ -152,7 +152,7 @@ describe("HostCalls: Provide", () => {
   it("should return OK if preimage was not provided before (for self)", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const provide = new Provide(currentServiceId, accumulate);
+    const provide = Provide.new(currentServiceId, accumulate);
     const serviceId = tryAsServiceId(15_000);
     const preimage = BytesBlob.blobFromNumbers([0xaa, 0xbb, 0xcc, 0xdd]);
 

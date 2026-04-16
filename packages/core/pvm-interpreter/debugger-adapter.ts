@@ -8,8 +8,12 @@ import { Registers } from "./registers.js";
 export class DebuggerAdapter {
   private readonly pvm: Interpreter;
 
-  constructor(useSbrkGas = false) {
-    this.pvm = new Interpreter({ useSbrkGas });
+  static new(useSbrkGas = false) {
+    return new DebuggerAdapter(useSbrkGas);
+  }
+
+  private constructor(useSbrkGas = false) {
+    this.pvm = Interpreter.new({ useSbrkGas });
   }
 
   resetJAM(jamProgram: Uint8Array, pc: number, gas: bigint, args: Uint8Array, hasMetadata = false) {

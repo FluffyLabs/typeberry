@@ -52,7 +52,7 @@ async function createBlock(db: InMemoryBlocks, parent: HeaderHash, slot = 0): Pr
   const blockView = reencodeAsView(Block.Codec, block, tinyChainSpec);
   const headerHash = blake2b.hashBytes(blockView.header.view().encoded()).asOpaque<HeaderHash>();
 
-  await db.insertBlock(new WithHash(headerHash, blockView));
+  await db.insertBlock(WithHash.new(headerHash, blockView));
 
   return headerHash;
 }

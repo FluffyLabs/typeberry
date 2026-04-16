@@ -16,10 +16,10 @@ describe("MathOps", () => {
     regs.setU64(firstValRegIndex, firstValue);
     regs.setU64(secondValRegIndex, secondValue);
 
-    const immediate = new ImmediateDecoder();
+    const immediate = ImmediateDecoder.new();
     immediate.setBytes(bigintToUint8ArrayLE(firstValue));
 
-    const mathOps = new MathOps(regs);
+    const mathOps = MathOps.new(regs);
 
     return { regs, mathOps, immediate, firstValRegIndex, secondValRegIndex, resultRegisterIndex };
   }

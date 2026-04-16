@@ -15,11 +15,15 @@ export class ProgramDecoder {
   private mask: Mask;
   private jumpTable: JumpTable;
 
-  constructor(rawProgram: Uint8Array) {
+  static new(rawProgram: Uint8Array) {
+    return new ProgramDecoder(rawProgram);
+  }
+
+  private constructor(rawProgram: Uint8Array) {
     const { code, mask, jumpTable, jumpTableItemLength } = this.decodeProgram(rawProgram);
 
     this.code = new Uint8Array(code);
-    this.mask = new Mask(mask);
+    this.mask = Mask.new(mask);
     this.jumpTable = JumpTable.fromRaw(jumpTableItemLength, jumpTable);
   }
 
@@ -62,7 +66,7 @@ export class ProgramDecoder {
   /** https://graypaper.fluffylabs.dev/#/68eaa1f/23f400234701?v=0.6.4 */
   static deblob(program: Uint8Array): Result<ProgramDecoder, ProgramDecoderError> {
     try {
-      return Result.ok(new ProgramDecoder(program));
+      return Result.ok(ProgramDecoder.new(program));
     } catch (e) {
       logger.error`Invalid program: ${e}`;
       return Result.error(ProgramDecoderError.InvalidProgramError, () => `Program decoder error: ${e}`);

@@ -28,7 +28,11 @@ export class MultiMap<TKeys extends readonly unknown[], TValue> {
    * Pass the number of keys and optionally mappers from keys to primitive types
    * if needed.
    */
-  constructor(keysLength: TKeys["length"], keyMappers?: KeyMappers<TKeys>) {
+  static new<TKeys extends readonly unknown[], TValue>(keysLength: TKeys["length"], keyMappers?: KeyMappers<TKeys>) {
+    return new MultiMap<TKeys, TValue>(keysLength, keyMappers);
+  }
+
+  private constructor(keysLength: TKeys["length"], keyMappers?: KeyMappers<TKeys>) {
     check`${keysLength > 0} Keys cannot be empty.`;
     check`${keyMappers === undefined || keyMappers.length === keysLength} Incorrect number of key mappers given!`;
     this.data = new Map() as NestedMaps<TKeys, TValue>;

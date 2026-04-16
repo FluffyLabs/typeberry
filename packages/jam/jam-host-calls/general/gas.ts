@@ -17,7 +17,11 @@ export class GasHostCall implements HostCallHandler {
   basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(7);
 
-  constructor(public readonly currentServiceId: ServiceId) {}
+  static new(currentServiceId: ServiceId) {
+    return new GasHostCall(currentServiceId);
+  }
+
+  private constructor(public readonly currentServiceId: ServiceId) {}
 
   execute(gas: IGasCounter, regs: HostCallRegisters): Promise<undefined | PvmExecution> {
     const gasValue = gas.get();

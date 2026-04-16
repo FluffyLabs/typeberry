@@ -188,7 +188,7 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry, blake2b: Bla
     const slots = tryAsLookupHistorySlots(item.value.map((slot) => tryAsTimeSlot(slot)));
 
     const arr = lookupHistory.get(item.key.hash) ?? [];
-    arr.push(new LookupHistoryItem(item.key.hash, tryAsU32(item.key.length), slots));
+    arr.push(LookupHistoryItem.new(item.key.hash, tryAsU32(item.key.length), slots));
     lookupHistory.set(item.key.hash, arr);
   }
 

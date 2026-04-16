@@ -34,7 +34,7 @@ export class Program {
   static fromGeneric(blob: Uint8Array, hasMetadata: boolean) {
     const { code, metadata } = hasMetadata ? extractCodeAndMetadata(blob) : { code: blob };
     const regs = Registers.empty();
-    const memory = new Memory();
+    const memory = Memory.new();
     return new Program(code, regs, memory, metadata);
   }
 

@@ -5,7 +5,11 @@ import type { Registers } from "../registers.js";
 import { Result } from "../result.js";
 
 export class BranchOps {
-  constructor(
+  static new(regs: Registers, instructionResult: InstructionResult, basicBlocks: BasicBlocks) {
+    return new BranchOps(regs, instructionResult, basicBlocks);
+  }
+
+  private constructor(
     private regs: Registers,
     private instructionResult: InstructionResult,
     private basicBlocks: BasicBlocks,

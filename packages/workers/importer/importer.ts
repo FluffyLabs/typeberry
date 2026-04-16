@@ -84,7 +84,7 @@ export class Importer {
 
     this.metrics = metrics.createMetrics();
 
-    this.verifier = new BlockVerifier(args.hasher, args.blocks);
+    this.verifier = BlockVerifier.new(args.hasher, args.blocks);
     this.stf = OnChain.assemble({
       chainSpec: args.spec,
       state,
@@ -206,7 +206,7 @@ export class Importer {
 
     // insert new state and the block to DB.
     const timerDb = measure("import:db");
-    const writeBlocks = this.blocks.insertBlock(new WithHash(headerHash, block));
+    const writeBlocks = this.blocks.insertBlock(WithHash.new(headerHash, block));
 
     // Computation of the state root may happen asynchronously,
     // but we still need to wait for it before next block can be imported
@@ -233,7 +233,7 @@ export class Importer {
       }
     }
 
-    return Result.ok(new WithHash(headerHash, block.header.view()));
+    return Result.ok(WithHash.new(headerHash, block.header.view()));
   }
 
   getBestStateRootHash() {

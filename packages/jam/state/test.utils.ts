@@ -185,12 +185,12 @@ export const testState = (): InMemoryState => {
           ),
           lookupHistory: HashDictionary.fromEntries(
             [
-              new LookupHistoryItem(
+              LookupHistoryItem.new(
                 b32("0xc16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c"),
                 tryAsU32(35),
                 asKnownSize([tryAsTimeSlot(0)]),
               ),
-              new LookupHistoryItem(
+              LookupHistoryItem.new(
                 b32("0x15f8485e3a88e86182e63280720d5ec9892578f0e577fb1bcdda5cf497950815"),
                 tryAsU32(1099),
                 asKnownSize([tryAsTimeSlot(0)]),

@@ -11,7 +11,7 @@ const REGISTER = 7;
 describe("HostCalls: Gas", () => {
   it("should write U32 gas to register", () => {
     const currentServiceId = tryAsServiceId(10_000);
-    const gas = new GasHostCall(currentServiceId);
+    const gas = GasHostCall.new(currentServiceId);
 
     const counter = gasCounter(tryAsGas(10_000));
     const regs = HostCallRegisters.empty();
@@ -27,7 +27,7 @@ describe("HostCalls: Gas", () => {
 
   it("should write U64 gas to register", () => {
     const currentServiceId = tryAsServiceId(10_000);
-    const gas = new GasHostCall(currentServiceId);
+    const gas = GasHostCall.new(currentServiceId);
 
     const counter = gasCounter(tryAsGas(2n ** 64n - 1n));
     const regs = HostCallRegisters.empty();

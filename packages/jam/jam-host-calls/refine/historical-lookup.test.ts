@@ -45,7 +45,7 @@ function prepareRegsAndMemory(
   if (writableMemory) {
     builder.setWriteablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE));
   }
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
     memory,
@@ -60,7 +60,7 @@ function prepareRegsAndMemory(
 describe("HostCalls: Historical Lookup", () => {
   it("should lookup key from an account", async () => {
     const refine = new TestRefineExt();
-    const lookup = new HistoricalLookup(refine);
+    const lookup = HistoricalLookup.new(refine);
     const serviceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(32, 3);
     const data = "hello world";
@@ -81,7 +81,7 @@ describe("HostCalls: Historical Lookup", () => {
 
   it("should lookup key longer than destination", async () => {
     const refine = new TestRefineExt();
-    const lookup = new HistoricalLookup(refine);
+    const lookup = HistoricalLookup.new(refine);
     const serviceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(32, 3);
     const data = "hello world";
@@ -99,7 +99,7 @@ describe("HostCalls: Historical Lookup", () => {
 
   it("should lookup key longer than destination + offset", async () => {
     const refine = new TestRefineExt();
-    const lookup = new HistoricalLookup(refine);
+    const lookup = HistoricalLookup.new(refine);
     const serviceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(32, 3);
     const data = "hello world";
@@ -117,7 +117,7 @@ describe("HostCalls: Historical Lookup", () => {
 
   it("should handle missing value", async () => {
     const refine = new TestRefineExt();
-    const lookup = new HistoricalLookup(refine);
+    const lookup = HistoricalLookup.new(refine);
     const serviceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, hash, 0, 32);
@@ -137,7 +137,7 @@ describe("HostCalls: Historical Lookup", () => {
 
   it("should panic if no memory for key", async () => {
     const refine = new TestRefineExt();
-    const lookup = new HistoricalLookup(refine);
+    const lookup = HistoricalLookup.new(refine);
     const serviceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, hash, 0, 32, { skipHash: true });
@@ -152,7 +152,7 @@ describe("HostCalls: Historical Lookup", () => {
 
   it("should panic if memory is not writable", async () => {
     const refine = new TestRefineExt();
-    const lookup = new HistoricalLookup(refine);
+    const lookup = HistoricalLookup.new(refine);
     const serviceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(32, 3);
     const data = "hello world";
@@ -169,7 +169,7 @@ describe("HostCalls: Historical Lookup", () => {
 
   it("should handle if the destination length is greater than data length", async () => {
     const refine = new TestRefineExt();
-    const lookup = new HistoricalLookup(refine);
+    const lookup = HistoricalLookup.new(refine);
     const serviceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(32, 3);
     const data = "hello world";
@@ -191,7 +191,7 @@ describe("HostCalls: Historical Lookup", () => {
 
   it("should panic if the destination is beyond mem limit", async () => {
     const refine = new TestRefineExt();
-    const lookup = new HistoricalLookup(refine);
+    const lookup = HistoricalLookup.new(refine);
     const serviceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(32, 3);
     const data = "hello world";
@@ -210,7 +210,7 @@ describe("HostCalls: Historical Lookup", () => {
 
   it("should handle 0-length destination", async () => {
     const refine = new TestRefineExt();
-    const lookup = new HistoricalLookup(refine);
+    const lookup = HistoricalLookup.new(refine);
     const serviceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(32, 3);
     const data = "hello world";

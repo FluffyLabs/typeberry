@@ -22,7 +22,7 @@ function prepareRegsAndMemory(machineId: MachineId, sourceStart: number, destina
   registers.set(10, tryAsU64(length));
 
   const builder = new MemoryBuilder();
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
 
   return {
     registers,
@@ -32,7 +32,7 @@ function prepareRegsAndMemory(machineId: MachineId, sourceStart: number, destina
 
 function prepareTest(result: Result<OK, PeekPokeError>) {
   const refine = new TestRefineExt();
-  const poke = new Poke(refine);
+  const poke = Poke.new(refine);
   poke.currentServiceId = tryAsServiceId(10_000);
   const machineId = tryAsMachineId(10_000);
   const memoryStart = 2 ** 20;

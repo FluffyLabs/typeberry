@@ -17,10 +17,10 @@ describe("BooleanOps", () => {
     regs.setU64(secondRegisterIndex, secondValue);
     regs.setU64(resultRegisterIndex, 0xdeadbeefn);
 
-    const immediate = new ImmediateDecoder();
+    const immediate = ImmediateDecoder.new();
     immediate.setBytes(bigintToUint8ArrayLE(secondValue));
 
-    const bitOps = new BooleanOps(regs);
+    const bitOps = BooleanOps.new(regs);
 
     return { regs, bitOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex, immediate };
   }

@@ -30,7 +30,7 @@ function prepareRegsAndMemory(code: BytesBlob, pc: ProgramCounter, { skipCode = 
   if (!skipCode) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), code.raw);
   }
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
     memory,
@@ -40,7 +40,7 @@ function prepareRegsAndMemory(code: BytesBlob, pc: ProgramCounter, { skipCode = 
 describe("HostCalls: Machine", () => {
   it("should start a new nested machine with minimal code", async () => {
     const refine = new TestRefineExt();
-    const machine = new Machine(refine);
+    const machine = Machine.new(refine);
     const machineId = tryAsMachineId(10_000);
     machine.currentServiceId = tryAsServiceId(10_000);
     const code = BytesBlob.blobFromNumbers([0, 0, 0]);
@@ -58,7 +58,7 @@ describe("HostCalls: Machine", () => {
 
   it("should start a new nested machine with fibbonacci code", async () => {
     const refine = new TestRefineExt();
-    const machine = new Machine(refine);
+    const machine = Machine.new(refine);
     const machineId = tryAsMachineId(10_000);
     machine.currentServiceId = tryAsServiceId(10_000);
     const code = BytesBlob.blobFromNumbers([
@@ -79,7 +79,7 @@ describe("HostCalls: Machine", () => {
 
   it("should panic when code is unavailable", async () => {
     const refine = new TestRefineExt();
-    const machine = new Machine(refine);
+    const machine = Machine.new(refine);
     machine.currentServiceId = tryAsServiceId(10_000);
     const code = BytesBlob.blobFromString("amazing PVM code");
     const programCounter = tryAsProgramCounter(5);
@@ -94,7 +94,7 @@ describe("HostCalls: Machine", () => {
 
   it("should return HUH when code is invalid", async () => {
     const refine = new TestRefineExt();
-    const machine = new Machine(refine);
+    const machine = Machine.new(refine);
     machine.currentServiceId = tryAsServiceId(10_000);
     const code = BytesBlob.blobFromString("invalid PVM code");
     const programCounter = tryAsProgramCounter(5);

@@ -33,7 +33,7 @@ function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = serviceA
 
   const builder = new MemoryBuilder();
   builder.setWriteablePages(tryAsMemoryIndex(pageStart), tryAsMemoryIndex(pageStart + PAGE_SIZE));
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
 
   const readRaw = () => {
     const result = new Uint8Array(Number(registers.get(LEN_REG)));
@@ -63,7 +63,7 @@ describe("HostCalls: Info", () => {
     const serviceId = tryAsServiceId(10_000);
     const currentServiceId = serviceId;
     const accounts = new TestAccounts(currentServiceId);
-    const info = new Info(currentServiceId, accounts);
+    const info = Info.new(currentServiceId, accounts);
     const { registers, memory, readInfo } = prepareRegsAndMemory(serviceId);
     const storageUtilisationBytes = tryAsU64(10_000);
     const storageUtilisationCount = tryAsU32(1_000);
@@ -103,7 +103,7 @@ describe("HostCalls: Info", () => {
     const serviceId = tryAsServiceId(10_000);
     const currentServiceId = serviceId;
     const accounts = new TestAccounts(currentServiceId);
-    const info = new Info(currentServiceId, accounts);
+    const info = Info.new(currentServiceId, accounts);
     const { registers, memory, readRaw } = prepareRegsAndMemory(serviceId);
     registers.set(LEN_REG, tryAsU64(10));
     const storageUtilisationBytes = tryAsU64(10_000);
@@ -134,7 +134,7 @@ describe("HostCalls: Info", () => {
   it("should write none if account info is missing", async () => {
     const currentServiceId = tryAsServiceId(15_000);
     const accounts = new TestAccounts(currentServiceId);
-    const info = new Info(currentServiceId, accounts);
+    const info = Info.new(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(serviceId);
 
@@ -150,7 +150,7 @@ describe("HostCalls: Info", () => {
     const serviceId = tryAsServiceId(10_000);
     const currentServiceId = serviceId;
     const accounts = new TestAccounts(currentServiceId);
-    const info = new Info(serviceId, accounts);
+    const info = Info.new(serviceId, accounts);
     const { registers, memory } = prepareRegsAndMemory(serviceId, 10);
     const storageUtilisationBytes = tryAsU64(10_000);
     const storageUtilisationCount = tryAsU32(1_000);

@@ -22,7 +22,7 @@ function prepareRegsAndMemory(machineId: MachineId, destinationStart: number, so
   registers.set(10, tryAsU64(length));
 
   const builder = new MemoryBuilder();
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
 
   return {
     registers,
@@ -32,7 +32,7 @@ function prepareRegsAndMemory(machineId: MachineId, destinationStart: number, so
 
 function prepareTest(result: Result<OK, PeekPokeError>) {
   const refine = new TestRefineExt();
-  const peek = new Peek(refine);
+  const peek = Peek.new(refine);
   peek.currentServiceId = tryAsServiceId(10_000);
   const machineId = tryAsMachineId(10_000);
   const destinationStart = 2 ** 16;

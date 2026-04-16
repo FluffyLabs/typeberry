@@ -234,7 +234,7 @@ export class Accumulate {
   ) {
     logger.log`Accumulating service ${serviceId}, transfers: ${transfers.length} operands: ${operands.length} at slot: ${slot}`;
 
-    const updatedState = new PartiallyUpdatedState(this.state, inputStateUpdate);
+    const updatedState = PartiallyUpdatedState.new(this.state, inputStateUpdate);
 
     const serviceInfo = updatedState.getServiceInfo(serviceId);
     if (serviceInfo !== null) {
@@ -498,7 +498,7 @@ export class Accumulate {
     }
 
     // δ†
-    const partialStateUpdate = new PartiallyUpdatedState(this.state, AccumulationStateUpdate.new(servicesUpdate));
+    const partialStateUpdate = PartiallyUpdatedState.new(this.state, AccumulationStateUpdate.new(servicesUpdate));
     // update last accumulation
     for (const serviceId of accumulatedServices) {
       // https://graypaper.fluffylabs.dev/#/7e6ff6a/181003185103?v=0.6.7

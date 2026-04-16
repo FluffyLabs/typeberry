@@ -13,9 +13,9 @@ import { OneRegOneExtImmDispatcher } from "./one-reg-one-ext-imm-dispatcher.js";
 
 describe("OneRegOneExtImmDispatcher", () => {
   const regs = Registers.empty();
-  const memory = new Memory();
+  const memory = Memory.new();
   const instructionResult = new InstructionResult();
-  const loadOps = new LoadOps(regs, memory, instructionResult);
+  const loadOps = LoadOps.new(regs, memory, instructionResult);
   const mockFn = mock.fn();
 
   function mockAllMethods(obj: object) {
@@ -39,7 +39,7 @@ describe("OneRegOneExtImmDispatcher", () => {
   });
 
   const argsMock = {
-    immediateDecoder: new ExtendedWitdthImmediateDecoder(),
+    immediateDecoder: ExtendedWitdthImmediateDecoder.new(),
   } as OneRegisterOneExtendedWidthImmediateArgs;
 
   const relevantInstructions = Object.entries(Instruction)

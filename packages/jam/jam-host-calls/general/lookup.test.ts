@@ -66,7 +66,7 @@ function prepareRegsAndMemory(
       tryAsMemoryIndex(DESTINATION_MEM_ADDRESS + PAGE_SIZE),
     );
   }
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
     memory,
@@ -77,7 +77,7 @@ describe("HostCalls: Lookup", () => {
   it("should fail gracefully if account doesn't exist", async () => {
     const currentServiceId = tryAsServiceId(15_000);
     const accounts = new TestAccounts(currentServiceId);
-    const lookup = new Lookup(currentServiceId, accounts);
+    const lookup = Lookup.new(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(serviceId, HASH);
 
@@ -92,7 +92,7 @@ describe("HostCalls: Lookup", () => {
   it("should fail gracefully if preimage doesn't exist", async () => {
     const currentServiceId = tryAsServiceId(15_000);
     const accounts = new TestAccounts(currentServiceId);
-    const lookup = new Lookup(currentServiceId, accounts);
+    const lookup = Lookup.new(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(serviceId, HASH);
 
@@ -106,7 +106,7 @@ describe("HostCalls: Lookup", () => {
   it("should fail on page fault if memory isn't readable", async () => {
     const currentServiceId = tryAsServiceId(15_000);
     const accounts = new TestAccounts(currentServiceId);
-    const lookup = new Lookup(currentServiceId, accounts);
+    const lookup = Lookup.new(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
     const { registers, memory: emptyMemory } = prepareRegsAndMemory(serviceId, HASH, {
       skipKey: true,
@@ -120,7 +120,7 @@ describe("HostCalls: Lookup", () => {
   it("should fail on page fault if destination memory is not writable", async () => {
     const currentServiceId = tryAsServiceId(15_000);
     const accounts = new TestAccounts(currentServiceId);
-    const lookup = new Lookup(currentServiceId, accounts);
+    const lookup = Lookup.new(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
     const { registers, memory: emptyMemory } = prepareRegsAndMemory(serviceId, HASH, {
       skipValue: true,
@@ -137,7 +137,7 @@ describe("HostCalls: Lookup", () => {
     it("without offset", async () => {
       const currentServiceId = tryAsServiceId(15_000);
       const accounts = new TestAccounts(currentServiceId);
-      const lookup = new Lookup(currentServiceId, accounts);
+      const lookup = Lookup.new(currentServiceId, accounts);
       const serviceId = tryAsServiceId(10_000);
       const preimageLength = 5;
       const { registers, memory } = prepareRegsAndMemory(serviceId, HASH, { preimageLength });
@@ -157,7 +157,7 @@ describe("HostCalls: Lookup", () => {
     it("with offset", async () => {
       const currentServiceId = tryAsServiceId(15_000);
       const accounts = new TestAccounts(currentServiceId);
-      const lookup = new Lookup(currentServiceId, accounts);
+      const lookup = Lookup.new(currentServiceId, accounts);
       const serviceId = tryAsServiceId(10_000);
       const preimageLength = 5;
       const preimageOffset = 6;

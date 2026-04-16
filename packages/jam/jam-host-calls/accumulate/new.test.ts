@@ -49,7 +49,7 @@ function prepareRegsAndMemory(
   if (!skipCodeHash) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), codeHash.raw);
   }
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
     memory,
@@ -60,7 +60,7 @@ describe("HostCalls: New", () => {
   it("should create a new service", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const n = new New(serviceId, accumulate);
+    const n = New.new(serviceId, accumulate);
     accumulate.newServiceResponse = Result.ok(tryAsServiceId(23_000));
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
@@ -84,7 +84,7 @@ describe("HostCalls: New", () => {
   it("should fail when balance is not enough", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const n = new New(serviceId, accumulate);
+    const n = New.new(serviceId, accumulate);
     accumulate.newServiceResponse = Result.error(
       NewServiceError.InsufficientFunds,
       () => "Test: insufficient funds for new service",
@@ -108,7 +108,7 @@ describe("HostCalls: New", () => {
   it("should fail when code not readable", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const n = new New(serviceId, accumulate);
+    const n = New.new(serviceId, accumulate);
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),
@@ -130,7 +130,7 @@ describe("HostCalls: New", () => {
   it("should fail when trying to set gratis storage by unprivileged service", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const n = new New(serviceId, accumulate);
+    const n = New.new(serviceId, accumulate);
     accumulate.newServiceResponse = Result.error(
       NewServiceError.UnprivilegedService,
       () => "Test: unprivileged service trying to set gratis storage",
@@ -154,7 +154,7 @@ describe("HostCalls: New", () => {
   it("should create a new service with selected id", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10); // service has registrar privilege
-    const n = new New(serviceId, accumulate);
+    const n = New.new(serviceId, accumulate);
     accumulate.newServiceResponse = Result.ok(tryAsServiceId(42));
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
@@ -179,7 +179,7 @@ describe("HostCalls: New", () => {
   it("should create a new service with random id", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000); // service does not have registrar privilege
-    const n = new New(serviceId, accumulate);
+    const n = New.new(serviceId, accumulate);
     accumulate.newServiceResponse = Result.ok(tryAsServiceId(2 ** 20));
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
@@ -204,7 +204,7 @@ describe("HostCalls: New", () => {
   it("should fail when trying to set selected id, but service already exists", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10);
-    const n = new New(serviceId, accumulate);
+    const n = New.new(serviceId, accumulate);
     accumulate.newServiceResponse = Result.error(
       NewServiceError.RegistrarServiceIdAlreadyTaken,
       () => "Test: service ID already taken",

@@ -94,7 +94,7 @@ describe("FuzzV1Target Handler", () => {
 
       mockMessageHandler.getPeerInfo.mock.mockImplementation(async () => responsePeerInfo);
 
-      const fuzzTarget = new FuzzTarget(mockMessageHandler, mockSender, spec);
+      const fuzzTarget = FuzzTarget.new(mockMessageHandler, mockSender, spec);
       const testMessage = encode(incomingMessage);
 
       await fuzzTarget.onSocketMessage(testMessage);
@@ -152,7 +152,7 @@ describe("FuzzV1Target Handler", () => {
 
       mockMessageHandler.initialize.mock.mockImplementation(async () => expectedStateRoot);
 
-      const fuzzTarget = new FuzzTarget(mockMessageHandler, mockSender, spec);
+      const fuzzTarget = FuzzTarget.new(mockMessageHandler, mockSender, spec);
       await completeHandshake(mockMessageHandler, mockSender, fuzzTarget);
       mockSender._sentData = []; // Clear handshake response
 
@@ -190,7 +190,7 @@ describe("FuzzV1Target Handler", () => {
 
       mockMessageHandler.importBlock.mock.mockImplementation(async () => Result.ok(expectedStateRoot));
 
-      const fuzzTarget = new FuzzTarget(mockMessageHandler, mockSender, spec);
+      const fuzzTarget = FuzzTarget.new(mockMessageHandler, mockSender, spec);
       await completeHandshake(mockMessageHandler, mockSender, fuzzTarget);
       mockSender._sentData = []; // Clear handshake response
 
@@ -227,7 +227,7 @@ describe("FuzzV1Target Handler", () => {
         Result.error(expectedError, () => "Test: ImportBlock error"),
       );
 
-      const fuzzTarget = new FuzzTarget(mockMessageHandler, mockSender, spec);
+      const fuzzTarget = FuzzTarget.new(mockMessageHandler, mockSender, spec);
       await completeHandshake(mockMessageHandler, mockSender, fuzzTarget);
       mockSender._sentData = []; // Clear handshake response
 
@@ -273,7 +273,7 @@ describe("FuzzV1Target Handler", () => {
 
       mockMessageHandler.getSerializedState.mock.mockImplementation(async () => keyValues);
 
-      const fuzzTarget = new FuzzTarget(mockMessageHandler, mockSender, spec);
+      const fuzzTarget = FuzzTarget.new(mockMessageHandler, mockSender, spec);
       await completeHandshake(mockMessageHandler, mockSender, fuzzTarget);
       mockSender._sentData = []; // Clear handshake response
 
@@ -303,7 +303,7 @@ describe("FuzzV1Target Handler", () => {
         value: stateRoot,
       };
 
-      const fuzzTarget = new FuzzTarget(mockMessageHandler, mockSender, spec);
+      const fuzzTarget = FuzzTarget.new(mockMessageHandler, mockSender, spec);
       await completeHandshake(mockMessageHandler, mockSender, fuzzTarget);
       mockSender._sentData = []; // Clear handshake response
 
@@ -331,7 +331,7 @@ describe("FuzzV1Target Handler", () => {
         value: keyValues,
       };
 
-      const fuzzTarget = new FuzzTarget(mockMessageHandler, mockSender, spec);
+      const fuzzTarget = FuzzTarget.new(mockMessageHandler, mockSender, spec);
       await completeHandshake(mockMessageHandler, mockSender, fuzzTarget);
       mockSender._sentData = []; // Clear handshake response
 
@@ -354,7 +354,7 @@ describe("FuzzV1Target Handler", () => {
         value: error,
       };
 
-      const fuzzTarget = new FuzzTarget(mockMessageHandler, mockSender, spec);
+      const fuzzTarget = FuzzTarget.new(mockMessageHandler, mockSender, spec);
       await completeHandshake(mockMessageHandler, mockSender, fuzzTarget);
       mockSender._sentData = []; // Clear handshake response
 
@@ -372,7 +372,7 @@ describe("FuzzV1Target Handler", () => {
       const mockMessageHandler = new MockV1MessageHandler();
       const mockSender = new MockSender();
 
-      const fuzzTarget = new FuzzTarget(mockMessageHandler, mockSender, spec);
+      const fuzzTarget = FuzzTarget.new(mockMessageHandler, mockSender, spec);
 
       // Create malformed message with valid length prefix but invalid data
       const malformedMessage = new Uint8Array(8);
@@ -406,7 +406,7 @@ describe("FuzzV1Target Handler", () => {
     mockSender: MockSender,
     fuzzTarget?: FuzzTarget,
   ): Promise<FuzzTarget> {
-    const target = fuzzTarget ?? new FuzzTarget(mockMessageHandler, mockSender, spec);
+    const target = fuzzTarget ?? FuzzTarget.new(mockMessageHandler, mockSender, spec);
 
     const inputPeerInfo = PeerInfo.create({
       fuzzVersion: tryAsU8(1),

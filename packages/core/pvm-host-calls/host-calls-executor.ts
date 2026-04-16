@@ -36,7 +36,15 @@ export type ReturnValue<TGas = Gas> = {
 );
 
 export class HostCallsExecutor {
-  constructor(
+  static new(
+    pvmInstanceManager: PvmInstanceManager,
+    hostCalls: HostCalls,
+    ioTracer: EcalliTraceLogger | null = EcalliTraceLogger.create(),
+  ) {
+    return new HostCallsExecutor(pvmInstanceManager, hostCalls, ioTracer);
+  }
+
+  private constructor(
     private pvmInstanceManager: PvmInstanceManager,
     private hostCalls: HostCalls,
     private ioTracer: EcalliTraceLogger | null = EcalliTraceLogger.create(),
@@ -83,7 +91,7 @@ export class HostCallsExecutor {
     const ioTracker = this.ioTracer?.tracker() ?? null;
     const registers = HostCallRegisters.fromRaw(pvmInstance.registers.getAllEncoded());
     registers.ioTracker = ioTracker;
-    const memory = new HostCallMemory(pvmInstance.memory);
+    const memory = HostCallMemory.new(pvmInstance.memory);
     memory.ioTracker = ioTracker;
 
     const gas = pvmInstance.gas;

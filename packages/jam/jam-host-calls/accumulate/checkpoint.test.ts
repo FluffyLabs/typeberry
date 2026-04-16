@@ -13,7 +13,7 @@ describe("HostCalls: Checkpoint", () => {
   it("should write U64 gas to register and checkpoint the state", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
-    const checkpoint = new Checkpoint(serviceId, accumulate);
+    const checkpoint = Checkpoint.new(serviceId, accumulate);
 
     const counter = gasCounter(tryAsGas(2n ** 42n - 1n));
     const regs = HostCallRegisters.empty();

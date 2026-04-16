@@ -15,18 +15,18 @@ import { OneRegOneImmOneOffsetDispatcher } from "./one-reg-one-imm-one-offset-di
 describe("OneRegOneImmOneOffsetDispatcher", () => {
   describe("check if it handles expected instructions", () => {
     const regs = Registers.empty();
-    const memory = new Memory();
+    const memory = Memory.new();
     const instructionResult = new InstructionResult();
     const basicBlocks = new BasicBlocks();
-    const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
-    const loadOps = new LoadOps(regs, memory, instructionResult);
+    const branchOps = BranchOps.new(regs, instructionResult, basicBlocks);
+    const loadOps = LoadOps.new(regs, memory, instructionResult);
 
     after(() => {
       mock.restoreAll();
     });
 
     const argsMock = {
-      immediateDecoder: new ImmediateDecoder(),
+      immediateDecoder: ImmediateDecoder.new(),
     } as OneRegisterOneImmediateOneOffsetArgs;
 
     it("it should call BranchOps.jump and LoadOps.loadImmediate", () => {
@@ -145,11 +145,11 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
 
   describe("check if it handles other instructions than expected", () => {
     const regs = Registers.empty();
-    const memory = new Memory();
+    const memory = Memory.new();
     const instructionResult = new InstructionResult();
     const basicBlocks = new BasicBlocks();
-    const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
-    const loadOps = new LoadOps(regs, memory, instructionResult);
+    const branchOps = BranchOps.new(regs, instructionResult, basicBlocks);
+    const loadOps = LoadOps.new(regs, memory, instructionResult);
 
     const mockFn = mock.fn();
 
@@ -175,7 +175,7 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     });
 
     const argsMock = {
-      immediateDecoder: new ImmediateDecoder(),
+      immediateDecoder: ImmediateDecoder.new(),
     } as OneRegisterOneImmediateOneOffsetArgs;
 
     const otherInstructions = Object.entries(Instruction)

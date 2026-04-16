@@ -15,7 +15,7 @@ const program = new Uint8Array([jumpTable.length, jumpTableItemLength, 16, ...ju
 
 describe("ProgramDecoder", () => {
   it("should corectly decode instructions", () => {
-    const programDecoder = new ProgramDecoder(program);
+    const programDecoder = ProgramDecoder.new(program);
 
     const result = programDecoder.getCode();
 
@@ -23,15 +23,15 @@ describe("ProgramDecoder", () => {
   });
 
   it("should corectly decode mask", () => {
-    const programDecoder = new ProgramDecoder(program);
+    const programDecoder = ProgramDecoder.new(program);
 
     const result = programDecoder.getMask();
 
-    assert.deepStrictEqual(result, new Mask(BitVec.fromBlob(new Uint8Array(bitMask), code.length)));
+    assert.deepStrictEqual(result, Mask.new(BitVec.fromBlob(new Uint8Array(bitMask), code.length)));
   });
 
   it("should corectly decode jump table", () => {
-    const programDecoder = new ProgramDecoder(program);
+    const programDecoder = ProgramDecoder.new(program);
 
     const result = programDecoder.getJumpTable();
 

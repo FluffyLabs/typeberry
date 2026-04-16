@@ -174,7 +174,7 @@ export class InMemoryService extends WithDebug implements Service {
         throw new Error(`Service ${service.serviceId} is missing expected lookupHistory: ${hash}, ${length}`);
       }
       const items = lookupHistory.get(hash) ?? [];
-      items.push(new LookupHistoryItem(hash, length, slots));
+      items.push(LookupHistoryItem.new(hash, length, slots));
       lookupHistory.set(hash, items);
     }
 
@@ -365,7 +365,7 @@ export class InMemoryState extends WithDebug implements State, WithStateView, En
           if (slot !== null) {
             const lookupHistory = service.data.lookupHistory.get(preimage.hash);
             const length = tryAsU32(preimage.blob.length);
-            const lookup = new LookupHistoryItem(preimage.hash, length, tryAsLookupHistorySlots([slot]));
+            const lookup = LookupHistoryItem.new(preimage.hash, length, tryAsLookupHistorySlots([slot]));
             if (lookupHistory === undefined) {
               // no lookup history for that preimage at all (edge case, should be requested)
               service.data.lookupHistory.set(preimage.hash, [lookup]);
@@ -490,7 +490,7 @@ export class InMemoryState extends WithDebug implements State, WithStateView, En
   }
 
   view(): StateView {
-    return new InMemoryStateView(this.chainSpec, this);
+    return InMemoryStateView.new(this.chainSpec, this);
   }
 
   /**

@@ -35,7 +35,7 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
   /** Restore node config from a transferable config object. */
   static async fromTransferable<T>(decodeParams: Decode<T>, config: TransferableConfig) {
     const blake2b = await Blake2b.createHasher();
-    const chainSpec = new ChainSpec(config.chainSpec);
+    const chainSpec = ChainSpec.new(config.chainSpec);
     const workerParams = Decoder.decodeObject(decodeParams, config.workerParams, chainSpec);
     const ports = new Map(
       config.workerPorts.map(([name, port]) => [name, ThreadPort.fromTransferable(chainSpec, port)]),
@@ -61,11 +61,11 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
   ) {}
 
   openDatabase(options: { readonly: boolean } = { readonly: true }): RootDb<BlocksDb, SerializedStatesDb> {
-    const lmdb = new LmdbRoot(this.dbPath, options.readonly);
+    const lmdb = LmdbRoot.new(this.dbPath, options.readonly);
 
     return {
-      getBlocksDb: () => new LmdbBlocks(this.chainSpec, lmdb),
-      getStatesDb: () => new LmdbStates(this.chainSpec, this.blake2b, lmdb),
+      getBlocksDb: () => LmdbBlocks.new(this.chainSpec, lmdb),
+      getStatesDb: () => LmdbStates.new(this.chainSpec, this.blake2b, lmdb),
       close: async () => await lmdb.close(),
     };
   }

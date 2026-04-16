@@ -13,9 +13,9 @@ import { TwoImmsDispatcher } from "./two-imms-dispatcher.js";
 
 describe("TwoImmsDispatcher", () => {
   const regs = Registers.empty();
-  const memory = new Memory();
+  const memory = Memory.new();
   const instructionResult = new InstructionResult();
-  const storeOps = new StoreOps(regs, memory, instructionResult);
+  const storeOps = StoreOps.new(regs, memory, instructionResult);
 
   const mockFn = mock.fn();
 
@@ -40,8 +40,8 @@ describe("TwoImmsDispatcher", () => {
   });
 
   const argsMock = {
-    firstImmediateDecoder: new ImmediateDecoder(),
-    secondImmediateDecoder: new ImmediateDecoder(),
+    firstImmediateDecoder: ImmediateDecoder.new(),
+    secondImmediateDecoder: ImmediateDecoder.new(),
   } as TwoImmediatesArgs;
 
   const relevantInstructions = Object.entries(Instruction)

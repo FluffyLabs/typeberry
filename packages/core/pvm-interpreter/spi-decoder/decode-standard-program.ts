@@ -14,10 +14,14 @@ const NO_OF_REGISTERS = 13;
 
 export class MemorySegment extends WithDebug {
   static from({ start, end, data }: Omit<MemorySegment, never>) {
+    return MemorySegment.new(start, end, data);
+  }
+
+  static new(start: number, end: number, data: Uint8Array | null) {
     return new MemorySegment(start, end, data);
   }
 
-  constructor(
+  private constructor(
     public readonly start: number,
     public readonly end: number,
     public readonly data: Uint8Array | null,
@@ -26,7 +30,11 @@ export class MemorySegment extends WithDebug {
   }
 }
 export class SpiMemory extends WithDebug {
-  constructor(
+  static new(readable: MemorySegment[], writeable: MemorySegment[], sbrkIndex: number, heapEnd: number) {
+    return new SpiMemory(readable, writeable, sbrkIndex, heapEnd);
+  }
+
+  private constructor(
     public readonly readable: MemorySegment[],
     public readonly writeable: MemorySegment[],
     public readonly sbrkIndex: number,
@@ -37,7 +45,11 @@ export class SpiMemory extends WithDebug {
 }
 
 export class SpiProgram extends WithDebug {
-  constructor(
+  static new(code: Uint8Array, memory: SpiMemory, registers: BigUint64Array) {
+    return new SpiProgram(code, memory, registers);
+  }
+
+  private constructor(
     public readonly code: Uint8Array,
     public readonly memory: SpiMemory,
     public readonly registers: BigUint64Array,
@@ -101,15 +113,15 @@ export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
     stackStart < stackEnd && getMemorySegment(stackStart, stackEnd),
   ].filter(nonEmpty);
 
-  return new SpiProgram(
+  return SpiProgram.new(
     code,
-    new SpiMemory(readableMemory, writeableMemory, heapZerosEnd, stackStart),
+    SpiMemory.new(readableMemory, writeableMemory, heapZerosEnd, stackStart),
     getRegisters(args.length),
   );
 }
 
 function getMemorySegment(start: number, end: number, data: Uint8Array | null = null) {
-  return new MemorySegment(start, end, data);
+  return MemorySegment.new(start, end, data);
 }
 
 function getRegisters(argsLength: number) {

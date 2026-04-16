@@ -64,7 +64,17 @@ const logger = Logger.new(import.meta.filename, "protocol/ce-134");
 export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
-  constructor(
+  static new(
+    onWorkPackage: (
+      coreIndex: CoreIndex,
+      segmentsRootMappings: WorkPackageInfo[],
+      workPackageBundle: WorkPackageBundle,
+    ) => Promise<{ workReportHash: WorkReportHash; signature: Ed25519Signature }>,
+  ) {
+    return new ServerHandler(onWorkPackage);
+  }
+
+  private constructor(
     private readonly onWorkPackage: (
       coreIndex: CoreIndex,
       segmentsRootMappings: WorkPackageInfo[],
@@ -113,6 +123,11 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 
 export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
+
+  static new() {
+    return new ClientHandler();
+  }
+
   private readonly pendingRequests = new Map<
     StreamId,
     {

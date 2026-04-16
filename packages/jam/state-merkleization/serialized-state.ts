@@ -96,7 +96,7 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
       this.recentlyUsedServices.push(id);
     }
 
-    return new SerializedService(this.blake2b, id, serviceData, (key) => this.retrieveOptional(key));
+    return SerializedService.new(this.blake2b, id, serviceData, (key) => this.retrieveOptional(key));
   }
 
   private retrieve<T>(k: KeyAndCodec<T>, description: string): T {
@@ -200,7 +200,16 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
 
 /** Service data representation on a serialized state. */
 export class SerializedService implements Service {
-  constructor(
+  static new(
+    blake2b: Blake2b,
+    serviceId: ServiceId,
+    accountInfo: ServiceAccountInfo,
+    retrieveOptional: <T>(key: KeyAndCodec<T>) => T | undefined,
+  ) {
+    return new SerializedService(blake2b, serviceId, accountInfo, retrieveOptional);
+  }
+
+  private constructor(
     public readonly blake2b: Blake2b,
     /** Service id */
     public readonly serviceId: ServiceId,

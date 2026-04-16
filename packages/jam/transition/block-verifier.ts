@@ -22,7 +22,11 @@ type BlockVerificationOptions = {
 };
 
 export class BlockVerifier {
-  constructor(
+  static new(hasher: TransitionHasher, blocks: BlocksDb) {
+    return new BlockVerifier(hasher, blocks);
+  }
+
+  private constructor(
     public readonly hasher: TransitionHasher,
     private readonly blocks: BlocksDb,
   ) {}

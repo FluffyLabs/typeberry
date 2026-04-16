@@ -15,7 +15,7 @@ describe("PVM Examples", () => {
     const program = BytesBlob.parseBlob(programHex);
 
     // Create interpreter and initialize with program
-    const pvm = new Interpreter();
+    const pvm = Interpreter.new();
     pvm.resetGeneric(program.raw, 0, tryAsGas(1000));
 
     // dump the program data
@@ -39,7 +39,7 @@ describe("PVM Examples", () => {
     const programHex = "0x0000210408010409010503000277ff07070c528a08980852a905f3528704080409111300499352d500";
     const program = BytesBlob.parseBlob(programHex);
 
-    const pvm = new Interpreter();
+    const pvm = Interpreter.new();
     pvm.resetGeneric(program.raw, 0, tryAsGas(1000));
     pvm.runProgram();
 

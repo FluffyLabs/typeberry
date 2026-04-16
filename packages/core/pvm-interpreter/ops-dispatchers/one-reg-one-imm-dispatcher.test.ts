@@ -15,13 +15,13 @@ import { OneRegOneImmDispatcher } from "./one-reg-one-imm-dispatcher.js";
 
 describe("OneRegOneImmDispatcher", () => {
   const regs = Registers.empty();
-  const memory = new Memory();
+  const memory = Memory.new();
   const jumpTable = JumpTable.fromRaw(1, new Uint8Array([1]));
   const instructionResult = new InstructionResult();
-  const storeOps = new StoreOps(regs, memory, instructionResult);
-  const loadOps = new LoadOps(regs, memory, instructionResult);
+  const storeOps = StoreOps.new(regs, memory, instructionResult);
+  const loadOps = LoadOps.new(regs, memory, instructionResult);
   const basicBlocks = new BasicBlocks();
-  const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
+  const dynamicJumpOps = DynamicJumpOps.new(regs, jumpTable, instructionResult, basicBlocks);
   const mockFn = mock.fn();
 
   function mockAllMethods(obj: object) {
@@ -47,7 +47,7 @@ describe("OneRegOneImmDispatcher", () => {
   });
 
   const argsMock = {
-    immediateDecoder: new ImmediateDecoder(),
+    immediateDecoder: ImmediateDecoder.new(),
   } as OneRegisterOneImmediateArgs;
 
   const relevantInstructions = Object.entries(Instruction)

@@ -35,7 +35,11 @@ export class Bless implements HostCallHandler {
   basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10, 11, 12);
 
-  constructor(
+  static new(currentServiceId: ServiceId, partialState: PartialState, chainSpec: ChainSpec) {
+    return new Bless(currentServiceId, partialState, chainSpec);
+  }
+
+  private constructor(
     public readonly currentServiceId: ServiceId,
     private readonly partialState: PartialState,
     private readonly chainSpec: ChainSpec,

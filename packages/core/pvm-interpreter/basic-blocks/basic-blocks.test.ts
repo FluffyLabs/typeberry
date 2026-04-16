@@ -9,7 +9,7 @@ import { BasicBlocks } from "./basic-blocks.js";
 describe("BasicBlocks", () => {
   it("should return true for the first instruction even it is a termination block instruction", () => {
     const code = new Uint8Array([Instruction.TRAP]);
-    const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_0001]), code.length));
+    const mask = Mask.new(BitVec.fromBlob(new Uint8Array([0b0000_0001]), code.length));
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);
     const index = 0;
@@ -21,7 +21,7 @@ describe("BasicBlocks", () => {
 
   it("should return true for the first instruction after a termination block instruction", () => {
     const code = new Uint8Array([Instruction.TRAP, Instruction.ADD_32, 5, 7]);
-    const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_0011]), code.length));
+    const mask = Mask.new(BitVec.fromBlob(new Uint8Array([0b0000_0011]), code.length));
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);
     const index = 1;
@@ -33,7 +33,7 @@ describe("BasicBlocks", () => {
 
   it("should return false for the second instruction after a termination block instruction", () => {
     const code = new Uint8Array([Instruction.TRAP, Instruction.ADD_32, 5, 7, Instruction.SUB_32, 5, 7]);
-    const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0001_0011]), code.length));
+    const mask = Mask.new(BitVec.fromBlob(new Uint8Array([0b0001_0011]), code.length));
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);
     const index = 4;
@@ -45,7 +45,7 @@ describe("BasicBlocks", () => {
 
   it("should return false for a termination block instruction that is not the first instruction in the program", () => {
     const code = new Uint8Array([Instruction.TRAP, Instruction.ADD_32, 5, 7, Instruction.TRAP]);
-    const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0001_0011]), code.length));
+    const mask = Mask.new(BitVec.fromBlob(new Uint8Array([0b0001_0011]), code.length));
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);
     const index = 4;
@@ -57,7 +57,7 @@ describe("BasicBlocks", () => {
 
   it("should return true for a beginning of basic block instruction that is not the first instruction after a block termination instruction that has some args", () => {
     const code = new Uint8Array([Instruction.BRANCH_EQ, 135, 25, Instruction.ADD_32, 5, 7, Instruction.TRAP]);
-    const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0100_1001]), code.length));
+    const mask = Mask.new(BitVec.fromBlob(new Uint8Array([0b0100_1001]), code.length));
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);
     const index = 3;
@@ -69,7 +69,7 @@ describe("BasicBlocks", () => {
 
   it("should return true for a termination block instruction that is the after a termination instruction", () => {
     const code = new Uint8Array([Instruction.TRAP, Instruction.TRAP]);
-    const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_0011]), code.length));
+    const mask = Mask.new(BitVec.fromBlob(new Uint8Array([0b0000_0011]), code.length));
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);
     const index = 1;
@@ -81,7 +81,7 @@ describe("BasicBlocks", () => {
 
   it("should return false for a negative number", () => {
     const code = new Uint8Array([Instruction.TRAP, Instruction.TRAP]);
-    const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_0011]), code.length));
+    const mask = Mask.new(BitVec.fromBlob(new Uint8Array([0b0000_0011]), code.length));
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);
     const index = -1;
@@ -126,7 +126,7 @@ describe("BasicBlocks", () => {
       0,
       Instruction.JUMP_IND,
     ]);
-    const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_0001, 0b0000_0000, 0b0000_0000, 0b1000_0000]), 32));
+    const mask = Mask.new(BitVec.fromBlob(new Uint8Array([0b0000_0001, 0b0000_0000, 0b0000_0000, 0b1000_0000]), 32));
 
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);

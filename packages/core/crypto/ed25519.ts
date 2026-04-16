@@ -35,7 +35,11 @@ export type Ed25519Signature = Opaque<Bytes<ED25519_SIGNATURE_BYTES>, "Ed25519Si
  * Can be passed to `sign` method to produce signatures.
  */
 export class Ed25519Pair {
-  constructor(
+  static new(pubKey: Ed25519Key, _privKey: Bytes<ED25519_PRIV_KEY_BYTES>) {
+    return new Ed25519Pair(pubKey, _privKey);
+  }
+
+  private constructor(
     /** Public key */
     public readonly pubKey: Ed25519Key,
     /** Private key. NOTE: Avoid using directly. */
@@ -46,7 +50,7 @@ export class Ed25519Pair {
 /** Create a private key from given raw bytes. */
 export async function privateKey(privKey: Bytes<ED25519_PRIV_KEY_BYTES>): Promise<Ed25519Pair> {
   const pubKey = await ed.getPublicKeyAsync(privKey.raw);
-  return new Ed25519Pair(Bytes.fromBlob(pubKey, ED25519_KEY_BYTES).asOpaque(), privKey.asOpaque());
+  return Ed25519Pair.new(Bytes.fromBlob(pubKey, ED25519_KEY_BYTES).asOpaque(), privKey.asOpaque());
 }
 
 /** Sign given piece of data using provided key pair. */

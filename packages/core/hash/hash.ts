@@ -35,8 +35,11 @@ export const ZERO_HASH = Bytes.zero(HASH_SIZE);
  * unnecessary re-hashing of the data.
  */
 export class WithHash<THash extends OpaqueHash, TData> extends WithDebug {
-  // TODO [ToDr] use static method and make constructor private
-  constructor(
+  static new<THash extends OpaqueHash, TData>(hash: THash, data: TData) {
+    return new WithHash(hash, data);
+  }
+
+  protected constructor(
     public readonly hash: THash,
     public readonly data: TData,
   ) {
@@ -47,8 +50,13 @@ export class WithHash<THash extends OpaqueHash, TData> extends WithDebug {
 /**
  * Extension of [`WithHash`] additionally containing an encoded version of the object.
  */
+// @ts-expect-error TS2417: static new() signature differs from parent (requires extra `encoded` param)
 export class WithHashAndBytes<THash extends OpaqueHash, TData> extends WithHash<THash, TData> {
-  constructor(
+  static new<THash extends OpaqueHash, TData>(hash: THash, data: TData, encoded: BytesBlob) {
+    return new WithHashAndBytes(hash, data, encoded);
+  }
+
+  protected constructor(
     hash: THash,
     data: TData,
     public readonly encoded: BytesBlob,

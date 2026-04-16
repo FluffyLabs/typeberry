@@ -9,7 +9,11 @@ import { getEncodedConstants } from "./fetch-externalities.js";
 export class RefineFetchExternalities implements general.IRefineFetch {
   readonly context = general.FetchContext.Refine;
 
-  constructor(private readonly chainSpec: ChainSpec) {}
+  static new(chainSpec: ChainSpec) {
+    return new RefineFetchExternalities(chainSpec);
+  }
+
+  private constructor(private readonly chainSpec: ChainSpec) {}
 
   constants(): BytesBlob {
     return getEncodedConstants(this.chainSpec);

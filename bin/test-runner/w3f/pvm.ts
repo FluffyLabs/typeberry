@@ -91,7 +91,7 @@ export async function runPvmTest(testContent: PvmTest) {
   const regs = Registers.empty();
   regs.copyFrom(testContent["initial-regs"]);
 
-  const pvm = new Interpreter();
+  const pvm = Interpreter.new();
 
   const mapPvmStatus = (status: Status) => {
     if (status === Status.FAULT) {

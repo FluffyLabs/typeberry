@@ -149,11 +149,15 @@ async function initWorker<XParams extends WithTransferList, XResult>(
   });
   // make sure the threads don't prevent the program from stopping.
   workerThread.unref();
-  return new WorkerChannel(workerThread, port2);
+  return WorkerChannel.new(workerThread, port2);
 }
 
 class WorkerChannel<TParams extends WithTransferList, TResult> {
-  constructor(
+  static new<TParams extends WithTransferList, TResult>(worker: Worker, port: MessagePort) {
+    return new WorkerChannel<TParams, TResult>(worker, port);
+  }
+
+  private constructor(
     public readonly worker: Worker,
     public readonly port: MessagePort,
   ) {}
