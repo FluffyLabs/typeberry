@@ -31,7 +31,7 @@ export const MAX_NUMBER_OF_WORK_ITEMS = 16;
 /**
  * A piece of work done within a core.
  *
- * `P = (j ∈ Y, h ∈ NS, u ∈ H, p ∈ Y, x ∈ X, w ∈ ⟦I⟧1∶I)
+ * `P = (j ∈ Y, h ∈ NS, u ∈ H, f ∈ Y, x ∈ X, w ∈ ⟦I⟧1∶I)
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/197000197200
  */
@@ -40,8 +40,8 @@ export class WorkPackage extends WithDebug {
     authCodeHost: codec.u32.asOpaque<ServiceId>(),
     authCodeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
     context: RefineContext.Codec,
-    authorization: codec.blob,
-    parametrization: codec.blob,
+    authToken: codec.blob,
+    authConfiguration: codec.blob,
     items: codec.sequenceVarLen(WorkItem.Codec).convert(
       (x) => x,
       (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
@@ -49,25 +49,25 @@ export class WorkPackage extends WithDebug {
   });
 
   static create({
-    authorization,
+    authToken,
     authCodeHost,
     authCodeHash,
-    parametrization,
+    authConfiguration,
     context,
     items,
   }: CodecRecord<WorkPackage>) {
-    return new WorkPackage(authorization, authCodeHost, authCodeHash, parametrization, context, items);
+    return new WorkPackage(authToken, authCodeHost, authCodeHash, authConfiguration, context, items);
   }
 
   private constructor(
     /** `j`: simple blob acting as an authorization token */
-    public readonly authorization: BytesBlob,
+    public readonly authToken: BytesBlob,
     /** `h`: index of the service that hosts the authorization code */
     public readonly authCodeHost: ServiceId,
     /** `u`: authorization code hash */
     public readonly authCodeHash: CodeHash,
-    /** `p`: authorization parametrization blob */
-    public readonly parametrization: BytesBlob,
+    /** `f`: authorization configuration blob */
+    public readonly authConfiguration: BytesBlob,
     /** `x`: context in which the refine function should run */
     public readonly context: RefineContext,
     /**

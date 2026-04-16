@@ -21,10 +21,10 @@ export const workPackageFromJson = json.object<JsonWorkPackage, WorkPackage>(
   },
   ({ authorization, auth_code_host, auth_code_hash, authorizer_config, context, items }) =>
     WorkPackage.create({
-      authorization,
+      authToken: authorization,
       authCodeHost: auth_code_host,
       authCodeHash: auth_code_hash,
-      parametrization: authorizer_config,
+      authConfiguration: authorizer_config,
       context,
       items: FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
     }),

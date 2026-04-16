@@ -43,10 +43,13 @@ describe("Fetch", () => {
   it("should write empty result and set IN_OUT_REG to NONE if fetch returns null", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const fetchMock = new RefineFetchMock();
-    // authorizerTraceResponse is null by default — Kind 2 legitimately returns null
+    // oneWorkItem returns null when the work item index has no mock response registered
 
     const blob = BytesBlob.blobFromNumbers([]);
-    const { registers, memory, readBack } = prepareRegsAndMemory(blob, FetchKind.AuthorizerTrace);
+    const { registers, memory, readBack } = prepareRegsAndMemory(blob, FetchKind.OneWorkItem);
+    // set work item index to one that has no response → oneWorkItem returns null
+    registers.set(11, tryAsU64(999));
+    fetchMock.oneWorkItemResponses.set("999", null);
 
     const fetch = Fetch.new(currentServiceId, fetchMock);
     const result = await fetch.execute(gas, registers, memory);
@@ -268,7 +271,7 @@ describe("Fetch", () => {
     const fetchMock = new RefineFetchMock();
     fetchMock.authorizerResponse = blob;
 
-    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.Authorizer);
+    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.AuthConfiguration);
 
     const fetch = Fetch.new(currentServiceId, fetchMock);
     const result = await fetch.execute(gas, registers, memory);
@@ -284,7 +287,7 @@ describe("Fetch", () => {
     const fetchMock = new RefineFetchMock();
     fetchMock.authorizationTokenResponse = blob;
 
-    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.AuthorizationToken);
+    const { registers, memory, readBack, expectedLength } = prepareRegsAndMemory(blob, FetchKind.AuthToken);
 
     const fetch = Fetch.new(currentServiceId, fetchMock);
     const result = await fetch.execute(gas, registers, memory);
@@ -417,8 +420,8 @@ describe("Fetch", () => {
       FetchKind.OtherWorkItemImports,
       FetchKind.MyImports,
       FetchKind.WorkPackage,
-      FetchKind.Authorizer,
-      FetchKind.AuthorizationToken,
+      FetchKind.AuthConfiguration,
+      FetchKind.AuthToken,
       FetchKind.RefineContext,
       FetchKind.AllWorkItems,
       FetchKind.OneWorkItem,
@@ -490,14 +493,14 @@ class RefineFetchMock implements IRefineFetch {
 
   public constantsResponse: BytesBlob | null = null;
   public entropyResponse: EntropyHash | null = null;
-  public authorizerTraceResponse: BytesBlob | null = null;
+  public authorizerTraceResponse: BytesBlob = BytesBlob.empty();
   public workItemExtrinsicResponses: Map<string, BytesBlob | null> = new Map();
   public workItemImportResponses: Map<string, BytesBlob | null> = new Map();
-  public workPackageResponse: BytesBlob | null = null;
-  public authorizerResponse: BytesBlob | null = null;
-  public authorizationTokenResponse: BytesBlob | null = null;
-  public refineContextResponse: BytesBlob | null = null;
-  public allWorkItemsResponse: BytesBlob | null = null;
+  public workPackageResponse: BytesBlob = BytesBlob.empty();
+  public authorizerResponse: BytesBlob = BytesBlob.empty();
+  public authorizationTokenResponse: BytesBlob = BytesBlob.empty();
+  public refineContextResponse: BytesBlob = BytesBlob.empty();
+  public allWorkItemsResponse: BytesBlob = BytesBlob.empty();
   public oneWorkItemResponses: Map<string, BytesBlob | null> = new Map();
   public workItemPayloadResponses: Map<string, BytesBlob | null> = new Map();
 
@@ -515,7 +518,7 @@ class RefineFetchMock implements IRefineFetch {
     return this.entropyResponse;
   }
 
-  authorizerTrace(): BytesBlob | null {
+  authorizerTrace(): BytesBlob {
     return this.authorizerTraceResponse;
   }
 
@@ -537,23 +540,23 @@ class RefineFetchMock implements IRefineFetch {
     return this.workItemImportResponses.get(key) ?? null;
   }
 
-  workPackage(): BytesBlob | null {
+  workPackage(): BytesBlob {
     return this.workPackageResponse;
   }
 
-  authorizer(): BytesBlob | null {
+  authConfiguration(): BytesBlob {
     return this.authorizerResponse;
   }
 
-  authorizationToken(): BytesBlob | null {
+  authToken(): BytesBlob {
     return this.authorizationTokenResponse;
   }
 
-  refineContext(): BytesBlob | null {
+  refineContext(): BytesBlob {
     return this.refineContextResponse;
   }
 
-  allWorkItems(): BytesBlob | null {
+  allWorkItems(): BytesBlob {
     return this.allWorkItemsResponse;
   }
 

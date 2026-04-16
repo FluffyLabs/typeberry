@@ -1,5 +1,5 @@
 import type { EntropyHash } from "@typeberry/block";
-import { Bytes, type BytesBlob } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { general } from "@typeberry/jam-host-calls";
@@ -24,36 +24,44 @@ export class RefineFetchExternalities implements general.IRefineFetch {
     return Bytes.zero(HASH_SIZE).asOpaque();
   }
 
-  authorizerTrace(): BytesBlob | null {
-    return null;
+  // TODO [ToDr] implement
+  authorizerTrace(): BytesBlob {
+    return BytesBlob.empty();
   }
 
+  // TODO [ToDr] implement
   workItemExtrinsic(_workItem: U64 | null, _index: U64): BytesBlob | null {
     return null;
   }
 
+  // TODO [ToDr] implement
   workItemImport(_workItem: U64 | null, _index: U64): BytesBlob | null {
     return null;
   }
 
-  workPackage(): BytesBlob | null {
-    return null;
+  // TODO [ToDr] implement
+  workPackage(): BytesBlob {
+    return BytesBlob.empty();
   }
 
-  authorizer(): BytesBlob | null {
-    return null;
+  // TODO [ToDr] implement
+  authConfiguration(): BytesBlob {
+    return BytesBlob.empty();
   }
 
-  authorizationToken(): BytesBlob | null {
-    return null;
+  // TODO [ToDr] implement
+  authToken(): BytesBlob {
+    return BytesBlob.empty();
   }
 
-  refineContext(): BytesBlob | null {
-    return null;
+  // TODO [ToDr] implement
+  refineContext(): BytesBlob {
+    return BytesBlob.empty();
   }
 
-  allWorkItems(): BytesBlob | null {
-    return null;
+  // TODO [ToDr] implement
+  allWorkItems(): BytesBlob {
+    return BytesBlob.empty();
   }
 
   oneWorkItem(_workItem: U64): BytesBlob | null {

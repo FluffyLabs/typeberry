@@ -57,6 +57,10 @@ export type AccumulateHostCallExternalities = {
   serviceExternalities: general.AccountsInfo & general.AccountsLookup & general.AccountsWrite & general.AccountsRead;
 };
 
+export type IsAuthorizedHostCallExternalities = {
+  fetchExternalities: general.IIsAuthorizedFetch;
+};
+
 type OnTransferHostCallExternalities = {
   partialState: general.AccountsInfo & general.AccountsLookup & general.AccountsWrite & general.AccountsRead;
   fetchExternalities: general.IFetchExternalities;
@@ -134,6 +138,17 @@ export class PvmExecutor {
     return accumulateHandlers.concat(generalHandlers);
   }
 
+  /** Prepare is-authorized host call handlers */
+  private static prepareIsAuthorizedHostCalls(serviceId: ServiceId, externalities: IsAuthorizedHostCallExternalities) {
+    const generalHandlers: HostCallHandler[] = [
+      new general.LogHostCall(serviceId),
+      new general.GasHostCall(serviceId),
+      new general.Fetch(serviceId, externalities.fetchExternalities),
+    ];
+
+    return generalHandlers;
+  }
+
   /** Prepare on transfer host call handlers */
   private static prepareOnTransferHostCalls(serviceId: ServiceId, externalities: OnTransferHostCallExternalities) {
     const generalHandlers: HostCallHandler[] = [
@@ -173,6 +188,18 @@ export class PvmExecutor {
     const hostCallHandlers = PvmExecutor.prepareRefineHostCalls(serviceId, externalities);
     const instances = await PvmExecutor.prepareBackend(pvm);
     return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.REFINE, instances);
+  }
+
+  /** A utility function that can be used to prepare is-authorized executor */
+  static async createIsAuthorizedExecutor(
+    serviceId: ServiceId,
+    serviceCode: BytesBlob,
+    externalities: IsAuthorizedHostCallExternalities,
+    pvm: PvmBackend,
+  ) {
+    const hostCallHandlers = PvmExecutor.prepareIsAuthorizedHostCalls(serviceId, externalities);
+    const instances = await PvmExecutor.prepareBackend(pvm);
+    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.IS_AUTHORIZED, instances);
   }
 
   /** A utility function that can be used to prepare accumulate executor */
