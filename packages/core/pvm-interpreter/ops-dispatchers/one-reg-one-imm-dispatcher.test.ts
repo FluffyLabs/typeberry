@@ -14,9 +14,9 @@ import { Registers } from "../registers.js";
 import { OneRegOneImmDispatcher } from "./one-reg-one-imm-dispatcher.js";
 
 describe("OneRegOneImmDispatcher", () => {
-  const regs = new Registers();
+  const regs = Registers.empty();
   const memory = new Memory();
-  const jumpTable = new JumpTable(1, new Uint8Array([1]));
+  const jumpTable = JumpTable.fromRaw(1, new Uint8Array([1]));
   const instructionResult = new InstructionResult();
   const storeOps = new StoreOps(regs, memory, instructionResult);
   const loadOps = new LoadOps(regs, memory, instructionResult);

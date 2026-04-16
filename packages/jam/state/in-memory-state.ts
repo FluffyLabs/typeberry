@@ -72,24 +72,32 @@ export enum UpdateError {
   PreimageExists = 2,
 }
 
+/** Data backing an {@link InMemoryService}. */
+export type InMemoryServiceData = {
+  /** https://graypaper.fluffylabs.dev/#/85129da/383303383303?v=0.6.3 */
+  info: ServiceAccountInfo;
+  /** https://graypaper.fluffylabs.dev/#/85129da/10f90010f900?v=0.6.3 */
+  readonly preimages: HashDictionary<PreimageHash, PreimageItem>;
+  /** https://graypaper.fluffylabs.dev/#/85129da/115400115800?v=0.6.3 */
+  readonly lookupHistory: HashDictionary<PreimageHash, LookupHistoryItem[]>;
+  /** https://graypaper.fluffylabs.dev/#/85129da/10f80010f800?v=0.6.3 */
+  readonly storage: Map<string, StorageItem>;
+};
+
 /**
  * In-memory representation of the service.
  */
 export class InMemoryService extends WithDebug implements Service {
-  constructor(
+  /** Create a new in-memory service wrapping the given id and data. */
+  static new(serviceId: ServiceId, data: InMemoryServiceData) {
+    return new InMemoryService(serviceId, data);
+  }
+
+  protected constructor(
     /** Service id. */
     readonly serviceId: ServiceId,
     /** Service details. */
-    readonly data: {
-      /** https://graypaper.fluffylabs.dev/#/85129da/383303383303?v=0.6.3 */
-      info: ServiceAccountInfo;
-      /** https://graypaper.fluffylabs.dev/#/85129da/10f90010f900?v=0.6.3 */
-      readonly preimages: HashDictionary<PreimageHash, PreimageItem>;
-      /** https://graypaper.fluffylabs.dev/#/85129da/115400115800?v=0.6.3 */
-      readonly lookupHistory: HashDictionary<PreimageHash, LookupHistoryItem[]>;
-      /** https://graypaper.fluffylabs.dev/#/85129da/10f80010f800?v=0.6.3 */
-      readonly storage: Map<string, StorageItem>;
-    },
+    readonly data: InMemoryServiceData,
   ) {
     super();
   }
@@ -130,7 +138,7 @@ export class InMemoryService extends WithDebug implements Service {
 
   /** Return identical `InMemoryService` which does not share any references. */
   clone(): InMemoryService {
-    return new InMemoryService(this.serviceId, {
+    return InMemoryService.new(this.serviceId, {
       info: ServiceAccountInfo.create(this.data.info),
       preimages: HashDictionary.fromEntries(Array.from(this.data.preimages.entries())),
       lookupHistory: HashDictionary.fromEntries(
@@ -179,7 +187,7 @@ export class InMemoryService extends WithDebug implements Service {
       storage.set(key.toString(), StorageItem.create({ key, value }));
     }
 
-    return new InMemoryService(service.serviceId, {
+    return InMemoryService.new(service.serviceId, {
       info,
       preimages,
       storage,
@@ -403,7 +411,7 @@ export class InMemoryState extends WithDebug implements State, WithStateView, En
         }
         this.services.set(
           serviceId,
-          new InMemoryService(serviceId, {
+          InMemoryService.new(serviceId, {
             info: account,
             preimages: HashDictionary.new(),
             storage: new Map(),

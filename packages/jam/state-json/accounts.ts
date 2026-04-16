@@ -154,7 +154,7 @@ export class JsonService {
         storage.set(key.toString(), item);
       }
 
-      return new InMemoryService(id, {
+      return InMemoryService.new(id, {
         info: data.service,
         preimages,
         storage,
@@ -221,7 +221,7 @@ export class JsonServicePre072 {
         storage.set(key.toString(), item);
       }
 
-      return new InMemoryService(id, {
+      return InMemoryService.new(id, {
         info: data.service,
         preimages,
         storage,

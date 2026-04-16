@@ -83,7 +83,7 @@ export class PvmExecutor {
     private entrypoint: ProgramCounter,
     pvmInstanceManager: PvmInstanceManager,
   ) {
-    this.hostCalls = new HostCalls({
+    this.hostCalls = HostCalls.new({
       missing: new general.Missing(),
       handlers: hostCallHandlers,
     });

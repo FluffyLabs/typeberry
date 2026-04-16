@@ -192,7 +192,7 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry, blake2b: Bla
     lookupHistory.set(item.key.hash, arr);
   }
 
-  return new InMemoryService(tryAsServiceId(entry.id), {
+  return InMemoryService.new(tryAsServiceId(entry.id), {
     info: ServiceAccountInfo.create({
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
       balance: tryAsU64(0),

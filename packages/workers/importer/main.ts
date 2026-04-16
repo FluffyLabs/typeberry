@@ -38,10 +38,18 @@ export async function createImporter(
   const pruneBlocks = config.workerParams.pruneBlocks ?? false;
 
   const hasher = new TransitionHasher(await keccakHasher, await blake2b);
-  const importer = new Importer(chainSpec, pvm, hasher, logger, blocks, states, {
-    ...options,
-    finalizer,
-    pruneBlocks,
+  const importer = Importer.open({
+    spec: chainSpec,
+    pvm,
+    hasher,
+    logger,
+    blocks,
+    states,
+    options: {
+      ...options,
+      finalizer,
+      pruneBlocks,
+    },
   });
 
   return {

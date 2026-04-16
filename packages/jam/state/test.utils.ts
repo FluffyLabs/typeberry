@@ -156,7 +156,7 @@ export const testState = (): InMemoryState => {
     services: new Map([
       [
         tryAsServiceId(0),
-        new InMemoryService(tryAsServiceId(0), {
+        InMemoryService.new(tryAsServiceId(0), {
           info: ServiceAccountInfo.create({
             codeHash: b32("0x15f8485e3a88e86182e63280720d5ec9892578f0e577fb1bcdda5cf497950815"),
             balance: tryAsU64(10000000000),

@@ -75,7 +75,14 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
   const startTime = tryAsU64(process.hrtime.bigint() / 1_000_000n);
   const startTimeSlot = states.getState(hash)?.timeslot ?? tryAsTimeSlot(0);
 
-  const generator = new Generator(chainSpec, bandersnatch, keccakHasher, blake2bHasher, blocks, states);
+  const generator = Generator.new({
+    chainSpec,
+    bandersnatch,
+    keccakHasher,
+    blake2b: blake2bHasher,
+    blocks,
+    states,
+  });
 
   const keys = await Promise.all(
     config.workerParams.keys.map(async (secrets) => ({

@@ -206,7 +206,14 @@ describe("Generator", () => {
       const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
       const statesDb = createMockStatesDb(state);
 
-      const generator = new Generator(tinyChainSpec, bandersnatch, keccakHasher, blake2b, blocksDb, statesDb);
+      const generator = Generator.new({
+        chainSpec: tinyChainSpec,
+        bandersnatch,
+        keccakHasher,
+        blake2b,
+        blocks: blocksDb,
+        states: statesDb,
+      });
 
       const validatorIndex = tryAsValidatorIndex(0);
       const timeSlot = tryAsTimeSlot(1);
@@ -233,7 +240,14 @@ describe("Generator", () => {
       const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
       const statesDb = createMockStatesDb(state);
 
-      const generator = new Generator(tinyChainSpec, bandersnatch, keccakHasher, blake2b, blocksDb, statesDb);
+      const generator = Generator.new({
+        chainSpec: tinyChainSpec,
+        bandersnatch,
+        keccakHasher,
+        blake2b,
+        blocks: blocksDb,
+        states: statesDb,
+      });
 
       const validatorIndex = tryAsValidatorIndex(0);
       const timeSlot = tryAsTimeSlot(firstSlotOfEpoch1);

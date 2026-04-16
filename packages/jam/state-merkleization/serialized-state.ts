@@ -66,7 +66,12 @@ export class SerializedState<T extends SerializedStateBackend = SerializedStateB
 
   /** Return a non-decoding version of the state. */
   view(): StateView {
-    return new SerializedStateView(this.spec, this.backend, this.recentlyUsedServices, this.viewCache);
+    return SerializedStateView.new({
+      spec: this.spec,
+      backend: this.backend,
+      recentlyUsedServices: this.recentlyUsedServices,
+      viewCache: this.viewCache,
+    });
   }
 
   // TODO [ToDr] Temporary method to update the state,

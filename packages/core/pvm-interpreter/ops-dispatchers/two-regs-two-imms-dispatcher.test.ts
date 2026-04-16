@@ -15,9 +15,9 @@ import { TwoRegsTwoImmsDispatcher } from "./two-regs-two-imms-dispatcher.js";
 
 describe("TwoRegsTwoImmsDispatcher", () => {
   describe("check if it handles expected instructions", () => {
-    const regs = new Registers();
+    const regs = Registers.empty();
     const memory = new Memory();
-    const jumpTable = new JumpTable(1, new Uint8Array([1]));
+    const jumpTable = JumpTable.fromRaw(1, new Uint8Array([1]));
     const instructionResult = new InstructionResult();
     const loadOps = new LoadOps(regs, memory, instructionResult);
     const basicBlocks = new BasicBlocks();
@@ -65,10 +65,10 @@ describe("TwoRegsTwoImmsDispatcher", () => {
 
   describe("check if it handles other instructions than expected", () => {
     const instructionResult = new InstructionResult();
-    const regs = new Registers();
+    const regs = Registers.empty();
     const memory = new Memory();
     const loadOps = new LoadOps(regs, memory, instructionResult);
-    const jumpTable = new JumpTable(1, new Uint8Array([1]));
+    const jumpTable = JumpTable.fromRaw(1, new Uint8Array([1]));
     const basicBlocks = new BasicBlocks();
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const mockFn = mock.fn();

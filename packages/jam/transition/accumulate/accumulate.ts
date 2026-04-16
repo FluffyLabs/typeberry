@@ -155,14 +155,14 @@ export class Accumulate {
     }
 
     const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec, this.blake2b);
-    const partialState = new AccumulateExternalities(
-      this.chainSpec,
-      this.blake2b,
-      updatedState,
-      serviceId,
-      nextServiceId,
-      slot,
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: this.chainSpec,
+      blake2b: this.blake2b,
+      updatedState: updatedState,
+      currentServiceId: serviceId,
+      nextNewServiceIdCandidate: nextServiceId,
+      currentTimeslot: slot,
+    });
 
     const fetchExternalities = new AccumulateFetchExternalities(entropy, transfers, operands, this.chainSpec);
 

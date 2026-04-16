@@ -54,7 +54,7 @@ function createMockState(
     const serviceId = tryAsServiceId(svc.id);
     serviceMap.set(
       serviceId,
-      new InMemoryService(serviceId, {
+      InMemoryService.new(serviceId, {
         info: ServiceAccountInfo.create({
           codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
           balance: tryAsU64(1_000_000_000n),

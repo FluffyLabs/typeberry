@@ -20,7 +20,7 @@ export class ProgramDecoder {
 
     this.code = new Uint8Array(code);
     this.mask = new Mask(mask);
-    this.jumpTable = new JumpTable(jumpTableItemLength, jumpTable);
+    this.jumpTable = JumpTable.fromRaw(jumpTableItemLength, jumpTable);
   }
 
   private decodeProgram(program: Uint8Array) {

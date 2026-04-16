@@ -35,6 +35,6 @@ describe("ProgramDecoder", () => {
 
     const result = programDecoder.getJumpTable();
 
-    assert.deepStrictEqual(result, new JumpTable(jumpTableItemLength, new Uint8Array(jumpTable)));
+    assert.deepStrictEqual(result, JumpTable.fromRaw(jumpTableItemLength, new Uint8Array(jumpTable)));
   });
 });

@@ -68,14 +68,14 @@ const INVALID_SERVICE_ID_ERROR = "Either manager or delegator or registrar is no
 describe("PartialState.checkPreimageStatus", () => {
   it("should check preimage status from state", () => {
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
     const preimageHash = Bytes.parseBytes(
       "0xc16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c",
       HASH_SIZE,
@@ -91,14 +91,14 @@ describe("PartialState.checkPreimageStatus", () => {
   it("should return preimage status when its in updated state", () => {
     const state = partiallyUpdatedState();
     const serviceId = tryAsServiceId(0);
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      serviceId,
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: serviceId,
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const preimageHash = Bytes.parseBytes(
       "0xc16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c",
@@ -131,14 +131,14 @@ describe("PartialState.requestPreimage", () => {
     }
     const service = maybeService;
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      serviceId,
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: serviceId,
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
 
     const status = partialState.requestPreimage(preimageHash, tryAsU64(5));
@@ -183,14 +183,14 @@ describe("PartialState.requestPreimage", () => {
     }
     const service = maybeService;
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
 
     const status = partialState.requestPreimage(preimageHash, tryAsU64(5));
@@ -228,14 +228,14 @@ describe("PartialState.requestPreimage", () => {
 
   it("should fail if preimage is already requested", () => {
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
 
     const status = partialState.requestPreimage(preimageHash, tryAsU64(5));
@@ -253,14 +253,14 @@ describe("PartialState.requestPreimage", () => {
 
   it("should fail if preimage is already available", () => {
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
     const preimageHash = Bytes.parseBytes(
       "0xc16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c",
       HASH_SIZE,
@@ -278,14 +278,14 @@ describe("PartialState.requestPreimage", () => {
 
   it("should fail if balance is insufficient", () => {
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
 
     const status = partialState.requestPreimage(preimageHash, tryAsU64(2n ** 34n - 1n));
@@ -302,14 +302,14 @@ describe("PartialState.requestPreimage", () => {
 describe("PartialState.forgetPreimage", () => {
   it("should error if preimage does not exist", () => {
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
     const hash = Bytes.fill(HASH_SIZE, 0x01).asOpaque();
 
     const result = partialState.forgetPreimage(hash, tryAsU64(42));
@@ -331,14 +331,14 @@ describe("PartialState.forgetPreimage", () => {
     ).asOpaque();
     const length = tryAsU64(35);
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      serviceId,
-      tryAsServiceId(10),
-      tryAsTimeSlot(50),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: serviceId,
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(50),
+    });
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
@@ -372,14 +372,14 @@ describe("PartialState.forgetPreimage", () => {
     const hash = Bytes.fill(HASH_SIZE, 0x03).asOpaque();
     const length = tryAsU64(42);
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      serviceId,
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: serviceId,
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
     partialState.requestPreimage(hash, length);
 
     const result = partialState.forgetPreimage(hash, length);
@@ -415,14 +415,14 @@ describe("PartialState.forgetPreimage", () => {
     const oldSlot = tryAsTimeSlot(0); // very old
     const serviceId = tryAsServiceId(0);
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      serviceId,
-      tryAsServiceId(10),
-      tryAsTimeSlot(50),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: serviceId,
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(50),
+    });
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
@@ -471,14 +471,14 @@ describe("PartialState.forgetPreimage", () => {
     const recentSlot = tryAsTimeSlot(90); // within expunge period
     const serviceId = tryAsServiceId(0);
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      serviceId,
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: serviceId,
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
@@ -502,14 +502,14 @@ describe("PartialState.forgetPreimage", () => {
     const availableSlot = tryAsTimeSlot(80);
     const serviceId = tryAsServiceId(0);
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      serviceId,
-      tryAsServiceId(10),
-      tryAsTimeSlot(100),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: serviceId,
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(100),
+    });
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
@@ -559,14 +559,14 @@ describe("PartialState.forgetPreimage", () => {
     const z = tryAsTimeSlot(70);
     const serviceId = tryAsServiceId(0);
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      serviceId,
-      tryAsServiceId(10),
-      tryAsTimeSlot(100000),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: serviceId,
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(100000),
+    });
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
@@ -620,14 +620,14 @@ describe("PartialState.forgetPreimage", () => {
     const z = tryAsTimeSlot(70);
     const serviceId = tryAsServiceId(0);
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      serviceId,
-      tryAsServiceId(10),
-      tryAsTimeSlot(100),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: serviceId,
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(100),
+    });
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
@@ -654,14 +654,14 @@ describe("PartialState.forgetPreimage", () => {
     const length = tryAsU64(42);
     const serviceId = tryAsServiceId(0);
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      serviceId,
-      tryAsServiceId(10),
-      tryAsTimeSlot(2),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: serviceId,
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(2),
+    });
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
       UpdatePreimage.updateOrAdd({
@@ -691,14 +691,14 @@ describe("PartialState.newService", () => {
     }
     const service = maybeService;
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const codeHash = Bytes.fill(HASH_SIZE, 0x11).asOpaque();
     const codeLength = tryAsU32(100);
@@ -780,14 +780,14 @@ describe("PartialState.newService", () => {
     }
     const service = maybeService;
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(serviceId),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(serviceId),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const codeHash = Bytes.fill(HASH_SIZE, 0x11).asOpaque();
     const codeLength = tryAsU32(100);
@@ -865,7 +865,7 @@ describe("PartialState.newService", () => {
     }
     const service = maybeService;
 
-    const updatedService = new InMemoryService(service.serviceId, {
+    const updatedService = InMemoryService.new(service.serviceId, {
       ...service.data,
       info: ServiceAccountInfo.create({
         ...service.data.info,
@@ -875,14 +875,14 @@ describe("PartialState.newService", () => {
     });
     state.state.services.set(tryAsServiceId(0), updatedService);
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const codeHash = Bytes.fill(HASH_SIZE, 0x12).asOpaque();
     // artificially large to exceed balance
@@ -927,7 +927,7 @@ describe("PartialState.newService", () => {
     }
     const service = maybeService;
 
-    const updatedService = new InMemoryService(service.serviceId, {
+    const updatedService = InMemoryService.new(service.serviceId, {
       ...service.data,
       info: ServiceAccountInfo.create({
         ...service.data.info,
@@ -936,14 +936,14 @@ describe("PartialState.newService", () => {
     });
     state.state.services.set(tryAsServiceId(0), updatedService);
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const codeHash = Bytes.fill(HASH_SIZE, 0x12).asOpaque();
     const codeLength = tryAsU64(1024);
@@ -985,14 +985,14 @@ describe("PartialState.newService", () => {
       throw new Error("Invalid service!");
     }
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const codeHash = Bytes.fill(HASH_SIZE, 0x11).asOpaque();
     const codeLength = tryAsU32(100);
@@ -1036,14 +1036,14 @@ describe("PartialState.newService", () => {
       throw new Error("Invalid service!");
     }
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const codeHash = Bytes.fill(HASH_SIZE, 0x12).asOpaque();
     const codeLength = tryAsU64(1024);
@@ -1072,14 +1072,14 @@ describe("PartialState.newService", () => {
 describe("PartialState.updateValidatorsData", () => {
   it("should update validators data", () => {
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     // when
     const result = partialState.updateValidatorsData(
@@ -1104,14 +1104,14 @@ describe("PartialState.updateValidatorsData", () => {
       ...state.state.privilegedServices,
       delegator: tryAsServiceId(1),
     });
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     // when
     const result = partialState.updateValidatorsData(
@@ -1137,14 +1137,14 @@ describe("PartialState.updateValidatorsData", () => {
 describe("PartialState.checkpoint", () => {
   it("should checkpoint the updates", () => {
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
     // put something into updated state
     const status = partialState.requestPreimage(preimageHash, tryAsU64(5));
@@ -1167,14 +1167,14 @@ describe("PartialState.upgradeService", () => {
     }
     const service = maybeService;
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const codeHash = Bytes.fill(HASH_SIZE, 0xcd).asOpaque();
     const gas = tryAsU64(1_000n);
@@ -1207,14 +1207,14 @@ describe("PartialState.updateAuthorizationQueue", () => {
   it("should update the authorization queue and transfer the assigner for the given core", () => {
     const state = partiallyUpdatedState();
     const initialPrivileged = state.state.privilegedServices;
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const coreIndex = tryAsCoreIndex(0);
     const newAssigner = tryAsServiceId(99);
@@ -1244,14 +1244,14 @@ describe("PartialState.updateAuthorizationQueue", () => {
 
   it("should return InvalidServiceId when given auth manager is invalid", () => {
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const coreIndex = tryAsCoreIndex(0);
     const assigners: ServiceId | null = null;
@@ -1279,14 +1279,14 @@ describe("PartialState.updateAuthorizationQueue", () => {
       ...state.state.privilegedServices,
       assigners: asOpaqueType(FixedSizeArray.new([tryAsServiceId(1), tryAsServiceId(2)], tinyChainSpec.coresCount)),
     });
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const coreIndex = tryAsCoreIndex(0);
     const assigners = tryAsServiceId(0);
@@ -1314,14 +1314,14 @@ describe("PartialState.updateAuthorizationQueue", () => {
       ...state.state.privilegedServices,
       assigners: asOpaqueType(FixedSizeArray.new([tryAsServiceId(1), tryAsServiceId(2)], tinyChainSpec.coresCount)),
     });
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const coreIndex = tryAsCoreIndex(0);
     const assigners: ServiceId | null = null;
@@ -1353,7 +1353,7 @@ describe("PartialState.updateAuthorizationQueue", () => {
     }
     state.state.services.set(
       CURRENT_SERVICE_ID,
-      new InMemoryService(CURRENT_SERVICE_ID, {
+      InMemoryService.new(CURRENT_SERVICE_ID, {
         info: baseService.data.info,
         preimages: HashDictionary.new(),
         lookupHistory: HashDictionary.new(),
@@ -1364,14 +1364,14 @@ describe("PartialState.updateAuthorizationQueue", () => {
       ...state.state.privilegedServices,
       assigners: asOpaqueType(FixedSizeArray.new([CURRENT_SERVICE_ID, tryAsServiceId(0)], tinyChainSpec.coresCount)),
     });
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      CURRENT_SERVICE_ID,
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: CURRENT_SERVICE_ID,
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const coreIndex = tryAsCoreIndex(0);
     const queue = FixedSizeArray.new(
@@ -1393,14 +1393,14 @@ describe("PartialState.updateAuthorizationQueue", () => {
 
   it("should prevent the previous assigner from re-assigning after transfer", () => {
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const coreIndex = tryAsCoreIndex(0);
     const newAssigner = tryAsServiceId(99);
@@ -1436,14 +1436,14 @@ describe("PartialState.updateAuthorizationQueue", () => {
 describe("PartialState.updatePrivilegedServices", () => {
   it("should update privileged services", () => {
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const manager = tryAsServiceId(1);
     const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
@@ -1479,14 +1479,14 @@ describe("PartialState.updatePrivilegedServices", () => {
 
   it("should return InvalidService when given manager is invalid service id", () => {
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const manager: ServiceId | null = null;
     const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
@@ -1510,14 +1510,14 @@ describe("PartialState.updatePrivilegedServices", () => {
 
   it("should return InvalidService when given validator is invalid service id", () => {
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const manager = tryAsServiceId(1);
     const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
@@ -1541,14 +1541,14 @@ describe("PartialState.updatePrivilegedServices", () => {
 
   it("should return InvalidService when given registrar is invalid service id", () => {
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const manager = tryAsServiceId(1);
     const assigners = tryAsPerCore(new Array(tinyChainSpec.coresCount).fill(tryAsServiceId(2)), tinyChainSpec);
@@ -1582,7 +1582,7 @@ describe("PartialState.transfer", () => {
 
     state.state.services.set(
       tryAsServiceId(1),
-      new InMemoryService(tryAsServiceId(1), {
+      InMemoryService.new(tryAsServiceId(1), {
         info: ServiceAccountInfo.create({
           ...service.data.info,
           onTransferMinGas: tryAsServiceGas(1000),
@@ -1600,14 +1600,14 @@ describe("PartialState.transfer", () => {
 
   it("should perform a successful transfer", () => {
     const { state, service } = partiallyUpdatedStateWithSecondService();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const destinationId = tryAsServiceId(1);
     const amount = tryAsU64(500n);
@@ -1648,14 +1648,14 @@ describe("PartialState.transfer", () => {
 
   it("should return DestinationNotFound error if destination doesnt exist", () => {
     const { state } = partiallyUpdatedStateWithSecondService();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const amount = tryAsU64(100n);
     const gas = tryAsServiceGas(1_000n);
@@ -1673,14 +1673,14 @@ describe("PartialState.transfer", () => {
 
   it("should return GasTooLow error if gas is below destination's minimum", () => {
     const { state } = partiallyUpdatedStateWithSecondService();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const destinationId = tryAsServiceId(1);
     const amount = tryAsU64(100n);
@@ -1699,14 +1699,14 @@ describe("PartialState.transfer", () => {
 
   it("should return BalanceBelowThreshold error if balance would fall too low", () => {
     const { state } = partiallyUpdatedStateWithSecondService();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const destinationId = tryAsServiceId(1);
     const amount = tryAsU64(9_999_999_999n); // dangerously high
@@ -1728,14 +1728,14 @@ describe("PartialState.yield", () => {
   it("should yield root", () => {
     const currentServiceId = tryAsServiceId(0);
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      currentServiceId,
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: currentServiceId,
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
     const expectedYieldedRoot = Bytes.fill(HASH_SIZE, 0xef);
     // when
     partialState.yield(Bytes.fill(HASH_SIZE, 0xef));
@@ -1784,7 +1784,7 @@ describe("PartialState.providePreimage", () => {
       // we need to replace the existing service
       state.state.services.set(
         service.serviceId,
-        new InMemoryService(service.serviceId, {
+        InMemoryService.new(service.serviceId, {
           ...service.data,
           preimages,
           lookupHistory,
@@ -1792,7 +1792,7 @@ describe("PartialState.providePreimage", () => {
       );
     }
 
-    const secondService = new InMemoryService(tryAsServiceId(1), {
+    const secondService = InMemoryService.new(tryAsServiceId(1), {
       info: ServiceAccountInfo.create({
         ...service.data.info,
         onTransferMinGas: tryAsServiceGas(1000),
@@ -1815,14 +1815,14 @@ describe("PartialState.providePreimage", () => {
       requested: true,
     });
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const serviceId = tryAsServiceId(1);
     assert.deepStrictEqual(state.stateUpdate.services.preimages.size, 0);
@@ -1869,14 +1869,14 @@ describe("PartialState.providePreimage", () => {
   it("should provide a preimage for itself", () => {
     const { state, preimage } = partiallyUpdatedStateWithSecondService({ self: true, requested: true });
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const serviceId = tryAsServiceId(0);
     assert.deepStrictEqual(state.stateUpdate.services.preimages.size, 0);
@@ -1912,14 +1912,14 @@ describe("PartialState.providePreimage", () => {
       requested: false,
     });
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const serviceId = tryAsServiceId(1);
     assert.deepStrictEqual(state.stateUpdate.services.preimages.size, 0);
@@ -1946,14 +1946,14 @@ describe("PartialState.providePreimage", () => {
       available: true,
     });
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
     const serviceId = tryAsServiceId(1);
     const updates = state.stateUpdate.services.preimages.get(serviceId) ?? [];
     updates.push(
@@ -2007,14 +2007,14 @@ describe("PartialState.providePreimage", () => {
       available: true,
     });
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
     const serviceId = tryAsServiceId(0);
 
     // when
@@ -2039,14 +2039,14 @@ describe("PartialState.providePreimage", () => {
       available: false,
     });
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const serviceId = tryAsServiceId(0);
     assert.deepStrictEqual(state.stateUpdate.services.preimages, new Map());
@@ -2092,14 +2092,14 @@ describe("PartialState.providePreimage", () => {
       available: false,
     });
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const serviceId = tryAsServiceId(1);
     assert.deepStrictEqual(state.stateUpdate.services.preimages, new Map());
@@ -2204,7 +2204,7 @@ describe("PartialState.eject", () => {
       }
     }
 
-    const destinationService = new InMemoryService(destinationId, {
+    const destinationService = InMemoryService.new(destinationId, {
       info: ServiceAccountInfo.create({
         ...baseService.data.info,
         codeHash,
@@ -2221,14 +2221,14 @@ describe("PartialState.eject", () => {
   }
   it("should return InvalidService if destination is null", () => {
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const tombstone = Bytes.fill(HASH_SIZE, 0xef).asOpaque();
 
@@ -2245,14 +2245,14 @@ describe("PartialState.eject", () => {
 
   it("should return InvalidService if destination service does not exist", () => {
     const state = partiallyUpdatedState();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     const nonExistentServiceId = tryAsServiceId(99); // not present in stateUpdate
     const tombstone = Bytes.fill(HASH_SIZE, 0xee).asOpaque();
@@ -2284,14 +2284,14 @@ describe("PartialState.eject", () => {
       },
     });
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(50),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(50),
+    });
 
     // when
     const correctEjectResult = partialState.eject(destinationId, tombstone); // correct eject
@@ -2314,14 +2314,14 @@ describe("PartialState.eject", () => {
     });
 
     const tombstone = Bytes.fill(HASH_SIZE, 0xec).asOpaque();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     // when
     const result = partialState.eject(destinationId, tombstone);
@@ -2341,14 +2341,14 @@ describe("PartialState.eject", () => {
     });
 
     const tombstone = Bytes.fill(HASH_SIZE, 0xeb).asOpaque();
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     // when
     const result = partialState.eject(destinationId, tombstone);
@@ -2368,14 +2368,14 @@ describe("PartialState.eject", () => {
     // destination service has valid codeHash and config, but no preimage or lookup history
     const destinationId = setupEjectableService(state.state);
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     // when
     const result = partialState.eject(destinationId, tombstone);
@@ -2402,14 +2402,14 @@ describe("PartialState.eject", () => {
       },
     });
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(16),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(16),
+    });
 
     // when
     const result = partialState.eject(destinationId, tombstone);
@@ -2436,14 +2436,14 @@ describe("PartialState.eject", () => {
       },
     });
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(17),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(17),
+    });
 
     // when
     const result = partialState.eject(destinationId, tombstone);
@@ -2472,14 +2472,14 @@ describe("PartialState.eject", () => {
       },
     });
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(50),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(50),
+    });
 
     // set the balance to overflow
     const currentService = state.state.services.get(tryAsServiceId(0));
@@ -2522,14 +2522,14 @@ describe("PartialState.eject", () => {
       },
     });
 
-    const partialState = new AccumulateExternalities(
-      tinyChainSpec,
-      blake2b,
-      state,
-      tryAsServiceId(0),
-      tryAsServiceId(10),
-      tryAsTimeSlot(50),
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: tinyChainSpec,
+      blake2b: blake2b,
+      updatedState: state,
+      currentServiceId: tryAsServiceId(0),
+      nextNewServiceIdCandidate: tryAsServiceId(10),
+      currentTimeslot: tryAsTimeSlot(50),
+    });
 
     // when
     const result = partialState.eject(destinationId, tombstone);
@@ -2575,7 +2575,7 @@ describe("AccumulateServiceExternalities", () => {
       0,
     );
 
-    return new InMemoryService(serviceId, {
+    return InMemoryService.new(serviceId, {
       info: ServiceAccountInfo.create({
         balance: tryAsU64(2 ** 32),
         accumulateMinGas: tryAsServiceGas(1000),
@@ -2613,14 +2613,14 @@ describe("AccumulateServiceExternalities", () => {
       const state = prepareState([prepareService(currentServiceId)]);
       const expectedServiceInfo: ServiceAccountInfo | null = null;
 
-      const accumulateServiceExternalities = new AccumulateExternalities(
-        tinyChainSpec,
-        blake2b,
-        state,
-        currentServiceId,
-        tryAsServiceId(42),
-        tryAsTimeSlot(16),
-      );
+      const accumulateServiceExternalities = AccumulateExternalities.forService({
+        chainSpec: tinyChainSpec,
+        blake2b: blake2b,
+        updatedState: state,
+        currentServiceId: currentServiceId,
+        nextNewServiceIdCandidate: tryAsServiceId(42),
+        currentTimeslot: tryAsTimeSlot(16),
+      });
 
       const serviceInfo = accumulateServiceExternalities.getServiceInfo(serviceId);
 
@@ -2633,14 +2633,14 @@ describe("AccumulateServiceExternalities", () => {
       const state = prepareState([prepareService(currentServiceId)]);
       const expectedServiceInfo: ServiceAccountInfo | null = null;
 
-      const accumulateServiceExternalities = new AccumulateExternalities(
-        tinyChainSpec,
-        blake2b,
-        state,
-        currentServiceId,
-        tryAsServiceId(42),
-        tryAsTimeSlot(16),
-      );
+      const accumulateServiceExternalities = AccumulateExternalities.forService({
+        chainSpec: tinyChainSpec,
+        blake2b: blake2b,
+        updatedState: state,
+        currentServiceId: currentServiceId,
+        nextNewServiceIdCandidate: tryAsServiceId(42),
+        currentTimeslot: tryAsTimeSlot(16),
+      });
 
       const serviceInfo = accumulateServiceExternalities.getServiceInfo(serviceId);
 
@@ -2653,14 +2653,14 @@ describe("AccumulateServiceExternalities", () => {
       const state = prepareState([prepareService(currentServiceId), prepareService(serviceId)]);
       const expectedServiceInfo = prepareService(serviceId).getInfo();
 
-      const accumulateServiceExternalities = new AccumulateExternalities(
-        tinyChainSpec,
-        blake2b,
-        state,
-        currentServiceId,
-        tryAsServiceId(42),
-        tryAsTimeSlot(16),
-      );
+      const accumulateServiceExternalities = AccumulateExternalities.forService({
+        chainSpec: tinyChainSpec,
+        blake2b: blake2b,
+        updatedState: state,
+        currentServiceId: currentServiceId,
+        nextNewServiceIdCandidate: tryAsServiceId(42),
+        currentTimeslot: tryAsTimeSlot(16),
+      });
 
       const serviceInfo = accumulateServiceExternalities.getServiceInfo(serviceId);
 
@@ -2676,14 +2676,14 @@ describe("AccumulateServiceExternalities", () => {
       const state = prepareState([prepareService(currentServiceId)]);
       const expectedResult: BytesBlob | null = null;
 
-      const accumulateServiceExternalities = new AccumulateExternalities(
-        tinyChainSpec,
-        blake2b,
-        state,
-        currentServiceId,
-        tryAsServiceId(42),
-        tryAsTimeSlot(16),
-      );
+      const accumulateServiceExternalities = AccumulateExternalities.forService({
+        chainSpec: tinyChainSpec,
+        blake2b: blake2b,
+        updatedState: state,
+        currentServiceId: currentServiceId,
+        nextNewServiceIdCandidate: tryAsServiceId(42),
+        currentTimeslot: tryAsTimeSlot(16),
+      });
 
       const result = accumulateServiceExternalities.lookup(serviceId, hash);
 
@@ -2697,14 +2697,14 @@ describe("AccumulateServiceExternalities", () => {
       const state = prepareState([prepareService(currentServiceId)]);
       const expectedResult: BytesBlob | null = null;
 
-      const accumulateServiceExternalities = new AccumulateExternalities(
-        tinyChainSpec,
-        blake2b,
-        state,
-        currentServiceId,
-        tryAsServiceId(42),
-        tryAsTimeSlot(16),
-      );
+      const accumulateServiceExternalities = AccumulateExternalities.forService({
+        chainSpec: tinyChainSpec,
+        blake2b: blake2b,
+        updatedState: state,
+        currentServiceId: currentServiceId,
+        nextNewServiceIdCandidate: tryAsServiceId(42),
+        currentTimeslot: tryAsTimeSlot(16),
+      });
 
       const result = accumulateServiceExternalities.lookup(serviceId, hash);
 
@@ -2720,14 +2720,14 @@ describe("AccumulateServiceExternalities", () => {
       const state = prepareState([service]);
       const expectedResult: BytesBlob | null = null;
 
-      const accumulateServiceExternalities = new AccumulateExternalities(
-        tinyChainSpec,
-        blake2b,
-        state,
-        currentServiceId,
-        tryAsServiceId(42),
-        tryAsTimeSlot(16),
-      );
+      const accumulateServiceExternalities = AccumulateExternalities.forService({
+        chainSpec: tinyChainSpec,
+        blake2b: blake2b,
+        updatedState: state,
+        currentServiceId: currentServiceId,
+        nextNewServiceIdCandidate: tryAsServiceId(42),
+        currentTimeslot: tryAsTimeSlot(16),
+      });
 
       const result = accumulateServiceExternalities.lookup(currentServiceId, requestedHash);
 
@@ -2742,14 +2742,14 @@ describe("AccumulateServiceExternalities", () => {
       const service = prepareService(serviceId, { preimages });
       const state = prepareState([service]);
 
-      const accumulateServiceExternalities = new AccumulateExternalities(
-        tinyChainSpec,
-        blake2b,
-        state,
-        serviceId,
-        tryAsServiceId(42),
-        tryAsTimeSlot(16),
-      );
+      const accumulateServiceExternalities = AccumulateExternalities.forService({
+        chainSpec: tinyChainSpec,
+        blake2b: blake2b,
+        updatedState: state,
+        currentServiceId: serviceId,
+        nextNewServiceIdCandidate: tryAsServiceId(42),
+        currentTimeslot: tryAsTimeSlot(16),
+      });
 
       const result = accumulateServiceExternalities.lookup(serviceId, requestedHash);
 
@@ -2764,14 +2764,14 @@ describe("AccumulateServiceExternalities", () => {
       const hash = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const state = prepareState([prepareService(currentServiceId)]);
 
-      const accumulateServiceExternalities = new AccumulateExternalities(
-        tinyChainSpec,
-        blake2b,
-        state,
-        currentServiceId,
-        tryAsServiceId(42),
-        tryAsTimeSlot(16),
-      );
+      const accumulateServiceExternalities = AccumulateExternalities.forService({
+        chainSpec: tinyChainSpec,
+        blake2b: blake2b,
+        updatedState: state,
+        currentServiceId: currentServiceId,
+        nextNewServiceIdCandidate: tryAsServiceId(42),
+        currentTimeslot: tryAsTimeSlot(16),
+      });
 
       const result = accumulateServiceExternalities.read(serviceId, hash);
 
@@ -2783,14 +2783,14 @@ describe("AccumulateServiceExternalities", () => {
       const serviceId = tryAsServiceId(33);
       const hash = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const state = prepareState([prepareService(currentServiceId)]);
-      const accumulateServiceExternalities = new AccumulateExternalities(
-        tinyChainSpec,
-        blake2b,
-        state,
-        currentServiceId,
-        tryAsServiceId(42),
-        tryAsTimeSlot(16),
-      );
+      const accumulateServiceExternalities = AccumulateExternalities.forService({
+        chainSpec: tinyChainSpec,
+        blake2b: blake2b,
+        updatedState: state,
+        currentServiceId: currentServiceId,
+        nextNewServiceIdCandidate: tryAsServiceId(42),
+        currentTimeslot: tryAsTimeSlot(16),
+      });
 
       const result = accumulateServiceExternalities.read(serviceId, hash);
 
@@ -2813,14 +2813,14 @@ describe("AccumulateServiceExternalities", () => {
       const service = prepareService(serviceId, { storage: initialStorage });
       const state = prepareState([prepareService(currentServiceId), service]);
 
-      const accumulateServiceExternalities = new AccumulateExternalities(
-        tinyChainSpec,
-        blake2b,
-        state,
-        currentServiceId,
-        tryAsServiceId(42),
-        tryAsTimeSlot(16),
-      );
+      const accumulateServiceExternalities = AccumulateExternalities.forService({
+        chainSpec: tinyChainSpec,
+        blake2b: blake2b,
+        updatedState: state,
+        currentServiceId: currentServiceId,
+        nextNewServiceIdCandidate: tryAsServiceId(42),
+        currentTimeslot: tryAsTimeSlot(16),
+      });
 
       const result = accumulateServiceExternalities.read(serviceId, key);
       assert.strictEqual(result, value);
@@ -2831,14 +2831,14 @@ describe("AccumulateServiceExternalities", () => {
       const hash = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const blob = BytesBlob.empty();
       const state = prepareState([prepareService(currentServiceId)]);
-      const accumulateServiceExternalities = new AccumulateExternalities(
-        tinyChainSpec,
-        blake2b,
-        state,
-        currentServiceId,
-        tryAsServiceId(42),
-        tryAsTimeSlot(16),
-      );
+      const accumulateServiceExternalities = AccumulateExternalities.forService({
+        chainSpec: tinyChainSpec,
+        blake2b: blake2b,
+        updatedState: state,
+        currentServiceId: currentServiceId,
+        nextNewServiceIdCandidate: tryAsServiceId(42),
+        currentTimeslot: tryAsTimeSlot(16),
+      });
 
       assert.strictEqual(state.stateUpdate.services.storage.size, 0);
 
@@ -2856,14 +2856,14 @@ describe("AccumulateServiceExternalities", () => {
       initialStorage.set(key.toString(), StorageItem.create({ key, value }));
 
       const state = prepareState([prepareService(currentServiceId, { storage: initialStorage })]);
-      const accumulateServiceExternalities = new AccumulateExternalities(
-        tinyChainSpec,
-        blake2b,
-        state,
-        currentServiceId,
-        tryAsServiceId(42),
-        tryAsTimeSlot(16),
-      );
+      const accumulateServiceExternalities = AccumulateExternalities.forService({
+        chainSpec: tinyChainSpec,
+        blake2b: blake2b,
+        updatedState: state,
+        currentServiceId: currentServiceId,
+        nextNewServiceIdCandidate: tryAsServiceId(42),
+        currentTimeslot: tryAsTimeSlot(16),
+      });
 
       accumulateServiceExternalities.write(key, newBlob);
 

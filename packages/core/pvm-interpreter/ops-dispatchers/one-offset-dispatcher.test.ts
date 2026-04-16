@@ -11,7 +11,7 @@ import { Registers } from "../registers.js";
 import { OneOffsetDispatcher } from "./one-offset-dispatcher.js";
 
 test("OneOffsetDispatcher", async (t) => {
-  const regs = new Registers();
+  const regs = Registers.empty();
   const instructionResult = new InstructionResult();
   const basicBlocks = new BasicBlocks();
   const branchOps = new BranchOps(regs, instructionResult, basicBlocks);

@@ -70,6 +70,17 @@ const BASE_STORAGE_BYTES = tryAsU64(34);
 
 const logger = Logger.new(import.meta.filename, "externalities");
 
+/** Construction arguments for {@link AccumulateExternalities}. */
+export type AccumulateExternalitiesArgs = {
+  chainSpec: ChainSpec;
+  blake2b: Blake2b;
+  updatedState: PartiallyUpdatedState;
+  /** `x_s` */
+  currentServiceId: ServiceId;
+  nextNewServiceIdCandidate: ServiceId;
+  currentTimeslot: TimeSlot;
+};
+
 export class AccumulateExternalities
   implements PartialState, general.AccountsWrite, general.AccountsRead, general.AccountsInfo, general.AccountsLookup
 {
@@ -77,23 +88,35 @@ export class AccumulateExternalities
   /** `x_i`: next service id we are going to create. */
   private nextNewServiceId: ServiceId;
 
-  constructor(
-    private readonly chainSpec: ChainSpec,
-    private readonly blake2b: Blake2b,
-    private readonly updatedState: PartiallyUpdatedState,
-    /** `x_s` */
-    private readonly currentServiceId: ServiceId,
-    nextNewServiceIdCandidate: ServiceId,
-    private readonly currentTimeslot: TimeSlot,
-  ) {
-    this.checkpointedState = AccumulationStateUpdate.copyFrom(updatedState.stateUpdate);
-    this.nextNewServiceId = this.getNextAvailableServiceId(nextNewServiceIdCandidate);
-
-    const service = this.updatedState.getServiceInfo(this.currentServiceId);
+  /**
+   * Construct externalities for accumulating a specific service.
+   *
+   * Validates that the current service exists in `updatedState`.
+   */
+  static forService(args: AccumulateExternalitiesArgs) {
+    const service = args.updatedState.getServiceInfo(args.currentServiceId);
     if (service === null) {
-      throw new Error(`Invalid state initialization. Service info missing for ${this.currentServiceId}.`);
+      throw new Error(`Invalid state initialization. Service info missing for ${args.currentServiceId}.`);
     }
+    return new AccumulateExternalities(args);
   }
+
+  private constructor(args: AccumulateExternalitiesArgs) {
+    this.chainSpec = args.chainSpec;
+    this.blake2b = args.blake2b;
+    this.updatedState = args.updatedState;
+    this.currentServiceId = args.currentServiceId;
+    this.currentTimeslot = args.currentTimeslot;
+    this.checkpointedState = AccumulationStateUpdate.copyFrom(args.updatedState.stateUpdate);
+    this.nextNewServiceId = this.getNextAvailableServiceId(args.nextNewServiceIdCandidate);
+  }
+
+  private readonly chainSpec: ChainSpec;
+  private readonly blake2b: Blake2b;
+  private readonly updatedState: PartiallyUpdatedState;
+  /** `x_s` */
+  private readonly currentServiceId: ServiceId;
+  private readonly currentTimeslot: TimeSlot;
 
   /** Return the underlying state update and checkpointed state. */
   getStateUpdates(): [AccumulationStateUpdate, AccumulationStateUpdate] {

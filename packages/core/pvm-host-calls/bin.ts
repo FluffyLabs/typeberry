@@ -4,7 +4,7 @@ import { HostCalls, NoopMissing } from "./host-calls.js";
 import { HostCallsExecutor } from "./host-calls-executor.js";
 import { PvmInstanceManager } from "./pvm-instance-manager.js";
 
-const hostCalls = new HostCalls({ missing: new NoopMissing(), handlers: [] });
+const hostCalls = HostCalls.new({ missing: new NoopMissing(), handlers: [] });
 const pvmInstanceManager = await PvmInstanceManager.new(PvmBackend.BuiltIn);
 const pvmHostCallExtension = new HostCallsExecutor(pvmInstanceManager, hostCalls);
 

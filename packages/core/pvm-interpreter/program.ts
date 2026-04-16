@@ -8,7 +8,7 @@ export class Program {
   static fromSpi(blob: Uint8Array, args: Uint8Array, hasMetadata: boolean) {
     const { code: spiCode, metadata } = hasMetadata ? extractCodeAndMetadata(blob) : { code: blob };
     const { code, memory: rawMemory, registers } = decodeStandardProgram(spiCode, args);
-    const regs = new Registers();
+    const regs = Registers.empty();
     regs.copyFrom(registers);
     const memoryBuilder = new MemoryBuilder();
 
@@ -33,7 +33,7 @@ export class Program {
 
   static fromGeneric(blob: Uint8Array, hasMetadata: boolean) {
     const { code, metadata } = hasMetadata ? extractCodeAndMetadata(blob) : { code: blob };
-    const regs = new Registers();
+    const regs = Registers.empty();
     const memory = new Memory();
     return new Program(code, regs, memory, metadata);
   }

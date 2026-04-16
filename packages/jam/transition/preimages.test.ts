@@ -34,7 +34,7 @@ function createAccount(
   const preimages = HashDictionary.fromEntries(preimagesEntries.map((x) => [x.hash, x]));
   const lookupHistory = HashDictionary.fromEntries(lookupHistoryEntries.map((x) => [x.hash, [x]]));
 
-  return new InMemoryService(id, {
+  return InMemoryService.new(id, {
     info: ServiceAccountInfo.create({
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
       balance: tryAsU64(0),

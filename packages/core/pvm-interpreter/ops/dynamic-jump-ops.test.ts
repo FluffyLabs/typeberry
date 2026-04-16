@@ -14,8 +14,8 @@ import { DynamicJumpOps } from "./dynamic-jump-ops.js";
 
 describe("DynamicJumpOps", () => {
   function prepareData(firstValue: bigint, secondValue: bigint) {
-    const regs = new Registers();
-    const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
+    const regs = Registers.empty();
+    const jumpTable = JumpTable.fromRaw(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
     const code = new Uint8Array([Instruction.TRAP, Instruction.TRAP, Instruction.TRAP, Instruction.ADD_32, 5, 6]);
     const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1111]), code.length));

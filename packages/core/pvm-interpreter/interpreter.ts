@@ -60,7 +60,7 @@ const logger = Logger.new(import.meta.filename, "pvm");
 
 export class Interpreter implements IPvmInterpreter {
   private readonly useSbrkGas: boolean;
-  readonly registers = new Registers();
+  readonly registers = Registers.empty();
   readonly memory = new Memory();
   gas = gasCounter(tryAsGas(0));
   private code: Uint8Array = new Uint8Array();

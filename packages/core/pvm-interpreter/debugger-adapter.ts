@@ -17,7 +17,7 @@ export class DebuggerAdapter {
   }
 
   resetGeneric(rawProgram: Uint8Array, flatRegisters: Uint8Array, initialGas: bigint) {
-    this.pvm.resetGeneric(rawProgram, 0, tryAsGas(initialGas), new Registers(flatRegisters));
+    this.pvm.resetGeneric(rawProgram, 0, tryAsGas(initialGas), Registers.fromBytes(flatRegisters));
   }
 
   reset(rawProgram: Uint8Array, pc: number, gas: bigint, maybeRegisters?: Registers, maybeMemory?: Memory) {
@@ -75,7 +75,7 @@ export class DebuggerAdapter {
   }
 
   setRegisters(registers: Uint8Array) {
-    this.pvm.registers.copyFrom(new Registers(registers));
+    this.pvm.registers.copyFrom(Registers.fromBytes(registers));
   }
 
   getProgramCounter(): number {
