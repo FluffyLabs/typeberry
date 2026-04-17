@@ -22,14 +22,15 @@ import { loadState } from "./state-loader.js";
 const keccakHasher = keccak.KeccakHasher.create();
 
 type NamedBlock = Block & { _fileName: string };
-const cachedBlocks = new Map<string, NamedBlock[]>();
+// Only cache the most recently used directory. Tests run grouped by directory,
+// so this hits for sibling tests but doesn't pin memory for unrelated traces.
+let lastLoadedDir: string | null = null;
+let lastLoadedBlocks: NamedBlock[] = [];
 function loadBlocks(testPath: string, spec: ChainSpec) {
   const dir = path.dirname(testPath);
-  // NOTE: cache intentionally disabled - block objects may be mutated by transitions
-  // const fromCache = cachedBlocks.get(dir);
-  // if (fromCache !== undefined) {
-  //   return fromCache;
-  // }
+  if (lastLoadedDir === dir) {
+    return lastLoadedBlocks;
+  }
 
   const blocks: NamedBlock[] = [];
   for (const file of fs.readdirSync(dir).sort()) {
@@ -56,7 +57,8 @@ function loadBlocks(testPath: string, spec: ChainSpec) {
   }
 
   blocks.sort((a, b) => a.header.timeSlotIndex - b.header.timeSlotIndex);
-  cachedBlocks.set(dir, blocks);
+  lastLoadedDir = dir;
+  lastLoadedBlocks = blocks;
   return blocks;
 }
 
