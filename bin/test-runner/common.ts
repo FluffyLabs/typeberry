@@ -1,13 +1,13 @@
 import "json-bigint-patch";
 
+import { describe, it } from "bun:test";
 import { fail } from "node:assert";
 import * as fs from "node:fs/promises";
 import path from "node:path";
 import util from "node:util";
-import { describe, it } from "bun:test";
 import { type Decode, Decoder } from "@typeberry/codec";
 import { type ChainSpec, PvmBackend, tinyChainSpec } from "@typeberry/config";
-import { initWasm } from "@typeberry/crypto";
+import { bandersnatchWasm, initWasm } from "@typeberry/crypto";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
 import { assertNever } from "@typeberry/utils";
@@ -335,7 +335,10 @@ async function scanDir(relPath: string, dir: string, filePatterns: string[]): Pr
     const files = await fs.readdir(dir.startsWith("/") ? dir : `${relPath}/${dir}`, {
       recursive: true,
     });
-    return files.filter((f) => filePatterns.some((pattern) => f.endsWith(pattern))).map((f) => `${dir}/${f}`);
+    return files
+      .filter((f) => filePatterns.some((pattern) => f.endsWith(pattern)))
+      .map((f) => `${dir}/${f}`)
+      .sort();
   } catch (e) {
     logger.error`Unable to find test vectors in ${relPath}/${dir}: ${e}`;
     return [];
@@ -444,7 +447,9 @@ function prepareTest<T, V>(
         runner: path,
         file: fileName,
         variant,
-        test: () => {
+        test: async () => {
+          // Reset bandersnatch wasm to work around bun wasm state leakage
+          await (bandersnatchWasm as { resetWasm?: () => Promise<void> }).resetWasm?.();
           logger.log`[${path}:${variant}] running test from ${fileName} (spec: ${chainSpec.name})`;
           logger.trace` ${util.inspect(parsedTest, true, 2)}`;
           return run(

@@ -6,30 +6,33 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { Blake2b, keccak, WithHash } from "@typeberry/hash";
+import { Logger } from "@typeberry/logger";
 import { serializeStateUpdate } from "@typeberry/state-merkleization";
 import { StateTransition, StateTransitionGenesis } from "@typeberry/state-vectors";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { DbHeaderChain, OnChain } from "@typeberry/transition/chain-stf.js";
-import { Logger } from "@typeberry/logger";
 import { deepEqual, resultToString } from "@typeberry/utils";
 import { type RunOptions, type SelectedPvm, selectedPvmToBackend } from "../common.js";
 
 const logger = Logger.new(import.meta.filename, "state-transition");
+
 import { loadState } from "./state-loader.js";
 
 const keccakHasher = keccak.KeccakHasher.create();
 
-const cachedBlocks = new Map<string, Block[]>();
+type NamedBlock = Block & { _fileName: string };
+const cachedBlocks = new Map<string, NamedBlock[]>();
 function loadBlocks(testPath: string, spec: ChainSpec) {
   const dir = path.dirname(testPath);
-  const fromCache = cachedBlocks.get(dir);
-  if (fromCache !== undefined) {
-    return fromCache;
-  }
+  // NOTE: cache intentionally disabled - block objects may be mutated by transitions
+  // const fromCache = cachedBlocks.get(dir);
+  // if (fromCache !== undefined) {
+  //   return fromCache;
+  // }
 
-  const blocks: Block[] = [];
-  for (const file of fs.readdirSync(dir)) {
+  const blocks: NamedBlock[] = [];
+  for (const file of fs.readdirSync(dir).sort()) {
     if (!file.endsWith(".bin")) {
       continue;
     }
@@ -38,10 +41,14 @@ function loadBlocks(testPath: string, spec: ChainSpec) {
       if (file.endsWith("genesis.bin")) {
         const genesis = Decoder.decodeObject(StateTransitionGenesis.Codec, data, spec);
         const genesisBlock = Block.create({ header: genesis.header, extrinsic: emptyBlock().extrinsic });
-        blocks.push(genesisBlock);
+        const named = genesisBlock as NamedBlock;
+        named._fileName = file;
+        blocks.push(named);
       } else {
         const test = Decoder.decodeObject(StateTransition.Codec, data, spec);
-        blocks.push(test.block.materialize());
+        const block = test.block.materialize() as NamedBlock;
+        block._fileName = file;
+        blocks.push(block);
       }
     } catch {
       // some blocks might be invalid, but that's fine. We just ignore them.
@@ -71,8 +78,9 @@ export async function runStateTransition(testContent: StateTransition, options: 
 
   const blockView = testContent.block;
   const allBlocks = loadBlocks(options.path, spec);
-  const timeStotIndex = testContent.block.header.view().timeSlotIndex.materialize();
-  const myBlockIndex = allBlocks.findIndex(({ header }) => header.timeSlotIndex === timeStotIndex);
+  // Match by filename - each .json test file has a corresponding .bin block file.
+  const testBinName = `${path.basename(options.path, ".json")}.bin`;
+  const myBlockIndex = allBlocks.findIndex((block) => block._fileName === testBinName);
   const previousBlocks = allBlocks.slice(0, myBlockIndex);
 
   const hasher = TransitionHasher.new(await keccakHasher, blake2b);
