@@ -34,6 +34,9 @@ import { type OK, Result } from "@typeberry/utils";
 
 type MachineEntry = [MachineId, IPvmInterpreter];
 
+/** Used when searching by MachineId only — the comparator ignores this field. */
+const NULL_INTERPRETER = undefined as unknown as IPvmInterpreter;
+
 const machineComparator = (a: MachineEntry, b: MachineEntry) => {
   if (a[0] < b[0]) {
     return Ordering.Less;
@@ -92,7 +95,7 @@ export class RefineExternalitiesImpl implements RefineExternalities {
 
   machineExpunge(machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>> {
     // We just care about machineIndex
-    const entry = this.machines.findExact([machineIndex, undefined as unknown as IPvmInterpreter]);
+    const entry = this.machines.findExact([machineIndex, NULL_INTERPRETER]);
     if (entry === undefined) {
       return Promise.resolve(Result.error(NoMachineError, () => `Machine not found (id: ${machineIndex})`));
     }
@@ -175,7 +178,7 @@ export class RefineExternalitiesImpl implements RefineExternalities {
     gas: BigGas,
     registers: HostCallRegisters,
   ): Promise<Result<MachineResult, NoMachineError>> {
-    const entry = this.machines.findExact([machineIndex, undefined as unknown as IPvmInterpreter]);
+    const entry = this.machines.findExact([machineIndex, NULL_INTERPRETER]);
     if (entry === undefined) {
       return Promise.resolve(Result.error(NoMachineError, () => `Machine not found (id: ${machineIndex})`));
     }
