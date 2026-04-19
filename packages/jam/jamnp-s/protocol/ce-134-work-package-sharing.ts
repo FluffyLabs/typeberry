@@ -128,6 +128,8 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     return new ClientHandler();
   }
 
+  private constructor() {}
+
   private readonly pendingRequests = new Map<
     StreamId,
     {
