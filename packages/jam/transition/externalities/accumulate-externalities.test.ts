@@ -15,6 +15,7 @@ import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import {
+  CURRENT_SERVICE_ID,
   EjectError,
   ForgetPreimageError,
   NewServiceError,
@@ -1203,8 +1204,9 @@ describe("PartialState.upgradeService", () => {
 });
 
 describe("PartialState.updateAuthorizationQueue", () => {
-  it("should update the authorization queue for a given core index", () => {
+  it("should update the authorization queue and transfer the assigner for the given core", () => {
     const state = partiallyUpdatedState();
+    const initialPrivileged = state.state.privilegedServices;
     const partialState = new AccumulateExternalities(
       tinyChainSpec,
       blake2b,
@@ -1215,17 +1217,29 @@ describe("PartialState.updateAuthorizationQueue", () => {
     );
 
     const coreIndex = tryAsCoreIndex(0);
-    const assigners = tryAsServiceId(0);
+    const newAssigner = tryAsServiceId(99);
     const queue = FixedSizeArray.new(
       Array.from({ length: AUTHORIZATION_QUEUE_SIZE }, () => Bytes.fill(HASH_SIZE, 0xee).asOpaque()),
       AUTHORIZATION_QUEUE_SIZE,
     );
 
     // when
-    partialState.updateAuthorizationQueue(coreIndex, queue, assigners);
+    const result = partialState.updateAuthorizationQueue(coreIndex, queue, newAssigner);
 
     // then
+    deepEqual(result, Result.ok(OK));
     assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), queue);
+
+    // the privilegedServices update must be written, with only the targeted
+    // core's assigner transferred; all other fields must be preserved.
+    const updated = state.stateUpdate.privilegedServices;
+    assert.ok(updated !== null, "stateUpdate.privilegedServices should be written");
+    assert.strictEqual(updated.assigners[0], newAssigner);
+    assert.strictEqual(updated.assigners[1], initialPrivileged.assigners[1]);
+    assert.strictEqual(updated.manager, initialPrivileged.manager);
+    assert.strictEqual(updated.delegator, initialPrivileged.delegator);
+    assert.strictEqual(updated.registrar, initialPrivileged.registrar);
+    assert.strictEqual(updated.autoAccumulateServices, initialPrivileged.autoAccumulateServices);
   });
 
   it("should return InvalidServiceId when given auth manager is invalid", () => {
@@ -1255,6 +1269,8 @@ describe("PartialState.updateAuthorizationQueue", () => {
       Result.error(UpdatePrivilegesError.InvalidServiceId, () => "New auth manager is null for core 0"),
     );
     assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), undefined);
+    // no partial privilegedServices write on error
+    assert.strictEqual(state.stateUpdate.privilegedServices, null);
   });
 
   it("should return UnprivilegedService when current service is not privileged", () => {
@@ -1288,6 +1304,8 @@ describe("PartialState.updateAuthorizationQueue", () => {
       Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Service 0 not assigner for core 0 (expected: 1)"),
     );
     assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), undefined);
+    // no partial privilegedServices write on error
+    assert.strictEqual(state.stateUpdate.privilegedServices, null);
   });
 
   it("should return UnprivilegedService before InvalidServiceId if given auth manager is incorrect, but current servis is also unprivileged", () => {
@@ -1321,6 +1339,97 @@ describe("PartialState.updateAuthorizationQueue", () => {
       Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Service 0 not assigner for core 0 (expected: 1)"),
     );
     assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), undefined);
+    // no partial privilegedServices write on error
+    assert.strictEqual(state.stateUpdate.privilegedServices, null);
+  });
+
+  it("should succeed on a self-transfer using CURRENT_SERVICE_ID", () => {
+    const state = partiallyUpdatedState();
+    // inject a service info for CURRENT_SERVICE_ID so it can act as the
+    // current (and assigning) service on core 0
+    const baseService = state.state.services.get(tryAsServiceId(0));
+    if (baseService === undefined) {
+      throw new Error("Invalid service!");
+    }
+    state.state.services.set(
+      CURRENT_SERVICE_ID,
+      new InMemoryService(CURRENT_SERVICE_ID, {
+        info: baseService.data.info,
+        preimages: HashDictionary.new(),
+        lookupHistory: HashDictionary.new(),
+        storage: new Map(),
+      }),
+    );
+    state.state.privilegedServices = PrivilegedServices.create({
+      ...state.state.privilegedServices,
+      assigners: asOpaqueType(FixedSizeArray.new([CURRENT_SERVICE_ID, tryAsServiceId(0)], tinyChainSpec.coresCount)),
+    });
+    const partialState = new AccumulateExternalities(
+      tinyChainSpec,
+      blake2b,
+      state,
+      CURRENT_SERVICE_ID,
+      tryAsServiceId(10),
+      tryAsTimeSlot(16),
+    );
+
+    const coreIndex = tryAsCoreIndex(0);
+    const queue = FixedSizeArray.new(
+      Array.from({ length: AUTHORIZATION_QUEUE_SIZE }, () => Bytes.fill(HASH_SIZE, 0xee).asOpaque()),
+      AUTHORIZATION_QUEUE_SIZE,
+    );
+
+    // when
+    const result = partialState.updateAuthorizationQueue(coreIndex, queue, CURRENT_SERVICE_ID);
+
+    // then
+    deepEqual(result, Result.ok(OK));
+    assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), queue);
+    const updated = state.stateUpdate.privilegedServices;
+    assert.ok(updated !== null, "stateUpdate.privilegedServices should be written");
+    assert.strictEqual(updated.assigners[0], CURRENT_SERVICE_ID);
+    assert.strictEqual(updated.assigners[1], tryAsServiceId(0));
+  });
+
+  it("should prevent the previous assigner from re-assigning after transfer", () => {
+    const state = partiallyUpdatedState();
+    const partialState = new AccumulateExternalities(
+      tinyChainSpec,
+      blake2b,
+      state,
+      tryAsServiceId(0),
+      tryAsServiceId(10),
+      tryAsTimeSlot(16),
+    );
+
+    const coreIndex = tryAsCoreIndex(0);
+    const newAssigner = tryAsServiceId(99);
+    const firstQueue = FixedSizeArray.new(
+      Array.from({ length: AUTHORIZATION_QUEUE_SIZE }, () => Bytes.fill(HASH_SIZE, 0xee).asOpaque()),
+      AUTHORIZATION_QUEUE_SIZE,
+    );
+    const secondQueue = FixedSizeArray.new(
+      Array.from({ length: AUTHORIZATION_QUEUE_SIZE }, () => Bytes.fill(HASH_SIZE, 0xff).asOpaque()),
+      AUTHORIZATION_QUEUE_SIZE,
+    );
+
+    // when: first call succeeds and transfers the assigner to service 99
+    const first = partialState.updateAuthorizationQueue(coreIndex, firstQueue, newAssigner);
+    // and the previous assigner (service 0) immediately tries to re-assign
+    const second = partialState.updateAuthorizationQueue(coreIndex, secondQueue, tryAsServiceId(0));
+
+    // then
+    deepEqual(first, Result.ok(OK));
+    deepEqual(
+      second,
+      Result.error(UpdatePrivilegesError.UnprivilegedService, () => "Service 0 not assigner for core 0 (expected: 99)"),
+    );
+    // the first queue remains — the failing second call must not overwrite it
+    assert.deepStrictEqual(state.stateUpdate.authorizationQueues.get(coreIndex), firstQueue);
+    // and the transferred assigner is still in place
+    const updated = state.stateUpdate.privilegedServices;
+    assert.ok(updated !== null);
+    assert.strictEqual(updated.assigners[0], newAssigner);
   });
 });
 
