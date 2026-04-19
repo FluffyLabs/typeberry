@@ -78,6 +78,8 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     return new ClientHandler();
   }
 
+  private constructor() {}
+
   onStreamMessage(sender: StreamMessageSender): void {
     logger.warn`[${sender.streamId}] Got unexpected message on CE-133 stream. Closing.`;
     sender.close();
