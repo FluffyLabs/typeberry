@@ -17,7 +17,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { SegmentExportError, tryAsMachineId, tryAsProgramCounter } from "@typeberry/jam-host-calls";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCallRegisters } from "@typeberry/pvm-host-calls";
-import { NO_OF_REGISTERS, REGISTER_BYTE_SIZE, Status, tryAsBigGas } from "@typeberry/pvm-interface";
+import { Status, tryAsBigGas } from "@typeberry/pvm-interface";
 import { InMemoryService, InMemoryState, PreimageItem, ServiceAccountInfo, type State } from "@typeberry/state";
 import { RefineExternalitiesImpl, type RefineExternalitiesParams } from "./refine.js";
 
@@ -91,7 +91,7 @@ function createExt(overrides: Partial<RefineExternalitiesParams> = {}) {
 }
 
 function emptyRegisters() {
-  return new HostCallRegisters(new Uint8Array(NO_OF_REGISTERS * REGISTER_BYTE_SIZE));
+  return HostCallRegisters.empty();
 }
 
 describe("RefineExternalitiesImpl", () => {
