@@ -13,7 +13,13 @@ import { PvmBackend, tinyChainSpec } from "@typeberry/config";
 import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { InMemoryService, InMemoryState, PreimageItem, ServiceAccountInfo } from "@typeberry/state";
+import { buildWorkPackageFetchData } from "@typeberry/transition/externalities/fetch-externalities.js";
 import { AuthorizationError, IsAuthorized } from "./is-authorized.js";
+
+function buildPackageAndFetchData(authCodeHash: CodeHash, authToken: BytesBlob, authConfiguration: BytesBlob) {
+  const pkg = buildPackage(authCodeHash, authToken, authConfiguration);
+  return { pkg, fetchData: buildWorkPackageFetchData(tinyChainSpec, pkg) };
+}
 
 function buildPackage(authCodeHash: CodeHash, authToken: BytesBlob, authConfiguration: BytesBlob): WorkPackage {
   const items = [
@@ -100,7 +106,8 @@ describe("IsAuthorized", () => {
     const isAuthorized = new IsAuthorized(spec, PvmBackend.BuiltIn, blake2b);
     const token = BytesBlob.blobFromString("hello");
 
-    const result = await isAuthorized.invoke(state, tryAsCoreIndex(0), buildPackage(authCodeHash, token, token));
+    const { pkg, fetchData } = buildPackageAndFetchData(authCodeHash, token, token);
+    const result = await isAuthorized.invoke(state, tryAsCoreIndex(0), pkg, fetchData);
 
     assert.strictEqual(result.isOk, true, `Expected OK but got error: ${result.isError ? result.details() : ""}`);
 
@@ -124,11 +131,8 @@ describe("IsAuthorized", () => {
     const state = createStateWithService(authCodeHash, AUTHORIZER_PVM);
     const isAuthorized = new IsAuthorized(spec, PvmBackend.BuiltIn, blake2b);
 
-    const result = await isAuthorized.invoke(
-      state,
-      tryAsCoreIndex(0),
-      buildPackage(authCodeHash, BytesBlob.empty(), BytesBlob.empty()),
-    );
+    const empty = buildPackageAndFetchData(authCodeHash, BytesBlob.empty(), BytesBlob.empty());
+    const result = await isAuthorized.invoke(state, tryAsCoreIndex(0), empty.pkg, empty.fetchData);
 
     assert.strictEqual(result.isOk, true, `Expected OK but got error: ${result.isError ? result.details() : ""}`);
     const outputStr = Buffer.from(result.ok.authorizationOutput.raw).toString("utf8");
@@ -140,11 +144,12 @@ describe("IsAuthorized", () => {
     const state = createStateWithService(authCodeHash, AUTHORIZER_PVM);
     const isAuthorized = new IsAuthorized(spec, PvmBackend.BuiltIn, blake2b);
 
-    const result = await isAuthorized.invoke(
-      state,
-      tryAsCoreIndex(0),
-      buildPackage(authCodeHash, BytesBlob.blobFromString("wrong"), BytesBlob.blobFromString("right")),
+    const mismatch = buildPackageAndFetchData(
+      authCodeHash,
+      BytesBlob.blobFromString("wrong"),
+      BytesBlob.blobFromString("right"),
     );
+    const result = await isAuthorized.invoke(state, tryAsCoreIndex(0), mismatch.pkg, mismatch.fetchData);
 
     assert.strictEqual(result.isError, true);
     assert.strictEqual(result.error, AuthorizationError.PvmFailed);
@@ -158,11 +163,8 @@ describe("IsAuthorized", () => {
     });
     const isAuthorized = new IsAuthorized(spec, PvmBackend.BuiltIn, blake2b);
 
-    const result = await isAuthorized.invoke(
-      state,
-      tryAsCoreIndex(0),
-      buildPackage(authCodeHash, BytesBlob.empty(), BytesBlob.empty()),
-    );
+    const missing = buildPackageAndFetchData(authCodeHash, BytesBlob.empty(), BytesBlob.empty());
+    const result = await isAuthorized.invoke(state, tryAsCoreIndex(0), missing.pkg, missing.fetchData);
 
     assert.strictEqual(result.isError, true);
     assert.strictEqual(result.error, AuthorizationError.CodeNotFound);
@@ -194,11 +196,8 @@ describe("IsAuthorized", () => {
     });
     const isAuthorized = new IsAuthorized(spec, PvmBackend.BuiltIn, blake2b);
 
-    const result = await isAuthorized.invoke(
-      state,
-      tryAsCoreIndex(0),
-      buildPackage(authCodeHash, BytesBlob.empty(), BytesBlob.empty()),
-    );
+    const emptyPreimage = buildPackageAndFetchData(authCodeHash, BytesBlob.empty(), BytesBlob.empty());
+    const result = await isAuthorized.invoke(state, tryAsCoreIndex(0), emptyPreimage.pkg, emptyPreimage.fetchData);
 
     assert.strictEqual(result.isError, true);
     assert.strictEqual(result.error, AuthorizationError.CodeNotFound);

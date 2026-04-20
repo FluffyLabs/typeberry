@@ -12,7 +12,12 @@ import { asKnownSize, FixedSizeArray } from "@typeberry/collections";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU64 } from "@typeberry/numbers";
+import { buildWorkPackageFetchData } from "./fetch-externalities.js";
 import { IsAuthorizedFetchExternalities } from "./is-authorized-fetch-externalities.js";
+
+function fetchDataFor(pkg: WorkPackage, chainSpec = tinyChainSpec) {
+  return buildWorkPackageFetchData(chainSpec, pkg);
+}
 
 function buildWorkItem(overrides: { service?: number; payloadLen?: number } = {}) {
   return WorkItem.create({
@@ -47,41 +52,41 @@ function buildPackage(items: WorkItem[] = [buildWorkItem({})]) {
 
 describe("IsAuthorizedFetchExternalities", () => {
   it("returns different constants for different chain specs", () => {
-    const tinyExt = new IsAuthorizedFetchExternalities(tinyChainSpec, buildPackage());
-    const fullExt = new IsAuthorizedFetchExternalities(fullChainSpec, buildPackage());
+    const tinyExt = new IsAuthorizedFetchExternalities(tinyChainSpec, fetchDataFor(buildPackage(), tinyChainSpec));
+    const fullExt = new IsAuthorizedFetchExternalities(fullChainSpec, fetchDataFor(buildPackage(), fullChainSpec));
     assert.notStrictEqual(tinyExt.constants().length, 0);
     assert.notDeepStrictEqual(tinyExt.constants(), fullExt.constants());
   });
 
   it("returns encoded work package", () => {
     const pkg = buildPackage();
-    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, pkg);
+    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, fetchDataFor(pkg));
     const expected = Encoder.encodeObject(WorkPackage.Codec, pkg, tinyChainSpec);
     assert.deepStrictEqual(ext.workPackage().raw, expected.raw);
   });
 
   it("returns auth configuration and auth token from the package", () => {
-    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, buildPackage());
+    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, fetchDataFor(buildPackage()));
     assert.deepStrictEqual(ext.authConfiguration().raw, new Uint8Array([4, 5, 6, 7]));
     assert.deepStrictEqual(ext.authToken().raw, new Uint8Array([1, 2, 3]));
   });
 
   it("returns encoded refine context", () => {
     const pkg = buildPackage();
-    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, pkg);
+    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, fetchDataFor(pkg));
     const expected = Encoder.encodeObject(RefineContext.Codec, pkg.context);
     assert.deepStrictEqual(ext.refineContext().raw, expected.raw);
   });
 
   it("returns concatenated work item summaries with 62 bytes per item", () => {
     const items = [buildWorkItem({ service: 1 }), buildWorkItem({ service: 2, payloadLen: 5 })];
-    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, buildPackage(items));
+    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, fetchDataFor(buildPackage(items)));
     assert.strictEqual(ext.allWorkItems().length, 62 * items.length);
   });
 
   it("returns a single work item summary (kind 12)", () => {
     const items = [buildWorkItem({ service: 1 }), buildWorkItem({ service: 2, payloadLen: 10 })];
-    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, buildPackage(items));
+    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, fetchDataFor(buildPackage(items)));
     const one = ext.oneWorkItem(tryAsU64(1));
     assert.ok(one !== null);
     assert.strictEqual(one.length, 62);
@@ -90,13 +95,13 @@ describe("IsAuthorizedFetchExternalities", () => {
   });
 
   it("returns null for one work item when index is out of range", () => {
-    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, buildPackage());
+    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, fetchDataFor(buildPackage()));
     assert.strictEqual(ext.oneWorkItem(tryAsU64(99)), null);
   });
 
   it("returns the raw payload of a work item (kind 13)", () => {
     const items = [buildWorkItem({ service: 1, payloadLen: 2 }), buildWorkItem({ service: 2, payloadLen: 5 })];
-    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, buildPackage(items));
+    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, fetchDataFor(buildPackage(items)));
     const payload = ext.workItemPayload(tryAsU64(1));
     assert.ok(payload !== null);
     assert.strictEqual(payload.length, 5);
@@ -104,7 +109,7 @@ describe("IsAuthorizedFetchExternalities", () => {
   });
 
   it("returns null for payload when index is out of range", () => {
-    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, buildPackage());
+    const ext = new IsAuthorizedFetchExternalities(tinyChainSpec, fetchDataFor(buildPackage()));
     assert.strictEqual(ext.workItemPayload(tryAsU64(99)), null);
   });
 });

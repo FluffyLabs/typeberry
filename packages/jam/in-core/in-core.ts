@@ -11,6 +11,7 @@ import type { Blake2b, WithHash } from "@typeberry/hash";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { tryAsU8, tryAsU16, tryAsU32 } from "@typeberry/numbers";
+import { buildWorkPackageFetchData } from "@typeberry/transition/externalities/fetch-externalities.js";
 import { assertEmpty, Result } from "@typeberry/utils";
 import { AuthorizationError, type AuthorizationOk, IsAuthorized } from "./is-authorized.js";
 import { type ImportedSegment, type PerWorkItem, Refine, type RefineItemResult } from "./refine.js";
@@ -105,8 +106,11 @@ export class InCore {
       );
     }
 
+    // Eagerly build the per-package fetch data so we pay the encoding cost
+    const packageFetchData = buildWorkPackageFetchData(this.chainSpec, workPackageAndHash.data);
+
     // Check authorization
-    const authResult = await this.isAuthorized.invoke(state, core, workPackageAndHash.data);
+    const authResult = await this.isAuthorized.invoke(state, core, workPackageAndHash.data, packageFetchData);
     if (authResult.isError) {
       return Result.error(
         RefineError.AuthorizationError,
@@ -125,7 +129,7 @@ export class InCore {
       const result = await this.refineItem.invoke(
         state,
         lookupState,
-        workPackageAndHash.data,
+        packageFetchData,
         idx,
         item,
         imports,

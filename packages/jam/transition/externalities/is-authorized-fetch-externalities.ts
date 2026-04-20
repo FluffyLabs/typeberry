@@ -1,23 +1,15 @@
-import { RefineContext } from "@typeberry/block/refine-context.js";
-import { WorkPackage } from "@typeberry/block/work-package.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { general } from "@typeberry/jam-host-calls";
 import type { U64 } from "@typeberry/numbers";
-import {
-  encodeAllWorkItemSummaries,
-  encodeWorkItemSummary,
-  getEncodedConstants,
-  u64ToArrayIndex,
-} from "./fetch-externalities.js";
+import { getEncodedConstants, u64ToArrayIndex, type WorkPackageFetchData } from "./fetch-externalities.js";
 
 export class IsAuthorizedFetchExternalities implements general.IIsAuthorizedFetch {
   readonly context = general.FetchContext.IsAuthorized;
 
   constructor(
     private readonly chainSpec: ChainSpec,
-    private readonly pkg: WorkPackage,
+    private readonly pkg: WorkPackageFetchData,
   ) {}
 
   constants(): BytesBlob {
@@ -25,40 +17,36 @@ export class IsAuthorizedFetchExternalities implements general.IIsAuthorizedFetc
   }
 
   workPackage(): BytesBlob {
-    return Encoder.encodeObject(WorkPackage.Codec, this.pkg, this.chainSpec);
+    return this.pkg.packageView.encoded();
   }
 
   authConfiguration(): BytesBlob {
-    return this.pkg.authConfiguration;
+    return this.pkg.packageView.authConfiguration.view();
   }
 
   authToken(): BytesBlob {
-    return this.pkg.authToken;
+    return this.pkg.packageView.authToken.view();
   }
 
   refineContext(): BytesBlob {
-    return Encoder.encodeObject(RefineContext.Codec, this.pkg.context);
+    return this.pkg.packageView.context.encoded();
   }
 
   allWorkItems(): BytesBlob {
-    return encodeAllWorkItemSummaries(this.pkg.items);
+    return this.pkg.workItemSummaries.encoded();
   }
 
   oneWorkItem(workItem: U64): BytesBlob | null {
-    const items = this.pkg.items;
-    const idx = u64ToArrayIndex(workItem, items.length);
-    if (idx === null) {
-      return null;
-    }
-    return encodeWorkItemSummary(items[idx]);
+    const idx = u64ToArrayIndex(workItem, this.pkg.workItemSummaries.length);
+    return idx === null ? null : (this.pkg.workItemSummaries.get(idx)?.encoded() ?? null);
   }
 
   workItemPayload(workItem: U64): BytesBlob | null {
-    const items = this.pkg.items;
+    const items = this.pkg.packageView.items.view();
     const idx = u64ToArrayIndex(workItem, items.length);
     if (idx === null) {
       return null;
     }
-    return items[idx].payload;
+    return items.get(idx)?.view().payload.view() ?? null;
   }
 }

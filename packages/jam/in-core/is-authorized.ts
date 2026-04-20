@@ -8,6 +8,7 @@ import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import { PvmExecutor, ReturnStatus } from "@typeberry/executor";
 import type { Blake2b } from "@typeberry/hash";
 import type { State } from "@typeberry/state";
+import type { WorkPackageFetchData } from "@typeberry/transition/externalities/fetch-externalities.js";
 import { IsAuthorizedFetchExternalities } from "@typeberry/transition/externalities/is-authorized-fetch-externalities.js";
 import { Result } from "@typeberry/utils";
 
@@ -46,6 +47,7 @@ export class IsAuthorized {
     state: State,
     coreIndex: CoreIndex,
     workPackage: WorkPackage,
+    packageFetchData: WorkPackageFetchData,
   ): Promise<Result<AuthorizationOk, AuthorizationError>> {
     const { authCodeHost, authCodeHash, authConfiguration } = workPackage;
 
@@ -77,7 +79,7 @@ export class IsAuthorized {
     }
 
     // Prepare fetch externalities and executor
-    const fetchExternalities = new IsAuthorizedFetchExternalities(this.chainSpec, workPackage);
+    const fetchExternalities = new IsAuthorizedFetchExternalities(this.chainSpec, packageFetchData);
     const executor = await PvmExecutor.createIsAuthorizedExecutor(
       authCodeHost,
       code,

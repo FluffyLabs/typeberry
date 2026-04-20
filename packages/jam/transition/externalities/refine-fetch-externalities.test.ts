@@ -4,8 +4,8 @@ import { describe, it } from "node:test";
 import type { CodeHash } from "@typeberry/block";
 import { tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { RefineContext } from "@typeberry/block/refine-context.js";
-import type { WorkItemExtrinsic } from "@typeberry/block/work-item.js";
-import { WorkItem } from "@typeberry/block/work-item.js";
+import { ImportSpec, WorkItem, type WorkItemExtrinsic, WorkItemExtrinsicSpec } from "@typeberry/block/work-item.js";
+import { tryAsSegmentIndex } from "@typeberry/block/work-item-segment.js";
 import { tryAsWorkItemsCount, WorkPackage } from "@typeberry/block/work-package.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
@@ -15,6 +15,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { asOpaqueType } from "@typeberry/utils";
 import type { ImportedSegment, PerWorkItem } from "../../in-core/refine.js";
+import { buildWorkPackageFetchData } from "./fetch-externalities.js";
 import { RefineFetchExternalities } from "./refine-fetch-externalities.js";
 
 const asExtrinsic = (bytes: BytesBlob): WorkItemExtrinsic => asOpaqueType(bytes);
@@ -27,14 +28,20 @@ function buildWorkItem(overrides: {
   extrinsicCount?: number;
 }) {
   const codeHash = Bytes.fill(HASH_SIZE, 7).asOpaque<CodeHash>();
+  const imports = Array.from({ length: overrides.importCount ?? 0 }, (_, i) =>
+    ImportSpec.create({ treeRoot: Bytes.zero(HASH_SIZE), index: tryAsSegmentIndex(i) }),
+  );
+  const extrinsicSpecs = Array.from({ length: overrides.extrinsicCount ?? 0 }, () =>
+    WorkItemExtrinsicSpec.create({ hash: Bytes.zero(HASH_SIZE).asOpaque(), len: tryAsU32(0) }),
+  );
   return WorkItem.create({
     service: tryAsServiceId(overrides.service ?? 1),
     codeHash,
     payload: BytesBlob.blobFrom(new Uint8Array(overrides.payloadLen ?? 3).fill(0xab)),
     refineGasLimit: tryAsServiceGas(1_000_000),
     accumulateGasLimit: tryAsServiceGas(2_000_000),
-    importSegments: asKnownSize(new Array(overrides.importCount ?? 0)),
-    extrinsic: new Array(overrides.extrinsicCount ?? 0),
+    importSegments: asKnownSize(imports),
+    extrinsic: extrinsicSpecs,
     exportCount: tryAsU16(overrides.exportCount ?? 0),
   });
 }
@@ -70,8 +77,9 @@ function prepareRefineData(
   const chainSpec = opts.chainSpec ?? tinyChainSpec;
   const items = opts.items ?? [buildWorkItem({})];
   const workPackage = buildWorkPackage(items);
+  const packageData = buildWorkPackageFetchData(chainSpec, workPackage);
   return new RefineFetchExternalities(chainSpec, {
-    workPackage,
+    packageData,
     currentWorkItemIndex: opts.currentWorkItemIndex ?? 0,
     imports: opts.imports ?? asKnownSize(items.map(() => [])),
     extrinsics: opts.extrinsics ?? asKnownSize(items.map(() => [])),

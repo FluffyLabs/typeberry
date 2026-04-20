@@ -1,23 +1,16 @@
 import type { EntropyHash } from "@typeberry/block";
-import { RefineContext } from "@typeberry/block/refine-context.js";
 import type { WorkItemExtrinsic } from "@typeberry/block/work-item.js";
-import { WorkPackage } from "@typeberry/block/work-package.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import { Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { general } from "@typeberry/jam-host-calls";
 import type { U64 } from "@typeberry/numbers";
 import type { ImportedSegment, PerWorkItem } from "../../in-core/refine.js";
-import {
-  encodeAllWorkItemSummaries,
-  encodeWorkItemSummary,
-  getEncodedConstants,
-  u64ToArrayIndex,
-} from "./fetch-externalities.js";
+import { getEncodedConstants, u64ToArrayIndex, type WorkPackageFetchData } from "./fetch-externalities.js";
 
 export type RefineFetchData = {
-  workPackage: WorkPackage;
+  /** Pre-computed per-work-package encodings. */
+  packageData: WorkPackageFetchData;
   /** Index of the work item currently being refined (`i` in GP). */
   currentWorkItemIndex: number;
   /** Imports per work item (`ī`). */
@@ -83,45 +76,37 @@ export class RefineFetchExternalities implements general.IRefineFetch {
   }
 
   workPackage(): BytesBlob {
-    return Encoder.encodeObject(WorkPackage.Codec, this.data.workPackage, this.chainSpec);
+    return this.data.packageData.packageView.encoded();
   }
 
   authConfiguration(): BytesBlob {
-    return this.data.workPackage.authConfiguration;
+    return this.data.packageData.packageView.authConfiguration.view();
   }
 
   authToken(): BytesBlob {
-    return this.data.workPackage.authToken;
+    return this.data.packageData.packageView.authToken.view();
   }
 
   refineContext(): BytesBlob {
-    return Encoder.encodeObject(RefineContext.Codec, this.data.workPackage.context);
+    return this.data.packageData.packageView.context.encoded();
   }
 
-  /**
-   * Kind 11: concatenation of `S(w)` for every work item in the package.
-   *
-   * https://graypaper.fluffylabs.dev/#/ab2cdbd/31f40231f402?v=0.7.2
-   */
   allWorkItems(): BytesBlob {
-    return encodeAllWorkItemSummaries(this.data.workPackage.items);
+    return this.data.packageData.workItemSummaries.encoded();
   }
 
   oneWorkItem(workItem: U64): BytesBlob | null {
-    const items = this.data.workPackage.items;
-    const idx = u64ToArrayIndex(workItem, items.length);
-    if (idx === null) {
-      return null;
-    }
-    return encodeWorkItemSummary(items[idx]);
+    const summaries = this.data.packageData.workItemSummaries;
+    const idx = u64ToArrayIndex(workItem, summaries.length);
+    return idx === null ? null : (summaries.get(idx)?.encoded() ?? null);
   }
 
   workItemPayload(workItem: U64): BytesBlob | null {
-    const items = this.data.workPackage.items;
+    const items = this.data.packageData.packageView.items.view();
     const idx = u64ToArrayIndex(workItem, items.length);
     if (idx === null) {
       return null;
     }
-    return items[idx].payload;
+    return items.get(idx)?.view().payload.view() ?? null;
   }
 }

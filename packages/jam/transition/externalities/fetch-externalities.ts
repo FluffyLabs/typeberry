@@ -1,9 +1,9 @@
-import type { CodeHash, ServiceGas, ServiceId } from "@typeberry/block";
+import { type CodeHash, reencodeAsView, type ServiceGas, type ServiceId } from "@typeberry/block";
 import { G_I, MAX_REPORT_DEPENDENCIES, O, Q, T, W_A, W_B, W_C, W_M, W_T, W_X } from "@typeberry/block/gp-constants.js";
 import type { WorkItem } from "@typeberry/block/work-item.js";
-import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package.js";
+import { MAX_NUMBER_OF_WORK_ITEMS, WorkPackage, type WorkPackageView } from "@typeberry/block/work-package.js";
 import { BytesBlob } from "@typeberry/bytes";
-import { codec, Encoder } from "@typeberry/codec";
+import { codec, Decoder, type DescribedBy, Encoder, SequenceView } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { PendingTransfer } from "@typeberry/jam-host-calls";
@@ -129,8 +129,8 @@ export function getEncodedConstants(chainSpec: ChainSpec) {
 }
 
 /**
- * `S(w)` — work-item summary used by fetch kinds 11/12 in both the IsAuthorized
- * and Refine contexts. Fixed length of 62 bytes per item.
+ * `S(w)` — work-item summary used by fetch in both the IsAuthorized
+ * and Refine contexts.
  *
  * https://graypaper.fluffylabs.dev/#/ab2cdbd/31fc0231fc02?v=0.7.2
  */
@@ -144,6 +144,8 @@ const WORK_ITEM_SUMMARY_CODEC = codec.object({
   extrinsicCount: codec.u16,
   payloadLength: codec.u32,
 });
+type WorkItemSummary = DescribedBy<typeof WORK_ITEM_SUMMARY_CODEC>;
+type WorkItemSummaryView = DescribedBy<typeof WORK_ITEM_SUMMARY_CODEC.View>;
 
 export function encodeWorkItemSummary(item: WorkItem): BytesBlob {
   return Encoder.encodeObject(WORK_ITEM_SUMMARY_CODEC, {
@@ -158,15 +160,30 @@ export function encodeWorkItemSummary(item: WorkItem): BytesBlob {
   });
 }
 
-/** Kind 11 — concatenation of `S(w)` for every item in the package. */
-export function encodeAllWorkItemSummaries(items: readonly WorkItem[]): BytesBlob {
-  return BytesBlob.blobFromParts(items.map((i) => encodeWorkItemSummary(i).raw));
+/** Encoded work package data for fetch, shared between `IsAuthorized` and `Refine` fetchers. */
+export type WorkPackageFetchData = {
+  /** Lazy view over the encoded work package. */
+  packageView: WorkPackageView;
+  /** SequenceView over the concatenated S(w) summaries. */
+  workItemSummaries: SequenceView<WorkItemSummary, WorkItemSummaryView>;
+};
+
+/** Eagerly build the per-package fetch views. */
+export function buildWorkPackageFetchData(chainSpec: ChainSpec, workPackage: WorkPackage): WorkPackageFetchData {
+  const packageView = reencodeAsView(WorkPackage.Codec, workPackage, chainSpec);
+
+  const summariesBlob = BytesBlob.blobFromParts(workPackage.items.map((i) => encodeWorkItemSummary(i).raw));
+
+  const workItemSummaries = new SequenceView(
+    Decoder.fromBytesBlob(summariesBlob),
+    WORK_ITEM_SUMMARY_CODEC,
+    workPackage.items.length,
+  );
+
+  return { packageView, workItemSummaries };
 }
 
 /** Converts u64 value taken from a register into valid index of array of given `length`. */
 export function u64ToArrayIndex(v: U64, len: number): number | null {
-  if (v >= BigInt(len)) {
-    return null;
-  }
-  return Number(v);
+  return v < BigInt(len) ? Number(v) : null;
 }

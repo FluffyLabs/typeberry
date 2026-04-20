@@ -10,7 +10,6 @@ import {
 import { W_C } from "@typeberry/block/gp-constants.js";
 import type { WorkPackageHash } from "@typeberry/block/refine-context.js";
 import type { WorkItem, WorkItemExtrinsic } from "@typeberry/block/work-item.js";
-import type { WorkPackage } from "@typeberry/block/work-package.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
@@ -20,6 +19,7 @@ import { PvmExecutor, type RefineHostCallExternalities, ReturnStatus, type Retur
 import { type Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import type { State } from "@typeberry/state";
+import type { WorkPackageFetchData } from "@typeberry/transition/externalities/fetch-externalities.js";
 import { RefineFetchExternalities } from "@typeberry/transition/externalities/refine-fetch-externalities.js";
 import { assertNever, Result } from "@typeberry/utils";
 import { RefineExternalitiesImpl } from "./externalities/refine.js";
@@ -74,7 +74,7 @@ export class Refine {
   async invoke(
     state: State,
     lookupState: State,
-    workPackage: WorkPackage,
+    packageFetchData: WorkPackageFetchData,
     idx: number,
     item: WorkItem,
     allImports: PerWorkItem<ImportedSegment[]>,
@@ -121,7 +121,7 @@ export class Refine {
 
     const code = maybeCode.ok;
     const externalities = this.createRefineExternalities({
-      workPackage,
+      packageFetchData,
       currentWorkItemIndex: idx,
       imports: allImports,
       extrinsics: allExtrinsics,
@@ -234,7 +234,7 @@ export class Refine {
   }
 
   private createRefineExternalities(args: {
-    workPackage: WorkPackage;
+    packageFetchData: WorkPackageFetchData;
     currentWorkItemIndex: number;
     imports: PerWorkItem<ImportedSegment[]>;
     extrinsics: PerWorkItem<WorkItemExtrinsic[]>;
@@ -244,7 +244,7 @@ export class Refine {
     authorizerTrace: BytesBlob;
   }): RefineHostCallExternalities {
     const fetchExternalities = new RefineFetchExternalities(this.chainSpec, {
-      workPackage: args.workPackage,
+      packageData: args.packageFetchData,
       currentWorkItemIndex: args.currentWorkItemIndex,
       imports: args.imports,
       extrinsics: args.extrinsics,
