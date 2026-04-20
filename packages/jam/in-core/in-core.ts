@@ -66,9 +66,7 @@ export class InCore {
     extrinsics: PerWorkItem<WorkItemExtrinsic[]>,
   ): Promise<Result<RefineResult, RefineError>> {
     const workPackageHash = workPackageAndHash.hash;
-    const { context, authToken, authCodeHash, authCodeHost, authConfiguration, items, ...rest } =
-      workPackageAndHash.data;
-    assertEmpty(rest);
+    const { context, items } = workPackageAndHash.data;
 
     // TODO [ToDr] Verify BEEFY root
     // TODO [ToDr] Verify prerequisites
@@ -108,14 +106,7 @@ export class InCore {
     }
 
     // Check authorization
-    const authResult = await this.isAuthorized.invoke(
-      state,
-      core,
-      authToken,
-      authCodeHost,
-      authCodeHash,
-      authConfiguration,
-    );
+    const authResult = await this.isAuthorized.invoke(state, core, workPackageAndHash.data);
     if (authResult.isError) {
       return Result.error(
         RefineError.AuthorizationError,
@@ -134,6 +125,7 @@ export class InCore {
       const result = await this.refineItem.invoke(
         state,
         lookupState,
+        workPackageAndHash.data,
         idx,
         item,
         imports,
@@ -141,6 +133,7 @@ export class InCore {
         core,
         workPackageHash,
         exportOffset,
+        authResult.ok.authorizationOutput,
       );
       refineResults.push(result);
       exportOffset += result.exports.length;

@@ -4,13 +4,46 @@ import { resolve } from "node:path";
 import { before, describe, it } from "node:test";
 import type { CodeHash } from "@typeberry/block";
 import { tryAsCoreIndex, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import { RefineContext } from "@typeberry/block/refine-context.js";
+import { WorkItem } from "@typeberry/block/work-item.js";
+import { tryAsWorkItemsCount, WorkPackage } from "@typeberry/block/work-package.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { HashDictionary } from "@typeberry/collections";
+import { asKnownSize, FixedSizeArray, HashDictionary } from "@typeberry/collections";
 import { PvmBackend, tinyChainSpec } from "@typeberry/config";
 import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { InMemoryService, InMemoryState, PreimageItem, ServiceAccountInfo } from "@typeberry/state";
 import { AuthorizationError, IsAuthorized } from "./is-authorized.js";
+
+function buildPackage(authCodeHash: CodeHash, authToken: BytesBlob, authConfiguration: BytesBlob): WorkPackage {
+  const items = [
+    WorkItem.create({
+      service: tryAsServiceId(1),
+      codeHash: Bytes.zero(HASH_SIZE).asOpaque<CodeHash>(),
+      refineGasLimit: tryAsServiceGas(1_000_000),
+      accumulateGasLimit: tryAsServiceGas(1_000_000),
+      exportCount: tryAsU16(0),
+      payload: BytesBlob.empty(),
+      importSegments: asKnownSize([]),
+      extrinsic: [],
+    }),
+  ];
+  return WorkPackage.create({
+    authToken,
+    authCodeHost: AUTH_SERVICE_ID,
+    authCodeHash,
+    authConfiguration,
+    context: RefineContext.create({
+      anchor: Bytes.zero(HASH_SIZE).asOpaque(),
+      stateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+      beefyRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+      lookupAnchor: Bytes.zero(HASH_SIZE).asOpaque(),
+      lookupAnchorSlot: tryAsTimeSlot(16),
+      prerequisites: [],
+    }),
+    items: FixedSizeArray.new(items, tryAsWorkItemsCount(1)),
+  });
+}
 
 let blake2b: Blake2b;
 
@@ -67,7 +100,7 @@ describe("IsAuthorized", () => {
     const isAuthorized = new IsAuthorized(spec, PvmBackend.BuiltIn, blake2b);
     const token = BytesBlob.blobFromString("hello");
 
-    const result = await isAuthorized.invoke(state, tryAsCoreIndex(0), token, AUTH_SERVICE_ID, authCodeHash, token);
+    const result = await isAuthorized.invoke(state, tryAsCoreIndex(0), buildPackage(authCodeHash, token, token));
 
     assert.strictEqual(result.isOk, true, `Expected OK but got error: ${result.isError ? result.details() : ""}`);
 
@@ -94,10 +127,7 @@ describe("IsAuthorized", () => {
     const result = await isAuthorized.invoke(
       state,
       tryAsCoreIndex(0),
-      BytesBlob.empty(),
-      AUTH_SERVICE_ID,
-      authCodeHash,
-      BytesBlob.empty(),
+      buildPackage(authCodeHash, BytesBlob.empty(), BytesBlob.empty()),
     );
 
     assert.strictEqual(result.isOk, true, `Expected OK but got error: ${result.isError ? result.details() : ""}`);
@@ -113,10 +143,7 @@ describe("IsAuthorized", () => {
     const result = await isAuthorized.invoke(
       state,
       tryAsCoreIndex(0),
-      BytesBlob.blobFromString("wrong"),
-      AUTH_SERVICE_ID,
-      authCodeHash,
-      BytesBlob.blobFromString("right"),
+      buildPackage(authCodeHash, BytesBlob.blobFromString("wrong"), BytesBlob.blobFromString("right")),
     );
 
     assert.strictEqual(result.isError, true);
@@ -134,10 +161,7 @@ describe("IsAuthorized", () => {
     const result = await isAuthorized.invoke(
       state,
       tryAsCoreIndex(0),
-      BytesBlob.empty(),
-      AUTH_SERVICE_ID,
-      authCodeHash,
-      BytesBlob.empty(),
+      buildPackage(authCodeHash, BytesBlob.empty(), BytesBlob.empty()),
     );
 
     assert.strictEqual(result.isError, true);
@@ -173,10 +197,7 @@ describe("IsAuthorized", () => {
     const result = await isAuthorized.invoke(
       state,
       tryAsCoreIndex(0),
-      BytesBlob.empty(),
-      AUTH_SERVICE_ID,
-      authCodeHash,
-      BytesBlob.empty(),
+      buildPackage(authCodeHash, BytesBlob.empty(), BytesBlob.empty()),
     );
 
     assert.strictEqual(result.isError, true);

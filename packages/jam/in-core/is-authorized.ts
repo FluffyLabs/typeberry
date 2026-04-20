@@ -1,6 +1,7 @@
-import { type CodeHash, type CoreIndex, type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/block";
+import { type CoreIndex, type ServiceGas, tryAsServiceGas } from "@typeberry/block";
 import { G_I, W_A } from "@typeberry/block/gp-constants.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
+import type { WorkPackage } from "@typeberry/block/work-package.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec, PvmBackend } from "@typeberry/config";
@@ -44,11 +45,10 @@ export class IsAuthorized {
   async invoke(
     state: State,
     coreIndex: CoreIndex,
-    authToken: BytesBlob,
-    authCodeHost: ServiceId,
-    authCodeHash: CodeHash,
-    authConfiguration: BytesBlob,
+    workPackage: WorkPackage,
   ): Promise<Result<AuthorizationOk, AuthorizationError>> {
+    const { authCodeHost, authCodeHash, authConfiguration } = workPackage;
+
     // Look up the authorizer code from the auth code host service
     const service = state.getService(authCodeHost);
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/2eca002eca00?v=0.7.2
@@ -77,10 +77,7 @@ export class IsAuthorized {
     }
 
     // Prepare fetch externalities and executor
-    const fetchExternalities = new IsAuthorizedFetchExternalities(this.chainSpec, {
-      authToken,
-      authConfiguration,
-    });
+    const fetchExternalities = new IsAuthorizedFetchExternalities(this.chainSpec, workPackage);
     const executor = await PvmExecutor.createIsAuthorizedExecutor(
       authCodeHost,
       code,
