@@ -49,7 +49,7 @@ export function startFuzzTarget(version: FuzzVersion, socket: string | null, api
   const socketName = socket ?? "jam_target.sock";
 
   if (version === FuzzVersion.V1) {
-    return startIpcServer(socketName, (sender) => new v1.FuzzTarget(new FuzzHandler(api), sender, api.chainSpec));
+    return startIpcServer(socketName, (sender) => v1.FuzzTarget.new(FuzzHandler.new(api), sender, api.chainSpec));
   }
 
   assertNever(version);
@@ -79,7 +79,7 @@ function startJamnpExtension(api: ExtensionApi) {
 
   const getKeyValuePairs = (_hash: HeaderHash, startKey: ce129.Key) => {
     const value = BytesBlob.blobFromNumbers([255, 255, 0, 0]);
-    return [new ce129.KeyValuePair(startKey, value)];
+    return [ce129.KeyValuePair.new(startKey, value)];
   };
 
   return startJamnpIpcServer(
@@ -95,7 +95,11 @@ function startJamnpExtension(api: ExtensionApi) {
 const logger = Logger.new(import.meta.filename, "ext-ipc");
 
 class FuzzHandler implements v1.FuzzMessageHandler {
-  constructor(public readonly api: FuzzTargetApi) {}
+  static new(api: FuzzTargetApi) {
+    return new FuzzHandler(api);
+  }
+
+  private constructor(public readonly api: FuzzTargetApi) {}
 
   async getSerializedState(value: HeaderHash): Promise<v1.KeyValue[]> {
     const state = await this.api.getPostSerializedState(value);

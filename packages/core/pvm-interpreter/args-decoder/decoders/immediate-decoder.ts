@@ -11,7 +11,11 @@ export class ImmediateDecoder {
   private view: DataView;
   private bytes: Uint8Array;
 
-  constructor() {
+  static new() {
+    return new ImmediateDecoder();
+  }
+
+  private constructor() {
     const buffer = new ArrayBuffer(BUFFER_SIZE);
     this.u32 = new Uint32Array(buffer);
     this.i32 = new Int32Array(buffer);

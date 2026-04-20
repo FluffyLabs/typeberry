@@ -12,10 +12,10 @@ import { Registers } from "../registers.js";
 import { OneRegTwoImmsDispatcher } from "./one-reg-two-imms-dispatcher.js";
 
 describe("OneRegTwoImmsDispatcher", () => {
-  const regs = new Registers();
-  const memory = new Memory();
+  const regs = Registers.empty();
+  const memory = Memory.new();
   const instructionResult = new InstructionResult();
-  const storeOps = new StoreOps(regs, memory, instructionResult);
+  const storeOps = StoreOps.new(regs, memory, instructionResult);
 
   const mockFn = mock.fn();
 
@@ -40,8 +40,8 @@ describe("OneRegTwoImmsDispatcher", () => {
   });
 
   const argsMock = {
-    firstImmediateDecoder: new ImmediateDecoder(),
-    secondImmediateDecoder: new ImmediateDecoder(),
+    firstImmediateDecoder: ImmediateDecoder.new(),
+    secondImmediateDecoder: ImmediateDecoder.new(),
   } as OneRegisterTwoImmediatesArgs;
 
   const relevantInstructions = Object.entries(Instruction)

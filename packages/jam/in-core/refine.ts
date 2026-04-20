@@ -237,7 +237,7 @@ export class Refine {
     exportOffset: number;
   }): RefineHostCallExternalities {
     // TODO [ToDr] Pass all required fetch data
-    const fetchExternalities = new RefineFetchExternalities(this.chainSpec);
+    const fetchExternalities = RefineFetchExternalities.new(this.chainSpec);
     const refine = RefineExternalitiesImpl.create({
       currentServiceId: args.currentServiceId,
       lookupState: args.lookupState,

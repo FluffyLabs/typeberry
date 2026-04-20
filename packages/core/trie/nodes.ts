@@ -90,14 +90,12 @@ export class TrieNode {
 
   /** View this node as a branch node */
   asBranchNode(): BranchNode {
-    check`${this.getNodeType() === NodeType.Branch} not a branch!`;
-    return new BranchNode(this);
+    return BranchNode.viewOf(this);
   }
 
   /** View this node as a leaf node */
   asLeafNode(): LeafNode {
-    check`${this.getNodeType() !== NodeType.Branch} not a leaf!`;
-    return new LeafNode(this);
+    return LeafNode.viewOf(this);
   }
 
   toString() {
@@ -118,9 +116,7 @@ export class TrieNode {
  * +---------------------------------------------------------------+
  */
 export class BranchNode {
-  // Underlying raw node.
-  constructor(readonly node: TrieNode) {}
-
+  /** Build a branch node from its left and right sub-node hashes. */
   static fromSubNodes(left: TrieNodeHash, right: TrieNodeHash) {
     const node = new TrieNode();
     node.raw.set(left.raw, 0);
@@ -131,6 +127,15 @@ export class BranchNode {
 
     return new BranchNode(node);
   }
+
+  /** View an existing raw trie node as a branch node (validates node type). */
+  static viewOf(node: TrieNode): BranchNode {
+    check`${node.getNodeType() === NodeType.Branch} not a branch!`;
+    return new BranchNode(node);
+  }
+
+  // Underlying raw node.
+  private constructor(readonly node: TrieNode) {}
 
   /** Get the hash of the left sub-trie. */
   getLeft(): TrieNodeHash {
@@ -165,10 +170,6 @@ export class LeafNode {
   // Underlying raw node.
   readonly node: TrieNode;
 
-  constructor(node: TrieNode) {
-    this.node = node;
-  }
-
   static fromValue(key: InputKey, value: BytesBlob, valueHash: () => ValueHash): LeafNode {
     const node = new TrieNode();
     // The value will fit in the leaf itself.
@@ -187,6 +188,16 @@ export class LeafNode {
     }
 
     return new LeafNode(node);
+  }
+
+  /** View an existing raw trie node as a leaf node (validates node type). */
+  static viewOf(node: TrieNode): LeafNode {
+    check`${node.getNodeType() !== NodeType.Branch} not a leaf!`;
+    return new LeafNode(node);
+  }
+
+  private constructor(node: TrieNode) {
+    this.node = node;
   }
 
   /** Get the key (truncated to 31 bytes). */

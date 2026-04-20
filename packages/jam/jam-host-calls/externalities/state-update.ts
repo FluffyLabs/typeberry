@@ -143,7 +143,11 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
   /** A collection of state updates. */
   public readonly stateUpdate;
 
-  constructor(
+  static new<T extends StateSlice = StateSlice>(state: T, stateUpdate?: AccumulationStateUpdate) {
+    return new PartiallyUpdatedState<T>(state, stateUpdate);
+  }
+
+  private constructor(
     /** Original (unmodified state). */
     public readonly state: T,
     stateUpdate?: AccumulationStateUpdate,
@@ -271,7 +275,7 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
       }
 
       const slots = service.getLookupHistory(hash, lenU32);
-      return slots === null ? null : new LookupHistoryItem(hash, lenU32, slots);
+      return slots === null ? null : LookupHistoryItem.new(hash, lenU32, slots);
     };
 
     if (updatedPreimage === undefined) {
@@ -282,7 +286,7 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
     switch (action.kind) {
       case UpdatePreimageKind.Provide: {
         // casting to U32 is safe, since we compare with object we have in memory.
-        return new LookupHistoryItem(hash, updatedPreimage.length, tryAsLookupHistorySlots([currentTimeslot]));
+        return LookupHistoryItem.new(hash, updatedPreimage.length, tryAsLookupHistorySlots([currentTimeslot]));
       }
       case UpdatePreimageKind.Remove: {
         return null;

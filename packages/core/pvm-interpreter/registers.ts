@@ -14,8 +14,18 @@ export class Registers implements IRegisters {
   private asSigned: BigInt64Array;
   private asUnsigned: BigUint64Array;
 
-  constructor(private readonly bytes = safeAllocUint8Array(NO_OF_REGISTERS << REGISTER_SIZE_SHIFT)) {
+  /** Creates an empty registers object backed by a freshly allocated buffer. */
+  static empty() {
+    return new Registers(safeAllocUint8Array(NO_OF_REGISTERS << REGISTER_SIZE_SHIFT));
+  }
+
+  /** Wraps an existing byte buffer, validating its size. */
+  static fromBytes(bytes: Uint8Array) {
     check`${bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT} Invalid size of registers array.`;
+    return new Registers(bytes);
+  }
+
+  private constructor(private readonly bytes: Uint8Array) {
     this.asSigned = new BigInt64Array(bytes.buffer, bytes.byteOffset);
     this.asUnsigned = new BigUint64Array(bytes.buffer, bytes.byteOffset);
   }
@@ -27,11 +37,6 @@ export class Registers implements IRegisters {
   setAllEncoded(bytes: Uint8Array): void {
     check`${bytes.length === this.bytes.length} Incorrect size of input registers. Got: ${bytes.length}, need: ${this.bytes.length}`;
     this.bytes.set(bytes, 0);
-  }
-
-  static fromBytes(bytes: Uint8Array) {
-    check`${bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT} Invalid size of registers array.`;
-    return new Registers(bytes);
   }
 
   getBytesAsLittleEndian(index: number, len: number) {

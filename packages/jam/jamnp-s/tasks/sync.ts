@@ -59,7 +59,7 @@ export class SyncTask {
       return streamManager.getPeer(streamId);
     };
 
-    const up0Handler = new up0.Handler(
+    const up0Handler = up0.Handler.new(
       spec,
       () => syncTask.getUp0Handshake(),
       (streamId, ann) => {
@@ -79,7 +79,7 @@ export class SyncTask {
     // server mode
     streamManager.registerIncomingHandlers(up0Handler);
     streamManager.registerIncomingHandlers(
-      new ce128.ServerHandler(spec, (streamId, hash, direction, maxBlocks) => {
+      ce128.ServerHandler.new(spec, (streamId, hash, direction, maxBlocks) => {
         const peer = streamManager.getPeer(streamId);
         if (peer !== null) {
           return syncTask.handleGetBlockSequence(peer, hash, direction, maxBlocks);
@@ -90,7 +90,7 @@ export class SyncTask {
 
     // client mode
     streamManager.registerOutgoingHandlers(up0Handler);
-    streamManager.registerOutgoingHandlers(new ce128.ClientHandler(spec));
+    streamManager.registerOutgoingHandlers(ce128.ClientHandler.new(spec));
 
     return syncTask;
   }
@@ -369,5 +369,5 @@ export type RequestedBlocks = {
 
 function hashHeader(blake2b: Blake2b, header: Header, spec: ChainSpec): WithHash<HeaderHash, Header> {
   const encoded = Encoder.encodeObject(Header.Codec, header, spec);
-  return new WithHash(blake2b.hashBytes(encoded).asOpaque(), header);
+  return WithHash.new(blake2b.hashBytes(encoded).asOpaque(), header);
 }

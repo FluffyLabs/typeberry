@@ -16,7 +16,11 @@ import {
 } from "./math-utils.js";
 
 export class MathOps {
-  constructor(private regs: Registers) {}
+  static new(regs: Registers) {
+    return new MathOps(regs);
+  }
+
+  private constructor(private regs: Registers) {}
 
   addU32(firstIndex: number, secondIndex: number, resultIndex: number) {
     this.regs.setU64(

@@ -25,7 +25,11 @@ export class Assign implements HostCallHandler {
   basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8);
 
-  constructor(
+  static new(currentServiceId: ServiceId, partialState: PartialState, chainSpec: ChainSpec) {
+    return new Assign(currentServiceId, partialState, chainSpec);
+  }
+
+  private constructor(
     public readonly currentServiceId: ServiceId,
     private readonly partialState: PartialState,
     private readonly chainSpec: ChainSpec,

@@ -267,7 +267,11 @@ export class Fetch implements HostCallHandler {
   basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10, 11, 12);
 
-  constructor(
+  static new(currentServiceId: ServiceId, fetch: IFetchExternalities) {
+    return new Fetch(currentServiceId, fetch);
+  }
+
+  private constructor(
     public readonly currentServiceId: ServiceId,
     private readonly fetch: IFetchExternalities,
   ) {}

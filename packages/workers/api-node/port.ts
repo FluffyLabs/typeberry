@@ -23,13 +23,17 @@ export class ThreadPort implements Port {
   static pair(spec: ChainSpec): [ThreadPort, ThreadPort] {
     const { port1, port2 } = new MessageChannel();
 
-    return [new ThreadPort(spec, port1), new ThreadPort(spec, port2)];
+    return [ThreadPort.new(spec, port1), ThreadPort.new(spec, port2)];
   }
 
   public readonly threadId = threadId;
   private readonly events = new EventEmitter();
 
-  public constructor(
+  static new(spec: ChainSpec, port: MessagePort) {
+    return new ThreadPort(spec, port);
+  }
+
+  private constructor(
     private readonly spec: ChainSpec,
     private readonly port: MessagePort,
   ) {

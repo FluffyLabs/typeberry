@@ -39,7 +39,13 @@ const logger = Logger.new(import.meta.filename, "protocol/ce-133");
 export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
-  constructor(private readonly onWorkPackage: (i: CoreIndex, w: WorkPackage, e: WorkPackageExtrinsics) => void) {}
+  static new(onWorkPackage: (i: CoreIndex, w: WorkPackage, e: WorkPackageExtrinsics) => void) {
+    return new ServerHandler(onWorkPackage);
+  }
+
+  private constructor(
+    private readonly onWorkPackage: (i: CoreIndex, w: WorkPackage, e: WorkPackageExtrinsics) => void,
+  ) {}
 
   public readonly workPackages = new Map<StreamId, CoreWorkPackage>();
 
@@ -67,6 +73,12 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 
 export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
+
+  static new() {
+    return new ClientHandler();
+  }
+
+  private constructor() {}
 
   onStreamMessage(sender: StreamMessageSender): void {
     logger.warn`[${sender.streamId}] Got unexpected message on CE-133 stream. Closing.`;

@@ -8,7 +8,11 @@ export type Skip = {
 
 /** Wrapper for `Decoder` that can skip bytes of fields in the data buffer instead of decoding them. */
 export class Skipper {
-  constructor(public readonly decoder: Decoder) {}
+  static new(decoder: Decoder) {
+    return new Skipper(decoder);
+  }
+
+  private constructor(public readonly decoder: Decoder) {}
   /** Skip U64/I64. */
   u64 = () => this.decoder.skip(8);
   /** Skip U32/I32. */

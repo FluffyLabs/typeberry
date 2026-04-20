@@ -11,7 +11,6 @@ import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.j
 import { type ProgramCounter, tryAsMachineId, tryAsProgramCounter } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Machine } from "./machine.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -22,7 +21,7 @@ const PC_REG = 9;
 
 function prepareRegsAndMemory(code: BytesBlob, pc: ProgramCounter, { skipCode = false }: { skipCode?: boolean } = {}) {
   const memStart = 2 ** 20;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(CODE_START_REG, tryAsU64(memStart));
   registers.set(CODE_LEN_REG, tryAsU64(code.length));
   registers.set(PC_REG, pc);
@@ -31,7 +30,7 @@ function prepareRegsAndMemory(code: BytesBlob, pc: ProgramCounter, { skipCode = 
   if (!skipCode) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), code.raw);
   }
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
     memory,
@@ -41,7 +40,7 @@ function prepareRegsAndMemory(code: BytesBlob, pc: ProgramCounter, { skipCode = 
 describe("HostCalls: Machine", () => {
   it("should start a new nested machine with minimal code", async () => {
     const refine = new TestRefineExt();
-    const machine = new Machine(refine);
+    const machine = Machine.new(refine);
     const machineId = tryAsMachineId(10_000);
     machine.currentServiceId = tryAsServiceId(10_000);
     const code = BytesBlob.blobFromNumbers([0, 0, 0]);
@@ -59,7 +58,7 @@ describe("HostCalls: Machine", () => {
 
   it("should start a new nested machine with fibbonacci code", async () => {
     const refine = new TestRefineExt();
-    const machine = new Machine(refine);
+    const machine = Machine.new(refine);
     const machineId = tryAsMachineId(10_000);
     machine.currentServiceId = tryAsServiceId(10_000);
     const code = BytesBlob.blobFromNumbers([
@@ -80,7 +79,7 @@ describe("HostCalls: Machine", () => {
 
   it("should panic when code is unavailable", async () => {
     const refine = new TestRefineExt();
-    const machine = new Machine(refine);
+    const machine = Machine.new(refine);
     machine.currentServiceId = tryAsServiceId(10_000);
     const code = BytesBlob.blobFromString("amazing PVM code");
     const programCounter = tryAsProgramCounter(5);
@@ -95,7 +94,7 @@ describe("HostCalls: Machine", () => {
 
   it("should return HUH when code is invalid", async () => {
     const refine = new TestRefineExt();
-    const machine = new Machine(refine);
+    const machine = Machine.new(refine);
     machine.currentServiceId = tryAsServiceId(10_000);
     const code = BytesBlob.blobFromString("invalid PVM code");
     const programCounter = tryAsProgramCounter(5);

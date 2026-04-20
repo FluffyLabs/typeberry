@@ -621,7 +621,11 @@ function objectView<T, D extends DescriptorRecord<T>>(
 ): Descriptor<ViewOf<T, D>> {
   // Create a View, based on the `AbstractView`.
   class ClassView extends ObjectView<T> {
-    constructor(d: Decoder) {
+    static new(d: Decoder) {
+      return new ClassView(d);
+    }
+
+    private constructor(d: Decoder) {
       super(d, Class, descriptors);
     }
   }
@@ -646,8 +650,8 @@ function objectView<T, D extends DescriptorRecord<T>>(
       e.bytes(Bytes.fromBlob(encoded.raw, encoded.length));
     },
     (d) => {
-      const view = new ClassView(d.clone()) as ViewOf<T, D>;
-      skipper(new Skipper(d));
+      const view = ClassView.new(d.clone()) as ViewOf<T, D>;
+      skipper(Skipper.new(d));
       return view;
     },
     skipper,
@@ -676,7 +680,7 @@ function sequenceViewVarLen<T, V>(type: Descriptor<T, V>, options: LengthRange):
     },
     (d) => {
       const view = new SequenceView(d.clone(), type);
-      skipper(new Skipper(d));
+      skipper(Skipper.new(d));
       return view;
     },
     skipper,
@@ -703,7 +707,7 @@ function sequenceViewFixLen<T, V>(
     },
     (d) => {
       const view = new SequenceView(d.clone(), type, fixedLength);
-      skipper(new Skipper(d));
+      skipper(Skipper.new(d));
       return view;
     },
     skipper,

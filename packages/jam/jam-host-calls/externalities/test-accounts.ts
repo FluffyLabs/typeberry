@@ -11,11 +11,11 @@ import type { AccountsWrite } from "../general/write.js";
 
 export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite, AccountsInfo {
   constructor(private readonly serviceId: ServiceId) {}
-  public readonly preimages: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
+  public readonly preimages: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = MultiMap.new(2, [
     null,
     (hash) => hash.toString(),
   ]);
-  public readonly storage: MultiMap<[ServiceId, StorageKey], BytesBlob | null> = new MultiMap(2, [
+  public readonly storage: MultiMap<[ServiceId, StorageKey], BytesBlob | null> = MultiMap.new(2, [
     null,
     (hash) => hash.toString(),
   ]);

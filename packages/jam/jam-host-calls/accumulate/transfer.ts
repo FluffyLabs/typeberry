@@ -37,7 +37,11 @@ export class Transfer implements HostCallHandler {
 
   tracedRegisters = traceRegisters(IN_OUT_REG, AMOUNT_REG, TRANSFER_GAS_FEE_REG, MEMO_START_REG);
 
-  constructor(
+  static new(currentServiceId: ServiceId, partialState: PartialState) {
+    return new Transfer(currentServiceId, partialState);
+  }
+
+  private constructor(
     public readonly currentServiceId: ServiceId,
     private readonly partialState: PartialState,
   ) {}

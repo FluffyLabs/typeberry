@@ -11,7 +11,6 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import { asOpaqueType, OK, Result } from "@typeberry/utils";
 import { TestAccounts } from "../externalities/test-accounts.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Read } from "./read.js";
 import { HostCallResult } from "./results.js";
 
@@ -43,7 +42,7 @@ function prepareRegsAndMemory(
 ) {
   const keyAddress = 2 ** 20;
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   if (serviceId !== undefined) {
     registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
   } else {
@@ -62,7 +61,7 @@ function prepareRegsAndMemory(
   if (!skipValue) {
     builder.setWriteablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE));
   }
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
     memory,
@@ -79,7 +78,7 @@ describe("HostCalls: Read", () => {
     it("for current account", async () => {
       const currentServiceId = tryAsServiceId(10_000);
       const accounts = new TestAccounts(currentServiceId);
-      const read = new Read(currentServiceId, accounts);
+      const read = Read.new(currentServiceId, accounts);
       const serviceId = tryAsServiceId(10_000);
       const key = BytesBlob.blobFromString("key");
       const value = "hello world";
@@ -96,7 +95,7 @@ describe("HostCalls: Read", () => {
     it("for different service Id", async () => {
       const currentServiceId = tryAsServiceId(10_000);
       const accounts = new TestAccounts(currentServiceId);
-      const read = new Read(currentServiceId, accounts);
+      const read = Read.new(currentServiceId, accounts);
       const serviceId = tryAsServiceId(11_000);
       const key = BytesBlob.blobFromString("key");
       const value = "hello world";
@@ -115,7 +114,7 @@ describe("HostCalls: Read", () => {
     it("with offset", async () => {
       const currentServiceId = tryAsServiceId(10_000);
       const accounts = new TestAccounts(currentServiceId);
-      const read = new Read(currentServiceId, accounts);
+      const read = Read.new(currentServiceId, accounts);
       const serviceId = tryAsServiceId(10_000);
       const key = BytesBlob.blobFromString("key");
       const value = "hello world";
@@ -134,7 +133,7 @@ describe("HostCalls: Read", () => {
     it("with offset and length", async () => {
       const currentServiceId = tryAsServiceId(10_000);
       const accounts = new TestAccounts(currentServiceId);
-      const read = new Read(currentServiceId, accounts);
+      const read = Read.new(currentServiceId, accounts);
       const serviceId = tryAsServiceId(10_000);
       const key = BytesBlob.blobFromString("key");
       const value = "hello world";
@@ -154,7 +153,7 @@ describe("HostCalls: Read", () => {
     it("with 0-length destination target", async () => {
       const currentServiceId = tryAsServiceId(10_000);
       const accounts = new TestAccounts(currentServiceId);
-      const read = new Read(currentServiceId, accounts);
+      const read = Read.new(currentServiceId, accounts);
       const serviceId = tryAsServiceId(10_000);
       const key = BytesBlob.blobFromString("xyz");
       const value = "hello world";
@@ -171,7 +170,7 @@ describe("HostCalls: Read", () => {
   it("should handle missing account", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const accounts = new TestAccounts(currentServiceId);
-    const read = new Read(currentServiceId, accounts);
+    const read = Read.new(currentServiceId, accounts);
     const value = "xyz";
     const key = BytesBlob.blobFromString(value);
     const { registers, memory } = prepareRegsAndMemory(key, value.length);
@@ -188,7 +187,7 @@ describe("HostCalls: Read", () => {
   it("should handle missing value", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const accounts = new TestAccounts(currentServiceId);
-    const read = new Read(currentServiceId, accounts);
+    const read = Read.new(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
     const value = "xyz";
     const key = BytesBlob.blobFromString(value);
@@ -205,7 +204,7 @@ describe("HostCalls: Read", () => {
   it("should fail if there is no memory for key", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const accounts = new TestAccounts(currentServiceId);
-    const read = new Read(currentServiceId, accounts);
+    const read = Read.new(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
     const value = "xyz";
     const key = BytesBlob.blobFromString(value);
@@ -219,7 +218,7 @@ describe("HostCalls: Read", () => {
   it("should fail if there is no memory for result", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const accounts = new TestAccounts(currentServiceId);
-    const read = new Read(currentServiceId, accounts);
+    const read = Read.new(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
     const value = "xyz";
     const key = BytesBlob.blobFromString(value);

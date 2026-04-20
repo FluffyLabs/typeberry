@@ -12,7 +12,6 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Upgrade } from "./upgrade.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -28,7 +27,7 @@ function prepareRegsAndMemory(
   { skipCodeHash = false }: { skipCodeHash?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(CODE_HASH_START_REG, tryAsU64(memStart));
   registers.set(GAS_REG, gas);
   registers.set(BALANCE_REG, balance);
@@ -38,7 +37,7 @@ function prepareRegsAndMemory(
   if (!skipCodeHash) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), codeHash.raw);
   }
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
     memory,
@@ -49,7 +48,7 @@ describe("HostCalls: Upgrade", () => {
   it("should upgrade a service", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const upgrade = new Upgrade(currentServiceId, accumulate);
+    const upgrade = Upgrade.new(currentServiceId, accumulate);
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(2n ** 40n),
@@ -67,7 +66,7 @@ describe("HostCalls: Upgrade", () => {
   it("should fail when code not readable", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const upgrade = new Upgrade(currentServiceId, accumulate);
+    const upgrade = Upgrade.new(currentServiceId, accumulate);
 
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),

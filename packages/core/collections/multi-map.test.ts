@@ -20,7 +20,7 @@ describe("Multi Map", () => {
     type MyMap = MultiMap<[string, MyObject, number], string>;
 
     // given
-    const map: MyMap = new MultiMap(3, [null, (obj) => obj.val, null]);
+    const map: MyMap = MultiMap.new(3, [null, (obj) => obj.val, null]);
     map
       .set("hello", "a", new MyObject(5), 10)
       .set("world", "b", new MyObject(10), 10)
@@ -42,7 +42,7 @@ describe("Multi Map", () => {
 
   it("should check existence and remove elements", () => {
     // given
-    const map: MultiMap<[string, number], string> = new MultiMap(2);
+    const map: MultiMap<[string, number], string> = MultiMap.new(2);
     map.set("hello", "a", 10).set("world", "b", 10).set("frens", "a", 11);
 
     // when

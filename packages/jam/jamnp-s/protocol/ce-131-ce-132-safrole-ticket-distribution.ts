@@ -45,7 +45,15 @@ export class TicketDistributionRequest extends WithDebug {
 const logger = Logger.new(import.meta.filename, "protocol/ce-131-ce-132");
 
 export class ServerHandler<T extends STREAM_KIND> implements StreamHandler<T> {
-  constructor(
+  static new<T extends STREAM_KIND>(
+    chainSpec: ChainSpec,
+    kind: T,
+    onTicketReceived: (epochIndex: Epoch, ticket: SignedTicket) => void,
+  ) {
+    return new ServerHandler<T>(chainSpec, kind, onTicketReceived);
+  }
+
+  private constructor(
     private readonly chainSpec: ChainSpec,
     public readonly kind: T,
     private readonly onTicketReceived: (epochIndex: Epoch, ticket: SignedTicket) => void,
@@ -62,7 +70,11 @@ export class ServerHandler<T extends STREAM_KIND> implements StreamHandler<T> {
 }
 
 export class ClientHandler<T extends STREAM_KIND> implements StreamHandler<T> {
-  constructor(
+  static new<T extends STREAM_KIND>(chainSpec: ChainSpec, kind: T) {
+    return new ClientHandler<T>(chainSpec, kind);
+  }
+
+  private constructor(
     private readonly chainSpec: ChainSpec,
     public readonly kind: T,
   ) {}

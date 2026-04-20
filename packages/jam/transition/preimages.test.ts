@@ -34,7 +34,7 @@ function createAccount(
   const preimages = HashDictionary.fromEntries(preimagesEntries.map((x) => [x.hash, x]));
   const lookupHistory = HashDictionary.fromEntries(lookupHistoryEntries.map((x) => [x.hash, [x]]));
 
-  return new InMemoryService(id, {
+  return InMemoryService.new(id, {
     info: ServiceAccountInfo.create({
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
       balance: tryAsU64(0),
@@ -174,7 +174,7 @@ describe("Preimages", async () => {
 
     const preimages = [PreimageItem.create({ hash, blob })];
     const lookupHistory = [
-      new LookupHistoryItem(hash, tryAsU32(blob.length), tryAsLookupHistorySlots([tryAsTimeSlot(5)])),
+      LookupHistoryItem.new(hash, tryAsU32(blob.length), tryAsLookupHistorySlots([tryAsTimeSlot(5)])),
     ];
 
     const state = InMemoryState.partial(tinyChainSpec, {
@@ -203,8 +203,8 @@ describe("Preimages", async () => {
     const hash2 = blake2b.hashBytes(blob2).asOpaque();
 
     const lookupHistory = [
-      new LookupHistoryItem(hash1, tryAsU32(blob1.length), tryAsLookupHistorySlots([])),
-      new LookupHistoryItem(hash2, tryAsU32(blob2.length), tryAsLookupHistorySlots([])),
+      LookupHistoryItem.new(hash1, tryAsU32(blob1.length), tryAsLookupHistorySlots([])),
+      LookupHistoryItem.new(hash2, tryAsU32(blob2.length), tryAsLookupHistorySlots([])),
     ];
 
     const state = InMemoryState.partial(tinyChainSpec, {

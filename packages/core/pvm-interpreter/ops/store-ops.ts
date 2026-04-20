@@ -8,7 +8,11 @@ import { Result } from "../result.js";
 import { addWithOverflowU32 } from "./math-utils.js";
 
 export class StoreOps {
-  constructor(
+  static new(regs: Registers, memory: Memory, instructionResult: InstructionResult) {
+    return new StoreOps(regs, memory, instructionResult);
+  }
+
+  private constructor(
     private regs: Registers,
     private memory: Memory,
     private instructionResult: InstructionResult,

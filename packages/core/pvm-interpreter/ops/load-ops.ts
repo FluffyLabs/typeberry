@@ -10,7 +10,11 @@ import { addWithOverflowU32 } from "./math-utils.js";
 const REG_SIZE_BYTES = 8;
 
 export class LoadOps {
-  constructor(
+  static new(regs: Registers, memory: Memory, instructionResult: InstructionResult) {
+    return new LoadOps(regs, memory, instructionResult);
+  }
+
+  private constructor(
     private regs: Registers,
     private memory: Memory,
     private instructionResult: InstructionResult,

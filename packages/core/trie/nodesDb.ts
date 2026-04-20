@@ -11,7 +11,11 @@ export type TrieHasher = {
 export class NodesDb {
   protected readonly nodes: HashDictionary<TrieNodeHash, TrieNode> = HashDictionary.new();
 
-  constructor(public readonly hasher: TrieHasher) {}
+  static new(hasher: TrieHasher) {
+    return new NodesDb(hasher);
+  }
+
+  protected constructor(public readonly hasher: TrieHasher) {}
 
   get(hash: TrieNodeHash): TrieNode | null {
     return NodesDb.withHashCompat(hash, (key) => {
@@ -55,6 +59,10 @@ export class NodesDb {
  * A version of `NodesDb` augmented with mutating methods.
  */
 export class WriteableNodesDb extends NodesDb {
+  static new(hasher: TrieHasher) {
+    return new WriteableNodesDb(hasher);
+  }
+
   remove(hash: TrieNodeHash) {
     return NodesDb.withHashCompat(hash, (key) => {
       this.nodes.delete(key);

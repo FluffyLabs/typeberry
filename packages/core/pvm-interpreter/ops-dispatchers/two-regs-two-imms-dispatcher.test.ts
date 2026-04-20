@@ -15,13 +15,13 @@ import { TwoRegsTwoImmsDispatcher } from "./two-regs-two-imms-dispatcher.js";
 
 describe("TwoRegsTwoImmsDispatcher", () => {
   describe("check if it handles expected instructions", () => {
-    const regs = new Registers();
-    const memory = new Memory();
-    const jumpTable = new JumpTable(1, new Uint8Array([1]));
+    const regs = Registers.empty();
+    const memory = Memory.new();
+    const jumpTable = JumpTable.fromRaw(1, new Uint8Array([1]));
     const instructionResult = new InstructionResult();
-    const loadOps = new LoadOps(regs, memory, instructionResult);
+    const loadOps = LoadOps.new(regs, memory, instructionResult);
     const basicBlocks = new BasicBlocks();
-    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
+    const dynamicJumpOps = DynamicJumpOps.new(regs, jumpTable, instructionResult, basicBlocks);
     const loadImmediateMock = mock.fn();
     const jumpIndMock = mock.fn();
 
@@ -42,8 +42,8 @@ describe("TwoRegsTwoImmsDispatcher", () => {
     const argsMock = {
       firstRegisterIndex: 1,
       secondRegisterIndex: 2,
-      firstImmediateDecoder: new ImmediateDecoder(),
-      secondImmediateDecoder: new ImmediateDecoder(),
+      firstImmediateDecoder: ImmediateDecoder.new(),
+      secondImmediateDecoder: ImmediateDecoder.new(),
     } as TwoRegistersTwoImmediatesArgs;
 
     it("should call LoadOps.loadImmediate", () => {
@@ -65,12 +65,12 @@ describe("TwoRegsTwoImmsDispatcher", () => {
 
   describe("check if it handles other instructions than expected", () => {
     const instructionResult = new InstructionResult();
-    const regs = new Registers();
-    const memory = new Memory();
-    const loadOps = new LoadOps(regs, memory, instructionResult);
-    const jumpTable = new JumpTable(1, new Uint8Array([1]));
+    const regs = Registers.empty();
+    const memory = Memory.new();
+    const loadOps = LoadOps.new(regs, memory, instructionResult);
+    const jumpTable = JumpTable.fromRaw(1, new Uint8Array([1]));
     const basicBlocks = new BasicBlocks();
-    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
+    const dynamicJumpOps = DynamicJumpOps.new(regs, jumpTable, instructionResult, basicBlocks);
     const mockFn = mock.fn();
 
     function mockAllMethods(obj: object) {
@@ -95,8 +95,8 @@ describe("TwoRegsTwoImmsDispatcher", () => {
     });
 
     const argsMock = {
-      firstImmediateDecoder: new ImmediateDecoder(),
-      secondImmediateDecoder: new ImmediateDecoder(),
+      firstImmediateDecoder: ImmediateDecoder.new(),
+      secondImmediateDecoder: ImmediateDecoder.new(),
     } as TwoRegistersTwoImmediatesArgs;
 
     const otherInstructions = Object.entries(Instruction)

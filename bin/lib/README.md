@@ -243,7 +243,7 @@ const programHex = "0x0000213308013309012803009577ff51070c648ac8980864a928f36487
 const program = BytesBlob.parseBlob(programHex);
 
 // Create interpreter and initialize with program
-const pvm = new Interpreter();
+const pvm = Interpreter.new();
 pvm.resetGeneric(program.raw, 0, tryAsGas(1000));
 
 // dump the program data
@@ -269,7 +269,7 @@ import { BytesBlob } from "@typeberry/lib/bytes";
 const programHex = "0x0000210408010409010503000277ff07070c528a08980852a905f3528704080409111300499352d500";
 const program = BytesBlob.parseBlob(programHex);
 
-const pvm = new Interpreter();
+const pvm = Interpreter.new();
 pvm.resetGeneric(program.raw, 0, tryAsGas(1000));
 pvm.runProgram();
 

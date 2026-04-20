@@ -51,7 +51,19 @@ export class RpcServer {
   private readonly subscriptionManager: SubscriptionManager;
   private readonly logger: Logger;
 
-  constructor(
+  static new(
+    port: number,
+    rootDb: LmdbRoot,
+    chainSpec: ChainSpec,
+    blake2b: Blake2b,
+    pvmBackend: PvmBackend,
+    handlers: HandlerMap,
+    schemas: SchemaMap,
+  ) {
+    return new RpcServer(port, rootDb, chainSpec, blake2b, pvmBackend, handlers, schemas);
+  }
+
+  private constructor(
     port: number,
     private readonly rootDb: LmdbRoot,
     private readonly chainSpec: ChainSpec,
@@ -62,13 +74,13 @@ export class RpcServer {
   ) {
     this.logger = Logger.new(import.meta.filename, "rpc");
 
-    this.blocks = new LmdbBlocks(chainSpec, this.rootDb);
-    this.states = new LmdbStates(chainSpec, this.blake2b, this.rootDb);
+    this.blocks = LmdbBlocks.new(chainSpec, this.rootDb);
+    this.states = LmdbStates.new(chainSpec, this.blake2b, this.rootDb);
 
     this.wss = new WebSocketServer({ port });
     this.setupWebSocket();
 
-    this.subscriptionManager = new SubscriptionManager(this);
+    this.subscriptionManager = SubscriptionManager.new(this);
   }
 
   private setupWebSocket(): void {

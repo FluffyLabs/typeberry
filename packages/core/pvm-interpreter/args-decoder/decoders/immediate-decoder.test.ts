@@ -5,7 +5,7 @@ import { ImmediateDecoder } from "./immediate-decoder.js";
 describe("ImmediateDecoder", () => {
   describe("reading bytes as signed and unsigned number U32", () => {
     it("Positive number without elided octets", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
       const encodedBytes = new Uint8Array([0x01, 0x00, 0x00, 0x00]);
       const expectedSigned = 1;
       const expectedUnsigned = 1;
@@ -17,7 +17,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Negative number without elided octets", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
       const encodedBytes = new Uint8Array([0xff, 0xff, 0xff, 0xff]);
       const expectedSigned = -1;
       const expectedUnsigned = 2 ** 32 - 1;
@@ -29,7 +29,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Positive number with elided octets", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
       const encodedBytes = new Uint8Array([0x01]);
       const expectedSigned = 1;
       const expectedUnsigned = 1;
@@ -41,7 +41,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Negative number with elided octets", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
       const encodedBytes = new Uint8Array([0xff]);
       const expectedSigned = -1;
       const expectedUnsigned = 2 ** 32 - 1;
@@ -53,7 +53,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Large positive number without elided octets", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
       const encodedBytes = new Uint8Array([0xff, 0xff, 0x7f, 0x00]);
       const expectedSigned = 0x00_7f_ff_ff;
       const expectedUnsigned = 0x00_7f_ff_ff;
@@ -65,7 +65,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Large negative number without elided octets", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([0x01, 0x00, 0x80, 0xff]);
       const expectedSigned = -0x00_7f_ff_ff;
@@ -78,7 +78,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Maximum positive value", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([0xff, 0xff, 0xff, 0x7f]);
       const expectedSigned = 0x7f_ff_ff_ff;
@@ -91,7 +91,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Maximum negative value", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([0x00, 0x00, 0x00, 0x80]);
       const expectedSigned = -(2 ** 31);
@@ -104,7 +104,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Empty bytes array", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([]);
       const expectedSigned = 0;
@@ -119,7 +119,7 @@ describe("ImmediateDecoder", () => {
 
   describe("reading bytes as signed and unsigned number U64", () => {
     it("Positive number without elided octets", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
       const encodedBytes = new Uint8Array([0x01, 0x00, 0x00, 0x00]);
       const expectedSigned = 1n;
       const expectedUnsigned = 1n;
@@ -131,7 +131,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Negative number without elided octets", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
       const encodedBytes = new Uint8Array([0xff, 0xff, 0xff, 0xff]);
       const expectedSigned = -1n;
       const expectedUnsigned = 2n ** 64n - 1n;
@@ -143,7 +143,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Positive number with elided octets", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
       const encodedBytes = new Uint8Array([0x01]);
       const expectedSigned = 1n;
       const expectedUnsigned = 1n;
@@ -155,7 +155,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Negative number with elided octets", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
       const encodedBytes = new Uint8Array([0xff]);
       const expectedSigned = -1n;
       const expectedUnsigned = 2n ** 64n - 1n;
@@ -167,7 +167,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Large positive number without elided octets", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
       const encodedBytes = new Uint8Array([0xff, 0xff, 0x7f, 0x00]);
       const expectedSigned = 0x00_7f_ff_ffn;
       const expectedUnsigned = 0x00_7f_ff_ffn;
@@ -179,7 +179,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Large negative number without elided octets", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([0x01, 0x00, 0x80, 0xff]);
       const expectedSigned = -0x00_7f_ff_ffn;
@@ -192,7 +192,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Maximum positive value", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([0xff, 0xff, 0xff, 0x7f]);
       const expectedSigned = 0x7f_ff_ff_ffn;
@@ -205,7 +205,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Maximum negative value", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([0x00, 0x00, 0x00, 0x80]);
       const expectedSigned = -(2n ** 31n);
@@ -218,7 +218,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("Empty bytes array", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([]);
       const expectedSigned = 0n;
@@ -233,7 +233,7 @@ describe("ImmediateDecoder", () => {
 
   describe("getBytesAsLittleEndian", () => {
     it("should return empty bytes array", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([]);
       const expectedBytes = new Uint8Array([0, 0, 0, 0]);
@@ -244,7 +244,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("should return u8 number correctly encoded as little endian", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([0xff]);
       const expectedBytes = new Uint8Array([0xff, 0xff, 0xff, 0xff]);
@@ -255,7 +255,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("should return u16 number correctly encoded as little endian", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([0xff, 0xee]);
       const expectedBytes = new Uint8Array([0xff, 0xee, 0xff, 0xff]);
@@ -266,7 +266,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("should return u32 number correctly encoded as little endian", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
       const expectedBytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
@@ -279,7 +279,7 @@ describe("ImmediateDecoder", () => {
 
   describe("getExtendedBytesAsLittleEndian", () => {
     it("should return empty bytes array", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([]);
       const expectedBytes = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0]);
@@ -290,7 +290,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("should return u8 number correctly encoded as little endian", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([0xff]);
       const expectedBytes = new Uint8Array([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
@@ -301,7 +301,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("should return u16 number correctly encoded as little endian", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([0xff, 0xee]);
       const expectedBytes = new Uint8Array([0xff, 0xee, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
@@ -312,7 +312,7 @@ describe("ImmediateDecoder", () => {
     });
 
     it("should return u32 number correctly encoded as little endian", () => {
-      const decoder = new ImmediateDecoder();
+      const decoder = ImmediateDecoder.new();
 
       const encodedBytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
       const expectedBytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc, 0xff, 0xff, 0xff, 0xff]);

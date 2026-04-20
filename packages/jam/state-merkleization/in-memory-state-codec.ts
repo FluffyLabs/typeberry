@@ -103,7 +103,7 @@ const lookupHistoryItemCodec = codec.object<LookupHistoryItem>(
       .convert(seeThrough, tryAsLookupHistorySlots),
   },
   "LookupHistoryItem",
-  ({ hash, length, slots }) => new LookupHistoryItem(hash, length, slots),
+  ({ hash, length, slots }) => LookupHistoryItem.new(hash, length, slots),
 );
 
 const lookupHistoryEntryCodec = codec.object<LookupHistoryEntry>({
