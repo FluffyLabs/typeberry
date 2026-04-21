@@ -3,13 +3,17 @@ import { type Gas, type IGasCounter, tryAsGas } from "@typeberry/pvm-interface";
 
 /** Create a new gas counter instance depending on the gas value. */
 export function gasCounter(gas: Gas): IGasCounter {
-  return new GasCounterU64(tryAsU64(gas));
+  return GasCounterU64.new(tryAsU64(gas));
 }
 
 class GasCounterU64 implements IGasCounter {
   initialGas: Gas;
 
-  constructor(private gas: U64) {
+  static new(gas: U64) {
+    return new GasCounterU64(gas);
+  }
+
+  private constructor(private gas: U64) {
     this.initialGas = tryAsGas(gas);
   }
 

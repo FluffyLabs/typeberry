@@ -15,11 +15,11 @@ describe("MemoryBuilder", () => {
       const pageMap = new Map();
       pageMap.set(
         RESERVED_NUMBER_OF_PAGES,
-        new ReadablePage(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES), new Uint8Array()),
+        ReadablePage.new(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES), new Uint8Array()),
       );
       pageMap.set(
         RESERVED_NUMBER_OF_PAGES + 1,
-        new WriteablePage(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 1), new Uint8Array()),
+        WriteablePage.new(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 1), new Uint8Array()),
       );
       const expectedMemory = {
         endHeapIndex: (RESERVED_NUMBER_OF_PAGES + 4) * PAGE_SIZE,
@@ -94,7 +94,7 @@ describe("MemoryBuilder", () => {
       const pageMap = new Map();
       pageMap.set(
         RESERVED_NUMBER_OF_PAGES,
-        new ReadablePage(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES), new Uint8Array()),
+        ReadablePage.new(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES), new Uint8Array()),
       );
       const expectedMemory = {
         endHeapIndex: (RESERVED_NUMBER_OF_PAGES + 3) * PAGE_SIZE,
@@ -122,7 +122,7 @@ describe("MemoryBuilder", () => {
       const pageMap = new Map();
       pageMap.set(
         RESERVED_NUMBER_OF_PAGES + 2,
-        new WriteablePage(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 2), new Uint8Array()),
+        WriteablePage.new(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 2), new Uint8Array()),
       );
       const expectedMemory = {
         endHeapIndex: (RESERVED_NUMBER_OF_PAGES + 4) * PAGE_SIZE,
@@ -150,11 +150,11 @@ describe("MemoryBuilder", () => {
       const pageMap = new Map();
       pageMap.set(
         RESERVED_NUMBER_OF_PAGES,
-        new ReadablePage(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES), new Uint8Array()),
+        ReadablePage.new(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES), new Uint8Array()),
       );
       pageMap.set(
         RESERVED_NUMBER_OF_PAGES + 1,
-        new WriteablePage(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 1), new Uint8Array()),
+        WriteablePage.new(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 1), new Uint8Array()),
       );
       const expectedMemory = {
         endHeapIndex: (RESERVED_NUMBER_OF_PAGES + 4) * PAGE_SIZE,
@@ -190,7 +190,7 @@ describe("MemoryBuilder", () => {
       const data = new Uint8Array(PAGE_SIZE).fill(1);
       const pageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
       const address = tryAsMemoryIndex(pageNumber * PAGE_SIZE);
-      pageMap.set(pageNumber, new WriteablePage(pageNumber, data));
+      pageMap.set(pageNumber, WriteablePage.new(pageNumber, data));
       const expectedMemory = {
         endHeapIndex: (RESERVED_NUMBER_OF_PAGES + 4) * PAGE_SIZE,
         sbrkIndex: (RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE,

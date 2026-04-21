@@ -82,7 +82,13 @@ export class ChainSpec extends WithDebug {
   /** `L`: The maximum age in timeslots of the lookup anchor. */
   readonly maxLookupAnchorAge: U32;
 
-  constructor(data: Omit<ChainSpec, "validatorsSuperMajority" | "thirdOfValidators" | "erasureCodedPieceSize">) {
+  static new(data: Omit<ChainSpec, "validatorsSuperMajority" | "thirdOfValidators" | "erasureCodedPieceSize">) {
+    return new ChainSpec(data);
+  }
+
+  private constructor(
+    data: Omit<ChainSpec, "validatorsSuperMajority" | "thirdOfValidators" | "erasureCodedPieceSize">,
+  ) {
     super();
 
     this.name = data.name;
@@ -106,7 +112,7 @@ export class ChainSpec extends WithDebug {
 }
 
 /** Set of values for "tiny" chain as defined in JAM test vectors. */
-export const tinyChainSpec = new ChainSpec({
+export const tinyChainSpec = ChainSpec.new({
   name: "tiny",
   validatorsCount: tryAsU16(6),
   coresCount: tryAsU16(2),
@@ -129,7 +135,7 @@ export const tinyChainSpec = new ChainSpec({
  * Set of values for "full" chain as defined in JAM test vectors.
  * Please note that only validatorsCount and epochLength are "full", the rest is copied from "tiny".
  */
-export const fullChainSpec = new ChainSpec({
+export const fullChainSpec = ChainSpec.new({
   name: "full",
   validatorsCount: tryAsU16(1023),
   coresCount: tryAsU16(341),

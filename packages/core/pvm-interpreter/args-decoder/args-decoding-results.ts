@@ -46,7 +46,7 @@ export const createResults = () => {
   results[ArgumentType.ONE_IMMEDIATE] = {
     type: ArgumentType.ONE_IMMEDIATE,
     noOfBytesToSkip: 1,
-    immediateDecoder: new ImmediateDecoder(),
+    immediateDecoder: ImmediateDecoder.new(),
   };
 
   results[ArgumentType.TWO_REGISTERS] = {
@@ -68,7 +68,7 @@ export const createResults = () => {
     type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET,
     noOfBytesToSkip: 1,
     registerIndex: 0,
-    immediateDecoder: new ImmediateDecoder(),
+    immediateDecoder: ImmediateDecoder.new(),
     nextPc: 0,
   };
 
@@ -85,22 +85,22 @@ export const createResults = () => {
     noOfBytesToSkip: 1,
     firstRegisterIndex: 0,
     secondRegisterIndex: 0,
-    immediateDecoder: new ImmediateDecoder(),
+    immediateDecoder: ImmediateDecoder.new(),
   };
 
   results[ArgumentType.ONE_REGISTER_ONE_IMMEDIATE] = {
     type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE,
     noOfBytesToSkip: 1,
     registerIndex: 0,
-    immediateDecoder: new ImmediateDecoder(),
+    immediateDecoder: ImmediateDecoder.new(),
   };
 
   results[ArgumentType.ONE_REGISTER_TWO_IMMEDIATES] = {
     type: ArgumentType.ONE_REGISTER_TWO_IMMEDIATES,
     noOfBytesToSkip: 1,
     registerIndex: 0,
-    firstImmediateDecoder: new ImmediateDecoder(),
-    secondImmediateDecoder: new ImmediateDecoder(),
+    firstImmediateDecoder: ImmediateDecoder.new(),
+    secondImmediateDecoder: ImmediateDecoder.new(),
   };
 
   results[ArgumentType.ONE_OFFSET] = {
@@ -112,15 +112,15 @@ export const createResults = () => {
   results[ArgumentType.TWO_IMMEDIATES] = {
     type: ArgumentType.TWO_IMMEDIATES,
     noOfBytesToSkip: 1,
-    firstImmediateDecoder: new ImmediateDecoder(),
-    secondImmediateDecoder: new ImmediateDecoder(),
+    firstImmediateDecoder: ImmediateDecoder.new(),
+    secondImmediateDecoder: ImmediateDecoder.new(),
   };
 
   results[ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES] = {
     type: ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES,
     noOfBytesToSkip: 1,
-    firstImmediateDecoder: new ImmediateDecoder(),
-    secondImmediateDecoder: new ImmediateDecoder(),
+    firstImmediateDecoder: ImmediateDecoder.new(),
+    secondImmediateDecoder: ImmediateDecoder.new(),
     firstRegisterIndex: 0,
     secondRegisterIndex: 0,
   };
@@ -129,7 +129,7 @@ export const createResults = () => {
     type: ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE,
     noOfBytesToSkip: 9,
     registerIndex: 0,
-    immediateDecoder: new ExtendedWitdthImmediateDecoder(),
+    immediateDecoder: ExtendedWitdthImmediateDecoder.new(),
   };
 
   return results;

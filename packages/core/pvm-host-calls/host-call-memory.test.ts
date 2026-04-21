@@ -34,7 +34,7 @@ describe("HostCallMemory", () => {
 
   beforeEach(() => {
     memory = new FakeMemory();
-    hostCallMemory = new HostCallMemory(memory);
+    hostCallMemory = HostCallMemory.new(memory);
   });
 
   describe("storeFrom", () => {

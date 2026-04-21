@@ -69,7 +69,14 @@ const logger = Logger.new(import.meta.filename, "protocol/ce-128");
 export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
-  constructor(
+  static new(
+    chainSpec: ChainSpec,
+    getBlockSequence: (streamId: StreamId, hash: HeaderHash, direction: Direction, maxBlocks: U32) => BlockView[],
+  ) {
+    return new ServerHandler(chainSpec, getBlockSequence);
+  }
+
+  private constructor(
     private readonly chainSpec: ChainSpec,
     private readonly getBlockSequence: (
       streamId: StreamId,
@@ -100,7 +107,11 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   private promiseResolvers: Map<StreamId, (value: BlockView[]) => void> = new Map();
   private promiseRejectors: Map<StreamId, (reason?: unknown) => void> = new Map();
 
-  constructor(private readonly chainSpec: ChainSpec) {}
+  static new(chainSpec: ChainSpec) {
+    return new ClientHandler(chainSpec);
+  }
+
+  private constructor(private readonly chainSpec: ChainSpec) {}
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     const { streamId } = sender;

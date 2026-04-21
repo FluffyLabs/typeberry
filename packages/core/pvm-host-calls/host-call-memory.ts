@@ -7,7 +7,11 @@ export class HostCallMemory {
   // Track successful memory reads and writes.
   public ioTracker: IoTracker | null = null;
 
-  constructor(private readonly memory: IMemory) {}
+  static new(memory: IMemory) {
+    return new HostCallMemory(memory);
+  }
+
+  private constructor(private readonly memory: IMemory) {}
 
   /**
    * Save some bytes into memory under given address.

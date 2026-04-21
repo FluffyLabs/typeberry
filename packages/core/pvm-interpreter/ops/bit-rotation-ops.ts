@@ -3,7 +3,11 @@ import type { Registers } from "../registers.js";
 import { unsignedRightShiftBigInt } from "./math-utils.js";
 
 export class BitRotationOps {
-  constructor(private regs: Registers) {}
+  static new(regs: Registers) {
+    return new BitRotationOps(regs);
+  }
+
+  private constructor(private regs: Registers) {}
 
   reverseBytes(valueIndex: number, resultIndex: number) {
     const value = this.regs.getU64(valueIndex);

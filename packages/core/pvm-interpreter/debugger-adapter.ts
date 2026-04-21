@@ -8,8 +8,12 @@ import { Registers } from "./registers.js";
 export class DebuggerAdapter {
   private readonly pvm: Interpreter;
 
-  constructor(useSbrkGas = false) {
-    this.pvm = new Interpreter({ useSbrkGas });
+  static new(useSbrkGas = false) {
+    return new DebuggerAdapter(useSbrkGas);
+  }
+
+  private constructor(useSbrkGas = false) {
+    this.pvm = Interpreter.new({ useSbrkGas });
   }
 
   resetJAM(jamProgram: Uint8Array, pc: number, gas: bigint, args: Uint8Array, hasMetadata = false) {
@@ -17,7 +21,7 @@ export class DebuggerAdapter {
   }
 
   resetGeneric(rawProgram: Uint8Array, flatRegisters: Uint8Array, initialGas: bigint) {
-    this.pvm.resetGeneric(rawProgram, 0, tryAsGas(initialGas), new Registers(flatRegisters));
+    this.pvm.resetGeneric(rawProgram, 0, tryAsGas(initialGas), Registers.fromBytes(flatRegisters));
   }
 
   reset(rawProgram: Uint8Array, pc: number, gas: bigint, maybeRegisters?: Registers, maybeMemory?: Memory) {
@@ -75,7 +79,7 @@ export class DebuggerAdapter {
   }
 
   setRegisters(registers: Uint8Array) {
-    this.pvm.registers.copyFrom(new Registers(registers));
+    this.pvm.registers.copyFrom(Registers.fromBytes(registers));
   }
 
   getProgramCounter(): number {

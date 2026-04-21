@@ -118,7 +118,7 @@ const preimageStatusFromJson = json.object<JsonPreimageStatus, LookupHistoryItem
     },
     value: json.array("number"),
   },
-  ({ key, value }) => new LookupHistoryItem(key.hash, tryAsU32(key.length), value),
+  ({ key, value }) => LookupHistoryItem.new(key.hash, tryAsU32(key.length), value),
 );
 
 export class JsonService {
@@ -154,7 +154,7 @@ export class JsonService {
         storage.set(key.toString(), item);
       }
 
-      return new InMemoryService(id, {
+      return InMemoryService.new(id, {
         info: data.service,
         preimages,
         storage,
@@ -177,7 +177,7 @@ const preimageStatusFromJson072 = json.object<JsonPreimageStatusPre072, LookupHi
     hash: fromJson.bytes32(),
     status: json.array("number"),
   },
-  ({ hash, status }) => new LookupHistoryItem(hash, tryAsU32(0), status),
+  ({ hash, status }) => LookupHistoryItem.new(hash, tryAsU32(0), status),
 );
 
 type JsonPreimageStatusPre072 = {
@@ -206,7 +206,7 @@ export class JsonServicePre072 {
       for (const item of data.lookup_meta ?? data.preimages_status ?? []) {
         const data = lookupHistory.get(item.hash) ?? [];
         const length = tryAsU32(preimages.get(item.hash)?.blob.length ?? item.length);
-        data.push(new LookupHistoryItem(item.hash, length, item.slots));
+        data.push(LookupHistoryItem.new(item.hash, length, item.slots));
         lookupHistory.set(item.hash, data);
       }
 
@@ -221,7 +221,7 @@ export class JsonServicePre072 {
         storage.set(key.toString(), item);
       }
 
-      return new InMemoryService(id, {
+      return InMemoryService.new(id, {
         info: data.service,
         preimages,
         storage,

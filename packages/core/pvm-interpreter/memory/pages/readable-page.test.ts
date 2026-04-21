@@ -12,7 +12,7 @@ describe("ReadablePage", () => {
     const initialMemory = new Uint8Array([0, ...bytes]);
     const startIndex = tryAsMemoryIndex(0);
     const pageNumber = tryAsPageNumber(0);
-    const readablePage = new ReadablePage(pageNumber, initialMemory);
+    const readablePage = ReadablePage.new(pageNumber, initialMemory);
     const lengthToLoad = 4;
     const result = new Uint8Array(lengthToLoad);
     const expectedResult = bytes;
@@ -29,7 +29,7 @@ describe("ReadablePage", () => {
     const initialMemory = new Uint8Array([0, ...bytes]);
     const startIndex = tryAsMemoryIndex(0);
     const pageNumber = tryAsPageNumber(0);
-    const readablePage = new ReadablePage(pageNumber, initialMemory);
+    const readablePage = ReadablePage.new(pageNumber, initialMemory);
     const lengthToLoad = 4;
     const result = new Uint8Array(lengthToLoad);
     const expectedResult = new Uint8Array([3, 4, 0, 0]);
@@ -45,7 +45,7 @@ describe("ReadablePage", () => {
     const initialMemory = new Uint8Array();
     const storeIndex = tryAsPageIndex(0);
     const pageNumber = tryAsPageNumber(0);
-    const readablePage = new ReadablePage(pageNumber, initialMemory);
+    const readablePage = ReadablePage.new(pageNumber, initialMemory);
 
     const storeResult = readablePage.storeFrom(storeIndex, new Uint8Array());
 

@@ -11,7 +11,11 @@ const EXIT = 0xff_ff_00_00;
 const JUMP_ALIGMENT_FACTOR = 2;
 
 export class DynamicJumpOps {
-  constructor(
+  static new(regs: Registers, jumpTable: JumpTable, instructionResult: InstructionResult, basicBlocks: BasicBlocks) {
+    return new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
+  }
+
+  private constructor(
     private regs: Registers,
     private jumpTable: JumpTable,
     private instructionResult: InstructionResult,

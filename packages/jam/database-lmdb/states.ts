@@ -67,7 +67,11 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>>, InitStates
   private readonly states: SubDb;
   private readonly values: SubDb;
 
-  constructor(
+  static new(spec: ChainSpec, blake2b: Blake2b, root: LmdbRoot) {
+    return new LmdbStates(spec, blake2b, root);
+  }
+
+  private constructor(
     private readonly spec: ChainSpec,
     private readonly blake2b: Blake2b,
     private readonly root: LmdbRoot,

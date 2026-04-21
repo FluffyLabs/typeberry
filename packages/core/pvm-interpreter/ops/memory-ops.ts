@@ -4,7 +4,11 @@ import type { Registers } from "../registers.js";
 import { Result } from "../result.js";
 
 export class MemoryOps {
-  constructor(
+  static new(regs: Registers, memory: Memory, instructionResult: InstructionResult) {
+    return new MemoryOps(regs, memory, instructionResult);
+  }
+
+  private constructor(
     private regs: Registers,
     private memory: Memory,
     private instructionResult: InstructionResult,

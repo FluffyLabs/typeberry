@@ -23,7 +23,7 @@ const zero = Bytes.zero(HASH_SIZE).asOpaque();
 export class InMemoryTrie {
   /** Create an empty in-memory trie. */
   static empty(hasher: TrieHasher): InMemoryTrie {
-    return new InMemoryTrie(new WriteableNodesDb(hasher));
+    return new InMemoryTrie(WriteableNodesDb.new(hasher));
   }
 
   /** Given a collection of leaves, compute the state root. */
@@ -118,7 +118,7 @@ export class InMemoryTrie {
   static fromLeaves(hasher: TrieHasher, leaves: readonly LeafNode[]) {
     // TODO [ToDr] [opti] Pair up the leaves and build upper levels.
     let root: TrieNode | null = null;
-    const nodes = new WriteableNodesDb(hasher);
+    const nodes = WriteableNodesDb.new(hasher);
     for (const leaf of leaves) {
       root = trieInsert(root, nodes, leaf);
     }

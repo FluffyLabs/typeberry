@@ -36,17 +36,38 @@ const logger = Logger.new(import.meta.filename, "author");
  */
 export type BlockSealInput = Opaque<BytesBlob, "Seal">;
 
+/** Construction arguments for {@link Generator}. */
+export type GeneratorArgs = {
+  chainSpec: ChainSpec;
+  bandersnatch: BandernsatchWasm;
+  keccakHasher: keccak.KeccakHasher;
+  blake2b: Blake2b;
+  blocks: BlocksDb;
+  states: StatesDb;
+};
+
 export class Generator {
   private readonly metrics: ReturnType<typeof metrics.createMetrics>;
 
-  constructor(
-    public readonly chainSpec: ChainSpec,
-    public readonly bandersnatch: BandernsatchWasm,
-    public readonly keccakHasher: keccak.KeccakHasher,
-    public readonly blake2b: Blake2b,
-    private readonly blocks: BlocksDb,
-    private readonly states: StatesDb,
-  ) {
+  public readonly chainSpec: ChainSpec;
+  public readonly bandersnatch: BandernsatchWasm;
+  public readonly keccakHasher: keccak.KeccakHasher;
+  public readonly blake2b: Blake2b;
+  private readonly blocks: BlocksDb;
+  private readonly states: StatesDb;
+
+  /** Build a {@link Generator} from its collaborators. */
+  static new(args: GeneratorArgs) {
+    return new Generator(args);
+  }
+
+  private constructor(args: GeneratorArgs) {
+    this.chainSpec = args.chainSpec;
+    this.bandersnatch = args.bandersnatch;
+    this.keccakHasher = args.keccakHasher;
+    this.blake2b = args.blake2b;
+    this.blocks = args.blocks;
+    this.states = args.states;
     this.metrics = metrics.createMetrics();
   }
 
@@ -130,7 +151,7 @@ export class Generator {
     }
 
     // retrieve data from previous block
-    const hasher = new TransitionHasher(this.keccakHasher, this.blake2b);
+    const hasher = TransitionHasher.new(this.keccakHasher, this.blake2b);
     const stateRoot = this.states.getStateRoot(lastState);
 
     // TODO create extrinsic

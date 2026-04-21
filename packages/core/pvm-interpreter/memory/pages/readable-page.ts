@@ -5,7 +5,11 @@ import { MemoryPage } from "./memory-page.js";
 import type { PageIndex, PageNumber } from "./page-utils.js";
 
 export class ReadablePage extends MemoryPage {
-  constructor(
+  static new(pageNumber: PageNumber, data: Uint8Array) {
+    return new ReadablePage(pageNumber, data);
+  }
+
+  private constructor(
     pageNumber: PageNumber,
     private data: Uint8Array,
   ) {

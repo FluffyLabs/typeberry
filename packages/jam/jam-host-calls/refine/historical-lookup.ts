@@ -28,7 +28,11 @@ export class HistoricalLookup implements HostCallHandler {
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9);
 
-  constructor(private readonly refine: RefineExternalities) {}
+  static new(refine: RefineExternalities) {
+    return new HistoricalLookup(refine);
+  }
+
+  private constructor(private readonly refine: RefineExternalities) {}
 
   async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
     // a

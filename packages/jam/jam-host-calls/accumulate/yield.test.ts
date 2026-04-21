@@ -10,7 +10,6 @@ import { gasCounter, MemoryBuilder, tryAsMemoryIndex, tryAsSbrkIndex } from "@ty
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Yield } from "./yield.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -22,7 +21,7 @@ function prepareRegsAndMemory(
   data: BytesBlob,
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(HASH_START_REG, tryAsU64(hashStart));
 
   const builder = new MemoryBuilder();
@@ -30,7 +29,7 @@ function prepareRegsAndMemory(
     builder.setReadablePages(tryAsMemoryIndex(hashStart), tryAsMemoryIndex(hashStart + PAGE_SIZE), data.raw);
   }
 
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
     memory,
@@ -41,7 +40,7 @@ describe("HostCalls: Yield", () => {
   it("should return panic if memory is unreadable", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const yieldHostCall = new Yield(currentServiceId, accumulate); // yield is a reserved keyword
+    const yieldHostCall = Yield.new(currentServiceId, accumulate); // yield is a reserved keyword
 
     const hashStart = tryAsU32(2 ** 16);
     const data = Bytes.fill(HASH_SIZE, 0xaa).asOpaque();
@@ -60,7 +59,7 @@ describe("HostCalls: Yield", () => {
   it("should return status OK and yield hash", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const yieldHostCall = new Yield(currentServiceId, accumulate);
+    const yieldHostCall = Yield.new(currentServiceId, accumulate);
 
     const hashStart = tryAsU32(2 ** 16);
     const data = Bytes.fill(HASH_SIZE, 0xaa).asOpaque();

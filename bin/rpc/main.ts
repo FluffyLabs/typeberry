@@ -73,10 +73,10 @@ export async function main(args: string[]) {
     withRelPath(nodeConfig.databaseBasePath),
   );
 
-  const rootDb = new LmdbRoot(dbPath, true);
+  const rootDb = LmdbRoot.new(dbPath, true);
   // TODO [RPC] Make PvmBackend configurable via CLI args
   const pvmBackend = PvmBackend.Ananas;
-  const server = new RpcServer(port, rootDb, spec, blake2b, pvmBackend, handlers, validation.schemas);
+  const server = RpcServer.new(port, rootDb, spec, blake2b, pvmBackend, handlers, validation.schemas);
 
   process.on("SIGINT", async () => {
     await server.close();

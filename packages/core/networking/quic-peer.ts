@@ -17,7 +17,11 @@ export class QuicPeer implements Peer {
   public readonly key: Ed25519Key;
   private readonly streamEvents = new EventEmitter();
 
-  constructor(
+  static new(conn: QUICConnection, peerInfo: PeerInfo) {
+    return new QuicPeer(conn, peerInfo);
+  }
+
+  private constructor(
     public readonly conn: QUICConnection,
     peerInfo: PeerInfo,
   ) {
@@ -34,7 +38,7 @@ export class QuicPeer implements Peer {
     addEventListener(conn, events.EventQUICConnectionStream, (ev) => {
       const stream = ev.detail;
       logger.log`🚰  [${this.id}] new stream: [${stream.streamId}]`;
-      this.streamEvents.emit("stream", new QuicStream(stream));
+      this.streamEvents.emit("stream", QuicStream.new(stream));
     });
 
     addEventListener(conn, events.EventQUICConnectionError, (err) => {
@@ -49,7 +53,7 @@ export class QuicPeer implements Peer {
   openStream(): QuicStream {
     const stream = this.conn.newStream("bidi");
     logger.log`🚰 [${this.id}] opening stream: [${stream.streamId}]`;
-    return new QuicStream(stream);
+    return QuicStream.new(stream);
   }
 
   async disconnect() {

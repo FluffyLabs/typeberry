@@ -20,7 +20,7 @@ describe("ArgsDecoder", () => {
     argumentType: ArgumentType;
   }) {
     const code = new Uint8Array(programBytes);
-    const mask = new Mask(BitVec.fromBlob(new Uint8Array(maskBytes), programBytes.length));
+    const mask = Mask.new(BitVec.fromBlob(new Uint8Array(maskBytes), programBytes.length));
     const argsDecoder = new ArgsDecoder();
     argsDecoder.reset(code, mask);
     const result = createResults()[argumentType];
@@ -29,13 +29,13 @@ describe("ArgsDecoder", () => {
   }
 
   function prepareImmediate(bytes: number[]) {
-    const immediate = new ImmediateDecoder();
+    const immediate = ImmediateDecoder.new();
     immediate.setBytes(new Uint8Array(bytes));
     return immediate;
   }
 
   function prepareExtendedWidthImmediate(bytes: number[]) {
-    const immediate = new ExtendedWitdthImmediateDecoder();
+    const immediate = ExtendedWitdthImmediateDecoder.new();
     immediate.setBytes(new Uint8Array(bytes));
     return immediate;
   }

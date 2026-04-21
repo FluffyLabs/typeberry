@@ -25,7 +25,11 @@ export class LmdbBlocks implements BlocksDb {
   private readonly headers: SubDb;
   private readonly postStateRoots: SubDb;
 
-  constructor(
+  static new(chainSpec: ChainSpec, root: LmdbRoot) {
+    return new LmdbBlocks(chainSpec, root);
+  }
+
+  private constructor(
     private readonly chainSpec: ChainSpec,
     private readonly root: LmdbRoot,
   ) {

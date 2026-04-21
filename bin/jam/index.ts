@@ -71,7 +71,7 @@ async function prepareConfigFile(
             const port = devPort(idx + 1);
             // Derive the peer ID from the public key using the same method as in certificate.ts
             const peerId = altNameRaw((await ed25519.privateKey(seed)).pubKey);
-            return new Bootnode(asOpaqueType(peerId), "127.0.0.1", port);
+            return Bootnode.new(asOpaqueType(peerId), "127.0.0.1", port);
           }),
         )
       : [];

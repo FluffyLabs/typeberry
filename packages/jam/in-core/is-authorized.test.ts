@@ -65,7 +65,7 @@ const AUTHORIZER_PVM = BytesBlob.blobFrom(readFileSync(resolve(import.meta.dirna
 const AUTH_SERVICE_ID = tryAsServiceId(42);
 
 function createService(serviceId: typeof AUTH_SERVICE_ID, codeHash: OpaqueHash, code: BytesBlob): InMemoryService {
-  return new InMemoryService(serviceId, {
+  return InMemoryService.new(serviceId, {
     info: ServiceAccountInfo.create({
       codeHash: codeHash.asOpaque<CodeHash>(),
       balance: tryAsU64(10_000_000_000),
@@ -173,7 +173,7 @@ describe("IsAuthorized", () => {
   it("should fail when auth code preimage is missing", async () => {
     const authCodeHash = getAuthCodeHash();
     // Service exists but with no preimages
-    const emptyService = new InMemoryService(AUTH_SERVICE_ID, {
+    const emptyService = InMemoryService.new(AUTH_SERVICE_ID, {
       info: ServiceAccountInfo.create({
         codeHash: Bytes.zero(HASH_SIZE).asOpaque<CodeHash>(),
         balance: tryAsU64(0),

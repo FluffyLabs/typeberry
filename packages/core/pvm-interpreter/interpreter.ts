@@ -60,8 +60,8 @@ const logger = Logger.new(import.meta.filename, "pvm");
 
 export class Interpreter implements IPvmInterpreter {
   private readonly useSbrkGas: boolean;
-  readonly registers = new Registers();
-  readonly memory = new Memory();
+  readonly registers = Registers.empty();
+  readonly memory = Memory.new();
   gas = gasCounter(tryAsGas(0));
   private code: Uint8Array = new Uint8Array();
   private mask = Mask.empty();
@@ -86,23 +86,27 @@ export class Interpreter implements IPvmInterpreter {
   private basicBlocks: BasicBlocks;
   private jumpTable = JumpTable.empty();
 
-  constructor({ useSbrkGas = false }: InterpreterOptions = {}) {
+  static new(options: InterpreterOptions = {}) {
+    return new Interpreter(options);
+  }
+
+  private constructor({ useSbrkGas = false }: InterpreterOptions = {}) {
     this.useSbrkGas = useSbrkGas;
     this.argsDecoder = new ArgsDecoder();
     this.basicBlocks = new BasicBlocks();
-    const mathOps = new MathOps(this.registers);
-    const shiftOps = new ShiftOps(this.registers);
-    const bitOps = new BitOps(this.registers);
-    const booleanOps = new BooleanOps(this.registers);
-    const moveOps = new MoveOps(this.registers);
-    const branchOps = new BranchOps(this.registers, this.instructionResult, this.basicBlocks);
-    const loadOps = new LoadOps(this.registers, this.memory, this.instructionResult);
-    const storeOps = new StoreOps(this.registers, this.memory, this.instructionResult);
-    const noArgsOps = new NoArgsOps(this.instructionResult);
-    const dynamicJumpOps = new DynamicJumpOps(this.registers, this.jumpTable, this.instructionResult, this.basicBlocks);
-    const hostCallOps = new HostCallOps(this.instructionResult);
-    const memoryOps = new MemoryOps(this.registers, this.memory, this.instructionResult);
-    const bitRotationOps = new BitRotationOps(this.registers);
+    const mathOps = MathOps.new(this.registers);
+    const shiftOps = ShiftOps.new(this.registers);
+    const bitOps = BitOps.new(this.registers);
+    const booleanOps = BooleanOps.new(this.registers);
+    const moveOps = MoveOps.new(this.registers);
+    const branchOps = BranchOps.new(this.registers, this.instructionResult, this.basicBlocks);
+    const loadOps = LoadOps.new(this.registers, this.memory, this.instructionResult);
+    const storeOps = StoreOps.new(this.registers, this.memory, this.instructionResult);
+    const noArgsOps = NoArgsOps.new(this.instructionResult);
+    const dynamicJumpOps = DynamicJumpOps.new(this.registers, this.jumpTable, this.instructionResult, this.basicBlocks);
+    const hostCallOps = HostCallOps.new(this.instructionResult);
+    const memoryOps = MemoryOps.new(this.registers, this.memory, this.instructionResult);
+    const bitRotationOps = BitRotationOps.new(this.registers);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps, bitRotationOps);
     this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(
@@ -134,7 +138,7 @@ export class Interpreter implements IPvmInterpreter {
   }
 
   resetGeneric(rawProgram: Uint8Array, pc: number, gas: Gas, maybeRegisters?: Registers, maybeMemory?: Memory) {
-    const programDecoder = new ProgramDecoder(rawProgram);
+    const programDecoder = ProgramDecoder.new(rawProgram);
     this.code = programDecoder.getCode();
     this.mask = programDecoder.getMask();
     this.jumpTable.copyFrom(programDecoder.getJumpTable());

@@ -27,7 +27,11 @@ export class Machine implements HostCallHandler {
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9);
 
-  constructor(private readonly refine: RefineExternalities) {}
+  static new(refine: RefineExternalities) {
+    return new Machine(refine);
+  }
+
+  private constructor(private readonly refine: RefineExternalities) {}
 
   async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
     // `p_o`: memory index where there program code starts

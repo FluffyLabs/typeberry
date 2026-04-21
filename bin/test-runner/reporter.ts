@@ -7,7 +7,11 @@ export class Reporter extends Transform {
   public testPassed = 0;
   public testFailed = 0;
 
-  constructor(public readonly suiteName: string) {
+  static new(suiteName: string) {
+    return new Reporter(suiteName);
+  }
+
+  private constructor(public readonly suiteName: string) {
     super({
       writableObjectMode: true,
       transform: myTransform,

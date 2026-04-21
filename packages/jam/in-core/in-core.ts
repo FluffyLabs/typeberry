@@ -41,7 +41,11 @@ export class InCore {
   private readonly isAuthorized: IsAuthorized;
   private readonly refineItem: Refine;
 
-  constructor(
+  static new(chainSpec: ChainSpec, states: StatesDb, pvmBackend: PvmBackend, blake2b: Blake2b) {
+    return new InCore(chainSpec, states, pvmBackend, blake2b);
+  }
+
+  private constructor(
     public readonly chainSpec: ChainSpec,
     private readonly states: StatesDb,
     pvmBackend: PvmBackend,

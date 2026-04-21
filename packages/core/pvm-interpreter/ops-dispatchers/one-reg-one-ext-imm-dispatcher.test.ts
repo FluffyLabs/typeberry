@@ -12,10 +12,10 @@ import { Registers } from "../registers.js";
 import { OneRegOneExtImmDispatcher } from "./one-reg-one-ext-imm-dispatcher.js";
 
 describe("OneRegOneExtImmDispatcher", () => {
-  const regs = new Registers();
-  const memory = new Memory();
+  const regs = Registers.empty();
+  const memory = Memory.new();
   const instructionResult = new InstructionResult();
-  const loadOps = new LoadOps(regs, memory, instructionResult);
+  const loadOps = LoadOps.new(regs, memory, instructionResult);
   const mockFn = mock.fn();
 
   function mockAllMethods(obj: object) {
@@ -39,7 +39,7 @@ describe("OneRegOneExtImmDispatcher", () => {
   });
 
   const argsMock = {
-    immediateDecoder: new ExtendedWitdthImmediateDecoder(),
+    immediateDecoder: ExtendedWitdthImmediateDecoder.new(),
   } as OneRegisterOneExtendedWidthImmediateArgs;
 
   const relevantInstructions = Object.entries(Instruction)

@@ -42,7 +42,7 @@ describe("SerializedState", () => {
               lastAccumulation: tryAsTimeSlot(12),
               parentService: tryAsServiceId(10),
             }),
-            lookupHistory: new LookupHistoryItem(
+            lookupHistory: LookupHistoryItem.new(
               Bytes.fill(HASH_SIZE, 5).asOpaque(),
               tryAsU32(10_000),
               tryAsLookupHistorySlots([]),

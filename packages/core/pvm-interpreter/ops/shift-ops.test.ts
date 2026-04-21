@@ -8,7 +8,7 @@ import { ShiftOps } from "./shift-ops.js";
 
 describe("ShiftOps", () => {
   function prepareData(firstValue: bigint, secondValue: bigint) {
-    const regs = new Registers();
+    const regs = Registers.empty();
     const firstRegisterIndex = 0;
     const secondRegisterIndex = 1;
     const resultRegisterIndex = 12;
@@ -16,10 +16,10 @@ describe("ShiftOps", () => {
     regs.setU64(firstRegisterIndex, firstValue);
     regs.setU64(secondRegisterIndex, secondValue);
 
-    const immediate = new ImmediateDecoder();
+    const immediate = ImmediateDecoder.new();
     immediate.setBytes(bigintToUint8ArrayLE(secondValue));
 
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = ShiftOps.new(regs);
 
     return { regs, shiftOps, immediate, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex };
   }

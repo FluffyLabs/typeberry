@@ -87,7 +87,16 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
   private readonly handshakes: Map<StreamId, Handshake> = new Map();
   private readonly pendingHandshakes: Map<StreamId, boolean> = new Map();
 
-  constructor(
+  static new(
+    spec: ChainSpec,
+    getHandshake: () => Handshake,
+    onAnnouncement: (streamId: StreamId, ann: Announcement) => void,
+    onHandshake: (streamId: StreamId, handshake: Handshake) => void,
+  ) {
+    return new Handler(spec, getHandshake, onAnnouncement, onHandshake);
+  }
+
+  private constructor(
     private readonly spec: ChainSpec,
     private readonly getHandshake: () => Handshake,
     private readonly onAnnouncement: (streamId: StreamId, ann: Announcement) => void,

@@ -24,7 +24,7 @@ const getExpectedPage = (address: MemoryIndex, contents: Uint8Array, length: num
 describe("StoreOps", () => {
   function prepareStoreData(valueToStore: bigint, noOfBytes: 1 | 2 | 4 | 8) {
     const instructionResult = new InstructionResult();
-    const regs = new Registers();
+    const regs = Registers.empty();
     const address = tryAsMemoryIndex(RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + 1);
     const registerIndex = 1;
     regs.setU64(registerIndex, valueToStore);
@@ -37,10 +37,10 @@ describe("StoreOps", () => {
         initialMemory,
       )
       .finalize(tryAsMemoryIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
-    const storeOps = new StoreOps(regs, memory, instructionResult);
+    const storeOps = StoreOps.new(regs, memory, instructionResult);
     const expectedPage = getExpectedPage(address, bigintToUint8ArrayLE(valueToStore, noOfBytes), 32);
 
-    const immediate = new ImmediateDecoder();
+    const immediate = ImmediateDecoder.new();
     immediate.setBytes(bigintToUint8ArrayLE(valueToStore, noOfBytes));
 
     return { storeOps, address, registerIndex, memory, expectedPage, immediate };
@@ -136,7 +136,7 @@ describe("StoreOps", () => {
     addressImmediateValue: bigint,
   ) {
     const instructionResult = new InstructionResult();
-    const regs = new Registers();
+    const regs = Registers.empty();
     const address = tryAsMemoryIndex(Number(addressRegisterValue + addressImmediateValue));
     const addressRegisterIndex = 0;
     const valueRegisterIndex = 1;
@@ -151,13 +151,13 @@ describe("StoreOps", () => {
         initialMemory,
       )
       .finalize(tryAsMemoryIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
-    const storeOps = new StoreOps(regs, memory, instructionResult);
+    const storeOps = StoreOps.new(regs, memory, instructionResult);
     const expectedPage = getExpectedPage(address, bigintToUint8ArrayLE(valueToStore, noOfBytes), 32);
 
-    const valueImmediate = new ImmediateDecoder();
+    const valueImmediate = ImmediateDecoder.new();
     valueImmediate.setBytes(bigintToUint8ArrayLE(valueToStore, noOfBytes));
 
-    const addressImmediate = new ImmediateDecoder();
+    const addressImmediate = ImmediateDecoder.new();
     addressImmediate.setBytes(bigintToUint8ArrayLE(addressImmediateValue));
 
     return {

@@ -26,7 +26,7 @@ const stream = run({
 
 stream.compose(new spec()).pipe(process.stdout);
 
-const reporter = new Reporter(suiteToRun);
+const reporter = Reporter.new(suiteToRun);
 const fileStream = fs.createWriteStream(`${distDir}/${suiteToRun.replace(".ts", "")}.txt`, { flags: "a" });
 stream
   .compose(reporter)

@@ -51,7 +51,11 @@ const logger = Logger.new(import.meta.filename, "protocol/ce-135");
 export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
-  constructor(
+  static new(chainSpec: ChainSpec, onWorkReport: (workReport: GuaranteedWorkReport) => void) {
+    return new ServerHandler(chainSpec, onWorkReport);
+  }
+
+  private constructor(
     private readonly chainSpec: ChainSpec,
     private readonly onWorkReport: (workReport: GuaranteedWorkReport) => void,
   ) {}
@@ -69,7 +73,11 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
-  constructor(private readonly chainSpec: ChainSpec) {}
+  static new(chainSpec: ChainSpec) {
+    return new ClientHandler(chainSpec);
+  }
+
+  private constructor(private readonly chainSpec: ChainSpec) {}
 
   onStreamMessage(sender: StreamMessageSender): void {
     logger.warn`[${sender.streamId}] Got unexpected message on CE-135 stream. Closing.`;

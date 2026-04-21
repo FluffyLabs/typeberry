@@ -81,7 +81,7 @@ describe("JAM encoder / decoder", () => {
 
         const decoder = Decoder.fromBytesBlob(encoded);
         // skipping
-        const skip = new Skipper(decoder.clone());
+        const skip = Skipper.new(decoder.clone());
         g.descriptor.skip(skip);
         skip.decoder.finish();
 

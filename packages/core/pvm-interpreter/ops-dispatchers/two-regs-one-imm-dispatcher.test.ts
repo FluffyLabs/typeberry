@@ -13,16 +13,16 @@ import { TwoRegsOneImmDispatcher } from "./two-regs-one-imm-dispatcher.js";
 
 describe("TwoRegsOneImmDispatcher", () => {
   const instructionResult = new InstructionResult();
-  const regs = new Registers();
-  const memory = new Memory();
-  const mathOps = new MathOps(regs);
-  const shiftOps = new ShiftOps(regs);
-  const bitOps = new BitOps(regs);
-  const booleanOps = new BooleanOps(regs);
-  const moveOps = new MoveOps(regs);
-  const storeOps = new StoreOps(regs, memory, instructionResult);
-  const loadOps = new LoadOps(regs, memory, instructionResult);
-  const bitRotationOps = new BitRotationOps(regs);
+  const regs = Registers.empty();
+  const memory = Memory.new();
+  const mathOps = MathOps.new(regs);
+  const shiftOps = ShiftOps.new(regs);
+  const bitOps = BitOps.new(regs);
+  const booleanOps = BooleanOps.new(regs);
+  const moveOps = MoveOps.new(regs);
+  const storeOps = StoreOps.new(regs, memory, instructionResult);
+  const loadOps = LoadOps.new(regs, memory, instructionResult);
+  const bitRotationOps = BitRotationOps.new(regs);
 
   const mockFn = mock.fn();
 
@@ -54,7 +54,7 @@ describe("TwoRegsOneImmDispatcher", () => {
   });
 
   const argsMock = {
-    immediateDecoder: new ImmediateDecoder(),
+    immediateDecoder: ImmediateDecoder.new(),
   } as TwoRegistersOneImmediateArgs;
 
   const relevantInstructions = Object.entries(Instruction)
