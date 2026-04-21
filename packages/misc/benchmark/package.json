@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/benchmark",
-  "version": "0.5.10",
+  "version": "0.5.11",
   "description": "Benchmarks runner for typeberry.",
   "main": "index.ts",
   "scripts": {
