@@ -37,13 +37,21 @@ export class EcalliTraceLogger {
   }
 
   /**
+   * Returns `true` if the `ecalli` module logger is configured for at least TRACE level.
+   * Enable with: `JAM_LOG=ecalli=trace` or `JAM_LOG=trace`
+   */
+  static isTraceEnabled(): boolean {
+    return ecalliLogger.getLevel() <= Level.TRACE;
+  }
+
+  /**
    * Create an IoTraceLogger that outputs to the `ecalli` module logger.
    *
    * Returns `null` if the `ecalli` logger is not configured for at least TRACE level.
    * Enable with: `JAM_LOG=ecalli=trace` or `JAM_LOG=trace`
    */
   static create(): EcalliTraceLogger | null {
-    if (ecalliLogger.getLevel() > Level.TRACE) {
+    if (!EcalliTraceLogger.isTraceEnabled()) {
       return null;
     }
 
