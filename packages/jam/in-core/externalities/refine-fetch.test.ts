@@ -13,10 +13,10 @@ import { asKnownSize, FixedSizeArray } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { buildWorkPackageFetchData } from "@typeberry/transition/externalities/fetch-externalities.js";
 import { asOpaqueType } from "@typeberry/utils";
-import type { ImportedSegment, PerWorkItem } from "../../in-core/refine.js";
-import { buildWorkPackageFetchData } from "./fetch-externalities.js";
-import { RefineFetchExternalities } from "./refine-fetch-externalities.js";
+import type { ImportedSegment, PerWorkItem } from "./refine-fetch.js";
+import { RefineFetchExternalities } from "./refine-fetch.js";
 
 const asExtrinsic = (bytes: BytesBlob): WorkItemExtrinsic => asOpaqueType(bytes);
 
@@ -246,7 +246,7 @@ describe("RefineFetchExternalities", () => {
     const payload = ext.workItemPayload(tryAsU64(1));
     assert.ok(payload !== null);
     assert.strictEqual(payload.length, 5);
-    assert.ok(payload.raw.every((x) => x === 0xab));
+    assert.ok(payload.raw.every((x: number) => x === 0xab));
   });
 
   it("should return null for payload when index is out of range", () => {

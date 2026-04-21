@@ -9,8 +9,8 @@ import { PvmExecutor, ReturnStatus } from "@typeberry/executor";
 import type { Blake2b } from "@typeberry/hash";
 import type { State } from "@typeberry/state";
 import type { WorkPackageFetchData } from "@typeberry/transition/externalities/fetch-externalities.js";
-import { IsAuthorizedFetchExternalities } from "@typeberry/transition/externalities/is-authorized-fetch-externalities.js";
 import { Result } from "@typeberry/utils";
+import { IsAuthorizedFetchExternalities } from "./externalities/index.js";
 
 export enum AuthorizationError {
   /** BAD: authorizer code not found (service or preimage missing). */

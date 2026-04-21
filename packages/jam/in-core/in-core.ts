@@ -13,10 +13,11 @@ import { Logger } from "@typeberry/logger";
 import { tryAsU8, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { buildWorkPackageFetchData } from "@typeberry/transition/externalities/fetch-externalities.js";
 import { assertEmpty, Result } from "@typeberry/utils";
+import type { ImportedSegment, PerWorkItem } from "./externalities/index.js";
 import { AuthorizationError, type AuthorizationOk, IsAuthorized } from "./is-authorized.js";
-import { type ImportedSegment, type PerWorkItem, Refine, type RefineItemResult } from "./refine.js";
+export type { ImportedSegment, PerWorkItem };
 
-export type { ImportedSegment, PerWorkItem, RefineItemResult } from "./refine.js";
+import { Refine, type RefineItemResult } from "./refine.js";
 
 export type RefineResult = {
   report: WorkReport;

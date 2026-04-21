@@ -2,7 +2,11 @@ import type { BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
 import { general } from "@typeberry/jam-host-calls";
 import type { U64 } from "@typeberry/numbers";
-import { getEncodedConstants, u64ToArrayIndex, type WorkPackageFetchData } from "./fetch-externalities.js";
+import {
+  getEncodedConstants,
+  u64ToArrayIndex,
+  type WorkPackageFetchData,
+} from "@typeberry/transition/externalities/fetch-externalities.js";
 
 export class IsAuthorizedFetchExternalities implements general.IIsAuthorizedFetch {
   readonly context = general.FetchContext.IsAuthorized;

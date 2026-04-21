@@ -12,8 +12,8 @@ import { asKnownSize, FixedSizeArray } from "@typeberry/collections";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU64 } from "@typeberry/numbers";
-import { buildWorkPackageFetchData } from "./fetch-externalities.js";
-import { IsAuthorizedFetchExternalities } from "./is-authorized-fetch-externalities.js";
+import { buildWorkPackageFetchData } from "@typeberry/transition/externalities/fetch-externalities.js";
+import { IsAuthorizedFetchExternalities } from "./is-authorized-fetch.js";
 
 function fetchDataFor(pkg: WorkPackage, chainSpec = tinyChainSpec) {
   return buildWorkPackageFetchData(chainSpec, pkg);
@@ -105,7 +105,7 @@ describe("IsAuthorizedFetchExternalities", () => {
     const payload = ext.workItemPayload(tryAsU64(1));
     assert.ok(payload !== null);
     assert.strictEqual(payload.length, 5);
-    assert.ok(payload.raw.every((x) => x === 0xab));
+    assert.ok(payload.raw.every((x: number) => x === 0xab));
   });
 
   it("returns null for payload when index is out of range", () => {
