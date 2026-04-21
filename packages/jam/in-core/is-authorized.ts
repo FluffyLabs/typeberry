@@ -1,7 +1,6 @@
 import { type CoreIndex, type ServiceGas, tryAsServiceGas } from "@typeberry/block";
 import { G_I, W_A } from "@typeberry/block/gp-constants.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
-import type { WorkPackage } from "@typeberry/block/work-package.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec, PvmBackend } from "@typeberry/config";
@@ -46,10 +45,9 @@ export class IsAuthorized {
   async invoke(
     state: State,
     coreIndex: CoreIndex,
-    workPackage: WorkPackage,
     packageFetchData: WorkPackageFetchData,
   ): Promise<Result<AuthorizationOk, AuthorizationError>> {
-    const { authCodeHost, authCodeHash, authConfiguration } = workPackage;
+    const { authCodeHost, authCodeHash, authConfiguration } = packageFetchData.packageView.materialize();
 
     // Look up the authorizer code from the auth code host service
     const service = state.getService(authCodeHost);

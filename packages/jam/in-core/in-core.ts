@@ -111,7 +111,7 @@ export class InCore {
     const packageFetchData = buildWorkPackageFetchData(this.chainSpec, workPackageAndHash.data);
 
     // Check authorization
-    const authResult = await this.isAuthorized.invoke(state, core, workPackageAndHash.data, packageFetchData);
+    const authResult = await this.isAuthorized.invoke(state, core, packageFetchData);
     if (authResult.isError) {
       return Result.error(
         RefineError.AuthorizationError,

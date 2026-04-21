@@ -5,7 +5,7 @@ import type { CodeHash } from "@typeberry/block";
 import { tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { RefineContext } from "@typeberry/block/refine-context.js";
 import { ImportSpec, WorkItem, type WorkItemExtrinsic, WorkItemExtrinsicSpec } from "@typeberry/block/work-item.js";
-import { tryAsSegmentIndex } from "@typeberry/block/work-item-segment.js";
+import { SEGMENT_BYTES, tryAsSegmentIndex } from "@typeberry/block/work-item-segment.js";
 import { tryAsWorkItemsCount, WorkPackage } from "@typeberry/block/work-package.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
@@ -164,10 +164,10 @@ describe("RefineFetchExternalities", () => {
 
   it("should return an import segment by work item index and segment index", () => {
     const items = [buildWorkItem({}), buildWorkItem({ service: 2 })];
-    const segBytes = new Uint8Array(16).fill(0x55);
+    const segBytes = new Uint8Array(SEGMENT_BYTES).fill(0x55);
     const imports: PerWorkItem<ImportedSegment[]> = asKnownSize([
       [],
-      [{ index: 0 as never, data: Bytes.fromBlob(segBytes, 16) as never }],
+      [{ index: tryAsSegmentIndex(0), data: Bytes.fromBlob(segBytes, SEGMENT_BYTES) }],
     ]);
     const ext = prepareRefineData({ items, imports });
 
@@ -180,6 +180,7 @@ describe("RefineFetchExternalities", () => {
     const ext = prepareRefineData();
     assert.strictEqual(ext.workItemImport(tryAsU64(10), tryAsU64(0)), null);
     assert.strictEqual(ext.workItemImport(null, tryAsU64(10)), null);
+    assert.strictEqual(ext.workItemImport(tryAsU64(0), tryAsU64(10)), null);
   });
 
   it("should return encoded work package", () => {
