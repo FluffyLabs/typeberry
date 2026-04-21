@@ -47,7 +47,10 @@ export class IsAuthorized {
     coreIndex: CoreIndex,
     packageFetchData: WorkPackageFetchData,
   ): Promise<Result<AuthorizationOk, AuthorizationError>> {
-    const { authCodeHost, authCodeHash, authConfiguration } = packageFetchData.packageView.materialize();
+    const packageView = packageFetchData.packageView;
+    const authCodeHost = packageView.authCodeHost.materialize();
+    const authCodeHash = packageView.authCodeHash.materialize();
+    const authConfiguration = packageView.authConfiguration.materialize();
 
     // Look up the authorizer code from the auth code host service
     const service = state.getService(authCodeHost);
