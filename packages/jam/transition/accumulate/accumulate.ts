@@ -12,7 +12,7 @@ import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import { ArrayView, HashSet, SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { PvmExecutor, ReturnStatus } from "@typeberry/executor";
+import { EcalliTraceLogger, PvmExecutor, ReturnStatus } from "@typeberry/executor";
 import { type Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import type { PendingTransfer } from "@typeberry/jam-host-calls";
 import {
@@ -80,13 +80,21 @@ const ARGS_CODEC = codec.object({
 });
 
 export class Accumulate {
+  public readonly options: AccumulateOptions;
+
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly blake2b: Blake2b,
     public readonly state: AccumulateState,
-    public readonly options: AccumulateOptions,
+    options: AccumulateOptions,
   ) {
-    if (options.accumulateSequentially === true) {
+    const ecalliTraceEnabled = EcalliTraceLogger.isTraceEnabled();
+    const accumulateSequentially = options.accumulateSequentially === true || ecalliTraceEnabled;
+    this.options = { ...options, accumulateSequentially };
+
+    if (ecalliTraceEnabled && options.accumulateSequentially !== true) {
+      logger.warn`⚠️ ecalli trace logging is enabled: forcing sequential accumulation to keep the trace output ordered.`;
+    } else if (accumulateSequentially) {
       logger.warn`⚠️ Parallel accumulation is disabled. Running in sequential mode.`;
     }
   }
