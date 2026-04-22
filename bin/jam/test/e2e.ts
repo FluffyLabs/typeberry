@@ -30,8 +30,11 @@ test("JAM Node dev blocks with LMDB", { timeout: TEST_TIMEOUT }, async () => {
   const dbPath = "./test-db";
   let jamProcess: ChildProcess | null = null;
   try {
-    // enable LMDB storage
-    jamProcess = await start({ devIndex: "all", args: [`--config=.database_base_path="${dbPath}"`] });
+    // enable LMDB storage (preserve dev default config when passing --config patch)
+    jamProcess = await start({
+      devIndex: "all",
+      args: ["--config=dev", `--config=.database_base_path="${dbPath}"`],
+    });
 
     // wait for specific output on the console
     await listenForBestBlocks("dev-lmdb", jamProcess, (blockNum) => blockNum > TARGET_BLOCK);
@@ -79,7 +82,7 @@ test("JAM Node ticket distribution with LMDB and worker threads", { timeout: 120
       const dbPath = `${testDbParentPath}/validator-${i}`;
       const proc = await start({
         devIndex: i,
-        args: [`--config=.database_base_path="${dbPath}"`],
+        args: ["--config=dev", `--config=.database_base_path="${dbPath}"`],
         timeout: TICKET_TEST_TIMEOUT,
       });
       processes.push(proc);

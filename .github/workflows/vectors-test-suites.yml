@@ -101,7 +101,13 @@ jobs:
           fi
           echo "$INSTALL_DIR" >> $GITHUB_PATH
       - run: bun install --frozen-lockfile
+      # Self-hosted runners share RAM across parallel shards, so we run shards
+      # sequentially (BUN_TEST_CONCURRENCY=1). BUN_TEST_SHARDS can be raised
+      # to reduce per-process memory on memory-constrained runners.
       - run: bun run --cwd bin/test-runner start -- ${{ matrix.script }}
+        env:
+          BUN_TEST_SHARDS: "8"
+          BUN_TEST_CONCURRENCY: "1"
       - name: Display results
         if: always()
         run: cat ./dist/${{ matrix.output }}

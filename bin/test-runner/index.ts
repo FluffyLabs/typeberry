@@ -15,18 +15,27 @@ if (suiteToRun === undefined) {
 const suitePath = `${import.meta.dirname}/${suiteToRun}`;
 const outputFile = `${distDir}/${suiteToRun.replace(".ts", "")}.txt`;
 
-// Sharding: run the suite as N parallel bun processes. Each process only picks
-// up a subset of test directories (see `BUN_TEST_SHARD` handling in common.ts).
+// Sharding: run the suite as N bun processes. Each process only picks up a
+// subset of test directories (see `BUN_TEST_SHARD` handling in common.ts).
 // This works around JSC's habit of under-counting WebAssembly.Memory for GC
 // pressure — when a single bun process runs 1000+ tests, stale wasm instances
 // pile up until the JS heap hits `RangeError: Out of memory`. Splitting the
 // work into fresh short-lived processes makes each process's peak heap small
 // enough to stay well under the OOM threshold.
 //
-// `--smol` on each shard keeps per-process memory low. Override shard count via
-// `BUN_TEST_SHARDS=N` (default 4). Set `BUN_TEST_SHARDS=1` to run in a single
-// process (useful when debugging a specific test with a name filter).
+// `--smol` on each shard keeps per-process memory low.
+//
+// Env knobs:
+//   BUN_TEST_SHARDS=N       total shards (default 4). Use 1 to disable sharding
+//                           (useful when debugging a specific test with --test-name-pattern).
+//   BUN_TEST_CONCURRENCY=N  how many shards may run at once (default = shard count,
+//                           i.e. fully parallel). On memory-constrained runners set this
+//                           lower, e.g. =1 for strictly sequential execution.
 const shardCount = Math.max(1, Number.parseInt(process.env.BUN_TEST_SHARDS ?? "4", 10));
+const concurrency = Math.max(
+  1,
+  Math.min(shardCount, Number.parseInt(process.env.BUN_TEST_CONCURRENCY ?? `${shardCount}`, 10)),
+);
 const forwardedArgs = process.argv.slice(3);
 
 const runShard = (shard: number) =>
@@ -40,8 +49,16 @@ const runShard = (shard: number) =>
     },
   });
 
-const procs = Array.from({ length: shardCount }, (_, i) => runShard(i + 1));
-const exitCodes = await Promise.all(procs.map((p) => p.exited));
+const exitCodes: number[] = new Array(shardCount);
+// Execute shards in rolling batches of `concurrency` processes.
+for (let i = 0; i < shardCount; i += concurrency) {
+  const batchSize = Math.min(concurrency, shardCount - i);
+  const procs = Array.from({ length: batchSize }, (_, j) => runShard(i + j + 1));
+  const batchCodes = await Promise.all(procs.map((p) => p.exited));
+  for (let j = 0; j < batchSize; j++) {
+    exitCodes[i + j] = batchCodes[j];
+  }
+}
 const exitCode = exitCodes.some((c) => c !== 0) ? 1 : 0;
 
 const status = exitCode === 0 ? "OK" : "FAILED";
