@@ -11,11 +11,13 @@ import type { Blake2b, WithHash } from "@typeberry/hash";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { tryAsU8, tryAsU16, tryAsU32 } from "@typeberry/numbers";
+import { buildWorkPackageFetchData } from "@typeberry/transition/externalities/fetch-externalities.js";
 import { assertEmpty, Result } from "@typeberry/utils";
+import type { ImportedSegment, PerWorkItem } from "./externalities/index.js";
 import { AuthorizationError, type AuthorizationOk, IsAuthorized } from "./is-authorized.js";
-import { type ImportedSegment, type PerWorkItem, Refine, type RefineItemResult } from "./refine.js";
+export type { ImportedSegment, PerWorkItem };
 
-export type { ImportedSegment, PerWorkItem, RefineItemResult } from "./refine.js";
+import { Refine, type RefineItemResult } from "./refine.js";
 
 export type RefineResult = {
   report: WorkReport;
@@ -70,9 +72,7 @@ export class InCore {
     extrinsics: PerWorkItem<WorkItemExtrinsic[]>,
   ): Promise<Result<RefineResult, RefineError>> {
     const workPackageHash = workPackageAndHash.hash;
-    const { context, authToken, authCodeHash, authCodeHost, authConfiguration, items, ...rest } =
-      workPackageAndHash.data;
-    assertEmpty(rest);
+    const { context, items } = workPackageAndHash.data;
 
     // TODO [ToDr] Verify BEEFY root
     // TODO [ToDr] Verify prerequisites
@@ -111,15 +111,11 @@ export class InCore {
       );
     }
 
+    // Eagerly build the per-package fetch data so we pay the encoding cost
+    const packageFetchData = buildWorkPackageFetchData(this.chainSpec, workPackageAndHash.data);
+
     // Check authorization
-    const authResult = await this.isAuthorized.invoke(
-      state,
-      core,
-      authToken,
-      authCodeHost,
-      authCodeHash,
-      authConfiguration,
-    );
+    const authResult = await this.isAuthorized.invoke(state, core, packageFetchData);
     if (authResult.isError) {
       return Result.error(
         RefineError.AuthorizationError,
@@ -138,6 +134,7 @@ export class InCore {
       const result = await this.refineItem.invoke(
         state,
         lookupState,
+        packageFetchData,
         idx,
         item,
         imports,
@@ -145,6 +142,7 @@ export class InCore {
         core,
         workPackageHash,
         exportOffset,
+        authResult.ok.authorizationOutput,
       );
       refineResults.push(result);
       exportOffset += result.exports.length;

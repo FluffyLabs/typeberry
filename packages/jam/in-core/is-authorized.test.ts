@@ -4,13 +4,52 @@ import { resolve } from "node:path";
 import { before, describe, it } from "node:test";
 import type { CodeHash } from "@typeberry/block";
 import { tryAsCoreIndex, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import { RefineContext } from "@typeberry/block/refine-context.js";
+import { WorkItem } from "@typeberry/block/work-item.js";
+import { tryAsWorkItemsCount, WorkPackage } from "@typeberry/block/work-package.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { HashDictionary } from "@typeberry/collections";
+import { asKnownSize, FixedSizeArray, HashDictionary } from "@typeberry/collections";
 import { PvmBackend, tinyChainSpec } from "@typeberry/config";
 import { Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { InMemoryService, InMemoryState, PreimageItem, ServiceAccountInfo } from "@typeberry/state";
+import { buildWorkPackageFetchData } from "@typeberry/transition/externalities/fetch-externalities.js";
 import { AuthorizationError, IsAuthorized } from "./is-authorized.js";
+
+function buildPackageAndFetchData(authCodeHash: CodeHash, authToken: BytesBlob, authConfiguration: BytesBlob) {
+  const pkg = buildPackage(authCodeHash, authToken, authConfiguration);
+  return { pkg, fetchData: buildWorkPackageFetchData(tinyChainSpec, pkg) };
+}
+
+function buildPackage(authCodeHash: CodeHash, authToken: BytesBlob, authConfiguration: BytesBlob): WorkPackage {
+  const items = [
+    WorkItem.create({
+      service: tryAsServiceId(1),
+      codeHash: Bytes.zero(HASH_SIZE).asOpaque<CodeHash>(),
+      refineGasLimit: tryAsServiceGas(1_000_000),
+      accumulateGasLimit: tryAsServiceGas(1_000_000),
+      exportCount: tryAsU16(0),
+      payload: BytesBlob.empty(),
+      importSegments: asKnownSize([]),
+      extrinsic: [],
+    }),
+  ];
+  return WorkPackage.create({
+    authToken,
+    authCodeHost: AUTH_SERVICE_ID,
+    authCodeHash,
+    authConfiguration,
+    context: RefineContext.create({
+      anchor: Bytes.zero(HASH_SIZE).asOpaque(),
+      stateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+      beefyRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+      lookupAnchor: Bytes.zero(HASH_SIZE).asOpaque(),
+      lookupAnchorSlot: tryAsTimeSlot(16),
+      prerequisites: [],
+    }),
+    items: FixedSizeArray.new(items, tryAsWorkItemsCount(1)),
+  });
+}
 
 let blake2b: Blake2b;
 
@@ -67,7 +106,8 @@ describe("IsAuthorized", () => {
     const isAuthorized = new IsAuthorized(spec, PvmBackend.BuiltIn, blake2b);
     const token = BytesBlob.blobFromString("hello");
 
-    const result = await isAuthorized.invoke(state, tryAsCoreIndex(0), token, AUTH_SERVICE_ID, authCodeHash, token);
+    const { fetchData } = buildPackageAndFetchData(authCodeHash, token, token);
+    const result = await isAuthorized.invoke(state, tryAsCoreIndex(0), fetchData);
 
     assert.strictEqual(result.isOk, true, `Expected OK but got error: ${result.isError ? result.details() : ""}`);
 
@@ -91,14 +131,8 @@ describe("IsAuthorized", () => {
     const state = createStateWithService(authCodeHash, AUTHORIZER_PVM);
     const isAuthorized = new IsAuthorized(spec, PvmBackend.BuiltIn, blake2b);
 
-    const result = await isAuthorized.invoke(
-      state,
-      tryAsCoreIndex(0),
-      BytesBlob.empty(),
-      AUTH_SERVICE_ID,
-      authCodeHash,
-      BytesBlob.empty(),
-    );
+    const empty = buildPackageAndFetchData(authCodeHash, BytesBlob.empty(), BytesBlob.empty());
+    const result = await isAuthorized.invoke(state, tryAsCoreIndex(0), empty.fetchData);
 
     assert.strictEqual(result.isOk, true, `Expected OK but got error: ${result.isError ? result.details() : ""}`);
     const outputStr = Buffer.from(result.ok.authorizationOutput.raw).toString("utf8");
@@ -110,14 +144,12 @@ describe("IsAuthorized", () => {
     const state = createStateWithService(authCodeHash, AUTHORIZER_PVM);
     const isAuthorized = new IsAuthorized(spec, PvmBackend.BuiltIn, blake2b);
 
-    const result = await isAuthorized.invoke(
-      state,
-      tryAsCoreIndex(0),
-      BytesBlob.blobFromString("wrong"),
-      AUTH_SERVICE_ID,
+    const mismatch = buildPackageAndFetchData(
       authCodeHash,
+      BytesBlob.blobFromString("wrong"),
       BytesBlob.blobFromString("right"),
     );
+    const result = await isAuthorized.invoke(state, tryAsCoreIndex(0), mismatch.fetchData);
 
     assert.strictEqual(result.isError, true);
     assert.strictEqual(result.error, AuthorizationError.PvmFailed);
@@ -131,14 +163,8 @@ describe("IsAuthorized", () => {
     });
     const isAuthorized = new IsAuthorized(spec, PvmBackend.BuiltIn, blake2b);
 
-    const result = await isAuthorized.invoke(
-      state,
-      tryAsCoreIndex(0),
-      BytesBlob.empty(),
-      AUTH_SERVICE_ID,
-      authCodeHash,
-      BytesBlob.empty(),
-    );
+    const missing = buildPackageAndFetchData(authCodeHash, BytesBlob.empty(), BytesBlob.empty());
+    const result = await isAuthorized.invoke(state, tryAsCoreIndex(0), missing.fetchData);
 
     assert.strictEqual(result.isError, true);
     assert.strictEqual(result.error, AuthorizationError.CodeNotFound);
@@ -170,14 +196,8 @@ describe("IsAuthorized", () => {
     });
     const isAuthorized = new IsAuthorized(spec, PvmBackend.BuiltIn, blake2b);
 
-    const result = await isAuthorized.invoke(
-      state,
-      tryAsCoreIndex(0),
-      BytesBlob.empty(),
-      AUTH_SERVICE_ID,
-      authCodeHash,
-      BytesBlob.empty(),
-    );
+    const emptyPreimage = buildPackageAndFetchData(authCodeHash, BytesBlob.empty(), BytesBlob.empty());
+    const result = await isAuthorized.invoke(state, tryAsCoreIndex(0), emptyPreimage.fetchData);
 
     assert.strictEqual(result.isError, true);
     assert.strictEqual(result.error, AuthorizationError.CodeNotFound);

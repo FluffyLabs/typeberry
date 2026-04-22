@@ -1,4 +1,4 @@
-import { type CodeHash, type CoreIndex, type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/block";
+import { type CoreIndex, type ServiceGas, tryAsServiceGas } from "@typeberry/block";
 import { G_I, W_A } from "@typeberry/block/gp-constants.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { BytesBlob } from "@typeberry/bytes";
@@ -7,8 +7,9 @@ import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import { PvmExecutor, ReturnStatus } from "@typeberry/executor";
 import type { Blake2b } from "@typeberry/hash";
 import type { State } from "@typeberry/state";
-import { IsAuthorizedFetchExternalities } from "@typeberry/transition/externalities/is-authorized-fetch-externalities.js";
+import type { WorkPackageFetchData } from "@typeberry/transition/externalities/fetch-externalities.js";
 import { Result } from "@typeberry/utils";
+import { IsAuthorizedFetchExternalities } from "./externalities/index.js";
 
 export enum AuthorizationError {
   /** BAD: authorizer code not found (service or preimage missing). */
@@ -44,11 +45,13 @@ export class IsAuthorized {
   async invoke(
     state: State,
     coreIndex: CoreIndex,
-    authToken: BytesBlob,
-    authCodeHost: ServiceId,
-    authCodeHash: CodeHash,
-    authConfiguration: BytesBlob,
+    packageFetchData: WorkPackageFetchData,
   ): Promise<Result<AuthorizationOk, AuthorizationError>> {
+    const packageView = packageFetchData.packageView;
+    const authCodeHost = packageView.authCodeHost.materialize();
+    const authCodeHash = packageView.authCodeHash.materialize();
+    const authConfiguration = packageView.authConfiguration.materialize();
+
     // Look up the authorizer code from the auth code host service
     const service = state.getService(authCodeHost);
     // https://graypaper.fluffylabs.dev/#/ab2cdbd/2eca002eca00?v=0.7.2
@@ -77,10 +80,7 @@ export class IsAuthorized {
     }
 
     // Prepare fetch externalities and executor
-    const fetchExternalities = new IsAuthorizedFetchExternalities(this.chainSpec, {
-      authToken,
-      authConfiguration,
-    });
+    const fetchExternalities = new IsAuthorizedFetchExternalities(this.chainSpec, packageFetchData);
     const executor = await PvmExecutor.createIsAuthorizedExecutor(
       authCodeHost,
       code,
