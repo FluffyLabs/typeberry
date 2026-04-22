@@ -22,7 +22,7 @@
     },
     "benchmarks": {
       "name": "@typeberry/benchmarks",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/bytes": "*",
         "@typeberry/codec": "*",
@@ -38,7 +38,7 @@
     },
     "bin/convert": {
       "name": "@typeberry/convert",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "bin": "./index.js",
       "dependencies": {
         "@typeberry/block": "*",
@@ -69,7 +69,7 @@
     },
     "bin/ipc2rpc": {
       "name": "@typeberry/ipc2rpc",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -84,7 +84,7 @@
     },
     "bin/jam": {
       "name": "@typeberry/jam",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "bin": "./index.ts",
       "dependencies": {
         "@typeberry/bytes": "*",
@@ -108,9 +108,9 @@
     },
     "bin/lib": {
       "name": "@typeberry/lib",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
-        "@fluffylabs/anan-as": "^1.1.5",
+        "@fluffylabs/anan-as": "^1.3.0",
         "@noble/ed25519": "2.2.3",
         "@opentelemetry/api": "1.9.0",
         "@typeberry/block": "*",
@@ -151,7 +151,7 @@
     },
     "bin/pvm": {
       "name": "@typeberry/pvm",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/pvm-interface": "*",
         "@typeberry/pvm-interpreter": "*",
@@ -160,7 +160,7 @@
     },
     "bin/rpc": {
       "name": "@typeberry/rpc",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "bin": {
         "rpc": "index.ts",
       },
@@ -192,7 +192,7 @@
     },
     "bin/tci": {
       "name": "@typeberry/tci",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "bin": "./index.ts",
       "dependencies": {
         "@typeberry/block": "*",
@@ -211,7 +211,7 @@
     },
     "bin/test-runner": {
       "name": "@typeberry/test-runner",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/block-json": "*",
@@ -245,11 +245,11 @@
     },
     "packages/configs": {
       "name": "@typeberry/configs",
-      "version": "0.5.10",
+      "version": "0.5.11",
     },
     "packages/core/bytes": {
       "name": "@typeberry/bytes",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/ordering": "*",
         "@typeberry/utils": "*",
@@ -257,7 +257,7 @@
     },
     "packages/core/codec": {
       "name": "@typeberry/codec",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/bytes": "*",
         "@typeberry/logger": "*",
@@ -267,7 +267,7 @@
     },
     "packages/core/collections": {
       "name": "@typeberry/collections",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/bytes": "*",
         "@typeberry/hash": "*",
@@ -277,14 +277,14 @@
     },
     "packages/core/concurrent": {
       "name": "@typeberry/concurrent",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/utils": "*",
       },
     },
     "packages/core/crypto": {
       "name": "@typeberry/crypto",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@noble/ed25519": "2.2.3",
         "@typeberry/bytes": "*",
@@ -296,7 +296,7 @@
     },
     "packages/core/erasure-coding": {
       "name": "@typeberry/erasure-coding",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -308,7 +308,7 @@
     },
     "packages/core/hash": {
       "name": "@typeberry/hash",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/bytes": "*",
         "@typeberry/utils": "*",
@@ -317,19 +317,19 @@
     },
     "packages/core/json-parser": {
       "name": "@typeberry/json-parser",
-      "version": "0.5.10",
+      "version": "0.5.11",
     },
     "packages/core/listener": {
       "name": "@typeberry/listener",
-      "version": "0.5.10",
+      "version": "0.5.11",
     },
     "packages/core/logger": {
       "name": "@typeberry/logger",
-      "version": "0.5.10",
+      "version": "0.5.11",
     },
     "packages/core/mmr": {
       "name": "@typeberry/mmr",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/bytes": "*",
         "@typeberry/hash": "*",
@@ -337,7 +337,7 @@
     },
     "packages/core/networking": {
       "name": "@typeberry/networking",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "bin": "./bin/test.ts",
       "dependencies": {
         "@matrixai/quic": "2.0.9",
@@ -354,18 +354,18 @@
     },
     "packages/core/numbers": {
       "name": "@typeberry/numbers",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/utils": "*",
       },
     },
     "packages/core/ordering": {
       "name": "@typeberry/ordering",
-      "version": "0.5.10",
+      "version": "0.5.11",
     },
     "packages/core/pvm-host-calls": {
       "name": "@typeberry/pvm-host-calls",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/bytes": "*",
         "@typeberry/config": "*",
@@ -379,7 +379,7 @@
     },
     "packages/core/pvm-interface": {
       "name": "@typeberry/pvm-interface",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/numbers": "*",
         "@typeberry/utils": "*",
@@ -387,7 +387,7 @@
     },
     "packages/core/pvm-interpreter": {
       "name": "@typeberry/pvm-interpreter",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/bytes": "*",
         "@typeberry/codec": "*",
@@ -399,9 +399,9 @@
     },
     "packages/core/pvm-interpreter-ananas": {
       "name": "@typeberry/pvm-interpreter-ananas",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
-        "@fluffylabs/anan-as": "^1.1.5",
+        "@fluffylabs/anan-as": "^1.3.0",
         "@typeberry/codec": "*",
         "@typeberry/numbers": "*",
         "@typeberry/pvm-interface": "*",
@@ -411,7 +411,7 @@
     },
     "packages/core/shuffling": {
       "name": "@typeberry/shuffling",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/bytes": "*",
         "@typeberry/hash": "*",
@@ -421,7 +421,7 @@
     },
     "packages/core/telemetry": {
       "name": "@typeberry/telemetry",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@opentelemetry/auto-instrumentations-node": "^0.67.0",
         "@opentelemetry/exporter-metrics-otlp-http": "^0.208.0",
@@ -435,7 +435,7 @@
     },
     "packages/core/trie": {
       "name": "@typeberry/trie",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/bytes": "*",
         "@typeberry/collections": "*",
@@ -445,11 +445,11 @@
     },
     "packages/core/utils": {
       "name": "@typeberry/utils",
-      "version": "0.5.10",
+      "version": "0.5.11",
     },
     "packages/extensions/ipc": {
       "name": "@typeberry/ext-ipc",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -469,7 +469,7 @@
     },
     "packages/jam/block": {
       "name": "@typeberry/block",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/bytes": "*",
         "@typeberry/codec": "*",
@@ -483,7 +483,7 @@
     },
     "packages/jam/block-json": {
       "name": "@typeberry/block-json",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -496,7 +496,7 @@
     },
     "packages/jam/config": {
       "name": "@typeberry/config",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/numbers": "*",
         "@typeberry/utils": "*",
@@ -504,7 +504,7 @@
     },
     "packages/jam/config-node": {
       "name": "@typeberry/config-node",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block-json": "*",
         "@typeberry/bytes": "*",
@@ -518,7 +518,7 @@
     },
     "packages/jam/database": {
       "name": "@typeberry/database",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -534,7 +534,7 @@
     },
     "packages/jam/database-lmdb": {
       "name": "@typeberry/database-lmdb",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -554,7 +554,7 @@
     },
     "packages/jam/executor": {
       "name": "@typeberry/executor",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/jam-host-calls": "*",
@@ -565,7 +565,7 @@
     },
     "packages/jam/fuzz-proto": {
       "name": "@typeberry/fuzz-proto",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -579,7 +579,7 @@
     },
     "packages/jam/in-core": {
       "name": "@typeberry/in-core",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -603,7 +603,7 @@
     },
     "packages/jam/jam-host-calls": {
       "name": "@typeberry/jam-host-calls",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -623,7 +623,7 @@
     },
     "packages/jam/jamnp-s": {
       "name": "@typeberry/jamnp-s",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -641,7 +641,7 @@
     },
     "packages/jam/node": {
       "name": "@typeberry/node",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@opentelemetry/api": "1.9.0",
         "@typeberry/block": "*",
@@ -673,7 +673,7 @@
     },
     "packages/jam/rpc-client": {
       "name": "@typeberry/rpc-client",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/logger": "*",
         "@typeberry/rpc-validation": "*",
@@ -683,7 +683,7 @@
     },
     "packages/jam/rpc-validation": {
       "name": "@typeberry/rpc-validation",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/hash": "*",
         "zod": "^4.1.13",
@@ -691,7 +691,7 @@
     },
     "packages/jam/safrole": {
       "name": "@typeberry/safrole",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -709,7 +709,7 @@
     },
     "packages/jam/state": {
       "name": "@typeberry/state",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -726,7 +726,7 @@
     },
     "packages/jam/state-json": {
       "name": "@typeberry/state-json",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/block-json": "*",
@@ -745,7 +745,7 @@
     },
     "packages/jam/state-merkleization": {
       "name": "@typeberry/state-merkleization",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -763,7 +763,7 @@
     },
     "packages/jam/state-vectors": {
       "name": "@typeberry/state-vectors",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/block-json": "*",
@@ -776,7 +776,7 @@
     },
     "packages/jam/transition": {
       "name": "@typeberry/transition",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -802,7 +802,7 @@
     },
     "packages/jam/transition/disputes": {
       "name": "@typeberry/disputes",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -819,7 +819,7 @@
     },
     "packages/misc/benchmark": {
       "name": "@typeberry/benchmark",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/logger": "*",
         "benny": "3.7.1",
@@ -828,7 +828,7 @@
     },
     "packages/workers/api": {
       "name": "@typeberry/workers-api",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/codec": "*",
         "@typeberry/listener": "*",
@@ -840,7 +840,7 @@
     },
     "packages/workers/api-node": {
       "name": "@typeberry/workers-api-node",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/codec": "*",
         "@typeberry/config": "*",
@@ -856,7 +856,7 @@
     },
     "packages/workers/block-authorship": {
       "name": "@typeberry/block-authorship",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@opentelemetry/api": "^1.9.0",
         "@typeberry/block": "*",
@@ -882,7 +882,7 @@
     },
     "packages/workers/comms-authorship-network": {
       "name": "@typeberry/comms-authorship-network",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/codec": "*",
@@ -892,7 +892,7 @@
     },
     "packages/workers/importer": {
       "name": "@typeberry/importer",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@opentelemetry/api": "1.9.0",
         "@typeberry/block": "*",
@@ -917,7 +917,7 @@
     },
     "packages/workers/jam-network": {
       "name": "@typeberry/jam-network",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@typeberry/block": "*",
         "@typeberry/bytes": "*",
@@ -990,7 +990,7 @@
 
     "@eslint/plugin-kit": ["@eslint/plugin-kit@0.4.1", "", { "dependencies": { "@eslint/core": "^0.17.0", "levn": "^0.4.1" } }, "sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA=="],
 
-    "@fluffylabs/anan-as": ["@fluffylabs/anan-as@1.1.5", "", {}, "sha512-TRCCd5npU38ozMBPPj/0wzCrZ+brsnXL9oZQ1lC38s6OnBeg8cznLMaMNU3GCpR2FpU52dusq7ZgNeoUcAmoSQ=="],
+    "@fluffylabs/anan-as": ["@fluffylabs/anan-as@1.3.0", "", { "bin": { "anan-as": "dist/bin/index.js" } }, "sha512-VO1Fd/Xkh5C87l4CLuYpQ6Iz7XRW4apKKqJdCTD510HDNMsejVREtalyCICOCx9/XWYPEuAgZgmxPCKOdpkqnQ=="],
 
     "@gerrit0/mini-shiki": ["@gerrit0/mini-shiki@3.15.0", "", { "dependencies": { "@shikijs/engine-oniguruma": "^3.15.0", "@shikijs/langs": "^3.15.0", "@shikijs/themes": "^3.15.0", "@shikijs/types": "^3.15.0", "@shikijs/vscode-textmate": "^10.0.2" } }, "sha512-L5IHdZIDa4bG4yJaOzfasOH/o22MCesY0mx+n6VATbaiCtMeR59pdRqYk4bEiQkIHfxsHPNgdi7VJlZb2FhdMQ=="],
 
