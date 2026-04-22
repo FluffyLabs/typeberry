@@ -214,6 +214,22 @@ export function parseArgs(argv: string[]) {
   }
 }
 
+/**
+ * Parse the `BUN_TEST_SHARD=N/M` env var (1-indexed). Returns
+ * `{ index: 0, total: 1 }` when unset or invalid, i.e. "run everything".
+ */
+function parseShardEnv(): { index: number; total: number } {
+  const env = process.env.BUN_TEST_SHARD;
+  if (env === undefined || env === "") {
+    return { index: 0, total: 1 };
+  }
+  const [n, m] = env.split("/").map((s) => Number.parseInt(s, 10));
+  if (!Number.isFinite(n) || !Number.isFinite(m) || m < 1 || n < 1 || n > m) {
+    throw new Error(`Invalid BUN_TEST_SHARD: ${env} (expected N/M with 1 ≤ N ≤ M)`);
+  }
+  return { index: n - 1, total: m };
+}
+
 export async function main(
   runners: Runner<unknown, unknown>[],
   directoryToScan: string,
@@ -245,6 +261,18 @@ export async function main(
   if (initialFiles.length === 0) {
     // scan the given directory for fallback tests
     testFiles = await scanDir(relPath, directoryToScan, patterns);
+  }
+
+  // If `BUN_TEST_SHARD=N/M` is set, keep only the N-th shard of directories.
+  // Sharding by directory (not file) preserves per-dir locality (e.g. the
+  // `lastLoadedDir` block cache in state-transition.ts) and keeps related
+  // blocks in the same worker process.
+  const shard = parseShardEnv();
+  if (shard.total > 1) {
+    const allDirs = Array.from(new Set(testFiles.map((f) => path.dirname(f)))).sort();
+    const myDirs = new Set(allDirs.filter((_, i) => i % shard.total === shard.index));
+    testFiles = testFiles.filter((f) => myDirs.has(path.dirname(f)));
+    logger.info`Shard ${shard.index + 1}/${shard.total}: selected ${myDirs.size}/${allDirs.length} dirs, ${testFiles.length} files`;
   }
 
   logger.info`Preparing tests for ${testFiles.length} files.`;
