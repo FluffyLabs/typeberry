@@ -39,7 +39,7 @@ JAM Prize requirements
 
 ```bash
 $ node --version
-v 22.9.0
+v24.0.0
 ```
 
 We recommend [NVM](https://github.com/nvm-sh/nvm) to install and manage different
