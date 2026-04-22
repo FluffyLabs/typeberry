@@ -26,16 +26,22 @@ const outputFile = `${distDir}/${suiteToRun.replace(".ts", "")}.txt`;
 // `--smol` on each shard keeps per-process memory low.
 //
 // Env knobs:
-//   BUN_TEST_SHARDS=N       total shards (default 4). Use 1 to disable sharding
-//                           (useful when debugging a specific test with --test-name-pattern).
-//   BUN_TEST_CONCURRENCY=N  how many shards may run at once (default = shard count,
-//                           i.e. fully parallel). On memory-constrained runners set this
-//                           lower, e.g. =1 for strictly sequential execution.
+//   BUN_TEST_SHARDS=N         total shards (default 4). Use 1 to disable sharding
+//                             (useful when debugging a specific test with --test-name-pattern).
+//   BUN_TEST_CONCURRENCY=N    how many shards may run at once (default = shard count,
+//                             i.e. fully parallel). On memory-constrained runners set this
+//                             lower, e.g. =1 for strictly sequential execution.
+//   BUN_TEST_SHARD_DELAY_MS=N delay in ms between shard batches (default 0). On
+//                             self-hosted runners a small delay (~2–5s) gives the
+//                             kernel time to reclaim pages before the next shard
+//                             mmaps — without it the last shard sometimes hits
+//                             `mprotect failed: Cannot allocate memory`.
 const shardCount = Math.max(1, Number.parseInt(process.env.BUN_TEST_SHARDS ?? "4", 10));
 const concurrency = Math.max(
   1,
   Math.min(shardCount, Number.parseInt(process.env.BUN_TEST_CONCURRENCY ?? `${shardCount}`, 10)),
 );
+const shardDelayMs = Math.max(0, Number.parseInt(process.env.BUN_TEST_SHARD_DELAY_MS ?? "0", 10));
 const forwardedArgs = process.argv.slice(3);
 
 const runShard = (shard: number) =>
@@ -57,6 +63,11 @@ for (let i = 0; i < shardCount; i += concurrency) {
   const batchCodes = await Promise.all(procs.map((p) => p.exited));
   for (let j = 0; j < batchSize; j++) {
     exitCodes[i + j] = batchCodes[j];
+  }
+  // Give the kernel a chance to reclaim the child's pages before the next batch.
+  const moreBatches = i + batchSize < shardCount;
+  if (moreBatches && shardDelayMs > 0) {
+    await new Promise((resolve) => setTimeout(resolve, shardDelayMs));
   }
 }
 const exitCode = exitCodes.some((c) => c !== 0) ? 1 : 0;
