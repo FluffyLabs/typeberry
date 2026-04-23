@@ -40,13 +40,20 @@ jobs:
             chmod +x "$INSTALL_DIR/bun"
           fi
           echo "$INSTALL_DIR" >> $GITHUB_PATH
+      - name: Setup Node.js
+        # Benchmarks run under node+tsx instead of bun: benny's sample timing
+        # is wildly noisy under bun's JIT (±50–175%), blowing past the 30-min
+        # CI budget. Node gives ±<7% and finishes in minutes.
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
       - run: bun install --frozen-lockfile
       - name: Benchmarks run
         uses: nick-fields/retry@v3
         with:
           timeout_minutes: 30
           max_attempts: 3
-          command: bun run --cwd packages/misc/benchmark start
+          command: bun run --cwd packages/misc/benchmark start:node
       - name: Display results
         if: always()
         run: cat ./dist/benchmarks/results.txt

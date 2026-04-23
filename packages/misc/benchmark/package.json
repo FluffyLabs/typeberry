@@ -5,6 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "start": "bun run ./index.ts",
+    "start:node": "tsx ./index.ts",
     "test": "bun test"
   },
   "author": "Fluffy Labs",
