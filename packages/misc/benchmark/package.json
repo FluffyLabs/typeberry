@@ -4,8 +4,9 @@
   "description": "Benchmarks runner for typeberry.",
   "main": "index.ts",
   "scripts": {
-    "start": "tsx ./index.ts",
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "start": "bun run ./index.ts",
+    "start:node": "tsx ./index.ts",
+    "test": "bun test"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

@@ -38,29 +38,28 @@ JAM Prize requirements
 ## Requirements
 
 ```bash
-$ node --version
-v24.0.0
+$ bun --version
+1.3.13
 ```
 
-We recommend [NVM](https://github.com/nvm-sh/nvm) to install and manage different
-`node` versions.
+Install Bun from [bun.sh](https://bun.sh).
 
 ### Installing dependencies
 
 ```bash
-$ npm ci
+$ bun install
 ```
 
 ### Running typeberry
 
 ```bash
-$ npm start
+$ bun run start
 ```
 
 ### Running fuzz-target
 
 ```bash
-$ npm start -- fuzz-target
+$ bun run start -- fuzz-target
 ```
 
 ### Running with Docker
@@ -84,7 +83,7 @@ $ docker run -e JAM_LOG=trace GP_VERSION=0.7.2 typeberry
 $ docker run -v $(pwd)/database:/app/database typeberry
 ```
 
-The Docker container uses a minimal Alpine Linux image and forwards all arguments to `npm start`.
+The Docker container uses a slim Debian image and forwards all arguments to `bun run start`.
 
 ### Running the JSON RPC
 
@@ -93,7 +92,7 @@ JSON-RPC does not require `typeberry` to be running, so we just need to point th
 Note the DB needs to be already initialized.
 
 ```bash
-$ npm start -w @typeberry/rpc 
+$ bun run --cwd bin/rpc start
 ```
 
 ### Additional tooling
@@ -111,7 +110,7 @@ $ npm start -w @typeberry/rpc
 ### Formatting & linting
 
 ```bash
-$ npm run qa
+$ bun run qa
 ```
 
 Formatting & linting is done by [biomejs](https://biomejs.dev/)). You can run
@@ -119,36 +118,36 @@ separate tools using commands below.
 Note that all safe fixes will be applied automatically.
 
 ```bash
-$ npm run format # format the code
-$ npm run lint   # lint the code & organise imports
+$ bun run format # format the code
+$ bun run lint   # lint the code & organise imports
 ```
 
 A shorthand to run all the checks and apply safe fixes all at once is:
 ```bash
-$ npm run qa-fix
+$ bun run qa-fix
 ```
 
 ### Running unit tests
 
 ```bash
-$ npm run test
+$ bun test
 ```
 
 Running tests from a single package:
 ```bash
-$ npm run test -w @typeberry/trie
+$ bun test --cwd packages/core/trie
 ```
 
 ### Running benchmarks
 This command will run all benchmarks from `./benchmarks/` folder
 
 ```bash
-$ npm start -w @typeberry/benchmark
+$ bun run --cwd packages/misc/benchmark start
 ```
 
 Since each benchmark file is also runnable, it's easy to run just one benchmark, e.g:
 ```bash
-$ npm exec tsx ./benchmarks/math/mul_overflow.ts
+$ bun run ./benchmarks/math/mul_overflow.ts
 ```
 
 ### Running JSON test vectors
@@ -160,7 +159,7 @@ to execute them.
 
 ```bash
 $ git clone https://github.com/w3f/jamtestvectors.git
-$ npm run w3f -w @typeberry/test-runner  --  jamtestvectors/**/*.json ../jamtestvectors/erasure_coding/vectors/*
+$ bun run --cwd bin/test-runner w3f -- jamtestvectors/**/*.json ../jamtestvectors/erasure_coding/vectors/*
 ```
 
 Since there are multiple sources of test vectors (and their versions may differ),
@@ -176,13 +175,13 @@ You can select a specific PVM backend using the `--pvm` option:
 
 ```bash
 # Run tests with built-in PVM only
-$ npm run w3f-davxy:0.7.1 -w @typeberry/test-runner -- --pvm builtin
+$ bun run --cwd bin/test-runner w3f-davxy:0.7.1 -- --pvm builtin
 
 # Run tests with Ananas PVM only
-$ npm run w3f-davxy:0.7.1 -w @typeberry/test-runner -- --pvm ananas
+$ bun run --cwd bin/test-runner w3f-davxy:0.7.1 -- --pvm ananas
 
 # Run tests with both PVMs (default)
-$ npm run w3f-davxy:0.7.1 -w @typeberry/test-runner
+$ bun run --cwd bin/test-runner w3f-davxy:0.7.1
 ```
 
 This option is useful for debugging PVM-specific issues or running faster tests
@@ -194,17 +193,17 @@ To run JSON RPC E2E test-vectors [test-vectors](https://github.com/fluffylabs/te
 repository needs to be checked out with ref matching our tests. Then to run tests:
 
 ```bash
-$ npm run test:e2e -w @typeberry/rpc
+$ bun run --cwd bin/rpc test:e2e
 ```
 
 ### Adding a new component / package
 
 ```bash
-$ npm init -w ./packages/core/mycomponent
-$ npm init -w ./packages/jam/mycomponent
+$ mkdir -p packages/core/mycomponent && cd packages/core/mycomponent && bun init
+$ mkdir -p packages/jam/mycomponent && cd packages/jam/mycomponent && bun init
 ```
 
-This command will automatically update the `workspaces` field in top-level `package.json`.
+After creating the package, manually add its path to the `workspaces` array in the top-level `package.json`.
 
 ## Codestyle
 

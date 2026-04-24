@@ -34,14 +34,15 @@
     "minimist": "^1.2.8"
   },
   "scripts": {
-    "start": "tsx --test-timeout=900000 ./index.ts",
-    "w3f:0.7.2": "GP_VERSION=0.7.2 tsx ./w3f-072.ts",
-    "w3f-davxy:0.7.1": "GP_VERSION=0.7.1 tsx ./w3f-davxy-071.ts",
-    "w3f-davxy:0.7.2": "GP_VERSION=0.7.2 tsx ./w3f-davxy-072.ts",
-    "jam-conformance:0.7.1": "GP_VERSION=0.7.1 tsx ./jam-conformance-071.ts",
-    "jam-conformance:0.7.2": "GP_VERSION=0.7.2 tsx ./jam-conformance-072.ts",
-    "javajam:0.7.1": "GP_VERSION=0.7.1 tsx ./javajam-071.ts",
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "start": "bun run ./index.ts",
+    "w3f:0.7.2": "GP_VERSION=0.7.2 bun --smol test ./w3f-072.ts",
+    "w3f-davxy:0.7.1": "GP_VERSION=0.7.1 bun --smol test ./w3f-davxy-071.ts",
+    "w3f-davxy:0.7.2": "GP_VERSION=0.7.2 bun --smol test ./w3f-davxy-072.ts",
+    "jam-conformance:0.7.1": "GP_VERSION=0.7.1 bun --smol test ./jam-conformance-071.ts",
+    "jam-conformance:0.7.2": "GP_VERSION=0.7.2 bun --smol test ./jam-conformance-072.ts",
+    "jam-conformance-flaky:0.7.2": "GP_VERSION=0.7.2 bun --smol test ./jam-conformance-072-flaky.ts",
+    "javajam:0.7.1": "GP_VERSION=0.7.1 bun --smol test ./javajam-071.ts",
+    "test": "bun test"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

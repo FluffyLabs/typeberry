@@ -16,23 +16,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [24]
         project: [lib, jam, convert]
 
     steps:
     - uses: actions/checkout@v6
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1.3.13
+    - name: Use Node.js (for npm publish)
       uses: actions/setup-node@v6
       with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        node-version: 24
         registry-url: 'https://registry.npmjs.org'
 
     - name: Install dependencies
-      run: npm ci
+      run: bun install --frozen-lockfile
 
     - name: Build @typeberry/${{ matrix.project }}
-      run: npm run build -w @typeberry/${{ matrix.project }}
+      run: bun run --cwd bin/${{ matrix.project }} build
       env:
         IS_RELEASE: ${{ github.event_name == 'release' && !github.event.release.prerelease && '1' || '' }}
 
@@ -49,7 +51,7 @@ jobs:
       id: pkg-version
       working-directory: ./dist/${{ matrix.project }}
       run: |
-        VERSION=$(node -p "require('./package.json').version")
+        VERSION=$(bun -e "console.log(require('./package.json').version)")
         echo "version=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Check if version exists on npm
@@ -79,6 +81,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1.3.13
     - uses: docker/setup-buildx-action@v3
 
     - name: Log in to GitHub Container Registry
@@ -91,7 +97,7 @@ jobs:
     - name: Extract version from package.json
       id: version
       run: |
-        VERSION=$(node -p "require('./package.json').version")
+        VERSION=$(bun -e "console.log(require('./package.json').version)")
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Version: $VERSION"
 
@@ -116,10 +122,55 @@ jobs:
         cache-to: type=gha,mode=max
         platforms: linux/amd64
 
+  build-binaries:
+    if: github.event_name == 'release'
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: darwin-arm64
+            platform_gnu: darwin-arm64
+          - os: ubuntu-latest
+            platform: linux-x64
+            platform_gnu: linux-x64-gnu
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1.3.13
+
+    - name: Install dependencies
+      run: bun install --frozen-lockfile
+
+    - name: Build binary
+      working-directory: ./bin/jam
+      run: ./build-for-bun.sh
+      env:
+        PLATFORM: ${{ matrix.platform }}
+        PLATFORM_GNU: ${{ matrix.platform_gnu }}
+        IS_RELEASE: ${{ github.event_name == 'release' && !github.event.release.prerelease && '1' || '' }}
+
+    - name: Smoke test binary
+      run: |
+        ./dist/jam-bun/jam --help
+        echo "Smoke test passed"
+
+    - name: Upload binary to release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: dist/jam-${{ matrix.platform }}.zip
+
   update-release-notes:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
-    needs: [publish-npm, publish-docker]
+    needs: [publish-npm, publish-docker, build-binaries]
     permissions:
       contents: write
 
@@ -136,14 +187,17 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         body: |
-          ## 🐳 Docker Images
+          ## Standalone Binaries
+
+          Download the zip for your platform from the assets below, extract, and run `./jam --help`.
+
+          ## Docker Images
 
           ```bash
-          # GitHub Container Registry
           docker pull ghcr.io/${{ github.repository_owner }}/typeberry:${{ steps.ver.outputs.version }}
           ```
 
-          ## 📦 NPM Packages
+          ## NPM Packages
 
           ```bash
           npm install @typeberry/lib@${{ steps.ver.outputs.version }}

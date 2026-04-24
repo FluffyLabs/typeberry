@@ -7,7 +7,7 @@ import { logger } from "../logger.js";
 import { clampU64ToU32 } from "../utils.js";
 import { HostCallResult } from "./results.js";
 
-const decoder = new TextDecoder("utf8");
+const decoder = new TextDecoder("utf-8");
 
 enum Levels {
   ERROR = 0,

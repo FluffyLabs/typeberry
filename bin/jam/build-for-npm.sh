@@ -1,68 +1,51 @@
 #!/bin/bash
 set -ex
 
-# This script compiles the project into "single" JS file (it's actually one per worker thread)
-# using @vercel/ncc. The result is in `./dist/jam`
+# This script bundles the project into JS files using bun build (targeting node).
+# The result is in ./dist/jam — a self-contained npm package.
 
-VERSION=$(node -p "require('./package.json').version")
-DESCRIPTION=$(node -p "require('./package.json').description")
+VERSION=$(bun -e "console.log(require('./package.json').version)")
+DESCRIPTION=$(bun -e "console.log(require('./package.json').description)")
 
-# Start from the top-level project directory
-cd ../..
+# Resolve the top-level project directory (two levels up from bin/jam)
+ROOT=$(cd ../.. && pwd)
+DIST_FOLDER="$ROOT/dist/jam"
 
-DIST_FOLDER=./dist/jam
+# clean dist folder
+rm -rf "$DIST_FOLDER"
+mkdir -p "$DIST_FOLDER"
 
-# clean dist file
-mkdir $DIST_FOLDER || true
-rm -rf $DIST_FOLDER/*
+# Common externals: native deps that must be installed at runtime
+EXTERNALS="--external lmdb --external @matrixai/quic --external @typeberry/native"
 
-# TODO [ToDr] Temporary require anan-as before https://github.com/tomusdrw/anan-as/issues/99
-# is resolved.
-# Build the main binary
-BUILD="npx @vercel/ncc build -a -s -e lmdb -e @matrixai/quic -e tsx/esm/api"
-$BUILD ./bin/jam/index.ts -o $DIST_FOLDER
+# Build the main entry point
+bun build --target=node $EXTERNALS \
+  --outfile "$DIST_FOLDER/index.js" \
+  "$ROOT/bin/jam/index.ts"
 
-# Fix un-compiled worker files to point to the ones we will compile manually.
-#
-# Despite using `-a` flag, @vercel/ncc does not bundle the worker files,
-# so they still point to some external files via `import` statements.
-# To fix that, we manually build workers and move the files inside.
+# Build workers separately (they run in worker_threads, referenced via new URL())
+bun build --target=node $EXTERNALS \
+  --outfile "$DIST_FOLDER/bootstrap-importer.ts" \
+  "$ROOT/packages/workers/importer/bootstrap-importer.ts"
 
-# Build all workers separately and then the main binary
-$BUILD ./packages/workers/importer/index.ts -o $DIST_FOLDER/importer
-$BUILD ./packages/workers/jam-network/index.ts -o $DIST_FOLDER/jam-network
-$BUILD ./packages/workers/block-authorship/index.ts -o $DIST_FOLDER/block-authorship
+bun build --target=node $EXTERNALS \
+  --outfile "$DIST_FOLDER/bootstrap-network.ts" \
+  "$ROOT/packages/workers/jam-network/bootstrap-network.ts"
 
-# copy some files that should be there
-cp ./LICENSE $DIST_FOLDER/
-cp ./README.md $DIST_FOLDER/
+bun build --target=node $EXTERNALS \
+  --outfile "$DIST_FOLDER/bootstrap-generator.ts" \
+  "$ROOT/packages/workers/block-authorship/bootstrap-generator.ts"
 
-# Flatten the workers structure
-cd $DIST_FOLDER
-
-cd ./importer
-rm *.mjs || true
-mv index.js bootstrap-importer.mjs
-mv index.js.map bootstrap-importer.mjs.map
-mv * ../
-cd ../jam-network
-rm *.mjs || true
-mv index.js bootstrap-network.mjs
-mv index.js.map bootstrap-network.mjs.map
-mv * ../
-cd ../block-authorship
-rm *.mjs || true
-mv index.js bootstrap-generator.mjs
-mv index.js.map bootstrap-generator.mjs.map
-mv * ../
-cd ../
-
-# copy worker wasm files
-cp **/*.wasm ./ || true # ignore overwrite errors
+# Copy repo files
+cp "$ROOT/LICENSE" "$DIST_FOLDER/"
+cp "$ROOT/README.md" "$DIST_FOLDER/"
 
 # Make index.js executable and insert shebang with 8GB heap size
-echo '#!/usr/bin/env -S node --max-old-space-size=8192' > ./temp.js && cat ./index.js >> ./temp.js && mv ./temp.js ./index.js
-chmod +x ./index.js
+TEMP="$DIST_FOLDER/temp.js"
+echo '#!/usr/bin/env -S node --max-old-space-size=8192' > "$TEMP"
+cat "$DIST_FOLDER/index.js" >> "$TEMP"
+mv "$TEMP" "$DIST_FOLDER/index.js"
+chmod +x "$DIST_FOLDER/index.js"
 
 if [ -z "$IS_RELEASE" ]; then
   SHA=$(git rev-parse --short HEAD)
@@ -70,7 +53,7 @@ if [ -z "$IS_RELEASE" ]; then
 fi
 
 # build package.json file
-cat > ./package.json << EOF
+cat > "$DIST_FOLDER/package.json" << EOF
 {
   "name": "@typeberry/jam",
   "version": "$VERSION",
@@ -81,7 +64,8 @@ cat > ./package.json << EOF
   },
   "dependencies": {
     "lmdb": "3.1.3",
-    "@matrixai/quic": "2.0.9"
+    "@matrixai/quic": "2.0.9",
+    "@typeberry/native": "0.2.0-74dd7d7"
   },
   "homepage": "https://typeberry.dev",
   "repository": {

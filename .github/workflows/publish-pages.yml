@@ -24,16 +24,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
-    - name: Use Node.js 24
-      uses: actions/setup-node@v6
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
       with:
-        node-version: 24
-        cache: 'npm'
-    - run: npm ci
+        bun-version: 1.3.13
+    - run: bun install --frozen-lockfile
     - name: Generate documentation
-      run: npm run docs
+      run: bun run docs
     - name: Run links-check and generate notes.
-      run: npm run reader-notes
+      run: bun run reader-notes
     - name: Copy configs & schemas (configs dir)
       run: cp -r ./packages/configs/* ./web/configs/
     - name: Copy configs & schemas (schemas dir)

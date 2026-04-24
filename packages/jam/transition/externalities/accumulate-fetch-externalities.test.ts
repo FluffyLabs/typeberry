@@ -14,6 +14,15 @@ import { Operand } from "../accumulate/operand.js";
 import { AccumulateFetchExternalities } from "./accumulate-fetch-externalities.js";
 import { TRANSFER_OR_OPERAND, TransferOperandKind, type TransferOrOperand } from "./fetch-externalities.js";
 
+/** Compare BytesBlob values by raw bytes to avoid bun deepStrictEqual issues with opaque types. */
+function assertBlobEqual(actual: BytesBlob | null, expected: BytesBlob | null, msg?: string) {
+  if (actual === null || expected === null) {
+    assert.strictEqual(actual, expected, msg);
+    return;
+  }
+  assert.deepStrictEqual(Array.from(actual.raw), Array.from(expected.raw), msg);
+}
+
 describe("AccumulateFetchExternalities", () => {
   const prepareOperands = (length: number) => {
     const operands: Operand[] = [];
@@ -236,12 +245,12 @@ describe("AccumulateFetchExternalities", () => {
     const fetchExternalities = prepareAccumulateData({ operands, transfers: [], chainSpec });
 
     const result = fetchExternalities.allTransfersAndOperands();
-    assert.deepStrictEqual(result, encodedAll);
+    assertBlobEqual(result, encodedAll);
 
     for (let i = 0; i < operands.length; i++) {
       const one = fetchExternalities.oneTransferOrOperand(tryAsU64(i));
       const encodedOne = encodeOneTransferOrOperand(toOneTransferOrOperandAt(operands, [], i), chainSpec);
-      assert.deepStrictEqual(one, encodedOne, `Mismatch at operand index ${i}`);
+      assertBlobEqual(one, encodedOne, `Mismatch at operand index ${i}`);
     }
 
     const outOfRange = fetchExternalities.oneTransferOrOperand(tryAsU64(operands.length));
@@ -257,12 +266,12 @@ describe("AccumulateFetchExternalities", () => {
     const fetchExternalities = prepareAccumulateData({ operands: [], transfers, chainSpec });
 
     const result = fetchExternalities.allTransfersAndOperands();
-    assert.deepStrictEqual(result, encodedAll);
+    assertBlobEqual(result, encodedAll);
 
     for (let i = 0; i < transfers.length; i++) {
       const one = fetchExternalities.oneTransferOrOperand(tryAsU64(i));
       const encodedOne = encodeOneTransferOrOperand(toOneTransferOrOperandAt([], transfers, i), chainSpec);
-      assert.deepStrictEqual(one, encodedOne, `Mismatch at transfer index ${i}`);
+      assertBlobEqual(one, encodedOne, `Mismatch at transfer index ${i}`);
     }
 
     const outOfRange = fetchExternalities.oneTransferOrOperand(tryAsU64(transfers.length));

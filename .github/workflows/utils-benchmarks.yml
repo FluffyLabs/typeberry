@@ -16,10 +16,6 @@ jobs:
   benchmarks:
     runs-on: [self-hosted, benchmarks]
 
-    strategy:
-      matrix:
-        node-version: [24.x]
-
     steps:
       - name: Delete previous comment on PR
         # Don't attempt to comment if PR is coming from a fork.
@@ -29,18 +25,35 @@ jobs:
           mode: delete
           comment-tag: benchmarks
       - uses: actions/checkout@v6
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Setup Bun
+        run: |
+          BUN_VERSION="1.3.13"
+          INSTALL_DIR="$HOME/.bun/bin"
+          mkdir -p "$INSTALL_DIR"
+          # Force pinned version: reinstall if missing or version mismatch
+          if ! "$INSTALL_DIR/bun" --version 2>/dev/null | grep -qx "$BUN_VERSION"; then
+            rm -f /tmp/bun.zip
+            rm -rf /tmp/bun-extract
+            curl -fsSL -o /tmp/bun.zip "https://github.com/oven-sh/bun/releases/download/bun-v$BUN_VERSION/bun-linux-x64.zip"
+            python3 -c "import zipfile; zipfile.ZipFile('/tmp/bun.zip').extractall('/tmp/bun-extract')"
+            mv -f /tmp/bun-extract/bun-linux-x64/bun "$INSTALL_DIR/bun"
+            chmod +x "$INSTALL_DIR/bun"
+          fi
+          echo "$INSTALL_DIR" >> $GITHUB_PATH
+      - name: Setup Node.js
+        # Benchmarks run under node+tsx instead of bun: benny's sample timing
+        # is wildly noisy under bun's JIT (±50–175%), blowing past the 30-min
+        # CI budget. Node gives ±<7% and finishes in minutes.
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-      - run: npm ci
+          node-version: 24
+      - run: bun install --frozen-lockfile
       - name: Benchmarks run
         uses: nick-fields/retry@v3
         with:
           timeout_minutes: 30
           max_attempts: 3
-          command: npm start -w @typeberry/benchmark
+          command: bun run --cwd packages/misc/benchmark start:node
       - name: Display results
         if: always()
         run: cat ./dist/benchmarks/results.txt

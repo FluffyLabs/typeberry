@@ -223,7 +223,7 @@ export const string = Descriptor.withView<string, BytesBlob>(
   "string",
   { bytes: TYPICAL_SEQUENCE_LENGTH, isExact: false },
   (e, v) => e.bytesBlob(BytesBlob.blobFrom(new TextEncoder().encode(v))),
-  (d) => new TextDecoder("utf8", { fatal: true }).decode(d.bytesBlob().raw),
+  (d) => new TextDecoder("utf-8", { fatal: true }).decode(d.bytesBlob().raw),
   (s) => s.bytesBlob(),
   blob,
 );

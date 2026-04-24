@@ -4,7 +4,7 @@
   "description": "In core execution utilities (refine phase).",
   "main": "index.ts",
   "scripts": {
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "bun test"
   },
   "dependencies": {
     "@typeberry/block": "*",

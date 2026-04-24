@@ -1,4 +1,4 @@
-import { it } from "node:test";
+import { it } from "bun:test";
 
 import type { PerValidator } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";

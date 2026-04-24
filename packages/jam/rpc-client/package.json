@@ -10,7 +10,7 @@
     "eventemitter3": "^5.0.1"
   },
   "scripts": {
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "bun test"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

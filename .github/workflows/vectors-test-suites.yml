@@ -12,7 +12,6 @@ concurrency:
 
 env:
   TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
-  NODE_VERSION: 24.x
 
 jobs:
   test-vectors:
@@ -73,13 +72,32 @@ jobs:
           sed -i 's|git@github.com:|https://github.com/|g' .gitmodules
           git submodule sync ${{ matrix.submodule }}
           git submodule update --init --depth 1 ${{ matrix.submodule }}
-      - name: Use Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-      - run: npm ci
-      - run: npm start -w @typeberry/test-runner -- ${{ matrix.script }}
+      - name: Setup Bun
+        run: |
+          BUN_VERSION="1.3.13"
+          INSTALL_DIR="$HOME/.bun/bin"
+          mkdir -p "$INSTALL_DIR"
+          # Force pinned version: reinstall if missing or version mismatch
+          if ! "$INSTALL_DIR/bun" --version 2>/dev/null | grep -qx "$BUN_VERSION"; then
+            rm -f /tmp/bun.zip
+            rm -rf /tmp/bun-extract
+            curl -fsSL -o /tmp/bun.zip "https://github.com/oven-sh/bun/releases/download/bun-v$BUN_VERSION/bun-linux-x64.zip"
+            python3 -c "import zipfile; zipfile.ZipFile('/tmp/bun.zip').extractall('/tmp/bun-extract')"
+            mv -f /tmp/bun-extract/bun-linux-x64/bun "$INSTALL_DIR/bun"
+            chmod +x "$INSTALL_DIR/bun"
+          fi
+          echo "$INSTALL_DIR" >> $GITHUB_PATH
+      - run: bun install --frozen-lockfile
+      # Self-hosted runners share RAM across parallel shards, so we run shards
+      # sequentially (BUN_TEST_CONCURRENCY=1). The delay between shards gives
+      # the kernel time to reclaim the exited child's pages before the next
+      # shard mmaps — otherwise the last shard occasionally hits
+      # `mprotect failed: Cannot allocate memory`.
+      - run: bun run --cwd bin/test-runner start -- ${{ matrix.script }}
+        env:
+          BUN_TEST_SHARDS: "8"
+          BUN_TEST_CONCURRENCY: "1"
+          BUN_TEST_SHARD_DELAY_MS: "5000"
       - name: Display results
         if: always()
         run: cat ./dist/${{ matrix.output }}

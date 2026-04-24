@@ -1,0 +1,4 @@
+[install]
+# Use hoisted linker so all workspace packages are symlinked
+# in root node_modules (required for tsc to resolve them).
+linker = "hoisted"
