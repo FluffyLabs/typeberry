@@ -2,8 +2,8 @@
 
 import { loadConfig, NODE_DEFAULTS } from "@typeberry/config-node";
 import { Level, Logger } from "@typeberry/logger";
-import { importBlocks, JamConfig, main as node } from "@typeberry/node";
-import { workspacePathFix } from "@typeberry/utils";
+import { JamConfig, main as node, startBlocksReader } from "@typeberry/node";
+import { resultToString, workspacePathFix } from "@typeberry/utils";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 
@@ -16,13 +16,29 @@ async function main() {
     nodeConfig,
     pvmBackend: NODE_DEFAULTS.pvm,
   });
+  const logger = Logger.new(import.meta.filename, "e2e-setup");
   try {
     const api = await node(jamConfig, withRelPath, null);
-    await importBlocks(api, blocksToImport);
+    const reader = startBlocksReader({ files: blocksToImport, chainSpec: api.chainSpec }, logger);
+    for (const block of reader) {
+      const slot = block.header.view().timeSlotIndex.materialize();
+      logger.log`📖 Importing block: #${slot}`;
+      const res = await api.importBlock(block);
+      if (res.isError) {
+        logger.error`📖 ${resultToString(res)}`;
+      }
+    }
   } catch (e) {
     console.error(`${e}`);
     process.exit(-1);
   }
+  // The blocks are persisted to LMDB during each `importBlock`, so the
+  // database is ready for the actual `test:e2e-run` step. Skip `api.close()`
+  // and exit immediately: bun 1.3.13 panics with
+  // `NAPI FATAL ERROR: Error::New napi_create_error` during native module
+  // teardown (LMDB / bandersnatch worker). Tracked at
+  // https://github.com/oven-sh/bun/pull/28248.
+  process.exit(0);
 }
 
 const blocksToImport = [
