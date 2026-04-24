@@ -1,5 +1,4 @@
 import { logger, main, parseArgs } from "./common.js";
-import { FLAKY_ON_BUN } from "./jam-conformance-072-flaky-list.js";
 import { runners } from "./w3f/runners.js";
 
 const r = await main(runners, "test-vectors/jam-conformance/fuzz-reports/0.7.2/traces", {
@@ -11,9 +10,6 @@ const r = await main(runners, "test-vectors/jam-conformance/fuzz-reports/0.7.2/t
 
     // Block should be rejected?
     "1766565819_2010/00000225.json",
-
-    // Flaky under bun's wasm runtime; run separately via jam-conformance-072-flaky.ts
-    ...FLAKY_ON_BUN,
   ],
 });
 logger.log`${r}`;

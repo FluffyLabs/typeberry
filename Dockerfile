@@ -1,4 +1,4 @@
-FROM oven/bun:1.3.12-slim
+FROM oven/bun:1.3.13-slim
 
 RUN useradd -d /app -m typeberry
 

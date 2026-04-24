@@ -288,8 +288,21 @@ export async function main(
       }
     }
 
+    // Determine file kind from extension early to avoid parsing files
+    // that would not be accepted anyway.
+    const fileKind: testFile.bin | testFile.json = absolutePath.endsWith(testFile.bin) ? testFile.bin : testFile.json;
+    const isAccepted =
+      accepted === undefined ||
+      accepted[fileKind] === undefined ||
+      (accepted[fileKind] ?? []).some((x) => absolutePath.includes(x));
+
+    if (!isAccepted) {
+      // Skip the file entirely — don't load, don't parse, don't register.
+      continue;
+    }
+
     let testFileContent: testFile.Content;
-    if (absolutePath.endsWith(testFile.bin)) {
+    if (fileKind === testFile.bin) {
       const content: Buffer = await fs.readFile(absolutePath);
       testFileContent = {
         kind: testFile.bin,
@@ -303,21 +316,11 @@ export async function main(
       };
     }
 
-    // we accept a test file when:
-    // 1. No explicit `accepted` is defined
-    const isAccepted =
-      accepted === undefined ||
-      // 2. No explicit `accepted` for the file kind is defined
-      accepted[testFileContent.kind] === undefined ||
-      // 3. If the list is defined, we make sure that the path is on that list.
-      (accepted[testFileContent.kind] ?? []).some((x) => absolutePath.includes(x));
-
     const testVariants = prepareTest(runners, testFileContent, testFilePath, absolutePath, {
       pvms,
       accumulateSequentially,
     });
     for (const test of testVariants) {
-      test.shouldSkip = !isAccepted;
       tests.push(test);
     }
   }

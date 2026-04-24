@@ -17,9 +17,6 @@ jobs:
   test-vectors:
     name: ${{ matrix.display_name }}
     runs-on: self-hosted
-    # `continue_on_error` is a per-matrix-entry flag (set on the flaky suite).
-    # Falls back to false for entries that don't set it.
-    continue-on-error: ${{ matrix.continue_on_error == true }}
 
     strategy:
       fail-fast: false
@@ -31,16 +28,6 @@ jobs:
             output: jam-conformance-072.txt
             artifact_name: conformance-072-results
             submodule: jam-conformance
-          # Known-flaky tests under bun's wasm runtime. Run separately with
-          # continue-on-error so CI stays green while we track the upstream
-          # bun bugs (see jam-conformance-072-flaky-list.ts).
-          - display_name: conformance-0.7.2-flaky
-            gp_version: 0.7.2
-            script: jam-conformance-072-flaky.ts
-            output: jam-conformance-072-flaky.txt
-            artifact_name: conformance-072-flaky-results
-            submodule: jam-conformance
-            continue_on_error: true
           - display_name: w3f-0.7.2
             gp_version: 0.7.2
             script: w3f-072.ts
@@ -87,7 +74,7 @@ jobs:
           git submodule update --init --depth 1 ${{ matrix.submodule }}
       - name: Setup Bun
         run: |
-          BUN_VERSION="1.3.12"
+          BUN_VERSION="1.3.13"
           INSTALL_DIR="$HOME/.bun/bin"
           mkdir -p "$INSTALL_DIR"
           # Force pinned version: reinstall if missing or version mismatch

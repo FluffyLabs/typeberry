@@ -39,7 +39,7 @@ JAM Prize requirements
 
 ```bash
 $ bun --version
-1.3.12
+1.3.13
 ```
 
 Install Bun from [bun.sh](https://bun.sh).
