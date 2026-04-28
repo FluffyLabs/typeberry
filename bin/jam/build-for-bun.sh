@@ -24,15 +24,23 @@ bun build --compile \
 
 # Copy platform-specific native addons next to the binary.
 # lmdb uses node-gyp-build which looks for prebuilds/<platform>/ next to execPath.
-# quic and bandersnatch are resolved via Module._resolveFilename patch.
+# Filename includes the libc tag on linux (glibc/musl); darwin has no tag.
+# We target glibc — the bun targets are linked against glibc.
+case "${PLATFORM}" in
+  linux-*) LMDB_PREBUILD="node.napi.glibc.node" ;;
+  *)       LMDB_PREBUILD="node.napi.node" ;;
+esac
 mkdir -p "$DIST_FOLDER/prebuilds/${PLATFORM}"
-cp "$(bun -e "console.log(require.resolve('@lmdb/lmdb-${PLATFORM}/node.napi.node'))")" \
-  "$DIST_FOLDER/prebuilds/${PLATFORM}/node.napi.node"
+cp "$(bun -e "console.log(require.resolve('@lmdb/lmdb-${PLATFORM}/${LMDB_PREBUILD}'))")" \
+  "$DIST_FOLDER/prebuilds/${PLATFORM}/${LMDB_PREBUILD}"
+# quic and bandersnatch are resolved via Module._resolveFilename patch.
 cp "$(bun -e "console.log(require.resolve('@matrixai/quic-${PLATFORM}/node.napi.node'))")" \
   "$DIST_FOLDER/quic.node"
 
-# Bandersnatch native package uses a different naming convention
-cp "$(bun -e "console.log(require.resolve('@typeberry/bandersnatch-native-${PLATFORM_GNU}/bandersnatch.${PLATFORM}.node'))")" \
+# Bandersnatch native package uses a different naming convention.
+# The .node filename uses PLATFORM_GNU (so the linux file is
+# bandersnatch.linux-x64-gnu.node, while darwin reuses PLATFORM_GNU=PLATFORM).
+cp "$(bun -e "console.log(require.resolve('@typeberry/bandersnatch-native-${PLATFORM_GNU}/bandersnatch.${PLATFORM_GNU}.node'))")" \
   "$DIST_FOLDER/bandersnatch.node"
 
 # Version stamp
