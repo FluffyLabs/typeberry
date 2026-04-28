@@ -233,11 +233,20 @@ export class RpcServer {
 
   async close(): Promise<void> {
     this.logger.info`Cleaning up...`;
+    // Under bun 1.3.12, ws.terminate() (socket.destroy()) doesn't notify the
+    // underlying HTTP server, so wss.close(cb) never fires. Cap the wait.
     await new Promise<void>((resolve) => {
       for (const ws of this.wss.clients) {
         ws.terminate();
       }
-      this.wss.close(() => resolve());
+      const timer = setTimeout(() => {
+        this.logger.warn`wss.close() callback did not fire within 1s; proceeding`;
+        resolve();
+      }, 1000);
+      this.wss.close(() => {
+        clearTimeout(timer);
+        resolve();
+      });
     });
     this.subscriptionManager.destroy();
     await this.rootDb.db.close();

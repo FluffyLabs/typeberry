@@ -1,7 +1,7 @@
 import { logger, main, parseArgs } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
-main(runners, "test-vectors/jam-conformance/fuzz-reports/0.7.2/traces", {
+const r = await main(runners, "test-vectors/jam-conformance/fuzz-reports/0.7.2/traces", {
   ...parseArgs(process.argv.slice(2)),
   patterns: [".json"],
   ignored: [
@@ -11,9 +11,5 @@ main(runners, "test-vectors/jam-conformance/fuzz-reports/0.7.2/traces", {
     // Block should be rejected?
     "1766565819_2010/00000225.json",
   ],
-})
-  .then((r) => logger.log`${r}`)
-  .catch((e) => {
-    logger.error`${e}`;
-    process.exit(-1);
-  });
+});
+logger.log`${r}`;

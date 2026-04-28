@@ -1,5 +1,6 @@
+import { mock, spyOn } from "bun:test";
 import assert from "node:assert";
-import { after, before, beforeEach, describe, it, mock } from "node:test";
+import { after, before, beforeEach, describe, it } from "node:test";
 import type { OneImmediateArgs } from "../args-decoder/args-decoder.js";
 import { ArgumentType } from "../args-decoder/argument-type.js";
 import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
@@ -13,18 +14,20 @@ describe("OneImmDispatcher", () => {
   describe("check if it handles expected instructions", () => {
     const instructionResult = new InstructionResult();
     const hostCallOps = HostCallOps.new(instructionResult);
-    const hostCallMock = mock.fn();
+    const hostCallMock = mock();
 
     after(() => {
-      mock.restoreAll();
+      mock.restore();
     });
 
     beforeEach(() => {
-      hostCallMock.mock.resetCalls();
+      hostCallMock.mockClear();
     });
 
     before(() => {
-      mock.method(hostCallOps, "hostCall", hostCallMock);
+      spyOn(hostCallOps as unknown as Record<string, (...args: unknown[]) => unknown>, "hostCall").mockImplementation(
+        hostCallMock,
+      );
     });
 
     const argsMock = {
@@ -43,13 +46,12 @@ describe("OneImmDispatcher", () => {
   describe("check if it handles other instructions than expected", () => {
     const instructionResult = new InstructionResult();
     const hostCallOps = HostCallOps.new(instructionResult);
-    const mockFn = mock.fn();
+    const mockFn = mock();
 
     function mockAllMethods(obj: object) {
-      const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(obj)) as (keyof typeof obj)[];
-
-      for (const method of methodNames) {
-        mock.method(obj, method, mockFn);
+      const target = obj as Record<string, (...args: unknown[]) => unknown>;
+      for (const method of Object.getOwnPropertyNames(Object.getPrototypeOf(obj))) {
+        spyOn(target, method).mockImplementation(mockFn);
       }
     }
 
@@ -58,11 +60,11 @@ describe("OneImmDispatcher", () => {
     });
 
     after(() => {
-      mock.restoreAll();
+      mock.restore();
     });
 
     beforeEach(() => {
-      mockFn.mock.resetCalls();
+      mockFn.mockClear();
     });
 
     const argsMock = {

@@ -11,51 +11,40 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [24.x]
-
     steps:
     - uses: actions/checkout@v6
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v6
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
       with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - name: Check whether package-lock.json is up to date
+        bun-version: 1.3.13
+    - run: bun install --frozen-lockfile
+    - name: Check whether bun.lock is up to date
       run: |
-        npm install --package-lock-only
-        if ! git diff --quiet -- package-lock.json; then
-          echo "package-lock.json is out of sync with package.json."
-          echo "Please run 'npm install' and commit the updated package-lock.json."
+        bun install
+        if ! git diff --quiet -- bun.lock; then
+          echo "bun.lock is out of sync with package.json."
+          echo "Please run 'bun install' and commit the updated bun.lock."
           exit 1
         else
-          echo "package-lock.json is up to date."
+          echo "bun.lock is up to date."
         fi
-    - run: npm run build
-    - run: npm run build -w @typeberry/lib
-    - run: npm run check:cycles
+    - run: bun run build
+    - run: bun run --cwd bin/lib build
+    - run: bun run check:cycles
 
   npm:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [24.x]
-
     steps:
     - uses: actions/checkout@v6
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v6
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
       with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build -w @typeberry/jam
+        bun-version: 1.3.13
+    - run: bun install --frozen-lockfile
+    - run: bun run --cwd bin/jam build
     - run: |
         cd dist/jam
         npm install
         node index.js --help
-
 

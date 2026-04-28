@@ -12,8 +12,8 @@
     "assemblyscript-loader": "^0.3.0"
   },
   "scripts": {
-    "start": "tsx ./bin.ts",
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "start": "bun run ./bin.ts",
+    "test": "bun test"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

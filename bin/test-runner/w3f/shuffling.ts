@@ -1,5 +1,5 @@
+import { it } from "bun:test";
 import assert from "node:assert";
-import { it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { Blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";

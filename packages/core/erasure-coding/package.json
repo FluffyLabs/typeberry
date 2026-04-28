@@ -4,8 +4,8 @@
   "description": "Erasure encoding implementation",
   "main": "index.ts",
   "scripts": {
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
-    "start": "tsx ./index"
+    "test": "bun test",
+    "start": "bun run ./index"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

@@ -45,7 +45,8 @@ export class LmdbBlocks implements BlocksDb {
   }
 
   async setPostStateRoot(hash: HeaderHash, postStateRoot: StateRootHash): Promise<void> {
-    await this.postStateRoots.put(hash.raw, postStateRoot.raw);
+    // NOTE: lmdb's async put() never resolves under bun's event loop.
+    this.postStateRoots.putSync(hash.raw, postStateRoot.raw);
   }
 
   getPostStateRoot(hash: HeaderHash): StateRootHash | null {
@@ -59,14 +60,16 @@ export class LmdbBlocks implements BlocksDb {
   async insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void> {
     const header = block.data.header.view().encoded();
     const extrinsic = block.data.extrinsic.view().encoded();
-    await this.root.db.transaction(() => {
-      this.headers.put(block.hash.raw, header.raw);
-      this.extrinsics.put(block.hash.raw, extrinsic.raw);
+    // NOTE: lmdb's async transaction() never resolves under bun's event loop.
+    this.root.db.transactionSync(() => {
+      this.headers.putSync(block.hash.raw, header.raw);
+      this.extrinsics.putSync(block.hash.raw, extrinsic.raw);
     });
   }
 
   async setBestHeaderHash(hash: HeaderHash): Promise<void> {
-    await this.root.db.put(BEST_BLOCK, hash.raw);
+    // NOTE: lmdb's async put() never resolves under bun's event loop.
+    this.root.db.putSync(BEST_BLOCK, hash.raw);
   }
 
   getBestHeaderHash(): HeaderHash {

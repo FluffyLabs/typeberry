@@ -16,6 +16,8 @@ export enum WorkerControlPlaneMsg {
   CommunicationPort = 0,
   /** Transfers worker configuration. */
   Config = 1,
+  /** Signal from the worker that it is ready to receive configuration. */
+  Ready = 2,
 }
 
 export type ThreadComms = {
@@ -70,15 +72,35 @@ export function spawnWorker<To, From, Params>(
   const channel = new MessageChannel();
   const worker = new Worker(bootstrapPath);
 
+  const transferableConfig = config.intoTransferable(paramsEncoder);
   const msg: WorkerControlPlane = {
     kind: WorkerControlPlaneMsg.Config,
     parentPort: channel.port2,
-    config: config.intoTransferable(paramsEncoder),
+    config: transferableConfig,
   };
 
   logger.trace`(${protocol.name}) <-- config`;
-  // send the config down to the worker
-  worker.postMessage(msg, [msg.parentPort]);
+  // Every MessagePort inside the message must be listed in the transferable
+  // argument — otherwise bun rejects the postMessage with a structured-clone
+  // error (Node is more lenient but still risks duplicating the port).
+  const transferredPorts = transferableConfig.workerPorts.map(([, { port }]) => port);
+  // Wait for the worker to signal it's ready before sending the config.
+  // Node buffers messages sent before the worker attaches its parentPort
+  // listener, but bun does not — messages sent during bootstrap are silently
+  // dropped. The worker sends a Ready message as soon as its listener is
+  // attached (see initWorker below).
+  const onReady = (incoming: unknown) => {
+    if (
+      incoming !== null &&
+      typeof incoming === "object" &&
+      "kind" in incoming &&
+      incoming.kind === WorkerControlPlaneMsg.Ready
+    ) {
+      worker.off("message", onReady);
+      worker.postMessage(msg, [msg.parentPort, ...transferredPorts]);
+    }
+  };
+  worker.on("message", onReady);
 
   const workerFinished = new Promise<void>((resolve, reject) => {
     worker.once("error", reject);
@@ -157,7 +179,18 @@ export async function initWorker<To, From, Params>(
         return;
       }
 
+      if (msg.kind === WorkerControlPlaneMsg.Ready) {
+        // Ready is only ever sent from worker -> parent, not the other way.
+        logger.error`--> (${protocol.name}) unexpected Ready message on worker side.`;
+        return;
+      }
+
       assertNever(msg.kind);
     });
+
+    // Signal to the parent that we're ready to receive the configuration.
+    // Node buffers pre-listener messages, bun does not — this handshake
+    // ensures the parent only sends once our listener is attached.
+    parentPort.postMessage({ kind: WorkerControlPlaneMsg.Ready });
   });
 }

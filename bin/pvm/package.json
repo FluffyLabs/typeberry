@@ -9,8 +9,8 @@
     "@typeberry/pvm-interpreter-ananas": "*"
   },
   "scripts": {
-    "start": "tsx ./index.ts",
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "start": "bun run ./index.ts",
+    "test": "bun test"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

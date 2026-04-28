@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, it, mock } from "node:test";
+import { mock, spyOn } from "bun:test";
+import { afterEach, beforeEach, describe, it } from "node:test";
 import {
   Block,
   DisputesExtrinsic,
@@ -187,17 +188,19 @@ describe("Generator", () => {
     bandersnatch = await BandernsatchWasm.new();
 
     // Mock VRF functions to return predictable results
-    mock.method(bandersnatchVrf, "getVrfOutputHash", () =>
+    spyOn(bandersnatchVrf, "getVrfOutputHash").mockImplementation(() =>
       Promise.resolve(Result.ok(Bytes.zero(HASH_SIZE).asOpaque())),
     );
-    mock.method(bandersnatchVrf, "generateSeal", () => Promise.resolve(Result.ok(MOCK_SEAL_SIGNATURE.asOpaque())));
-    mock.method(bandersnatchVrf, "getRingCommitment", () =>
+    spyOn(bandersnatchVrf, "generateSeal").mockImplementation(() =>
+      Promise.resolve(Result.ok(MOCK_SEAL_SIGNATURE.asOpaque())),
+    );
+    spyOn(bandersnatchVrf, "getRingCommitment").mockImplementation(() =>
       Promise.resolve(Result.ok(Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque())),
     );
   });
 
   afterEach(() => {
-    mock.restoreAll();
+    mock.restore();
   });
 
   describe("nextBlock - fallback mode", () => {

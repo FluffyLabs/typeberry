@@ -4,7 +4,7 @@
   "description": "JAM crypto-related utilities.",
   "main": "index.ts",
   "scripts": {
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "bun test"
   },
   "dependencies": {
     "@noble/ed25519": "2.2.3",
