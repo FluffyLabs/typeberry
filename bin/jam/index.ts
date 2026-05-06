@@ -11,6 +11,7 @@ import { exportBlocks, importBlocks, JamConfig, main, mainFuzz } from "@typeberr
 import { Telemetry } from "@typeberry/telemetry";
 import { asOpaqueType, workspacePathFix } from "@typeberry/utils";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
+import { readFuzzEnv, synthesizeFuzzArgs } from "./fuzz-env.js";
 
 export * from "./args.js";
 
@@ -20,12 +21,24 @@ let args: Arguments;
 const withRelPath = workspacePathFix(`${import.meta.dirname}/../..`);
 
 try {
-  const parsed = parseArgs(process.argv.slice(2), withRelPath);
-  if (parsed === null) {
-    console.info(HELP);
-    process.exit(0);
+  const fuzzEnv = readFuzzEnv(process.env);
+  if (fuzzEnv !== null) {
+    if (process.argv.length > 2) {
+      throw new Error("When JAM_FUZZ is set, command-line arguments are not accepted.");
+    }
+    // In fuzz mode, the logger config is determined by JAM_FUZZ_LOG_LEVEL alone;
+    // any JAM_LOG filters configured at module load are discarded so behavior is
+    // deterministic regardless of which env vars happen to be present.
+    Logger.configureAll("", fuzzEnv.logLevel ?? Level.LOG);
+    args = synthesizeFuzzArgs(fuzzEnv);
+  } else {
+    const parsed = parseArgs(process.argv.slice(2), withRelPath);
+    if (parsed === null) {
+      console.info(HELP);
+      process.exit(0);
+    }
+    args = parsed;
   }
-  args = parsed;
 } catch (e) {
   console.error(`\n${e}\n`);
   console.info(HELP);
