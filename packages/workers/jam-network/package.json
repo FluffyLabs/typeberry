@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/jam-network",
-  "version": "0.5.11",
+  "version": "0.6.0",
   "description": "JAM networking worker.",
   "main": "index.ts",
   "dependencies": {
