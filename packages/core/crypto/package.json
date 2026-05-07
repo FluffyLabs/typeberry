@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/crypto",
-  "version": "0.5.11",
+  "version": "0.6.0",
   "description": "JAM crypto-related utilities.",
   "main": "index.ts",
   "scripts": {

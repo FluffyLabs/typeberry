@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/jam",
-  "version": "0.5.11",
+  "version": "0.6.0",
   "description": "JAM implementation in TypeScript",
   "private": true,
   "workspaces": [

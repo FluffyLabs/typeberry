@@ -1,7 +1,7 @@
 {
   "name": "@typeberry/collections",
   "description": "Known-size collection types.",
-  "version": "0.5.11",
+  "version": "0.6.0",
   "main": "index.ts",
   "dependencies": {
     "@typeberry/bytes": "*",
