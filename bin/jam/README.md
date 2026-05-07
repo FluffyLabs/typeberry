@@ -132,6 +132,37 @@ JAM_LOG=trace jam dev 1
 JAM_LOG=networking:debug,state:trace jam
 ```
 
+### `JAM_FUZZ*` (Standard Target Packaging)
+
+When `JAM_FUZZ` is set, the node starts in fuzz-target mode regardless of any
+command-line arguments (passing CLI args alongside `JAM_FUZZ` is rejected).
+This is the entrypoint expected by the
+[JAM conformance fuzz target packaging](https://github.com/davxy/jam-conformance/tree/main/fuzz-proto#standard-target-packaging)
+contract.
+
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `JAM_FUZZ` | Yes (any non-empty value) | Activates fuzz mode. |
+| `JAM_FUZZ_SPEC` | Yes | Chain spec: `tiny` or `full`. |
+| `JAM_FUZZ_SOCK_PATH` | Yes | Unix domain socket path the target listens on. |
+| `JAM_FUZZ_DATA_PATH` | Yes | Persistent data directory (currently unused; reserved). |
+| `JAM_FUZZ_LOG_LEVEL` | No | Log verbosity: `error`, `warn`, `info`, `debug`, `trace`. Overrides `JAM_LOG` in fuzz mode. |
+
+The target stays up across multiple fuzzer sessions; on each `Initialize`
+message it resets the in-memory state to the genesis sent by the fuzzer.
+
+**Docker example:**
+
+```bash
+docker run --rm \
+  -e JAM_FUZZ=1 \
+  -e JAM_FUZZ_SPEC=tiny \
+  -e JAM_FUZZ_SOCK_PATH=/tmp/jam.sock \
+  -e JAM_FUZZ_DATA_PATH=/tmp/jam-data \
+  -v /tmp:/tmp \
+  typeberry:latest
+```
+
 ### OpenTelemetry Variables
 
 | Variable | Description | Default |

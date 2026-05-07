@@ -1,4 +1,4 @@
-FROM node:25-bookworm-slim
+FROM --platform=linux/amd64 node:25-bookworm-slim
 
 RUN useradd -d /app -m typeberry
 
