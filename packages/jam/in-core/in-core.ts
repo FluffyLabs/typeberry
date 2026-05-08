@@ -3,7 +3,7 @@ import { type RefineContext, type WorkPackageHash, WorkPackageInfo } from "@type
 import type { WorkItemExtrinsic } from "@typeberry/block/work-item.js";
 import type { WorkPackage } from "@typeberry/block/work-package.js";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
-import { Bytes } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize, FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import type { StatesDb } from "@typeberry/database";
@@ -11,6 +11,7 @@ import type { Blake2b, WithHash } from "@typeberry/hash";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { tryAsU8, tryAsU16, tryAsU32 } from "@typeberry/numbers";
+import { constantDepthMerkleRoot } from "@typeberry/state-merkleization";
 import { buildWorkPackageFetchData } from "@typeberry/transition/externalities/fetch-externalities.js";
 import { assertEmpty, Result } from "@typeberry/utils";
 import type { ImportedSegment, PerWorkItem } from "./externalities/index.js";
@@ -49,7 +50,7 @@ export class InCore {
     public readonly chainSpec: ChainSpec,
     private readonly states: StatesDb,
     pvmBackend: PvmBackend,
-    blake2b: Blake2b,
+    private readonly blake2b: Blake2b,
   ) {
     this.isAuthorized = new IsAuthorized(chainSpec, pvmBackend, blake2b);
     this.refineItem = new Refine(chainSpec, pvmBackend, blake2b);
@@ -150,11 +151,11 @@ export class InCore {
 
     // amalgamate the work report now
     return Result.ok(
-      InCore.amalgamateWorkReport(asKnownSize(refineResults), authResult.ok, workPackageHash, context, core),
+      this.amalgamateWorkReport(asKnownSize(refineResults), authResult.ok, workPackageHash, context, core),
     );
   }
 
-  private static amalgamateWorkReport(
+  private amalgamateWorkReport(
     refineResults: PerWorkItem<RefineItemResult>,
     authResult: AuthorizationOk,
     workPackageHash: WorkPackageHash,
@@ -170,8 +171,9 @@ export class InCore {
 
     // TODO [ToDr] Compute erasure root
     const erasureRoot = Bytes.zero(HASH_SIZE);
-    // TODO [ToDr] Compute exports root
-    const exportsRoot = Bytes.zero(HASH_SIZE).asOpaque();
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/3ff5013ff501?v=0.7.2
+    const flatExports = exports.flat().map((s) => BytesBlob.blobFrom(s.raw));
+    const exportsRoot = constantDepthMerkleRoot(flatExports, this.blake2b).asOpaque();
     const exportsCount = exports.reduce((acc, x) => acc + x.length, 0);
 
     // TODO [ToDr] Segment root lookup computation?
