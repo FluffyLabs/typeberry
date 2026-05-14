@@ -237,7 +237,14 @@ describe("Generator", () => {
       const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
       const statesDb = createMockStatesDb(state);
 
-      const generator = new Generator(tinyChainSpec, bandersnatch, keccakHasher, blake2b, blocksDb, statesDb);
+      const generator = Generator.new({
+        chainSpec: tinyChainSpec,
+        bandersnatch,
+        keccakHasher,
+        blake2b,
+        blocks: blocksDb,
+        states: statesDb,
+      });
 
       // Create two tickets with different signatures
       const sig1 = Bytes.zero(BANDERSNATCH_PROOF_BYTES);
@@ -283,7 +290,14 @@ describe("Generator", () => {
       const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
       const statesDb = createMockStatesDb(state);
 
-      const generator = new Generator(tinyChainSpec, bandersnatch, keccakHasher, blake2b, blocksDb, statesDb);
+      const generator = Generator.new({
+        chainSpec: tinyChainSpec,
+        bandersnatch,
+        keccakHasher,
+        blake2b,
+        blocks: blocksDb,
+        states: statesDb,
+      });
 
       const sig1 = Bytes.zero(BANDERSNATCH_PROOF_BYTES);
       const ticket1 = SignedTicket.create({
@@ -320,7 +334,14 @@ describe("Generator", () => {
       const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
       const statesDb = createMockStatesDb(state);
 
-      const generator = new Generator(tinyChainSpec, bandersnatch, keccakHasher, blake2b, blocksDb, statesDb);
+      const generator = Generator.new({
+        chainSpec: tinyChainSpec,
+        bandersnatch,
+        keccakHasher,
+        blake2b,
+        blocks: blocksDb,
+        states: statesDb,
+      });
 
       const sig1 = Bytes.zero(BANDERSNATCH_PROOF_BYTES);
       sig1.raw[0] = 1;
@@ -359,7 +380,14 @@ describe("Generator", () => {
       const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
       const statesDb = createMockStatesDb(state);
 
-      const generator = new Generator(tinyChainSpec, bandersnatch, keccakHasher, blake2b, blocksDb, statesDb);
+      const generator = Generator.new({
+        chainSpec: tinyChainSpec,
+        bandersnatch,
+        keccakHasher,
+        blake2b,
+        blocks: blocksDb,
+        states: statesDb,
+      });
 
       const sig1 = Bytes.zero(BANDERSNATCH_PROOF_BYTES);
       sig1.raw[0] = 1;
@@ -397,7 +425,14 @@ describe("Generator", () => {
       const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
       const statesDb = createMockStatesDb(state);
 
-      const generator = new Generator(tinyChainSpec, bandersnatch, keccakHasher, blake2b, blocksDb, statesDb);
+      const generator = Generator.new({
+        chainSpec: tinyChainSpec,
+        bandersnatch,
+        keccakHasher,
+        blake2b,
+        blocks: blocksDb,
+        states: statesDb,
+      });
 
       // Create 4 tickets — only 3 should be included (lowest IDs win)
       const makeTicket = (sigByte: number, idByte: number) => {
