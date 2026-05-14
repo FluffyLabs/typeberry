@@ -37,11 +37,19 @@ export async function createImporter(
   const finalizer = dummyFinalityDepth > 0 ? DummyFinalizer.create(blocks, dummyFinalityDepth) : undefined;
   const pruneBlocks = config.workerParams.pruneBlocks ?? false;
 
-  const hasher = new TransitionHasher(await keccakHasher, await blake2b);
-  const importer = new Importer(chainSpec, pvm, hasher, logger, blocks, states, {
-    ...options,
-    finalizer,
-    pruneBlocks,
+  const hasher = TransitionHasher.new(await keccakHasher, await blake2b);
+  const importer = Importer.open({
+    spec: chainSpec,
+    pvm,
+    hasher,
+    logger,
+    blocks,
+    states,
+    options: {
+      ...options,
+      finalizer,
+      pruneBlocks,
+    },
   });
 
   return {

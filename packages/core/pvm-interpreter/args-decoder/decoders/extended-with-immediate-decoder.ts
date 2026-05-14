@@ -4,7 +4,11 @@ export class ExtendedWitdthImmediateDecoder {
   private unsignedImmediate: BigUint64Array;
   private bytes: Uint8Array;
 
-  constructor() {
+  static new() {
+    return new ExtendedWitdthImmediateDecoder();
+  }
+
+  private constructor() {
     const buffer = new ArrayBuffer(IMMEDIATE_SIZE);
     this.unsignedImmediate = new BigUint64Array(buffer);
     this.bytes = new Uint8Array(buffer);

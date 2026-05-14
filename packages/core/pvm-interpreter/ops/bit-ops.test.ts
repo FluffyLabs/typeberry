@@ -8,7 +8,7 @@ import { BitOps } from "./bit-ops.js";
 
 describe("BitOps", () => {
   function prepareData(firstValue: bigint, secondValue = 0n) {
-    const regs = new Registers();
+    const regs = Registers.empty();
     const firstRegisterIndex = 0;
     const secondRegisterIndex = 1;
     const resultRegisterIndex = 12;
@@ -16,10 +16,10 @@ describe("BitOps", () => {
     regs.setU64(firstRegisterIndex, firstValue);
     regs.setU64(secondRegisterIndex, secondValue);
 
-    const immediate = new ImmediateDecoder();
+    const immediate = ImmediateDecoder.new();
     immediate.setBytes(bigintToUint8ArrayLE(secondValue));
 
-    const bitOps = new BitOps(regs);
+    const bitOps = BitOps.new(regs);
 
     return { regs, bitOps, immediate, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex };
   }

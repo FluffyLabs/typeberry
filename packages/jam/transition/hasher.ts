@@ -11,7 +11,11 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
     return new TransitionHasher(await keccak.KeccakHasher.create(), await Blake2b.createHasher());
   }
 
-  constructor(
+  static new(keccakHasher: keccak.KeccakHasher, blake2b: Blake2b) {
+    return new TransitionHasher(keccakHasher, blake2b);
+  }
+
+  private constructor(
     private readonly keccakHasher: keccak.KeccakHasher,
     public readonly blake2b: Blake2b,
   ) {}
@@ -27,7 +31,7 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
 
   /** Creates hash from the block header view */
   header(header: HeaderView): WithHash<HeaderHash, HeaderView> {
-    return new WithHash(this.blake2b.hashBytes(header.encoded()).asOpaque(), header);
+    return WithHash.new(this.blake2b.hashBytes(header.encoded()).asOpaque(), header);
   }
 
   /**
@@ -61,6 +65,6 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
 
     const encoded = BytesBlob.blobFromParts([et.raw, ep.raw, eg.raw, ea.raw, ed.raw]);
 
-    return new WithHashAndBytes(this.blake2b.hashBytes(encoded).asOpaque(), extrinsicView, encoded);
+    return WithHashAndBytes.create(this.blake2b.hashBytes(encoded).asOpaque(), extrinsicView, encoded);
   }
 }

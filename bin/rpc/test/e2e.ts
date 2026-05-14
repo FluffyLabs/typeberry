@@ -15,7 +15,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
 
   before(async () => {
     server = await main([`--config=${import.meta.dirname}/e2e.config.json`]);
-    client = new RpcClient("ws://localhost:19800");
+    client = RpcClient.new("ws://localhost:19800");
     await client.waitForConnection();
   });
 

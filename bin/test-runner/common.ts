@@ -42,7 +42,11 @@ export class RunnerBuilder<T, V> implements Runner<T, V> {
   public readonly variants: V[] = [];
   public readonly chainSpecs: ChainSpec[] = [];
 
-  constructor(
+  static new<T, V>(path: string, run: RunFunction<T, V>) {
+    return new RunnerBuilder<T, V>(path, run);
+  }
+
+  private constructor(
     public readonly path: string,
     public readonly run: RunFunction<T, V>,
   ) {}
@@ -85,7 +89,7 @@ export class RunnerBuilder<T, V> implements Runner<T, V> {
 
 /** Test runner builder function. */
 export function runner<T, V = never>(path: string, run: RunFunction<T, V>, chainSpecs?: ChainSpec[]) {
-  const builder = new RunnerBuilder(path, run);
+  const builder = RunnerBuilder.new(path, run);
   if (chainSpecs !== undefined) {
     return builder.withChainSpecDetection(chainSpecs);
   }

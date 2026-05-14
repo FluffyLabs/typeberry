@@ -30,7 +30,7 @@ describe("TransitionHasher", () => {
     async function prepareHasher() {
       const keccakHasher = await keccak.KeccakHasher.create();
       const blake2b = await Blake2b.createHasher();
-      return new TransitionHasher(keccakHasher, blake2b);
+      return TransitionHasher.new(keccakHasher, blake2b);
     }
 
     function prepareExtrinsicView(partialExtrinsic: Partial<Extrinsic>) {

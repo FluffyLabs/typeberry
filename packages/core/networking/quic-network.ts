@@ -9,7 +9,17 @@ const logger = Logger.new(import.meta.filename, "net");
 export class QuicNetwork implements Network<QuicPeer> {
   private started = false;
 
-  constructor(
+  static new(
+    socket: QUICSocket,
+    server: QUICServer,
+    _dial: (peer: PeerAddress, options: DialOptions) => Promise<QuicPeer>,
+    _peers: PeersManagement<QuicPeer>,
+    listen: { host: string; port: number },
+  ) {
+    return new QuicNetwork(socket, server, _dial, _peers, listen);
+  }
+
+  private constructor(
     private readonly socket: QUICSocket,
     private readonly server: QUICServer,
     private readonly _dial: (peer: PeerAddress, options: DialOptions) => Promise<QuicPeer>,

@@ -9,7 +9,7 @@ const program = new Uint8Array([
   230, 174, 73, 44, 0, 0, 0, 0, 178, 230, 174, 120, 73, 85, 65, 2, 4,
 ]);
 
-const pvmTb = new Interpreter({ useSbrkGas: true });
+const pvmTb = Interpreter.new({ useSbrkGas: true });
 const pvmAnanas = await AnanasInterpreter.new();
 
 pvmTb.resetGeneric(program, 0, tryAsGas(200n));

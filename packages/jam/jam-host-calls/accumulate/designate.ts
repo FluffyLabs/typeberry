@@ -23,7 +23,11 @@ export class Designate implements HostCallHandler {
   basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG);
 
-  constructor(
+  static new(currentServiceId: ServiceId, partialState: PartialState, chainSpec: ChainSpec) {
+    return new Designate(currentServiceId, partialState, chainSpec);
+  }
+
+  private constructor(
     public readonly currentServiceId: ServiceId,
     private readonly partialState: PartialState,
     private readonly chainSpec: ChainSpec,

@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/in-core",
-  "version": "0.5.10",
+  "version": "0.6.0",
   "description": "In core execution utilities (refine phase).",
   "main": "index.ts",
   "scripts": {
@@ -18,6 +18,10 @@
     "@typeberry/jam-host-calls": "*",
     "@typeberry/logger": "*",
     "@typeberry/numbers": "*",
+    "@typeberry/ordering": "*",
+    "@typeberry/pvm-host-calls": "*",
+    "@typeberry/pvm-interface": "*",
+    "@typeberry/pvm-interpreter": "*",
     "@typeberry/state": "*",
     "@typeberry/transition": "*",
     "@typeberry/utils": "*"

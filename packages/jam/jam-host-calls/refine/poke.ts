@@ -26,7 +26,11 @@ export class Poke implements HostCallHandler {
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10);
 
-  constructor(private readonly refine: RefineExternalities) {}
+  static new(refine: RefineExternalities) {
+    return new Poke(refine);
+  }
+
+  private constructor(private readonly refine: RefineExternalities) {}
 
   async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
     // `n`: machine index

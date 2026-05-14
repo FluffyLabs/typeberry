@@ -25,7 +25,11 @@ export class Expunge implements HostCallHandler {
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(IN_OUT_REG);
 
-  constructor(private readonly refine: RefineExternalities) {}
+  static new(refine: RefineExternalities) {
+    return new Expunge(refine);
+  }
+
+  private constructor(private readonly refine: RefineExternalities) {}
 
   async execute(_gas: IGasCounter, regs: HostCallRegisters): Promise<PvmExecution | undefined> {
     // `n`: machine index

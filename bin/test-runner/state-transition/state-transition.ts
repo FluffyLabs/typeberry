@@ -72,23 +72,23 @@ export async function runStateTransition(testContent: StateTransition, options: 
   const myBlockIndex = allBlocks.findIndex(({ header }) => header.timeSlotIndex === timeStotIndex);
   const previousBlocks = allBlocks.slice(0, myBlockIndex);
 
-  const hasher = new TransitionHasher(await keccakHasher, blake2b);
+  const hasher = TransitionHasher.new(await keccakHasher, blake2b);
 
   const blocksDb = InMemoryBlocks.fromBlocks(
     previousBlocks.map((block) => {
       const blockView = blockAsView(spec, block);
       const headerHash = hasher.header(blockView.header.view());
-      return new WithHash(headerHash.hash, blockView);
+      return WithHash.new(headerHash.hash, blockView);
     }),
   );
 
-  const stf = new OnChain(
-    spec,
-    preState,
+  const stf = OnChain.assemble({
+    chainSpec: spec,
+    state: preState,
     hasher,
-    { pvm, accumulateSequentially: options.accumulateSequentially },
-    DbHeaderChain.new(blocksDb),
-  );
+    options: { pvm, accumulateSequentially: options.accumulateSequentially },
+    headerChain: DbHeaderChain.new(blocksDb),
+  });
 
   // verify that we compute the state root exactly the same.
   assert.deepStrictEqual(testContent.pre_state.state_root.toString(), preStateRoot.toString());
@@ -96,7 +96,7 @@ export async function runStateTransition(testContent: StateTransition, options: 
 
   const shouldBlockBeRejected = testContent.pre_state.state_root.isEqualTo(testContent.post_state.state_root);
 
-  const verifier = new BlockVerifier(stf.hasher, blocksDb);
+  const verifier = BlockVerifier.new(stf.hasher, blocksDb);
   // NOTE [ToDr] we skip full verification here, since we can run tests in isolation
   // (i.e. no block history)
   const verificationResult = await verifier.verifyBlock(blockView, { skipParentAndStateRoot: true });

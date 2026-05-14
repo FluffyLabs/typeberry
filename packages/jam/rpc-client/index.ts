@@ -29,7 +29,11 @@ type SubscriptionEventMap = {
 };
 
 class SubscriptionEventEmitter extends EventEmitter<SubscriptionEventMap> {
-  constructor(readonly unsubscribe: () => Promise<void>) {
+  static new(unsubscribe: () => Promise<void>) {
+    return new SubscriptionEventEmitter(unsubscribe);
+  }
+
+  private constructor(readonly unsubscribe: () => Promise<void>) {
     super();
   }
 }
@@ -43,7 +47,11 @@ export class RpcClient {
   private nextId = 1;
   private connectionPromise: Promise<void>;
 
-  constructor(url: string) {
+  static new(url: string) {
+    return new RpcClient(url);
+  }
+
+  private constructor(url: string) {
     this.ws = new WebSocket(url);
     this.connectionPromise = new Promise((resolve) => {
       this.ws.once("open", () => {
@@ -146,7 +154,7 @@ export class RpcClient {
 
   async subscribe<M extends SubscribableMethodName>(method: M, params: InputOf<M>): Promise<SubscriptionEventEmitter> {
     const subscriptionId = await this.call(method, params);
-    const eventEmitter = new SubscriptionEventEmitter(() => this.unsubscribe(subscriptionId));
+    const eventEmitter = SubscriptionEventEmitter.new(() => this.unsubscribe(subscriptionId));
     this.subscriptions.set(subscriptionId, { id: subscriptionId, method, eventEmitter });
     return eventEmitter;
   }

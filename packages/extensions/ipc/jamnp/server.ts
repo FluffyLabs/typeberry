@@ -16,7 +16,7 @@ export function startJamnpIpcServer(
   getKeyValuePairs: (hash: HeaderHash, startKey: ce129.Key, endKey: ce129.Key) => ce129.KeyValuePair[],
 ) {
   return startIpcServer(`typeberry-jamnp-${nodeName}`, (sender) => {
-    const handler = new JamnpIpcHandler(sender);
+    const handler = JamnpIpcHandler.new(sender);
     // Send block announcements
     const listener = (announcement: unknown) => {
       if (announcement instanceof up0.Announcement) {
@@ -33,14 +33,14 @@ export function startJamnpIpcServer(
     });
 
     handler.registerStreamHandlers(
-      new up0.Handler(
+      up0.Handler.new(
         chainSpec,
         getHandshake,
         () => {},
         () => {},
       ),
     );
-    handler.registerStreamHandlers(new ce129.Handler(true, getBoundaryNodes, getKeyValuePairs));
+    handler.registerStreamHandlers(ce129.Handler.new(true, getBoundaryNodes, getKeyValuePairs));
     return handler;
   });
 }

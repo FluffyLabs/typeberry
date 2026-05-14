@@ -29,7 +29,7 @@ export const refineWorkPackage: Handler<"typeberry_refineWorkPackage"> = async (
 
   // Hash the work package
   const workPackageHash = blake2b.hashBytes(workPackageBlob).asOpaque();
-  const workPackageAndHash = new WithHash(workPackageHash, workPackage);
+  const workPackageAndHash = WithHash.new(workPackageHash, workPackage);
 
   logger.info`Refining work package ${workPackageHash} to core ${coreIndex} with ${workPackage.items.length} items`;
 
@@ -44,7 +44,7 @@ export const refineWorkPackage: Handler<"typeberry_refineWorkPackage"> = async (
   const imports = asKnownSize(emptyImports);
 
   // Create in-core instance and process the work package
-  const inCore = new InCore(chainSpec, db.states, pvmBackend, blake2b);
+  const inCore = InCore.new(chainSpec, db.states, pvmBackend, blake2b);
   const result = await inCore.refine(workPackageAndHash, coreIndex, imports, extrinsics);
 
   if (result.isError) {

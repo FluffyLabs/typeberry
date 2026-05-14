@@ -22,7 +22,11 @@ export class Upgrade implements HostCallHandler {
   basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, GAS_REG, ALLOWANCE_REG);
 
-  constructor(
+  static new(currentServiceId: ServiceId, partialState: PartialState) {
+    return new Upgrade(currentServiceId, partialState);
+  }
+
+  private constructor(
     public readonly currentServiceId: ServiceId,
     private readonly partialState: PartialState,
   ) {}

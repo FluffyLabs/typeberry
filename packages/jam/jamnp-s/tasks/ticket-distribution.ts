@@ -33,13 +33,13 @@ export class TicketDistributionTask {
 
     // server mode: receive tickets from peers
     streamManager.registerIncomingHandlers(
-      new ce131.ServerHandler(chainSpec, ce131.STREAM_KIND_PROXY_TO_ALL, (epochIndex, ticket) => {
+      ce131.ServerHandler.new(chainSpec, ce131.STREAM_KIND_PROXY_TO_ALL, (epochIndex, ticket) => {
         task.onTicketReceived(epochIndex, ticket);
       }),
     );
 
     // client mode: send tickets to peers
-    streamManager.registerOutgoingHandlers(new ce131.ClientHandler(chainSpec, ce131.STREAM_KIND_PROXY_TO_ALL));
+    streamManager.registerOutgoingHandlers(ce131.ClientHandler.new(chainSpec, ce131.STREAM_KIND_PROXY_TO_ALL));
 
     return task;
   }

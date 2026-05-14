@@ -16,10 +16,10 @@ describe("CE133", () => {
     const handlers = testClientServer();
 
     let receivedData = {} as { coreIndex: CoreIndex; workPackage: WorkPackage; extrinsic: WorkPackageExtrinsics };
-    const server = new ServerHandler((coreIndex, workPackage, extrinsic) => {
+    const server = ServerHandler.new((coreIndex, workPackage, extrinsic) => {
       receivedData = { coreIndex, workPackage, extrinsic };
     });
-    const client = new ClientHandler();
+    const client = ClientHandler.new();
     handlers.server.registerHandlers(server);
     handlers.client.registerHandlers(client);
 

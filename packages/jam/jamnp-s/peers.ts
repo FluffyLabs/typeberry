@@ -47,7 +47,11 @@ export class Connections {
   /** Info about peers that are currently connected or where connected in the past. */
   private readonly peerInfo: Map<PeerId, PeerInfo> = new Map();
 
-  constructor(private readonly network: Network<Peer>) {
+  static new(network: Network<Peer>) {
+    return new Connections(network);
+  }
+
+  private constructor(private readonly network: Network<Peer>) {
     network.peers.onPeerConnected((peer) => {
       this.updatePeer(peer);
       return OK;

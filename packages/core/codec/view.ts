@@ -123,7 +123,7 @@ export abstract class ObjectView<T> {
     `;
 
     let lastItem = this.cache.get(lastField);
-    const skipper = new Skipper(this.decoder);
+    const skipper = Skipper.new(this.decoder);
 
     // now skip all of the fields and further populate the cache.
     for (let i = this.lastDecodedFieldIdx + 1; i <= index; i++) {
@@ -250,7 +250,7 @@ export class SequenceView<T, V = T> {
       Unjustified call to 'decodeUpTo' - the index (${index}) is already decoded (${this.lastDecodedIdx}).
     `;
     let lastItem = this.cache.get(this.lastDecodedIdx);
-    const skipper = new Skipper(this.decoder);
+    const skipper = Skipper.new(this.decoder);
 
     // now skip all of the fields and further populate the cache.
     for (let i = this.lastDecodedIdx + 1; i <= index; i++) {

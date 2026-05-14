@@ -11,10 +11,10 @@ import { Registers } from "../registers.js";
 import { TwoRegsOneOffsetDispatcher } from "./two-regs-one-offset-dispatcher.js";
 
 test("TwoRegsOneOffsetDispatcher", async (t) => {
-  const regs = new Registers();
+  const regs = Registers.empty();
   const instructionResult = new InstructionResult();
   const basicBlocks = new BasicBlocks();
-  const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
+  const branchOps = BranchOps.new(regs, instructionResult, basicBlocks);
 
   const mockFn = t.mock.fn();
 

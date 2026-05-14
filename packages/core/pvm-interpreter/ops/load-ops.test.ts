@@ -15,10 +15,10 @@ describe("LoadOps", () => {
   describe("loadImmediate", () => {
     function prepareLoadImmediateData(numberToLoad: bigint) {
       const instructionResult = new InstructionResult();
-      const registers = new Registers();
-      const memory = new Memory();
-      const loadOps = new LoadOps(registers, memory, instructionResult);
-      const immediateDecoder = new ImmediateDecoder();
+      const registers = Registers.empty();
+      const memory = Memory.new();
+      const loadOps = LoadOps.new(registers, memory, instructionResult);
+      const immediateDecoder = ImmediateDecoder.new();
       immediateDecoder.setBytes(bigintToUint8ArrayLE(numberToLoad));
 
       return {
@@ -57,8 +57,8 @@ describe("LoadOps", () => {
     const memory = new MemoryBuilder()
       .setWriteablePages(getStartPageIndex(address), tryAsMemoryIndex(getStartPageIndex(address) + PAGE_SIZE), data)
       .finalize(tryAsMemoryIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
-    const registers = new Registers();
-    const loadOps = new LoadOps(registers, memory, instructionResult);
+    const registers = Registers.empty();
+    const loadOps = LoadOps.new(registers, memory, instructionResult);
     const registerIndex = 0;
     registers.setU64(registerIndex, 0x11_22_33_44_55_66_77_88n);
 
@@ -179,13 +179,13 @@ describe("LoadOps", () => {
     const memory = new MemoryBuilder()
       .setWriteablePages(getStartPageIndex(address), tryAsMemoryIndex(getStartPageIndex(address) + PAGE_SIZE), data)
       .finalize(tryAsMemoryIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
-    const registers = new Registers();
-    const loadOps = new LoadOps(registers, memory, instructionResult);
+    const registers = Registers.empty();
+    const loadOps = LoadOps.new(registers, memory, instructionResult);
     const addressRegisterIndex = 1;
     const resultRegisterIndex = 0;
     registers.setU64(addressRegisterIndex, registerValue);
 
-    const immediate = new ImmediateDecoder();
+    const immediate = ImmediateDecoder.new();
     immediate.setBytes(bigintToUint8ArrayLE(immediateValue));
 
     return {
@@ -227,7 +227,7 @@ describe("LoadOps", () => {
       );
       const expectedSignedValue = -8756n;
       const expectedUnsignedValue = 18446744073709542860n;
-      const immediateDecoder = new ImmediateDecoder();
+      const immediateDecoder = ImmediateDecoder.new();
       immediateDecoder.setBytes(new Uint8Array([1]));
 
       loadOps.loadIndI16(resultRegisterIndex, addressRegisterIndex, immediate);

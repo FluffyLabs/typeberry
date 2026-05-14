@@ -11,7 +11,6 @@ import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.j
 import { type PreimageStatus, PreimageStatusKind } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Query } from "./query.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -27,7 +26,7 @@ function prepareRegsAndMemory(
   data: BytesBlob,
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(HASH_START_REG, tryAsU64(hashStart));
   registers.set(LENGTH_REG, tryAsU64(length));
 
@@ -36,7 +35,7 @@ function prepareRegsAndMemory(
     builder.setReadablePages(tryAsMemoryIndex(hashStart), tryAsMemoryIndex(hashStart + PAGE_SIZE), data.raw);
   }
 
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
     memory,
@@ -47,7 +46,7 @@ describe("HostCalls: Query", () => {
   it("should return panic if memory is unreadable", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const query = new Query(currentServiceId, accumulate);
+    const query = Query.new(currentServiceId, accumulate);
 
     const w7 = tryAsU64(2 ** 16);
     const w8 = tryAsU64(0);
@@ -70,7 +69,7 @@ describe("HostCalls: Query", () => {
   it("should return none if preimage is not found", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const query = new Query(currentServiceId, accumulate);
+    const query = Query.new(currentServiceId, accumulate);
 
     const w7 = tryAsU64(2 ** 16);
     const w8 = tryAsU64(32);
@@ -92,7 +91,7 @@ describe("HostCalls: Query", () => {
   it("should return requested if preimage is requested", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const query = new Query(currentServiceId, accumulate);
+    const query = Query.new(currentServiceId, accumulate);
 
     const w7 = tryAsU64(2 ** 16);
     const w8 = tryAsU64(32);
@@ -117,7 +116,7 @@ describe("HostCalls: Query", () => {
   it("should return available if preimage is available", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const query = new Query(currentServiceId, accumulate);
+    const query = Query.new(currentServiceId, accumulate);
 
     const w7 = tryAsU64(2 ** 16);
     const w8 = tryAsU64(32);
@@ -145,7 +144,7 @@ describe("HostCalls: Query", () => {
   it("should return unavailable if preimage is unavailable", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const query = new Query(currentServiceId, accumulate);
+    const query = Query.new(currentServiceId, accumulate);
 
     const w7 = tryAsU64(2 ** 16);
     const w8 = tryAsU64(32);
@@ -174,7 +173,7 @@ describe("HostCalls: Query", () => {
   it("should return reavailable if preimage is reavailable", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const query = new Query(currentServiceId, accumulate);
+    const query = Query.new(currentServiceId, accumulate);
 
     const w7 = tryAsU64(2 ** 16);
     const w8 = tryAsU64(32);

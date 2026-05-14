@@ -32,13 +32,33 @@ export interface SerializedStateBackend {
 }
 
 export class SerializedStateView<T extends SerializedStateBackend> implements StateView {
-  constructor(
-    private readonly spec: ChainSpec,
-    public backend: T,
-    /** Best-effort list of recently active services. */
-    private readonly recentlyUsedServices: ServiceId[],
-    private readonly viewCache: HashDictionary<StateKey, unknown>,
-  ) {}
+  private readonly spec: ChainSpec;
+  public backend: T;
+  /** Best-effort list of recently active services. */
+  private readonly recentlyUsedServices: ServiceId[];
+  private readonly viewCache: HashDictionary<StateKey, unknown>;
+
+  /** Build a new view over an existing serialized-state backend. */
+  static new<T extends SerializedStateBackend>(args: {
+    spec: ChainSpec;
+    backend: T;
+    recentlyUsedServices: ServiceId[];
+    viewCache: HashDictionary<StateKey, unknown>;
+  }): SerializedStateView<T> {
+    return new SerializedStateView(args.spec, args.backend, args.recentlyUsedServices, args.viewCache);
+  }
+
+  private constructor(
+    spec: ChainSpec,
+    backend: T,
+    recentlyUsedServices: ServiceId[],
+    viewCache: HashDictionary<StateKey, unknown>,
+  ) {
+    this.spec = spec;
+    this.backend = backend;
+    this.recentlyUsedServices = recentlyUsedServices;
+    this.viewCache = viewCache;
+  }
 
   private retrieveView<A, B>({ key, Codec }: KeyAndCodecWithView<A, B>, description: string): B {
     const cached = this.viewCache.get(key);

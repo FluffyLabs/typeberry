@@ -8,7 +8,7 @@ const U64_BYTES = 8;
 describe("Registers", () => {
   describe("loading values", () => {
     it("should return 0xff_ff_ff_ff correctly loaded into register", () => {
-      const registers = new Registers();
+      const registers = Registers.empty();
       const expectedSignedNumber = -1;
       const expectedUnsignedNumber = 2 ** 32 - 1;
 
@@ -19,7 +19,7 @@ describe("Registers", () => {
     });
 
     it("should return 0x00_00_00_01 correctly loaded into register", () => {
-      const registers = new Registers();
+      const registers = Registers.empty();
       const expectedSignedNumber = 1;
       const expectedUnsignedNumber = 1;
 
@@ -30,7 +30,7 @@ describe("Registers", () => {
     });
 
     it("should return 0x80_00_00_00 correctly loaded into register", () => {
-      const registers = new Registers();
+      const registers = Registers.empty();
       const expectedSignedNumber = -(2 ** 31);
       const expectedUnsignedNumber = 2 ** 31;
 
@@ -43,7 +43,7 @@ describe("Registers", () => {
 
   describe("getBytesAsLittleEndian", () => {
     it("should return empty bytes array", () => {
-      const regs = new Registers();
+      const regs = Registers.empty();
 
       const num = 0;
       const expectedBytes = new Uint8Array([0, 0, 0, 0]);
@@ -54,7 +54,7 @@ describe("Registers", () => {
     });
 
     it("should return u8 number correctly encoded as little endian", () => {
-      const regs = new Registers();
+      const regs = Registers.empty();
 
       const num = 0xff;
       const expectedBytes = new Uint8Array([0xff, 0, 0, 0]);
@@ -65,7 +65,7 @@ describe("Registers", () => {
     });
 
     it("should return u16 number correctly encoded as little endian", () => {
-      const regs = new Registers();
+      const regs = Registers.empty();
 
       const num = 0xff_ee;
       const expectedBytes = new Uint8Array([0xee, 0xff, 0, 0]);
@@ -76,7 +76,7 @@ describe("Registers", () => {
     });
 
     it("should return u32 number correctly encoded as little endian", () => {
-      const regs = new Registers();
+      const regs = Registers.empty();
 
       const num = 0xff_ee_dd_cc;
       const expectedBytes = new Uint8Array([0xcc, 0xdd, 0xee, 0xff]);
@@ -89,7 +89,7 @@ describe("Registers", () => {
 
   describe("Implemented IRegister", () => {
     it("should correctly get all registers into bytes encoded", () => {
-      const regs = new Registers();
+      const regs = Registers.empty();
 
       const num = 0xef_cd_ab_89_67_45_23_01n;
       const bytesReg = new Uint8Array([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]);
@@ -107,7 +107,7 @@ describe("Registers", () => {
     });
 
     it("should correctly set all registers from bytes encoded", () => {
-      const regs = new Registers();
+      const regs = Registers.empty();
 
       const bytesReg = new Uint8Array([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]);
       const fill = new Uint8Array(12 * U64_BYTES).fill(0); // we set 1st register so we fill remaining 12 with 0
@@ -123,7 +123,7 @@ describe("Registers", () => {
     });
 
     it("should throw when trying to set all registers from bytes encoded with incorrect size", () => {
-      const regs = new Registers();
+      const regs = Registers.empty();
 
       const bytesReg = new Uint8Array([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]);
       const fill = new Uint8Array(12 * U64_BYTES).fill(0); // we set 1st register so we fill remaining 12 with 0

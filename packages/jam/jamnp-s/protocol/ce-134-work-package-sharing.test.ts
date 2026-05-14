@@ -25,7 +25,7 @@ describe("CE 134: Work Package Sharing", () => {
     const handlers = testClientServer();
 
     await new Promise((resolve) => {
-      const serverHandler = new ServerHandler((coreIndex, segmentsRootMappings, workPackageBundle) => {
+      const serverHandler = ServerHandler.new((coreIndex, segmentsRootMappings, workPackageBundle) => {
         assert.deepStrictEqual(coreIndex, MOCK_CORE_INDEX);
         assert.deepStrictEqual(segmentsRootMappings, MOCK_SEGMENTS_ROOT_MAPPINGS);
         assert.deepStrictEqual(workPackageBundle, MOCK_WORK_PACKAGE_BUNDLE);
@@ -37,7 +37,7 @@ describe("CE 134: Work Package Sharing", () => {
       });
 
       handlers.server.registerHandlers(serverHandler);
-      handlers.client.registerHandlers(new ClientHandler());
+      handlers.client.registerHandlers(ClientHandler.new());
 
       handlers.client.withNewStream(STREAM_KIND, (handler: ClientHandler, sender) => {
         handler

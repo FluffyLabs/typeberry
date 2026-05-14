@@ -33,7 +33,7 @@ describe("TicketDistributionTask", () => {
   async function init(name: string) {
     const network = new MockNetwork(name);
     const streamManager = new StreamManager();
-    const connections = new Connections(network);
+    const connections = Connections.new(network);
 
     // Track received tickets for verification
     const receivedTickets: { epochIndex: Epoch; ticket: SignedTicket }[] = [];

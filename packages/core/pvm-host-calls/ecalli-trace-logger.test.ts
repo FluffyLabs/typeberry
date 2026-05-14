@@ -13,7 +13,7 @@ function createRegisters(values: Map<number, bigint>): HostCallRegisters {
   for (const [idx, value] of values) {
     view.setBigUint64(idx * REGISTER_BYTE_SIZE, value, true);
   }
-  return new HostCallRegisters(bytes);
+  return HostCallRegisters.fromRaw(bytes);
 }
 
 describe("IoTraceLogger", () => {

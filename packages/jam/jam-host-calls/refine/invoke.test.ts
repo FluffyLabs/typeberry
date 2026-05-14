@@ -17,7 +17,6 @@ import {
 } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Invoke } from "./invoke.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -34,11 +33,11 @@ function prepareRegsAndMemory(
   data: BytesBlob,
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(MACHINE_INDEX_REG, machineIndex);
   registers.set(DEST_REG, tryAsU64(destinationStart));
 
-  const memory = new HostCallMemory(prepareMemory(data, destinationStart, PAGE_SIZE, { registerMemory }));
+  const memory = HostCallMemory.new(prepareMemory(data, destinationStart, PAGE_SIZE, { registerMemory }));
 
   return {
     registers,
@@ -84,7 +83,7 @@ describe("HostCalls: Invoke", () => {
       },
     );
 
-    const invoke = new Invoke(refine);
+    const invoke = Invoke.new(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId);
@@ -109,7 +108,7 @@ describe("HostCalls: Invoke", () => {
       },
     );
 
-    const invoke = new Invoke(refine);
+    const invoke = Invoke.new(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId);
@@ -129,7 +128,7 @@ describe("HostCalls: Invoke", () => {
       status: Status.OK,
     });
 
-    const invoke = new Invoke(refine);
+    const invoke = Invoke.new(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId + 1n);
@@ -151,7 +150,7 @@ describe("HostCalls: Invoke", () => {
       hostCallIndex,
     });
 
-    const invoke = new Invoke(refine);
+    const invoke = Invoke.new(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId);
@@ -173,7 +172,7 @@ describe("HostCalls: Invoke", () => {
       address,
     });
 
-    const invoke = new Invoke(refine);
+    const invoke = Invoke.new(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId);
@@ -193,7 +192,7 @@ describe("HostCalls: Invoke", () => {
       status: Status.OOG,
     });
 
-    const invoke = new Invoke(refine);
+    const invoke = Invoke.new(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId);
@@ -213,7 +212,7 @@ describe("HostCalls: Invoke", () => {
       status: Status.PANIC,
     });
 
-    const invoke = new Invoke(refine);
+    const invoke = Invoke.new(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId);
@@ -233,7 +232,7 @@ describe("HostCalls: Invoke", () => {
       status: Status.HALT,
     });
 
-    const invoke = new Invoke(refine);
+    const invoke = Invoke.new(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId);

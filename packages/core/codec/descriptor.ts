@@ -117,7 +117,7 @@ export class Descriptor<T, V = T> implements Codec<T>, Skip, CodecWithView<T, V>
    */
   public skipEncoded(decoder: Decoder) {
     const initBytes = decoder.bytesRead();
-    this.skip(new Skipper(decoder));
+    this.skip(Skipper.new(decoder));
     const endBytes = decoder.bytesRead();
     return BytesBlob.blobFrom(decoder.source.subarray(initBytes, endBytes));
   }

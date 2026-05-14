@@ -9,8 +9,8 @@ import { HostCallOps } from "./host-call-ops.js";
 describe("HostCallOps", () => {
   function prepareData(immediateValue: bigint) {
     const instructionResult = new InstructionResult();
-    const hostCallOps = new HostCallOps(instructionResult);
-    const immediate = new ImmediateDecoder();
+    const hostCallOps = HostCallOps.new(instructionResult);
+    const immediate = ImmediateDecoder.new();
     immediate.setBytes(bigintToUint8ArrayLE(immediateValue));
 
     return { hostCallOps, instructionResult, immediate };

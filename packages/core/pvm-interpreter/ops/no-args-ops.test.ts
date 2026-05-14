@@ -9,7 +9,7 @@ describe("NoArgsOps", () => {
   describe("trap", () => {
     it("should change status to panic", () => {
       const instructionResult = new InstructionResult();
-      const noArgsOps = new NoArgsOps(instructionResult);
+      const noArgsOps = NoArgsOps.new(instructionResult);
 
       noArgsOps.trap();
 
@@ -21,7 +21,7 @@ describe("NoArgsOps", () => {
     it("should not change anything", () => {
       const instructionResult = new InstructionResult();
       const expectedInstructionResult = new InstructionResult();
-      const noArgsOps = new NoArgsOps(instructionResult);
+      const noArgsOps = NoArgsOps.new(instructionResult);
 
       noArgsOps.fallthrough();
 

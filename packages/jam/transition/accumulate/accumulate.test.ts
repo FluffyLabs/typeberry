@@ -338,7 +338,7 @@ const createServices = (
 const createService = (serviceId: ServiceId, hash: OpaqueHash, blob: BytesBlob, info: TestServiceInfo) => {
   const preimages = HashDictionary.new<PreimageHash, PreimageItem>();
   preimages.set(hash.asOpaque(), PreimageItem.create({ hash: hash.asOpaque(), blob }));
-  return new InMemoryService(serviceId, {
+  return InMemoryService.new(serviceId, {
     info: ServiceAccountInfo.create({
       accumulateMinGas: tryAsServiceGas(0n),
       codeHash: hash.asOpaque(),

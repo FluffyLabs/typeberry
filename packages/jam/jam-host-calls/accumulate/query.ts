@@ -31,7 +31,11 @@ export class Query implements HostCallHandler {
   basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG_1, IN_OUT_REG_2);
 
-  constructor(
+  static new(currentServiceId: ServiceId, partialState: PartialState) {
+    return new Query(currentServiceId, partialState);
+  }
+
+  private constructor(
     public readonly currentServiceId: ServiceId,
     private readonly partialState: PartialState,
   ) {}

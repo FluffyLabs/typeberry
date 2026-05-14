@@ -8,7 +8,7 @@ import { InMemoryStates } from "./states.js";
 
 describe("InMemoryState", () => {
   it("should write and read some state", async () => {
-    const db = new InMemoryStates(tinyChainSpec);
+    const db = InMemoryStates.new(tinyChainSpec);
     const root = Bytes.parseBytes(TEST_STATE_ROOT, HASH_SIZE).asOpaque();
     deepEqual(db.getState(root), null);
 

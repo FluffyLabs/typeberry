@@ -19,11 +19,15 @@ export class Checkpoint implements HostCallHandler {
 
   private readonly gasHostCall: GasHostCall;
 
-  constructor(
+  static new(currentServiceId: ServiceId, partialState: PartialState) {
+    return new Checkpoint(currentServiceId, partialState);
+  }
+
+  private constructor(
     public readonly currentServiceId: ServiceId,
     private readonly partialState: PartialState,
   ) {
-    this.gasHostCall = new GasHostCall(currentServiceId);
+    this.gasHostCall = GasHostCall.new(currentServiceId);
     this.tracedRegisters = this.gasHostCall.tracedRegisters;
   }
 

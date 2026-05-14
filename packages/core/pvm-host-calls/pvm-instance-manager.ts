@@ -17,7 +17,7 @@ export class PvmInstanceManager {
     switch (interpreter) {
       case PvmBackend.BuiltIn:
         instances.push(
-          new Interpreter({
+          Interpreter.new({
             useSbrkGas: false,
           }),
         );

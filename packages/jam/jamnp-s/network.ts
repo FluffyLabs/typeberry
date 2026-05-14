@@ -34,7 +34,7 @@ export async function setup(
     protocols: [`jamnp-s/0/${genesisFirstBytes}`],
   });
 
-  const connections = new Connections(network);
+  const connections = Connections.new(network);
   connections.addPersistentRetry(bootnodes);
 
   const streamManager = new StreamManager();

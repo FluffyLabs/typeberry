@@ -34,7 +34,11 @@ export class KeyValuePair extends WithDebug {
     return new KeyValuePair(key, value);
   }
 
-  constructor(
+  static new(key: Key, value: BytesBlob) {
+    return new KeyValuePair(key, value);
+  }
+
+  private constructor(
     public readonly key: Key,
     public readonly value: BytesBlob,
   ) {
@@ -86,7 +90,15 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
   private readonly boundaryNodes: Map<StreamId, TrieNode[]> = new Map();
   private readonly onResponse: Map<StreamId, (state: StateResponse) => void> = new Map();
 
-  constructor(
+  static new(
+    isServer = false,
+    getBoundaryNodes?: (hash: HeaderHash, startKey: Key, endKey: Key) => TrieNode[],
+    getKeyValuePairs?: (hash: HeaderHash, startKey: Key, endKey: Key) => KeyValuePair[],
+  ) {
+    return new Handler(isServer, getBoundaryNodes, getKeyValuePairs);
+  }
+
+  private constructor(
     private readonly isServer: boolean = false,
     private readonly getBoundaryNodes?: (hash: HeaderHash, startKey: Key, endKey: Key) => TrieNode[],
     private readonly getKeyValuePairs?: (hash: HeaderHash, startKey: Key, endKey: Key) => KeyValuePair[],

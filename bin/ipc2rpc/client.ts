@@ -19,9 +19,9 @@ export function startClient(
   const client = new Socket();
 
   return new Promise((resolve) => {
-    const messageHandler = new JamnpIpcHandler(new IpcSender(client));
-    messageHandler.registerStreamHandlers(new up0.Handler(spec, getHandshake, onAnnouncement, onHandshake));
-    messageHandler.registerStreamHandlers(new ce129.Handler(false));
+    const messageHandler = JamnpIpcHandler.new(IpcSender.new(client));
+    messageHandler.registerStreamHandlers(up0.Handler.new(spec, getHandshake, onAnnouncement, onHandshake));
+    messageHandler.registerStreamHandlers(ce129.Handler.new(false));
 
     client.connect(socketPath, () => {
       logger.log`Connected to IPC server`;

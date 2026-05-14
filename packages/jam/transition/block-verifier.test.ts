@@ -26,7 +26,7 @@ const DEFAULT_TIME_SLOT = tryAsTimeSlot(1);
 
 describe("Block Verifier", async () => {
   const spec = tinyChainSpec;
-  const hasher = new TransitionHasher(await keccak.KeccakHasher.create(), await Blake2b.createHasher());
+  const hasher = TransitionHasher.new(await keccak.KeccakHasher.create(), await Blake2b.createHasher());
 
   const toBlockView = (block: Block): BlockView => {
     const encodedBlock = Encoder.encodeObject(Block.Codec, block, spec);
@@ -55,7 +55,7 @@ describe("Block Verifier", async () => {
     const blockView = toBlockView(block);
     const headerHashOrDefault = headerHash ?? DEFAULT_HEADER_HASH;
     const stateRoot = stateRootHash ?? DEFAULT_STATE_ROOT;
-    db.insertBlock(new WithHash(headerHashOrDefault, blockView));
+    db.insertBlock(WithHash.new(headerHashOrDefault, blockView));
     if (prepareStateRoot) {
       db.setPostStateRoot(headerHashOrDefault, stateRoot);
     }
@@ -93,7 +93,7 @@ describe("Block Verifier", async () => {
   it("should return ParentNotFound error if parent block is not found", async () => {
     const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb, { headerHash: Bytes.fill(HASH_SIZE, 7).asOpaque() });
-    const blockVerifier = new BlockVerifier(hasher, blocksDb);
+    const blockVerifier = BlockVerifier.new(hasher, blocksDb);
     const block = prepareBlock({ parentHash: Bytes.fill(HASH_SIZE, 8).asOpaque() });
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
@@ -111,7 +111,7 @@ describe("Block Verifier", async () => {
     const timeSlot = tryAsTimeSlot(42);
     const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb, { timeSlot });
-    const blockVerifier = new BlockVerifier(hasher, blocksDb);
+    const blockVerifier = BlockVerifier.new(hasher, blocksDb);
     const block = prepareBlock({ timeSlot: tryAsTimeSlot(timeSlot - 2) });
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
@@ -125,7 +125,7 @@ describe("Block Verifier", async () => {
   it("should return InvalidExtrinsic error if current block extrinsic hash is incorrect", async () => {
     const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb);
-    const blockVerifier = new BlockVerifier(hasher, blocksDb);
+    const blockVerifier = BlockVerifier.new(hasher, blocksDb);
     const block = prepareBlock({ correctExtrinsic: false });
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
@@ -146,7 +146,7 @@ describe("Block Verifier", async () => {
       stateRootHash: Bytes.fill(HASH_SIZE, 6).asOpaque(),
       prepareStateRoot: false,
     });
-    const blockVerifier = new BlockVerifier(hasher, blocksDb);
+    const blockVerifier = BlockVerifier.new(hasher, blocksDb);
 
     const block = prepareBlock({
       priorStateRootHash: Bytes.fill(HASH_SIZE, 7).asOpaque(),
@@ -170,7 +170,7 @@ describe("Block Verifier", async () => {
       stateRootHash: Bytes.fill(HASH_SIZE, 6).asOpaque(),
       prepareStateRoot: true,
     });
-    const blockVerifier = new BlockVerifier(hasher, blocksDb);
+    const blockVerifier = BlockVerifier.new(hasher, blocksDb);
 
     const block = prepareBlock({
       priorStateRootHash: Bytes.fill(HASH_SIZE, 7).asOpaque(),
@@ -192,7 +192,7 @@ describe("Block Verifier", async () => {
   it("should return valid header hash if all checks pass", async () => {
     const blocksDb = InMemoryBlocks.new();
     prepareBlocksDb(blocksDb, { prepareStateRoot: true });
-    const blockVerifier = new BlockVerifier(hasher, blocksDb);
+    const blockVerifier = BlockVerifier.new(hasher, blocksDb);
 
     const block = prepareBlock({
       correctExtrinsic: true,

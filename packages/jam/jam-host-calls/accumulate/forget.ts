@@ -21,7 +21,11 @@ export class Forget implements HostCallHandler {
   basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8);
 
-  constructor(
+  static new(currentServiceId: ServiceId, partialState: PartialState) {
+    return new Forget(currentServiceId, partialState);
+  }
+
+  private constructor(
     public readonly currentServiceId: ServiceId,
     private readonly partialState: PartialState,
   ) {}

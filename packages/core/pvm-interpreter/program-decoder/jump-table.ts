@@ -3,12 +3,21 @@ import { check } from "@typeberry/utils";
 export class JumpTable {
   private indices: Uint32Array;
 
-  constructor(itemByteLength: number, bytes: Uint8Array) {
+  /** Create an empty jump table. */
+  static empty() {
+    return new JumpTable(0, new Uint8Array());
+  }
+
+  /** Decode a jump table from a raw bytes buffer. */
+  static fromRaw(itemByteLength: number, bytes: Uint8Array) {
     check`
       ${itemByteLength === 0 || bytes.length % itemByteLength === 0}
       Length of jump table (${bytes.length}) should be a multiple of item lenght (${itemByteLength})!
     `;
+    return new JumpTable(itemByteLength, bytes);
+  }
 
+  private constructor(itemByteLength: number, bytes: Uint8Array) {
     const length = itemByteLength === 0 ? 0 : bytes.length / itemByteLength;
 
     this.indices = new Uint32Array(length);
@@ -40,10 +49,6 @@ export class JumpTable {
 
   getDestination(index: number) {
     return this.indices[index];
-  }
-
-  static empty() {
-    return new JumpTable(0, new Uint8Array());
   }
 
   getSize() {

@@ -33,6 +33,17 @@ export type ImporterOptions = {
   pruneBlocks?: boolean;
 };
 
+/** Construction arguments for {@link Importer}. */
+export type ImporterArgs = {
+  spec: ChainSpec;
+  pvm: PvmBackend;
+  hasher: TransitionHasher;
+  logger: Logger;
+  blocks: BlocksDb;
+  states: StatesDb<SerializedState<LeafDb>>;
+  options?: ImporterOptions;
+};
+
 export class Importer {
   private readonly verifier: BlockVerifier;
   private readonly stf: OnChain;
@@ -43,29 +54,49 @@ export class Importer {
   private currentHash: HeaderHash;
   private readonly metrics: ReturnType<typeof metrics.createMetrics>;
 
-  constructor(
-    spec: ChainSpec,
-    pvm: PvmBackend,
-    private readonly hasher: TransitionHasher,
-    private readonly logger: Logger,
-    private readonly blocks: BlocksDb,
-    private readonly states: StatesDb<SerializedState<LeafDb>>,
-    private readonly options: ImporterOptions = {},
-  ) {
-    this.metrics = metrics.createMetrics();
-    const currentBestHeaderHash = this.blocks.getBestHeaderHash();
-    const state = states.getState(currentBestHeaderHash);
+  private readonly hasher: TransitionHasher;
+  private readonly logger: Logger;
+  private readonly blocks: BlocksDb;
+  private readonly states: StatesDb<SerializedState<LeafDb>>;
+  private readonly options: ImporterOptions;
+
+  /**
+   * Build an {@link Importer} connected to the best state loaded from `states`.
+   *
+   * Throws if the best state cannot be loaded — callers are expected to treat that
+   * as a programmer error (the DB should be initialized before reaching here).
+   */
+  static open(args: ImporterArgs): Importer {
+    const currentBestHeaderHash = args.blocks.getBestHeaderHash();
+    const state = args.states.getState(currentBestHeaderHash);
     if (state === null) {
       throw new Error(`Unable to load best state from header hash: ${currentBestHeaderHash}.`);
     }
+    return new Importer(args, state, currentBestHeaderHash);
+  }
 
-    this.verifier = new BlockVerifier(hasher, blocks);
-    this.stf = new OnChain(spec, state, hasher, { pvm, accumulateSequentially: false }, DbHeaderChain.new(blocks));
+  private constructor(args: ImporterArgs, state: SerializedState<LeafDb>, currentBestHeaderHash: HeaderHash) {
+    this.hasher = args.hasher;
+    this.logger = args.logger;
+    this.blocks = args.blocks;
+    this.states = args.states;
+    this.options = args.options ?? {};
+
+    this.metrics = metrics.createMetrics();
+
+    this.verifier = BlockVerifier.new(args.hasher, args.blocks);
+    this.stf = OnChain.assemble({
+      chainSpec: args.spec,
+      state,
+      hasher: args.hasher,
+      options: { pvm: args.pvm, accumulateSequentially: false },
+      headerChain: DbHeaderChain.new(args.blocks),
+    });
     this.state = state;
     this.currentHash = currentBestHeaderHash;
     this.prepareForNextEpoch();
 
-    logger.info`😎 Best time slot: ${state.timeslot} (header hash: ${currentBestHeaderHash})`;
+    args.logger.info`😎 Best time slot: ${state.timeslot} (header hash: ${currentBestHeaderHash})`;
   }
 
   /** Do some extra work for preparation for the next epoch. */
@@ -175,7 +206,7 @@ export class Importer {
 
     // insert new state and the block to DB.
     const timerDb = measure("import:db");
-    const writeBlocks = this.blocks.insertBlock(new WithHash(headerHash, block));
+    const writeBlocks = this.blocks.insertBlock(WithHash.new(headerHash, block));
 
     // Computation of the state root may happen asynchronously,
     // but we still need to wait for it before next block can be imported
@@ -202,7 +233,7 @@ export class Importer {
       }
     }
 
-    return Result.ok(new WithHash(headerHash, block.header.view()));
+    return Result.ok(WithHash.new(headerHash, block.header.view()));
   }
 
   getBestStateRootHash() {

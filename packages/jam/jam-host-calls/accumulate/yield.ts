@@ -26,7 +26,11 @@ export class Yield implements HostCallHandler {
   basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG);
 
-  constructor(
+  static new(currentServiceId: ServiceId, partialState: PartialState) {
+    return new Yield(currentServiceId, partialState);
+  }
+
+  private constructor(
     public readonly currentServiceId: ServiceId,
     private readonly partialState: PartialState,
   ) {}

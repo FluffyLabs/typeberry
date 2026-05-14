@@ -57,7 +57,11 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
   private readonly db: HashDictionary<HeaderHash, InMemoryState> = HashDictionary.new();
   private readonly blake2b: Promise<Blake2b>;
 
-  constructor(private readonly spec: ChainSpec) {
+  static new(spec: ChainSpec) {
+    return new InMemoryStates(spec);
+  }
+
+  private constructor(private readonly spec: ChainSpec) {
     this.blake2b = Blake2b.createHasher();
   }
 

@@ -12,7 +12,7 @@ import { Bytes } from "@typeberry/bytes";
 import { codec, Encoder } from "@typeberry/codec";
 import { ArrayView, HashSet, SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { PvmExecutor, ReturnStatus } from "@typeberry/executor";
+import { EcalliTraceLogger, PvmExecutor, ReturnStatus } from "@typeberry/executor";
 import { type Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import type { PendingTransfer } from "@typeberry/jam-host-calls";
 import {
@@ -80,13 +80,21 @@ const ARGS_CODEC = codec.object({
 });
 
 export class Accumulate {
+  public readonly options: AccumulateOptions;
+
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly blake2b: Blake2b,
     public readonly state: AccumulateState,
-    public readonly options: AccumulateOptions,
+    options: AccumulateOptions,
   ) {
-    if (options.accumulateSequentially === true) {
+    const ecalliTraceEnabled = EcalliTraceLogger.isTraceEnabled();
+    const accumulateSequentially = options.accumulateSequentially === true || ecalliTraceEnabled;
+    this.options = { ...options, accumulateSequentially };
+
+    if (ecalliTraceEnabled && options.accumulateSequentially !== true) {
+      logger.warn`⚠️ ecalli trace logging is enabled: forcing sequential accumulation to keep the trace output ordered.`;
+    } else if (accumulateSequentially) {
       logger.warn`⚠️ Parallel accumulation is disabled. Running in sequential mode.`;
     }
   }
@@ -155,14 +163,14 @@ export class Accumulate {
     }
 
     const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec, this.blake2b);
-    const partialState = new AccumulateExternalities(
-      this.chainSpec,
-      this.blake2b,
-      updatedState,
-      serviceId,
-      nextServiceId,
-      slot,
-    );
+    const partialState = AccumulateExternalities.forService({
+      chainSpec: this.chainSpec,
+      blake2b: this.blake2b,
+      updatedState: updatedState,
+      currentServiceId: serviceId,
+      nextNewServiceIdCandidate: nextServiceId,
+      currentTimeslot: slot,
+    });
 
     const fetchExternalities = new AccumulateFetchExternalities(entropy, transfers, operands, this.chainSpec);
 
@@ -234,7 +242,7 @@ export class Accumulate {
   ) {
     logger.log`Accumulating service ${serviceId}, transfers: ${transfers.length} operands: ${operands.length} at slot: ${slot}`;
 
-    const updatedState = new PartiallyUpdatedState(this.state, inputStateUpdate);
+    const updatedState = PartiallyUpdatedState.new(this.state, inputStateUpdate);
 
     const serviceInfo = updatedState.getServiceInfo(serviceId);
     if (serviceInfo !== null) {
@@ -498,7 +506,7 @@ export class Accumulate {
     }
 
     // δ†
-    const partialStateUpdate = new PartiallyUpdatedState(this.state, AccumulationStateUpdate.new(servicesUpdate));
+    const partialStateUpdate = PartiallyUpdatedState.new(this.state, AccumulationStateUpdate.new(servicesUpdate));
     // update last accumulation
     for (const serviceId of accumulatedServices) {
       // https://graypaper.fluffylabs.dev/#/7e6ff6a/181003185103?v=0.6.7

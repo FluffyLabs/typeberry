@@ -2,7 +2,11 @@ import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decode
 import type { Registers } from "../registers.js";
 
 export class BooleanOps {
-  constructor(private regs: Registers) {}
+  static new(regs: Registers) {
+    return new BooleanOps(regs);
+  }
+
+  private constructor(private regs: Registers) {}
 
   setLessThanSignedImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
     this.regs.setU64(resultIndex, this.regs.getI64(firstIndex) < immediate.getI64() ? 1n : 0n);

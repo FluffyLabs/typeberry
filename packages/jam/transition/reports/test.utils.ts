@@ -326,7 +326,7 @@ export const initialServices = ({ withDummyCodeHash = false } = {}): Map<Service
   const id = tryAsServiceId(129);
   m.set(
     id,
-    new InMemoryService(tryAsServiceId(129), {
+    InMemoryService.new(tryAsServiceId(129), {
       preimages: HashDictionary.new(),
       storage: new Map(),
       lookupHistory: HashDictionary.new(),

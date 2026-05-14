@@ -43,7 +43,11 @@ export class JamnpIpcHandler implements IpcHandler {
   /** termination promise + resolvers */
   private readonly onEnd: OnEnd;
 
-  constructor(private readonly sender: IpcSender) {
+  static new(sender: IpcSender) {
+    return new JamnpIpcHandler(sender);
+  }
+
+  private constructor(private readonly sender: IpcSender) {
     let resolve = () => {};
     let reject = (_error: Error) => {};
     const listen = new Promise<void>((res, rej) => {
@@ -73,7 +77,7 @@ export class JamnpIpcHandler implements IpcHandler {
     // find first stream id with given kind
     for (const [ipcStreamId, handler] of this.streams.entries()) {
       if (handler.kind === streamKind) {
-        work(handler as THandler, new EnvelopeSender(ipcStreamId, this.sender));
+        work(handler as THandler, EnvelopeSender.new(ipcStreamId, this.sender));
         return;
       }
     }
@@ -105,7 +109,7 @@ export class JamnpIpcHandler implements IpcHandler {
     this.streams.set(ipcStreamId, handler);
     this.pendingStreams.set(ipcStreamId, true);
 
-    const sender = new EnvelopeSender(ipcStreamId, this.sender);
+    const sender = EnvelopeSender.new(ipcStreamId, this.sender);
     sender.open(NewStream.create({ streamByte: kind }));
 
     work(handler as THandler, sender);
@@ -119,7 +123,7 @@ export class JamnpIpcHandler implements IpcHandler {
     logger.log`[${ipcStreamId}] incoming message: ${envelope.type} ${envelope.data}`;
     // check if this is a already known stream id
     const streamHandler = this.streams.get(ipcStreamId);
-    const streamSender = new EnvelopeSender(ipcStreamId, this.sender);
+    const streamSender = EnvelopeSender.new(ipcStreamId, this.sender);
     // we don't know that stream yet, so it has to be a new one
     if (streamHandler === undefined) {
       // closing or message of unknown stream - ignore.
@@ -208,7 +212,11 @@ export class JamnpIpcHandler implements IpcHandler {
 class EnvelopeSender implements StreamMessageSender {
   public readonly streamId: StreamId;
 
-  constructor(
+  static new(ipcStreamId: IpcStreamId, sender: IpcSender) {
+    return new EnvelopeSender(ipcStreamId, sender);
+  }
+
+  private constructor(
     private readonly ipcStreamId: IpcStreamId,
     private readonly sender: IpcSender,
   ) {

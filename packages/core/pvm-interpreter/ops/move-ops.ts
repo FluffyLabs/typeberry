@@ -2,7 +2,11 @@ import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decode
 import type { Registers } from "../registers.js";
 
 export class MoveOps {
-  constructor(private regs: Registers) {}
+  static new(regs: Registers) {
+    return new MoveOps(regs);
+  }
+
+  private constructor(private regs: Registers) {}
 
   cmovIfZeroImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
     if (this.regs.getU64(firstIndex) === 0n) {

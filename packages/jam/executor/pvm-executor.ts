@@ -57,6 +57,10 @@ export type AccumulateHostCallExternalities = {
   serviceExternalities: general.AccountsInfo & general.AccountsLookup & general.AccountsWrite & general.AccountsRead;
 };
 
+export type IsAuthorizedHostCallExternalities = {
+  fetchExternalities: general.IIsAuthorizedFetch;
+};
+
 type OnTransferHostCallExternalities = {
   partialState: general.AccountsInfo & general.AccountsLookup & general.AccountsWrite & general.AccountsRead;
   fetchExternalities: general.IFetchExternalities;
@@ -83,11 +87,11 @@ export class PvmExecutor {
     private entrypoint: ProgramCounter,
     pvmInstanceManager: PvmInstanceManager,
   ) {
-    this.hostCalls = new HostCalls({
+    this.hostCalls = HostCalls.new({
       missing: new general.Missing(),
       handlers: hostCallHandlers,
     });
-    this.pvm = new HostCallsExecutor(pvmInstanceManager, this.hostCalls);
+    this.pvm = HostCallsExecutor.new(pvmInstanceManager, this.hostCalls);
   }
 
   private static async prepareBackend(pvm: PvmBackend) {
@@ -96,15 +100,15 @@ export class PvmExecutor {
 
   /** Prepare refine host call handlers */
   private static prepareRefineHostCalls(serviceId: ServiceId, externalities: RefineHostCallExternalities) {
-    const refineHandlers: HostCallHandler[] = REFINE_HOST_CALL_CLASSES.map(
-      (HandlerClass) => new HandlerClass(externalities.refine),
+    const refineHandlers: HostCallHandler[] = REFINE_HOST_CALL_CLASSES.map((HandlerClass) =>
+      HandlerClass.new(externalities.refine),
     );
 
     /** https://graypaper.fluffylabs.dev/#/ab2cdbd/2fa7022fa702?v=0.7.2 */
     const generalHandlers: HostCallHandler[] = [
-      new general.LogHostCall(serviceId),
-      new general.GasHostCall(serviceId),
-      new general.Fetch(serviceId, externalities.fetchExternalities),
+      general.LogHostCall.new(serviceId),
+      general.GasHostCall.new(serviceId),
+      general.Fetch.new(serviceId, externalities.fetchExternalities),
     ];
 
     return refineHandlers.concat(generalHandlers);
@@ -116,34 +120,45 @@ export class PvmExecutor {
     externalities: AccumulateHostCallExternalities,
     chainSpec: ChainSpec,
   ) {
-    const accumulateHandlers: HostCallHandler[] = ACCUMULATE_HOST_CALL_CLASSES.map(
-      (HandlerClass) => new HandlerClass(serviceId, externalities.partialState, chainSpec),
+    const accumulateHandlers: HostCallHandler[] = ACCUMULATE_HOST_CALL_CLASSES.map((HandlerClass) =>
+      HandlerClass.new(serviceId, externalities.partialState, chainSpec),
     );
 
     /** https://graypaper.fluffylabs.dev/#/ab2cdbd/30d00130d001?v=0.7.2 */
     const generalHandlers: HostCallHandler[] = [
-      new general.LogHostCall(serviceId),
-      new general.GasHostCall(serviceId),
-      new general.Read(serviceId, externalities.serviceExternalities),
-      new general.Write(serviceId, externalities.serviceExternalities),
-      new general.Fetch(serviceId, externalities.fetchExternalities),
-      new general.Lookup(serviceId, externalities.serviceExternalities),
-      new general.Info(serviceId, externalities.serviceExternalities),
+      general.LogHostCall.new(serviceId),
+      general.GasHostCall.new(serviceId),
+      general.Read.new(serviceId, externalities.serviceExternalities),
+      general.Write.new(serviceId, externalities.serviceExternalities),
+      general.Fetch.new(serviceId, externalities.fetchExternalities),
+      general.Lookup.new(serviceId, externalities.serviceExternalities),
+      general.Info.new(serviceId, externalities.serviceExternalities),
     ];
 
     return accumulateHandlers.concat(generalHandlers);
   }
 
+  /** Prepare is-authorized host call handlers */
+  private static prepareIsAuthorizedHostCalls(serviceId: ServiceId, externalities: IsAuthorizedHostCallExternalities) {
+    const generalHandlers: HostCallHandler[] = [
+      general.LogHostCall.new(serviceId),
+      general.GasHostCall.new(serviceId),
+      general.Fetch.new(serviceId, externalities.fetchExternalities),
+    ];
+
+    return generalHandlers;
+  }
+
   /** Prepare on transfer host call handlers */
   private static prepareOnTransferHostCalls(serviceId: ServiceId, externalities: OnTransferHostCallExternalities) {
     const generalHandlers: HostCallHandler[] = [
-      new general.LogHostCall(serviceId),
-      new general.GasHostCall(serviceId),
-      new general.Fetch(serviceId, externalities.fetchExternalities),
-      new general.Read(serviceId, externalities.partialState),
-      new general.Write(serviceId, externalities.partialState),
-      new general.Lookup(serviceId, externalities.partialState),
-      new general.Info(serviceId, externalities.partialState),
+      general.LogHostCall.new(serviceId),
+      general.GasHostCall.new(serviceId),
+      general.Fetch.new(serviceId, externalities.fetchExternalities),
+      general.Read.new(serviceId, externalities.partialState),
+      general.Write.new(serviceId, externalities.partialState),
+      general.Lookup.new(serviceId, externalities.partialState),
+      general.Info.new(serviceId, externalities.partialState),
     ];
 
     return generalHandlers;
@@ -173,6 +188,18 @@ export class PvmExecutor {
     const hostCallHandlers = PvmExecutor.prepareRefineHostCalls(serviceId, externalities);
     const instances = await PvmExecutor.prepareBackend(pvm);
     return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.REFINE, instances);
+  }
+
+  /** A utility function that can be used to prepare is-authorized executor */
+  static async createIsAuthorizedExecutor(
+    serviceId: ServiceId,
+    serviceCode: BytesBlob,
+    externalities: IsAuthorizedHostCallExternalities,
+    pvm: PvmBackend,
+  ) {
+    const hostCallHandlers = PvmExecutor.prepareIsAuthorizedHostCalls(serviceId, externalities);
+    const instances = await PvmExecutor.prepareBackend(pvm);
+    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.IS_AUTHORIZED, instances);
   }
 
   /** A utility function that can be used to prepare accumulate executor */

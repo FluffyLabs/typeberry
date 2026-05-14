@@ -22,8 +22,8 @@ describe("ThreadPort", () => {
   });
 
   it("should successfuly send messages", async () => {
-    const tx = new ThreadPort(spec, channel.port1);
-    const rx = new ThreadPort(spec, channel.port2);
+    const tx = ThreadPort.new(spec, channel.port1);
+    const rx = ThreadPort.new(spec, channel.port2);
 
     let received: Envelope<U32> | null = null;
     // attach listener

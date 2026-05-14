@@ -39,7 +39,7 @@ describe("InMemoryDatabase", () => {
     const db = InMemoryBlocks.new();
     const block = testBlockView();
     const headerHash = blake2b.hashBytes(block.header.view().encoded()).asOpaque();
-    db.insertBlock(new WithHash(headerHash, block));
+    db.insertBlock(WithHash.new(headerHash, block));
 
     assert.deepStrictEqual(db.getHeader(headerHash)?.materialize(), block.header.materialize());
     assert.deepStrictEqual(db.getExtrinsic(headerHash)?.materialize(), block.extrinsic.materialize());

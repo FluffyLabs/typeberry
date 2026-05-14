@@ -145,7 +145,7 @@ export type Args =
 
 export class ArgsDecoder {
   private nibblesDecoder = new NibblesDecoder();
-  private offsetDecoder = new ImmediateDecoder();
+  private offsetDecoder = ImmediateDecoder.new();
   private code: Uint8Array = new Uint8Array();
   private mask: Mask = Mask.empty();
 

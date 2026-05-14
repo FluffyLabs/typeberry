@@ -160,7 +160,7 @@ export class StreamManager {
 
     stream.addOnError(onError);
 
-    const quicStream = new QuicStreamSender(streamId, stream, onError);
+    const quicStream = QuicStreamSender.new(streamId, stream, onError);
     this.streams.set(streamId, {
       handler,
       streamSender: quicStream,
@@ -231,7 +231,11 @@ class QuicStreamSender implements StreamMessageSender {
   private bufferedData: { data: BytesBlob; addPrefix: boolean }[] = [];
   private currentWriterPromise: Promise<void> | null = null;
 
-  constructor(
+  static new(streamId: StreamId, internal: Stream, onError: StreamErrorCallback) {
+    return new QuicStreamSender(streamId, internal, onError);
+  }
+
+  private constructor(
     public readonly streamId: StreamId,
     private readonly internal: Stream,
     private readonly onError: StreamErrorCallback,

@@ -8,7 +8,7 @@ import { MathOps } from "./math-ops.js";
 
 describe("MathOps", () => {
   function prepareData(firstValue: bigint, secondValue: bigint) {
-    const regs = new Registers();
+    const regs = Registers.empty();
     const firstValRegIndex = 0;
     const secondValRegIndex = 1;
     const resultRegisterIndex = 12;
@@ -16,10 +16,10 @@ describe("MathOps", () => {
     regs.setU64(firstValRegIndex, firstValue);
     regs.setU64(secondValRegIndex, secondValue);
 
-    const immediate = new ImmediateDecoder();
+    const immediate = ImmediateDecoder.new();
     immediate.setBytes(bigintToUint8ArrayLE(firstValue));
 
-    const mathOps = new MathOps(regs);
+    const mathOps = MathOps.new(regs);
 
     return { regs, mathOps, immediate, firstValRegIndex, secondValRegIndex, resultRegisterIndex };
   }

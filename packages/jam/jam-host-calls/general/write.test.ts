@@ -12,7 +12,6 @@ import { PAGE_SIZE } from "@typeberry/pvm-interpreter/spi-decoder/memory-conts.j
 import { ServiceAccountInfo } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
 import { TestAccounts } from "../externalities/test-accounts.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { HostCallResult } from "./results.js";
 import { Write } from "./write.js";
 
@@ -53,7 +52,7 @@ function prepareRegsAndMemory(
 ) {
   const keyAddress = 2 ** 18;
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(KEY_START_REG, tryAsU64(keyAddress));
   registers.set(KEY_LEN_REG, tryAsU64(key.length));
   registers.set(DEST_START_REG, tryAsU64(memStart));
@@ -66,7 +65,7 @@ function prepareRegsAndMemory(
   if (!skipValue && dataInMemory.length > 0) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), dataInMemory.raw);
   }
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
     memory,
@@ -77,7 +76,7 @@ describe("HostCalls: Write", () => {
   it("should write data to account state", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
-    const write = new Write(serviceId, accounts);
+    const write = Write.new(serviceId, accounts);
     const key = BytesBlob.blobFromString("imma key");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
     accounts.storage.set(BytesBlob.blobFromString("old data"), serviceId, asOpaqueType(key));
@@ -95,7 +94,7 @@ describe("HostCalls: Write", () => {
   it("should write data to account state when low balance but with gratisStorage", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId, { balance: 100n, gratisStorage: 150_000n });
-    const write = new Write(serviceId, accounts);
+    const write = Write.new(serviceId, accounts);
     const key = BytesBlob.blobFromString("imma key");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
     accounts.storage.set(BytesBlob.blobFromString("old data"), serviceId, asOpaqueType(key));
@@ -113,7 +112,7 @@ describe("HostCalls: Write", () => {
   it("should remove data from account state", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
-    const write = new Write(serviceId, accounts);
+    const write = Write.new(serviceId, accounts);
     const key = BytesBlob.blobFromString("xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromNumbers([]));
     accounts.storage.set(BytesBlob.blobFromString("hello world!"), serviceId, asOpaqueType(key));
@@ -131,7 +130,7 @@ describe("HostCalls: Write", () => {
   it("should fail if there is no memory for key", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
-    const write = new Write(serviceId, accounts);
+    const write = Write.new(serviceId, accounts);
     const key = BytesBlob.blobFromString("xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"), {
       skipKey: true,
@@ -148,7 +147,7 @@ describe("HostCalls: Write", () => {
   it("should fail if there is no memory for result", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
-    const write = new Write(serviceId, accounts);
+    const write = Write.new(serviceId, accounts);
     const key = BytesBlob.blobFromString("xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"), {
       skipValue: true,
@@ -165,7 +164,7 @@ describe("HostCalls: Write", () => {
   it("should fail if the key is not fully readable", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
-    const write = new Write(serviceId, accounts);
+    const write = Write.new(serviceId, accounts);
     const key = BytesBlob.blobFromString("xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
     registers.set(KEY_LEN_REG, tryAsU64(PAGE_SIZE + 1));
@@ -181,7 +180,7 @@ describe("HostCalls: Write", () => {
   it("should fail if the value is not fully readable", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
-    const write = new Write(serviceId, accounts);
+    const write = Write.new(serviceId, accounts);
     const key = BytesBlob.blobFromString("xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
     registers.set(DEST_LEN_REG, tryAsU64(PAGE_SIZE + 1));
@@ -197,7 +196,7 @@ describe("HostCalls: Write", () => {
   it("should handle storage full when low balance in the account", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId, { balance: 100n });
-    const write = new Write(serviceId, accounts);
+    const write = Write.new(serviceId, accounts);
     const key = BytesBlob.blobFromString("imma key");
     const { registers, memory } = prepareRegsAndMemory(
       key,

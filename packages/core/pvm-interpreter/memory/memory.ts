@@ -36,7 +36,16 @@ export class Memory implements IMemory {
     );
   }
 
-  constructor(
+  static new(
+    sbrkIndex = tryAsSbrkIndex(RESERVED_MEMORY_RANGE.end),
+    virtualSbrkIndex = tryAsSbrkIndex(RESERVED_MEMORY_RANGE.end),
+    endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX),
+    memory = new Map<PageNumber, MemoryPage>(),
+  ) {
+    return new Memory(sbrkIndex, virtualSbrkIndex, endHeapIndex, memory);
+  }
+
+  private constructor(
     private sbrkIndex = tryAsSbrkIndex(RESERVED_MEMORY_RANGE.end),
     private virtualSbrkIndex = tryAsSbrkIndex(RESERVED_MEMORY_RANGE.end),
     private endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX),
@@ -194,7 +203,7 @@ export class Memory implements IMemory {
     const rangeToAllocate = PageRange.fromStartAndLength(firstPageNumber, pagesToAllocate);
 
     for (const pageNumber of rangeToAllocate) {
-      const page = new WriteablePage(pageNumber);
+      const page = WriteablePage.new(pageNumber);
       this.memory.set(pageNumber, page);
     }
 

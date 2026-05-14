@@ -4,7 +4,11 @@ import { MAX_SHIFT_U32, MAX_SHIFT_U64 } from "./math-consts.js";
 import { unsignedRightShiftBigInt } from "./math-utils.js";
 
 export class ShiftOps {
-  constructor(private regs: Registers) {}
+  static new(regs: Registers) {
+    return new ShiftOps(regs);
+  }
+
+  private constructor(private regs: Registers) {}
 
   shiftLogicalLeftU32(firstIndex: number, secondIndex: number, resultIndex: number) {
     this.regs.setU32(

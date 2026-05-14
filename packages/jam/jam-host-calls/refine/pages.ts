@@ -31,7 +31,11 @@ export class Pages implements HostCallHandler {
   currentServiceId = CURRENT_SERVICE_ID;
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, 9, 10);
 
-  constructor(private readonly refine: RefineExternalities) {}
+  static new(refine: RefineExternalities) {
+    return new Pages(refine);
+  }
+
+  private constructor(private readonly refine: RefineExternalities) {}
 
   async execute(_gas: IGasCounter, regs: HostCallRegisters): Promise<PvmExecution | undefined> {
     // `n`: machine index

@@ -129,13 +129,32 @@ export class OnChain {
 
   private isReadyForNextEpoch: Promise<boolean> = Promise.resolve(false);
 
-  constructor(
-    public readonly chainSpec: ChainSpec,
-    public readonly state: State & WithStateView,
-    public readonly hasher: TransitionHasher,
+  public readonly chainSpec: ChainSpec;
+  public readonly state: State & WithStateView;
+  public readonly hasher: TransitionHasher;
+
+  /** Wire up a full on-chain STF from its dependencies. */
+  static assemble(args: {
+    chainSpec: ChainSpec;
+    state: State & WithStateView;
+    hasher: TransitionHasher;
+    options: AccumulateOptions;
+    headerChain: HeaderChain;
+  }) {
+    return new OnChain(args.chainSpec, args.state, args.hasher, args.options, args.headerChain);
+  }
+
+  private constructor(
+    chainSpec: ChainSpec,
+    state: State & WithStateView,
+    hasher: TransitionHasher,
     options: AccumulateOptions,
     headerChain: HeaderChain,
   ) {
+    this.chainSpec = chainSpec;
+    this.state = state;
+    this.hasher = hasher;
+
     const bandersnatch = BandernsatchWasm.new();
     this.statistics = new Statistics(chainSpec, state);
 

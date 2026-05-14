@@ -92,7 +92,7 @@ export function spawnWorker<To, From, Params>(
   });
 
   // now return communication channel with that worker
-  const txPort = new ThreadPort(config.chainSpec, channel.port1);
+  const txPort = ThreadPort.new(config.chainSpec, channel.port1);
   return {
     api: Channel.tx(protocol, txPort),
     worker,
@@ -146,7 +146,7 @@ export async function initWorker<To, From, Params>(
         logger.trace`--> (${protocol.name}) received configuration.`;
         isResolved = true;
         const config = await LmdbWorkerConfig.fromTransferable(paramsDecoder, msg.config);
-        const rxPort = new ThreadPort(config.chainSpec, msg.parentPort);
+        const rxPort = ThreadPort.new(config.chainSpec, msg.parentPort);
         const comms = Channel.rx(protocol, rxPort);
 
         resolve({

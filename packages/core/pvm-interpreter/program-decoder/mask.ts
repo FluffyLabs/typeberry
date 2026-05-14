@@ -25,7 +25,11 @@ export class Mask {
    */
   private lookupTableForward: Uint8Array;
 
-  constructor(mask: BitVec) {
+  static new(mask: BitVec) {
+    return new Mask(mask);
+  }
+
+  private constructor(mask: BitVec) {
     this.lookupTableForward = this.buildLookupTableForward(mask);
   }
 

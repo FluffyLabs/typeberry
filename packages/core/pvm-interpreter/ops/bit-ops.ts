@@ -3,7 +3,11 @@ import type { Registers } from "../registers.js";
 import { clz64, countBits32, countBits64, ctz32, ctz64 } from "./bit-utils.js";
 
 export class BitOps {
-  constructor(private regs: Registers) {}
+  static new(regs: Registers) {
+    return new BitOps(regs);
+  }
+
+  private constructor(private regs: Registers) {}
 
   or(firstIndex: number, secondIndex: number, resultIndex: number) {
     this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) | this.regs.getU64(secondIndex));

@@ -1,12 +1,4 @@
-import {
-  Block,
-  type BlockView,
-  emptyBlock,
-  Header,
-  type HeaderHash,
-  reencodeAsView,
-  type TimeSlot,
-} from "@typeberry/block";
+import { Block, emptyBlock, Header, type HeaderHash, reencodeAsView, type TimeSlot } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
@@ -95,10 +87,10 @@ export async function initializeDatabase(
   // When initGenesisFromAncestry is set, use ancestry[0][0] as the initial block hash (for fuzz-target mode)
   const initialBlockHash =
     (options.initGenesisFromAncestry ?? false) && ancestry.length > 0 ? ancestry[0][0] : genesisHeaderHash;
-  await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(initialBlockHash, blockView));
+  await blocks.insertBlock(WithHash.new(initialBlockHash, blockView));
   // insert fake blocks for ancestry data
   for (const [hash, slot] of ancestry) {
-    await blocks.insertBlock(new WithHash(hash, reencodeAsView(Block.Codec, emptyBlock(slot), spec)));
+    await blocks.insertBlock(WithHash.new(hash, reencodeAsView(Block.Codec, emptyBlock(slot), spec)));
   }
   await states.insertInitialState(initialBlockHash, genesisStateSerialized);
   await blocks.setPostStateRoot(initialBlockHash, genesisStateRootHash);

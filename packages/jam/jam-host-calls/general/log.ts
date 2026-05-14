@@ -31,7 +31,11 @@ export class LogHostCall implements HostCallHandler {
   // intentionally not tracing anything here, since the message will be printed anyway.
   tracedRegisters = traceRegisters();
 
-  constructor(public readonly currentServiceId: ServiceId) {}
+  static new(currentServiceId: ServiceId) {
+    return new LogHostCall(currentServiceId);
+  }
+
+  private constructor(public readonly currentServiceId: ServiceId) {}
 
   async execute(_gas: IGasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined> {
     const lvl = regs.get(7);

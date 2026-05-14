@@ -13,7 +13,11 @@ export type PeerAddress = {
 
 /** Bootnode class represents a single contact point in the network */
 export class Bootnode implements PeerAddress {
-  constructor(
+  static new(id: PeerId, ip: string, port: number) {
+    return new Bootnode(id, ip, port);
+  }
+
+  private constructor(
     /** Network address derived from the node's cryptographic public key (always 53-character?) */
     readonly id: PeerId,
     /** IP address (either IPv4 or IPv6) of the bootnode */

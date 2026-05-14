@@ -15,7 +15,11 @@ import { StatisticsData, type StatisticsDataView } from "./statistics.js";
 import { type ValidatorData, type ValidatorDataView, validatorsDataCodec } from "./validator-data.js";
 
 export class InMemoryStateView implements StateView {
-  constructor(
+  static new(chainSpec: ChainSpec, state: State) {
+    return new InMemoryStateView(chainSpec, state);
+  }
+
+  private constructor(
     private readonly chainSpec: ChainSpec,
     private readonly state: State,
   ) {}

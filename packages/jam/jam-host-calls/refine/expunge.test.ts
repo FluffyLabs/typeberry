@@ -15,18 +15,17 @@ import {
 } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Expunge } from "./expunge.js";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 
 function prepareRegsAndMemory(machineId: MachineId) {
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(7, machineId);
 
   const builder = new MemoryBuilder();
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
 
   return {
     registers,
@@ -36,7 +35,7 @@ function prepareRegsAndMemory(machineId: MachineId) {
 
 function prepareTest(result: Result<ProgramCounter, NoMachineError>) {
   const refine = new TestRefineExt();
-  const expunge = new Expunge(refine);
+  const expunge = Expunge.new(refine);
   expunge.currentServiceId = tryAsServiceId(10_000);
   const machineId = tryAsMachineId(10_000);
   const { registers, memory } = prepareRegsAndMemory(machineId);

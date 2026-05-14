@@ -196,7 +196,7 @@ export class Quic {
     }
 
     function newPeer(conn: QUICConnection, peerInfo: PeerInfo, side: "in" | "out") {
-      const peer = new QuicPeer(conn, peerInfo);
+      const peer = QuicPeer.new(conn, peerInfo);
       const connectionStartTime = now();
       addEventListener(peer.conn, events.EventQUICConnectionClose, (ev) => {
         const duration = now() - connectionStartTime;
@@ -208,6 +208,6 @@ export class Quic {
       return peer;
     }
 
-    return new QuicNetwork(socket, server, dial, peers, { host, port });
+    return QuicNetwork.new(socket, server, dial, peers, { host, port });
   }
 }

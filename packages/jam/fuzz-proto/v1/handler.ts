@@ -48,7 +48,11 @@ export interface FuzzMessageHandler {
 export class FuzzTarget implements IpcHandler {
   private sessionFeatures = 0;
 
-  constructor(
+  static new(msgHandler: FuzzMessageHandler, sender: IpcSender, spec: ChainSpec) {
+    return new FuzzTarget(msgHandler, sender, spec);
+  }
+
+  private constructor(
     public readonly msgHandler: FuzzMessageHandler,
     public readonly sender: IpcSender,
     public readonly spec: ChainSpec,

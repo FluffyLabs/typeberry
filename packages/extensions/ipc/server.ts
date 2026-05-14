@@ -10,7 +10,11 @@ import { encodeMessageLength, handleMessageFragmentation } from "@typeberry/netw
 
 /** Sending data abstraction on a socket. */
 export class IpcSender {
-  constructor(private readonly socket: Socket) {}
+  static new(socket: Socket) {
+    return new IpcSender(socket);
+  }
+
+  private constructor(private readonly socket: Socket) {}
 
   /** Write given data to the outgoing socket. */
   send(data: BytesBlob): void {
@@ -34,7 +38,7 @@ export function startIpcServer(name: string, newMessageHandler: (socket: IpcSend
   // Create the IPC server
   const server = createServer((socket: Socket) => {
     logger.log`Client connected`;
-    const messageHandler = newMessageHandler(new IpcSender(socket));
+    const messageHandler = newMessageHandler(IpcSender.new(socket));
 
     // Handle incoming data from the client
     socket.on(

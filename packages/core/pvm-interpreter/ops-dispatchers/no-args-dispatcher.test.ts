@@ -9,7 +9,7 @@ import { NoArgsDispatcher } from "./no-args-dispatcher.js";
 
 describe("NoArgsDispatcher", () => {
   const instructionResult = new InstructionResult();
-  const noArgsOps = new NoArgsOps(instructionResult);
+  const noArgsOps = NoArgsOps.new(instructionResult);
 
   const mockFn = mock.fn();
 

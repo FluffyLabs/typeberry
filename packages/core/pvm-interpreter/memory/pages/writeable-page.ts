@@ -23,7 +23,11 @@ export class WriteablePage extends MemoryPage {
   private buffer: ArrayBuffer;
   private view: Uint8Array;
 
-  constructor(pageNumber: PageNumber, initialData?: Uint8Array) {
+  static new(pageNumber: PageNumber, initialData?: Uint8Array) {
+    return new WriteablePage(pageNumber, initialData);
+  }
+
+  private constructor(pageNumber: PageNumber, initialData?: Uint8Array) {
     super(pageNumber);
     const dataLength = initialData?.length ?? 0;
     const initialPageLength = Math.min(PAGE_SIZE, Math.max(dataLength, MIN_ALLOCATION_LENGTH));

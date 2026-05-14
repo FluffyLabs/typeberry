@@ -13,7 +13,7 @@ import { MIN_PUBLIC_SERVICE_INDEX } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { AuthorizerHash } from "@typeberry/block/refine-context.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import type { FixedSizeArray } from "@typeberry/collections";
+import { asKnownSize, type FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type Blake2b, HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import {
@@ -70,6 +70,17 @@ const BASE_STORAGE_BYTES = tryAsU64(34);
 
 const logger = Logger.new(import.meta.filename, "externalities");
 
+/** Construction arguments for {@link AccumulateExternalities}. */
+export type AccumulateExternalitiesArgs = {
+  chainSpec: ChainSpec;
+  blake2b: Blake2b;
+  updatedState: PartiallyUpdatedState;
+  /** `x_s` */
+  currentServiceId: ServiceId;
+  nextNewServiceIdCandidate: ServiceId;
+  currentTimeslot: TimeSlot;
+};
+
 export class AccumulateExternalities
   implements PartialState, general.AccountsWrite, general.AccountsRead, general.AccountsInfo, general.AccountsLookup
 {
@@ -77,23 +88,35 @@ export class AccumulateExternalities
   /** `x_i`: next service id we are going to create. */
   private nextNewServiceId: ServiceId;
 
-  constructor(
-    private readonly chainSpec: ChainSpec,
-    private readonly blake2b: Blake2b,
-    private readonly updatedState: PartiallyUpdatedState,
-    /** `x_s` */
-    private readonly currentServiceId: ServiceId,
-    nextNewServiceIdCandidate: ServiceId,
-    private readonly currentTimeslot: TimeSlot,
-  ) {
-    this.checkpointedState = AccumulationStateUpdate.copyFrom(updatedState.stateUpdate);
-    this.nextNewServiceId = this.getNextAvailableServiceId(nextNewServiceIdCandidate);
-
-    const service = this.updatedState.getServiceInfo(this.currentServiceId);
+  /**
+   * Construct externalities for accumulating a specific service.
+   *
+   * Validates that the current service exists in `updatedState`.
+   */
+  static forService(args: AccumulateExternalitiesArgs) {
+    const service = args.updatedState.getServiceInfo(args.currentServiceId);
     if (service === null) {
-      throw new Error(`Invalid state initialization. Service info missing for ${this.currentServiceId}.`);
+      throw new Error(`Invalid state initialization. Service info missing for ${args.currentServiceId}.`);
     }
+    return new AccumulateExternalities(args);
   }
+
+  private constructor(args: AccumulateExternalitiesArgs) {
+    this.chainSpec = args.chainSpec;
+    this.blake2b = args.blake2b;
+    this.updatedState = args.updatedState;
+    this.currentServiceId = args.currentServiceId;
+    this.currentTimeslot = args.currentTimeslot;
+    this.checkpointedState = AccumulationStateUpdate.copyFrom(args.updatedState.stateUpdate);
+    this.nextNewServiceId = this.getNextAvailableServiceId(args.nextNewServiceIdCandidate);
+  }
+
+  private readonly chainSpec: ChainSpec;
+  private readonly blake2b: Blake2b;
+  private readonly updatedState: PartiallyUpdatedState;
+  /** `x_s` */
+  private readonly currentServiceId: ServiceId;
+  private readonly currentTimeslot: TimeSlot;
 
   /** Return the underlying state update and checkpointed state. */
   getStateUpdates(): [AccumulationStateUpdate, AccumulationStateUpdate] {
@@ -232,7 +255,7 @@ export class AccumulateExternalities
       this.updatedState.updatePreimage(
         this.currentServiceId,
         UpdatePreimage.updateOrAdd({
-          lookupHistory: new LookupHistoryItem(hash, clampedLength, tryAsLookupHistorySlots([])),
+          lookupHistory: LookupHistoryItem.new(hash, clampedLength, tryAsLookupHistorySlots([])),
         }),
       );
     } else {
@@ -240,7 +263,7 @@ export class AccumulateExternalities
       this.updatedState.updatePreimage(
         this.currentServiceId,
         UpdatePreimage.updateOrAdd({
-          lookupHistory: new LookupHistoryItem(
+          lookupHistory: LookupHistoryItem.new(
             hash,
             clampedLength,
             tryAsLookupHistorySlots([...existingPreimage.slots, this.currentTimeslot]),
@@ -314,7 +337,7 @@ export class AccumulateExternalities
       this.updatedState.updatePreimage(
         serviceId,
         UpdatePreimage.updateOrAdd({
-          lookupHistory: new LookupHistoryItem(status.hash, status.length, tryAsLookupHistorySlots([s.data[0], t])),
+          lookupHistory: LookupHistoryItem.new(status.hash, status.length, tryAsLookupHistorySlots([s.data[0], t])),
         }),
       );
       return Result.ok(OK);
@@ -327,7 +350,7 @@ export class AccumulateExternalities
         this.updatedState.updatePreimage(
           serviceId,
           UpdatePreimage.updateOrAdd({
-            lookupHistory: new LookupHistoryItem(status.hash, status.length, tryAsLookupHistorySlots([s.data[2], t])),
+            lookupHistory: LookupHistoryItem.new(status.hash, status.length, tryAsLookupHistorySlots([s.data[2], t])),
           }),
         );
 
@@ -453,7 +476,7 @@ export class AccumulateExternalities
       parentService: this.currentServiceId,
     });
 
-    const newLookupItem = new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([]));
+    const newLookupItem = LookupHistoryItem.new(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([]));
 
     // `s`: https://graypaper.fluffylabs.dev/#/ab2cdbd/361003361003?v=0.7.2
     const updatedCurrentAccount = ServiceAccountInfo.create({
@@ -539,22 +562,24 @@ export class AccumulateExternalities
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>,
-    assigners: ServiceId | null,
+    newAssigner: ServiceId | null,
   ): Result<OK, UpdatePrivilegesError> {
     /** https://graypaper.fluffylabs.dev/#/7e6ff6a/36a40136a401?v=0.6.7 */
 
     // NOTE `coreIndex` is already verified in the HC, so this is infallible.
-    const currentAssigners = this.updatedState.getPrivilegedServices().assigners[coreIndex];
+    const privilegedServices = this.updatedState.getPrivilegedServices();
+    const currentAssigners = privilegedServices.assigners;
+    const assigner = currentAssigners[coreIndex];
 
-    if (currentAssigners !== this.currentServiceId) {
-      logger.trace`Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${currentAssigners}) and cannot update authorization queue.`;
+    if (assigner !== this.currentServiceId) {
+      logger.trace`Current service id (${this.currentServiceId}) is not an auth manager of core ${coreIndex} (expected: ${assigner}) and cannot update authorization queue.`;
       return Result.error(
         UpdatePrivilegesError.UnprivilegedService,
-        () => `Service ${this.currentServiceId} not assigner for core ${coreIndex} (expected: ${currentAssigners})`,
+        () => `Service ${this.currentServiceId} not assigner for core ${coreIndex} (expected: ${assigner})`,
       );
     }
 
-    if (assigners === null) {
+    if (newAssigner === null) {
       logger.trace`The new auth manager is not a valid service id.`;
       return Result.error(
         UpdatePrivilegesError.InvalidServiceId,
@@ -562,7 +587,17 @@ export class AccumulateExternalities
       );
     }
 
+    // update the authorization queue
     this.updatedState.stateUpdate.authorizationQueues.set(coreIndex, authQueue);
+    // move permissions to the new assigner
+    const assigners = currentAssigners.slice();
+    assigners[coreIndex] = newAssigner;
+    this.updatedState.stateUpdate.privilegedServices = PrivilegedServices.create({
+      ...privilegedServices,
+      // since coreindex is validated, we do not alter the size,
+      // hence it's safe to convert back
+      assigners: asKnownSize(assigners),
+    });
     return Result.ok(OK);
   }
 

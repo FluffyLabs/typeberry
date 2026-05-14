@@ -22,7 +22,11 @@ export class SubscriptionManager {
   private pollInterval: NodeJS.Timeout;
   private nextId: number;
 
-  constructor(private server: RpcServer) {
+  static new(server: RpcServer) {
+    return new SubscriptionManager(server);
+  }
+
+  private constructor(private server: RpcServer) {
     this.subscriptions = new Map();
     this.lastResults = new Map();
     this.pollInterval = setInterval(() => this.pollSubscriptions(), POLL_INTERVAL_MS);

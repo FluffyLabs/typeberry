@@ -12,12 +12,12 @@ import { TwoRegsDispatcher } from "./two-regs-dispatcher.js";
 
 describe("TwoRegsDispatcher", () => {
   const instructionResult = new InstructionResult();
-  const regs = new Registers();
-  const memory = new Memory();
-  const memoryOps = new MemoryOps(regs, memory, instructionResult);
-  const moveOps = new MoveOps(regs);
-  const bitOps = new BitOps(regs);
-  const bitRotationOps = new BitRotationOps(regs);
+  const regs = Registers.empty();
+  const memory = Memory.new();
+  const memoryOps = MemoryOps.new(regs, memory, instructionResult);
+  const moveOps = MoveOps.new(regs);
+  const bitOps = BitOps.new(regs);
+  const bitRotationOps = BitRotationOps.new(regs);
   const mockFn = mock.fn();
 
   function mockAllMethods(obj: object) {

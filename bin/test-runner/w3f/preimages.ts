@@ -188,11 +188,11 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry, blake2b: Bla
     const slots = tryAsLookupHistorySlots(item.value.map((slot) => tryAsTimeSlot(slot)));
 
     const arr = lookupHistory.get(item.key.hash) ?? [];
-    arr.push(new LookupHistoryItem(item.key.hash, tryAsU32(item.key.length), slots));
+    arr.push(LookupHistoryItem.new(item.key.hash, tryAsU32(item.key.length), slots));
     lookupHistory.set(item.key.hash, arr);
   }
 
-  return new InMemoryService(tryAsServiceId(entry.id), {
+  return InMemoryService.new(tryAsServiceId(entry.id), {
     info: ServiceAccountInfo.create({
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
       balance: tryAsU64(0),

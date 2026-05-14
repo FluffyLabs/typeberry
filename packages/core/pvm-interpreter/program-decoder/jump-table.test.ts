@@ -7,7 +7,7 @@ describe("JumpTable", () => {
   it("should return true when an index exist in jump table", () => {
     const jumpTableItemLength = 4;
     const bytes = new Uint8Array([0x78, 0x56, 0x34, 0x12]);
-    const jumpTable = new JumpTable(jumpTableItemLength, bytes);
+    const jumpTable = JumpTable.fromRaw(jumpTableItemLength, bytes);
     const indexToCheck = 0;
 
     const result = jumpTable.hasIndex(indexToCheck);
@@ -18,7 +18,7 @@ describe("JumpTable", () => {
   it("should return false when an index not exist in jump table", () => {
     const jumpTableItemLength = 4;
     const bytes = new Uint8Array([0x78, 0x56, 0x34, 0x12]);
-    const jumpTable = new JumpTable(jumpTableItemLength, bytes);
+    const jumpTable = JumpTable.fromRaw(jumpTableItemLength, bytes);
     const indexToCheck = 5;
 
     const result = jumpTable.hasIndex(indexToCheck);
@@ -30,7 +30,7 @@ describe("JumpTable", () => {
     const jumpTableItemLength = 4;
     const expectedValue = 0x12_34_56_78;
     const bytes = new Uint8Array([0xff, 0xff, 0xff, 0xff, 0x78, 0x56, 0x34, 0x12]);
-    const jumpTable = new JumpTable(jumpTableItemLength, bytes);
+    const jumpTable = JumpTable.fromRaw(jumpTableItemLength, bytes);
     const indexToCheck = 1;
 
     const result = jumpTable.getDestination(indexToCheck);
@@ -42,7 +42,7 @@ describe("JumpTable", () => {
     const jumpTableItemLength = 8;
     const expectedValue = 0xff_ff_ff_ff;
     const bytes = new Uint8Array([0xff, 0xff, 0xff, 0xff, 0x78, 0x56, 0x34, 0x12]);
-    const jumpTable = new JumpTable(jumpTableItemLength, bytes);
+    const jumpTable = JumpTable.fromRaw(jumpTableItemLength, bytes);
     const indexToCheck = 0;
 
     const result = jumpTable.getDestination(indexToCheck);
@@ -54,7 +54,7 @@ describe("JumpTable", () => {
     const jumpTableItemLength = 8;
     const expectedValue = 0x00_00_00_00_12_34_56_78;
     const bytes = new Uint8Array([0x78, 0x56, 0x34, 0x12, 0, 0, 0, 0]);
-    const jumpTable = new JumpTable(jumpTableItemLength, bytes);
+    const jumpTable = JumpTable.fromRaw(jumpTableItemLength, bytes);
     const indexToCheck = 0;
 
     const result = jumpTable.getDestination(indexToCheck);
@@ -67,7 +67,7 @@ describe("JumpTable", () => {
     const expectedValue = 2 ** 32 - 1;
     const bytes = new Uint8Array(255);
     bytes.fill(1);
-    const jumpTable = new JumpTable(jumpTableItemLength, bytes);
+    const jumpTable = JumpTable.fromRaw(jumpTableItemLength, bytes);
     const indexToCheck = 0;
 
     const result = jumpTable.getDestination(indexToCheck);

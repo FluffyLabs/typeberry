@@ -6,25 +6,46 @@ import {
   tryAsSegmentIndex,
 } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
+import { SortedArray } from "@typeberry/collections";
+import type { PvmBackend } from "@typeberry/config";
 import type { Blake2bHash } from "@typeberry/hash";
 import {
   type MachineId,
   type MachineResult,
+  type MachineStatus,
   type MemoryOperation,
-  type NoMachineError,
+  NoMachineError,
   type PagesError,
   type PeekPokeError,
   type ProgramCounter,
   type RefineExternalities,
   SegmentExportError,
+  tryAsMachineId,
+  tryAsProgramCounter,
   type ZeroVoidError,
 } from "@typeberry/jam-host-calls";
-import type { U64 } from "@typeberry/numbers";
-import type { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
-import type { BigGas } from "@typeberry/pvm-interface";
-import type { ProgramDecoderError } from "@typeberry/pvm-interpreter";
+import { tryAsU64, type U64 } from "@typeberry/numbers";
+import { Ordering } from "@typeberry/ordering";
+import { type HostCallMemory, HostCallRegisters, PvmInstanceManager } from "@typeberry/pvm-host-calls";
+import { type BigGas, type IPvmInterpreter, Status, tryAsBigGas, tryAsGas } from "@typeberry/pvm-interface";
+import { ProgramDecoder, type ProgramDecoderError } from "@typeberry/pvm-interpreter";
 import type { State } from "@typeberry/state";
 import { type OK, Result } from "@typeberry/utils";
+
+type MachineEntry = [MachineId, IPvmInterpreter];
+
+/** Used when searching by MachineId only — the comparator ignores this field. */
+const NULL_INTERPRETER = undefined as unknown as IPvmInterpreter;
+
+const machineComparator = (a: MachineEntry, b: MachineEntry) => {
+  if (a[0] < b[0]) {
+    return Ordering.Less;
+  }
+  if (a[0] > b[0]) {
+    return Ordering.Greater;
+  }
+  return Ordering.Equal;
+};
 
 /**
  * Parameters required to create a RefineExternalitiesImpl.
@@ -36,9 +57,16 @@ export type RefineExternalitiesParams = {
   lookupState: State;
   /** Export offset -- sum of exports from prior work items in this package. */
   exportOffset: number;
+  /**
+   * PVM backend to use for creating inner PVM instances.
+   * NIT: Could accept PVMInstanceManager
+   */
+  pvmBackend: PvmBackend;
 };
 
 export class RefineExternalitiesImpl implements RefineExternalities {
+  /** Inner PVM instances sorted by MachineId. */
+  private machines: SortedArray<MachineEntry> = SortedArray.fromSortedArray(machineComparator);
   /** Service being refined (used as default for historicalLookup). */
   private readonly currentServiceId: ServiceId;
   /** State at the lookup anchor for preimage lookups. */
@@ -47,6 +75,8 @@ export class RefineExternalitiesImpl implements RefineExternalities {
   private readonly exportedSegments: Segment[] = [];
   /** Offset for segment indexing (sum of exports from prior items). */
   private readonly exportOffset: number;
+  /** PVM backend for creating inner machines. */
+  private readonly pvmBackend: PvmBackend;
 
   static create(params: RefineExternalitiesParams) {
     return new RefineExternalitiesImpl(params);
@@ -56,14 +86,22 @@ export class RefineExternalitiesImpl implements RefineExternalities {
     this.currentServiceId = params.currentServiceId;
     this.lookupState = params.lookupState;
     this.exportOffset = params.exportOffset;
+    this.pvmBackend = params.pvmBackend;
   }
 
   getExportedSegments(): readonly Segment[] {
     return this.exportedSegments;
   }
 
-  machineExpunge(_machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>> {
-    throw new Error("Method not implemented.");
+  machineExpunge(machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>> {
+    // We just care about machineIndex
+    const entry = this.machines.findExact([machineIndex, NULL_INTERPRETER]);
+    if (entry === undefined) {
+      return Promise.resolve(Result.error(NoMachineError, () => `Machine not found (id: ${machineIndex})`));
+    }
+    const pc = tryAsProgramCounter(entry[1].getPC());
+    this.machines.removeOne(entry);
+    return Promise.resolve(Result.ok(pc));
   }
 
   machinePages(
@@ -103,16 +141,73 @@ export class RefineExternalitiesImpl implements RefineExternalities {
     throw new Error("Method not implemented.");
   }
 
-  machineInit(_code: BytesBlob, _programCounter: ProgramCounter): Promise<Result<MachineId, ProgramDecoderError>> {
-    throw new Error("Method not implemented.");
+  async machineInit(code: BytesBlob, programCounter: ProgramCounter): Promise<Result<MachineId, ProgramDecoderError>> {
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/346400346400?v=0.7.2
+    const deblobResult = ProgramDecoder.deblob(code.raw);
+    if (deblobResult.isError) {
+      return Result.error(deblobResult.error, deblobResult.details);
+    }
+
+    const manager = await PvmInstanceManager.new(this.pvmBackend);
+    const innerPvm = await manager.getInstance();
+
+    innerPvm.resetGeneric(code.raw, Number(programCounter), tryAsGas(0));
+
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/348c00348c00?v=0.7.2
+    // Binary search for the minimal free MachineId
+    const arr = this.machines.array;
+    let low = 0;
+    let high = arr.length;
+    while (low < high) {
+      const mid = (low + high) >> 1;
+      if (arr[mid][0] > BigInt(mid)) {
+        high = mid;
+      } else {
+        low = mid + 1;
+      }
+    }
+
+    const machineId = tryAsMachineId(low);
+    // https://graypaper.fluffylabs.dev/#/ab2cdbd/340501340b01?v=0.7.2
+    this.machines.insert([machineId, innerPvm]);
+    return Result.ok(machineId);
   }
 
   machineInvoke(
-    _machineIndex: MachineId,
-    _gas: BigGas,
-    _registers: HostCallRegisters,
+    machineIndex: MachineId,
+    gas: BigGas,
+    registers: HostCallRegisters,
   ): Promise<Result<MachineResult, NoMachineError>> {
-    throw new Error("Method not implemented.");
+    const entry = this.machines.findExact([machineIndex, NULL_INTERPRETER]);
+    if (entry === undefined) {
+      return Promise.resolve(Result.error(NoMachineError, () => `Machine not found (id: ${machineIndex})`));
+    }
+
+    const innerPvm = entry[1];
+
+    // Prepare inner PVM
+    innerPvm.registers.setAllEncoded(registers.getEncoded());
+    innerPvm.gas.set(gas);
+
+    // Execute program
+    innerPvm.runProgram();
+
+    // Status
+    const status = innerPvm.getStatus();
+    const exitParam = innerPvm.getExitParam() ?? 0;
+    const remainingGas = tryAsBigGas(innerPvm.gas.get());
+    const outRegisters = HostCallRegisters.fromRaw(new Uint8Array(innerPvm.registers.getAllEncoded()));
+
+    let machineStatus: MachineStatus;
+    if (status === Status.HOST) {
+      machineStatus = { status, hostCallIndex: tryAsU64(exitParam) };
+    } else if (status === Status.FAULT) {
+      machineStatus = { status, address: tryAsU64(exitParam) };
+    } else {
+      machineStatus = { status };
+    }
+
+    return Promise.resolve(Result.ok({ result: machineStatus, gas: remainingGas, registers: outRegisters }));
   }
 
   exportSegment(segment: Segment): Result<SegmentIndex, SegmentExportError> {

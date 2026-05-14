@@ -17,19 +17,18 @@ export class HostCalls {
   private readonly hostCalls = new Map<HostCallIndex, HostCallHandler>();
   private readonly missing;
 
-  constructor({
-    missing,
-    handlers = [],
-  }: {
-    missing: HostCallHandler;
-    handlers?: HostCallHandler[];
-  }) {
-    this.missing = missing;
-
+  /** Build a `HostCalls` registry, verifying that no two handlers share an index. */
+  static new({ missing, handlers = [] }: { missing: HostCallHandler; handlers?: HostCallHandler[] }) {
+    const hostCalls = new HostCalls(missing);
     for (const handler of handlers) {
-      check`${this.hostCalls.get(handler.index) === undefined} Overwriting host call handler at index ${handler.index}`;
-      this.hostCalls.set(handler.index, handler);
+      check`${hostCalls.hostCalls.get(handler.index) === undefined} Overwriting host call handler at index ${handler.index}`;
+      hostCalls.hostCalls.set(handler.index, handler);
     }
+    return hostCalls;
+  }
+
+  private constructor(missing: HostCallHandler) {
+    this.missing = missing;
   }
 
   /** Get a host call by index. */

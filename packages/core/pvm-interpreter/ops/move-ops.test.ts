@@ -8,7 +8,7 @@ import { MoveOps } from "./move-ops.js";
 
 describe("MoveOps", () => {
   function prepareData(firstValue: bigint, secondValue: bigint) {
-    const regs = new Registers();
+    const regs = Registers.empty();
     const firstRegisterIndex = 0;
     const secondRegisterIndex = 1;
     const resultRegisterIndex = 12;
@@ -16,10 +16,10 @@ describe("MoveOps", () => {
     regs.setU64(firstRegisterIndex, firstValue);
     regs.setU64(secondRegisterIndex, secondValue);
 
-    const immediate = new ImmediateDecoder();
+    const immediate = ImmediateDecoder.new();
     immediate.setBytes(bigintToUint8ArrayLE(secondValue));
 
-    const moveOps = new MoveOps(regs);
+    const moveOps = MoveOps.new(regs);
 
     return { regs, moveOps, immediate, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex };
   }

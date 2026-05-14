@@ -53,7 +53,7 @@ export class MemoryBuilder {
     for (let i = 0; i < noOfPages; i++) {
       const pageNumber = pages[i];
       const dataChunk = data.subarray(i * PAGE_SIZE, (i + 1) * PAGE_SIZE);
-      const page = new ReadablePage(pageNumber, dataChunk);
+      const page = ReadablePage.new(pageNumber, dataChunk);
       this.initialMemory.set(pageNumber, page);
     }
 
@@ -87,7 +87,7 @@ export class MemoryBuilder {
     for (let i = 0; i < noOfPages; i++) {
       const pageNumber = pages[i];
       const dataChunk = data.subarray(i * PAGE_SIZE, (i + 1) * PAGE_SIZE);
-      const page = new WriteablePage(pageNumber, dataChunk);
+      const page = WriteablePage.new(pageNumber, dataChunk);
       this.initialMemory.set(pageNumber, page);
     }
 

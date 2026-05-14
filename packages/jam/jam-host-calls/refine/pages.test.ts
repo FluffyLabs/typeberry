@@ -14,21 +14,20 @@ import {
 } from "../externalities/refine-externalities.js";
 import { TestRefineExt } from "../externalities/refine-externalities.test.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Pages } from "./pages.js";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 
 function prepareRegsAndMemory(machineId: MachineId, pageStart: U64, pageCount: U64, requestType: U64) {
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(7, machineId);
   registers.set(8, pageStart);
   registers.set(9, pageCount);
   registers.set(10, requestType);
 
   const builder = new MemoryBuilder();
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
 
   return {
     registers,
@@ -44,7 +43,7 @@ function prepareTest(
   requestType: number,
 ) {
   const refine = new TestRefineExt();
-  const pages = new Pages(refine);
+  const pages = Pages.new(refine);
   pages.currentServiceId = tryAsServiceId(10_000);
   const machineIndex = tryAsMachineId(machineId);
   const start = tryAsU64(pageStart);

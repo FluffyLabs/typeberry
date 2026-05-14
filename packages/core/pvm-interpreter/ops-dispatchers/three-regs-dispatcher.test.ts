@@ -9,13 +9,13 @@ import { Registers } from "../registers.js";
 import { ThreeRegsDispatcher } from "./three-regs-dispatcher.js";
 
 test("ThreeRegsDispatcher", async (t) => {
-  const regs = new Registers();
-  const mathOps = new MathOps(regs);
-  const bitOps = new BitOps(regs);
-  const shiftOps = new ShiftOps(regs);
-  const booleanOps = new BooleanOps(regs);
-  const moveOps = new MoveOps(regs);
-  const bitRotationOps = new BitRotationOps(regs);
+  const regs = Registers.empty();
+  const mathOps = MathOps.new(regs);
+  const bitOps = BitOps.new(regs);
+  const shiftOps = ShiftOps.new(regs);
+  const booleanOps = BooleanOps.new(regs);
+  const moveOps = MoveOps.new(regs);
+  const bitRotationOps = BitRotationOps.new(regs);
 
   const mockFn = t.mock.fn();
 

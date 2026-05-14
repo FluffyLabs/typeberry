@@ -53,8 +53,8 @@ describe("LMDB States database", () => {
   const spec = tinyChainSpec;
 
   it("should import state and read state", async () => {
-    const root = new LmdbRoot(tmpDir);
-    const states = new LmdbStates(spec, blake2b, root);
+    const root = LmdbRoot.new(tmpDir);
+    const states = LmdbStates.new(spec, blake2b, root);
 
     try {
       const emptyState = InMemoryState.empty(spec);
@@ -77,8 +77,8 @@ describe("LMDB States database", () => {
   });
 
   it("should update the state", async () => {
-    const root = new LmdbRoot(tmpDir);
-    const states = new LmdbStates(spec, blake2b, root);
+    const root = LmdbRoot.new(tmpDir);
+    const states = LmdbStates.new(spec, blake2b, root);
 
     try {
       const state = InMemoryState.empty(spec);
@@ -87,7 +87,7 @@ describe("LMDB States database", () => {
       assert.ok(newState !== null);
       const headerHash2: HeaderHash = Bytes.fill(HASH_SIZE, 2).asOpaque();
 
-      const lookupHistory = new LookupHistoryItem(
+      const lookupHistory = LookupHistoryItem.new(
         Bytes.fill(HASH_SIZE, 0xff).asOpaque(),
         tryAsU32(5),
         tryAsLookupHistorySlots([]),
@@ -187,8 +187,8 @@ describe("LMDB States database", () => {
   });
 
   it("should import more complex state", async () => {
-    const root = new LmdbRoot(tmpDir);
-    const states = new LmdbStates(spec, blake2b, root);
+    const root = LmdbRoot.new(tmpDir);
+    const states = LmdbStates.new(spec, blake2b, root);
 
     try {
       const initialState = testState();
@@ -219,8 +219,8 @@ describe("LMDB States database", () => {
   });
 
   it("should update more complex entries", async () => {
-    const root = new LmdbRoot(tmpDir);
-    const states = new LmdbStates(spec, blake2b, root);
+    const root = LmdbRoot.new(tmpDir);
+    const states = LmdbStates.new(spec, blake2b, root);
 
     try {
       const state = testState();

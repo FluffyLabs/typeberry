@@ -4,7 +4,11 @@ import { addEventListener } from "./quic-utils.js";
 
 /** `QUICStream` adapter for our `Stream` API. */
 export class QuicStream implements Stream {
-  constructor(public readonly stream: QUICStream) {}
+  static new(stream: QUICStream) {
+    return new QuicStream(stream);
+  }
+
+  private constructor(public readonly stream: QUICStream) {}
 
   get streamId() {
     return this.stream.streamId;

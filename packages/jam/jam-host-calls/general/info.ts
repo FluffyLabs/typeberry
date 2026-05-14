@@ -48,7 +48,11 @@ export class Info implements HostCallHandler {
   basicGasCost = tryAsSmallGas(10);
   tracedRegisters = traceRegisters(IN_OUT_REG, 8, OFFSET_REG, LEN_REG);
 
-  constructor(
+  static new(currentServiceId: ServiceId, account: AccountsInfo) {
+    return new Info(currentServiceId, account);
+  }
+
+  private constructor(
     public readonly currentServiceId: ServiceId,
     private readonly account: AccountsInfo,
   ) {}

@@ -14,7 +14,6 @@ import { Result } from "@typeberry/utils";
 import { RequestPreimageError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../general/results.js";
-import { emptyRegistersBuffer } from "../utils.js";
 import { Solicit } from "./solicit.js";
 
 const gas = gasCounter(tryAsGas(0));
@@ -28,7 +27,7 @@ function prepareRegsAndMemory(
   { skipPreimageHash = false }: { skipPreimageHash?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new HostCallRegisters(emptyRegistersBuffer());
+  const registers = HostCallRegisters.empty();
   registers.set(HASH_START_REG, tryAsU64(memStart));
   registers.set(LENGTH_REG, preimageLength);
 
@@ -37,7 +36,7 @@ function prepareRegsAndMemory(
   if (!skipPreimageHash) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), preimageHash.raw);
   }
-  const memory = new HostCallMemory(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
+  const memory = HostCallMemory.new(builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0)));
   return {
     registers,
     memory,
@@ -48,7 +47,7 @@ describe("HostCalls: Solicit", () => {
   it("should request a preimage hash", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const solicit = new Solicit(currentServiceId, accumulate);
+    const solicit = Solicit.new(currentServiceId, accumulate);
     const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU64(4_096));
 
     // when
@@ -62,7 +61,7 @@ describe("HostCalls: Solicit", () => {
   it("should fail if hash not available", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const solicit = new Solicit(currentServiceId, accumulate);
+    const solicit = Solicit.new(currentServiceId, accumulate);
     const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU64(4_096), {
       skipPreimageHash: true,
     });
@@ -78,7 +77,7 @@ describe("HostCalls: Solicit", () => {
   it("should fail if already requested", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const solicit = new Solicit(currentServiceId, accumulate);
+    const solicit = Solicit.new(currentServiceId, accumulate);
 
     accumulate.requestPreimageResponse = Result.error(
       RequestPreimageError.AlreadyRequested,
@@ -97,7 +96,7 @@ describe("HostCalls: Solicit", () => {
   it("should fail if already available", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const solicit = new Solicit(currentServiceId, accumulate);
+    const solicit = Solicit.new(currentServiceId, accumulate);
 
     accumulate.requestPreimageResponse = Result.error(
       RequestPreimageError.AlreadyAvailable,
@@ -116,7 +115,7 @@ describe("HostCalls: Solicit", () => {
   it("should fail if balance too low", async () => {
     const accumulate = new PartialStateMock();
     const currentServiceId = tryAsServiceId(10_000);
-    const solicit = new Solicit(currentServiceId, accumulate);
+    const solicit = Solicit.new(currentServiceId, accumulate);
 
     accumulate.requestPreimageResponse = Result.error(
       RequestPreimageError.InsufficientFunds,

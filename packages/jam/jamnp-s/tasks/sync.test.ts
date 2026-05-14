@@ -50,7 +50,7 @@ describe("SyncTask", () => {
   async function init(name: string, ourBlocks: WithHash<HeaderHash, Block>[] = []) {
     const network = new MockNetwork(name);
     const streamManager = new StreamManager();
-    const connections = new Connections(network);
+    const connections = Connections.new(network);
     const blocksDb = await setupTestDatabase(ourBlocks);
     const receivedBlocks: Block[][] = [];
     const onNewBlocks = (blocks: BlockView[]) => {
@@ -210,7 +210,7 @@ describe("SyncTask", () => {
     }
 
     // Send broadcast
-    self.syncTask.broadcastHeader(new WithHash(newBlock.hash, toHeaderView(newBlock.data.header)));
+    self.syncTask.broadcastHeader(WithHash.new(newBlock.hash, toHeaderView(newBlock.data.header)));
     await tick();
 
     for (const p of peers) {
@@ -261,7 +261,7 @@ function createTestBlock(
   const block = Block.create({ ...baseBlock, header });
   const view = toBlockView(block);
   const headerHash = blake2b.hashBytes(view.header.encoded());
-  return new WithHash(headerHash.asOpaque<HeaderHash>(), block);
+  return WithHash.new(headerHash.asOpaque<HeaderHash>(), block);
 }
 
 async function setupTestDatabase(inBlocks: WithHash<HeaderHash, Block>[] = []): Promise<InMemoryBlocks> {
@@ -279,7 +279,7 @@ async function setupTestDatabase(inBlocks: WithHash<HeaderHash, Block>[] = []): 
     const block = blocks[i];
     const blockView = toBlockView(block.data);
 
-    await db.insertBlock(new WithHash(block.hash, blockView));
+    await db.insertBlock(WithHash.new(block.hash, blockView));
   }
 
   // Set the last block as best

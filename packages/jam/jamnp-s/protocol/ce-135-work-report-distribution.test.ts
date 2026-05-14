@@ -77,13 +77,13 @@ describe("CE 135: Work Report Distribution", () => {
     const handlers = testClientServer();
 
     await new Promise((resolve) => {
-      const serverHandler = new ServerHandler(tinyChainSpec, (workReport) => {
+      const serverHandler = ServerHandler.new(tinyChainSpec, (workReport) => {
         assert.deepStrictEqual(workReport, MOCK_GUARANTEED_WORK_REPORT);
         resolve(undefined);
       });
 
       handlers.server.registerHandlers(serverHandler);
-      handlers.client.registerHandlers(new ClientHandler(tinyChainSpec));
+      handlers.client.registerHandlers(ClientHandler.new(tinyChainSpec));
 
       handlers.client.withNewStream(STREAM_KIND, (handler: ClientHandler, sender) => {
         handler.sendWorkReport(sender, MOCK_GUARANTEED_WORK_REPORT);

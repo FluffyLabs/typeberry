@@ -14,17 +14,17 @@ import { DynamicJumpOps } from "./dynamic-jump-ops.js";
 
 describe("DynamicJumpOps", () => {
   function prepareData(firstValue: bigint, secondValue: bigint) {
-    const regs = new Registers();
-    const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
+    const regs = Registers.empty();
+    const jumpTable = JumpTable.fromRaw(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
     const code = new Uint8Array([Instruction.TRAP, Instruction.TRAP, Instruction.TRAP, Instruction.ADD_32, 5, 6]);
-    const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1111]), code.length));
+    const mask = Mask.new(BitVec.fromBlob(new Uint8Array([0b0000_1111]), code.length));
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);
-    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
+    const dynamicJumpOps = DynamicJumpOps.new(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
     regs.setU64(registerIndex, firstValue);
-    const immediate = new ImmediateDecoder();
+    const immediate = ImmediateDecoder.new();
     immediate.setBytes(bigintToUint8ArrayLE(secondValue));
 
     return {
