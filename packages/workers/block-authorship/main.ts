@@ -105,6 +105,14 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
   const initialState = states.getState(initialHash);
 
   logger.info`Block authorship validator keys: ${keys.map(({ bandersnatchPublic }, index) => `\n ${index}: ${bandersnatchPublic.toString()}`)}`;
+
+  // Per-epoch cache for Tickets mode: index corresponds to position in sealingKeySeries.tickets.
+  // null entry means none of our keys match that slot.
+  // Rebuilt once per epoch via buildTicketAuthorshipCache().
+  // Declared here (before the eager startup build below) so its TDZ doesn't fire
+  // when `buildTicketAuthorshipCache` runs during initialisation.
+  let ticketAuthorshipCache: Array<SealData | null> | null = null;
+
   if (initialState !== null) {
     const isEpochStart = startTimeSlot % chainSpec.epochLength === 0;
     const initialKeys = await getSealingKeySeries(isEpochStart, startTimeSlot, initialState);
@@ -132,11 +140,6 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
     }
     return tryAsValidatorIndex(index);
   }
-
-  // Per-epoch cache for Tickets mode: index corresponds to position in sealingKeySeries.tickets.
-  // null entry means none of our keys match that slot.
-  // Rebuilt once per epoch via buildTicketAuthorshipCache().
-  let ticketAuthorshipCache: Array<SealData | null> | null = null;
 
   /**
    * Precomputes which slots we are the author of for the current epoch (Tickets mode).
@@ -422,15 +425,24 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
       continue;
     }
 
-    if (isNewEpoch) {
-      logEpochBlockCreation(epoch, selingKeySeriesResult.ok);
-      // Build authorship cache for Tickets mode once per epoch.
-      // entropy[2] here is the epoch-E entropy (pre-transition state), same value
-      // that will be at entropy[3] after the transition block is applied.
-      await buildTicketAuthorshipCache(selingKeySeriesResult.ok, state.entropy[2]);
+    // On a new epoch, `state.entropy[2]` is the epoch-E entropy (pre-transition);
+    // mid-epoch, it has already shifted to `entropy[3]`.
+    const entropy = isNewEpoch ? state.entropy[2] : state.entropy[3];
+
+    // Rebuild the authorship cache on each epoch boundary, and also catch the case
+    // where the startup prebuild was skipped (e.g. initialState was null or the
+    // initial sealing-key transition errored) so we don't silently miss Tickets-mode
+    // slots until the next epoch boundary.
+    const needsCacheRebuild =
+      isNewEpoch ||
+      (selingKeySeriesResult.ok.kind === SafroleSealingKeysKind.Tickets && ticketAuthorshipCache === null);
+    if (needsCacheRebuild) {
+      if (isNewEpoch) {
+        logEpochBlockCreation(epoch, selingKeySeriesResult.ok);
+      }
+      await buildTicketAuthorshipCache(selingKeySeriesResult.ok, entropy);
     }
 
-    const entropy = isNewEpoch ? state.entropy[2] : state.entropy[3];
     const sealData = getSealData(selingKeySeriesResult.ok, keys, timeSlot, entropy);
 
     if (sealData !== null && currentValidatorData !== null) {
