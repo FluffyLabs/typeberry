@@ -8,8 +8,9 @@ import {
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
-import type { TicketAttempt } from "@typeberry/block/tickets.js";
+import type { SignedTicket } from "@typeberry/block/tickets.js";
 import { BytesBlob } from "@typeberry/bytes";
+import { HashDictionary } from "@typeberry/collections/hash-dictionary.js";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import type { NetworkingComms } from "@typeberry/comms-authorship-network";
 import { type BandersnatchKey, type Ed25519Key, initWasm } from "@typeberry/crypto";
@@ -23,10 +24,11 @@ import { Blake2b, keccak } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { tryAsU64 } from "@typeberry/numbers";
 import { Safrole } from "@typeberry/safrole";
+import bandersnatchVrf from "@typeberry/safrole/bandersnatch-vrf.js";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import { JAM_FALLBACK_SEAL, JAM_TICKET_SEAL } from "@typeberry/safrole/constants.js";
 import { type SafroleSealingKeys, SafroleSealingKeysKind, type State, type ValidatorData } from "@typeberry/state";
-import { asOpaqueType, assertNever, Result } from "@typeberry/utils";
+import { asOpaqueType, Result } from "@typeberry/utils";
 import type { WorkerConfig } from "@typeberry/workers-api";
 import { type BlockSealInput, Generator } from "./generator.js";
 import type { BlockAuthorshipConfig, GeneratorInternal } from "./protocol.js";
@@ -48,6 +50,12 @@ type ValidatorPrivateKeys = {
 type ValidatorPublicKeys = {
   bandersnatchPublic: BandersnatchKey;
   ed25519Public: Ed25519Key;
+};
+
+type SealData = {
+  key: ValidatorKeys;
+  sealPayload: BlockSealInput;
+  logId?: string;
 };
 
 type ValidatorKeys = ValidatorPrivateKeys & ValidatorPublicKeys;
@@ -97,14 +105,24 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
   const initialState = states.getState(initialHash);
 
   logger.info`Block authorship validator keys: ${keys.map(({ bandersnatchPublic }, index) => `\n ${index}: ${bandersnatchPublic.toString()}`)}`;
+
+  // Per-epoch cache for Tickets mode: index corresponds to position in sealingKeySeries.tickets.
+  // null entry means none of our keys match that slot.
+  // Rebuilt once per epoch via buildTicketAuthorshipCache().
+  // Declared here (before the eager startup build below) so its TDZ doesn't fire
+  // when `buildTicketAuthorshipCache` runs during initialisation.
+  let ticketAuthorshipCache: Array<SealData | null> | null = null;
+
   if (initialState !== null) {
-    const initialKeys = await getSealingKeySeries(
-      startTimeSlot % chainSpec.epochLength === 0,
-      startTimeSlot,
-      initialState,
-    );
+    const isEpochStart = startTimeSlot % chainSpec.epochLength === 0;
+    const initialKeys = await getSealingKeySeries(isEpochStart, startTimeSlot, initialState);
     if (initialKeys.isOk) {
       logEpochBlockCreation(tryAsEpoch(Math.floor(startTimeSlot / chainSpec.epochLength)), initialKeys.ok);
+      // Build the cache eagerly so the first slot of a session doesn't need an
+      // on-the-fly VRF scan. After this, `buildTicketAuthorshipCache` is only
+      // re-run on epoch boundaries.
+      const initialEntropy = isEpochStart ? initialState.entropy[2] : initialState.entropy[3];
+      await buildTicketAuthorshipCache(initialKeys.ok, initialEntropy);
     }
   }
 
@@ -115,16 +133,6 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
     return tryAsU64(BigInt(startTimeSlot) * slotDurationMs + timeFromStart + slotDurationMs);
   }
 
-  function getKeyForCurrentSlot(sealingKeySeries: SafroleSealingKeys, keys: ValidatorKeys[], timeSlot: TimeSlot) {
-    if (sealingKeySeries.kind === SafroleSealingKeysKind.Keys) {
-      const indexForCurrentSlot = timeSlot % sealingKeySeries.keys.length;
-      const sealingKey = sealingKeySeries.keys[indexForCurrentSlot];
-      return keys.find((x) => x.bandersnatchPublic.isEqualTo(sealingKey)) ?? null;
-    }
-
-    throw new Error("Tickets mode is not supported yet");
-  }
-
   function getValidatorIndex(key: ValidatorKeys, currentValidatorData: PerValidator<ValidatorData>) {
     const index = currentValidatorData.findIndex((data) => data.bandersnatch.isEqualTo(key.bandersnatchPublic));
     if (index < 0) {
@@ -133,20 +141,77 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
     return tryAsValidatorIndex(index);
   }
 
-  function getSealPayload(
+  /**
+   * Precomputes which slots we are the author of for the current epoch (Tickets mode).
+   */
+  async function buildTicketAuthorshipCache(sealingKeySeries: SafroleSealingKeys, entropy: EntropyHash) {
+    if (sealingKeySeries.kind !== SafroleSealingKeysKind.Tickets) {
+      ticketAuthorshipCache = null;
+      return;
+    }
+
+    const ownTickets = new HashDictionary<EntropyHash, SealData>();
+    for (let attempt = 0; attempt < chainSpec.ticketsPerValidator; attempt++) {
+      const payload = getTicketSealPayload(entropy, attempt);
+      for (const key of keys) {
+        const result = await bandersnatchVrf.getVrfOutputHash(bandersnatch, key.bandersnatchSecret, payload);
+        if (result.isOk) {
+          ownTickets.set(result.ok.asOpaque<EntropyHash>(), { key, sealPayload: asOpaqueType(payload) });
+        }
+      }
+    }
+
+    const cache = sealingKeySeries.tickets.map((ticket) => ownTickets.get(ticket.id.asOpaque<EntropyHash>()) ?? null);
+    ticketAuthorshipCache = cache;
+    const ours = cache.filter(Boolean).length;
+    logger.info`Built ticket authorship cache: ${ours}/${cache.length} slots assigned to us this epoch.`;
+  }
+
+  function getTicketSealPayload(entropy: EntropyHash, attempt: number): BytesBlob {
+    return BytesBlob.blobFromParts(JAM_TICKET_SEAL, entropy.raw, new Uint8Array([attempt]));
+  }
+
+  function getFallbackSealPayload(entropy: EntropyHash): BlockSealInput {
+    return asOpaqueType(BytesBlob.blobFromParts(JAM_FALLBACK_SEAL, entropy.raw));
+  }
+
+  /**
+   * Returns the validator key and seal payload for the current slot, or null if we are not the author.
+   *
+   * Keys mode (fallback): matches our key against the slot's assigned bandersnatch key.
+   * Tickets mode: O(1) lookup against the per-epoch authorship cache (built eagerly at
+   * startup and on every epoch transition, so we never fall back to on-the-fly VRF).
+   */
+  function getSealData(
     sealingKeySeries: SafroleSealingKeys,
+    keys: ValidatorKeys[],
+    timeSlot: TimeSlot,
     entropy: EntropyHash,
-    attempt?: TicketAttempt,
-  ): BlockSealInput {
+  ): SealData | null {
     if (sealingKeySeries.kind === SafroleSealingKeysKind.Keys) {
-      return asOpaqueType(BytesBlob.blobFromParts(JAM_FALLBACK_SEAL, entropy.raw));
+      const indexForCurrentSlot = timeSlot % sealingKeySeries.keys.length;
+      const sealingKey = sealingKeySeries.keys[indexForCurrentSlot];
+      const key = keys.find((x) => x.bandersnatchPublic.isEqualTo(sealingKey)) ?? null;
+      if (key === null) {
+        return null;
+      }
+
+      return {
+        key,
+        sealPayload: getFallbackSealPayload(entropy),
+        logId: `key ${key.bandersnatchPublic}`,
+      };
     }
 
-    if (sealingKeySeries.kind === SafroleSealingKeysKind.Tickets) {
-      return asOpaqueType(BytesBlob.blobFromParts(JAM_TICKET_SEAL, entropy.raw, new Uint8Array([attempt ?? 0])));
+    // Tickets mode: each slot is sealed by the validator who can produce the VRF output
+    // matching the ticket's ID for that slot.
+    const index = timeSlot % sealingKeySeries.tickets.length;
+    const ticket = sealingKeySeries.tickets.at(index) ?? null;
+    const cached = ticketAuthorshipCache?.at(index) ?? null;
+    if (ticket === null || cached === null) {
+      return null;
     }
-
-    assertNever(sealingKeySeries);
+    return { ...cached, logId: `ticket ${ticket.id} (attempt ${ticket.attempt})` };
   }
 
   function isEpochChanged(lastTimeslot: TimeSlot, currentTimeslot: TimeSlot): boolean {
@@ -156,11 +221,18 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
   }
 
   function logEpochBlockCreation(epoch: Epoch, sealingKeySeries: SafroleSealingKeys) {
+    if (sealingKeySeries.kind === SafroleSealingKeysKind.Tickets) {
+      logger.info`[EPOCH ${epoch}] Tickets mode active with ${sealingKeySeries.tickets.length} tickets.`;
+      return;
+    }
+
     let isCreating = false;
     const epochStart = epoch * chainSpec.epochLength;
     const epochEnd = epochStart + chainSpec.epochLength;
     for (let slot = epochStart; slot < epochEnd; slot++) {
-      const key = getKeyForCurrentSlot(sealingKeySeries, keys, tryAsTimeSlot(slot));
+      const indexForCurrentSlot = slot % sealingKeySeries.keys.length;
+      const sealingKey = sealingKeySeries.keys[indexForCurrentSlot];
+      const key = keys.find((x) => x.bandersnatchPublic.isEqualTo(sealingKey)) ?? null;
       if (key !== null) {
         isCreating = true;
         logger.info`[EPOCH ${epoch}] Validator ${key.bandersnatchPublic.toString()} will author block at slot ${slot}`;
@@ -185,6 +257,90 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
     return Result.ok(state.sealingKeySeries);
   }
 
+  // Ticket pool: epochIndex -> {ticket, id}[]
+  // IDs (entropyHash) are computed at receipt time via verifyTickets(), enabling O(1) dedup by ID.
+  const ticketPool = new Map<number, { ticket: SignedTicket; id: EntropyHash }[]>();
+  const ticketIdSets = new Map<number, HashSet<EntropyHash>>();
+
+  /**
+   * Adds pre-verified tickets to the in-memory ticket pool for the given epoch.
+   *
+   * Clears the pool when the epoch changes (we only ever need tickets for one epoch at a time).
+   * Deduplicates by ticket ID using a HashSet for O(1) lookup — prevents double-counting
+   * tickets received from multiple peers or via both CE-131 and CE-132 paths.
+   */
+  function addToPool(epochIndex: number, verifiedTickets: { ticket: SignedTicket; id: EntropyHash }[]) {
+    if (ticketPool.size > 0 && !ticketPool.has(epochIndex)) {
+      ticketPool.clear();
+      ticketIdSets.clear();
+    }
+    const existing = ticketPool.get(epochIndex) ?? [];
+    let idSet = ticketIdSets.get(epochIndex) ?? null;
+    if (idSet === null) {
+      idSet = HashSet.new();
+      ticketIdSets.set(epochIndex, idSet);
+    }
+    for (const entry of verifiedTickets) {
+      if (!idSet.has(entry.id)) {
+        existing.push(entry);
+        idSet.insert(entry.id);
+      }
+    }
+    ticketPool.set(epochIndex, existing);
+  }
+
+  /**
+   * Returns the correct tickets entropy for verification given the current state.
+   *
+   * When `state` is from epoch E-1 (i.e. we haven't produced epoch E's first block yet),
+   * the ticket entropy for epoch E is at index 1 (not yet shifted).
+   * After the epoch transition it moves to index 2.
+   */
+  function getTicketEntropy(epochIndex: number, state: State): EntropyHash {
+    const stateEpoch = Math.floor(state.timeslot / chainSpec.epochLength);
+    return epochIndex > stateEpoch ? state.entropy[1] : state.entropy[2];
+  }
+
+  /**
+   * Verifies tickets against the ring commitment and current epoch entropy, then adds valid
+   * ones to the pool with their computed IDs.
+   *
+   * Called both for own generated tickets and for tickets relayed from peers.
+   * Verification computes the ticket ID (entropyHash) which is then used for
+   * deduplication in the pool and later when building the extrinsic.
+   */
+  async function verifyAndAddToPool(epochIndex: number, tickets: SignedTicket[], state: State): Promise<boolean> {
+    const results = await bandersnatchVrf.verifyTickets(
+      bandersnatch,
+      state.designatedValidatorData.length,
+      state.epochRoot,
+      tickets,
+      getTicketEntropy(epochIndex, state),
+    );
+    if (results.length !== tickets.length) {
+      logger.error`verifyTickets returned ${results.length} results for ${tickets.length} tickets`;
+      return false;
+    }
+    const verified = tickets
+      .map((ticket, i) => ({ ticket, id: results[i].entropyHash }))
+      .filter((_, i) => results[i].isValid);
+    addToPool(epochIndex, verified);
+    return verified.length > 0;
+  }
+
+  // Receive a single ticket from peers (via jam-network worker).
+  // Returns true if the ticket passed validation so jam-network can decide whether to redistribute it.
+  networkingComms.setOnReceivedTickets(async ({ epochIndex, ticket }) => {
+    logger.log`Received ticket from peer for epoch ${epochIndex}`;
+    const hash = blocks.getBestHeaderHash();
+    const state = states.getState(hash);
+    if (state === null) {
+      logger.warn`Cannot verify received ticket: no state available`;
+      return false;
+    }
+    return await verifyAndAddToPool(epochIndex, [ticket], state);
+  });
+
   const isFastForward = config.workerParams.isFastForward;
   let lastGeneratedSlot = startTimeSlot;
   let ticketsGeneratedForEpoch = -1;
@@ -192,7 +348,7 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
   while (!isFinished) {
     const hash = blocks.getBestHeaderHash();
     const state = states.getState(hash);
-    const currentValidatorData = state?.currentValidatorData;
+    const currentValidatorData = state?.currentValidatorData ?? null;
 
     if (state === null) {
       continue;
@@ -252,6 +408,9 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
         } else {
           logger.log`Generated ${ticketsResult.ok.length} tickets for epoch ${epoch}. Distributing...`;
 
+          // Verify own tickets to get IDs, then add to pool
+          await verifyAndAddToPool(epoch, ticketsResult.ok, state);
+
           // Send directly to network worker (bypasses main thread)
           await networkingComms.sendTickets({ epochIndex: epoch, tickets: ticketsResult.ok });
         }
@@ -266,22 +425,42 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
       continue;
     }
 
-    if (isNewEpoch) {
-      logEpochBlockCreation(epoch, selingKeySeriesResult.ok);
+    // On a new epoch, `state.entropy[2]` is the epoch-E entropy (pre-transition);
+    // mid-epoch, it has already shifted to `entropy[3]`.
+    const entropy = isNewEpoch ? state.entropy[2] : state.entropy[3];
+
+    // Rebuild the authorship cache on each epoch boundary, and also catch the case
+    // where the startup prebuild was skipped (e.g. initialState was null or the
+    // initial sealing-key transition errored) so we don't silently miss Tickets-mode
+    // slots until the next epoch boundary.
+    const needsCacheRebuild =
+      isNewEpoch ||
+      (selingKeySeriesResult.ok.kind === SafroleSealingKeysKind.Tickets && ticketAuthorshipCache === null);
+    if (needsCacheRebuild) {
+      if (isNewEpoch) {
+        logEpochBlockCreation(epoch, selingKeySeriesResult.ok);
+      }
+      await buildTicketAuthorshipCache(selingKeySeriesResult.ok, entropy);
     }
 
-    const key = getKeyForCurrentSlot(selingKeySeriesResult.ok, keys, timeSlot);
+    const sealData = getSealData(selingKeySeriesResult.ok, keys, timeSlot, entropy);
 
-    if (key !== null && currentValidatorData !== undefined) {
+    if (sealData !== null && currentValidatorData !== null) {
+      const { key, sealPayload } = sealData;
       const validatorIndex = getValidatorIndex(key, currentValidatorData);
       if (validatorIndex === null) {
         continue;
       }
 
-      logger.log`Attempting to create a block using key ${key.bandersnatchPublic} located at validator index ${validatorIndex}.`;
-      const entropy = isNewEpoch ? state.entropy[2] : state.entropy[3];
-      const sealPayload = getSealPayload(selingKeySeriesResult.ok, entropy);
-      const newBlock = await generator.nextBlockView(validatorIndex, key.bandersnatchSecret, sealPayload, timeSlot);
+      logger.log`Attempting to create a block using ${sealData.logId} located at validator index ${validatorIndex}.`;
+      const currentEpochTickets = ticketPool.get(epoch) ?? [];
+      const newBlock = await generator.nextBlockView(
+        validatorIndex,
+        key.bandersnatchSecret,
+        sealPayload,
+        timeSlot,
+        currentEpochTickets, // {ticket, id}[] — already verified
+      );
       counter += 1;
       lastGeneratedSlot = timeSlot;
       logger.trace`Sending block ${counter}`;

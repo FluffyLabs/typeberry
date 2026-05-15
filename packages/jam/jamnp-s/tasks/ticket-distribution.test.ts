@@ -261,7 +261,7 @@ describe("TicketDistributionTask", () => {
     peer1.ticketTask.maintainDistribution();
     await tick();
 
-    // Self receives the ticket (via onTicketReceived -> addTicket)
+    // Self receives the ticket (via onTicketReceived -> addTicket, no callback set)
     assert.strictEqual(self.receivedTickets.length, 1);
 
     // Self should re-distribute to peer2 (and peer1, but peer1 already has it)
@@ -269,6 +269,55 @@ describe("TicketDistributionTask", () => {
     await tick();
 
     // peer2 should now have received the ticket from self
+    assert.strictEqual(peer2.receivedTickets.length, 1);
+    assert.deepStrictEqual(peer2.receivedTickets[0].ticket, ticket);
+  });
+
+  it("should NOT redistribute ticket if validation callback returns false", async () => {
+    const self = await init("self");
+    const peer1 = await init("peer1");
+    const peer2 = await init("peer2");
+
+    self.openConnection(peer1);
+    self.openConnection(peer2);
+    await tick();
+
+    // Validation always rejects
+    self.ticketTask.setOnTicketReceived(async () => false);
+
+    const ticket = createTestTicket(0);
+    peer1.ticketTask.addTicket(TEST_EPOCH, ticket);
+    peer1.ticketTask.maintainDistribution();
+    await tick();
+
+    // self.addTicket was NOT called (callback returned false), so nothing to redistribute
+    assert.strictEqual(self.receivedTickets.length, 0);
+    self.ticketTask.maintainDistribution();
+    await tick();
+    assert.strictEqual(peer2.receivedTickets.length, 0);
+  });
+
+  it("should redistribute ticket if validation callback returns true", async () => {
+    const self = await init("self");
+    const peer1 = await init("peer1");
+    const peer2 = await init("peer2");
+
+    self.openConnection(peer1);
+    self.openConnection(peer2);
+    await tick();
+
+    // Validation always accepts
+    self.ticketTask.setOnTicketReceived(async () => true);
+
+    const ticket = createTestTicket(0);
+    peer1.ticketTask.addTicket(TEST_EPOCH, ticket);
+    peer1.ticketTask.maintainDistribution();
+    await tick();
+
+    // self.addTicket WAS called (callback returned true)
+    assert.strictEqual(self.receivedTickets.length, 1);
+    self.ticketTask.maintainDistribution();
+    await tick();
     assert.strictEqual(peer2.receivedTickets.length, 1);
     assert.deepStrictEqual(peer2.receivedTickets[0].ticket, ticket);
   });
