@@ -116,7 +116,6 @@ export class TicketDistributionTask {
     // Drop tickets for older epochs (can happen when a delayed validation callback completes
     // after the epoch has already advanced — accepting it would roll back currentEpoch).
     if (this.currentEpoch !== null && epochIndex < this.currentEpoch) {
-      logger.warn`[addTicket] Ignoring ticket for old epoch ${epochIndex} (current: ${this.currentEpoch})`;
       return;
     }
 
