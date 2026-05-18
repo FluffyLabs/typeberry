@@ -14,9 +14,16 @@ export const AUTHORSHIP_NETWORK_PORT = "authorship-network";
  * This bypasses the main thread for ticket distribution, reducing latency.
  */
 export const protocol = createProtocol("authorship-network", {
-  // Messages from block-authorship to jam-network
+  // Messages from block-authorship to jam-network.
   toWorker: {
+    // Newly generated own tickets; networking should add them to its redistribution pool.
     tickets: {
+      request: TicketsMessage.Codec,
+      response: codec.nothing,
+    },
+    // Authoritative pool snapshot for the given epoch; networking replaces its local
+    // pool with these tickets (one-way, source of truth lives in block-authorship).
+    replaceTicketPool: {
       request: TicketsMessage.Codec,
       response: codec.nothing,
     },

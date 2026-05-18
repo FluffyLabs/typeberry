@@ -21,6 +21,7 @@
     "@typeberry/logger": "*",
     "@typeberry/networking": "*",
     "@typeberry/numbers": "*",
+    "@typeberry/ticket-pool": "*",
     "@typeberry/utils": "*"
   }
 }
