@@ -6,7 +6,7 @@ import { assertNever } from "@typeberry/utils";
 import { Channel } from "@typeberry/workers-api";
 import type { Api, Internal, LousyProtocol } from "@typeberry/workers-api/types.js";
 import { configTransferList, LmdbWorkerConfig, type TransferableConfig } from "./config.js";
-import { logHeapLimit } from "./host-environment.js";
+import { logHeapLimit, workerResourceLimits } from "./host-environment.js";
 import { ThreadPort } from "./port.js";
 
 const logger = Logger.new(import.meta.filename, "workers");
@@ -69,7 +69,7 @@ export function spawnWorker<To, From, Params>(
   logger.trace`Spawning ${protocol.name} child worker.`;
 
   const channel = new MessageChannel();
-  const worker = new Worker(bootstrapPath);
+  const worker = new Worker(bootstrapPath, { resourceLimits: workerResourceLimits() });
 
   const msg: WorkerControlPlane = {
     kind: WorkerControlPlaneMsg.Config,
