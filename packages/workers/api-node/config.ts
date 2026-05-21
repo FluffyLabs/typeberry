@@ -1,3 +1,4 @@
+import type { MessagePort } from "node:worker_threads";
 import { type Decode, Decoder, type Encode, Encoder } from "@typeberry/codec";
 import { ChainSpec } from "@typeberry/config";
 import {
@@ -90,6 +91,17 @@ export type TransferableConfig = {
   dbPath: string;
   workerPorts: [string, TransferablePort][];
 };
+
+/**
+ * Collect the transferable objects (communication ports) embedded in a config.
+ *
+ * `MessagePort`s can only be transferred, not structurally cloned, so they have to
+ * be listed in the `postMessage` transfer list. Omitting them results in a
+ * `DataCloneError`.
+ */
+export function configTransferList(config: TransferableConfig): MessagePort[] {
+  return config.workerPorts.map(([, transferable]) => transferable.port);
+}
 
 /**
  * In-memory (direct) worker using serialized state database.
