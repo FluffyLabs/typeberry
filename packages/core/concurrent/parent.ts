@@ -36,7 +36,7 @@ export class Executor<TParams extends WithTransferList, TResult> implements IExe
     for (let i = 0; i < options.minWorkers; i++) {
       workers.push(await initWorker(workerPath, options.maxHeapSize));
     }
-    return new Executor(workers, options.maxWorkers, workerPath);
+    return new Executor(workers, options.maxWorkers, workerPath, options.maxHeapSize);
   }
   // keeps track of the indices of worker threads that are currently free and available to execute tasks
   private readonly freeWorkerIndices: number[] = [];
@@ -48,6 +48,7 @@ export class Executor<TParams extends WithTransferList, TResult> implements IExe
     private readonly workers: WorkerChannel<TParams, TResult>[],
     private readonly maxWorkers: number,
     private readonly workerPath: URL,
+    private readonly maxHeapSize?: number,
   ) {
     // intial free workers.
     for (let i = 0; i < workers.length; i++) {
@@ -67,7 +68,7 @@ export class Executor<TParams extends WithTransferList, TResult> implements IExe
     }
 
     this.isWorkerInitializing = true;
-    this.workers.push(await initWorker(this.workerPath));
+    this.workers.push(await initWorker(this.workerPath, this.maxHeapSize));
     this.freeWorkerIndices.push(this.workers.length - 1);
     this.isWorkerInitializing = false;
     onSuccess();
