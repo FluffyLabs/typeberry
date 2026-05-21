@@ -136,7 +136,7 @@ export class AnanasInterpreter implements IPvmInterpreter {
     const programArr = lowerBytes(program);
     const argsArr = lowerBytes(args);
     this.gas.initialGas = gas;
-    this.instance.resetJAM(programArr, pc, BigInt(gas), argsArr, true);
+    this.instance.resetJAM(programArr, pc, BigInt(gas), argsArr, true, false);
   }
 
   resetGeneric(program: Uint8Array, _pc: number, gas: Gas): void {
