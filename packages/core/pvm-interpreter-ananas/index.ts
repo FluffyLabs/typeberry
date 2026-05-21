@@ -111,7 +111,7 @@ class AnanasGasCounter implements IGasCounter {
 }
 
 const USE_BLOCK_GAS = false;
-const PAGES_TO_PREALLOCATE = 256;
+const PAGES_TO_PREALLOCATE = 192;
 
 export class AnanasInterpreter implements IPvmInterpreter {
   readonly registers: AnanasRegisters;
