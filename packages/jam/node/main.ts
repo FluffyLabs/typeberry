@@ -20,7 +20,7 @@ import type { StateEntries } from "@typeberry/state-merkleization";
 import type { Telemetry } from "@typeberry/telemetry";
 import { CURRENT_SUITE, CURRENT_VERSION, Result, version } from "@typeberry/utils";
 import { DirectPort, DirectWorkerConfig } from "@typeberry/workers-api";
-import { InMemWorkerConfig, LmdbWorkerConfig, ThreadPort } from "@typeberry/workers-api-node";
+import { InMemWorkerConfig, LmdbWorkerConfig, logHostEnvironment, ThreadPort } from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import { initializeExtensions } from "./extensions.js";
 import type { JamConfig, NetworkConfig } from "./jam-config.js";
@@ -58,6 +58,7 @@ export async function main(
   logger.info`🫐 Typeberry ${version}. GP: ${CURRENT_VERSION} (${CURRENT_SUITE})`;
   logger.info`🎸 Starting node: ${config.nodeName}.`;
   logger.info`🖥️ PVM Backend: ${PvmBackend[config.pvmBackend]}.`;
+  logHostEnvironment(logger);
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
   const nodeName = config.nodeName;
