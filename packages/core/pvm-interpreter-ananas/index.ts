@@ -110,6 +110,9 @@ class AnanasGasCounter implements IGasCounter {
   }
 }
 
+const USE_BLOCK_GAS = false;
+const PAGES_TO_PREALLOCATE = 256;
+
 export class AnanasInterpreter implements IPvmInterpreter {
   readonly registers: AnanasRegisters;
   readonly memory: AnanasMemory;
@@ -136,7 +139,7 @@ export class AnanasInterpreter implements IPvmInterpreter {
     const programArr = lowerBytes(program);
     const argsArr = lowerBytes(args);
     this.gas.initialGas = gas;
-    this.instance.resetJAM(programArr, pc, BigInt(gas), argsArr, true, false);
+    this.instance.resetJAM(programArr, pc, BigInt(gas), argsArr, true, USE_BLOCK_GAS, PAGES_TO_PREALLOCATE);
   }
 
   resetGeneric(program: Uint8Array, _pc: number, gas: Gas): void {
@@ -145,7 +148,16 @@ export class AnanasInterpreter implements IPvmInterpreter {
     const pageMap = new Uint8Array();
     const chunks = new Uint8Array();
     this.gas.initialGas = gas;
-    this.instance.resetGenericWithMemory(programArr, emptyRegisters, pageMap, chunks, BigInt(gas), false);
+    this.instance.resetGenericWithMemory(
+      programArr,
+      emptyRegisters,
+      pageMap,
+      chunks,
+      BigInt(gas),
+      false,
+      USE_BLOCK_GAS,
+      PAGES_TO_PREALLOCATE,
+    );
   }
 
   nextStep(): boolean {
