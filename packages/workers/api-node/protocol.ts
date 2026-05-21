@@ -6,6 +6,7 @@ import { assertNever } from "@typeberry/utils";
 import { Channel } from "@typeberry/workers-api";
 import type { Api, Internal, LousyProtocol } from "@typeberry/workers-api/types.js";
 import { LmdbWorkerConfig, type TransferableConfig } from "./config.js";
+import { logHeapLimit } from "./host-environment.js";
 import { ThreadPort } from "./port.js";
 
 const logger = Logger.new(import.meta.filename, "workers");
@@ -115,6 +116,7 @@ export async function initWorker<To, From, Params>(
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 
   logger.trace`Worker ${protocol.name} starting.`;
+  logHeapLimit(logger, protocol.name);
 
   return new Promise((resolve, reject) => {
     if (parentPort === null) {
