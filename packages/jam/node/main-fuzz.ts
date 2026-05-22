@@ -56,7 +56,7 @@ export function getFuzzDetails() {
   return {
     nodeName: "@typeberry/jam",
     nodeVersion: fuzzV1.Version.tryFromString(version),
-    gpVersion: fuzzV1.Version.tryFromString(CURRENT_VERSION.split("-")[0]),
+    gpVersion: fuzzV1.Version.tryFromString(CURRENT_VERSION),
   };
 }
 
