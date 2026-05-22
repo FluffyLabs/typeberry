@@ -106,8 +106,11 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
         await finish;
       }
 
-      const buildNode = (databaseBasePath: string | undefined) =>
-        mainImporter(
+      const buildNode = (databaseBasePath: string | undefined) => {
+        // Enable state/blocks pruning only when running in memory.
+        // For disk backend, we store everything.
+        const isPersistent = databaseBasePath !== undefined;
+        return mainImporter(
           {
             ...config,
             node: {
@@ -125,10 +128,11 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
           withRelPath,
           {
             initGenesisFromAncestry: fuzzConfig.initGenesisFromAncestry,
-            dummyFinalityDepth: 10_000,
-            pruneBlocks: true,
+            dummyFinalityDepth: isPersistent ? 0 : 10_000,
+            pruneBlocks: !isPersistent,
           },
         );
+      };
 
       if (fuzzDbBase !== undefined) {
         // Each reset starts a fresh session from the genesis the fuzzer just sent,

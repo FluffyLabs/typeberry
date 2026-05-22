@@ -153,7 +153,10 @@ message it resets the state to the genesis sent by the fuzzer. By default the
 state is held in memory. If `JAM_FUZZ_DATA_PATH` points at a real directory, the
 target uses an on-disk LMDB database instead (wiped on every reset, so each
 session starts clean); if that database cannot be opened it logs a warning and
-falls back to in-memory.
+falls back to in-memory. On the on-disk backend pruning is disabled, so every
+block's state is retained for the whole session (this grows disk, not memory),
+which lets the fuzzer query the state of any past block. The in-memory backend
+keeps pruning enabled to bound memory.
 
 **Docker example:**
 
