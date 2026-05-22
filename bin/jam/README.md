@@ -145,11 +145,15 @@ contract.
 | `JAM_FUZZ` | Yes (any non-empty value) | Activates fuzz mode. |
 | `JAM_FUZZ_SPEC` | Yes | Chain spec: `tiny` or `full`. |
 | `JAM_FUZZ_SOCK_PATH` | Yes | Unix domain socket path the target listens on. |
-| `JAM_FUZZ_DATA_PATH` | Yes | Persistent data directory (currently unused; reserved). |
+| `JAM_FUZZ_DATA_PATH` | No | Database location. A real path runs the target against an on-disk LMDB database (recommended for full-spec runs, to bound memory). Unset, empty, or `undefined` keeps the in-memory database (the default). |
 | `JAM_FUZZ_LOG_LEVEL` | No | Log verbosity: `error`, `warn`, `info`, `debug`, `trace`. Overrides `JAM_LOG` in fuzz mode. |
 
 The target stays up across multiple fuzzer sessions; on each `Initialize`
-message it resets the in-memory state to the genesis sent by the fuzzer.
+message it resets the state to the genesis sent by the fuzzer. By default the
+state is held in memory. If `JAM_FUZZ_DATA_PATH` points at a real directory, the
+target uses an on-disk LMDB database instead (wiped on every reset, so each
+session starts clean); if that database cannot be opened it logs a warning and
+falls back to in-memory.
 
 **Docker example:**
 
