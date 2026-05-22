@@ -15,6 +15,16 @@ DIST_FOLDER=./dist/convert
 # clean dist dir
 mkdir -p "${DIST_FOLDER}"
 rm -rf "${DIST_FOLDER:?}"/*
+
+# When VERSION_SHA is set (e.g. CI builds) append it to the version. convert's
+# --help banner uses the version inlined by ncc from packages/core/utils/package.json
+# (not the root), so we stamp utils before building, same as bin/jam. Unset =
+# clean release version.
+if [ -n "$VERSION_SHA" ]; then
+  VERSION="$VERSION-$VERSION_SHA"
+  npm pkg set version="$VERSION" -w packages/core/utils
+fi
+
 # Build the main binary
 BUILD="npx @vercel/ncc build -s -d"
 $BUILD ./bin/convert/index.ts -o $DIST_FOLDER
@@ -25,12 +35,6 @@ cp ./README.md $DIST_FOLDER/
 # Make index.js executable and insert shebang
 echo '#!/usr/bin/env node' > $DIST_FOLDER/temp.js && cat $DIST_FOLDER/index.js >> $DIST_FOLDER/temp.js && mv $DIST_FOLDER/temp.js $DIST_FOLDER/index.js
 chmod +x $DIST_FOLDER/index.js
-
-# When VERSION_SHA is set (e.g. CI builds) append it to the version so the
-# artifact never looks like a clean release. Unset = release behavior (untouched).
-if [ -n "$VERSION_SHA" ]; then
-  VERSION="$VERSION-$VERSION_SHA"
-fi
 
 # build package.json file
 cat > $DIST_FOLDER/package.json << EOF

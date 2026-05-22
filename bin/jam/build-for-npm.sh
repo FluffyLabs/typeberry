@@ -16,11 +16,13 @@ DIST_FOLDER=./dist/jam
 mkdir $DIST_FOLDER || true
 rm -rf $DIST_FOLDER/*
 
-# When VERSION_SHA is set (e.g. Docker builds) append it to the version.
+# When VERSION_SHA is set (e.g. Docker builds) append it to the version. The
+# banner version is inlined by ncc from packages/core/utils/package.json: the
+# `../../../package.json` import in that package resolves there through the
+# workspace symlink, NOT to the repo root, so we must stamp utils (not root).
 if [ -n "$VERSION_SHA" ]; then
   VERSION="$VERSION-$VERSION_SHA"
-  # set the version now, to properly inline it into the build.
-  npm pkg set version="$VERSION"
+  npm pkg set version="$VERSION" -w packages/core/utils
 fi
 
 # Build the main binary
