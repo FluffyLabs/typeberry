@@ -17,6 +17,8 @@ export type ImporterOptions = {
   initGenesisFromAncestry?: boolean;
   dummyFinalityDepth?: number;
   pruneBlocks?: boolean;
+  /** Open the LMDB database without fsync/compression. Only safe for throwaway dbs (e.g. fuzzing). */
+  ephemeralDb?: boolean;
 };
 
 export async function mainImporter(
@@ -62,6 +64,7 @@ export async function mainImporter(
           blake2b,
           dbPath,
           workerParams,
+          ephemeral: options.ephemeralDb ?? false,
         });
 
   // Initialize the database with genesis state and block if there isn't one.

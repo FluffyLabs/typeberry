@@ -130,6 +130,9 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
             initGenesisFromAncestry: fuzzConfig.initGenesisFromAncestry,
             dummyFinalityDepth: isPersistent ? 0 : 10_000,
             pruneBlocks: !isPersistent,
+            // The fuzz db is wiped on every reset, so durability is pointless:
+            // skip fsync + compression to cut the per-block leaf write cost.
+            ephemeralDb: isPersistent,
           },
         );
       };
