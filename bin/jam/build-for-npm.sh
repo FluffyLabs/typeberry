@@ -16,8 +16,15 @@ DIST_FOLDER=./dist/jam
 mkdir $DIST_FOLDER || true
 rm -rf $DIST_FOLDER/*
 
-# TODO [ToDr] Temporary require anan-as before https://github.com/tomusdrw/anan-as/issues/99
-# is resolved.
+# When VERSION_SHA is set (e.g. Docker builds) append it to the version. The
+# banner version is inlined by ncc from packages/core/utils/package.json: the
+# `../../../package.json` import in that package resolves there through the
+# workspace symlink, NOT to the repo root, so we must stamp utils (not root).
+if [ -n "$VERSION_SHA" ]; then
+  VERSION="$VERSION-$VERSION_SHA"
+  npm pkg set version="$VERSION" -w packages/core/utils
+fi
+
 # Build the main binary
 BUILD="npx @vercel/ncc build -a -s -e lmdb -e @matrixai/quic -e tsx/esm/api"
 $BUILD ./bin/jam/index.ts -o $DIST_FOLDER
@@ -37,25 +44,25 @@ $BUILD ./packages/workers/block-authorship/index.ts -o $DIST_FOLDER/block-author
 cp ./LICENSE $DIST_FOLDER/
 cp ./README.md $DIST_FOLDER/
 
+# Flatten one worker build into dist/jam: rename its index.js -> $2.mjs (and map),
+# repoint the trailing sourceMappingURL (last line, via the `$` address) at the
+# renamed map so worker crash traces resolve to the right TS source, then move
+# everything up a level. $1 = worker subdir, $2 = bootstrap file basename.
+flatten_worker() {
+  cd "./$1"
+  rm *.mjs || true
+  mv index.js "$2.mjs"
+  mv index.js.map "$2.mjs.map"
+  sed -i "\$ s|sourceMappingURL=index.js.map|sourceMappingURL=$2.mjs.map|" "$2.mjs"
+  mv * ../
+  cd ../
+}
+
 # Flatten the workers structure
 cd $DIST_FOLDER
-
-cd ./importer
-rm *.mjs || true
-mv index.js bootstrap-importer.mjs
-mv index.js.map bootstrap-importer.mjs.map
-mv * ../
-cd ../jam-network
-rm *.mjs || true
-mv index.js bootstrap-network.mjs
-mv index.js.map bootstrap-network.mjs.map
-mv * ../
-cd ../block-authorship
-rm *.mjs || true
-mv index.js bootstrap-generator.mjs
-mv index.js.map bootstrap-generator.mjs.map
-mv * ../
-cd ../
+flatten_worker importer bootstrap-importer
+flatten_worker jam-network bootstrap-network
+flatten_worker block-authorship bootstrap-generator
 
 # copy worker wasm files
 cp **/*.wasm ./ || true # ignore overwrite errors
@@ -63,11 +70,6 @@ cp **/*.wasm ./ || true # ignore overwrite errors
 # Make index.js executable and insert shebang with 6GB heap size (leaves headroom on an 8GB box)
 echo '#!/usr/bin/env -S node --max-old-space-size=6144' > ./temp.js && cat ./index.js >> ./temp.js && mv ./temp.js ./index.js
 chmod +x ./index.js
-
-if [ -z "$IS_RELEASE" ]; then
-  SHA=$(git rev-parse --short HEAD)
-  VERSION="$VERSION-$SHA"
-fi
 
 # build package.json file
 cat > ./package.json << EOF
