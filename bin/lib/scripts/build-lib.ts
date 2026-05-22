@@ -62,7 +62,6 @@
  * ```
  */
 
-import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -82,28 +81,28 @@ interface PackageJson {
 /**
  * Get the version string for the package
  *
- * If IS_RELEASE environment variable is set, uses the version from package.json as-is.
- * Otherwise, appends the current git commit hash to create unique versions for each build.
+ * If the VERSION_SHA environment variable is set (e.g. CI builds), appends it to
+ * the base version to create a unique, non-release version. Otherwise (release
+ * behavior) the base version from package.json is used as-is.
  *
  * @param baseVersion - The base version from package.json
  * @returns The version string to use for publishing
  *
  * @example
- * // When IS_RELEASE is not set and commit is abc1234
+ * // When VERSION_SHA=abc1234
  * getVersion("0.5.1") // Returns "0.5.1-abc1234"
  *
- * // When IS_RELEASE is set
+ * // When VERSION_SHA is not set
  * getVersion("0.5.1") // Returns "0.5.1"
  */
 function getVersion(baseVersion: string): string {
-  const isRelease = Boolean(process.env.IS_RELEASE);
+  const versionSha = process.env.VERSION_SHA;
 
-  if (isRelease) {
+  if (versionSha === undefined || versionSha === "") {
     return baseVersion;
   }
 
-  const commitHash = execSync("git rev-parse --short HEAD").toString("utf8").trim();
-  return `${baseVersion}-${commitHash}`;
+  return `${baseVersion}-${versionSha}`;
 }
 
 /**

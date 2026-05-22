@@ -26,9 +26,10 @@ cp ./README.md $DIST_FOLDER/
 echo '#!/usr/bin/env node' > $DIST_FOLDER/temp.js && cat $DIST_FOLDER/index.js >> $DIST_FOLDER/temp.js && mv $DIST_FOLDER/temp.js $DIST_FOLDER/index.js
 chmod +x $DIST_FOLDER/index.js
 
-if [ -z "$IS_RELEASE" ]; then
-  SHA=$(git rev-parse --short HEAD)
-  VERSION="$VERSION-$SHA"
+# When VERSION_SHA is set (e.g. CI builds) append it to the version so the
+# artifact never looks like a clean release. Unset = release behavior (untouched).
+if [ -n "$VERSION_SHA" ]; then
+  VERSION="$VERSION-$VERSION_SHA"
 fi
 
 # build package.json file
