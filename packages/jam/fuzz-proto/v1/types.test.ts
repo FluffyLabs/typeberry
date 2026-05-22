@@ -63,6 +63,22 @@ describe("Fuzzer V1 Data Structures", () => {
       assert.strictEqual(version.minor, 2);
       assert.strictEqual(version.patch, 3);
     });
+
+    it("should ignore the git hash / pre-release suffix", () => {
+      const version = Version.tryFromString("0.7.0-15ccd70");
+
+      assert.strictEqual(version.major, 0);
+      assert.strictEqual(version.minor, 7);
+      assert.strictEqual(version.patch, 0);
+    });
+
+    it("should ignore the build metadata suffix", () => {
+      const version = Version.tryFromString("1.2.3+build.42");
+
+      assert.strictEqual(version.major, 1);
+      assert.strictEqual(version.minor, 2);
+      assert.strictEqual(version.patch, 3);
+    });
   });
 
   describe("PeerInfo", () => {

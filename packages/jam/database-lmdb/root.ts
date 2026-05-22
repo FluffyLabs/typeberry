@@ -6,13 +6,18 @@ export type SubDb = lmdb.Database<Uint8Array, lmdb.Key>;
 export class LmdbRoot {
   readonly db: lmdb.RootDatabase<Uint8Array, lmdb.Key>;
 
-  static new(dbPath: string, readOnly = false) {
-    return new LmdbRoot(dbPath, readOnly);
+  static new(dbPath: string, readOnly = false, ephemeral = false) {
+    return new LmdbRoot(dbPath, readOnly, ephemeral);
   }
 
-  private constructor(dbPath: string, readOnly = false) {
+  private constructor(dbPath: string, readOnly = false, ephemeral = false) {
     this.db = lmdb.open(dbPath, {
-      compression: true,
+      // For ephemeral databases (e.g. the fuzz target, which wipes on every reset)
+      // durability is pointless, so we skip fsync and skip compressing the large
+      // per-block leaf blobs. Both are pure overhead there and dominate the cost.
+      // This trades disk space (uncompressed) and crash-durability for speed.
+      compression: !ephemeral,
+      noSync: ephemeral,
       keyEncoding: "binary",
       encoding: "binary",
       readOnly,

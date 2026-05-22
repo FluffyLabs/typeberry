@@ -56,7 +56,7 @@ export function getFuzzDetails() {
   return {
     nodeName: "@typeberry/jam",
     nodeVersion: fuzzV1.Version.tryFromString(version),
-    gpVersion: fuzzV1.Version.tryFromString(CURRENT_VERSION.split("-")[0]),
+    gpVersion: fuzzV1.Version.tryFromString(CURRENT_VERSION),
   };
 }
 
@@ -106,8 +106,11 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
         await finish;
       }
 
-      const buildNode = (databaseBasePath: string | undefined) =>
-        mainImporter(
+      const buildNode = (databaseBasePath: string | undefined) => {
+        // Enable state/blocks pruning only when running in memory.
+        // For disk backend, we store everything.
+        const isPersistent = databaseBasePath !== undefined;
+        return mainImporter(
           {
             ...config,
             node: {
@@ -125,10 +128,14 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
           withRelPath,
           {
             initGenesisFromAncestry: fuzzConfig.initGenesisFromAncestry,
-            dummyFinalityDepth: 10_000,
-            pruneBlocks: true,
+            dummyFinalityDepth: isPersistent ? 0 : 10_000,
+            pruneBlocks: !isPersistent,
+            // The fuzz db is wiped on every reset, so durability is pointless:
+            // skip fsync + compression to cut the per-block leaf write cost.
+            ephemeralDb: isPersistent,
           },
         );
+      };
 
       if (fuzzDbBase !== undefined) {
         // Each reset starts a fresh session from the genesis the fuzzer just sent,

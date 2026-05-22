@@ -22,6 +22,7 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
     dbPath,
     blake2b,
     ports = new Map(),
+    ephemeral = false,
   }: {
     nodeName: string;
     chainSpec: ChainSpec;
@@ -29,8 +30,9 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
     dbPath: string;
     blake2b: Blake2b;
     ports?: Map<string, ThreadPort>;
+    ephemeral?: boolean;
   }) {
-    return new LmdbWorkerConfig(nodeName, chainSpec, workerParams, dbPath, blake2b, ports);
+    return new LmdbWorkerConfig(nodeName, chainSpec, workerParams, dbPath, blake2b, ports, ephemeral);
   }
 
   /** Restore node config from a transferable config object. */
@@ -59,10 +61,14 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
     public readonly dbPath: string,
     public readonly blake2b: Blake2b,
     public readonly ports: Map<string, ThreadPort>,
+    // When set, the underlying LMDB skips fsync and compression. Only safe for
+    // throwaway databases (the fuzz target wipes on reset). Not transferred to
+    // worker threads, so the durable main node path always gets the default.
+    public readonly ephemeral: boolean = false,
   ) {}
 
   openDatabase(options: { readonly: boolean } = { readonly: true }): RootDb<BlocksDb, SerializedStatesDb> {
-    const lmdb = LmdbRoot.new(this.dbPath, options.readonly);
+    const lmdb = LmdbRoot.new(this.dbPath, options.readonly, this.ephemeral);
 
     return {
       getBlocksDb: () => LmdbBlocks.new(this.chainSpec, lmdb),

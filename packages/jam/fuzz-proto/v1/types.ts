@@ -22,7 +22,10 @@ export class Version extends WithDebug {
   static tryFromString(str: string): Version {
     const parse = (v: string) => tryAsU8(Number(v));
     try {
-      const [major, minor, patch] = str.trim().split(".").map(parse);
+      // strip any semver pre-release / build metadata (e.g. "-15ccd70", "+build.42")
+      // so that only `major.minor.patch` is parsed.
+      const core = str.trim().split(/[-+]/)[0];
+      const [major, minor, patch] = core.split(".").map(parse);
 
       return Version.create({
         major,
