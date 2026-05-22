@@ -5,6 +5,7 @@ import type { IExecutor, MessageIn, MessageOut, WithTransferList } from "./messa
 // Amount of tasks in the queue that will trigger creation of new worker thread.
 // NOTE this might need to be configurable in the future.
 const QUEUE_SIZE_WORKER_THRESHOLD = 5;
+const DEFAULT_MAX_HEAP_SIZE_MB = 2048;
 
 /** Executor options. */
 export type ExecutorOptions = {
@@ -17,6 +18,8 @@ export type ExecutorOptions = {
    * when there is too many tasks pending in the queue.
    */
   maxWorkers: number;
+  /** Worker heap size limit (defaults to 2048 MB) */
+  maxHeapSize?: number;
 };
 
 /** Execution pool manager. */
@@ -31,9 +34,9 @@ export class Executor<TParams extends WithTransferList, TResult> implements IExe
 
     const workers: WorkerChannel<XParams, XResult>[] = [];
     for (let i = 0; i < options.minWorkers; i++) {
-      workers.push(await initWorker(workerPath));
+      workers.push(await initWorker(workerPath, options.maxHeapSize));
     }
-    return new Executor(workers, options.maxWorkers, workerPath);
+    return new Executor(workers, options.maxWorkers, workerPath, options.maxHeapSize);
   }
   // keeps track of the indices of worker threads that are currently free and available to execute tasks
   private readonly freeWorkerIndices: number[] = [];
@@ -45,6 +48,7 @@ export class Executor<TParams extends WithTransferList, TResult> implements IExe
     private readonly workers: WorkerChannel<TParams, TResult>[],
     private readonly maxWorkers: number,
     private readonly workerPath: URL,
+    private readonly maxHeapSize?: number,
   ) {
     // intial free workers.
     for (let i = 0; i < workers.length; i++) {
@@ -64,7 +68,7 @@ export class Executor<TParams extends WithTransferList, TResult> implements IExe
     }
 
     this.isWorkerInitializing = true;
-    this.workers.push(await initWorker(this.workerPath));
+    this.workers.push(await initWorker(this.workerPath, this.maxHeapSize));
     this.freeWorkerIndices.push(this.workers.length - 1);
     this.isWorkerInitializing = false;
     onSuccess();
@@ -137,10 +141,11 @@ type Task<TParams, TResult> = {
 
 async function initWorker<XParams extends WithTransferList, XResult>(
   workerPath: URL,
+  maxOldGenerationSizeMb: number = DEFAULT_MAX_HEAP_SIZE_MB,
 ): Promise<WorkerChannel<XParams, XResult>> {
   // create a worker and initialize communication channel
   const { port1, port2 } = new MessageChannel();
-  const workerThread = new Worker(workerPath, {});
+  const workerThread = new Worker(workerPath, { resourceLimits: { maxOldGenerationSizeMb } });
   workerThread.postMessage(port1, [port1]);
   // // wait for the worker to start
   await new Promise((resolve, reject) => {

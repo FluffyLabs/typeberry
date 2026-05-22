@@ -46,6 +46,22 @@ export function logHeapLimit(logger: Logger, workerName: string): void {
   logger.info`📦 V8 heap limit (${workerName}): ${toGiB(v8.getHeapStatistics().heap_size_limit)}.`;
 }
 
+/**
+ * `resourceLimits` to pass to `new Worker(...)` so the worker isolate gets the
+ * same heap budget as the main thread.
+ *
+ * Worker threads run in their own V8 isolate and do not reliably inherit the
+ * main thread's `--max-old-space-size` (set via NODE_OPTIONS). Without this they
+ * fall back to V8's default (~2 GiB) and abort with SIGABRT (exit code 134) once
+ * they outgrow it. Call this on the main thread at spawn time so we propagate
+ * whatever limit the process was actually started with.
+ */
+export function workerResourceLimits(): { maxOldGenerationSizeMb: number } {
+  return {
+    maxOldGenerationSizeMb: Math.floor(v8.getHeapStatistics().heap_size_limit / 1024 ** 2),
+  };
+}
+
 /** Read the cgroup (v2, then v1) memory limit in bytes, or null if unlimited / unavailable. */
 function readCgroupMemoryLimit(): number | null {
   if (os.platform() !== "linux") {
