@@ -29,16 +29,17 @@ fi
 BUILD="npx @vercel/ncc build -a -s -e lmdb -e @matrixai/quic -e tsx/esm/api"
 $BUILD ./bin/jam/index.ts -o $DIST_FOLDER
 
-# Fix un-compiled worker files to point to the ones we will compile manually.
-#
 # Despite using `-a` flag, @vercel/ncc does not bundle the worker files,
 # so they still point to some external files via `import` statements.
 # To fix that, we manually build workers and move the files inside.
 
-# Build all workers separately and then the main binary
-$BUILD ./packages/workers/importer/index.ts -o $DIST_FOLDER/importer
-$BUILD ./packages/workers/jam-network/index.ts -o $DIST_FOLDER/jam-network
-$BUILD ./packages/workers/block-authorship/index.ts -o $DIST_FOLDER/block-authorship
+# NOTE: the entry MUST be `bootstrap-main.ts` (the file that actually calls
+# `initWorker()` + `main()`), NOT `index.ts`. For some reason bundling
+# `index.ts` produces a worker that does nothing on load so the app just
+# hangs and does not do anything.
+$BUILD ./packages/workers/importer/bootstrap-main.ts -o $DIST_FOLDER/importer
+$BUILD ./packages/workers/jam-network/bootstrap-main.ts -o $DIST_FOLDER/jam-network
+$BUILD ./packages/workers/block-authorship/bootstrap-main.ts -o $DIST_FOLDER/block-authorship
 
 # copy some files that should be there
 cp ./LICENSE $DIST_FOLDER/
@@ -54,8 +55,13 @@ flatten_worker() {
   mv index.js "$2.mjs"
   mv index.js.map "$2.mjs.map"
   sed -i "\$ s|sourceMappingURL=index.js.map|sourceMappingURL=$2.mjs.map|" "$2.mjs"
-  mv * ../
+  # Move the bundle up one level into $DIST_FOLDER. We can't use `mv * ../`:
+  # workers that pull in telemetry also emit gRPC asset directories (proto/,
+  # protoc-gen-validate/, xds/) that the main bundle - and earlier workers -
+  # already created up there, and `mv` refuses to merge into a non-empty dir.
+  tar cf - . | ( cd ../ && tar xf - )
   cd ../
+  rm -rf "./$1"
 }
 
 # Flatten the workers structure
