@@ -174,17 +174,17 @@ docker run --rm \
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `OTEL_ENABLED` | Enable/disable OpenTelemetry | `true` |
+| `OTEL_ENABLED` | Enable/disable OpenTelemetry (set to `true` to enable) | `false` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | URL to push metrics to | `http://localhost:9090/api/v1/otlp` |
 
 **Example:**
 
 ```bash
-# Metrics will be pushed to local prometheus with OTLP receiver.
+# Telemetry is off by default.
 jam dev 1
 
-# Disable telemetry
-OTEL_ENABLED=false jam dev 1
+# Enable telemetry: metrics will be pushed to local prometheus with OTLP receiver.
+OTEL_ENABLED=true jam dev 1
 ```
 
 ### Local Prometheus via Docker
