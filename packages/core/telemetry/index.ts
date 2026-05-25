@@ -21,7 +21,10 @@ export class Telemetry {
       isMain: config.isMain ?? false,
       serviceName: `typeberry-${config.nodeName}`,
       serviceVersion: version,
-      enabled: env.OTEL_ENABLED !== "false",
+      // Opt-in: telemetry is off unless explicitly enabled. Keeping it on by
+      // default makes long-running processes (e.g. the fuzz target) accumulate
+      // unbounded in-memory metric series for high-cardinality attributes.
+      enabled: env.OTEL_ENABLED === "true",
       otlpEndpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "http://localhost:9090/api/v1/otlp",
       resourceAttributes: {
         "worker.type": config.worker,
