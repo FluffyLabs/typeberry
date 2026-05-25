@@ -200,7 +200,7 @@ jobs:
         token: ${{ steps.cleanup-token.outputs.token }}
         use-regex: true
         keep-n-tagged: 10
-        exclude-tags: '^latest$,^[0-9]+\.[0-9]+\.[0-9]+$'
+        exclude-tags: '^latest$|^[0-9]+\.[0-9]+\.[0-9]+$'
         delete-untagged: true
         dry-run: true   # KEEP true until the first real run is reviewed, then flip to false
 
