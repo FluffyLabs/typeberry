@@ -41,6 +41,7 @@
     "jam-conformance:0.7.1": "GP_VERSION=0.7.1 tsx ./jam-conformance-071.ts",
     "jam-conformance:0.7.2": "GP_VERSION=0.7.2 tsx ./jam-conformance-072.ts",
     "javajam:0.7.1": "GP_VERSION=0.7.1 tsx ./javajam-071.ts",
+    "local:0.7.2": "GP_VERSION=0.7.2 tsx ./local.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
