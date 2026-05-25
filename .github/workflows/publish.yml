@@ -1,7 +1,9 @@
-name: Publish
+name: Build & Publish
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
   release:
@@ -9,6 +11,7 @@ on:
 
 jobs:
   publish-npm:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -78,8 +81,7 @@ jobs:
       if: steps.check-version.outputs.exists == 'true'
       run: npm dist-tag add @typeberry/${{ matrix.project }}@${{ steps.pkg-version.outputs.version }} ${{ steps.npm-tag.outputs.tag }}
 
-  publish-docker:
-    if: github.event_name == 'release'
+  docker:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -89,45 +91,123 @@ jobs:
     - uses: actions/checkout@v6
     - uses: docker/setup-buildx-action@v3
 
+    - name: Get short commit SHA
+      id: sha
+      run: echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+    - name: Get package version
+      id: version
+      run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+    # Stamp the commit into the version for everything except a final (non-pre)
+    # release. Mirrors the publish-npm VERSION_SHA logic.
+    - name: Compute VERSION_SHA build-arg
+      id: vsha
+      run: |
+        if [[ "${{ github.event_name }}" == "release" && "${{ github.event.release.prerelease }}" != "true" ]]; then
+          echo "value=" >> "$GITHUB_OUTPUT"
+        else
+          echo "value=${{ steps.sha.outputs.short }}" >> "$GITHUB_OUTPUT"
+        fi
+
+    # metadata-action auto-lowercases the image path and produces OCI labels.
+    # Tag matrix:
+    #   push to main         -> next + {version}-{sha}
+    #   release (prerelease) -> next + {version}-{sha}
+    #   release (final)      -> {version} + latest
+    #   pull_request/dispatch -> no tags (no push)
+    - name: Compute image tags and labels
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository_owner }}/typeberry
+        tags: |
+          type=raw,value=next,enable=${{ github.event_name == 'push' || (github.event_name == 'release' && github.event.release.prerelease) }}
+          type=raw,value=${{ steps.version.outputs.version }}-${{ steps.sha.outputs.short }},enable=${{ github.event_name == 'push' || (github.event_name == 'release' && github.event.release.prerelease) }}
+          type=raw,value=${{ steps.version.outputs.version }},enable=${{ github.event_name == 'release' && !github.event.release.prerelease }}
+          type=raw,value=latest,enable=${{ github.event_name == 'release' && !github.event.release.prerelease }}
+
+    # Build once and load into the local daemon so we test the exact image we
+    # push. No rebuild on push -> no cache-miss drift.
+    - name: Build Docker image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: false
+        load: true
+        tags: typeberry:test
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: |
+          VERSION_SHA=${{ steps.vsha.outputs.value }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64
+
+    - name: Test Docker image
+      run: docker run --rm typeberry:test --help
+
+    # PRs: keep the image as an artifact for external/manual benchmarking.
+    - name: Save Docker image
+      if: github.event_name == 'pull_request'
+      run: docker save typeberry:test | gzip > typeberry-image.tar.gz
+
+    - name: Upload Docker image artifact
+      if: github.event_name == 'pull_request'
+      uses: actions/upload-artifact@v4
+      with:
+        name: typeberry-docker-image
+        path: typeberry-image.tar.gz
+        retention-days: 7
+
+    # Non-PR events push the identical, already-tested image.
     - name: Log in to GitHub Container Registry
+      if: github.event_name != 'pull_request'
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Extract version from package.json
-      id: version
+    - name: Push image tags
+      if: github.event_name != 'pull_request'
+      env:
+        TAGS: ${{ steps.meta.outputs.tags }}
       run: |
-        VERSION=$(node -p "require('./package.json').version")
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "Version: $VERSION"
+        printf '%s\n' "$TAGS" | while IFS= read -r tag; do
+          [ -z "$tag" ] && continue
+          docker tag typeberry:test "$tag"
+          docker push "$tag"
+        done
 
-    - name: Extract metadata
-      id: meta
-      uses: docker/metadata-action@v5
+    # main only: prune old pre-release images, keep the 10 newest. Release tags
+    # (latest + pure semver) are excluded so they are never deleted. The moving
+    # `next` tag shares a digest with the `{version}-{sha}` tag, so old builds
+    # stay tagged and are governed by keep-n-tagged.
+    - name: Mint token for cleanup
+      if: github.event_name == 'push'
+      id: cleanup-token
+      uses: actions/create-github-app-token@v2
       with:
-        images: |
-          ghcr.io/${{ github.repository_owner }}/typeberry
-        tags: |
-          type=semver,pattern={{version}},value=${{ steps.version.outputs.version }}
-          type=raw,value=latest,enable=${{ github.event_name == 'release' && !github.event.release.prerelease }}
+        app-id: ${{ vars.PR_APP_ID }}
+        private-key: ${{ secrets.PR_APP_PRIVATE_KEY }}
 
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v6
+    - name: Cleanup old pre-release images
+      if: github.event_name == 'push'
+      uses: dataaxiom/ghcr-cleanup-action@v1
       with:
-        context: .
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        platforms: linux/amd64
+        owner: ${{ github.repository_owner }}
+        packages: '^typeberry$'
+        token: ${{ steps.cleanup-token.outputs.token }}
+        use-regex: true
+        keep-n-tagged: 10
+        exclude-tags: '^latest$,^[0-9]+\.[0-9]+\.[0-9]+$'
+        delete-untagged: true
+        dry-run: true   # KEEP true until the first real run is reviewed, then flip to false
 
   update-release-notes:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
-    needs: [publish-npm, publish-docker]
+    needs: [publish-npm, docker]
     permissions:
       contents: write
 
