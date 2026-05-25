@@ -53,6 +53,13 @@ jobs:
             output: javajam-071.txt
             artifact_name: javajam-071-results
             submodule: javajam_071
+          # Vectors committed in-repo under `test-vectors-local/` (no external submodule).
+          - display_name: local-0.7.2
+            gp_version: 0.7.2
+            script: local.ts
+            output: local.txt
+            artifact_name: local-results
+            submodule: ""
 
     env:
       GP_VERSION: ${{ matrix.gp_version }}
@@ -62,12 +69,14 @@ jobs:
       - name: Load test ref
         run: .github/scripts/load-test-ref.sh
       - name: Checkout JAM test vectors
+        if: ${{ matrix.submodule != '' }}
         uses: actions/checkout@v6
         with:
           repository: fluffylabs/test-vectors
           path: "./test-vectors"
           ref: ${{ env.TEST_VECTORS_REF }}
       - name: Fetch only required submodule (${{ matrix.submodule }})
+        if: ${{ matrix.submodule != '' }}
         working-directory: ./test-vectors
         run: |
           sed -i 's|git@github.com:|https://github.com/|g' .gitmodules
