@@ -168,12 +168,18 @@ export class PartiallyUpdatedState<T extends StateSlice = StateSlice> {
       return null;
     }
 
-    const maybeUpdatedServiceInfo = this.stateUpdate.services.updated.get(destination);
+    // make sure the service is not being ejected in the same round
+    if (this.stateUpdate.services.removed.indexOf(destination) !== -1) {
+      return null;
+    }
 
+    // check the updated info
+    const maybeUpdatedServiceInfo = this.stateUpdate.services.updated.get(destination);
     if (maybeUpdatedServiceInfo !== undefined) {
       return maybeUpdatedServiceInfo.action.account;
     }
 
+    // or fallback to the state entry
     const maybeService = this.state.getService(destination);
     if (maybeService === null) {
       return null;
