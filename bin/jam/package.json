@@ -25,7 +25,7 @@
   },
   "scripts": {
     "start": "NODE_ENV=development NODE_OPTIONS='--max-old-space-size=12288' tsx ./index.ts",
-    "inspect": "NODE_ENV=development NODE_OPTIONS='--max-old-space-size=12288' tsx --inspect ./index.ts",
+    "inspect": "NODE_ENV=development NODE_OPTIONS='--max-old-space-size=12288' tsx --inspect-brk ./index.ts",
     "build": "./build-for-npm.sh",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
     "test:e2e": "JAM_LOG=trace tsx --test test/e2e.ts",
