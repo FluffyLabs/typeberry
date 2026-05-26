@@ -69,7 +69,7 @@ export function generateNextServiceId(
   );
 
   const result = blake2b.hashBytes(encoded).raw.subarray(0, 4);
-  const number = leBytesAsU32(result) >>> 0;
+  const number = leBytesAsU32(result);
   const mod = 2 ** 32 - MIN_PUBLIC_SERVICE_INDEX - 2 ** 8;
   return tryAsServiceId((number % mod) + MIN_PUBLIC_SERVICE_INDEX);
 }
