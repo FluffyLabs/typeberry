@@ -11,7 +11,8 @@ export function getPageNumber(address: MemoryIndex | SbrkIndex) {
 }
 
 export function getStartPageIndex(address: MemoryIndex) {
-  return tryAsMemoryIndex((address >>> PAGE_SIZE_SHIFT) << PAGE_SIZE_SHIFT);
+  // >>> 0 is needed to avoid changing sign of the number
+  return tryAsMemoryIndex(((address >>> PAGE_SIZE_SHIFT) << PAGE_SIZE_SHIFT) >>> 0);
 }
 
 export function getStartPageIndexFromPageNumber(pageNumber: PageNumber) {

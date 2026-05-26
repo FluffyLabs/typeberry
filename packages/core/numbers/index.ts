@@ -132,7 +132,8 @@ export function u32AsLeBytes(value: U32): Uint8Array {
  */
 export function leBytesAsU32(uint8Array: Uint8Array): U32 {
   check`${uint8Array.length === 4} Input must be a Uint8Array of length 4`;
-  return asTypedNumber(uint8Array[0] | (uint8Array[1] << 8) | (uint8Array[2] << 16) | (uint8Array[3] << 24));
+  // >>> 0 is needed to avoid changing sign of the number (the `<< 24` produces a signed int32)
+  return asTypedNumber((uint8Array[0] | (uint8Array[1] << 8) | (uint8Array[2] << 16) | (uint8Array[3] << 24)) >>> 0);
 }
 
 /** Get the smallest value between U64 a and values given as input parameters. */

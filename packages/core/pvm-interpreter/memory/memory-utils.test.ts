@@ -77,6 +77,24 @@ describe("memory-utils", () => {
 
       assert.strictEqual(startPageIndex, expectedAddress);
     });
+
+    it("should return a non-negative index for an address with bit 31 set", () => {
+      const address = tryAsMemoryIndex(0x8e64_e123);
+      const expectedAddress = 0x8e64_e000;
+
+      const startPageIndex = getStartPageIndex(address);
+
+      assert.strictEqual(startPageIndex, expectedAddress);
+    });
+
+    it("should return start index of the last page", () => {
+      const address = tryAsMemoryIndex(MAX_MEMORY_INDEX);
+      const expectedAddress = MAX_MEMORY_INDEX - PAGE_SIZE + 1;
+
+      const startPageIndex = getStartPageIndex(address);
+
+      assert.strictEqual(startPageIndex, expectedAddress);
+    });
   });
 
   describe("getStartPageIndexFromPageNumber", () => {
