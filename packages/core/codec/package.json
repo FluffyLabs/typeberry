@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/codec",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "description": "Serialization and deserialization codec for JAM.",
   "main": "index.ts",
   "dependencies": {
