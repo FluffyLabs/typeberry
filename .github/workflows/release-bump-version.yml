@@ -88,13 +88,13 @@ jobs:
 
     - name: Generate GitHub App Token
       id: app-token
-      uses: actions/create-github-app-token@v2
+      uses: actions/create-github-app-token@v3
       with:
         app-id: ${{ vars.PR_APP_ID }}
         private-key: ${{ secrets.PR_APP_PRIVATE_KEY }}
 
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v7
+      uses: peter-evans/create-pull-request@v8
       id: pr
       with:
         token: ${{ steps.app-token.outputs.token }}
@@ -107,7 +107,7 @@ jobs:
 
 
     - name: Create Draft Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag_name: v${{ steps.version.outputs.version }}
