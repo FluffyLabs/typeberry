@@ -21,7 +21,7 @@ import {
 } from "@typeberry/state-merkleization";
 import { type LeafNode, leafComparator, type ValueHash } from "@typeberry/trie";
 import { OK, Result } from "@typeberry/utils";
-import type { LmdbRoot, SubDb } from "./root.js";
+import { LmdbRoot, type SubDb } from "./root.js";
 
 /**
  * Hybrid serialized-states db.
@@ -37,7 +37,20 @@ export class HybridSerializedStates implements StatesDb<SerializedState<LeafDb>>
   // A single shared values accessor reused by every `LeafDb` we hand out.
   private readonly valuesDb: ValuesDb;
 
-  static new(spec: ChainSpec, blake2b: Blake2b, root: LmdbRoot) {
+  static new({
+    spec,
+    blake2b,
+    dbPath,
+    readOnly,
+    ephemeral,
+  }: {
+    spec: ChainSpec;
+    blake2b: Blake2b;
+    dbPath: string;
+    readOnly?: boolean;
+    ephemeral?: boolean;
+  }) {
+    const root = LmdbRoot.new(dbPath, readOnly, ephemeral);
     return new HybridSerializedStates(spec, blake2b, root);
   }
 
@@ -107,6 +120,7 @@ export class HybridSerializedStates implements StatesDb<SerializedState<LeafDb>>
 
   async close() {
     await this.lmdbValues.close();
+    await this.root.close();
   }
 
   /** Write new large values to LMDB in one transaction. */

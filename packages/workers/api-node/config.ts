@@ -196,8 +196,13 @@ export class HybridWorkerConfig<T = undefined> implements WorkerConfig<T, Blocks
     public readonly ephemeral: boolean,
   ) {
     this.blocks = InMemoryBlocks.new();
-    const root = LmdbRoot.new(this.dbPath, false, this.ephemeral);
-    this.states = HybridSerializedStates.new(this.chainSpec, this.blake2b, root);
+    this.states = HybridSerializedStates.new({
+      spec: this.chainSpec,
+      blake2b: this.blake2b,
+      dbPath: this.dbPath,
+      ephemeral: this.ephemeral,
+      readOnly: false,
+    });
   }
 
   openDatabase(_options: { readonly: boolean } = { readonly: true }): RootDb<BlocksDb, SerializedStatesDb> {

@@ -157,9 +157,7 @@ falls back to in-memory. The hybrid backend keeps the trie-leaf sets in memory
 (so it still prunes at finality depth 10_000 to bound memory, like the in-memory
 backend) but persists the large values to an on-disk LMDB store fronted by an
 in-memory LRU cache. This keeps memory bounded while the large values live on
-disk. Because leaf sets are pruned, the fuzzer can query the state of past
-blocks only within the pruning window (roughly the last 20_000 blocks), not the
-whole session.
+disk. 
 
 **Docker example:**
 

@@ -10,7 +10,6 @@ import { InMemoryState } from "@typeberry/state";
 import { StateEntries, type StateKey } from "@typeberry/state-merkleization";
 import { deepEqual, OK, Result } from "@typeberry/utils";
 import { HybridSerializedStates } from "./hybrid-states.js";
-import { LmdbRoot } from "./root.js";
 
 let blake2b: Blake2b;
 before(async () => {
@@ -24,18 +23,21 @@ function createTempDir(suffix = "hybrid"): string {
 describe("Hybrid serialized states", () => {
   const spec = tinyChainSpec;
   const headerHash: HeaderHash = Bytes.zero(HASH_SIZE).asOpaque();
-  let tmpDir = "";
+  let dbPath = "";
 
   beforeEach(() => {
-    tmpDir = createTempDir();
+    dbPath = createTempDir();
   });
   afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true });
+    fs.rmSync(dbPath, { recursive: true });
   });
 
   it("round-trips an initial state through the on-disk values store", async () => {
-    const root = LmdbRoot.new(tmpDir);
-    const states = HybridSerializedStates.new(spec, blake2b, root);
+    const states = HybridSerializedStates.new({
+      spec,
+      blake2b,
+      dbPath,
+    });
     try {
       const empty = InMemoryState.empty(spec);
       const serialized = StateEntries.serializeInMemory(spec, blake2b, empty);
@@ -55,8 +57,7 @@ describe("Hybrid serialized states", () => {
   });
 
   it("reads large values back from disk", async () => {
-    const root = LmdbRoot.new(tmpDir);
-    const states = HybridSerializedStates.new(spec, blake2b, root);
+    const states = HybridSerializedStates.new({ spec, blake2b, dbPath });
     try {
       // > 32 bytes => stored in the values db (not embedded in the leaf).
       const big1 = BytesBlob.blobFromString("x".repeat(100));
@@ -81,8 +82,7 @@ describe("Hybrid serialized states", () => {
   });
 
   it("drops the leaf set on markUnused while values stay on disk", async () => {
-    const root = LmdbRoot.new(tmpDir);
-    const states = HybridSerializedStates.new(spec, blake2b, root);
+    const states = HybridSerializedStates.new({ spec, blake2b, dbPath });
     try {
       const empty = InMemoryState.empty(spec);
       const serialized = StateEntries.serializeInMemory(spec, blake2b, empty);
