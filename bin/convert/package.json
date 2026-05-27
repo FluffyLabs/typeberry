@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/convert",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "description": "Convert JAM-related types between different formats.",
   "repository": {
     "type": "git",
