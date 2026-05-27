@@ -10,6 +10,20 @@ DESCRIPTION=$(node -p "require('./package.json').description")
 # Start from the top-level project directory
 cd ../..
 
+# These three are native/external modules that ncc can't bundle, so they ship as
+# real prod deps and get installed by the `npm install` below. We read the
+# versions from the packages that actually declare them instead of hardcoding,
+# so the bundle never drifts from the rest of the workspace.
+#
+# @typeberry/native carries the bandersnatch native addon as platform-specific
+# optionalDependencies. ncc can't bundle the runtime `require(<platformPkg>)`
+# (the argument is computed at runtime), so shipping it as a dep lets npm pull
+# the matching `.node` binary into dist/jam/node_modules. Otherwise the node
+# falls back to the slower wasm impl.
+NATIVE_VERSION=$(node -p "require('./packages/core/crypto/package.json').dependencies['@typeberry/native']")
+LMDB_VERSION=$(node -p "require('./packages/jam/database-lmdb/package.json').dependencies.lmdb")
+QUIC_VERSION=$(node -p "require('./packages/core/networking/package.json').dependencies['@matrixai/quic']")
+
 DIST_FOLDER=./dist/jam
 
 # clean dist file
@@ -88,8 +102,9 @@ cat > ./package.json << EOF
     "jam": "./index.js"
   },
   "dependencies": {
-    "lmdb": "3.1.3",
-    "@matrixai/quic": "2.0.9"
+    "lmdb": "$LMDB_VERSION",
+    "@matrixai/quic": "$QUIC_VERSION",
+    "@typeberry/native": "$NATIVE_VERSION"
   },
   "homepage": "https://typeberry.dev",
   "repository": {
