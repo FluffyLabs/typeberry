@@ -24,6 +24,18 @@ NATIVE_VERSION=$(node -p "require('./packages/core/crypto/package.json').depende
 LMDB_VERSION=$(node -p "require('./packages/jam/database-lmdb/package.json').dependencies.lmdb")
 QUIC_VERSION=$(node -p "require('./packages/core/networking/package.json').dependencies['@matrixai/quic']")
 
+# A missing/renamed dependency key makes `node -p` print the literal "undefined"
+# and exit 0, so `set -e` won't catch it. Bail out here with a clear message
+# instead of writing a broken "undefined" version into dist/jam/package.json.
+for pair in "@typeberry/native=$NATIVE_VERSION" "lmdb=$LMDB_VERSION" "@matrixai/quic=$QUIC_VERSION"; do
+  name="${pair%%=*}"
+  ver="${pair#*=}"
+  if [ -z "$ver" ] || [ "$ver" = "undefined" ]; then
+    echo "ERROR: could not resolve version for '$name' from its package.json" >&2
+    exit 1
+  fi
+done
+
 DIST_FOLDER=./dist/jam
 
 # clean dist file
