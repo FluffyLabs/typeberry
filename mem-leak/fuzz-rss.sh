@@ -28,6 +28,17 @@ OUT="$ROOT/mem-leak/out"
 SPEC="${SPEC:-tiny}"
 NUM_BLOCKS="${NUM_BLOCKS:-100000}"
 SAMPLE_SEC="${SAMPLE_SEC:-5}"
+# Database mode for the fuzz target:
+#   DATA_PATH=/shared/data -> on-disk LMDB, NO pruning (stores every block; the
+#                             unbounded off-heap mmap growth we measured).
+#   DATA_PATH=undefined     -> in-memory DB WITH pruning. State lives on the JS
+#                             heap, so growth shows up in heapUsed/anon (not file
+#                             cache). Retained-state window = 2*FINALITY_DEPTH.
+DATA_PATH="${DATA_PATH:-/shared/data}"
+# In-memory pruning window. Only honored by a SOURCE-built image (reads
+# JAM_FUZZ_FINALITY_DEPTH); empty/0 -> typeberry default 10000. Pruning fires at
+# 2*depth, so a small value (e.g. 200) gives a fast, low-heap plateau.
+FINALITY_DEPTH="${FINALITY_DEPTH:-}"
 # Tight cgroup cap so we can see whether the off-heap LMDB growth actually OOMs
 # the process or just gets reclaimed. --memory-swap == --memory disables swap
 # (set below), so the kernel can't paper over the limit -> a clean OOM signal.
@@ -49,6 +60,10 @@ SOCK="/shared/jam_target.sock"
 
 echo "== typeberry fuzz-target RSS/heap run =="
 echo "   spec=$SPEC num_blocks=$NUM_BLOCKS sample=${SAMPLE_SEC}s mem_limit=${MEM_LIMIT:-none} run_minutes=${RUN_MINUTES:-(until done)}"
+case "$(printf '%s' "$DATA_PATH" | tr 'A-Z' 'a-z' | tr -d '[:space:]')" in
+  ""|undefined) echo "   db=IN-MEMORY + pruning (finality_depth=${FINALITY_DEPTH:-default 10000}; watch heapUsed/anon)" ;;
+  *)            echo "   db=LMDB on-disk at '$DATA_PATH' (no pruning; watch off-heap mmap)" ;;
+esac
 echo "   target=$TARGET_IMAGE"
 echo "   source=$SOURCE_IMAGE"
 echo "   out -> $OUT"
@@ -119,7 +134,8 @@ docker run -d --name "$TB" \
   -e JAM_FUZZ=1 \
   -e JAM_FUZZ_SPEC="$SPEC" \
   -e JAM_FUZZ_SOCK_PATH="$SOCK" \
-  -e JAM_FUZZ_DATA_PATH=/shared/data \
+  -e JAM_FUZZ_DATA_PATH="$DATA_PATH" \
+  -e JAM_FUZZ_FINALITY_DEPTH="$FINALITY_DEPTH" \
   -e JAM_FUZZ_LOG_LEVEL=debug \
   -e JAM_LOG=log \
   -e MEM_OUT_DIR=/out \

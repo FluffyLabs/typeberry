@@ -28,6 +28,18 @@ const logger = Logger.new(import.meta.filename, "fuzztarget");
 const FUZZ_DB_SUBDIR = "typeberry-fuzz-db";
 
 /**
+ * Finality depth for the in-memory fuzz path. The `DummyFinalizer` only prunes
+ * once a chain reaches `2 * depth`, so this also sets the retained-state window.
+ * Overridable via `JAM_FUZZ_FINALITY_DEPTH` so memory experiments can use a small
+ * window for a fast, low-heap plateau; empty/invalid keeps the previous default
+ * of 10000. No effect on the persistent/LMDB path (which never prunes).
+ */
+function inMemoryFinalityDepth(): number {
+  const raw = Number(process.env.JAM_FUZZ_FINALITY_DEPTH);
+  return Number.isFinite(raw) && raw > 0 ? raw : 10_000;
+}
+
+/**
  * Resolve the directory the fuzzer should use for its on-disk database, or
  * `undefined` for an in-memory database. The dedicated `FUZZ_DB_SUBDIR` is
  * appended so we only ever wipe a directory the fuzzer owns, never the base
@@ -128,7 +140,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
           withRelPath,
           {
             initGenesisFromAncestry: fuzzConfig.initGenesisFromAncestry,
-            dummyFinalityDepth: isPersistent ? 0 : 10_000,
+            dummyFinalityDepth: isPersistent ? 0 : inMemoryFinalityDepth(),
             pruneBlocks: !isPersistent,
             // The fuzz db is wiped on every reset, so durability is pointless:
             // skip fsync + compression to cut the per-block leaf write cost.
