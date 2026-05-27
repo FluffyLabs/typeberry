@@ -12,7 +12,7 @@ concurrency:
 
 env:
   TEST_VECTORS_REF: ffffffffffffffffffffffffffffffffffffffff # loaded in scripts/load-test-ref.sh
-  NODE_VERSION: 24.x
+  NODE_VERSION: 26.x
 
 jobs:
   test-vectors:

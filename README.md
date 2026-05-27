@@ -39,7 +39,7 @@ JAM Prize requirements
 
 ```bash
 $ node --version
-v24.0.0
+v26.0.0
 ```
 
 We recommend [NVM](https://github.com/nvm-sh/nvm) to install and manage different
@@ -85,7 +85,7 @@ $ docker run -e JAM_LOG=trace GP_VERSION=0.7.2 typeberry
 $ docker run -v $(pwd)/database:/app/database typeberry
 ```
 
-This is a two-stage build on `node:25-bookworm-slim`: the first stage compiles the
+This is a two-stage build on `node:26-bookworm-slim`: the first stage compiles the
 project into a single bundle (one per worker thread) and the final image runs that
 bundle directly via the `index.js` entrypoint, forwarding all arguments to it.
 
