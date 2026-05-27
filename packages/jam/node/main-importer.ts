@@ -6,7 +6,7 @@ import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { createImporter, ImporterConfig } from "@typeberry/importer";
 import { tryAsU16 } from "@typeberry/numbers";
 import { CURRENT_SUITE, CURRENT_VERSION, Result, resultToString, version } from "@typeberry/utils";
-import { InMemWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
+import { HybridWorkerConfig, InMemWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 import type { NodeApi } from "./main.js";
@@ -19,6 +19,8 @@ export type ImporterOptions = {
   pruneBlocks?: boolean;
   /** Open the LMDB database without fsync/compression. Only safe for throwaway dbs (e.g. fuzzing). */
   ephemeralDb?: boolean;
+  /** Persistent backend to use when `databaseBasePath` is set. Defaults to full LMDB. */
+  stateBackend?: "lmdb" | "hybrid";
 };
 
 export async function mainImporter(
@@ -58,14 +60,23 @@ export async function mainImporter(
           blake2b,
           workerParams,
         })
-      : LmdbWorkerConfig.new({
-          nodeName,
-          chainSpec,
-          blake2b,
-          dbPath,
-          workerParams,
-          ephemeral: options.ephemeralDb ?? false,
-        });
+      : options.stateBackend === "hybrid"
+        ? HybridWorkerConfig.new({
+            nodeName,
+            chainSpec,
+            blake2b,
+            dbPath,
+            workerParams,
+            ephemeral: options.ephemeralDb ?? false,
+          })
+        : LmdbWorkerConfig.new({
+            nodeName,
+            chainSpec,
+            blake2b,
+            dbPath,
+            workerParams,
+            ephemeral: options.ephemeralDb ?? false,
+          });
 
   // Initialize the database with genesis state and block if there isn't one.
   logger.info`🛢️ Opening database at ${dbPath}`;
