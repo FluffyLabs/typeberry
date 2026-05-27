@@ -12,6 +12,10 @@ export class LmdbRoot {
 
   private constructor(dbPath: string, readOnly = false, ephemeral = false) {
     this.db = lmdb.open(dbPath, {
+      // experimental options
+      mapSize: 256 * 1024 * 1024 * 1024, // 256G max db size
+      useWritemap: true,
+      pageSize: 8192,
       // For ephemeral databases (e.g. the fuzz target, which wipes on every reset)
       // durability is pointless, so we skip fsync and skip compressing the large
       // per-block leaf blobs. Both are pure overhead there and dominate the cost.
