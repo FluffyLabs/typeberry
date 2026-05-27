@@ -73,8 +73,8 @@ flatten_worker block-authorship bootstrap-generator
 # copy worker wasm files
 cp **/*.wasm ./ || true # ignore overwrite errors
 
-# Make index.js executable and insert shebang with 4GB heap size limit
-echo '#!/usr/bin/env -S node --max-old-space-size=4096' > ./temp.js && cat ./index.js >> ./temp.js && mv ./temp.js ./index.js
+# Make index.js executable and insert shebang with 7GB heap size limit
+echo '#!/usr/bin/env -S node --max-old-space-size=7168' > ./temp.js && cat ./index.js >> ./temp.js && mv ./temp.js ./index.js
 chmod +x ./index.js
 
 # build package.json file
