@@ -63,6 +63,7 @@ export async function main(
   const blake2b = await Blake2b.createHasher();
   const nodeName = config.nodeName;
   const isInMemory = config.node.databaseBasePath === undefined;
+  logger.info`🗄️ States DB: ${isInMemory ? "in-memory" : "lmdb"}.`;
 
   const { dbPath, genesisHeaderHash } = getDatabasePath(
     blake2b,

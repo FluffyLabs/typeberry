@@ -36,6 +36,11 @@ export async function mainImporter(
   logger.info`🖥️ PVM Backend: ${PvmBackend[config.pvmBackend]}.`;
   logger.info`🐇 Bandersnatch ${bandesnatchNative.isOk ? "native 🚀" : `using wasm: ${bandesnatchNative.error}`}`;
 
+  // Single source of truth for the states db backend: drives both the log line
+  // below and the worker config picked further down.
+  const dbBackend = config.node.databaseBasePath === undefined ? "in-memory" : (options.stateBackend ?? "lmdb");
+  logger.info`🗄️ States DB: ${dbBackend}.`;
+
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
   const nodeName = config.nodeName;
@@ -53,14 +58,14 @@ export async function mainImporter(
     pruneBlocks: options.pruneBlocks ?? false,
   });
   const workerConfig =
-    config.node.databaseBasePath === undefined
+    dbBackend === "in-memory"
       ? InMemWorkerConfig.new({
           nodeName,
           chainSpec,
           blake2b,
           workerParams,
         })
-      : options.stateBackend === "hybrid"
+      : dbBackend === "hybrid"
         ? HybridWorkerConfig.new({
             nodeName,
             chainSpec,
