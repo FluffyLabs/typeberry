@@ -7,7 +7,15 @@ import type { SerializedState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, BlockVerifierError } from "@typeberry/transition/block-verifier.js";
 import { DbHeaderChain, OnChain, type StfError } from "@typeberry/transition/chain-stf.js";
-import { type ErrorResult, measure, now, Result, resultToString, type TaggedError } from "@typeberry/utils";
+import {
+  type ErrorResult,
+  measure,
+  memoryTracker,
+  now,
+  Result,
+  resultToString,
+  type TaggedError,
+} from "@typeberry/utils";
 import type { Finalizer } from "./finality.js";
 import * as metrics from "./metrics.js";
 
@@ -53,6 +61,7 @@ export class Importer {
   // Hash of the block that we have the posterior state for in `state`.
   private currentHash: HeaderHash;
   private readonly metrics: ReturnType<typeof metrics.createMetrics>;
+  private readonly memory = memoryTracker();
 
   private readonly hasher: TransitionHasher;
   private readonly logger: Logger;
@@ -127,6 +136,9 @@ export class Importer {
     const duration = now() - startTime;
 
     if (maybeBestHeader.isOk) {
+      if (timeSlot % 100 === 0) {
+        this.logger.info`📊 mem #${timeSlot}: ${this.memory()}`;
+      }
       const bestHeader = maybeBestHeader.ok;
       this.logger.info`🧊 Best block: #${timeSlot} (${bestHeader.hash})`;
       this.logger.log`${timer()}`;

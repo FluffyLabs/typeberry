@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/jam",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "JAM implementation in TypeScript",
   "private": true,
   "workspaces": [
@@ -67,7 +67,7 @@
     "packages/workers/jam-network"
   ],
   "engines": {
-    "node": ">=24",
+    "node": ">=26",
     "npm": ">=10"
   },
   "scripts": {

@@ -107,8 +107,6 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
       }
 
       const buildNode = (databaseBasePath: string | undefined) => {
-        // Enable state/blocks pruning only when running in memory.
-        // For disk backend, we store everything.
         const isPersistent = databaseBasePath !== undefined;
         return mainImporter(
           {
@@ -128,11 +126,14 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
           withRelPath,
           {
             initGenesisFromAncestry: fuzzConfig.initGenesisFromAncestry,
-            dummyFinalityDepth: isPersistent ? 0 : 10_000,
-            pruneBlocks: !isPersistent,
+            // Hybrid keeps leaf sets in RAM, so they must be windowed exactly
+            // like the in-memory backend; only the large values live on disk.
+            dummyFinalityDepth: 100,
+            pruneBlocks: true,
             // The fuzz db is wiped on every reset, so durability is pointless:
-            // skip fsync + compression to cut the per-block leaf write cost.
+            // skip fsync + compression to cut the per-block value write cost.
             ephemeralDb: isPersistent,
+            stateBackend: isPersistent ? "hybrid" : "lmdb",
           },
         );
       };

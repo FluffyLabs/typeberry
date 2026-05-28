@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [24]
+        node-version: [26]
         project: [lib, jam, convert]
 
     steps:
@@ -89,7 +89,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
-    - uses: docker/setup-buildx-action@v3
+    - uses: docker/setup-buildx-action@v4
 
     - name: Get short commit SHA
       id: sha
@@ -118,7 +118,7 @@ jobs:
     #   pull_request/dispatch -> no tags (no push)
     - name: Compute image tags and labels
       id: meta
-      uses: docker/metadata-action@v5
+      uses: docker/metadata-action@v6
       with:
         images: ghcr.io/${{ github.repository_owner }}/typeberry
         tags: |
@@ -130,7 +130,7 @@ jobs:
     # Build once and load into the local daemon so we test the exact image we
     # push. No rebuild on push -> no cache-miss drift.
     - name: Build Docker image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         context: .
         push: false
@@ -162,7 +162,7 @@ jobs:
     # Non-PR events push the identical, already-tested image.
     - name: Log in to GitHub Container Registry
       if: github.event_name != 'pull_request'
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -221,7 +221,7 @@ jobs:
         echo "version=${RAW#v}" >> "$GITHUB_OUTPUT"
 
     - name: Update Release Notes
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         body: |
           ## 🐳 Docker Images
