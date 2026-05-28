@@ -135,11 +135,10 @@ export class Importer {
     const maybeBestHeader = await this.importBlockInternal(block);
     const duration = now() - startTime;
 
-    if (timeSlot % 100 === 0) {
-      this.logger.info`📊 mem #${timeSlot}: ${this.memory()}`;
-    }
-
     if (maybeBestHeader.isOk) {
+      if (timeSlot % 100 === 0) {
+        this.logger.info`📊 mem #${timeSlot}: ${this.memory()}`;
+      }
       const bestHeader = maybeBestHeader.ok;
       this.logger.info`🧊 Best block: #${timeSlot} (${bestHeader.hash})`;
       this.logger.log`${timer()}`;
