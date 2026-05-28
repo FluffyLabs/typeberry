@@ -40,7 +40,7 @@ function hashToNumberSequence(blake2b: Blake2b, entropy: Bytes<ENTROPY_BYTES>, l
     const newHash = blake2b.hashBytes(randomBytes);
     const numberStartIndex = (4 * i) % 32;
     const numberEndIndex = numberStartIndex + 4;
-    const number = leBytesAsU32(newHash.raw.subarray(numberStartIndex, numberEndIndex)) >>> 0;
+    const number = leBytesAsU32(newHash.raw.subarray(numberStartIndex, numberEndIndex));
     result[i] = number;
   }
 

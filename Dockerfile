@@ -1,5 +1,5 @@
 # ---- Stage 1: build ----
-FROM --platform=linux/amd64 node:25-bookworm-slim AS builder
+FROM --platform=linux/amd64 node:26-bookworm-slim AS builder
 
 # Short commit hash. Passed through to build-for-npm.sh as VERSION_SHA so the
 # version is stamped with it (banner + manifest) and the image never looks like a
@@ -31,7 +31,7 @@ RUN cd bin/jam && VERSION_SHA="$VERSION_SHA" bash build-for-npm.sh
 RUN cd dist/jam && npm install --omit=dev
 
 # ---- Stage 2: runtime ----
-FROM --platform=linux/amd64 node:25-bookworm-slim
+FROM --platform=linux/amd64 node:26-bookworm-slim
 
 RUN useradd -d /app -m typeberry
 

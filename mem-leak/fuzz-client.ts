@@ -13,7 +13,7 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { v1 } from "@typeberry/fuzz-proto";
 import { encodeMessageLength, handleMessageFragmentation } from "@typeberry/networking";
-import { tryAsU32, tryAsU8 } from "@typeberry/numbers";
+import { tryAsU8, tryAsU32 } from "@typeberry/numbers";
 
 /** Minimal request/response client over the length-prefixed unix socket. */
 export class FuzzClient {

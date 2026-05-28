@@ -28,15 +28,15 @@ const logger = Logger.new(import.meta.filename, "fuzztarget");
 const FUZZ_DB_SUBDIR = "typeberry-fuzz-db";
 
 /**
- * Finality depth for the in-memory fuzz path. The `DummyFinalizer` only prunes
+ * Finality depth for the in-memory/hybrid fuzz path. The `DummyFinalizer` only prunes
  * once a chain reaches `2 * depth`, so this also sets the retained-state window.
  * Overridable via `JAM_FUZZ_FINALITY_DEPTH` so memory experiments can use a small
  * window for a fast, low-heap plateau; empty/invalid keeps the previous default
  * of 10000. No effect on the persistent/LMDB path (which never prunes).
  */
-function inMemoryFinalityDepth(): number {
+function finalityDepth(): number {
   const raw = Number(process.env.JAM_FUZZ_FINALITY_DEPTH);
-  return Number.isFinite(raw) && raw > 0 ? raw : 10_000;
+  return Number.isFinite(raw) && raw > 0 ? raw : 100;
 }
 
 /**
@@ -119,8 +119,6 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
       }
 
       const buildNode = (databaseBasePath: string | undefined) => {
-        // Enable state/blocks pruning only when running in memory.
-        // For disk backend, we store everything.
         const isPersistent = databaseBasePath !== undefined;
         return mainImporter(
           {
@@ -140,11 +138,15 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
           withRelPath,
           {
             initGenesisFromAncestry: fuzzConfig.initGenesisFromAncestry,
-            dummyFinalityDepth: isPersistent ? 0 : inMemoryFinalityDepth(),
-            pruneBlocks: !isPersistent,
+            // Hybrid keeps leaf sets in RAM, so they must be windowed exactly
+            // like the in-memory backend; only the large values live on disk.
+            dummyFinalityDepth: finalityDepth(),
+            // always prune (in-memory and hybrid)
+            pruneBlocks: true,
             // The fuzz db is wiped on every reset, so durability is pointless:
-            // skip fsync + compression to cut the per-block leaf write cost.
+            // skip fsync + compression to cut the per-block value write cost.
             ephemeralDb: isPersistent,
+            stateBackend: isPersistent ? "hybrid" : "lmdb",
           },
         );
       };

@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { maxU64, minU64, sumU32, sumU64, tryAsU32, tryAsU64, u32AsLeBytes } from "./index.js";
+import { leBytesAsU32, maxU64, minU64, sumU32, sumU64, tryAsU32, tryAsU64, u32AsLeBytes } from "./index.js";
 
 describe("sumU32", () => {
   it("should sum and handle overflow", () => {
@@ -45,6 +45,28 @@ describe("u32AsLittleEndian", () => {
       const result = u32AsLeBytes(value);
 
       assert.deepStrictEqual(result, expectedResult);
+    });
+  }
+});
+
+describe("leBytesAsU32", () => {
+  const createTestCase = (bytes: number[], expectedResult: number) => ({
+    bytes: new Uint8Array(bytes),
+    expectedResult,
+  });
+
+  const testCases = [
+    createTestCase([5, 0, 0, 0], 5),
+    createTestCase([0xff, 0xff, 0xff, 0x7f], 2147483647),
+    createTestCase([0, 0, 0, 0x80], 2147483648),
+    createTestCase([0xff, 0xff, 0xff, 0xff], 2 ** 32 - 1),
+  ];
+
+  for (const { bytes, expectedResult } of testCases) {
+    it(`should decode ${bytes} as ${expectedResult}`, () => {
+      const result = leBytesAsU32(bytes);
+
+      assert.strictEqual(result, expectedResult);
     });
   }
 });

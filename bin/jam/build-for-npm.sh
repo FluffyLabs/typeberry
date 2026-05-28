@@ -10,6 +10,32 @@ DESCRIPTION=$(node -p "require('./package.json').description")
 # Start from the top-level project directory
 cd ../..
 
+# These three are native/external modules that ncc can't bundle, so they ship as
+# real prod deps and get installed by the `npm install` below. We read the
+# versions from the packages that actually declare them instead of hardcoding,
+# so the bundle never drifts from the rest of the workspace.
+#
+# @typeberry/native carries the bandersnatch native addon as platform-specific
+# optionalDependencies. ncc can't bundle the runtime `require(<platformPkg>)`
+# (the argument is computed at runtime), so shipping it as a dep lets npm pull
+# the matching `.node` binary into dist/jam/node_modules. Otherwise the node
+# falls back to the slower wasm impl.
+NATIVE_VERSION=$(node -p "require('./packages/core/crypto/package.json').dependencies['@typeberry/native']")
+LMDB_VERSION=$(node -p "require('./packages/jam/database-lmdb/package.json').dependencies.lmdb")
+QUIC_VERSION=$(node -p "require('./packages/core/networking/package.json').dependencies['@matrixai/quic']")
+
+# A missing/renamed dependency key makes `node -p` print the literal "undefined"
+# and exit 0, so `set -e` won't catch it. Bail out here with a clear message
+# instead of writing a broken "undefined" version into dist/jam/package.json.
+for pair in "@typeberry/native=$NATIVE_VERSION" "lmdb=$LMDB_VERSION" "@matrixai/quic=$QUIC_VERSION"; do
+  name="${pair%%=*}"
+  ver="${pair#*=}"
+  if [ -z "$ver" ] || [ "$ver" = "undefined" ]; then
+    echo "ERROR: could not resolve version for '$name' from its package.json" >&2
+    exit 1
+  fi
+done
+
 DIST_FOLDER=./dist/jam
 
 # clean dist file
@@ -73,8 +99,8 @@ flatten_worker block-authorship bootstrap-generator
 # copy worker wasm files
 cp **/*.wasm ./ || true # ignore overwrite errors
 
-# Make index.js executable and insert shebang with 12GB heap size (leaves headroom on a 16GB box)
-echo '#!/usr/bin/env -S node --max-old-space-size=12288' > ./temp.js && cat ./index.js >> ./temp.js && mv ./temp.js ./index.js
+# Make index.js executable and insert shebang with 7GB heap size limit
+echo '#!/usr/bin/env -S node --max-old-space-size=7168' > ./temp.js && cat ./index.js >> ./temp.js && mv ./temp.js ./index.js
 chmod +x ./index.js
 
 # build package.json file
@@ -88,8 +114,9 @@ cat > ./package.json << EOF
     "jam": "./index.js"
   },
   "dependencies": {
-    "lmdb": "3.1.3",
-    "@matrixai/quic": "2.0.9"
+    "lmdb": "$LMDB_VERSION",
+    "@matrixai/quic": "$QUIC_VERSION",
+    "@typeberry/native": "$NATIVE_VERSION"
   },
   "homepage": "https://typeberry.dev",
   "repository": {
