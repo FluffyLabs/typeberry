@@ -196,7 +196,7 @@ jobs:
       uses: dataaxiom/ghcr-cleanup-action@v1
       with:
         owner: ${{ github.repository_owner }}
-        packages: '^typeberry$'
+        packages: 'typeberry'
         token: ${{ steps.cleanup-token.outputs.token }}
         use-regex: true
         keep-n-tagged: 10
