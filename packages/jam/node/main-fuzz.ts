@@ -128,7 +128,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
             initGenesisFromAncestry: fuzzConfig.initGenesisFromAncestry,
             // Hybrid keeps leaf sets in RAM, so they must be windowed exactly
             // like the in-memory backend; only the large values live on disk.
-            dummyFinalityDepth: 100,
+            dummyFinalityDepth: 20,
             pruneBlocks: true,
             // The fuzz db is wiped on every reset, so durability is pointless:
             // skip fsync + compression to cut the per-block value write cost.
