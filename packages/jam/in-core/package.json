@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/in-core",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "In core execution utilities (refine phase).",
   "main": "index.ts",
   "scripts": {
