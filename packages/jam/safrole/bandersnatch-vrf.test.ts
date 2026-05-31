@@ -1,4 +1,4 @@
-import assert, { deepEqual } from "node:assert";
+import assert from "node:assert";
 import { before, describe, it } from "node:test";
 
 import { tryAsValidatorIndex } from "@typeberry/block";
@@ -15,7 +15,7 @@ import {
 } from "@typeberry/crypto/bandersnatch.js";
 import { deriveBandersnatchPublicKey } from "@typeberry/crypto/key-derivation.js";
 import { HASH_SIZE } from "@typeberry/hash";
-import { Result } from "@typeberry/utils";
+import { deepEqual, Result } from "@typeberry/utils";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm.js";
 
@@ -234,7 +234,7 @@ describe("Bandersnatch verification", () => {
       const input = BytesBlob.blobFromString("example input");
       const auxData = BytesBlob.blobFromString("example aux data");
       const expectedSeal = Bytes.parseBytes(
-        "0x0b6c772fe61e4e7252722633475c998be3bfcabcda2efff75edaa7c6c889f4df8b487dea89dfbdf086e74c7a3678fed15e5b39eceebf133711c7410ea99d420163f50a95249c087272604395fc694a522ac50a572ac66a4706366a69fda74500",
+        "0x0b6c772fe61e4e7252722633475c998be3bfcabcda2efff75edaa7c6c889f4df832618f0679ff329ca154a1e495a64939756928fbfb7d50587348584d0ad6e09a84014dab23c7493031bba1a2efe727cea82fe1f7c2f0d9777f0d40761083007",
         BANDERSNATCH_VRF_SIGNATURE_BYTES,
       ).asOpaque();
 
@@ -269,7 +269,7 @@ describe("Bandersnatch verification", () => {
       const input = BytesBlob.blobFromString("example input");
       const auxData = BytesBlob.blobFromString("example aux data");
       const expectedSeal = Bytes.parseBytes(
-        "0x0b6c772fe61e4e7252722633475c998be3bfcabcda2efff75edaa7c6c889f4df8b487dea89dfbdf086e74c7a3678fed15e5b39eceebf133711c7410ea99d420163f50a95249c087272604395fc694a522ac50a572ac66a4706366a69fda74500",
+        "0x0b6c772fe61e4e7252722633475c998be3bfcabcda2efff75edaa7c6c889f4df832618f0679ff329ca154a1e495a64939756928fbfb7d50587348584d0ad6e09a84014dab23c7493031bba1a2efe727cea82fe1f7c2f0d9777f0d40761083007",
         BANDERSNATCH_VRF_SIGNATURE_BYTES,
       ).asOpaque();
 
@@ -287,11 +287,11 @@ describe("Bandersnatch verification", () => {
         input,
         auxData,
       );
-
-      deepEqual(
-        verificationResult,
-        Result.ok(BytesBlob.parseBlob("0x000b0e5c06e70a23d6cfed372763de718b0c21119ea51f7afe1e69b0000de620")),
+      const expected: typeof verificationResult = Result.ok(
+        Bytes.parseBytes("0x000b0e5c06e70a23d6cfed372763de718b0c21119ea51f7afe1e69b0000de620", HASH_SIZE).asOpaque(),
       );
+
+      deepEqual(verificationResult, expected);
     });
   });
 
