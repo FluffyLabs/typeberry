@@ -1,7 +1,7 @@
 // biome-ignore-all lint/suspicious/noConsole: bin file
 
 import { Bootnode } from "@typeberry/config";
-import { loadConfig } from "@typeberry/config-node";
+import { KnownChainSpec, loadConfig } from "@typeberry/config-node";
 import { ed25519 } from "@typeberry/crypto";
 import { deriveEd25519SecretKey } from "@typeberry/crypto/key-derivation.js";
 import { Blake2b } from "@typeberry/hash";
@@ -29,7 +29,7 @@ try {
     // In fuzz mode, the logger config is determined by JAM_FUZZ_LOG_LEVEL alone;
     // any JAM_LOG filters configured at module load are discarded so behavior is
     // deterministic regardless of which env vars happen to be present.
-    Logger.configureAll("", fuzzEnv.logLevel ?? Level.LOG);
+    Logger.configureAll("", fuzzEnv.logLevel ?? (fuzzEnv.spec === KnownChainSpec.Full ? Level.TRACE : Level.LOG));
     args = synthesizeFuzzArgs(fuzzEnv);
   } else {
     const parsed = parseArgs(process.argv.slice(2), withRelPath);
