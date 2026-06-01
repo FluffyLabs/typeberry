@@ -28,8 +28,24 @@ enum ResultValues {
  * to overcome that we cache the results of getting ring commitment.
  * Note we can also tentatively populate this cache, before we even
  * reach the epoch change block.
+ *
+ * Keep number of entries low here, since matching is done by fully
+ * comparing the keys.
+ * To avoid array re-allocation we keep it's size constant and use
+ * index.
  */
-const ringCommitmentCache: CacheEntry[] = [];
+let ringCommitmentIndex = 0;
+const ringCommitmentCache: CacheEntry[] = [
+  {
+    keys: BytesBlob.empty(),
+    value: Promise.resolve(Result.error(null, () => '')),
+  },
+  {
+    keys: BytesBlob.empty(),
+    value: Promise.resolve(Result.error(null, () => '')),
+  }
+];
+
 type CacheEntry = {
   keys: BytesBlob;
   value: Promise<Result<BandersnatchRingRoot, null>>;
@@ -50,6 +66,8 @@ const FUNCTIONS = {
 // properly in ESM.
 export default FUNCTIONS;
 
+const VRF_SEAL_VERIFICATION_FAILED = () => "Bandersnatch VRF seal verification failed";
+
 async function verifyHeaderSeals(
   bandersnatch: BandernsatchWasm,
   authorKey: BandersnatchKey,
@@ -69,7 +87,7 @@ async function verifyHeaderSeals(
   );
 
   if (sealResult[RESULT_INDEX] === ResultValues.Error) {
-    return Result.error(null, () => "Bandersnatch VRF seal verification failed");
+    return Result.error(null, VRF_SEAL_VERIFICATION_FAILED);
   }
 
   return Result.ok([
@@ -93,7 +111,7 @@ async function verifySeal(
   );
 
   if (sealResult[RESULT_INDEX] === ResultValues.Error) {
-    return Result.error(null, () => "Bandersnatch VRF seal verification failed");
+    return Result.error(null, VRF_SEAL_VERIFICATION_FAILED);
   }
 
   return Result.ok(Bytes.fromBlob(sealResult.subarray(1), HASH_SIZE).asOpaque());
@@ -104,25 +122,22 @@ function getRingCommitment(
   validators: BandersnatchKey[],
 ): Promise<Result<BandersnatchRingRoot, null>> {
   const keys = BytesBlob.blobFromParts(validators.map((x) => x.raw));
-  // We currently compare the large bytes blob, but the number of entries in the cache
-  // must be low. If the cache ever grows larger, we should rather consider hashing the keys.
-  const MAX_CACHE_ENTRIES = 3;
   const cacheEntry = ringCommitmentCache.find((v) => v.keys.isEqualTo(keys));
   if (cacheEntry !== undefined) {
     return cacheEntry.value;
   }
 
   const value = getRingCommitmentNoCache(bandersnatch, keys);
-  ringCommitmentCache.push({
+  ringCommitmentCache[ringCommitmentIndex] = {
     keys,
     value,
-  });
-  if (ringCommitmentCache.length > MAX_CACHE_ENTRIES) {
-    ringCommitmentCache.shift();
-  }
+  };
+  // move the index to point at next entry to override.
+  ringCommitmentIndex = (ringCommitmentIndex + 1) % ringCommitmentCache.length;
   return value;
 }
 
+const RING_COMMITMENT_FAILED = () => "Bandersnatch ring commitment calculation failed";
 async function getRingCommitmentNoCache(
   bandersnatch: BandernsatchWasm,
   keys: BytesBlob,
@@ -130,7 +145,7 @@ async function getRingCommitmentNoCache(
   const commitmentResult = await bandersnatch.getRingCommitment(keys.raw);
 
   if (commitmentResult[RESULT_INDEX] === ResultValues.Error) {
-    return Result.error(null, () => "Bandersnatch ring commitment calculation failed");
+    return Result.error(null, RING_COMMITMENT_FAILED);
   }
 
   return Result.ok(Bytes.fromBlob(commitmentResult.subarray(1), BANDERSNATCH_RING_ROOT_BYTES).asOpaque());
@@ -168,6 +183,7 @@ async function verifyTickets(
   }));
 }
 
+const SEAL_FAILED_ERROR = () => "Seal generation failed";
 async function generateSeal(
   bandersnatch: BandernsatchWasm,
   authorKey: BandersnatchSecretSeed,
@@ -177,7 +193,7 @@ async function generateSeal(
   const result = await bandersnatch.generateSeal(authorKey.raw, input.raw, auxData.raw);
 
   if (result[RESULT_INDEX] === ResultValues.Error) {
-    return Result.error(null, () => "Seal generation failed");
+    return Result.error(null, SEAL_FAILED_ERROR);
   }
 
   return Result.ok(Bytes.fromBlob(result.subarray(1), BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque());
@@ -185,6 +201,7 @@ async function generateSeal(
 
 export type VrfOutputHash = Opaque<OpaqueHash, "VRF Output Hash">;
 
+const VRF_OUTPUT_FAILED = () => "VRF output hash generation failed";
 async function getVrfOutputHash(
   bandersnatch: BandernsatchWasm,
   authorKey: BandersnatchSecretSeed,
@@ -193,7 +210,7 @@ async function getVrfOutputHash(
   const result = await bandersnatch.getVrfOutputHash(authorKey.raw, input.raw);
 
   if (result[RESULT_INDEX] === ResultValues.Error) {
-    return Result.error(null, () => "VRF output hash generation failed");
+    return Result.error(null, VRF_OUTPUT_FAILED);
   }
 
   return Result.ok(Bytes.fromBlob(result.subarray(1), HASH_SIZE).asOpaque());
