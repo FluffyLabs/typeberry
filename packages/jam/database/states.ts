@@ -49,6 +49,14 @@ export interface StatesDb<T extends State = State> {
   /** Mark state as no longer needed. Backend may remove it asynchronously. */
   markUnused(header: HeaderHash): void;
 
+  /**
+   * Apparent on-disk size of the database in bytes, used for monitoring.
+   *
+   * Returns `null` when the size is unknown. Backends that are not persisted
+   * (e.g. in-memory) may omit the method entirely.
+   */
+  diskSizeInBytes?(): number | null;
+
   /** Close the database and free resources. */
   close(): Promise<void>;
 }

@@ -1,6 +1,7 @@
 import type { BlockView, HeaderHash, StateRootHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { PvmBackend } from "@typeberry/config";
+import { KnownChainSpec } from "@typeberry/config-node";
 import { bandersnatch, initWasm } from "@typeberry/crypto";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { createImporter, ImporterConfig } from "@typeberry/importer";
@@ -18,7 +19,7 @@ export type ImporterOptions = {
   dummyFinalityDepth?: number;
   pruneBlocks?: boolean;
   /** Open the LMDB database without fsync/compression. Only safe for throwaway dbs (e.g. fuzzing). */
-  ephemeralDb?: boolean;
+  ephemeral?: boolean;
   /** Persistent backend to use when `databaseBasePath` is set. Defaults to full LMDB. */
   stateBackend?: "lmdb" | "hybrid";
 };
@@ -57,6 +58,10 @@ export async function mainImporter(
     dummyFinalityDepth: tryAsU16(options.dummyFinalityDepth ?? 0),
     pruneBlocks: options.pruneBlocks ?? false,
   });
+
+  const ephemeral = options.ephemeral ?? false;
+  // enable compression when running full test suite
+  const compression = ephemeral && config.node.flavor === KnownChainSpec.Full;
   const workerConfig =
     dbBackend === "in-memory"
       ? InMemWorkerConfig.new({
@@ -72,7 +77,8 @@ export async function mainImporter(
             blake2b,
             dbPath,
             workerParams,
-            ephemeral: options.ephemeralDb ?? false,
+            ephemeral,
+            compression,
           })
         : LmdbWorkerConfig.new({
             nodeName,
@@ -80,7 +86,7 @@ export async function mainImporter(
             blake2b,
             dbPath,
             workerParams,
-            ephemeral: options.ephemeralDb ?? false,
+            ephemeral,
           });
 
   // Initialize the database with genesis state and block if there isn't one.

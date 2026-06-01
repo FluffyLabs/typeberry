@@ -61,14 +61,17 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
     public readonly dbPath: string,
     public readonly blake2b: Blake2b,
     public readonly ports: Map<string, ThreadPort>,
-    // When set, the underlying LMDB skips fsync and compression. Only safe for
-    // throwaway databases (the fuzz target wipes on reset). Not transferred to
-    // worker threads, so the durable main node path always gets the default.
+    // When set, the underlying LMDB skips fsync. Only safe for throwaway
+    // databases (the fuzz target wipes on reset). Not transferred to worker
+    // threads, so the durable main node path always gets the default.
     public readonly ephemeral: boolean = false,
   ) {}
 
   openDatabase(options: { readonly: boolean } = { readonly: true }): RootDb<BlocksDb, SerializedStatesDb> {
-    const lmdb = LmdbRoot.new(this.dbPath, options.readonly, this.ephemeral);
+    const lmdb = LmdbRoot.new(this.dbPath, {
+      readOnly: options.readonly,
+      ephemeral: this.ephemeral,
+    });
 
     return {
       getBlocksDb: () => LmdbBlocks.new(this.chainSpec, lmdb),
@@ -173,6 +176,7 @@ export class HybridWorkerConfig<T = undefined> implements WorkerConfig<T, Blocks
     blake2b,
     dbPath,
     ephemeral = false,
+    compression = true,
   }: {
     nodeName: string;
     chainSpec: ChainSpec;
@@ -180,8 +184,9 @@ export class HybridWorkerConfig<T = undefined> implements WorkerConfig<T, Blocks
     blake2b: Blake2b;
     dbPath: string;
     ephemeral?: boolean;
+    compression?: boolean;
   }) {
-    return new HybridWorkerConfig(nodeName, chainSpec, workerParams, blake2b, dbPath, ephemeral);
+    return new HybridWorkerConfig(nodeName, chainSpec, workerParams, blake2b, dbPath, ephemeral, compression);
   }
 
   private readonly blocks: InMemoryBlocks;
@@ -194,6 +199,7 @@ export class HybridWorkerConfig<T = undefined> implements WorkerConfig<T, Blocks
     public readonly blake2b: Blake2b,
     public readonly dbPath: string,
     public readonly ephemeral: boolean,
+    public readonly compression: boolean = true,
   ) {
     this.blocks = InMemoryBlocks.new();
     this.states = HybridSerializedStates.new({
@@ -201,6 +207,7 @@ export class HybridWorkerConfig<T = undefined> implements WorkerConfig<T, Blocks
       blake2b: this.blake2b,
       dbPath: this.dbPath,
       ephemeral: this.ephemeral,
+      compression: this.compression,
       readOnly: false,
     });
   }

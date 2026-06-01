@@ -4,6 +4,18 @@ import type { Logger } from "@typeberry/logger";
 import type { SerializedState } from "@typeberry/state-merkleization";
 import { memoryTracker, now } from "@typeberry/utils";
 
+/** Reports the current on-disk database size in bytes, or `null` when unknown. */
+export type DbSizeProvider = () => number | null;
+
+/** Format a database size for the stats line, e.g. ` db=12.34GB`. Empty when unknown. */
+function formatDbSize(bytes: number | null): string {
+  if (bytes === null) {
+    return "";
+  }
+  const mb = bytes / (1024 * 1024);
+  return mb >= 1024 ? ` db=${(mb / 1024).toFixed(2)}GB` : ` db=${mb.toFixed(1)}MB`;
+}
+
 /** Events happening during block imports. */
 export interface ImporterEventsListener {
   /**
@@ -20,17 +32,20 @@ export interface ImporterEventsListener {
 
 export class ImporterStats implements ImporterEventsListener {
   private readonly memory = memoryTracker();
+  private showDiskStats = true;
   private totalTimePrev = 0;
   private totalTime = 0;
   private totalBlocksPrev = 0;
   private totalBlocks = 0;
 
-  static new(logger: Logger) {
-    return new ImporterStats(logger);
+  static new(logger: Logger, dbSizeInBytes: DbSizeProvider = () => null) {
+    return new ImporterStats(logger, dbSizeInBytes);
   }
 
   private constructor(
     private readonly logger: Logger,
+    /** Reports the current on-disk database size in bytes, or `null` if unknown. */
+    private readonly dbSizeInBytes: DbSizeProvider = () => null,
     /** How often we are going to print the stats (i.e. every `maxBlocks` blocks) */
     private readonly maxBlocks: number = 100,
     /** Alternatively print stats when we reach `${maxTimeMs}` of total block execution. */
@@ -53,6 +68,13 @@ export class ImporterStats implements ImporterEventsListener {
       this.totalBlocks += 1;
 
       if (this.totalBlocks >= this.maxBlocks || this.totalTime >= this.maxTimeMs) {
+        // disk data (every second output)
+        if (this.showDiskStats) {
+          this.logger.info`💾 disk at #${timeSlot}: ${formatDbSize(this.dbSizeInBytes())}`;
+        }
+        this.showDiskStats = !this.showDiskStats;
+
+        // memory
         this.logger.info`📊 mem at #${timeSlot}: ${this.memory()}`;
 
         // compute block statistics (rolling window of last two rounds)

@@ -162,6 +162,10 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>>, InitStates
     this.states.removeSync(header.raw);
   }
 
+  diskSizeInBytes(): number | null {
+    return this.root.sizeInBytes();
+  }
+
   async close() {
     await Promise.all([this.states.close(), this.values.close()]);
   }
