@@ -181,8 +181,17 @@ export class OnChain {
     if (await this.isReadyForNextEpoch) {
       return;
     }
+    const timeslot = this.state.timeslot;
+    logger.log`#${timeslot} preparing for next epoch`;
     const ready = this.safrole.prepareValidatorKeysForNextEpoch(this.state.disputesRecords.punishSet);
-    this.isReadyForNextEpoch = ready.then((_) => true);
+    this.isReadyForNextEpoch = ready.then((x) => {
+      if (x.isOk) {
+        logger.log`#${timeslot} next epoch ready`;
+      } else {
+        logger.log`#${timeslot} ${x.details()}`;
+      }
+      return true;
+    });
   }
 
   private async verifySeal(timeSlot: TimeSlot, block: BlockView) {
