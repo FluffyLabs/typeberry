@@ -75,6 +75,19 @@ describe("SortedArray", { timeout: 10 }, () => {
     assert.deepStrictEqual(data.slice(), [3]);
   });
 
+  it("should return the stored element that was removed", () => {
+    const byKey = (self: [number, string], other: [number, string]) => cmp(self[0], other[0]);
+    const data = SortedArray.fromArray<[number, string]>(byKey, [
+      [1, "a"],
+      [2, "b"],
+    ]);
+
+    const removed = data.removeOne([1, "x"]);
+
+    assert.deepStrictEqual(removed, [1, "a"]);
+    assert.strictEqual(data.removeOne([5, "z"]), undefined);
+  });
+
   it("should throw when using fromSortedArray and array is not sorted", () => {
     const data = [1, 3, 2];
 

@@ -94,6 +94,37 @@ describe("SortedSet", () => {
     });
   });
 
+  describe("replace", () => {
+    const byKey = (self: [number, string], other: [number, string]) => cmp(self[0], other[0]);
+
+    it("should return the displaced element when replacing an equal one", () => {
+      const data = SortedSet.fromArrayUnique<[number, string]>(byKey, [
+        [1, "a"],
+        [2, "b"],
+      ]);
+
+      const displaced = data.replace([1, "c"]);
+
+      assert.deepStrictEqual(displaced, [1, "a"]);
+      assert.deepStrictEqual(data.slice(), [
+        [1, "c"],
+        [2, "b"],
+      ]);
+    });
+
+    it("should return undefined when inserting a fresh element", () => {
+      const data = SortedSet.fromArrayUnique<[number, string]>(byKey, [[1, "a"]]);
+
+      const displaced = data.replace([2, "b"]);
+
+      assert.strictEqual(displaced, undefined);
+      assert.deepStrictEqual(data.slice(), [
+        [1, "a"],
+        [2, "b"],
+      ]);
+    });
+  });
+
   describe("fromTwoSortedCollections", () => {
     it("should merge two sorted sets without duplicates", () => {
       const arr1 = [1, 2, 3];
