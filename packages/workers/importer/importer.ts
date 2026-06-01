@@ -8,9 +8,9 @@ import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, BlockVerifierError } from "@typeberry/transition/block-verifier.js";
 import { DbHeaderChain, OnChain, type StfError } from "@typeberry/transition/chain-stf.js";
 import { type ErrorResult, measure, Result, resultToString, type TaggedError } from "@typeberry/utils";
-import { type ImporterEventsListener, ImporterStats } from "./events-logger.js";
 import type { Finalizer } from "./finality.js";
 import * as metrics from "./metrics.js";
+import { type ImporterEventsListener, ImporterStats } from "./stats.js";
 
 export enum ImporterErrorKind {
   Verifier = 0,
@@ -90,7 +90,7 @@ export class Importer {
     this.blocks = args.blocks;
     this.states = args.states;
     this.options = args.options ?? {};
-    this.events = args.events ?? ImporterStats.new(args.logger);
+    this.events = args.events ?? ImporterStats.new(args.logger, () => this.states.diskSizeInBytes?.() ?? null);
 
     this.metrics = metrics.createMetrics();
 

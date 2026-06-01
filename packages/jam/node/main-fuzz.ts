@@ -130,9 +130,11 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
             // like the in-memory backend; only the large values live on disk.
             dummyFinalityDepth: 20,
             pruneBlocks: true,
-            // The fuzz db is wiped on every reset, so durability is pointless:
-            // skip fsync + compression to cut the per-block value write cost.
-            ephemeralDb: isPersistent,
+            // Long full-spec sessions accumulate a large, never-pruned values db.
+            // Syncing lets the OS reclaim dirty mmap pages, and compression (full
+            // spec only, where values are big) bounds its on-disk/page-cache size.
+            // Tiny stays uncompressed since its db is small and speed matters more.
+            ephemeral: isPersistent,
             stateBackend: isPersistent ? "hybrid" : "lmdb",
           },
         );

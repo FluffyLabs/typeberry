@@ -43,14 +43,16 @@ export class HybridSerializedStates implements StatesDb<SerializedState<LeafDb>>
     dbPath,
     readOnly,
     ephemeral,
+    compression,
   }: {
     spec: ChainSpec;
     blake2b: Blake2b;
     dbPath: string;
     readOnly?: boolean;
     ephemeral?: boolean;
+    compression?: boolean;
   }) {
-    const root = LmdbRoot.new(dbPath, readOnly, ephemeral);
+    const root = LmdbRoot.new(dbPath, { readOnly, ephemeral, compression });
     return new HybridSerializedStates(spec, blake2b, root);
   }
 
@@ -116,6 +118,10 @@ export class HybridSerializedStates implements StatesDb<SerializedState<LeafDb>>
     // We only remove the state from memory - values are not pruned at all,
     // but since they are stored on disk we should be safe.
     this.inMemStates.delete(header);
+  }
+
+  diskSizeInBytes(): number | null {
+    return this.root.sizeInBytes();
   }
 
   async close() {
