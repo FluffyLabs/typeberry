@@ -136,16 +136,13 @@ async function getRingCommitmentNoCache(
   return Result.ok(Bytes.fromBlob(commitmentResult.subarray(1), BANDERSNATCH_RING_ROOT_BYTES).asOpaque());
 }
 
-// One byte for result discriminator (`ResultValues`) and the rest is entropy hash.
-const TICKET_RESULT_LENGTH = 1 + HASH_SIZE;
-
 async function verifyTickets(
   bandersnatch: BandernsatchWasm,
   numberOfValidators: number,
   epochRoot: BandersnatchRingRoot,
   tickets: readonly SignedTicket[],
   entropy: EntropyHash,
-): Promise<{ isValid: boolean; entropyHash: EntropyHash }[]> {
+): Promise<{ isValid: boolean; tickets: EntropyHash[] }> {
   const contextLength = entropy.length + JAM_TICKET_SEAL.length + 1;
 
   const ticketsData = BytesBlob.blobFromParts(
@@ -162,10 +159,15 @@ async function verifyTickets(
     ticketsData,
     contextLength,
   );
-  return Array.from(BytesBlob.blobFrom(verificationResult).chunks(TICKET_RESULT_LENGTH)).map((result) => ({
-    isValid: result.raw[RESULT_INDEX] === ResultValues.Ok,
-    entropyHash: Bytes.fromBlob(result.raw.subarray(1, TICKET_RESULT_LENGTH), HASH_SIZE).asOpaque(),
-  }));
+  const isValid = verificationResult[RESULT_INDEX] === ResultValues.Ok;
+  // NOTE: in case of failure, the hashes will be all zeros, but we can safely
+  // keep the same code path.
+  const chunks = BytesBlob.blobFrom(verificationResult.subarray(1)).chunks(HASH_SIZE);
+  const results: EntropyHash[] = [];
+  for (const entropyHash of chunks) {
+    results.push(Bytes.fromBlob(entropyHash.raw, HASH_SIZE).asOpaque());
+  }
+  return { isValid, tickets: results };
 }
 
 async function generateSeal(

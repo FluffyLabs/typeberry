@@ -392,7 +392,7 @@ export class Safrole {
     // TODO [ToDr] Verify that ticket attempt is in correct range.
     const verificationResult =
       extrinsic.length === 0
-        ? []
+        ? { isValid: true, tickets: [] }
         : await bandersnatchVrf.verifyTickets(
             await this.bandersnatch,
             validators.length,
@@ -401,14 +401,14 @@ export class Safrole {
             entropy,
           );
 
-    const tickets: Ticket[] = extrinsic.map((ticket, i) => ({
-      id: verificationResult[i].entropyHash,
-      attempt: ticket.attempt,
-    }));
-
-    if (!verificationResult.every((x) => x.isValid)) {
+    if (!verificationResult.isValid) {
       return Result.error(SafroleErrorCode.BadTicketProof, () => "Safrole: invalid ticket proof in extrinsic");
     }
+
+    const tickets: Ticket[] = extrinsic.map((ticket, i) => ({
+      id: verificationResult.tickets[i],
+      attempt: ticket.attempt,
+    }));
 
     /**
      * Verify if tickets are sorted and unique
