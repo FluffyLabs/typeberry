@@ -1,11 +1,4 @@
-import {
-  type BlockView,
-  type HeaderHash,
-  type HeaderView,
-  type StateRootHash,
-  type TimeSlot,
-  tryAsTimeSlot,
-} from "@typeberry/block";
+import { type BlockView, type HeaderHash, type HeaderView, type StateRootHash, tryAsTimeSlot } from "@typeberry/block";
 import type { ChainSpec, PvmBackend } from "@typeberry/config";
 import type { BlocksDb, LeafDb, StatesDb, StateUpdateError } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
@@ -15,7 +8,7 @@ import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, BlockVerifierError } from "@typeberry/transition/block-verifier.js";
 import { DbHeaderChain, OnChain, type StfError } from "@typeberry/transition/chain-stf.js";
 import { type ErrorResult, measure, Result, resultToString, type TaggedError } from "@typeberry/utils";
-import { ImporterStats } from "./events-logger.js";
+import { type ImporterEventsListener, ImporterStats } from "./events-logger.js";
 import type { Finalizer } from "./finality.js";
 import * as metrics from "./metrics.js";
 
@@ -52,12 +45,6 @@ export type ImporterArgs = {
   options?: ImporterOptions;
   events?: ImporterEventsListener;
 };
-
-export interface ImporterEventsListener {
-  onBlockImportingStarted(timeSlot: TimeSlot): (isOk: boolean) => number;
-
-  onStart(currentBestHeaderHash: HeaderHash, currentBestState: SerializedState<LeafDb>): void;
-}
 
 const MEASURE = {
   importVerify: measure("import:verify"),

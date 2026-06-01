@@ -3,7 +3,20 @@ import type { LeafDb } from "@typeberry/database";
 import type { Logger } from "@typeberry/logger";
 import type { SerializedState } from "@typeberry/state-merkleization";
 import { memoryTracker, now } from "@typeberry/utils";
-import type { ImporterEventsListener } from "./importer.js";
+
+/** Events happening during block imports. */
+export interface ImporterEventsListener {
+  /**
+   * Invoked when we start importing a block.
+   *
+   * Must return a callback that will be triggered at the end of block import.
+   * The callback is expected to return duration between start and end events.
+   */
+  onBlockImportingStarted(timeSlot: TimeSlot): (isOk: boolean) => number;
+
+  /** Initial state of the importer. */
+  onStart(currentBestHeaderHash: HeaderHash, currentBestState: SerializedState<LeafDb>): void;
+}
 
 export class ImporterStats implements ImporterEventsListener {
   private readonly memory = memoryTracker();
