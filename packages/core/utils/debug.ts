@@ -139,7 +139,7 @@ export function measure(id: string) {
 
 const BYTES_IN_MB = 1024 * 1024;
 const toMb = (bytes: number) => (bytes / BYTES_IN_MB).toFixed(1);
-const signedMb = (bytes: number) => `${bytes >= 0 ? "+" : "-"}${toMb(bytes)}`;
+const signedMb = (bytes: number) => `${bytes >= 0 ? "+" : ""}${toMb(bytes)}`;
 
 /** Raw process memory usage, or `null` in environments without `process` (e.g. browser). */
 function rawMemoryUsage(): NodeJS.MemoryUsage | null {
