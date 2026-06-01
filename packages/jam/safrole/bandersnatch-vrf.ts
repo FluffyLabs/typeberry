@@ -38,12 +38,12 @@ let ringCommitmentIndex = 0;
 const ringCommitmentCache: CacheEntry[] = [
   {
     keys: BytesBlob.empty(),
-    value: Promise.resolve(Result.error(null, () => '')),
+    value: Promise.resolve(Result.error(null, () => "")),
   },
   {
     keys: BytesBlob.empty(),
-    value: Promise.resolve(Result.error(null, () => '')),
-  }
+    value: Promise.resolve(Result.error(null, () => "")),
+  },
 ];
 
 type CacheEntry = {
