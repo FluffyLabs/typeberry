@@ -131,10 +131,28 @@ function inspectInternal<T>(val: T, seen: WeakSet<object>): string {
   return v;
 }
 
-/** Utility function to measure time taken for some operation [ms]. */
+/**
+ * Utility function to measure time taken for some operation [ms].
+ *
+ * To reduce allocations, each timer can only track one entry.
+ *
+ */
 export function measure(id: string) {
-  const start = now();
-  return () => `${id} took ${(now() - start).toFixed(2)}ms`;
+  const response = {
+    id,
+    start: 0,
+    duration() {
+      return now() - this.start;
+    },
+    toString() {
+      return `${this.id} took ${(this.duration()).toFixed(2)}ms`;
+    },
+  };
+
+  return () => {
+    response.start = now();
+    return response;
+  };
 }
 
 const BYTES_IN_MB = 1024 * 1024;
