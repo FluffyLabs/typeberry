@@ -30,6 +30,9 @@ out/
 docs/
 README.md
 LICENSE
+# ...but the npm build script copies these into the bundle, so keep them in context.
+!README.md
+!LICENSE
 
 # Testing
 coverage/

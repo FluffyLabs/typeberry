@@ -4,6 +4,7 @@ import { KnownChainSpec, NODE_DEFAULTS } from "@typeberry/config-node";
 import { Level } from "@typeberry/logger";
 import { Command } from "./args.js";
 import {
+  fuzzDatabaseBasePath,
   JAM_FUZZ,
   JAM_FUZZ_DATA_PATH,
   JAM_FUZZ_LOG_LEVEL,
@@ -73,16 +74,13 @@ describe("readFuzzEnv", () => {
     );
   });
 
-  it("rejects missing JAM_FUZZ_DATA_PATH", () => {
-    assert.throws(
-      () =>
-        readFuzzEnv({
-          [JAM_FUZZ]: "1",
-          [JAM_FUZZ_SPEC]: "tiny",
-          [JAM_FUZZ_SOCK_PATH]: "/tmp/s",
-        }),
-      new RegExp(`${JAM_FUZZ_DATA_PATH} is required`),
-    );
+  it("allows missing JAM_FUZZ_DATA_PATH (defaults to in-memory)", () => {
+    const result = readFuzzEnv({
+      [JAM_FUZZ]: "1",
+      [JAM_FUZZ_SPEC]: "tiny",
+      [JAM_FUZZ_SOCK_PATH]: "/tmp/s",
+    });
+    assert.strictEqual(result?.dataPath, "");
   });
 
   it("rejects empty JAM_FUZZ_SOCK_PATH", () => {
@@ -173,7 +171,7 @@ describe("synthesizeFuzzArgs", () => {
     const args = synthesizeFuzzArgs({
       spec: KnownChainSpec.Tiny,
       socketPath: "/tmp/jam.sock",
-      dataPath: "/tmp/jam-data",
+      dataPath: "undefined", // in-memory sentinel
       logLevel: null,
     });
 
@@ -194,12 +192,44 @@ describe("synthesizeFuzzArgs", () => {
     const args = synthesizeFuzzArgs({
       spec: KnownChainSpec.Full,
       socketPath: "/tmp/jam.sock",
-      dataPath: "/tmp/jam-data",
+      dataPath: "undefined", // in-memory sentinel
       logLevel: null,
     });
     if (args.command !== Command.FuzzTarget) {
       throw new Error("expected FuzzTarget command");
     }
     assert.deepStrictEqual(args.args.config, [...NODE_DEFAULTS.config, '.flavor="full"']);
+  });
+
+  it("appends .database_base_path when a real data path is given", () => {
+    const args = synthesizeFuzzArgs({
+      spec: KnownChainSpec.Tiny,
+      socketPath: "/tmp/jam.sock",
+      dataPath: "/tmp/jam-data",
+      logLevel: null,
+    });
+    if (args.command !== Command.FuzzTarget) {
+      throw new Error("expected FuzzTarget command");
+    }
+    assert.deepStrictEqual(args.args.config, [
+      ...NODE_DEFAULTS.config,
+      '.flavor="tiny"',
+      '.database_base_path="/tmp/jam-data"',
+    ]);
+  });
+});
+
+describe("fuzzDatabaseBasePath", () => {
+  it("returns undefined for empty string", () => {
+    assert.strictEqual(fuzzDatabaseBasePath(""), undefined);
+  });
+
+  it("returns undefined for the 'undefined' sentinel (case/space insensitive)", () => {
+    assert.strictEqual(fuzzDatabaseBasePath("undefined"), undefined);
+    assert.strictEqual(fuzzDatabaseBasePath("  UnDeFiNeD  "), undefined);
+  });
+
+  it("returns the trimmed path for a real path", () => {
+    assert.strictEqual(fuzzDatabaseBasePath("  /tmp/jam-data  "), "/tmp/jam-data");
   });
 });

@@ -5,7 +5,8 @@ import { Level, Logger } from "@typeberry/logger";
 import { assertNever } from "@typeberry/utils";
 import { Channel } from "@typeberry/workers-api";
 import type { Api, Internal, LousyProtocol } from "@typeberry/workers-api/types.js";
-import { LmdbWorkerConfig, type TransferableConfig } from "./config.js";
+import { configTransferList, LmdbWorkerConfig, type TransferableConfig } from "./config.js";
+import { logHeapLimit, workerResourceLimits } from "./host-environment.js";
 import { ThreadPort } from "./port.js";
 
 const logger = Logger.new(import.meta.filename, "workers");
@@ -68,7 +69,7 @@ export function spawnWorker<To, From, Params>(
   logger.trace`Spawning ${protocol.name} child worker.`;
 
   const channel = new MessageChannel();
-  const worker = new Worker(bootstrapPath);
+  const worker = new Worker(bootstrapPath, { resourceLimits: workerResourceLimits() });
 
   const msg: WorkerControlPlane = {
     kind: WorkerControlPlaneMsg.Config,
@@ -77,8 +78,10 @@ export function spawnWorker<To, From, Params>(
   };
 
   logger.trace`(${protocol.name}) <-- config`;
-  // send the config down to the worker
-  worker.postMessage(msg, [msg.parentPort]);
+  // send the config down to the worker. We need to transfer the parent
+  // communication port as well as any inter-worker ports carried in the config,
+  // otherwise structured clone fails with a `DataCloneError`.
+  worker.postMessage(msg, [msg.parentPort, ...configTransferList(msg.config)]);
 
   const workerFinished = new Promise<void>((resolve, reject) => {
     worker.once("error", reject);
@@ -115,6 +118,7 @@ export async function initWorker<To, From, Params>(
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 
   logger.trace`Worker ${protocol.name} starting.`;
+  logHeapLimit(logger, protocol.name);
 
   return new Promise((resolve, reject) => {
     if (parentPort === null) {

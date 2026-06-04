@@ -39,7 +39,7 @@ JAM Prize requirements
 
 ```bash
 $ node --version
-v24.0.0
+v26.0.0
 ```
 
 We recommend [NVM](https://github.com/nvm-sh/nvm) to install and manage different
@@ -68,8 +68,9 @@ $ npm start -- fuzz-target
 Build and run typeberry using Docker:
 
 ```bash
-# Build the Docker image
-$ docker build -t typeberry .
+# Build the Docker image (stamp the commit hash into the version so the image
+# is not mistaken for a clean release; omit the build-arg to build a release).
+$ docker build --build-arg VERSION_SHA=$(git rev-parse --short HEAD) -t typeberry .
 
 # Run with default settings
 $ docker run typeberry
@@ -84,7 +85,9 @@ $ docker run -e JAM_LOG=trace GP_VERSION=0.7.2 typeberry
 $ docker run -v $(pwd)/database:/app/database typeberry
 ```
 
-The Docker container uses a minimal Alpine Linux image and forwards all arguments to `npm start`.
+This is a two-stage build on `node:26-bookworm-slim`: the first stage compiles the
+project into a single bundle (one per worker thread) and the final image runs that
+bundle directly via the `index.js` entrypoint, forwarding all arguments to it.
 
 ### Running the JSON RPC
 

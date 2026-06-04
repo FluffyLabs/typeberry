@@ -89,10 +89,10 @@ export class DummyFinalizer implements Finalizer {
     }
 
     // Check if the extended chain is long enough to trigger finality.
-    // A chain of length N has N-1 blocks built on top of chain[0].
-    // We finalize chain[0] when there are >= depth blocks after it,
-    // i.e. chain.length > depth.
-    if (extendedChain.length <= this.depth) {
+    // We use a hysteresis of `depth`: pruning only fires when the chain
+    // reaches `2 * depth`, at which point we remove `depth` blocks/states
+    // at once. This avoids pruning on every single block import.
+    if (extendedChain.length <= 2 * this.depth) {
       return null;
     }
 

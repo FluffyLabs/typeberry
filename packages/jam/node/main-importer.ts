@@ -1,12 +1,13 @@
 import type { BlockView, HeaderHash, StateRootHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { PvmBackend } from "@typeberry/config";
+import { KnownChainSpec } from "@typeberry/config-node";
 import { bandersnatch, initWasm } from "@typeberry/crypto";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { createImporter, ImporterConfig } from "@typeberry/importer";
 import { tryAsU16 } from "@typeberry/numbers";
 import { CURRENT_SUITE, CURRENT_VERSION, Result, resultToString, version } from "@typeberry/utils";
-import { InMemWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
+import { HybridWorkerConfig, InMemWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 import type { NodeApi } from "./main.js";
@@ -17,6 +18,10 @@ export type ImporterOptions = {
   initGenesisFromAncestry?: boolean;
   dummyFinalityDepth?: number;
   pruneBlocks?: boolean;
+  /** Open the LMDB database without fsync/compression. Only safe for throwaway dbs (e.g. fuzzing). */
+  ephemeral?: boolean;
+  /** Persistent backend to use when `databaseBasePath` is set. Defaults to full LMDB. */
+  stateBackend?: "lmdb" | "hybrid";
 };
 
 export async function mainImporter(
@@ -31,6 +36,11 @@ export async function mainImporter(
   logger.info`🎸 Starting importer: ${config.nodeName}.`;
   logger.info`🖥️ PVM Backend: ${PvmBackend[config.pvmBackend]}.`;
   logger.info`🐇 Bandersnatch ${bandesnatchNative.isOk ? "native 🚀" : `using wasm: ${bandesnatchNative.error}`}`;
+
+  // Single source of truth for the states db backend: drives both the log line
+  // below and the worker config picked further down.
+  const dbBackend = config.node.databaseBasePath === undefined ? "in-memory" : (options.stateBackend ?? "lmdb");
+  logger.info`🗄️ States DB: ${dbBackend}.`;
 
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
@@ -48,21 +58,36 @@ export async function mainImporter(
     dummyFinalityDepth: tryAsU16(options.dummyFinalityDepth ?? 0),
     pruneBlocks: options.pruneBlocks ?? false,
   });
+
+  const ephemeral = options.ephemeral ?? false;
+  // enable compression when running full test suite
+  const compression = ephemeral && config.node.flavor === KnownChainSpec.Full;
   const workerConfig =
-    config.node.databaseBasePath === undefined
+    dbBackend === "in-memory"
       ? InMemWorkerConfig.new({
           nodeName,
           chainSpec,
           blake2b,
           workerParams,
         })
-      : LmdbWorkerConfig.new({
-          nodeName,
-          chainSpec,
-          blake2b,
-          dbPath,
-          workerParams,
-        });
+      : dbBackend === "hybrid"
+        ? HybridWorkerConfig.new({
+            nodeName,
+            chainSpec,
+            blake2b,
+            dbPath,
+            workerParams,
+            ephemeral,
+            compression,
+          })
+        : LmdbWorkerConfig.new({
+            nodeName,
+            chainSpec,
+            blake2b,
+            dbPath,
+            workerParams,
+            ephemeral,
+          });
 
   // Initialize the database with genesis state and block if there isn't one.
   logger.info`🛢️ Opening database at ${dbPath}`;

@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/rpc",
-  "version": "0.6.0",
+  "version": "0.8.4",
   "description": "A JSON RPC server for Typeberry.",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",
@@ -17,6 +17,8 @@
     "test:e2e-run": "NODE_ENV=development GP_VERSION=0.7.2 tsx --test ./test/e2e.ts"
   },
   "dependencies": {
+    "@opentelemetry/auto-instrumentations-node": "0.76.0",
+    "@opentelemetry/sdk-node": "0.218.0",
     "@typeberry/block": "*",
     "@typeberry/bytes": "*",
     "@typeberry/codec": "*",
@@ -34,7 +36,7 @@
     "@typeberry/state": "*",
     "@typeberry/utils": "*",
     "minimist": "1.2.8",
-    "ws": "8.18.2",
+    "ws": "^8.20.1",
     "zod": "^4.1.13"
   },
   "devDependencies": {

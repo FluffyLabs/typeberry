@@ -132,6 +132,7 @@ export class OnChain {
   public readonly chainSpec: ChainSpec;
   public readonly state: State & WithStateView;
   public readonly hasher: TransitionHasher;
+  public readonly measureAccumulate: ReturnType<typeof measure>;
 
   /** Wire up a full on-chain STF from its dependencies. */
   static assemble(args: {
@@ -172,6 +173,7 @@ export class OnChain {
     this.preimages = new Preimages(state, hasher.blake2b);
 
     this.authorization = new Authorization(chainSpec, state);
+    this.measureAccumulate = measure(`import:accumulate (${PvmBackend[options.pvm]})`);
   }
 
   /** Pre-populate things worth caching for the next epoch. */
@@ -179,8 +181,17 @@ export class OnChain {
     if (await this.isReadyForNextEpoch) {
       return;
     }
+    const timeslot = this.state.timeslot;
+    logger.log`#${timeslot} preparing for next epoch`;
     const ready = this.safrole.prepareValidatorKeysForNextEpoch(this.state.disputesRecords.punishSet);
-    this.isReadyForNextEpoch = ready.then((_) => true);
+    this.isReadyForNextEpoch = ready.then((x) => {
+      if (x.isOk) {
+        logger.log`#${timeslot} next epoch ready`;
+      } else {
+        logger.log`#${timeslot} ${x.details()}`;
+      }
+      return true;
+    });
   }
 
   private async verifySeal(timeSlot: TimeSlot, block: BlockView) {
@@ -302,14 +313,14 @@ export class OnChain {
     const { preimages, ...preimagesRest } = preimagesResult.ok;
     assertEmpty(preimagesRest);
 
-    const timerAccumulate = measure(`import:accumulate (${PvmBackend[this.accumulate.options.pvm]})`);
+    const timerAccumulate = this.measureAccumulate();
     // accumulate
     const accumulateResult = await this.accumulate.transition({
       slot: timeSlot,
       reports: availableReports,
       entropy: entropy[0],
     });
-    logger.log`${timerAccumulate()}`;
+    logger.log`#${timeSlot} ${timerAccumulate}`;
     if (accumulateResult.isError) {
       return stfError(StfErrorKind.Accumulate, accumulateResult);
     }
