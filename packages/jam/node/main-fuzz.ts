@@ -69,6 +69,12 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
 
   const fuzzDbBase = resolveFuzzDbBase(config.node.databaseBasePath);
 
+  // Using experimental fjall-hybrid by default, with an option to test lmdb as well.
+  const hybridStateBackend = process.env.JAM_FUZZ_DB === "lmdb-hybrid" ? "lmdb-hybrid" : "fjall-hybrid";
+  if (fuzzDbBase !== undefined) {
+    logger.info`🗄️ Fuzz persistent backend: ${hybridStateBackend}.`;
+  }
+
   let runningNode: NodeApi | null = null;
 
   const chainSpec = getChainSpec(config.node.flavor);
@@ -135,7 +141,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
             // spec only, where values are big) bounds its on-disk/page-cache size.
             // Tiny stays uncompressed since its db is small and speed matters more.
             ephemeral: isPersistent,
-            stateBackend: isPersistent ? "hybrid" : "lmdb",
+            stateBackend: isPersistent ? hybridStateBackend : "lmdb",
           },
         );
       };

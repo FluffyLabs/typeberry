@@ -18,10 +18,12 @@ export type ImporterOptions = {
   initGenesisFromAncestry?: boolean;
   dummyFinalityDepth?: number;
   pruneBlocks?: boolean;
-  /** Open the LMDB database without fsync/compression. Only safe for throwaway dbs (e.g. fuzzing). */
+  /** Open the database without fsync/compression. Only safe for throwaway dbs (e.g. fuzzing). */
   ephemeral?: boolean;
-  /** Persistent backend to use when `databaseBasePath` is set. Defaults to full LMDB. */
-  stateBackend?: "lmdb" | "hybrid";
+  /**
+   * Persistent backend to use when `databaseBasePath` is set. Defaults to full LMDB.
+   */
+  stateBackend?: "lmdb" | "lmdb-hybrid" | "fjall-hybrid";
 };
 
 export async function mainImporter(
@@ -70,8 +72,8 @@ export async function mainImporter(
           blake2b,
           workerParams,
         })
-      : dbBackend === "hybrid"
-        ? HybridWorkerConfig.new({
+      : dbBackend === "lmdb-hybrid" || dbBackend === "fjall-hybrid"
+        ? await HybridWorkerConfig.new({
             nodeName,
             chainSpec,
             blake2b,
@@ -79,6 +81,7 @@ export async function mainImporter(
             workerParams,
             ephemeral,
             compression,
+            backend: dbBackend === "lmdb-hybrid" ? "lmdb" : "fjall",
           })
         : LmdbWorkerConfig.new({
             nodeName,
