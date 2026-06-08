@@ -10,13 +10,13 @@
     },
     {
       "name": "parse hex from char codes",
-      "ops": 453736.11,
-      "margin": 0.15
+      "ops": 438341.4,
+      "margin": 1.0
     },
     {
       "name": "parse hex from string nibbles",
-      "ops": 259821.07,
-      "margin": 0.52
+      "ops": 248872.07,
+      "margin": 1.0
     }
   ],
   "fastest": {
