@@ -8,7 +8,8 @@ import { tinyChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/crypto";
 import { Logger } from "@typeberry/logger";
 import { createTestPeerPair, MockNetwork } from "@typeberry/networking/testing.js";
-import { OK } from "@typeberry/utils";
+import { AcceptTicketsValidator, ValidationError } from "@typeberry/ticket-pool";
+import { OK, Result } from "@typeberry/utils";
 import { Connections } from "../peers.js";
 import { StreamManager } from "../stream-manager.js";
 import { TicketDistributionTask } from "./ticket-distribution.js";
@@ -40,6 +41,10 @@ describe("TicketDistributionTask", () => {
 
     // Use real TicketDistributionTask
     const ticketTask = TicketDistributionTask.start(streamManager, connections, tinyChainSpec);
+
+    // Default validator accepts every ticket so the test asserts purely on distribution
+    // behaviour. Tests that exercise the rejection path overwrite this.
+    ticketTask.setTicketValidator(new AcceptTicketsValidator());
 
     // Intercept received tickets by wrapping onTicketReceived behavior
     // The task already adds received tickets to pending queue via addTicket,
@@ -273,7 +278,7 @@ describe("TicketDistributionTask", () => {
     assert.deepStrictEqual(peer2.receivedTickets[0].ticket, ticket);
   });
 
-  it("should NOT redistribute ticket if validation callback returns false", async () => {
+  it("should NOT redistribute ticket if validator rejects", async () => {
     const self = await init("self");
     const peer1 = await init("peer1");
     const peer2 = await init("peer2");
@@ -283,21 +288,23 @@ describe("TicketDistributionTask", () => {
     await tick();
 
     // Validation always rejects
-    self.ticketTask.setOnTicketReceived(async () => false);
+    self.ticketTask.setTicketValidator({
+      validate: async () => Result.error(ValidationError.InvalidProof, () => "rejected"),
+    });
 
     const ticket = createTestTicket(0);
     peer1.ticketTask.addTicket(TEST_EPOCH, ticket);
     peer1.ticketTask.maintainDistribution();
     await tick();
 
-    // self.addTicket was NOT called (callback returned false), so nothing to redistribute
+    // self.addTicket was NOT called (validator rejected), so nothing to redistribute
     assert.strictEqual(self.receivedTickets.length, 0);
     self.ticketTask.maintainDistribution();
     await tick();
     assert.strictEqual(peer2.receivedTickets.length, 0);
   });
 
-  it("should redistribute ticket if validation callback returns true", async () => {
+  it("should redistribute ticket if validator accepts", async () => {
     const self = await init("self");
     const peer1 = await init("peer1");
     const peer2 = await init("peer2");
@@ -306,19 +313,40 @@ describe("TicketDistributionTask", () => {
     self.openConnection(peer2);
     await tick();
 
-    // Validation always accepts
-    self.ticketTask.setOnTicketReceived(async () => true);
-
+    // Default init() already wires an AcceptTicketsValidator
     const ticket = createTestTicket(0);
     peer1.ticketTask.addTicket(TEST_EPOCH, ticket);
     peer1.ticketTask.maintainDistribution();
     await tick();
 
-    // self.addTicket WAS called (callback returned true)
+    // self.addTicket WAS called
     assert.strictEqual(self.receivedTickets.length, 1);
     self.ticketTask.maintainDistribution();
     await tick();
     assert.strictEqual(peer2.receivedTickets.length, 1);
     assert.deepStrictEqual(peer2.receivedTickets[0].ticket, ticket);
+  });
+
+  it("replacePool overwrites the redistribution pool", async () => {
+    const self = await init("self");
+    const peer1 = await init("peer1");
+
+    self.openConnection(peer1);
+    await tick();
+
+    // Locally added tickets first
+    self.ticketTask.addTicket(TEST_EPOCH, createTestTicket(0));
+    self.ticketTask.addTicket(TEST_EPOCH, createTestTicket(1));
+
+    // Pool dump replaces with a different set
+    const dump = [createTestTicket(2), createTestTicket(3)];
+    self.ticketTask.replacePool(TEST_EPOCH, dump);
+
+    self.ticketTask.maintainDistribution();
+    await tick();
+
+    assert.strictEqual(peer1.receivedTickets.length, 2);
+    assert.deepStrictEqual(peer1.receivedTickets[0].ticket, dump[0]);
+    assert.deepStrictEqual(peer1.receivedTickets[1].ticket, dump[1]);
   });
 });

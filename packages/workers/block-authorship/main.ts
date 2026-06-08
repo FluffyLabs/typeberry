@@ -8,7 +8,6 @@ import {
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
-import type { SignedTicket } from "@typeberry/block/tickets.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections/hash-dictionary.js";
 import { HashSet } from "@typeberry/collections/hash-set.js";
@@ -28,11 +27,13 @@ import bandersnatchVrf from "@typeberry/safrole/bandersnatch-vrf.js";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import { JAM_FALLBACK_SEAL, JAM_TICKET_SEAL } from "@typeberry/safrole/constants.js";
 import { type SafroleSealingKeys, SafroleSealingKeysKind, type State, type ValidatorData } from "@typeberry/state";
+import { VerifiedTicketPool } from "@typeberry/ticket-pool";
 import { asOpaqueType, Result } from "@typeberry/utils";
 import type { WorkerConfig } from "@typeberry/workers-api";
 import { type BlockSealInput, Generator } from "./generator.js";
 import type { BlockAuthorshipConfig, GeneratorInternal } from "./protocol.js";
 import { generateTickets } from "./ticket-generator.js";
+import { BandersnatchTicketValidator } from "./ticket-validator.js";
 
 const logger = Logger.new(import.meta.filename, "author");
 
@@ -257,90 +258,20 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
     return Result.ok(state.sealingKeySeries);
   }
 
-  // Ticket pool: epochIndex -> {ticket, id}[]
-  // IDs (entropyHash) are computed at receipt time via verifyTickets(), enabling O(1) dedup by ID.
-  const ticketPool = new Map<number, { ticket: SignedTicket; id: EntropyHash }[]>();
-  const ticketIdSets = new Map<number, HashSet<EntropyHash>>();
+  // Verified tickets for the current epoch, keyed by entropy hash (ticket id).
+  // Tickets enter via `validator.validate(...)` which both verifies and inserts.
+  const verifiedPool = new VerifiedTicketPool();
 
-  /**
-   * Adds pre-verified tickets to the in-memory ticket pool for the given epoch.
-   *
-   * Clears the pool when the epoch changes (we only ever need tickets for one epoch at a time).
-   * Deduplicates by ticket ID using a HashSet for O(1) lookup — prevents double-counting
-   * tickets received from multiple peers or via both CE-131 and CE-132 paths.
-   */
-  function addToPool(epochIndex: number, verifiedTickets: { ticket: SignedTicket; id: EntropyHash }[]) {
-    if (ticketPool.size > 0 && !ticketPool.has(epochIndex)) {
-      ticketPool.clear();
-      ticketIdSets.clear();
-    }
-    const existing = ticketPool.get(epochIndex) ?? [];
-    let idSet = ticketIdSets.get(epochIndex) ?? null;
-    if (idSet === null) {
-      idSet = HashSet.new();
-      ticketIdSets.set(epochIndex, idSet);
-    }
-    for (const entry of verifiedTickets) {
-      if (!idSet.has(entry.id)) {
-        existing.push(entry);
-        idSet.insert(entry.id);
-      }
-    }
-    ticketPool.set(epochIndex, existing);
-  }
-
-  /**
-   * Returns the correct tickets entropy for verification given the current state.
-   *
-   * When `state` is from epoch E-1 (i.e. we haven't produced epoch E's first block yet),
-   * the ticket entropy for epoch E is at index 1 (not yet shifted).
-   * After the epoch transition it moves to index 2.
-   */
-  function getTicketEntropy(epochIndex: number, state: State): EntropyHash {
-    const stateEpoch = Math.floor(state.timeslot / chainSpec.epochLength);
-    return epochIndex > stateEpoch ? state.entropy[1] : state.entropy[2];
-  }
-
-  /**
-   * Verifies tickets against the ring commitment and current epoch entropy, then adds valid
-   * ones to the pool with their computed IDs.
-   *
-   * Called both for own generated tickets and for tickets relayed from peers.
-   * Verification computes the ticket ID (entropyHash) which is then used for
-   * deduplication in the pool and later when building the extrinsic.
-   */
-  async function verifyAndAddToPool(epochIndex: number, tickets: SignedTicket[], state: State): Promise<boolean> {
-    const results = await bandersnatchVrf.verifyTickets(
-      bandersnatch,
-      state.designatedValidatorData.length,
-      state.epochRoot,
-      tickets,
-      getTicketEntropy(epochIndex, state),
-    );
-    if (results.tickets.length !== tickets.length) {
-      logger.error`verifyTickets returned ${results.tickets.length} results for ${tickets.length} tickets`;
-      return false;
-    }
-    // Batch verification: either the whole batch is valid or none of the tickets are.
-    if (!results.isValid) {
-      return false;
-    }
-    const verified = tickets.map((ticket, i) => ({ ticket, id: results.tickets[i] }));
-    addToPool(epochIndex, verified);
-    return verified.length > 0;
-  }
+  const ticketValidator = new BandersnatchTicketValidator(bandersnatch, chainSpec, verifiedPool, () =>
+    states.getState(blocks.getBestHeaderHash()),
+  );
 
   // Receive a single ticket from peers (via jam-network worker).
   // Returns true if the ticket passed validation so jam-network can decide whether to redistribute it.
   networkingComms.setOnReceivedTickets(async ({ epochIndex, ticket }) => {
     logger.log`Received ticket from peer for epoch ${epochIndex}`;
-    const hash = blocks.getBestHeaderHash();
-    const state = states.getState(hash);
-    if (state === null) {
-      logger.warn`Cannot verify received ticket: no state available`;
-      return false;
-    }
-    return await verifyAndAddToPool(epochIndex, [ticket], state);
+    const result = await ticketValidator.validate(epochIndex, ticket);
+    return result.isOk;
   });
 
   const isFastForward = config.workerParams.isFastForward;
@@ -410,8 +341,10 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
         } else {
           logger.log`Generated ${ticketsResult.ok.length} tickets for epoch ${epoch}. Distributing...`;
 
-          // Verify own tickets to get IDs, then add to pool
-          await verifyAndAddToPool(epoch, ticketsResult.ok, state);
+          // Verify own tickets (validator stores them in the pool with computed ids).
+          for (const ticket of ticketsResult.ok) {
+            await ticketValidator.validate(epoch, ticket);
+          }
 
           // Send directly to network worker (bypasses main thread)
           await networkingComms.sendTickets({ epochIndex: epoch, tickets: ticketsResult.ok });
@@ -445,6 +378,13 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
       await buildTicketAuthorshipCache(selingKeySeriesResult.ok, entropy);
     }
 
+    // On every epoch boundary, push the authoritative ticket pool to networking so it
+    // can replace its redistribution set; this keeps the two sides from drifting.
+    if (isNewEpoch) {
+      const dumpTickets = verifiedPool.getForEpoch(epoch).map((entry) => entry.ticket);
+      await networkingComms.sendReplaceTicketPool({ epochIndex: epoch, tickets: dumpTickets });
+    }
+
     const sealData = getSealData(selingKeySeriesResult.ok, keys, timeSlot, entropy);
 
     if (sealData !== null && currentValidatorData !== null) {
@@ -455,13 +395,14 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
       }
 
       logger.log`Attempting to create a block using ${sealData.logId} located at validator index ${validatorIndex}.`;
-      const currentEpochTickets = ticketPool.get(epoch) ?? [];
+      const currentEpochTickets = verifiedPool.getForEpoch(epoch);
       const newBlock = await generator.nextBlockView(
         validatorIndex,
         key.bandersnatchSecret,
         sealPayload,
         timeSlot,
-        currentEpochTickets, // {ticket, id}[] — already verified
+        // VerifiedTicket has the same `{ ticket, id }` shape the generator expects.
+        [...currentEpochTickets],
       );
       counter += 1;
       lastGeneratedSlot = timeSlot;

@@ -20,6 +20,7 @@
     "@typeberry/state": "*",
     "@typeberry/state-merkleization": "*",
     "@typeberry/telemetry": "*",
+    "@typeberry/ticket-pool": "*",
     "@typeberry/transition": "*",
     "@typeberry/utils": "*",
     "@typeberry/workers-api": "*",

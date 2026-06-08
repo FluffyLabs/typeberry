@@ -1,0 +1,21 @@
+{
+  "name": "@typeberry/ticket-pool",
+  "version": "0.6.0",
+  "description": "In-memory Safrole ticket pools and validation abstraction shared between block authorship and networking.",
+  "main": "index.ts",
+  "dependencies": {
+    "@typeberry/block": "*",
+    "@typeberry/bytes": "*",
+    "@typeberry/collections": "*",
+    "@typeberry/crypto": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/utils": "*"
+  },
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0",
+  "type": "module"
+}
