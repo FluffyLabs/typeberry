@@ -39,7 +39,9 @@ export class BandersnatchTicketValidator implements TicketValidator {
     }
 
     const entropy = this.getTicketEntropy(epochIndex, state);
-    const results = await bandersnatchVrf.verifyTickets(
+    // Batch verifier: a single `isValid` covers the whole batch and `tickets` holds the
+    // computed id per input ticket. We only ever pass one ticket here.
+    const { isValid, tickets } = await bandersnatchVrf.verifyTickets(
       this.bandersnatch,
       state.designatedValidatorData.length,
       state.epochRoot,
@@ -47,19 +49,18 @@ export class BandersnatchTicketValidator implements TicketValidator {
       entropy,
     );
 
-    if (results.length !== 1) {
-      logger.error`verifyTickets returned ${results.length} results for 1 ticket`;
+    if (tickets.length !== 1) {
+      logger.error`verifyTickets returned ${tickets.length} results for 1 ticket`;
       return Result.error(ValidationError.ValidatorUnavailable, () => "verifier returned unexpected result count");
     }
 
-    const [result] = results;
-    if (!result.isValid) {
+    if (!isValid) {
       return Result.error(ValidationError.InvalidProof, () => "bandersnatch proof rejected");
     }
 
-    const verified: VerifiedTicket = { ticket, id: result.entropyHash };
+    const verified: VerifiedTicket = { ticket, id: tickets[0] };
     this.pool.add(epochIndex, [verified]);
-    return Result.ok({ id: result.entropyHash });
+    return Result.ok({ id: tickets[0] });
   }
 
   /**
