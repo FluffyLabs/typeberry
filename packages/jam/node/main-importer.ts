@@ -14,6 +14,8 @@ import type { NodeApi } from "./main.js";
 
 const zeroHash = Bytes.zero(HASH_SIZE).asOpaque<StateRootHash>();
 
+export type StateBackend = "lmdb" | "lmdb-hybrid" | "fjall-hybrid";
+
 export type ImporterOptions = {
   initGenesisFromAncestry?: boolean;
   dummyFinalityDepth?: number;
@@ -23,7 +25,7 @@ export type ImporterOptions = {
   /**
    * Persistent backend to use when `databaseBasePath` is set. Defaults to full LMDB.
    */
-  stateBackend?: "lmdb" | "lmdb-hybrid" | "fjall-hybrid";
+  stateBackend?: StateBackend;
 };
 
 export async function mainImporter(

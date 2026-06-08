@@ -13,7 +13,7 @@ import { logHostEnvironment } from "@typeberry/workers-api-node";
 import { getChainSpec } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 import type { NodeApi } from "./main.js";
-import { mainImporter } from "./main-importer.js";
+import { mainImporter, type StateBackend } from "./main-importer.js";
 
 export type FuzzConfig = {
   version: FuzzVersion;
@@ -26,6 +26,10 @@ const logger = Logger.new(import.meta.filename, "fuzztarget");
 
 /** Dedicated subdirectory under the configured base path that the fuzzer owns and wipes. */
 const FUZZ_DB_SUBDIR = "typeberry-fuzz-db";
+
+const FUZZ_DB_FJALL: StateBackend = "fjall-hybrid";
+const FUZZ_DB_LMDB: StateBackend = "lmdb-hybrid";
+const FUZZ_DB_OPTIONS: string[] = [FUZZ_DB_FJALL, FUZZ_DB_LMDB];
 
 /**
  * Resolve the directory the fuzzer should use for its on-disk database, or
@@ -69,8 +73,12 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
 
   const fuzzDbBase = resolveFuzzDbBase(config.node.databaseBasePath);
 
+  const rawFuzzDb = process.env.JAM_FUZZ_DB?.trim() ?? "";
   // Using experimental fjall-hybrid by default, with an option to test lmdb as well.
-  const hybridStateBackend = process.env.JAM_FUZZ_DB === "lmdb-hybrid" ? "lmdb-hybrid" : "fjall-hybrid";
+  const hybridStateBackend = rawFuzzDb === "" ? FUZZ_DB_FJALL : rawFuzzDb;
+  if (!isValidStateBackend(hybridStateBackend)) {
+    throw new Error(`JAM_FUZZ_DB must be one of: ${FUZZ_DB_OPTIONS} (got: "${rawFuzzDb}").`);
+  }
   if (fuzzDbBase !== undefined) {
     logger.info`🗄️ Fuzz persistent backend: ${hybridStateBackend}.`;
   }
@@ -173,4 +181,8 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
       wipeFuzzDb(fuzzDbBase).catch(() => {});
     }
   };
+}
+
+function isValidStateBackend(val: string): val is StateBackend {
+  return FUZZ_DB_OPTIONS.indexOf(val) !== -1;
 }
