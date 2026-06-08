@@ -1,3 +1,4 @@
+import os from "node:os";
 import { setTimeout } from "node:timers/promises";
 import {
   type EntropyHash,
@@ -8,6 +9,7 @@ import {
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
+import type { SignedTicket } from "@typeberry/block/tickets.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections/hash-dictionary.js";
 import { HashSet } from "@typeberry/collections/hash-set.js";
@@ -28,14 +30,33 @@ import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import { JAM_FALLBACK_SEAL, JAM_TICKET_SEAL } from "@typeberry/safrole/constants.js";
 import { type SafroleSealingKeys, SafroleSealingKeysKind, type State, type ValidatorData } from "@typeberry/state";
 import { VerifiedTicketPool } from "@typeberry/ticket-pool";
-import { asOpaqueType, Result } from "@typeberry/utils";
+import { asOpaqueType, now, Result } from "@typeberry/utils";
 import type { WorkerConfig } from "@typeberry/workers-api";
 import { type BlockSealInput, Generator } from "./generator.js";
 import type { BlockAuthorshipConfig, GeneratorInternal } from "./protocol.js";
 import { generateTickets } from "./ticket-generator.js";
+import { TicketGeneratorPool } from "./ticket-generator-pool.js";
 import { BandersnatchTicketValidator } from "./ticket-validator.js";
 
 const logger = Logger.new(import.meta.filename, "author");
+
+/**
+ * Extra validators to generate tickets for, beyond the minimum needed to fill the
+ * accumulator. Filling requires `epochLength` distinct valid tickets; each validator
+ * yields `ticketsPerValidator`. The margin guards against a few tickets failing to
+ * land (extra tickets are simply dropped by the accumulator).
+ */
+const TICKET_GENERATION_VALIDATOR_MARGIN = 8;
+/** Leave this many cores for the main thread, importer, network and the OS. */
+const TICKET_POOL_RESERVED_CORES = 4;
+/** Hard cap on ticket-generation worker threads. */
+const TICKET_POOL_MAX_WORKERS = 12;
+
+/** Number of worker threads to use for parallel ticket generation. */
+function ticketPoolWorkerCount(): number {
+  const cores = os.availableParallelism?.() ?? os.cpus().length;
+  return Math.max(1, Math.min(cores - TICKET_POOL_RESERVED_CORES, TICKET_POOL_MAX_WORKERS));
+}
 
 type Config = WorkerConfig<BlockAuthorshipConfig>;
 
@@ -278,6 +299,119 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
   let lastGeneratedSlot = startTimeSlot;
   let ticketsGeneratedForEpoch = -1;
 
+  // --- Parallel ticket generation (worker pool) --------------------------
+  // Ring-VRF proof generation is CPU-bound and dominates the contest period.
+  // We offload it to a pool of worker threads so the authoring thread stays free
+  // and wall-clock time drops ~linearly with the number of workers. If the pool
+  // cannot be created we fall back to the single-threaded path in the loop.
+  let pool: TicketGeneratorPool | null = null;
+  if (keys.length > 0) {
+    try {
+      const workerCount = ticketPoolWorkerCount();
+      logger.info`Initialising ticket-generation worker pool (${workerCount} workers)…`;
+      pool = await TicketGeneratorPool.create(workerCount);
+      logger.info`Ticket-generation worker pool ready (${pool.workerCount} workers).`;
+    } catch (e) {
+      logger.warn`Could not start ticket-generation worker pool; falling back to single-threaded generation: ${e}`;
+      pool = null;
+    }
+  }
+
+  // Batch-verify own freshly-generated tickets (a single ring check covers the
+  // whole batch) and add them to the pool with their computed ids. Cheaper than
+  // validating each ticket individually.
+  async function addOwnTicketsToPool(epoch: Epoch, tickets: SignedTicket[]) {
+    const s = states.getState(blocks.getBestHeaderHash());
+    if (s === null) {
+      return;
+    }
+    const stateEpoch = Math.floor(s.timeslot / chainSpec.epochLength);
+    const entropy = epoch > stateEpoch ? s.entropy[1] : s.entropy[2];
+    const { isValid, tickets: ids } = await bandersnatchVrf.verifyTickets(
+      bandersnatch,
+      s.designatedValidatorData.length,
+      s.epochRoot,
+      tickets,
+      entropy,
+    );
+    if (!isValid || ids.length !== tickets.length) {
+      logger.warn`Own ticket batch failed verification for epoch ${epoch}`;
+      return;
+    }
+    verifiedPool.add(
+      epoch,
+      tickets.map((ticket, i) => ({ ticket, id: ids[i] })),
+    );
+  }
+
+  // Parallel generation is launched once per epoch when we enter its contest
+  // period; `parallelGenDone` resolves once every shard has been pooled.
+  let parallelGenEpoch = -1;
+  let parallelGenDone: Promise<void> | null = null;
+
+  async function ensureParallelGeneration(workerPool: TicketGeneratorPool, state: State, timeSlot: TimeSlot) {
+    const epoch = tryAsEpoch(Math.floor(timeSlot / chainSpec.epochLength));
+    const slotInEpoch = timeSlot % chainSpec.epochLength;
+
+    // Tickets can only be submitted during the contest period.
+    if (slotInEpoch >= chainSpec.contestLength) {
+      return;
+    }
+
+    // Launch generation once, when we first reach this epoch's contest period.
+    if (parallelGenEpoch !== epoch) {
+      parallelGenEpoch = epoch;
+
+      const ringKeys = state.designatedValidatorData.map((d) => d.bandersnatch);
+      const designatedKeySet = HashSet.from(ringKeys);
+      const validatorKeys = keys
+        .filter((k) => designatedKeySet.has(k.bandersnatchPublic))
+        .map((k) => ({ secret: k.bandersnatchSecret, public: k.bandersnatchPublic }));
+
+      if (validatorKeys.length === 0) {
+        parallelGenDone = Promise.resolve();
+        return;
+      }
+
+      // Snapshot the ticket entropy for the whole epoch (pre-transition it is at
+      // index 1, after the transition it shifts to 2 — same underlying value).
+      const stateEpoch = Math.floor(state.timeslot / chainSpec.epochLength);
+      const entropy = epoch > stateEpoch ? state.entropy[1] : state.entropy[2];
+
+      // Generate just enough validators to fill the accumulator, plus a margin.
+      const needed =
+        Math.ceil(chainSpec.epochLength / chainSpec.ticketsPerValidator) + TICKET_GENERATION_VALIDATOR_MARGIN;
+      const selected = validatorKeys.slice(0, Math.min(validatorKeys.length, needed));
+
+      const startTime = now();
+      logger.info`Epoch ${epoch}: generating tickets for ${selected.length} validators across ${workerPool.workerCount} worker threads…`;
+
+      parallelGenDone = workerPool
+        .generate(ringKeys, selected, entropy, chainSpec.ticketsPerValidator, async (tickets) => {
+          // Runs on the authoring thread as each shard completes.
+          await addOwnTicketsToPool(epoch, tickets);
+          await networkingComms.sendTickets({ epochIndex: epoch, tickets });
+        })
+        .then(() => {
+          logger.info`Epoch ${epoch}: ticket generation complete in ${((now() - startTime) / 1000).toFixed(1)}s.`;
+        })
+        .catch((e) => {
+          logger.warn`Epoch ${epoch}: parallel ticket generation failed: ${e}`;
+        });
+    }
+
+    // In fast-forward mode the authoring loop would otherwise blast through the
+    // contest period before the off-thread tickets are generated and included,
+    // leaving the accumulator unfilled (→ Keys-mode fallback). Wait for
+    // generation to finish so there are tickets to include. The wait is seconds
+    // (parallel), not minutes (serial), and the thread is idle (workers do the
+    // CPU work). In real-time mode the 6s/slot cadence gives ample time, so no
+    // wait is needed.
+    if (isFastForward && parallelGenDone !== null) {
+      await parallelGenDone;
+    }
+  }
+
   while (!isFinished) {
     const hash = blocks.getBestHeaderHash();
     const state = states.getState(hash);
@@ -313,7 +447,13 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
     const slotInEpoch = timeSlot % chainSpec.epochLength;
     const shouldGenerateTickets = slotInEpoch < chainSpec.contestLength && ticketsGeneratedForEpoch !== epoch;
 
-    if (shouldGenerateTickets) {
+    if (pool !== null) {
+      // Preferred path: offload generation to the worker pool. Keeps this thread
+      // free; in fast-forward it briefly waits so authoring doesn't outrun the
+      // off-thread generation.
+      await ensureParallelGeneration(pool, state, timeSlot);
+    } else if (shouldGenerateTickets) {
+      // Single-threaded fallback (worker pool unavailable).
       const designatedValidatorData = state.designatedValidatorData;
       const ringKeys = designatedValidatorData.map((data) => data.bandersnatch);
       const designatedKeySet = HashSet.from(ringKeys);
@@ -419,5 +559,6 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
   }
 
   logger.info`🎁 Block Authorship finished. Closing channel.`;
+  await pool?.destroy();
   await db.close();
 }

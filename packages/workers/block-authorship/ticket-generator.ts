@@ -23,6 +23,10 @@ export type ValidatorKey = {
  *
  * Each validator key produces `ticketsPerValidator` tickets using ring VRF proofs.
  * The ring keys define the anonymous set - only members can produce valid proofs.
+ *
+ * All resolved validators are generated in a single batched native call
+ * ({@link bandersnatchVrf.generateTicketsForValidators}) which reuses the ring
+ * prover setup across the batch.
  */
 export async function generateTickets(
   bandersnatch: BandernsatchWasm,
@@ -31,37 +35,46 @@ export async function generateTickets(
   entropy: EntropyHash,
   ticketsPerValidator: number,
 ): Promise<Result<SignedTicket[], TicketGeneratorError>> {
-  const allTickets: SignedTicket[] = [];
-
+  // Resolve each validator's index within the ring, skipping any that are not
+  // members (only ring members can produce valid proofs).
+  const proverKeyIndices: number[] = [];
+  const secrets: BandersnatchSecretSeed[] = [];
   for (const validatorKey of validatorKeys) {
     const proverIndex = ringKeys.findIndex((k) => k.isEqualTo(validatorKey.public));
     if (proverIndex < 0) {
       logger.warn`Validator public key not found in the ring, skipping ticket generation for this key`;
       continue;
     }
-
-    const ticketResult = await bandersnatchVrf.generateTickets(
-      bandersnatch,
-      ringKeys,
-      proverIndex,
-      validatorKey.secret,
-      entropy,
-      ticketsPerValidator,
-    );
-
-    if (ticketResult.isOk) {
-      allTickets.push(...ticketResult.ok);
-    } else {
-      logger.warn`Failed to generate tickets for validator, skipping`;
-    }
+    proverKeyIndices.push(proverIndex);
+    secrets.push(validatorKey.secret);
   }
 
-  if (validatorKeys.length > 0 && allTickets.length === 0) {
+  if (proverKeyIndices.length === 0) {
+    // No resolvable validators: an error if some were requested, else just empty.
+    if (validatorKeys.length > 0) {
+      return Result.error(
+        TicketGeneratorError.TicketGenerationFailed,
+        () => "Failed to generate tickets for all validators",
+      );
+    }
+    return Result.ok([]);
+  }
+
+  const result = await bandersnatchVrf.generateTicketsForValidators(
+    bandersnatch,
+    ringKeys,
+    proverKeyIndices,
+    secrets,
+    entropy,
+    ticketsPerValidator,
+  );
+
+  if (result.isError) {
     return Result.error(
       TicketGeneratorError.TicketGenerationFailed,
       () => "Failed to generate tickets for all validators",
     );
   }
 
-  return Result.ok(allTickets);
+  return Result.ok(result.ok.flat());
 }

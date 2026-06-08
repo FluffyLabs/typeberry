@@ -29,23 +29,27 @@ describe("Ticket Generator", () => {
 
     mock.method(
       bandersnatchVrf,
-      "generateTickets",
+      "generateTicketsForValidators",
       async (
         _bandersnatch: unknown,
         _ringKeys: unknown,
-        _proverIndex: unknown,
-        _key: unknown,
+        proverKeyIndices: readonly number[],
+        _secrets: unknown,
         _entropy: unknown,
         ticketsPerValidator: number,
       ) => {
-        const tickets: SignedTicket[] = [];
-        for (let attempt = 0; attempt < ticketsPerValidator; attempt++) {
-          tickets.push({
-            attempt: tryAsTicketAttempt(attempt),
-            signature: Bytes.zero(784).asOpaque(),
-          } as SignedTicket);
-        }
-        return Result.ok(tickets);
+        // One ticket list per resolved validator, in validator-major order.
+        const perValidator = proverKeyIndices.map(() => {
+          const tickets: SignedTicket[] = [];
+          for (let attempt = 0; attempt < ticketsPerValidator; attempt++) {
+            tickets.push({
+              attempt: tryAsTicketAttempt(attempt),
+              signature: Bytes.zero(784).asOpaque(),
+            } as SignedTicket);
+          }
+          return tickets;
+        });
+        return Result.ok(perValidator);
       },
     );
   });
