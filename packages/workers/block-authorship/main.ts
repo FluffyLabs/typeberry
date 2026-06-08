@@ -317,13 +317,15 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
       tickets,
       getTicketEntropy(epochIndex, state),
     );
-    if (results.length !== tickets.length) {
-      logger.error`verifyTickets returned ${results.length} results for ${tickets.length} tickets`;
+    if (results.tickets.length !== tickets.length) {
+      logger.error`verifyTickets returned ${results.tickets.length} results for ${tickets.length} tickets`;
       return false;
     }
-    const verified = tickets
-      .map((ticket, i) => ({ ticket, id: results[i].entropyHash }))
-      .filter((_, i) => results[i].isValid);
+    // Batch verification: either the whole batch is valid or none of the tickets are.
+    if (!results.isValid) {
+      return false;
+    }
+    const verified = tickets.map((ticket, i) => ({ ticket, id: results.tickets[i] }));
     addToPool(epochIndex, verified);
     return verified.length > 0;
   }
