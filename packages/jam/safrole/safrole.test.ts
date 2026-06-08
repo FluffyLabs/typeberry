@@ -92,10 +92,10 @@ describe("Safrole", () => {
 
   beforeEach(async () => {
     mock.method(bandersnatchVrf, "verifyTickets", () =>
-      Promise.resolve([
-        { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
-        { isValid: true, entropyHash: Bytes.fill(HASH_SIZE, 1) },
-      ]),
+      Promise.resolve({
+        isValid: true,
+        tickets: [Bytes.zero(HASH_SIZE), Bytes.fill(HASH_SIZE, 1)],
+      }),
     );
     blake2b = await Blake2b.createHasher();
   });
@@ -186,7 +186,7 @@ describe("Safrole", () => {
 
   it("should return bad ticket proof error", async () => {
     mock.method(bandersnatchVrf, "verifyTickets", () =>
-      Promise.resolve([{ isValid: false, entropyHash: Bytes.zero(HASH_SIZE) }]),
+      Promise.resolve({ isValid: false, tickets: [Bytes.zero(HASH_SIZE)] }),
     );
     const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator);
     const state: SafroleState = {
@@ -237,10 +237,10 @@ describe("Safrole", () => {
 
   it("should return duplicated ticket error", async () => {
     mock.method(bandersnatchVrf, "verifyTickets", () =>
-      Promise.resolve([
-        { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
-        { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
-      ]),
+      Promise.resolve({
+        isValid: true,
+        tickets: [Bytes.zero(HASH_SIZE), Bytes.zero(HASH_SIZE)],
+      }),
     );
     const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator);
     const state: SafroleState = {
@@ -295,10 +295,10 @@ describe("Safrole", () => {
 
   it("should return bad ticket order error", async () => {
     mock.method(bandersnatchVrf, "verifyTickets", () =>
-      Promise.resolve([
-        { isValid: true, entropyHash: Bytes.fill(HASH_SIZE, 1) },
-        { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
-      ]),
+      Promise.resolve({
+        isValid: true,
+        tickets: [Bytes.fill(HASH_SIZE, 1), Bytes.zero(HASH_SIZE)],
+      }),
     );
     const punishSet = SortedSet.fromArray<Ed25519Key>(hashComparator);
     const state: SafroleState = {
