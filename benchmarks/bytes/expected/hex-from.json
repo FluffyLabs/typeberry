@@ -5,18 +5,18 @@
   "results": [
     {
       "name": "parse hex using `Number` with NaN checking",
-      "ops": 67822.92,
-      "margin": 0.1
+      "ops": 83811.61,
+      "margin": 0.68
     },
     {
       "name": "parse hex from char codes",
-      "ops": 438341.4,
-      "margin": 1.0
+      "ops": 441899.6,
+      "margin": 0.29
     },
     {
       "name": "parse hex from string nibbles",
-      "ops": 248872.07,
-      "margin": 1.0
+      "ops": 253385.58,
+      "margin": 1.31
     }
   ],
   "fastest": {
