@@ -5,12 +5,12 @@
   "results": [
     {
       "name": "2 gets + conditional set",
-      "ops": 47751.86,
+      "ops": 46992.12,
       "margin": 2.0
     },
     {
       "name": "1 get 1 set",
-      "ops": 49092.29,
+      "ops": 37868.19,
       "margin": 10
     }
   ],
