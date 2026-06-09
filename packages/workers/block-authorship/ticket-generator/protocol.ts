@@ -2,11 +2,6 @@ import type { Transferable } from "node:worker_threads";
 
 /**
  * Parameters for a single ticket-generation shard sent to a worker thread.
- *
- * All fields are raw bytes / typed arrays so they survive structured-clone
- * across the worker boundary without losing class identity. The worker calls
- * `batchGenerateRingVrfForValidators` with exactly these and returns the raw
- * signature bytes.
  */
 export class TicketGenShardParams {
   constructor(
@@ -26,9 +21,7 @@ export class TicketGenShardParams {
 
   /**
    * No transfers: `ringKeysData` and `inputsData` are shared across all shards,
-   * so transferring would detach them for the other shards. The buffers are
-   * small (tens of KB), so a structured-clone copy is negligible next to the
-   * hundreds-of-ms-per-proof generation cost.
+   * so transferring would detach them for the other shards.
    */
   getTransferList(): Transferable[] {
     return [];
@@ -44,10 +37,7 @@ export class TicketGenShardResult {
 
   /**
    * No transfers: the native binding returns a view backed by external/WASM
-   * memory that cannot be detached, so transferring it throws inside the worker
-   * (and the framework's error fallback then also throws on the non-cloneable
-   * `details` closure, hanging the task). Letting structured-clone copy the bytes
-   * is correct and cheap (tens of KB per shard).
+   * memory that cannot be detached, so transferring it throws inside the worker.
    */
   getTransferList(): Transferable[] {
     return [];

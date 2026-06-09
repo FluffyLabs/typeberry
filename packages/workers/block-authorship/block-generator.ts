@@ -39,7 +39,7 @@ const logger = Logger.new(import.meta.filename, "author");
  */
 export type BlockSealInput = Opaque<BytesBlob, "Seal">;
 
-/** Construction arguments for {@link Generator}. */
+/** Construction arguments for `BlockGenerator`. */
 export type GeneratorArgs = {
   chainSpec: ChainSpec;
   bandersnatch: BandernsatchWasm;
@@ -49,7 +49,7 @@ export type GeneratorArgs = {
   states: StatesDb;
 };
 
-export class Generator {
+export class BlockGenerator {
   private readonly metrics: ReturnType<typeof metrics.createMetrics>;
 
   public readonly chainSpec: ChainSpec;
@@ -59,9 +59,9 @@ export class Generator {
   private readonly blocks: BlocksDb;
   private readonly states: StatesDb;
 
-  /** Build a {@link Generator} from its collaborators. */
+  /** Build a block generator from its collaborators. */
   static new(args: GeneratorArgs) {
-    return new Generator(args);
+    return new BlockGenerator(args);
   }
 
   private constructor(args: GeneratorArgs) {
@@ -137,7 +137,7 @@ export class Generator {
    */
   private prepareTicketsExtrinsic(
     pendingTickets: { ticket: SignedTicket; id: EntropyHash }[],
-    state: ReturnType<Generator["getLastHeaderAndState"]>["lastState"],
+    state: ReturnType<BlockGenerator["getLastHeaderAndState"]>["lastState"],
   ): SignedTicket[] {
     if (pendingTickets.length === 0) {
       return [];

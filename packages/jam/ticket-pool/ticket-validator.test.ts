@@ -16,12 +16,12 @@ function makeTicket(): SignedTicket {
 }
 
 describe("AcceptTicketsValidator", () => {
-  it("returns ok with null id", async () => {
+  it("returns ok with zero id", async () => {
     const v = new AcceptTicketsValidator();
-    const res = await v.validate(E1, makeTicket());
+    const res = await v.validate(E1, [makeTicket()]);
     assert.strictEqual(res.isOk, true);
     if (res.isOk) {
-      assert.strictEqual(res.ok.id, null);
+      assert.strictEqual(res.ok[0].id.toString(), "0x00");
     }
   });
 });
@@ -29,7 +29,7 @@ describe("AcceptTicketsValidator", () => {
 describe("DenyTicketsValidator", () => {
   it("returns ValidatorUnavailable", async () => {
     const v = new DenyTicketsValidator();
-    const res = await v.validate(E1, makeTicket());
+    const res = await v.validate(E1, [makeTicket()]);
     assert.strictEqual(res.isError, true);
     if (res.isError) {
       assert.strictEqual(res.error, ValidationError.ValidatorUnavailable);

@@ -303,7 +303,7 @@ describe("Bandersnatch verification", () => {
       const genResult = await bandersnatchVrf.generateTickets(
         await bandersnatchWasm,
         ringKeys,
-        proverIndex,
+        [proverIndex],
         secrets[proverIndex],
         entropy,
         2,
@@ -313,12 +313,13 @@ describe("Bandersnatch verification", () => {
 
       const commitment = await bandersnatchVrf.getRingCommitment(await bandersnatchWasm, ringKeys);
       assert.ok(commitment.isOk);
+      assert.strictEqual(genResult.ok.length, 1);
 
       const verifyResult = await bandersnatchVrf.verifyTickets(
         await bandersnatchWasm,
         ringKeys.length,
         commitment.ok,
-        genResult.ok,
+        genResult.ok[0],
         entropy,
       );
 

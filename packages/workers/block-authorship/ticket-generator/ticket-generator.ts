@@ -25,7 +25,7 @@ export type ValidatorKey = {
  * The ring keys define the anonymous set - only members can produce valid proofs.
  *
  * All resolved validators are generated in a single batched native call
- * ({@link bandersnatchVrf.generateTicketsForValidators}) which reuses the ring
+ * ({@link bandersnatchVrf.generateTickets}) which reuses the ring
  * prover setup across the batch.
  */
 export async function generateTickets(
@@ -60,7 +60,7 @@ export async function generateTickets(
     return Result.ok([]);
   }
 
-  const result = await bandersnatchVrf.generateTicketsForValidators(
+  const result = await bandersnatchVrf.generateTickets(
     bandersnatch,
     ringKeys,
     proverKeyIndices,

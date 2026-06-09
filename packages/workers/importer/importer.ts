@@ -34,7 +34,7 @@ export type ImporterOptions = {
   pruneBlocks?: boolean;
 };
 
-/** Construction arguments for {@link Importer}. */
+/** Construction arguments for `Importer`. */
 export type ImporterArgs = {
   spec: ChainSpec;
   pvm: PvmBackend;
@@ -70,7 +70,7 @@ export class Importer {
   private readonly events: ImporterEventsListener;
 
   /**
-   * Build an {@link Importer} connected to the best state loaded from `states`.
+   * Build an `Importer` connected to the best state loaded from `states`.
    *
    * Throws if the best state cannot be loaded — callers are expected to treat that
    * as a programmer error (the DB should be initialized before reaching here).

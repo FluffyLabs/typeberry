@@ -8,7 +8,7 @@
 import { ConcurrentWorker } from "@typeberry/concurrent";
 import { initWasm } from "@typeberry/crypto";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
-import { type TicketGenShardParams, TicketGenShardResult } from "./ticket-pool-protocol.js";
+import { type TicketGenShardParams, TicketGenShardResult } from "./protocol.js";
 
 async function main() {
   await initWasm();

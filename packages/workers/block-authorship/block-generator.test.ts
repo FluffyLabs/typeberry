@@ -34,7 +34,7 @@ import { JAM_FALLBACK_SEAL } from "@typeberry/safrole/constants.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
 import { asOpaqueType, deepEqual, Result } from "@typeberry/utils";
-import { type BlockSealInput, Generator } from "./generator.js";
+import { BlockGenerator, type BlockSealInput } from "./block-generator.js";
 
 // Test validator data - need 6 validators to match tinyChainSpec.validatorsCount
 const validatorDataArray = [
@@ -208,7 +208,7 @@ describe("Generator", () => {
       const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
       const statesDb = createMockStatesDb(state);
 
-      const generator = Generator.new({
+      const generator = BlockGenerator.new({
         chainSpec: tinyChainSpec,
         bandersnatch,
         keccakHasher,
@@ -237,7 +237,7 @@ describe("Generator", () => {
       const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
       const statesDb = createMockStatesDb(state);
 
-      const generator = Generator.new({
+      const generator = BlockGenerator.new({
         chainSpec: tinyChainSpec,
         bandersnatch,
         keccakHasher,
@@ -290,7 +290,7 @@ describe("Generator", () => {
       const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
       const statesDb = createMockStatesDb(state);
 
-      const generator = Generator.new({
+      const generator = BlockGenerator.new({
         chainSpec: tinyChainSpec,
         bandersnatch,
         keccakHasher,
@@ -334,7 +334,7 @@ describe("Generator", () => {
       const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
       const statesDb = createMockStatesDb(state);
 
-      const generator = Generator.new({
+      const generator = BlockGenerator.new({
         chainSpec: tinyChainSpec,
         bandersnatch,
         keccakHasher,
@@ -380,7 +380,7 @@ describe("Generator", () => {
       const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
       const statesDb = createMockStatesDb(state);
 
-      const generator = Generator.new({
+      const generator = BlockGenerator.new({
         chainSpec: tinyChainSpec,
         bandersnatch,
         keccakHasher,
@@ -425,7 +425,7 @@ describe("Generator", () => {
       const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
       const statesDb = createMockStatesDb(state);
 
-      const generator = Generator.new({
+      const generator = BlockGenerator.new({
         chainSpec: tinyChainSpec,
         bandersnatch,
         keccakHasher,
@@ -479,7 +479,7 @@ describe("Generator", () => {
       const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
       const statesDb = createMockStatesDb(state);
 
-      const generator = Generator.new({
+      const generator = BlockGenerator.new({
         chainSpec: tinyChainSpec,
         bandersnatch,
         keccakHasher,

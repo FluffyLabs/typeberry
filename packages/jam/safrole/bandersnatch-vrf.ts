@@ -45,6 +45,10 @@ const ringCommitmentCache: CacheEntry[] = [
     keys: BytesBlob.empty(),
     value: Promise.resolve(Result.error(null, () => "")),
   },
+  {
+    keys: BytesBlob.empty(),
+    value: Promise.resolve(Result.error(null, () => "")),
+  },
 ];
 
 type CacheEntry = {
@@ -60,7 +64,6 @@ const FUNCTIONS = {
   generateSeal,
   getVrfOutputHash,
   generateTickets,
-  generateTicketsForValidators,
 };
 
 // NOTE [ToDr] We export the entire object to allow mocking in tests.
@@ -224,69 +227,11 @@ async function getVrfOutputHash(
 const GENERATE_RESULT_ENTRY_LENGTH = 1 + BANDERSNATCH_PROOF_BYTES;
 
 /**
- * Generates signed tickets for all attempts at once using batch ring VRF.
- */
-async function generateTickets(
-  bandersnatch: BandernsatchWasm,
-  ringKeys: BandersnatchKey[],
-  proverKeyIndex: number,
-  key: BandersnatchSecretSeed,
-  entropy: EntropyHash,
-  ticketsPerValidator: number,
-): Promise<Result<SignedTicket[], null>> {
-  // Build VRF inputs: JAM_TICKET_SEAL || entropy || attempt_byte for each attempt
-  const vrfInputParts: Uint8Array[] = [];
-  for (let attempt = 0; attempt < ticketsPerValidator; attempt++) {
-    vrfInputParts.push(BytesBlob.blobFromParts([JAM_TICKET_SEAL, entropy.raw, Uint8Array.of(attempt)]).raw);
-  }
-  const attemptLength = 1;
-  const vrfInputDataLen = JAM_TICKET_SEAL.length + entropy.length + attemptLength;
-  const inputsData = BytesBlob.blobFromParts(vrfInputParts).raw;
-  const ringKeysData = BytesBlob.blobFromParts(ringKeys.map((k) => k.raw)).raw;
-
-  const result = await bandersnatch.batchGenerateRingVrf(
-    ringKeysData,
-    proverKeyIndex,
-    key.raw,
-    inputsData,
-    vrfInputDataLen,
-  );
-
-  const tickets: SignedTicket[] = [];
-  for (let attempt = 0; attempt < ticketsPerValidator; attempt++) {
-    const offset = attempt * GENERATE_RESULT_ENTRY_LENGTH;
-    const resultByte = result[offset];
-
-    if (resultByte === ResultValues.Error) {
-      return Result.error(null, () => `Ring VRF proof generation failed for attempt ${attempt}`);
-    }
-
-    const signature = Bytes.fromBlob(
-      new Uint8Array(result.subarray(offset + 1, offset + GENERATE_RESULT_ENTRY_LENGTH)),
-      BANDERSNATCH_PROOF_BYTES,
-    ).asOpaque();
-
-    tickets.push(
-      SignedTicket.create({
-        attempt: tryAsTicketAttempt(attempt),
-        signature,
-      }),
-    );
-  }
-
-  return Result.ok(tickets);
-}
-
-/**
  * Batch-generate signed tickets for multiple validators in a single native call,
  * reusing the ring prover setup across all of them. Returns one ticket list per
  * validator, in the same order as `proverKeyIndices`/`secrets`.
- *
- * This amortises the (relatively cheap) prover setup across the batch; the
- * dominant cost remains the per-proof ring VRF generation, so the speedup over
- * calling {@link generateTickets} per validator is modest (~14%).
  */
-async function generateTicketsForValidators(
+async function generateTickets(
   bandersnatch: BandernsatchWasm,
   ringKeys: BandersnatchKey[],
   proverKeyIndices: readonly number[],
@@ -358,7 +303,7 @@ export function parseTicketsBatchOutput(
         return Result.error(null, () => `Ring VRF proof generation failed for validator ${v}, attempt ${attempt}`);
       }
       const signature = Bytes.fromBlob(
-        new Uint8Array(result.subarray(offset + 1, offset + GENERATE_RESULT_ENTRY_LENGTH)),
+        result.subarray(offset + 1, offset + GENERATE_RESULT_ENTRY_LENGTH),
         BANDERSNATCH_PROOF_BYTES,
       ).asOpaque();
       tickets.push(SignedTicket.create({ attempt: tryAsTicketAttempt(attempt), signature }));

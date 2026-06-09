@@ -64,7 +64,8 @@
       "!**/benchmarks/**/output/**/*",
       "!**/test-vectors/**/*",
       "!**/packages/misc/builder/pkg.ts",
-      "!**/web/docs"
+      "!**/web/docs",
+      "!**/packages/configs/typeberry-dev-full.json"
     ]
   }
 }

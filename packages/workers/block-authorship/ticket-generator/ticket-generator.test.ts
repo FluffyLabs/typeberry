@@ -29,7 +29,7 @@ describe("Ticket Generator", () => {
 
     mock.method(
       bandersnatchVrf,
-      "generateTicketsForValidators",
+      "generateTickets",
       async (
         _bandersnatch: unknown,
         _ringKeys: unknown,

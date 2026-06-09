@@ -1,66 +1,63 @@
 import type { EntropyHash, Epoch } from "@typeberry/block";
 import type { SignedTicket } from "@typeberry/block/tickets.js";
 import type { ChainSpec } from "@typeberry/config";
-import { Logger } from "@typeberry/logger";
 import bandersnatchVrf from "@typeberry/safrole/bandersnatch-vrf.js";
 import type { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
 import type { State } from "@typeberry/state";
-import {
-  type TicketValidator,
-  type ValidatedTicket,
-  ValidationError,
-  type VerifiedTicket,
-  type VerifiedTicketPool,
-} from "@typeberry/ticket-pool";
+import { type TicketValidator, ValidationError, type VerifiedTicket } from "@typeberry/ticket-pool";
 import { Result } from "@typeberry/utils";
 
-const logger = Logger.new(import.meta.filename, "ticket-validator");
-
 /**
- * Real {@link TicketValidator} implementation that verifies a ticket against the ring
- * commitment and current epoch entropy using bandersnatch, then stores the verified
- * ticket (with its computed id) into the supplied {@link VerifiedTicketPool}.
+ * {@link TicketValidator} implementation that verifies a ticket against the ring
+ * commitment and current epoch entropy using bandersnatch.
  *
  * `getState` is a thunk because state advances continuously while validation is in
  * flight; we want the latest available state for each call.
  */
 export class BandersnatchTicketValidator implements TicketValidator {
-  constructor(
-    private readonly bandersnatch: BandernsatchWasm,
+  static new(chainSpec: ChainSpec, bandersnatch: BandernsatchWasm, getState: () => State) {
+    return new BandersnatchTicketValidator(chainSpec, bandersnatch, getState);
+  }
+
+  private constructor(
     private readonly chainSpec: ChainSpec,
-    private readonly pool: VerifiedTicketPool,
-    private readonly getState: () => State | null,
+    private readonly bandersnatch: BandernsatchWasm,
+    private readonly getState: () => State,
   ) {}
 
-  async validate(epochIndex: Epoch, ticket: SignedTicket): Promise<Result<ValidatedTicket, ValidationError>> {
+  async validate(epochIndex: Epoch, inTickets: SignedTicket[]): Promise<Result<VerifiedTicket[], ValidationError>> {
     const state = this.getState();
-    if (state === null) {
-      return Result.error(ValidationError.ValidatorUnavailable, () => "no state available");
-    }
-
+    // because we use either current or next entropy, tickets
+    // from incorrect epochs will fail verification (however that might be expensive)
+    // TODO [ToDr] We should early reject tickets from invalid epochs.
     const entropy = this.getTicketEntropy(epochIndex, state);
-    // Batch verifier: a single `isValid` covers the whole batch and `tickets` holds the
-    // computed id per input ticket. We only ever pass one ticket here.
+    // Batch verifier: a single `isValid` covers the whole batch
+    // and `tickets` holds the computed id per input ticket.
     const { isValid, tickets } = await bandersnatchVrf.verifyTickets(
       this.bandersnatch,
       state.designatedValidatorData.length,
       state.epochRoot,
-      [ticket],
+      inTickets,
       entropy,
     );
 
-    if (tickets.length !== 1) {
-      logger.error`verifyTickets returned ${tickets.length} results for 1 ticket`;
-      return Result.error(ValidationError.ValidatorUnavailable, () => "verifier returned unexpected result count");
+    if (tickets.length !== inTickets.length) {
+      return Result.error(
+        ValidationError.ValidatorUnavailable,
+        () => `io size mismatch got: ${tickets.length}, expected ${inTickets.length}`,
+      );
     }
 
     if (!isValid) {
       return Result.error(ValidationError.InvalidProof, () => "bandersnatch proof rejected");
     }
 
-    const verified: VerifiedTicket = { ticket, id: tickets[0] };
-    this.pool.add(epochIndex, [verified]);
-    return Result.ok({ id: tickets[0] });
+    return Result.ok(
+      inTickets.map((ticket, index) => {
+        const id = tickets[index];
+        return { ticket, id };
+      }),
+    );
   }
 
   /**

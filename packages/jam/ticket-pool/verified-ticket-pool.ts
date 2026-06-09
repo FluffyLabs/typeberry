@@ -20,6 +20,12 @@ export class VerifiedTicketPool {
   private readonly perEpoch = new Map<Epoch, VerifiedTicket[]>();
   private readonly idSets = new Map<Epoch, HashSet<EntropyHash>>();
 
+  static new() {
+    return new VerifiedTicketPool();
+  }
+
+  private constructor() {}
+
   /** Add pre-verified tickets to the pool, deduping by id. */
   add(epochIndex: Epoch, verifiedTickets: readonly VerifiedTicket[]): void {
     if (this.perEpoch.size > 0 && !this.perEpoch.has(epochIndex)) {

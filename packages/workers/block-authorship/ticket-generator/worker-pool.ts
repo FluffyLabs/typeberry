@@ -5,8 +5,8 @@ import { Executor } from "@typeberry/concurrent";
 import { type BandersnatchKey, type BandersnatchSecretSeed, SEED_SIZE } from "@typeberry/crypto";
 import { Logger } from "@typeberry/logger";
 import { buildTicketVrfInputs, parseTicketsBatchOutput } from "@typeberry/safrole/bandersnatch-vrf.js";
+import { TicketGenShardParams, type TicketGenShardResult } from "./protocol.js";
 import type { ValidatorKey } from "./ticket-generator.js";
-import { TicketGenShardParams, type TicketGenShardResult } from "./ticket-pool-protocol.js";
 
 const logger = Logger.new(import.meta.filename, "tickets-pool");
 
@@ -21,7 +21,7 @@ const WORKER_BOOTSTRAP = new URL("./bootstrap-ticket-generator.mjs", import.meta
  * blocks block production; this pool shards the work across worker threads so
  * the main thread stays free and wall-clock time drops ~linearly with cores.
  *
- * Uses {@link Executor} from `@typeberry/concurrent`.
+ * Uses `Executor` from `@typeberry/concurrent`.
  */
 export class TicketGeneratorPool {
   private constructor(
@@ -102,13 +102,13 @@ export class TicketGeneratorPool {
 
       const shardPromise = this.executor
         .run(params)
-        .then(async (result) => {
+        .then((result) => {
           const parsed = parseTicketsBatchOutput(result.signatures, indices.length, ticketsPerValidator);
           if (parsed.isError) {
             logger.warn`A ticket-generation shard returned an invalid proof: ${parsed.error}`;
             return;
           }
-          await onShardTickets(parsed.ok.flat());
+          return onShardTickets(parsed.ok.flat());
         })
         .catch((e) => {
           logger.warn`A ticket-generation shard failed: ${e}`;
