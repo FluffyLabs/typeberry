@@ -1,11 +1,12 @@
 import assert from "node:assert";
+import * as fs from "node:fs";
 import { describe, it } from "node:test";
 import { MessageChannel } from "node:worker_threads";
 import { codec } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { Blake2b } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
-import { configTransferList, LmdbWorkerConfig } from "./config.js";
+import { configTransferList, HybridWorkerConfig, LmdbWorkerConfig } from "./config.js";
 import { ThreadPort } from "./port.js";
 
 const spec = tinyChainSpec;
@@ -42,4 +43,40 @@ describe("LmdbWorkerConfig transfer list", () => {
       portB.close();
     }
   });
+});
+
+describe("HybridWorkerConfig", () => {
+  // Both persistent backends must construct asynchronously and hand out a
+  // working db. fjall is the experimental backend we want to benchmark.
+  for (const backend of ["lmdb", "fjall"] as const) {
+    it(`constructs and opens a ${backend}-backed hybrid db`, async () => {
+      const blake2b = await Blake2b.createHasher();
+      const dbPath = fs.mkdtempSync(`typeberry-hybrid-${backend}-`);
+      try {
+        const config = await HybridWorkerConfig.new({
+          nodeName: "node",
+          chainSpec: spec,
+          workerParams: undefined,
+          blake2b,
+          dbPath,
+          ephemeral: true,
+          backend,
+        });
+
+        const db = config.openDatabase({ readonly: false });
+        const states = db.getStatesDb();
+        try {
+          assert.notStrictEqual(db.getBlocksDb(), undefined);
+          assert.notStrictEqual(states, undefined);
+        } finally {
+          // The values store owns the on-disk resources (the no-op db.close()
+          // does not), so close it explicitly to release the fjall keyspace.
+          await states.close();
+          await db.close();
+        }
+      } finally {
+        fs.rmSync(dbPath, { recursive: true, force: true });
+      }
+    });
+  }
 });

@@ -42,6 +42,7 @@
     "packages/jam/config",
     "packages/jam/config-node",
     "packages/jam/database",
+    "packages/jam/database-fjall",
     "packages/jam/database-lmdb",
     "packages/jam/executor",
     "packages/jam/fuzz-proto",
