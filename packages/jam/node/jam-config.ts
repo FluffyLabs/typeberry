@@ -89,7 +89,7 @@ export type SeedDevConfig = {
 
 /** Developer mode configuration. */
 export type DevConfig = {
-  // TODO [ToDr] This should be removed. genesis should be loaded into JIP4 ChainSpec in TCI
+  // TODO [ToDr] This should be removed. genesis should be loaded into JIP4 ChainSpec
   // and passed as `NodeConfiguration`.
   /** Path to genesis state JSON description file. */
   genesisPath: string;
