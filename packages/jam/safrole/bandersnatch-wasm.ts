@@ -55,4 +55,31 @@ export class BandernsatchWasm {
   ) {
     return bandersnatchWasm.batchGenerateRingVrf(ringKeys, proverKeyIndex, secretSeed, inputsData, vrfInputDataLen);
   }
+
+  /**
+   * Batch-generate ring VRF tickets for multiple validators in a single call,
+   * reusing the ring prover setup across all of them.
+   *
+   * `secretSeedsData` is the fixed-width concatenation of the validators' secret
+   * seeds (each `secretSeedDataLen` bytes); `proverKeyIndices` are their indices
+   * within the ring and must have the same count. Output records are ordered
+   * validator-major then input-major, each `status byte || signature`.
+   */
+  async batchGenerateRingVrfForValidators(
+    ringKeys: Uint8Array,
+    proverKeyIndices: Uint32Array,
+    secretSeedsData: Uint8Array,
+    secretSeedDataLen: number,
+    inputsData: Uint8Array,
+    vrfInputDataLen: number,
+  ) {
+    return bandersnatchWasm.batchGenerateRingVrfForValidators(
+      ringKeys,
+      proverKeyIndices,
+      secretSeedsData,
+      secretSeedDataLen,
+      inputsData,
+      vrfInputDataLen,
+    );
+  }
 }

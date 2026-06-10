@@ -1,8 +1,10 @@
 import type { Epoch } from "@typeberry/block";
 import type { SignedTicket } from "@typeberry/block/tickets.js";
+import { Bytes } from "@typeberry/bytes";
 import type { AuthorshipComms } from "@typeberry/comms-authorship-network";
 import { parseBootnode } from "@typeberry/config-node";
 import { ed25519, initWasm } from "@typeberry/crypto";
+import { HASH_SIZE } from "@typeberry/hash";
 import { setup } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
 import { type TicketValidator, type ValidatedTicket, ValidationError } from "@typeberry/ticket-pool";
@@ -76,12 +78,20 @@ export async function main(
   // for an accept/reject decision. The wire protocol stays a simple bool; the
   // computed id stays inside authorship (it owns the verified pool).
   const ipcValidator: TicketValidator = {
-    validate: async (epochIndex: Epoch, ticket: SignedTicket): Promise<Result<ValidatedTicket, ValidationError>> => {
-      const ok = await authorshipComms.sendReceivedTickets({ epochIndex, ticket });
+    validate: async (
+      epochIndex: Epoch,
+      tickets: SignedTicket[],
+    ): Promise<Result<ValidatedTicket[], ValidationError>> => {
+      const ok = await authorshipComms.sendReceivedTickets({ epochIndex, tickets });
       if (!ok) {
         return Result.error(ValidationError.InvalidProof, () => "authorship rejected the ticket");
       }
-      return Result.ok({ id: null });
+      return Result.ok(
+        tickets.map((ticket) => ({
+          ticket,
+          id: Bytes.zero(HASH_SIZE).asOpaque(),
+        })),
+      );
     },
   };
   network.ticketTask.setTicketValidator(ipcValidator);

@@ -175,28 +175,34 @@ function rawMemoryUsage(): NodeJS.MemoryUsage | null {
  * `arrayBuffers` should allow tracking WASM memory, since every instance backs its
  * memory with `ArrayBuffer`.
  */
-export function memoryUsage(): string {
+export function memoryUsage(withDetails: boolean): string {
   const m = rawMemoryUsage();
   if (m === null) {
     return "";
   }
-  return `rss=${toMb(m.rss)}MB heap=${toMb(m.heapUsed)}/${toMb(m.heapTotal)}MB external=${toMb(m.external)}MB arrayBuffers=${toMb(m.arrayBuffers)}MB`;
+  if (withDetails) {
+    return `rss=${toMb(m.rss)}MB heap=${toMb(m.heapUsed)}/${toMb(m.heapTotal)}MB external=${toMb(m.external)}MB arrayBuffers=${toMb(m.arrayBuffers)}MB`;
+  }
+
+  return `rss=${toMb(m.rss)}MB heap=${toMb(m.heapUsed)}/${toMb(m.heapTotal)}MB`;
 }
 
 /** Create a stateful memory usage reporter. */
-export function memoryTracker(): () => string {
+export function memoryTracker(withDetails: boolean): { toString(): string } {
   let prev: NodeJS.MemoryUsage | null = null;
-  return () => {
-    const m = rawMemoryUsage();
-    if (m === null) {
-      return "";
-    }
-    const delta =
-      prev === null
-        ? ""
-        : ` (Δrss=${signedMb(m.rss - prev.rss)}MB ΔarrayBuffers=${signedMb(m.arrayBuffers - prev.arrayBuffers)}MB)`;
-    prev = m;
-    return `${memoryUsage()}${delta}`;
+  return {
+    toString() {
+      const m = rawMemoryUsage();
+      if (m === null) {
+        return "";
+      }
+      const delta =
+        prev === null || withDetails === false
+          ? ""
+          : ` (Δrss=${signedMb(m.rss - prev.rss)}MB ΔarrayBuffers=${signedMb(m.arrayBuffers - prev.arrayBuffers)}MB)`;
+      prev = m;
+      return `${memoryUsage(withDetails)}${delta}`;
+    },
   };
 }
 

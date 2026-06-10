@@ -25,19 +25,19 @@ function makeId(byte: number): EntropyHash {
 
 describe("VerifiedTicketPool", () => {
   it("starts empty", () => {
-    const pool = new VerifiedTicketPool();
+    const pool = VerifiedTicketPool.new();
     assert.deepStrictEqual(pool.getForEpoch(E1), []);
   });
 
   it("adds and retrieves tickets per epoch", () => {
-    const pool = new VerifiedTicketPool();
+    const pool = VerifiedTicketPool.new();
     pool.add(E1, [{ ticket: makeTicket(1), id: makeId(0xaa) }]);
     assert.strictEqual(pool.getForEpoch(E1).length, 1);
     assert.deepStrictEqual(pool.getForEpoch(E2), []);
   });
 
   it("dedups by id", () => {
-    const pool = new VerifiedTicketPool();
+    const pool = VerifiedTicketPool.new();
     const id = makeId(0x01);
     pool.add(E1, [{ ticket: makeTicket(1), id }]);
     pool.add(E1, [{ ticket: makeTicket(2), id }]);
@@ -46,7 +46,7 @@ describe("VerifiedTicketPool", () => {
   });
 
   it("clears previous epochs when a new epoch is added", () => {
-    const pool = new VerifiedTicketPool();
+    const pool = VerifiedTicketPool.new();
     pool.add(E1, [{ ticket: makeTicket(1), id: makeId(1) }]);
     pool.add(E2, [{ ticket: makeTicket(2), id: makeId(2) }]);
     assert.deepStrictEqual(pool.getForEpoch(E1), []);
@@ -54,7 +54,7 @@ describe("VerifiedTicketPool", () => {
   });
 
   it("appends across multiple add() calls for the same epoch", () => {
-    const pool = new VerifiedTicketPool();
+    const pool = VerifiedTicketPool.new();
     pool.add(E1, [{ ticket: makeTicket(1), id: makeId(1) }]);
     pool.add(E1, [{ ticket: makeTicket(2), id: makeId(2) }]);
     assert.strictEqual(pool.getForEpoch(E1).length, 2);

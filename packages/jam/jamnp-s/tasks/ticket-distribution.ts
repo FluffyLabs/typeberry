@@ -141,7 +141,7 @@ export class TicketDistributionTask {
     // Wrap with Promise.resolve().then() so a synchronous throw inside the validator
     // funnels into the same .catch() as an async rejection.
     Promise.resolve()
-      .then(() => validator.validate(epochIndex, ticket))
+      .then(() => validator.validate(epochIndex, [ticket]))
       .then((result) => {
         if (result.isOk) {
           this.addTicket(epochIndex, ticket);

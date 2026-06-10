@@ -11,7 +11,7 @@ const TARGET_BLOCK = 6;
 
 const logger = Logger.new(import.meta.filename, "jam:e2e");
 
-const bestBlockPattern = /🧊 Best block:.+#(\d+)/;
+const bestBlockPattern = /🧊 Best:.+#(\d+)/;
 
 test("JAM Node dev blocks with In Memory", { timeout: TEST_TIMEOUT }, async () => {
   let jamProcess: ChildProcess | null = null;
@@ -127,7 +127,7 @@ async function collectLogsUntilBlock(
   pattern: RegExp,
   targetBlock: number,
 ): Promise<string[]> {
-  const blockPattern = /🧊 Best block:.+#(\d+)/;
+  const blockPattern = /🧊 Best:.+#(\d+)/;
   const matchedLines: string[] = [];
   let currentBlock = 0;
 

@@ -2,6 +2,7 @@ import type { EntropyHash } from "@typeberry/block";
 import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { BandersnatchKey, BandersnatchSecretSeed } from "@typeberry/crypto";
+import { SEED_SIZE } from "@typeberry/crypto";
 import {
   BANDERSNATCH_PROOF_BYTES,
   BANDERSNATCH_RING_ROOT_BYTES,
@@ -36,6 +37,10 @@ enum ResultValues {
  */
 let ringCommitmentIndex = 0;
 const ringCommitmentCache: CacheEntry[] = [
+  {
+    keys: BytesBlob.empty(),
+    value: Promise.resolve(Result.error(null, () => "")),
+  },
   {
     keys: BytesBlob.empty(),
     value: Promise.resolve(Result.error(null, () => "")),
@@ -222,55 +227,90 @@ async function getVrfOutputHash(
 const GENERATE_RESULT_ENTRY_LENGTH = 1 + BANDERSNATCH_PROOF_BYTES;
 
 /**
- * Generates signed tickets for all attempts at once using batch ring VRF.
+ * Batch-generate signed tickets for multiple validators in a single native call,
+ * reusing the ring prover setup across all of them. Returns one ticket list per
+ * validator, in the same order as `proverKeyIndices`/`secrets`.
  */
 async function generateTickets(
   bandersnatch: BandernsatchWasm,
   ringKeys: BandersnatchKey[],
-  proverKeyIndex: number,
-  key: BandersnatchSecretSeed,
+  proverKeyIndices: readonly number[],
+  secrets: readonly BandersnatchSecretSeed[],
   entropy: EntropyHash,
   ticketsPerValidator: number,
-): Promise<Result<SignedTicket[], null>> {
-  // Build VRF inputs: JAM_TICKET_SEAL || entropy || attempt_byte for each attempt
-  const vrfInputParts: Uint8Array[] = [];
-  for (let attempt = 0; attempt < ticketsPerValidator; attempt++) {
-    vrfInputParts.push(BytesBlob.blobFromParts([JAM_TICKET_SEAL, entropy.raw, Uint8Array.of(attempt)]).raw);
+): Promise<Result<SignedTicket[][], null>> {
+  if (proverKeyIndices.length !== secrets.length) {
+    return Result.error(null, () => "proverKeyIndices and secrets must have the same length");
   }
-  const attemptLength = 1;
-  const vrfInputDataLen = JAM_TICKET_SEAL.length + entropy.length + attemptLength;
-  const inputsData = BytesBlob.blobFromParts(vrfInputParts).raw;
-  const ringKeysData = BytesBlob.blobFromParts(ringKeys.map((k) => k.raw)).raw;
+  if (proverKeyIndices.length === 0) {
+    return Result.ok([]);
+  }
 
-  const result = await bandersnatch.batchGenerateRingVrf(
+  const { inputsData, vrfInputDataLen } = buildTicketVrfInputs(entropy, ticketsPerValidator);
+  const ringKeysData = BytesBlob.blobFromParts(ringKeys.map((k) => k.raw)).raw;
+  const secretSeedsData = BytesBlob.blobFromParts(secrets.map((s) => s.raw)).raw;
+
+  const result = await bandersnatch.batchGenerateRingVrfForValidators(
     ringKeysData,
-    proverKeyIndex,
-    key.raw,
+    Uint32Array.from(proverKeyIndices),
+    secretSeedsData,
+    SEED_SIZE,
     inputsData,
     vrfInputDataLen,
   );
 
-  const tickets: SignedTicket[] = [];
+  return parseTicketsBatchOutput(result, proverKeyIndices.length, ticketsPerValidator);
+}
+
+/**
+ * Build the concatenated ring-VRF inputs for ticket generation: one
+ * `JAM_TICKET_SEAL || entropy || attempt_byte` input per attempt.
+ *
+ * Exposed so the worker-pool path can build the same inputs to hand off to a
+ * worker thread without re-deriving the layout.
+ */
+export function buildTicketVrfInputs(
+  entropy: EntropyHash,
+  ticketsPerValidator: number,
+): { inputsData: Uint8Array; vrfInputDataLen: number } {
+  const vrfInputParts: Uint8Array[] = [];
   for (let attempt = 0; attempt < ticketsPerValidator; attempt++) {
-    const offset = attempt * GENERATE_RESULT_ENTRY_LENGTH;
-    const resultByte = result[offset];
+    vrfInputParts.push(BytesBlob.blobFromParts([JAM_TICKET_SEAL, entropy.raw, Uint8Array.of(attempt)]).raw);
+  }
+  return {
+    inputsData: BytesBlob.blobFromParts(vrfInputParts).raw,
+    vrfInputDataLen: JAM_TICKET_SEAL.length + entropy.length + 1,
+  };
+}
 
-    if (resultByte === ResultValues.Error) {
-      return Result.error(null, () => `Ring VRF proof generation failed for attempt ${attempt}`);
+/**
+ * Parse the raw output of `batchGenerateRingVrfForValidators` into per-validator
+ * ticket lists. Records are ordered validator-major, then attempt-major; each
+ * record is `status byte || signature`. A malformed batch yields a single error
+ * byte. Exposed so the worker-pool path can parse a worker's raw result.
+ */
+export function parseTicketsBatchOutput(
+  result: Uint8Array,
+  numValidators: number,
+  ticketsPerValidator: number,
+): Result<SignedTicket[][], null> {
+  const perValidator: SignedTicket[][] = [];
+  let offset = 0;
+  for (let v = 0; v < numValidators; v++) {
+    const tickets: SignedTicket[] = [];
+    for (let attempt = 0; attempt < ticketsPerValidator; attempt++) {
+      if (result[offset] === ResultValues.Error) {
+        return Result.error(null, () => `Ring VRF proof generation failed for validator ${v}, attempt ${attempt}`);
+      }
+      const signature = Bytes.fromBlob(
+        result.subarray(offset + 1, offset + GENERATE_RESULT_ENTRY_LENGTH),
+        BANDERSNATCH_PROOF_BYTES,
+      ).asOpaque();
+      tickets.push(SignedTicket.create({ attempt: tryAsTicketAttempt(attempt), signature }));
+      offset += GENERATE_RESULT_ENTRY_LENGTH;
     }
-
-    const signature = Bytes.fromBlob(
-      new Uint8Array(result.subarray(offset + 1, offset + GENERATE_RESULT_ENTRY_LENGTH)),
-      BANDERSNATCH_PROOF_BYTES,
-    ).asOpaque();
-
-    tickets.push(
-      SignedTicket.create({
-        attempt: tryAsTicketAttempt(attempt),
-        signature,
-      }),
-    );
+    perValidator.push(tickets);
   }
 
-  return Result.ok(tickets);
+  return Result.ok(perValidator);
 }
