@@ -8,6 +8,8 @@ const logger = Logger.new(import.meta.filename, "finality");
 export interface FinalityResult {
   /** The newly finalized block hash. */
   finalizedHash: HeaderHash;
+  /** All newly finalized block hashes, ancestor-first, ending at `finalizedHash`. */
+  finalizedChain: HeaderHash[];
   /** Block hashes whose states are no longer needed and can be pruned. */
   prunableStateHashes: HeaderHash[];
 }
@@ -99,6 +101,8 @@ export class DummyFinalizer implements Finalizer {
     // The newly finalized block sits at index (length - 1 - depth).
     const finalizedIdx = extendedChain.length - 1 - this.depth;
     const finalizedHash = extendedChain[finalizedIdx];
+    // Everything up to (and including) that index becomes finalized now.
+    const finalizedChain = extendedChain.slice(0, finalizedIdx + 1);
 
     // Collect prunable hashes and rebuild the unfinalized set.
     // The previously finalized block's state is no longer needed.
@@ -132,6 +136,6 @@ export class DummyFinalizer implements Finalizer {
     this.lastFinalizedHash = finalizedHash;
     this.unfinalized = newUnfinalized;
 
-    return { finalizedHash, prunableStateHashes: prunable };
+    return { finalizedHash, finalizedChain, prunableStateHashes: prunable };
   }
 }
