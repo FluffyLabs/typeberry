@@ -27,9 +27,14 @@ export class BandersnatchTicketValidator implements TicketValidator {
 
   async validate(epochIndex: Epoch, inTickets: SignedTicket[]): Promise<Result<VerifiedTicket[], ValidationError>> {
     const state = this.getState();
-    // because we use either current or next entropy, tickets
-    // from incorrect epochs will fail verification (however that might be expensive)
-    // TODO [ToDr] We should early reject tickets from invalid epochs.
+    // Reject obviously invalid epochs up front: we only have the entropy to verify
+    // the current epoch (tickets being submitted now) and the next one (tickets at
+    // an epoch boundary). Anything else would only fail after the expensive proof
+    // check, so a peer could otherwise burn CPU with far-past/future batches.
+    const stateEpoch = Math.floor(state.timeslot / this.chainSpec.epochLength);
+    if (epochIndex < stateEpoch || epochIndex > stateEpoch + 1) {
+      return Result.error(ValidationError.InvalidProof, () => `ticket batch targets an invalid epoch ${epochIndex}`);
+    }
     const entropy = this.getTicketEntropy(epochIndex, state);
     // Batch verifier: a single `isValid` covers the whole batch
     // and `tickets` holds the computed id per input ticket.

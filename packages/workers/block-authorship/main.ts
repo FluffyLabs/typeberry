@@ -18,7 +18,7 @@ import type { ValidatorData } from "@typeberry/state";
 import { VerifiedTicketPool } from "@typeberry/ticket-pool";
 import type { WorkerConfig } from "@typeberry/workers-api";
 import { BlockGenerator } from "./block-generator.js";
-import { EpochTracker } from "./epoch-tracker.js";
+import { type EpochData, EpochTracker } from "./epoch-tracker.js";
 import type { BlockAuthorshipConfig, GeneratorInternal } from "./protocol.js";
 import { TicketGenerator } from "./ticket-generator/index.js";
 import { BandersnatchTicketValidator } from "./ticket-validator.js";
@@ -91,7 +91,7 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
   const state = getBestState();
   const timeSlotHandler = TimeSlotHandler.new(config.workerParams.isFastForward, chainSpec, state.timeslot);
   // per-epoch cached data
-  let epochData: Awaited<ReturnType<EpochTracker["getEpochData"]>> | null = null;
+  let epochData: EpochData | null = null;
 
   // Generate blocks until the close signal is received.
   let isFinished = false;
@@ -112,7 +112,15 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
     // Seems that the epoch is changing, let's transition
     if (epochData === null || epochTracker.isEpochChanged(stateTimeSlot, newTimeSlot)) {
       const oldEpochData = epochData;
-      epochData = await epochTracker.getEpochData(logger, state, newTimeSlot);
+      const epochDataResult = await epochTracker.getEpochData(logger, state, newTimeSlot);
+      if (epochDataResult.isError) {
+        // Couldn't compute the sealing keys for this epoch — wait and retry rather
+        // than crashing the worker (`epochData` keeps its previous value, if any).
+        logger.warn`[#${newTimeSlot}] Could not compute epoch data: ${epochDataResult.details()}`;
+        await timeSlotHandler.waitForNextSlot(false, epochPhase, ticketGeneratorDone);
+        continue;
+      }
+      epochData = epochDataResult.ok;
       const epochIndex = epochData.epoch;
       if (oldEpochData === null) {
         logger.info`🎁 [E${epochIndex}#${newTimeSlot}] starting authorship (state at #${stateTimeSlot})`;
@@ -137,7 +145,13 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
           if (generatingForEpoch !== epochData?.epoch) {
             return;
           }
-          await onEpochTickets(generatingForEpoch, tickets, "generator");
+          const isValid = await onEpochTickets(generatingForEpoch, tickets, "generator");
+          // Push our freshly generated tickets to networking so they're redistributed
+          // to peers (who include them in their blocks). Without this, a multi-node
+          // network never shares tickets and accumulators only ever hold local ones.
+          if (isValid) {
+            await networkingComms.sendTickets({ epochIndex: generatingForEpoch, tickets });
+          }
         });
       }
     }
@@ -152,6 +166,9 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
       const validatorIndex = getValidatorIndex(key.bandersnatchPublic, state.currentValidatorData);
       if (validatorIndex === null) {
         logger.log`${logPrefix} Not currently validator, yet ${currentSlot.logId} is present.`;
+        // Don't spin: wait for the next slot before re-checking (otherwise this is
+        // a tight hot loop until some other component advances the DB).
+        await timeSlotHandler.waitForNextSlot(false, epochPhase, ticketGeneratorDone);
         continue;
       }
 
@@ -254,8 +271,11 @@ class TimeSlotHandler {
       // or wait for other nodes to produce a block
       return await setTimeout(100);
     }
-    // wait for the next slot (TODO [ToDr] that's a bit shitty)
-    await setTimeout(Number(this.slotDurationMs));
+    // Sleep until the next slot boundary (not a full slot from "now") so the
+    // wakeup doesn't drift later and later as block work eats into each slot.
+    const elapsedInSlot = this.getVirtualTimeMs() % this.slotDurationMs;
+    const waitMs = elapsedInSlot === 0n ? this.slotDurationMs : this.slotDurationMs - elapsedInSlot;
+    await setTimeout(Number(waitMs));
   }
 
   /**

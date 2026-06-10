@@ -150,7 +150,14 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
       return { command: Command.Run, args: data };
     }
     case Command.Dev: {
-      const data = parseSharedOptions(args, [DEV_TINY_CONFIG]);
+      const shared = parseSharedOptions(args, [DEV_TINY_CONFIG]);
+      // Dev mode always needs a base dev config. If the user only provided jq-query
+      // modifiers (e.g. `--config=.database_base_path=...`), keep the tiny dev config
+      // as the base and layer the modifiers on top — otherwise the query would be
+      // applied to an empty config and fail. A provided base config / file replaces
+      // it as usual.
+      const hasBaseConfig = shared.config.some((c) => !c.startsWith("."));
+      const data = hasBaseConfig ? shared : { ...shared, config: [DEV_TINY_CONFIG, ...shared.config] };
       const indexOrAll = args._.shift();
       if (indexOrAll === undefined) {
         throw new Error("Missing dev-validator index.");

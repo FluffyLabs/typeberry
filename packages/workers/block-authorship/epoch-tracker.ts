@@ -1,13 +1,22 @@
-import { type Epoch, type TimeSlot, tryAsEpoch } from "@typeberry/block";
+import { type EntropyHash, type Epoch, type TimeSlot, tryAsEpoch } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import type { Blake2b } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";
 import { Safrole } from "@typeberry/safrole";
 import type { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
-import { SafroleSealingKeysKind, type State } from "@typeberry/state";
+import { type SafroleSealingKeys, SafroleSealingKeysKind, type State } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import { EpochAuthoringSlots, type SlotSealData } from "./epoch-authoring-slots.js";
 import type { ValidatorSecrets } from "./protocol.js";
+
+/** Per-epoch data computed once when entering (or resuming into) an epoch. */
+export type EpochData = {
+  epoch: Epoch;
+  epochLength: number;
+  sealingKeySeries: SafroleSealingKeys;
+  entropy: EntropyHash;
+  slots: Array<SlotSealData | null>;
+};
 
 export class EpochTracker {
   static async new(
@@ -33,11 +42,12 @@ export class EpochTracker {
     return newEpoch > stateEpoch;
   }
 
-  async getEpochData(logger: Logger, state: State, newTimeSlot: TimeSlot) {
+  async getEpochData(logger: Logger, state: State, newTimeSlot: TimeSlot): Promise<Result<EpochData, string>> {
     const sealingKeySeriesResult = await this.getSealingKeySeries(state, newTimeSlot);
-    // TODO [ToDr] fix this!
+    // Propagate the typed failure instead of crashing — `main` decides whether to
+    // retry, skip or terminate, and keeps the real error details.
     if (sealingKeySeriesResult.isError) {
-      throw new Error("xx");
+      return Result.error(`${sealingKeySeriesResult.error}`, sealingKeySeriesResult.details);
     }
     const epochLength = this.chainSpec.epochLength;
     const sealingKeySeries = sealingKeySeriesResult.ok;
@@ -54,13 +64,13 @@ export class EpochTracker {
     const slots = await this.authoring.getOurSlotsInKeySeries(sealingKeySeries, entropy);
     this.logEpochAuthorshipInfo(logger, epoch, slots);
 
-    return {
+    return Result.ok({
       epoch,
       epochLength,
       sealingKeySeries,
       entropy,
       slots,
-    };
+    });
   }
 
   private async getSealingKeySeries(state: State, newTimeSlot: TimeSlot) {

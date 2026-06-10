@@ -94,7 +94,7 @@ flatten_worker() {
 cd $DIST_FOLDER
 flatten_worker importer bootstrap-importer
 flatten_worker jam-network bootstrap-network
-flatten_worker block-authorship bootstrap-generator
+flatten_worker block-authorship bootstrap-authorship
 
 # copy worker wasm files
 cp **/*.wasm ./ || true # ignore overwrite errors

@@ -75,9 +75,8 @@ export class ImporterStats implements ImporterEventsListener {
         }
         this.showDiskStats = !this.showDiskStats;
 
-        // memory
+        // memory (memoryTracker's toString() is stateful — log it once)
         logger.info`📊 mem at #${timeSlot}: ${this.memory}`;
-        logger.trace`📊 mem at #${timeSlot}: ${this.memory}`;
 
         // compute block statistics (rolling window of last two rounds)
         const importedBlocks = this.totalBlocks + this.totalBlocksPrev;
