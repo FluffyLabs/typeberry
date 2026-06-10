@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/jam-network",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "JAM networking worker.",
   "main": "index.ts",
   "dependencies": {
@@ -16,6 +16,7 @@
     "@typeberry/jamnp-s": "*",
     "@typeberry/logger": "*",
     "@typeberry/telemetry": "*",
+    "@typeberry/ticket-pool": "*",
     "@typeberry/utils": "*",
     "@typeberry/workers-api": "*",
     "@typeberry/workers-api-node": "*"

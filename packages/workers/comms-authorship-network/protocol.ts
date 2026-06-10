@@ -1,6 +1,6 @@
 import { codec } from "@typeberry/codec";
 import { type Api, createProtocol, type Internal } from "@typeberry/workers-api";
-import { ReceivedTicketMessage, TicketsMessage } from "./tickets-message.js";
+import { TicketsMessage } from "./tickets-message.js";
 
 /**
  * Port name for authorship-network direct communication.
@@ -14,19 +14,25 @@ export const AUTHORSHIP_NETWORK_PORT = "authorship-network";
  * This bypasses the main thread for ticket distribution, reducing latency.
  */
 export const protocol = createProtocol("authorship-network", {
-  // Messages from block-authorship to jam-network
+  // Messages from block-authorship to jam-network.
   toWorker: {
+    // Newly generated own tickets; networking should add them to its redistribution pool.
     tickets: {
       request: TicketsMessage.Codec,
       response: codec.nothing,
     },
+    // Authoritative pool snapshot for the given epoch; networking replaces its local
+    // pool with these tickets (one-way, source of truth lives in block-authorship).
+    replaceTicketPool: {
+      request: TicketsMessage.Codec,
+      response: codec.nothing,
+    },
   },
-  // Messages from jam-network to block-authorship (one ticket per relay).
-  // Response indicates whether the ticket passed validation — used by jam-network
-  // to decide whether to redistribute the ticket to other peers.
+  // Messages from jam-network to block-authorship
+  // Response indicates whether all tickets in batch were valid (no per-ticket validity!)
   fromWorker: {
     receivedTickets: {
-      request: ReceivedTicketMessage.Codec,
+      request: TicketsMessage.Codec,
       response: codec.bool,
     },
   },

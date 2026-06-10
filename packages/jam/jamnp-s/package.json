@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/jamnp-s",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "JAM Networking Protocol - Simple",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",
@@ -21,6 +21,7 @@
     "@typeberry/logger": "*",
     "@typeberry/networking": "*",
     "@typeberry/numbers": "*",
+    "@typeberry/ticket-pool": "*",
     "@typeberry/utils": "*"
   }
 }

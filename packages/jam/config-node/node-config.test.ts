@@ -86,7 +86,7 @@ describe("loadConfig", () => {
 
   it("should load dev config", () => {
     const config = loadConfig(["dev"], withRelPath);
-    assert.deepStrictEqual(config, parseFromJson(configs.dev, NodeConfiguration.fromJson));
+    assert.deepStrictEqual(config, parseFromJson(configs.devTiny, NodeConfiguration.fromJson));
   });
 
   it("should parse inline json config and deep merge onto previous entries", () => {
@@ -200,9 +200,9 @@ describe("loadConfig", () => {
       config,
       parseFromJson(
         {
-          ...configs.dev,
+          ...configs.devTiny,
           database_base_path: "/test/path-1",
-          chain_spec: { ...configs.dev.chain_spec, bootnodes: [] },
+          chain_spec: { ...configs.devTiny.chain_spec, bootnodes: [] },
         },
         NodeConfiguration.fromJson,
       ),

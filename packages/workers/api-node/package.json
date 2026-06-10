@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/workers-api-node",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "Node.js implementation of the workers API.",
   "main": "index.ts",
   "scripts": {
@@ -10,6 +10,7 @@
     "@typeberry/codec": "*",
     "@typeberry/config": "*",
     "@typeberry/database": "*",
+    "@typeberry/database-fjall": "*",
     "@typeberry/database-lmdb": "*",
     "@typeberry/hash": "*",
     "@typeberry/listener": "*",

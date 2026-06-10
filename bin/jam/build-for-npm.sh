@@ -10,7 +10,7 @@ DESCRIPTION=$(node -p "require('./package.json').description")
 # Start from the top-level project directory
 cd ../..
 
-# These three are native/external modules that ncc can't bundle, so they ship as
+# These four are native/external modules that ncc can't bundle, so they ship as
 # real prod deps and get installed by the `npm install` below. We read the
 # versions from the packages that actually declare them instead of hardcoding,
 # so the bundle never drifts from the rest of the workspace.
@@ -20,14 +20,22 @@ cd ../..
 # (the argument is computed at runtime), so shipping it as a dep lets npm pull
 # the matching `.node` binary into dist/jam/node_modules. Otherwise the node
 # falls back to the slower wasm impl.
+#
+# @fjall-js/fjall is the same story: a napi-rs native addon whose generated
+# index.js uses CommonJS `__dirname` to locate its `.node` binary. Inlining it
+# into the ESM bundle crashes at load with "__dirname is not defined", and even
+# if it bundled it would freeze the build host's platform binary into the bundle
+# (wrong for cross-platform deploys). Externalizing + shipping as a dep lets npm
+# pull the matching platform binary, just like lmdb.
 NATIVE_VERSION=$(node -p "require('./packages/core/crypto/package.json').dependencies['@typeberry/native']")
 LMDB_VERSION=$(node -p "require('./packages/jam/database-lmdb/package.json').dependencies.lmdb")
 QUIC_VERSION=$(node -p "require('./packages/core/networking/package.json').dependencies['@matrixai/quic']")
+FJALL_VERSION=$(node -p "require('./packages/jam/database-fjall/package.json').dependencies['@fjall-js/fjall']")
 
 # A missing/renamed dependency key makes `node -p` print the literal "undefined"
 # and exit 0, so `set -e` won't catch it. Bail out here with a clear message
 # instead of writing a broken "undefined" version into dist/jam/package.json.
-for pair in "@typeberry/native=$NATIVE_VERSION" "lmdb=$LMDB_VERSION" "@matrixai/quic=$QUIC_VERSION"; do
+for pair in "@typeberry/native=$NATIVE_VERSION" "lmdb=$LMDB_VERSION" "@matrixai/quic=$QUIC_VERSION" "@fjall-js/fjall=$FJALL_VERSION"; do
   name="${pair%%=*}"
   ver="${pair#*=}"
   if [ -z "$ver" ] || [ "$ver" = "undefined" ]; then
@@ -52,7 +60,7 @@ if [ -n "$VERSION_SHA" ]; then
 fi
 
 # Build the main binary
-BUILD="npx @vercel/ncc build -a -s -e lmdb -e @matrixai/quic -e tsx/esm/api"
+BUILD="npx @vercel/ncc build -a -s -e lmdb -e @matrixai/quic -e @fjall-js/fjall -e tsx/esm/api"
 $BUILD ./bin/jam/index.ts -o $DIST_FOLDER
 
 # Despite using `-a` flag, @vercel/ncc does not bundle the worker files,
@@ -80,7 +88,9 @@ flatten_worker() {
   rm *.mjs || true
   mv index.js "$2.mjs"
   mv index.js.map "$2.mjs.map"
-  sed -i "\$ s|sourceMappingURL=index.js.map|sourceMappingURL=$2.mjs.map|" "$2.mjs"
+  # Portable in-place edit (BSD `sed -i` differs from GNU and breaks on macOS):
+  # rewrite via a temp file instead of relying on `-i`.
+  sed "\$ s|sourceMappingURL=index.js.map|sourceMappingURL=$2.mjs.map|" "$2.mjs" > "$2.mjs.tmp" && mv "$2.mjs.tmp" "$2.mjs"
   # Move the bundle up one level into $DIST_FOLDER. We can't use `mv * ../`:
   # workers that pull in telemetry also emit gRPC asset directories (proto/,
   # protoc-gen-validate/, xds/) that the main bundle - and earlier workers -
@@ -94,7 +104,7 @@ flatten_worker() {
 cd $DIST_FOLDER
 flatten_worker importer bootstrap-importer
 flatten_worker jam-network bootstrap-network
-flatten_worker block-authorship bootstrap-generator
+flatten_worker block-authorship bootstrap-authorship
 
 # copy worker wasm files
 cp **/*.wasm ./ || true # ignore overwrite errors
@@ -116,6 +126,7 @@ cat > ./package.json << EOF
   "dependencies": {
     "lmdb": "$LMDB_VERSION",
     "@matrixai/quic": "$QUIC_VERSION",
+    "@fjall-js/fjall": "$FJALL_VERSION",
     "@typeberry/native": "$NATIVE_VERSION"
   },
   "homepage": "https://typeberry.dev",

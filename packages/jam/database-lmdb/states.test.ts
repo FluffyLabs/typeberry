@@ -53,7 +53,7 @@ describe("LMDB States database", () => {
   const spec = tinyChainSpec;
 
   it("should import state and read state", async () => {
-    const root = LmdbRoot.new(tmpDir);
+    const root = LmdbRoot.new(tmpDir, {});
     const states = LmdbStates.new(spec, blake2b, root);
 
     try {
@@ -77,7 +77,7 @@ describe("LMDB States database", () => {
   });
 
   it("should update the state", async () => {
-    const root = LmdbRoot.new(tmpDir);
+    const root = LmdbRoot.new(tmpDir, {});
     const states = LmdbStates.new(spec, blake2b, root);
 
     try {
@@ -187,7 +187,7 @@ describe("LMDB States database", () => {
   });
 
   it("should import more complex state", async () => {
-    const root = LmdbRoot.new(tmpDir);
+    const root = LmdbRoot.new(tmpDir, {});
     const states = LmdbStates.new(spec, blake2b, root);
 
     try {
@@ -219,7 +219,7 @@ describe("LMDB States database", () => {
   });
 
   it("should update more complex entries", async () => {
-    const root = LmdbRoot.new(tmpDir);
+    const root = LmdbRoot.new(tmpDir, {});
     const states = LmdbStates.new(spec, blake2b, root);
 
     try {

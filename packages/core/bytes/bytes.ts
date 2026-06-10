@@ -240,6 +240,15 @@ export class Bytes<T extends number> extends BytesBlob {
   asOpaque<R>(): Opaque<Bytes<T>, TokenOf<R, Bytes<T>>> {
     return asOpaqueType<Bytes<T>, TokenOf<R, Bytes<T>>>(this);
   }
+
+  toStringTruncated() {
+    if (this.raw.length > 8) {
+      const start = bytesToHexString(this.raw.subarray(0, 2));
+      const end = bytesToHexString(this.raw.subarray(this.raw.length - 2));
+      return `${start}...${end.substring(2)}`;
+    }
+    return `${this.toString()}`;
+  }
 }
 
 function byteFromString(s: string): number {

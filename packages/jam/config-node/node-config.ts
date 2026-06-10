@@ -12,7 +12,9 @@ import { JipChainSpec } from "./jip-chain-spec.js";
 const logger = Logger.new(import.meta.filename, "config");
 
 /** Development config. Will accept unsealed blocks for now. */
-export const DEV_CONFIG = "dev";
+export const DEV_TINY_CONFIG = "dev";
+export const DEV_FULL_CONFIG = "dev-full";
+
 /** Default config file. */
 export const DEFAULT_CONFIG = "default";
 
@@ -79,8 +81,13 @@ export function loadConfig(config: string[], withRelPath: (p: string) => string)
   for (const entry of config) {
     logger.log`🔧 Applying '${entry}'`;
 
-    if (entry === DEV_CONFIG) {
-      mergedJson = structuredClone(configs.dev); // clone to avoid mutating the original config. not doing a merge since dev and default should theoretically replace all properties.
+    if (entry === DEV_TINY_CONFIG) {
+      mergedJson = structuredClone(configs.devTiny); // clone to avoid mutating the original config. not doing a merge since dev and default should theoretically replace all properties.
+      continue;
+    }
+
+    if (entry === DEV_FULL_CONFIG) {
+      mergedJson = structuredClone(configs.devFull); // clone to avoid mutating the original config. not doing a merge since dev and default should theoretically replace all properties.
       continue;
     }
 

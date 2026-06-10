@@ -1,6 +1,7 @@
 import type { BlockView, HeaderHash, StateRootHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { PvmBackend } from "@typeberry/config";
+import { KnownChainSpec } from "@typeberry/config-node";
 import { bandersnatch, initWasm } from "@typeberry/crypto";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { createImporter, ImporterConfig } from "@typeberry/importer";
@@ -13,14 +14,18 @@ import type { NodeApi } from "./main.js";
 
 const zeroHash = Bytes.zero(HASH_SIZE).asOpaque<StateRootHash>();
 
+export type StateBackend = "lmdb" | "lmdb-hybrid" | "fjall-hybrid";
+
 export type ImporterOptions = {
   initGenesisFromAncestry?: boolean;
   dummyFinalityDepth?: number;
   pruneBlocks?: boolean;
-  /** Open the LMDB database without fsync/compression. Only safe for throwaway dbs (e.g. fuzzing). */
-  ephemeralDb?: boolean;
-  /** Persistent backend to use when `databaseBasePath` is set. Defaults to full LMDB. */
-  stateBackend?: "lmdb" | "hybrid";
+  /** Open the database without fsync/compression. Only safe for throwaway dbs (e.g. fuzzing). */
+  ephemeral?: boolean;
+  /**
+   * Persistent backend to use when `databaseBasePath` is set. Defaults to full LMDB.
+   */
+  stateBackend?: StateBackend;
 };
 
 export async function mainImporter(
@@ -57,6 +62,10 @@ export async function mainImporter(
     dummyFinalityDepth: tryAsU16(options.dummyFinalityDepth ?? 0),
     pruneBlocks: options.pruneBlocks ?? false,
   });
+
+  const ephemeral = options.ephemeral ?? false;
+  // enable compression when running full test suite
+  const compression = ephemeral && config.node.flavor === KnownChainSpec.Full;
   const workerConfig =
     dbBackend === "in-memory"
       ? InMemWorkerConfig.new({
@@ -65,14 +74,16 @@ export async function mainImporter(
           blake2b,
           workerParams,
         })
-      : dbBackend === "hybrid"
-        ? HybridWorkerConfig.new({
+      : dbBackend === "lmdb-hybrid" || dbBackend === "fjall-hybrid"
+        ? await HybridWorkerConfig.new({
             nodeName,
             chainSpec,
             blake2b,
             dbPath,
             workerParams,
-            ephemeral: options.ephemeralDb ?? false,
+            ephemeral,
+            compression,
+            backend: dbBackend === "lmdb-hybrid" ? "lmdb" : "fjall",
           })
         : LmdbWorkerConfig.new({
             nodeName,
@@ -80,7 +91,7 @@ export async function mainImporter(
             blake2b,
             dbPath,
             workerParams,
-            ephemeral: options.ephemeralDb ?? false,
+            ephemeral,
           });
 
   // Initialize the database with genesis state and block if there isn't one.

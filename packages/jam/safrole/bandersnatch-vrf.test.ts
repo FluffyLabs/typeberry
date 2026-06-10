@@ -111,12 +111,9 @@ describe("Bandersnatch verification", () => {
         entropy,
       );
 
-      assert.strictEqual(
-        result.every((x) => x.isValid),
-        true,
-      );
+      assert.strictEqual(result.isValid, true);
       assert.deepStrictEqual(
-        result.map((x) => x.entropyHash.toString()),
+        result.tickets.map((x) => x.toString()),
         expectedIds.map((x) => x.toString()),
       );
     });
@@ -150,10 +147,12 @@ describe("Bandersnatch verification", () => {
         "0xbb30a42c1e62f0afda5f0a4e8a562f7a13a24cea00ee81917b86b89e801314aa",
         HASH_SIZE,
       ).asOpaque();
+      // Batch verification fails as a whole when any signature is invalid,
+      // and in that case all returned entropy hashes are zeroed out.
       const expectedIds = [
         "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "0x13fecb426e0a73b84b58b9a0832b11582dc971e79c5399e69f0baf1a244c7787",
-        "0x3a5d10abc80dda33fe3f40b3bb2e3eefd3e97dda3d617a860c9d94eb70b832ad",
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
       ].map((x) => Bytes.parseBytes(x, HASH_SIZE));
 
       const result = await bandersnatchVrf.verifyTickets(
@@ -164,12 +163,9 @@ describe("Bandersnatch verification", () => {
         entropy,
       );
 
+      assert.strictEqual(result.isValid, false);
       assert.deepStrictEqual(
-        result.map((x) => x.isValid),
-        [false, true, true],
-      );
-      assert.deepStrictEqual(
-        result.map((x) => x.entropyHash.toString()),
+        result.tickets.map((x) => x.toString()),
         expectedIds.map((x) => x.toString()),
       );
     });
@@ -307,8 +303,8 @@ describe("Bandersnatch verification", () => {
       const genResult = await bandersnatchVrf.generateTickets(
         await bandersnatchWasm,
         ringKeys,
-        proverIndex,
-        secrets[proverIndex],
+        [proverIndex],
+        [secrets[proverIndex]],
         entropy,
         2,
       );
@@ -317,19 +313,17 @@ describe("Bandersnatch verification", () => {
 
       const commitment = await bandersnatchVrf.getRingCommitment(await bandersnatchWasm, ringKeys);
       assert.ok(commitment.isOk);
+      assert.strictEqual(genResult.ok.length, 1);
 
       const verifyResult = await bandersnatchVrf.verifyTickets(
         await bandersnatchWasm,
         ringKeys.length,
         commitment.ok,
-        genResult.ok,
+        genResult.ok[0],
         entropy,
       );
 
-      assert.ok(
-        verifyResult.every((r) => r.isValid),
-        "Generated tickets should pass verification",
-      );
+      assert.ok(verifyResult.isValid, "Generated tickets should pass verification");
     });
   });
 });

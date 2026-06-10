@@ -7,6 +7,5 @@ bin/convert
 bin/ipc2rpc
 bin/pvm
 bin/rpc
-bin/tci
 bin/test-runner
 

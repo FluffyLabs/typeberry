@@ -31,8 +31,14 @@ describe("utils::lazyInspect", () => {
 
 describe("utils::memoryUsage", () => {
   it("should report all memory fields", () => {
-    const usage = memoryUsage();
+    const usage = memoryUsage(true);
     for (const field of ["rss=", "heap=", "external=", "arrayBuffers="]) {
+      assert.ok(usage.includes(field), `expected "${field}" in "${usage}"`);
+    }
+  });
+  it("should report all memory fields without details", () => {
+    const usage = memoryUsage(false);
+    for (const field of ["rss=", "heap="]) {
       assert.ok(usage.includes(field), `expected "${field}" in "${usage}"`);
     }
   });
@@ -40,14 +46,14 @@ describe("utils::memoryUsage", () => {
 
 describe("utils::memoryTracker", () => {
   it("should not include a delta on the first call", () => {
-    const tracker = memoryTracker();
-    assert.ok(!tracker().includes("Δrss"));
+    const tracker = memoryTracker(true);
+    assert.ok(!tracker.toString().includes("Δrss"));
   });
 
   it("should include a delta on subsequent calls", () => {
-    const tracker = memoryTracker();
-    tracker();
-    const second = tracker();
+    const tracker = memoryTracker(true);
+    tracker.toString();
+    const second = tracker.toString();
     assert.ok(second.includes("Δrss="), `expected delta in "${second}"`);
     assert.ok(second.includes("ΔarrayBuffers="), `expected delta in "${second}"`);
   });

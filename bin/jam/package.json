@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/jam",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "Typeberry - Typescript JAM implementation by Fluffy Labs team.",
   "repository": {
     "type": "git",
@@ -9,7 +9,10 @@
   "main": "index.ts",
   "bin": "./index.ts",
   "dependencies": {
+    "@typeberry/block": "*",
     "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/collections": "*",
     "@typeberry/config": "*",
     "@typeberry/config-node": "*",
     "@typeberry/crypto": "*",
@@ -18,7 +21,11 @@
     "@typeberry/networking": "*",
     "@typeberry/node": "*",
     "@typeberry/numbers": "*",
+    "@typeberry/safrole": "*",
+    "@typeberry/state": "*",
+    "@typeberry/state-merkleization": "*",
     "@typeberry/telemetry": "*",
+    "@typeberry/transition": "*",
     "@typeberry/utils": "*",
     "@typeberry/workers-api": "*",
     "minimist": "1.2.8"
@@ -29,7 +36,7 @@
     "build": "./build-for-npm.sh",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
     "test:e2e": "JAM_LOG=trace tsx --test test/e2e.ts",
-    "tiny-network": "tsx ./tiny-network.ts"
+    "tiny-network": "tsx ./helpers/tiny-network.ts"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

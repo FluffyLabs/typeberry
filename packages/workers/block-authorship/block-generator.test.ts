@@ -1,0 +1,519 @@
+import { afterEach, beforeEach, describe, it, mock } from "node:test";
+import {
+  Block,
+  DisputesExtrinsic,
+  type EntropyHash,
+  EpochMarker,
+  Extrinsic,
+  Header,
+  type TicketsMarker,
+  type TimeSlot,
+  tryAsTimeSlot,
+  tryAsValidatorIndex,
+  type ValidatorIndex,
+  ValidatorKeys,
+} from "@typeberry/block";
+import { SignedTicket, Ticket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { asKnownSize, FixedSizeArray } from "@typeberry/collections";
+import { tinyChainSpec } from "@typeberry/config";
+import {
+  BANDERSNATCH_KEY_BYTES,
+  BANDERSNATCH_PROOF_BYTES,
+  BANDERSNATCH_VRF_SIGNATURE_BYTES,
+  BLS_KEY_BYTES,
+  ED25519_KEY_BYTES,
+  initWasm,
+} from "@typeberry/crypto";
+import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto/bandersnatch.js";
+import type { BlocksDb, StatesDb } from "@typeberry/database";
+import { Blake2b, HASH_SIZE, keccak } from "@typeberry/hash";
+import bandersnatchVrf from "@typeberry/safrole/bandersnatch-vrf.js";
+import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm.js";
+import { JAM_FALLBACK_SEAL } from "@typeberry/safrole/constants.js";
+import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
+import { SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
+import { asOpaqueType, deepEqual, Result } from "@typeberry/utils";
+import { BlockGenerator, type BlockSealInput } from "./block-generator.js";
+
+// Test validator data - need 6 validators to match tinyChainSpec.validatorsCount
+const validatorDataArray = [
+  {
+    bandersnatch: "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
+    ed25519: "0x837ce344bc9defceb0d7de7e9e9925096768b7adb4dad932e532eb6551e0ea02",
+    bls: Bytes.zero(BLS_KEY_BYTES),
+    metadata: Bytes.zero(VALIDATOR_META_BYTES),
+  },
+  {
+    bandersnatch: "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
+    ed25519: "0xb3e0e096b02e2ec98a3441410aeddd78c95e27a0da6f411a09c631c0f2bea6e9",
+    bls: Bytes.zero(BLS_KEY_BYTES),
+    metadata: Bytes.zero(VALIDATOR_META_BYTES),
+  },
+  {
+    bandersnatch: "0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3",
+    ed25519: "0x5c7f34a4bd4f2d04076a8c6f9060a0c8d2c6bdd082ceb3eda7df381cb260faff",
+    bls: Bytes.zero(BLS_KEY_BYTES),
+    metadata: Bytes.zero(VALIDATOR_META_BYTES),
+  },
+  {
+    bandersnatch: "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
+    ed25519: "0x3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29",
+    bls: Bytes.zero(BLS_KEY_BYTES),
+    metadata: Bytes.zero(VALIDATOR_META_BYTES),
+  },
+  {
+    bandersnatch: "0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0",
+    ed25519: "0x22351e22105a19aabb42589162ad7f1ea0df1c25cebf0e4a9fcd261301274862",
+    bls: Bytes.zero(BLS_KEY_BYTES),
+    metadata: Bytes.zero(VALIDATOR_META_BYTES),
+  },
+  {
+    bandersnatch: "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
+    ed25519: "0xe68e0cf7f26c59f963b5846202d2327cc8bc0c4eff8cb9abd4012f9a71decf00",
+    bls: Bytes.zero(BLS_KEY_BYTES),
+    metadata: Bytes.zero(VALIDATOR_META_BYTES),
+  },
+].map(({ bandersnatch, bls, ed25519, metadata }) =>
+  ValidatorData.create({
+    bandersnatch: Bytes.parseBytes(bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque(),
+    bls: bls.asOpaque(),
+    ed25519: Bytes.parseBytes(ed25519, ED25519_KEY_BYTES).asOpaque(),
+    metadata: metadata.asOpaque(),
+  }),
+);
+
+const validators = asKnownSize(validatorDataArray);
+
+// Expected mock values - these are returned by mocked VRF functions
+const MOCK_SEAL_SIGNATURE = Bytes.fill(BANDERSNATCH_VRF_SIGNATURE_BYTES, 2);
+const MOCK_STATE_ROOT = Bytes.fill(HASH_SIZE, 3);
+const MOCK_PARENT_HASH = Bytes.fill(HASH_SIZE, 0xab);
+
+// Common test inputs
+const MOCK_BANDERSNATCH_SECRET = Bytes.zero(BANDERSNATCH_KEY_BYTES).asOpaque();
+const MOCK_SEAL_PAYLOAD = asOpaqueType(
+  BytesBlob.blobFromParts(JAM_FALLBACK_SEAL, Bytes.zero(HASH_SIZE).raw),
+) as BlockSealInput;
+
+// Mock state entropy values
+const MOCK_ENTROPY_0: EntropyHash = Bytes.fill(HASH_SIZE, 10).asOpaque();
+const MOCK_ENTROPY_1: EntropyHash = Bytes.fill(HASH_SIZE, 20).asOpaque();
+const MOCK_ENTROPY_2: EntropyHash = Bytes.fill(HASH_SIZE, 30).asOpaque();
+const MOCK_ENTROPY_3: EntropyHash = Bytes.fill(HASH_SIZE, 40).asOpaque();
+
+// Mock BlocksDb
+function createMockBlocksDb(headerHash: Bytes<32>) {
+  return {
+    getBestHeaderHash: () => headerHash.asOpaque(),
+  } as unknown as BlocksDb;
+}
+
+// Mock StatesDb
+function createMockStatesDb(state: ReturnType<typeof createMockState>) {
+  return {
+    getState: () => state,
+    getStateRoot: () => Promise.resolve(MOCK_STATE_ROOT.asOpaque()),
+  } as unknown as StatesDb;
+}
+
+function createMockState(timeslot: number) {
+  const bandersnatchKeys = validatorDataArray.map((v) => v.bandersnatch);
+
+  return {
+    timeslot: tryAsTimeSlot(timeslot),
+    entropy: FixedSizeArray.new([MOCK_ENTROPY_0, MOCK_ENTROPY_1, MOCK_ENTROPY_2, MOCK_ENTROPY_3], 4),
+    previousValidatorData: validators,
+    currentValidatorData: validators,
+    designatedValidatorData: validators,
+    nextValidatorData: validators,
+    ticketsAccumulator: asKnownSize([]),
+    sealingKeySeries: {
+      kind: SafroleSealingKeysKind.Keys as const,
+      keys: asKnownSize(bandersnatchKeys),
+    },
+    epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
+    disputesRecords: {
+      punishSet: { size: 0, has: () => false },
+    },
+  };
+}
+
+/**
+ * Creates an expected block based on mock values and provided parameters.
+ * Used for asserting generated blocks match expected structure.
+ */
+function createExpectedBlock(params: {
+  timeSlot: TimeSlot;
+  validatorIndex: ValidatorIndex;
+  extrinsicHash: Bytes<32>;
+  epochMarker?: EpochMarker | null;
+  ticketsMarker?: TicketsMarker | null;
+}) {
+  return Block.create({
+    header: Header.create({
+      parentHeaderHash: MOCK_PARENT_HASH.asOpaque(),
+      priorStateRoot: MOCK_STATE_ROOT.asOpaque(),
+      extrinsicHash: params.extrinsicHash.asOpaque(),
+      timeSlotIndex: params.timeSlot,
+      bandersnatchBlockAuthorIndex: params.validatorIndex,
+      entropySource: MOCK_SEAL_SIGNATURE.asOpaque(),
+      seal: MOCK_SEAL_SIGNATURE.asOpaque(),
+      epochMarker: params.epochMarker ?? null,
+      ticketsMarker: params.ticketsMarker ?? null,
+      offendersMarker: [],
+    }),
+    extrinsic: Extrinsic.create({
+      tickets: asOpaqueType([]),
+      preimages: [],
+      guarantees: asOpaqueType([]),
+      assurances: asOpaqueType([]),
+      disputes: DisputesExtrinsic.create({
+        verdicts: [],
+        culprits: [],
+        faults: [],
+      }),
+    }),
+  });
+}
+
+describe("Generator", () => {
+  let blake2b: Blake2b;
+  let keccakHasher: keccak.KeccakHasher;
+  let bandersnatch: BandernsatchWasm;
+
+  beforeEach(async () => {
+    await initWasm();
+    blake2b = await Blake2b.createHasher();
+    keccakHasher = await keccak.KeccakHasher.create();
+    bandersnatch = await BandernsatchWasm.new();
+
+    // Mock VRF functions to return predictable results
+    mock.method(bandersnatchVrf, "getVrfOutputHash", () =>
+      Promise.resolve(Result.ok(Bytes.zero(HASH_SIZE).asOpaque())),
+    );
+    mock.method(bandersnatchVrf, "generateSeal", () => Promise.resolve(Result.ok(MOCK_SEAL_SIGNATURE.asOpaque())));
+    mock.method(bandersnatchVrf, "getRingCommitment", () =>
+      Promise.resolve(Result.ok(Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque())),
+    );
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
+  });
+
+  describe("nextBlock - fallback mode", () => {
+    it("should create block for same-epoch slot", async () => {
+      const state = createMockState(0);
+      const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
+      const statesDb = createMockStatesDb(state);
+
+      const generator = BlockGenerator.new({
+        chainSpec: tinyChainSpec,
+        bandersnatch,
+        keccakHasher,
+        blake2b,
+        blocks: blocksDb,
+        states: statesDb,
+      });
+
+      const validatorIndex = tryAsValidatorIndex(0);
+      const timeSlot = tryAsTimeSlot(1);
+
+      const block = await generator.nextBlock(validatorIndex, MOCK_BANDERSNATCH_SECRET, MOCK_SEAL_PAYLOAD, timeSlot);
+
+      const expectedBlock = createExpectedBlock({
+        timeSlot,
+        validatorIndex,
+        extrinsicHash: block.header.extrinsicHash,
+      });
+
+      deepEqual(block, expectedBlock);
+    });
+
+    it("should include sorted tickets during contest period", async () => {
+      // tinyChainSpec: contestLength = 10, so slot 1 is in contest period (1 < 10)
+      const state = createMockState(0);
+      const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
+      const statesDb = createMockStatesDb(state);
+
+      const generator = BlockGenerator.new({
+        chainSpec: tinyChainSpec,
+        bandersnatch,
+        keccakHasher,
+        blake2b,
+        blocks: blocksDb,
+        states: statesDb,
+      });
+
+      // Create two tickets with different signatures
+      const sig1 = Bytes.zero(BANDERSNATCH_PROOF_BYTES);
+      sig1.raw[0] = 1;
+      const sig2 = Bytes.zero(BANDERSNATCH_PROOF_BYTES);
+      sig2.raw[0] = 2;
+
+      const ticket1 = SignedTicket.create({
+        attempt: tryAsTicketAttempt(0),
+        signature: sig1.asOpaque(),
+      });
+      const ticket2 = SignedTicket.create({
+        attempt: tryAsTicketAttempt(0),
+        signature: sig2.asOpaque(),
+      });
+
+      // ticket2 gets smaller ID (0x01...) and ticket1 gets larger ID (0x02...)
+      // so the sorted order should be [ticket2, ticket1]
+      const id1 = Bytes.fill(HASH_SIZE, 0x02).asOpaque<EntropyHash>();
+      const id2 = Bytes.fill(HASH_SIZE, 0x01).asOpaque<EntropyHash>();
+
+      const validatorIndex = tryAsValidatorIndex(0);
+      // Slot 1 is in contest period (1 < contestLength=10)
+      const timeSlot = tryAsTimeSlot(1);
+
+      // IDs are now pre-computed before passing to nextBlock
+      const block = await generator.nextBlock(validatorIndex, MOCK_BANDERSNATCH_SECRET, MOCK_SEAL_PAYLOAD, timeSlot, [
+        { ticket: ticket1, id: id1 },
+        { ticket: ticket2, id: id2 },
+      ]);
+
+      // Tickets should be sorted by ID ascending: ticket2 (id=0x01) before ticket1 (id=0x02)
+      const tickets = block.extrinsic.tickets as unknown as SignedTicket[];
+      deepEqual(tickets.length, 2);
+      deepEqual(tickets[0].signature, sig2.asOpaque());
+      deepEqual(tickets[1].signature, sig1.asOpaque());
+    });
+
+    it("should exclude tickets outside contest period", async () => {
+      // tinyChainSpec: contestLength = 10, epochLength = 12
+      // Slot 10 is outside contest period (10 >= 10)
+      const state = createMockState(9);
+      const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
+      const statesDb = createMockStatesDb(state);
+
+      const generator = BlockGenerator.new({
+        chainSpec: tinyChainSpec,
+        bandersnatch,
+        keccakHasher,
+        blake2b,
+        blocks: blocksDb,
+        states: statesDb,
+      });
+
+      const sig1 = Bytes.zero(BANDERSNATCH_PROOF_BYTES);
+      const ticket1 = SignedTicket.create({
+        attempt: tryAsTicketAttempt(0),
+        signature: sig1.asOpaque(),
+      });
+
+      const validatorIndex = tryAsValidatorIndex(0);
+      // Slot 10 is NOT in contest period (10 >= contestLength=10)
+      const timeSlot = tryAsTimeSlot(10);
+
+      const mockId = Bytes.fill(HASH_SIZE, 0x01).asOpaque<EntropyHash>();
+      const block = await generator.nextBlock(validatorIndex, MOCK_BANDERSNATCH_SECRET, MOCK_SEAL_PAYLOAD, timeSlot, [
+        { ticket: ticket1, id: mockId },
+      ]);
+
+      // No tickets should be included outside contest period
+      const tickets = block.extrinsic.tickets as unknown as SignedTicket[];
+      deepEqual(tickets.length, 0);
+    });
+
+    it("should filter out tickets already in ticketsAccumulator", async () => {
+      // Build a state that already has ticket with id=0x01 in its accumulator
+      const accumulatedId = Bytes.fill(HASH_SIZE, 0x01).asOpaque<EntropyHash>();
+      const accumulatedTicket = Ticket.create({
+        id: accumulatedId,
+        attempt: tryAsTicketAttempt(0),
+      });
+
+      const state = {
+        ...createMockState(0),
+        ticketsAccumulator: asKnownSize([accumulatedTicket]),
+      };
+      const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
+      const statesDb = createMockStatesDb(state);
+
+      const generator = BlockGenerator.new({
+        chainSpec: tinyChainSpec,
+        bandersnatch,
+        keccakHasher,
+        blake2b,
+        blocks: blocksDb,
+        states: statesDb,
+      });
+
+      const sig1 = Bytes.zero(BANDERSNATCH_PROOF_BYTES);
+      sig1.raw[0] = 1;
+      const sig2 = Bytes.zero(BANDERSNATCH_PROOF_BYTES);
+      sig2.raw[0] = 2;
+
+      const ticketAlreadyAccumulated = SignedTicket.create({
+        attempt: tryAsTicketAttempt(0),
+        signature: sig1.asOpaque(),
+      });
+      const ticketNew = SignedTicket.create({
+        attempt: tryAsTicketAttempt(0),
+        signature: sig2.asOpaque(),
+      });
+
+      // id=0x01 is already in accumulator, id=0x02 is new
+      const idAccumulated = Bytes.fill(HASH_SIZE, 0x01).asOpaque<EntropyHash>();
+      const idNew = Bytes.fill(HASH_SIZE, 0x02).asOpaque<EntropyHash>();
+
+      const validatorIndex = tryAsValidatorIndex(0);
+      const timeSlot = tryAsTimeSlot(1); // inside contest period
+
+      const block = await generator.nextBlock(validatorIndex, MOCK_BANDERSNATCH_SECRET, MOCK_SEAL_PAYLOAD, timeSlot, [
+        { ticket: ticketAlreadyAccumulated, id: idAccumulated },
+        { ticket: ticketNew, id: idNew },
+      ]);
+
+      // Only the new ticket (not in accumulator) should be included
+      const tickets = block.extrinsic.tickets as unknown as SignedTicket[];
+      deepEqual(tickets.length, 1);
+      deepEqual(tickets[0].signature, sig2.asOpaque());
+    });
+
+    it("should deduplicate tickets by ID", async () => {
+      const state = createMockState(0);
+      const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
+      const statesDb = createMockStatesDb(state);
+
+      const generator = BlockGenerator.new({
+        chainSpec: tinyChainSpec,
+        bandersnatch,
+        keccakHasher,
+        blake2b,
+        blocks: blocksDb,
+        states: statesDb,
+      });
+
+      const sig1 = Bytes.zero(BANDERSNATCH_PROOF_BYTES);
+      sig1.raw[0] = 1;
+      const sig2 = Bytes.zero(BANDERSNATCH_PROOF_BYTES);
+      sig2.raw[0] = 2;
+
+      // Two different SignedTicket objects but with the same ID (e.g. duplicate from reorg)
+      const ticketA = SignedTicket.create({
+        attempt: tryAsTicketAttempt(0),
+        signature: sig1.asOpaque(),
+      });
+      const ticketB = SignedTicket.create({
+        attempt: tryAsTicketAttempt(0),
+        signature: sig2.asOpaque(),
+      });
+      const duplicateId = Bytes.fill(HASH_SIZE, 0x05).asOpaque<EntropyHash>();
+
+      const validatorIndex = tryAsValidatorIndex(0);
+      const timeSlot = tryAsTimeSlot(1);
+
+      const block = await generator.nextBlock(validatorIndex, MOCK_BANDERSNATCH_SECRET, MOCK_SEAL_PAYLOAD, timeSlot, [
+        { ticket: ticketA, id: duplicateId },
+        { ticket: ticketB, id: duplicateId }, // same ID — should be deduplicated
+      ]);
+
+      const tickets = block.extrinsic.tickets as unknown as SignedTicket[];
+      deepEqual(tickets.length, 1);
+      // First occurrence is kept after sort (both have same ID, ticketA comes first)
+      deepEqual(tickets[0].signature, sig1.asOpaque());
+    });
+
+    it("should include at most maxTicketsPerExtrinsic tickets", async () => {
+      // tinyChainSpec.maxTicketsPerExtrinsic = 3
+      const state = createMockState(0);
+      const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
+      const statesDb = createMockStatesDb(state);
+
+      const generator = BlockGenerator.new({
+        chainSpec: tinyChainSpec,
+        bandersnatch,
+        keccakHasher,
+        blake2b,
+        blocks: blocksDb,
+        states: statesDb,
+      });
+
+      // Create 4 tickets — only 3 should be included (lowest IDs win)
+      const makeTicket = (sigByte: number, idByte: number) => {
+        const sig = Bytes.zero(BANDERSNATCH_PROOF_BYTES);
+        sig.raw[0] = sigByte;
+        return {
+          ticket: SignedTicket.create({ attempt: tryAsTicketAttempt(0), signature: sig.asOpaque() }),
+          id: Bytes.fill(HASH_SIZE, idByte).asOpaque<EntropyHash>(),
+          sig: sig.asOpaque(),
+        };
+      };
+
+      const t1 = makeTicket(1, 0x01); // lowest ID
+      const t2 = makeTicket(2, 0x02);
+      const t3 = makeTicket(3, 0x03);
+      const t4 = makeTicket(4, 0x04); // highest ID — should be excluded
+
+      const validatorIndex = tryAsValidatorIndex(0);
+      const timeSlot = tryAsTimeSlot(1);
+
+      const block = await generator.nextBlock(validatorIndex, MOCK_BANDERSNATCH_SECRET, MOCK_SEAL_PAYLOAD, timeSlot, [
+        { ticket: t4.ticket, id: t4.id }, // pass out-of-order to verify sorting
+        { ticket: t2.ticket, id: t2.id },
+        { ticket: t3.ticket, id: t3.id },
+        { ticket: t1.ticket, id: t1.id },
+      ]);
+
+      const tickets = block.extrinsic.tickets as unknown as SignedTicket[];
+      deepEqual(tickets.length, 3); // maxTicketsPerExtrinsic = 3
+      // Should include the 3 lowest IDs, sorted ascending
+      deepEqual(tickets[0].signature, t1.sig);
+      deepEqual(tickets[1].signature, t2.sig);
+      deepEqual(tickets[2].signature, t3.sig);
+    });
+
+    it("should create block with epoch marker at epoch boundary", async () => {
+      // tinyChainSpec.epochLength = 12, so:
+      // - timeslot 11 is last slot of epoch 0
+      // - timeslot 12 is first slot of epoch 1
+      const lastSlotOfEpoch0 = tinyChainSpec.epochLength - 1;
+      const firstSlotOfEpoch1 = tinyChainSpec.epochLength;
+
+      const state = createMockState(lastSlotOfEpoch0);
+      const blocksDb = createMockBlocksDb(MOCK_PARENT_HASH);
+      const statesDb = createMockStatesDb(state);
+
+      const generator = BlockGenerator.new({
+        chainSpec: tinyChainSpec,
+        bandersnatch,
+        keccakHasher,
+        blake2b,
+        blocks: blocksDb,
+        states: statesDb,
+      });
+
+      const validatorIndex = tryAsValidatorIndex(0);
+      const timeSlot = tryAsTimeSlot(firstSlotOfEpoch1);
+
+      const block = await generator.nextBlock(validatorIndex, MOCK_BANDERSNATCH_SECRET, MOCK_SEAL_PAYLOAD, timeSlot);
+
+      const expectedEpochMarker = EpochMarker.create({
+        entropy: MOCK_ENTROPY_0,
+        ticketsEntropy: MOCK_ENTROPY_1,
+        validators: asKnownSize(
+          validatorDataArray.map((v) =>
+            ValidatorKeys.create({
+              bandersnatch: v.bandersnatch,
+              ed25519: v.ed25519,
+            }),
+          ),
+        ),
+      });
+
+      const expectedBlock = createExpectedBlock({
+        timeSlot,
+        validatorIndex,
+        extrinsicHash: block.header.extrinsicHash,
+        epochMarker: expectedEpochMarker,
+      });
+
+      deepEqual(block, expectedBlock);
+    });
+  });
+});
