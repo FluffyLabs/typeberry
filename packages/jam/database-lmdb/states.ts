@@ -158,6 +158,12 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>>, InitStates
     return SerializedState.new(this.spec, this.blake2b, leafDbResult.ok);
   }
 
+  commitFinalized(_headers: HeaderHash[]): void {
+    // Values are never pruned here. This db survives restarts, so refcounting
+    // would need counts persisted (and crash-consistent) alongside the values.
+    // See the TODO above - not implemented until actually needed.
+  }
+
   markUnused(header: HeaderHash): void {
     this.states.removeSync(header.raw);
   }
