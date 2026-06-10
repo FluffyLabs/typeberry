@@ -14,6 +14,16 @@ const logger = Logger.new(import.meta.filename, "tickets-pool");
 const WORKER_BOOTSTRAP = new URL("./bootstrap-ticket-generator.mjs", import.meta.url);
 
 /**
+ * Validators per shard.
+ *
+ * Kept small so tickets stream into the pool incrementally (and get included in
+ * blocks throughout the contest period) rather than arriving in one lump when
+ * generation finishes. The prover setup is re-done per shard, but that cost is
+ * tiny next to the per-proof time, so finer shards add only ~1-2% overhead.
+ */
+const TICKET_SHARD_SIZE = 16;
+
+/**
  * A pool of worker threads that generate ring-VRF tickets in parallel.
  *
  * Ring-VRF proof generation is a heavy, synchronous, CPU-bound native call
@@ -81,14 +91,7 @@ export class TicketGeneratorPool {
     const { inputsData, vrfInputDataLen } = buildTicketVrfInputs(entropy, ticketsPerValidator);
     const ringKeysData = BytesBlob.blobFromParts(ringKeys.map((k) => k.raw)).raw;
 
-    // Split evenly so each worker runs a single batched call (one prover setup
-    // amortised across its shard).
-    const shardCount = Math.min(this.workerCount, resolved.length);
-    const shardSize = Math.ceil(resolved.length / shardCount);
-
-    const shardPromises: Promise<void>[] = [];
-    for (let start = 0; start < resolved.length; start += shardSize) {
-      const shard = resolved.slice(start, start + shardSize);
+    const runShard = (shard: { index: number; secret: BandersnatchSecretSeed }[]) => {
       const indices = Uint32Array.from(shard.map((r) => r.index));
       const secretSeedsData = BytesBlob.blobFromParts(shard.map((r) => r.secret.raw)).raw;
       const params = new TicketGenShardParams(
@@ -99,8 +102,7 @@ export class TicketGeneratorPool {
         inputsData,
         vrfInputDataLen,
       );
-
-      const shardPromise = this.executor
+      return this.executor
         .run(params)
         .then((result) => {
           const parsed = parseTicketsBatchOutput(result.signatures, indices.length, ticketsPerValidator);
@@ -113,9 +115,20 @@ export class TicketGeneratorPool {
         .catch((e) => {
           logger.warn`A ticket-generation shard failed: ${e}`;
         });
-      shardPromises.push(shardPromise);
-    }
+    };
 
-    await Promise.all(shardPromises);
+    // Dispatch small shards in waves of `workerCount` so every worker stays busy
+    // and tickets are delivered incrementally (one wave at a time) without
+    // over-queuing the executor.
+    const shardSize = Math.min(resolved.length, TICKET_SHARD_SIZE);
+    const waveSize = shardSize * this.workerCount;
+    for (let waveStart = 0; waveStart < resolved.length; waveStart += waveSize) {
+      const wave: Promise<void>[] = [];
+      const waveEnd = Math.min(waveStart + waveSize, resolved.length);
+      for (let start = waveStart; start < waveEnd; start += shardSize) {
+        wave.push(runShard(resolved.slice(start, start + shardSize)));
+      }
+      await Promise.all(wave);
+    }
   }
 }

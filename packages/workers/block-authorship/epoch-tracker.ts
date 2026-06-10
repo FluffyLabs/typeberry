@@ -42,9 +42,11 @@ export class EpochTracker {
     const epochLength = this.chainSpec.epochLength;
     const sealingKeySeries = sealingKeySeriesResult.ok;
     // On a new epoch, `state.entropy[2]` is the epoch-E entropy (pre-transition);
-    // mid-epoch, it has already shifted to `entropy[3]`.
-    const isFirstBlockOfEpoch = newTimeSlot % epochLength === 0;
-    const entropy = isFirstBlockOfEpoch ? state.entropy[2] : state.entropy[3];
+    // mid-epoch, it has already shifted to `entropy[3]`. Use the same predicate
+    // as `getSealingKeySeries` so the entropy and the key series stay consistent
+    // even when the first authored block of an epoch isn't exactly at slot E·L.
+    const isNewEpoch = this.isEpochChanged(state.timeslot, newTimeSlot);
+    const entropy = isNewEpoch ? state.entropy[2] : state.entropy[3];
 
     const epoch = tryAsEpoch(Math.floor(newTimeSlot / epochLength));
     logger.log`[E${epoch}] is using ${SafroleSealingKeysKind[sealingKeySeries.kind]}`;

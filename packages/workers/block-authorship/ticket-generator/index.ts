@@ -18,9 +18,9 @@ const TICKET_GENERATION_VALIDATOR_MARGIN = 8;
 /** Leave this many cores for the main thread, importer, network and the OS. */
 const TICKET_POOL_RESERVED_CORES = 4;
 /** Hard cap on ticket-generation worker threads. */
-const TICKET_POOL_MAX_WORKERS = 4;
+const TICKET_POOL_MAX_WORKERS = 8;
 
-const logger = Logger.new(import.meta.filename, "tickets-generator");
+const logger = Logger.new(import.meta.filename, "tickets");
 const measureTicketGen = measure("ticket:gen");
 
 /** Number of worker threads to use for parallel ticket generation. */
@@ -64,13 +64,13 @@ export class TicketGenerator {
     const selected = validatorKeys.slice(0, Math.min(validatorKeys.length, needed));
 
     const ticketGen = measureTicketGen();
-    logger.info`[E${epoch}] generating tickets for ${selected.length} validators across ${this.pool.workerCount} worker threads…`;
+    logger.info`🎫 [E${epoch}] generating tickets for ${selected.length} validators across ${this.pool.workerCount} worker threads…`;
 
     try {
       await this.pool.generate(ringKeys, selected, entropy, this.chainSpec.ticketsPerValidator, onTickets);
-      logger.info`[E${epoch}] ${ticketGen}`;
+      logger.info`🎫 [E${epoch}] ${ticketGen}`;
     } catch (e) {
-      logger.warn`[E${epoch}] ticket generation failed: ${e}`;
+      logger.warn`🎫 [E${epoch}] ticket generation failed: ${e}`;
     }
   }
 }

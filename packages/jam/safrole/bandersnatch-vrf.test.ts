@@ -304,7 +304,7 @@ describe("Bandersnatch verification", () => {
         await bandersnatchWasm,
         ringKeys,
         [proverIndex],
-        secrets[proverIndex],
+        [secrets[proverIndex]],
         entropy,
         2,
       );

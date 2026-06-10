@@ -4,6 +4,7 @@ import { tryAsEpoch } from "@typeberry/block";
 import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
 import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/crypto";
+import { HASH_SIZE } from "@typeberry/hash";
 import { AcceptTicketsValidator, DenyTicketsValidator, ValidationError } from "./ticket-validator.js";
 
 const E1 = tryAsEpoch(1);
@@ -21,7 +22,7 @@ describe("AcceptTicketsValidator", () => {
     const res = await v.validate(E1, [makeTicket()]);
     assert.strictEqual(res.isOk, true);
     if (res.isOk) {
-      assert.strictEqual(res.ok[0].id.toString(), "0x00");
+      assert.strictEqual(res.ok[0].id.toString(), Bytes.zero(HASH_SIZE).toString());
     }
   });
 });

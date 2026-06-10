@@ -1,5 +1,5 @@
 import { type PvmBackend, PvmBackendNames } from "@typeberry/config";
-import { DEFAULT_CONFIG, DEV_CONFIG, NODE_DEFAULTS } from "@typeberry/config-node";
+import { DEFAULT_CONFIG, DEV_TINY_CONFIG, NODE_DEFAULTS } from "@typeberry/config-node";
 import { logger } from "@typeberry/node";
 import { isU16, type U16 } from "@typeberry/numbers";
 import { version } from "@typeberry/utils";
@@ -28,7 +28,7 @@ Options:
   --${ARGS.NAME}                Override node name. Affects networking key and db location.
                         [default: ${NODE_DEFAULTS.name}]
   --${ARGS.CONFIG}              Configuration directives. If specified more than once, they are evaluated and merged from left to right.
-                        A configuration directive can be a path to a config file, an inline JSON object, a pseudo-jq query or one of predefined configs ['${DEV_CONFIG}', '${DEFAULT_CONFIG}'].
+                        A configuration directive can be a path to a config file, an inline JSON object, a pseudo-jq query or one of predefined configs ['${DEV_TINY_CONFIG}', '${DEFAULT_CONFIG}'].
                         Pseudo-jq queries are a way to modify the config using a subset of jq syntax.
                         Example: --${ARGS.CONFIG}=dev --${ARGS.CONFIG}=.chain_spec+={"bootnodes": []}      -- will modify only the bootnodes property of the chain spec (merge).
                         Example: --${ARGS.CONFIG}=dev --${ARGS.CONFIG}=.chain_spec={"bootnodes": []}       -- will replace the entire chain spec property with the provided JSON object.
@@ -150,7 +150,7 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
       return { command: Command.Run, args: data };
     }
     case Command.Dev: {
-      const data = parseSharedOptions(args, [DEV_CONFIG]);
+      const data = parseSharedOptions(args, [DEV_TINY_CONFIG]);
       const indexOrAll = args._.shift();
       if (indexOrAll === undefined) {
         throw new Error("Missing dev-validator index.");

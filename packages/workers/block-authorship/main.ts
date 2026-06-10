@@ -53,7 +53,7 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
 
   const epochTracker = await EpochTracker.new(chainSpec, bandersnatch, blake2bHasher, config.workerParams.keys);
 
-  logger.info`Authoring with: ${epochTracker.authoring.getBandersnatchPublicKeys().map((bandersnatchPublic, index) => `\n ${index}: ${bandersnatchPublic}`)}`;
+  logger.info`👛 Authoring with: ${epochTracker.authoring.getBandersnatchPublicKeys().map((bandersnatchPublic, index) => `\n ${index}: ${bandersnatchPublic}`)}`;
 
   const generator = BlockGenerator.new({
     chainSpec,
@@ -114,7 +114,11 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
       const oldEpochData = epochData;
       epochData = await epochTracker.getEpochData(logger, state, newTimeSlot);
       const epochIndex = epochData.epoch;
-      logger.info`[E${oldEpochData?.epoch}#${stateTimeSlot} -> E${epochIndex}#${newTimeSlot}] epoch transition.`;
+      if (oldEpochData === null) {
+        logger.info`🎁 [E${epochIndex}#${newTimeSlot}] starting authorship (state at #${stateTimeSlot})`;
+      } else {
+        logger.info`🎁 [E${oldEpochData.epoch}#${stateTimeSlot} -> E${epochIndex}#${newTimeSlot}] epoch transition`;
+      }
 
       // On every epoch boundary, push the authoritative ticket pool to networking so it
       // can replace its redistribution set; this keeps the two sides from drifting.
@@ -182,10 +186,18 @@ function getValidatorIndex(key: BandersnatchKey, currentValidatorData: PerValida
   return tryAsValidatorIndex(index);
 }
 
-// How many blocks before end of the content period we should forcefully await
-// ticket generator in fast forward mode. Without this, we generate blocks too
-// fast and never fill the tickets.
-const EPOCH_CONTENT_MARGIN = 5;
+/**
+ * How many slots before the end of the contest period we force-await the ticket
+ * generator in fast-forward mode. Without this, blocks are produced faster than
+ * tickets are generated and the accumulator never fills (→ Keys-mode fallback).
+ *
+ * Derived so that, after the wait completes, there are enough remaining contest
+ * slots to include a full accumulator worth of tickets (`epochLength` tickets at
+ * `maxTicketsPerExtrinsic` per block), plus a small buffer.
+ */
+function ticketInclusionMargin(chainSpec: ChainSpec): number {
+  return Math.ceil(chainSpec.epochLength / chainSpec.maxTicketsPerExtrinsic) + 4;
+}
 
 function systemTimeMs(): bigint {
   return process.hrtime.bigint() / 1_000_000n;
@@ -197,7 +209,13 @@ class TimeSlotHandler {
 
   static new(isFastForward: boolean, chainSpec: ChainSpec, stateTimeSlot: TimeSlot) {
     const slotDurationMs = BigInt(chainSpec.slotDuration) * 1_000n;
-    return new TimeSlotHandler(stateTimeSlot, slotDurationMs, isFastForward, chainSpec.contestLength);
+    return new TimeSlotHandler(
+      stateTimeSlot,
+      slotDurationMs,
+      isFastForward,
+      chainSpec.contestLength,
+      ticketInclusionMargin(chainSpec),
+    );
   }
 
   private constructor(
@@ -205,6 +223,7 @@ class TimeSlotHandler {
     private readonly slotDurationMs: bigint,
     private readonly isFastForward: boolean,
     private readonly contestLength: U32,
+    private readonly inclusionMargin: number,
   ) {
     this.systemStartTimeMs = systemTimeMs();
     this.stateStartTime = BigInt(initialStateTimeSlot) * slotDurationMs;
@@ -224,8 +243,8 @@ class TimeSlotHandler {
 
   async waitForNextSlot(wasAuthoring: boolean, epochPhase: number, ticketGeneratorDone: Promise<void>) {
     if (this.isFastForward) {
-      // when we approach the end of the content period make sure to wait for all tickets
-      if (epochPhase < this.contestLength && epochPhase + EPOCH_CONTENT_MARGIN > this.contestLength) {
+      // when we approach the end of the contest period make sure to wait for all tickets
+      if (epochPhase < this.contestLength && epochPhase + this.inclusionMargin > this.contestLength) {
         await ticketGeneratorDone;
       }
       // return as fast as possible

@@ -90,7 +90,7 @@ export class Importer {
     this.blocks = args.blocks;
     this.states = args.states;
     this.options = args.options ?? {};
-    this.events = args.events ?? ImporterStats.new(args.logger, () => this.states.diskSizeInBytes?.() ?? null);
+    this.events = args.events ?? ImporterStats.new(() => this.states.diskSizeInBytes?.() ?? null);
 
     this.metrics = metrics.createMetrics();
 
@@ -143,11 +143,11 @@ export class Importer {
       // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
       if (maybeBestHeader?.isOk) {
         const bestHeader = maybeBestHeader.ok;
-        this.logger.info`🧊 Best block: #${timeSlot} (${bestHeader.hash})`;
+        this.logger.info`🧊 Best: #${timeSlot} (${bestHeader.hash.toStringTruncated()})`;
         this.metrics.recordBlockImportComplete(duration, true);
       } else {
         this.logger
-          .log`❌ Rejected block #${timeSlot}: ${maybeBestHeader !== null ? resultToString(maybeBestHeader) : "exception"}`;
+          .log`❌ Rejected #${timeSlot}: ${maybeBestHeader !== null ? resultToString(maybeBestHeader) : "exception"}`;
         this.metrics.recordBlockImportComplete(duration, false);
       }
     }
@@ -234,7 +234,7 @@ export class Importer {
     if (finality !== null) {
       const pruneBlocks = this.options.pruneBlocks ?? false;
       this.logger
-        .info`🦭 Finalized block: ${finality.finalizedHash} (${finality.prunableStateHashes.length} to prune, blocks: ${pruneBlocks})`;
+        .info`🦭 Finalized: ${finality.finalizedHash.toStringTruncated()} (${finality.prunableStateHashes.length} to prune, blocks: ${pruneBlocks})`;
       for (const hash of finality.prunableStateHashes) {
         this.states.markUnused(hash);
         if (pruneBlocks) {
