@@ -87,10 +87,14 @@ export class SortedSet<V> extends SortedArray<V> implements ImmutableSortedSet<V
    *
    * Putting another value that's equal via comparator will replace the current one.
    */
-  public replace(v: V) {
+  public replace(v: V): V | undefined {
     const findIdx = this.binarySearch(v);
-    const toRemove = findIdx.isEqual ? 1 : 0;
-    this.array.splice(findIdx.idx, toRemove, v);
+    if (findIdx.isEqual) {
+      const [displaced] = this.array.splice(findIdx.idx, 1, v);
+      return displaced;
+    }
+    this.array.splice(findIdx.idx, 0, v);
+    return undefined;
   }
 
   /** Create a new SortedSet from two sorted collections. */
