@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/jam",
-  "version": "0.8.4",
+  "version": "0.9.0",
   "description": "Typeberry - Typescript JAM implementation by Fluffy Labs team.",
   "repository": {
     "type": "git",

@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/ticket-pool",
-  "version": "0.6.0",
+  "version": "0.9.0",
   "description": "In-memory Safrole ticket pools and validation abstraction shared between block authorship and networking.",
   "main": "index.ts",
   "dependencies": {

@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/rpc-client",
-  "version": "0.8.4",
+  "version": "0.9.0",
   "description": "A TypeScript JAM JSON-RPC client.",
   "main": "index.ts",
   "dependencies": {
