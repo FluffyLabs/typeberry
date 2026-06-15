@@ -7,7 +7,12 @@ import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { createImporter, ImporterConfig } from "@typeberry/importer";
 import { tryAsU16 } from "@typeberry/numbers";
 import { CURRENT_SUITE, CURRENT_VERSION, Result, resultToString, version } from "@typeberry/utils";
-import { HybridWorkerConfig, InMemWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
+import {
+  type FjallValuesSession,
+  HybridWorkerConfig,
+  InMemWorkerConfig,
+  LmdbWorkerConfig,
+} from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 import type { NodeApi } from "./main.js";
@@ -23,9 +28,15 @@ export type ImporterOptions = {
   /** Open the database without fsync/compression. Only safe for throwaway dbs (e.g. fuzzing). */
   ephemeral?: boolean;
   /**
-   * Persistent backend to use when `databaseBasePath` is set. Defaults to full LMDB.
+   * Persistent backend used when `databaseBasePath` is set. Defaults to full LMDB.
    */
   stateBackend?: StateBackend;
+  /**
+   * Reuse an already-open fjall values session instead of opening a fresh
+   * keyspace. Only used when `stateBackend === "fjall-hybrid"`. The fuzz target
+   * opens one per run and reuses it across resets.
+   */
+  sharedFjallSession?: FjallValuesSession;
 };
 
 export async function mainImporter(
@@ -84,6 +95,7 @@ export async function mainImporter(
             ephemeral,
             compression,
             backend: dbBackend === "lmdb-hybrid" ? "lmdb" : "fjall",
+            sharedFjallSession: options.sharedFjallSession,
           })
         : LmdbWorkerConfig.new({
             nodeName,

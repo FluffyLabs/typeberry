@@ -8,7 +8,7 @@ import {
   type RootDb,
   type SerializedStatesDb,
 } from "@typeberry/database";
-import { HybridSerializedStates as FjallHybridSerializedStates } from "@typeberry/database-fjall";
+import { HybridSerializedStates as FjallHybridSerializedStates, FjallValuesSession } from "@typeberry/database-fjall";
 import {
   LmdbBlocks,
   HybridSerializedStates as LmdbHybridSerializedStates,
@@ -19,7 +19,11 @@ import { Blake2b } from "@typeberry/hash";
 import type { WorkerConfig } from "@typeberry/workers-api";
 import { ThreadPort, type TransferablePort } from "./port.js";
 
-/** A worker config that's usable in node.js and uses LMDB database backend. */
+// Re-exported so the fuzz target can open one values session per run and reuse
+// it across resets (see `HybridWorkerConfig` / `mainFuzz`).
+export { FjallValuesSession };
+
+/** Worker config for node.js, backed by the LMDB database. */
 export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, SerializedStatesDb> {
   static new<T>({
     nodeName,
@@ -67,7 +71,7 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
     public readonly dbPath: string,
     public readonly blake2b: Blake2b,
     public readonly ports: Map<string, ThreadPort>,
-    // When set, the underlying LMDB skips fsync. Only safe for throwaway
+    // When set, the underlying database skips fsync. Only safe for throwaway
     // databases (the fuzz target wipes on reset). Not transferred to worker
     // threads, so the durable main node path always gets the default.
     public readonly ephemeral: boolean = false,
@@ -166,11 +170,10 @@ export type HybridBackend = "lmdb" | "fjall";
 
 /**
  * Hybrid worker config for the fuzz target: in-memory blocks and leaf sets,
- * but large values persisted to disk (LMDB or fjall, selected by `backend`).
+ * but large values persisted to disk. The `backend` picks where the values go
+ * (lmdb or fjall).
  *
- * The fjall backend is opt-in so its performance can be compared against LMDB
- * before committing to it. fjall opens its keyspace asynchronously, hence the
- * async `new`.
+ * fjall opens its keyspace asynchronously, that is why `new` here is async.
  *
  * Like `InMemWorkerConfig`, the blocks and leaf sets are shared across the
  * open/close/reopen dance that genesis init performs, so `openDatabase`
@@ -191,6 +194,7 @@ export class HybridWorkerConfig<T = undefined> implements WorkerConfig<T, Blocks
     ephemeral = false,
     compression = true,
     backend = "lmdb",
+    sharedFjallSession,
   }: {
     nodeName: string;
     chainSpec: ChainSpec;
@@ -200,12 +204,21 @@ export class HybridWorkerConfig<T = undefined> implements WorkerConfig<T, Blocks
     ephemeral?: boolean;
     compression?: boolean;
     backend?: HybridBackend;
+    /**
+     * Reuse an already-open fjall values session instead of opening a fresh
+     * keyspace. The fuzz target opens one per run and passes it on every reset,
+     * so only the in-memory blocks/leaf sets are rebuilt per vector. Ignored
+     * unless `backend === "fjall"`.
+     */
+    sharedFjallSession?: FjallValuesSession;
   }): Promise<HybridWorkerConfig<T>> {
-    // fjall opens its keyspace asynchronously; LMDB is synchronous. Either way
-    // the values store is created once here and shared across reopen.
+    // The values store is created once here and shared across reopen. When a
+    // session is given (fuzz reset reuse) we wrap it instead of opening a new one.
     const states =
       backend === "fjall"
-        ? await FjallHybridSerializedStates.new({ spec: chainSpec, blake2b, dbPath, ephemeral })
+        ? sharedFjallSession !== undefined
+          ? FjallHybridSerializedStates.fromSession(chainSpec, blake2b, sharedFjallSession)
+          : await FjallHybridSerializedStates.new({ spec: chainSpec, blake2b, dbPath, ephemeral })
         : LmdbHybridSerializedStates.new({ spec: chainSpec, blake2b, dbPath, ephemeral, compression, readOnly: false });
     return new HybridWorkerConfig(nodeName, chainSpec, workerParams, blake2b, dbPath, ephemeral, compression, states);
   }
