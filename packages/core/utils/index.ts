@@ -19,4 +19,5 @@ export * from "./opaque.js";
 export { name, version } from "./package.js";
 export * from "./result.js";
 export * from "./safe-alloc-uint8array.js";
+export * from "./shutdown.js";
 export * from "./test.js";

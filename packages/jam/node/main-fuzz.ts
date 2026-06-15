@@ -8,7 +8,7 @@ import { v1 as fuzzV1 } from "@typeberry/fuzz-proto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { StateEntries } from "@typeberry/state-merkleization";
-import { CURRENT_VERSION, Result, version } from "@typeberry/utils";
+import { type Closer, CURRENT_VERSION, Result, version } from "@typeberry/utils";
 import { FjallValuesSession, logHostEnvironment } from "@typeberry/workers-api-node";
 import { getChainSpec } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
@@ -73,7 +73,7 @@ export function getFuzzDetails() {
   };
 }
 
-export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) => string) {
+export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) => string): Promise<{ close: Closer }> {
   logger.info`💨 Fuzzer V${fuzzConfig.version} starting up.`;
   logger.info`🖥️ PVM Backend: ${PvmBackend[fuzzConfig.jamNodeConfig.pvmBackend]}.`;
   logHostEnvironment(logger);
@@ -97,6 +97,9 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
   // every reset, because opening it is the slow part. Only the in-memory blocks
   // and leaf sets are rebuilt for each vector. fjall-hybrid only.
   let fjallSession: FjallValuesSession | null = null;
+  // Set when close() starts. Guards resetState so a fuzz command arriving
+  // mid-shutdown can't build a fresh node that close() then orphans.
+  let isClosing = false;
 
   const chainSpec = getChainSpec(config.node.flavor);
 
@@ -127,6 +130,9 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
       state: StateEntries,
       ancestry: [HeaderHash, TimeSlot][],
     ): Promise<StateRootHash> => {
+      if (isClosing) {
+        return Bytes.zero(HASH_SIZE).asOpaque();
+      }
       if (runningNode !== null) {
         const finish = runningNode.close();
         runningNode = null;
@@ -209,20 +215,29 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
     },
   });
 
-  return () => {
-    closeFuzzTarget();
-    // Close the reused fjall values session (if any) before wiping its files, so
-    // the keyspace handle is released first.
-    const closed = fjallSession?.close() ?? Promise.resolve();
-    fjallSession = null;
-    if (fuzzDbBase !== undefined) {
-      // best-effort cleanup on shutdown; ignore failures (dir may already be gone).
-      closed
-        .catch(() => {})
-        .finally(() => {
-          wipeFuzzDb(fuzzDbBase).catch(() => {});
-        });
-    }
+  return {
+    close: async () => {
+      isClosing = true;
+      // Stop accepting connections + unlink the socket.
+      closeFuzzTarget();
+      // Drain the active session (flush + close DB). Swallow errors so a
+      // failing close still lets the process exit 0; the db is wiped next.
+      // The node references the shared fjall session, so it must close first.
+      if (runningNode !== null) {
+        const node = runningNode;
+        runningNode = null;
+        await node.close().catch((e) => logger.error`Error closing fuzz node: ${e}`);
+      }
+      // Release the reused fjall values keyspace before wiping its files.
+      if (fjallSession !== null) {
+        const session = fjallSession;
+        fjallSession = null;
+        await session.close().catch((e) => logger.error`Error closing fjall session: ${e}`);
+      }
+      if (fuzzDbBase !== undefined) {
+        await wipeFuzzDb(fuzzDbBase).catch(() => {});
+      }
+    },
   };
 }
 
