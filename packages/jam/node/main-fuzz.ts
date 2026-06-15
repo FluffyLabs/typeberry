@@ -9,7 +9,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import { CURRENT_VERSION, Result, version } from "@typeberry/utils";
-import { logHostEnvironment } from "@typeberry/workers-api-node";
+import { FjallValuesSession, logHostEnvironment } from "@typeberry/workers-api-node";
 import { getChainSpec } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 import type { NodeApi } from "./main.js";
@@ -30,6 +30,15 @@ const FUZZ_DB_SUBDIR = "typeberry-fuzz-db";
 const FUZZ_DB_FJALL: StateBackend = "fjall-hybrid";
 const FUZZ_DB_LMDB: StateBackend = "lmdb-hybrid";
 const FUZZ_DB_OPTIONS: string[] = [FUZZ_DB_FJALL, FUZZ_DB_LMDB];
+
+/** Subdirectory (under the fuzzer's db dir) holding the reused fjall values keyspace. */
+const FUZZ_FJALL_VALUES_SUBDIR = "values-session";
+/**
+ * Size of the fjall block-cache for the fuzz session. Values pile up across
+ * resets (for fjall we do not wipe between them), so this cache is what keeps
+ * the resident memory bounded.
+ */
+const FUZZ_FJALL_CACHE_BYTES = 128 * 1024 * 1024;
 
 /**
  * Resolve the directory the fuzzer should use for its on-disk database, or
@@ -84,6 +93,10 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
   }
 
   let runningNode: NodeApi | null = null;
+  // The fjall values keyspace is opened once per fuzz session and reused on
+  // every reset, because opening it is the slow part. Only the in-memory blocks
+  // and leaf sets are rebuilt for each vector. fjall-hybrid only.
+  let fjallSession: FjallValuesSession | null = null;
 
   const chainSpec = getChainSpec(config.node.flavor);
 
@@ -144,22 +157,44 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
             // like the in-memory backend; only the large values live on disk.
             dummyFinalityDepth: 20,
             pruneBlocks: true,
-            // Long full-spec sessions accumulate a large, never-pruned values db.
-            // Syncing lets the OS reclaim dirty mmap pages, and compression (full
-            // spec only, where values are big) bounds its on-disk/page-cache size.
-            // Tiny stays uncompressed since its db is small and speed matters more.
+            // The on-disk fuzz db is throwaway (we wipe it), so open it ephemeral and
+            // skip the fsync, we do not need durability here. On full spec ephemeral
+            // also turns on compression further down, so the big values do not grow the
+            // db too much. Tiny stays uncompressed, its db is small and speed matters more.
             ephemeral: isPersistent,
             stateBackend: isPersistent ? hybridStateBackend : "lmdb",
+            // Reuse the session keyspace (fjall-hybrid only, other backends
+            // ignore it). Nothing to pass for the in-memory fallback.
+            sharedFjallSession: isPersistent ? (fjallSession ?? undefined) : undefined,
           },
         );
       };
 
       if (fuzzDbBase !== undefined) {
-        // Each reset starts a fresh session from the genesis the fuzzer just sent,
-        // so the on-disk db must be empty: otherwise initializeDatabase sees an
-        // already-initialized db and silently resumes the previous run's state.
-        await wipeFuzzDb(fuzzDbBase);
         try {
+          if (hybridStateBackend === FUZZ_DB_FJALL) {
+            // fjall-hybrid: open the values keyspace once and reuse it on every
+            // reset. The values partition is content-addressed and immutable, so
+            // it is fine that values pile up across resets, the unreferenced ones
+            // just sit there. `initializeDatabase` decides whether the db is
+            // already initialized from the in-memory blocks, which we rebuild on
+            // every reset, not from the values store, so reusing it does not
+            // resume the previous run.
+            if (fjallSession === null) {
+              // Start from a clean slate once, then keep the keyspace open.
+              await wipeFuzzDb(fuzzDbBase);
+              fjallSession = await FjallValuesSession.open(`${withRelPath(fuzzDbBase)}/${FUZZ_FJALL_VALUES_SUBDIR}`, {
+                ephemeral: true,
+                cacheSizeBytes: FUZZ_FJALL_CACHE_BYTES,
+              });
+              logger.info`🗄️ Opened reusable fjall values session at ${withRelPath(fuzzDbBase)}/${FUZZ_FJALL_VALUES_SUBDIR}`;
+            }
+          } else {
+            // lmdb-hybrid: keep the old behaviour, wipe and reopen on every
+            // reset. A fresh db each reset makes `initializeDatabase` set up
+            // genesis again instead of resuming the previous run.
+            await wipeFuzzDb(fuzzDbBase);
+          }
           runningNode = await buildNode(fuzzDbBase);
           return await runningNode.getBestStateRootHash();
         } catch (e) {
@@ -176,9 +211,17 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
 
   return () => {
     closeFuzzTarget();
+    // Close the reused fjall values session (if any) before wiping its files, so
+    // the keyspace handle is released first.
+    const closed = fjallSession?.close() ?? Promise.resolve();
+    fjallSession = null;
     if (fuzzDbBase !== undefined) {
       // best-effort cleanup on shutdown; ignore failures (dir may already be gone).
-      wipeFuzzDb(fuzzDbBase).catch(() => {});
+      closed
+        .catch(() => {})
+        .finally(() => {
+          wipeFuzzDb(fuzzDbBase).catch(() => {});
+        });
     }
   };
 }

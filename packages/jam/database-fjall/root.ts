@@ -16,21 +16,27 @@ export function toUint8Array(value: Buffer | null): Uint8Array | null {
 
 export type FjallRootOptions = {
   /**
-   * When set, durability flushes (`persist`) are skipped entirely.
+   * When set, we skip the durability flush (`persist`) and `close()` does not
+   * do the sync-all fsync.
    *
-   * Only safe for throwaway databases (e.g. the fuzz target, which wipes on
-   * every reset). Mirrors LMDB's `noSync`.
+   * Only safe for throwaway databases, like the fuzz target that wipes on every
+   * reset.
    */
   ephemeral?: boolean;
+  /**
+   * Cache size in bytes, shared by all partitions of the keyspace. fjall reads
+   * through this cache, so it bounds how much we keep in memory. When not set,
+   * fjall uses its own default.
+   */
+  cacheSizeBytes?: number;
 };
 
 /**
- * A thin abstraction over the fjall keyspace.
+ * Thin wrapper over the fjall keyspace.
  *
- * Unlike LMDB (a memory-mapped B-tree), fjall is an LSM-tree that reads/writes
- * through regular file I/O, so its working set is bounded by an explicit block
- * cache rather than the whole mmap. LMDB has been causing oom issues because
- * of that.
+ * fjall is an LSM-tree: it reads and writes through normal file i/o and keeps
+ * only a bounded block cache in memory, so the resident set stays bounded even
+ * when the store on disk is big.
  */
 export class FjallRoot {
   private constructor(
@@ -42,7 +48,12 @@ export class FjallRoot {
 
   /** Open (or create) a fjall keyspace at the given path. */
   static async open(dbPath: string, options: FjallRootOptions): Promise<FjallRoot> {
-    const keyspace = await open(dbPath);
+    // Forward our options to the binding: `ephemeral` makes `close()` skip the
+    // sync-all fsync, `cacheSizeBytes` bounds how much we keep in memory.
+    const keyspace = await open(dbPath, {
+      ephemeral: options.ephemeral,
+      cacheSizeBytes: options.cacheSizeBytes,
+    });
     return new FjallRoot(keyspace, dbPath, options);
   }
 
@@ -65,11 +76,11 @@ export class FjallRoot {
   }
 
   /**
-   * Apparent on-disk size of the keyspace directory, in bytes.
+   * Size of the keyspace directory on disk, in bytes.
    *
-   * Returns `null` if the directory cannot be walked (e.g. not yet created).
-   * Unlike LMDB's single `data.mdb`, a fjall keyspace is a directory of
-   * partition and journal files, so we sum it recursively.
+   * Returns `null` when the directory cannot be walked (e.g. not created yet).
+   * A fjall keyspace is a directory of partition and journal files, so we sum
+   * them recursively.
    */
   sizeInBytes(): number | null {
     try {
