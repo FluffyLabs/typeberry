@@ -1,7 +1,8 @@
 import assert from "node:assert";
 import { afterEach, describe, it } from "node:test";
 
-import { installShutdownHandlers } from "./shutdown.js";
+import { installShutdownHandlers as installGenericShutdownHandlers } from "./shutdown.js";
+import { installShutdownHandlers } from "./shutdown.node.js";
 
 type Recorder = {
   exitCode: number | null;
@@ -161,33 +162,22 @@ describe("utils::installShutdownHandlers", () => {
     assert.strictEqual(exitRec.exitCode, null);
   });
 
-  it("is a no-op in non-Node runtimes", async () => {
-    const originalOn = process.on;
-    const originalExit = process.exit;
-    // Hide the Node-specific surface so installShutdownHandlers takes the no-op branch.
-    (process as unknown as { on: unknown }).on = undefined;
-    (process as unknown as { exit: unknown }).exit = undefined;
-    try {
-      const exitRec = makeExitRecorder();
-      let closeCalled = false;
+  it("is a no-op from the generic shutdown module", async () => {
+    const exitRec = makeExitRecorder();
+    let closeCalled = false;
 
-      const uninstall = installShutdownHandlers(
-        async () => {
-          closeCalled = true;
-        },
-        { exit: exitRec.exit, log: silentLog },
-      );
+    const uninstall = installGenericShutdownHandlers(
+      async () => {
+        closeCalled = true;
+      },
+      { exit: exitRec.exit, log: silentLog },
+    );
 
-      // The uninstall must be callable without throwing even in the no-op path.
-      uninstall();
+    uninstall();
 
-      assert.strictEqual(typeof uninstall, "function");
-      assert.strictEqual(closeCalled, false);
-      assert.strictEqual(exitRec.exitCode, null);
-    } finally {
-      (process as unknown as { on: typeof originalOn }).on = originalOn;
-      (process as unknown as { exit: typeof originalExit }).exit = originalExit;
-    }
+    assert.strictEqual(typeof uninstall, "function");
+    assert.strictEqual(closeCalled, false);
+    assert.strictEqual(exitRec.exitCode, null);
   });
 
   it("exits with code 1 when close rejects", async () => {
@@ -218,5 +208,35 @@ describe("utils::installShutdownHandlers", () => {
     assert.strictEqual(exitRec.exitCode, 1);
     assert.ok(errorLogged !== null, "expected error to be logged");
     assert.match(errorLogged as unknown as string, /boom/);
+  });
+
+  it("exits with code 1 when close throws synchronously", async () => {
+    const exitRec = makeExitRecorder();
+    let errorLogged: string | null = null;
+
+    uninstallers.push(
+      installShutdownHandlers(
+        () => {
+          throw new Error("sync boom");
+        },
+        {
+          exit: exitRec.exit,
+          log: {
+            info: () => {},
+            error: (msg) => {
+              errorLogged = msg;
+            },
+          },
+        },
+      ),
+    );
+
+    process.emit("SIGTERM", "SIGTERM");
+
+    await exitRec.exited;
+
+    assert.strictEqual(exitRec.exitCode, 1);
+    assert.ok(errorLogged !== null, "expected error to be logged");
+    assert.match(errorLogged as unknown as string, /sync boom/);
   });
 });

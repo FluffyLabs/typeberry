@@ -88,7 +88,7 @@ async function runShutdownScenario(signal: NodeJS.Signals): Promise<void> {
       throw new Error(`expected socket ${socket} to be removed after shutdown`);
     }
   } finally {
-    if (!proc.killed) {
+    if (proc.exitCode === null && proc.signalCode === null) {
       proc.kill("SIGKILL");
     }
     rmSync(join(socket, ".."), { recursive: true, force: true });
