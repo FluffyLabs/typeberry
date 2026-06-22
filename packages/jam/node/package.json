@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/node",
-  "version": "0.8.4",
+  "version": "0.9.0",
   "description": "The main typeberry node.",
   "main": "index.ts",
   "dependencies": {

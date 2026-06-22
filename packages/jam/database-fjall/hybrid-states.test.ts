@@ -8,7 +8,7 @@ import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { InMemoryState } from "@typeberry/state";
 import { StateEntries, type StateKey } from "@typeberry/state-merkleization";
 import { deepEqual, OK, Result } from "@typeberry/utils";
-import { HybridSerializedStates } from "./hybrid-states.js";
+import { FjallValuesSession, HybridSerializedStates } from "./hybrid-states.js";
 
 let blake2b: Blake2b;
 before(async () => {
@@ -73,6 +73,39 @@ describe("Fjall hybrid serialized states", () => {
       assert.strictEqual(`${state.backend.get(key1)}`, `${big1}`);
     } finally {
       await states.close();
+    }
+  });
+
+  it("shares an open values session across resets without closing it", async () => {
+    // The fuzz reset path opens the values keyspace once per session and reuses
+    // it: each "reset" builds a fresh states instance sharing that session, and
+    // closing a session-backed states must NOT close the shared keyspace.
+    const session = await FjallValuesSession.open(dbPath);
+    try {
+      const big = BytesBlob.blobFromString("z".repeat(100));
+      const key: StateKey = Bytes.fill(HASH_SIZE, 7).asOpaque();
+      const entries = StateEntries.fromEntriesUnsafe([[key, big]]);
+
+      // First "reset": write values through a states instance, then close it.
+      const first = HybridSerializedStates.fromSession(spec, blake2b, session);
+      const res = await first.insertInitialState(headerHash, entries);
+      deepEqual(res, Result.ok(OK));
+      await first.close();
+
+      // Second "reset": a fresh states sharing the same session. Its in-memory
+      // leaf set is independent (empty until it inserts)...
+      const second = HybridSerializedStates.fromSession(spec, blake2b, session);
+      assert.strictEqual(second.getState(headerHash), null);
+
+      // ...but the on-disk values store is the same one, still open and usable
+      // (a closed keyspace would throw here).
+      await second.insertInitialState(headerHash, entries);
+      const state = second.getState(headerHash);
+      assert.ok(state !== null);
+      assert.strictEqual(`${state.backend.get(key)}`, `${big}`);
+      await second.close();
+    } finally {
+      await session.close();
     }
   });
 

@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/importer",
-  "version": "0.8.4",
+  "version": "0.9.0",
   "description": "A JAM block importer queue.",
   "main": "index.ts",
   "dependencies": {
