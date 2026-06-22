@@ -9,7 +9,7 @@ import { Level, Logger } from "@typeberry/logger";
 import { altNameRaw } from "@typeberry/networking";
 import { exportBlocks, importBlocks, JamConfig, main, mainFuzz } from "@typeberry/node";
 import { Telemetry } from "@typeberry/telemetry";
-import { asOpaqueType, workspacePathFix } from "@typeberry/utils";
+import { asOpaqueType, type Closer, installShutdownHandlers, workspacePathFix } from "@typeberry/utils";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 import { readFuzzEnv, synthesizeFuzzArgs } from "./fuzz-env.js";
 
@@ -45,7 +45,15 @@ try {
   process.exit(1);
 }
 
-const running = startNode(args, withRelPath);
+// Install shutdown handlers as early as possible so signals during startup
+// also exit cleanly. The closer is mutated by each startNode branch once it
+// knows what to clean up.
+let currentClose: Closer = async () => {};
+installShutdownHandlers(() => currentClose(), { log: console });
+
+const running = startNode(args, withRelPath, (c) => {
+  currentClose = c;
+});
 
 running.catch((e) => {
   console.error(`${e}`);
@@ -109,7 +117,11 @@ async function prepareConfigFile(
   });
 }
 
-async function startNode(args: Arguments, withRelPath: (p: string) => string) {
+async function startNode(
+  args: Arguments,
+  withRelPath: (p: string) => string,
+  setCloser: (c: Closer) => void,
+): Promise<void> {
   const blake2b = await Blake2b.createHasher();
   const jamNodeConfig = await prepareConfigFile(args, blake2b, withRelPath);
 
@@ -125,7 +137,9 @@ async function startNode(args: Arguments, withRelPath: (p: string) => string) {
     const version = args.args.version;
     const socket = args.args.socket;
     const initGenesisFromAncestry = args.args.initGenesisFromAncestry;
-    return mainFuzz({ jamNodeConfig, version, socket, initGenesisFromAncestry }, withRelPath);
+    const { close } = await mainFuzz({ jamNodeConfig, version, socket, initGenesisFromAncestry }, withRelPath);
+    setCloser(close);
+    return;
   }
 
   // Just import a bunch of blocks
@@ -139,15 +153,26 @@ async function startNode(args: Arguments, withRelPath: (p: string) => string) {
       withRelPath,
       telemetry,
     );
-    return await importBlocks(node, args.args.files);
+    setCloser(() => node.close());
+    try {
+      await importBlocks(node, args.args.files);
+    } finally {
+      // Drain workers/db on both happy-path completion and signal-driven
+      // shutdown — otherwise the process would hang on the still-active workers.
+      await node.close();
+      setCloser(async () => {});
+    }
+    return;
   }
 
   if (args.command === Command.Export) {
-    return await exportBlocks(jamNodeConfig, args.args.output, withRelPath);
+    await exportBlocks(jamNodeConfig, args.args.output, withRelPath);
+    return;
   }
 
   // Run regular node.
-  return main(jamNodeConfig, withRelPath, telemetry);
+  const node = await main(jamNodeConfig, withRelPath, telemetry);
+  setCloser(() => node.close());
 }
 
 function devNodeName(defaultNodeName: string, idx: number | string) {
