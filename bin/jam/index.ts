@@ -9,7 +9,8 @@ import { Level, Logger } from "@typeberry/logger";
 import { altNameRaw } from "@typeberry/networking";
 import { exportBlocks, importBlocks, JamConfig, main, mainFuzz } from "@typeberry/node";
 import { Telemetry } from "@typeberry/telemetry";
-import { asOpaqueType, type Closer, installShutdownHandlers, workspacePathFix } from "@typeberry/utils";
+import { asOpaqueType, type Closer, workspacePathFix } from "@typeberry/utils";
+import { installShutdownHandlers } from "@typeberry/utils/shutdown.node.js";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 import { readFuzzEnv, synthesizeFuzzArgs } from "./fuzz-env.js";
 
@@ -153,13 +154,18 @@ async function startNode(
       withRelPath,
       telemetry,
     );
-    setCloser(() => node.close());
+    let closePromise: Promise<void> | null = null;
+    const closeNode = () => {
+      closePromise ??= node.close();
+      return closePromise;
+    };
+    setCloser(closeNode);
     try {
       await importBlocks(node, args.args.files);
     } finally {
       // Drain workers/db on both happy-path completion and signal-driven
       // shutdown — otherwise the process would hang on the still-active workers.
-      await node.close();
+      await closeNode();
       setCloser(async () => {});
     }
     return;
