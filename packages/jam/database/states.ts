@@ -46,6 +46,17 @@ export interface StatesDb<T extends State = State> {
   /** Retrieve posterior state of given header. */
   getState(header: HeaderHash): T | null;
 
+  /**
+   * Notify the backend about newly finalized blocks, in ancestor-first order.
+   *
+   * Backends that share data between states (e.g. a content-addressed values DB)
+   * use this to move the blocks' references from speculative to finalized.
+   * MUST be called before `markUnused` of the same finality round, otherwise
+   * the newly finalized blocks would be treated as dead forks and values still
+   * referenced by the finalized state could be dropped.
+   */
+  commitFinalized(headers: HeaderHash[]): void;
+
   /** Mark state as no longer needed. Backend may remove it asynchronously. */
   markUnused(header: HeaderHash): void;
 
@@ -112,6 +123,10 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
     }
 
     return InMemoryState.copyFrom(this.spec, state, state.intoServicesData());
+  }
+
+  commitFinalized(_headers: HeaderHash[]): void {
+    // nothing to do: every state is a full, independent copy.
   }
 
   markUnused(header: HeaderHash): void {

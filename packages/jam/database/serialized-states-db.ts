@@ -104,6 +104,11 @@ export class InMemorySerializedStates implements StatesDb<SerializedState<LeafDb
     return SerializedState.new(this.spec, this.blake2b, leafDb);
   }
 
+  commitFinalized(_headers: HeaderHash[]): void {
+    // No value pruning here: this in-memory db keeps every value in a plain map
+    // and is not the long-running fuzz target the refcounting is meant for.
+  }
+
   markUnused(header: HeaderHash): void {
     this.db.delete(header);
   }
