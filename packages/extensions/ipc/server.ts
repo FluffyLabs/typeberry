@@ -107,6 +107,12 @@ export function startIpcServer(name: string, newMessageHandler: (socket: IpcSend
     controller.abort();
     // unrefing
     server.unref();
+    // Windows named pipes are cleaned up by the OS; Unix sockets are not.
+    if (!isWindows) {
+      try {
+        fs.unlinkSync(socketPath);
+      } catch {}
+    }
   };
 }
 
