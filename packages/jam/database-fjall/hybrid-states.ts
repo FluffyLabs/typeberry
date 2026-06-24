@@ -236,6 +236,11 @@ export class HybridSerializedStates implements StatesDb<SerializedState<LeafDb>>
       return Result.ok(OK);
     }
     try {
+      // Flush queued removals first: a pending cleanup might be about to delete
+      // a content hash we are re-inserting now. Writing behind it keeps the
+      // re-inserted value on disk (removals are only queued at refcount 0, so
+      // none can be queued for a value still referenced).
+      await this.pendingCleanup;
       const entries = values.map(([hash, val]) => ({ key: hash.raw, value: val.raw }));
       await this.values.insertBatch(entries);
       await this.session.persist();
