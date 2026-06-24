@@ -111,12 +111,14 @@ export class SortedArray<V> implements ImmutableSortedArray<V> {
   }
 
   /** Remove one matching element from the collection. */
-  public removeOne(v: V) {
+  public removeOne(v: V): V | undefined {
     const findIdx = this.binarySearch(v);
     if (findIdx.isEqual) {
-      // remove the element
-      this.array.splice(findIdx.idx, 1);
+      // remove the element and return the stored one
+      const [removed] = this.array.splice(findIdx.idx, 1);
+      return removed;
     }
+    return undefined;
   }
 
   public has(v: V) {

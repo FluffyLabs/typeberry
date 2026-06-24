@@ -4,3 +4,4 @@ export * from "./leaf-db-update.js";
 export * from "./root.js";
 export * from "./serialized-states-db.js";
 export * from "./states.js";
+export * from "./value-refs.js";

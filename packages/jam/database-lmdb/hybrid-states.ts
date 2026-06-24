@@ -5,13 +5,17 @@ import { HashDictionary, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import {
   type InitStatesDb,
+  InMemoryValueRefsStore,
   LeafDb,
   type StatesDb,
   StateUpdateError,
   updateLeafs,
+  ValueRefs,
+  type ValueRefsUpdate,
   type ValuesDb,
 } from "@typeberry/database";
 import type { Blake2b } from "@typeberry/hash";
+import { Logger } from "@typeberry/logger";
 import type { ServicesUpdate, State } from "@typeberry/state";
 import {
   SerializedState,
@@ -23,6 +27,8 @@ import { type LeafNode, leafComparator, type ValueHash } from "@typeberry/trie";
 import { OK, Result } from "@typeberry/utils";
 import { LmdbRoot, type SubDb } from "./root.js";
 
+const logger = Logger.new(import.meta.filename, "db");
+
 /**
  * Hybrid serialized-states db.
  *
@@ -30,12 +36,22 @@ import { LmdbRoot, type SubDb } from "./root.js";
  * Reads go straight to lmdb, which keeps its own page cache.
  * NOTE: this DB is designed for long fuzzing and to be used with pruning to
  * keep the heap usage bounded.
+ *
+ * Values that no longer belong to any surviving state are removed from lmdb,
+ * decided by in-memory refcounting (`ValueRefs`) driven by the importer's
+ * finality signal. Counts are not persisted: this db cannot resume from disk
+ * anyway (the leaf sets live in memory), so values left over by a previous
+ * run are never collected.
  */
 export class HybridSerializedStates implements StatesDb<SerializedState<LeafDb>>, InitStatesDb<StateEntries> {
   private readonly inMemStates: HashDictionary<HeaderHash, SortedSet<LeafNode>> = HashDictionary.new();
   private readonly lmdbValues: SubDb;
   // A single shared values accessor reused by every `LeafDb` we hand out.
   private readonly valuesDb: ValuesDb;
+  private readonly refsStore = new InMemoryValueRefsStore();
+  private readonly refs = new ValueRefs(this.refsStore);
+  // Queue of not-yet-committed value removals, awaited on close.
+  private pendingCleanup: Promise<unknown> = Promise.resolve();
 
   static new({
     spec,
@@ -76,6 +92,7 @@ export class HybridSerializedStates implements StatesDb<SerializedState<LeafDb>>
       return res;
     }
     this.inMemStates.set(headerHash, leafs);
+    this.applyRefs(this.refs.onInitial(values.map((v) => v[0])));
     return Result.ok(OK);
   }
 
@@ -87,7 +104,7 @@ export class HybridSerializedStates implements StatesDb<SerializedState<LeafDb>>
     const updatedValues = serializeStateUpdate(this.spec, this.blake2b, update);
     // Clone the leaf set before mutating: the previous state keeps using its own.
     const newLeafs = SortedSet.fromSortedArray(leafComparator, state.backend.leafs.array);
-    const { values, leafs } = updateLeafs(newLeafs, this.blake2b, updatedValues);
+    const { values, removed, leafs } = updateLeafs(newLeafs, this.blake2b, updatedValues);
     const res = await this.writeValues(values);
     if (res.isError) {
       // Leave the caller's state untouched: its new leaves would reference
@@ -98,6 +115,7 @@ export class HybridSerializedStates implements StatesDb<SerializedState<LeafDb>>
     // values are durably written.
     state.updateBackend(LeafDb.fromLeaves(leafs, this.valuesDb));
     this.inMemStates.set(header, leafs);
+    this.applyRefs(this.refs.onImport(header, { inserted: values.map((v) => v[0]), removed }));
     return Result.ok(OK);
   }
 
@@ -114,10 +132,35 @@ export class HybridSerializedStates implements StatesDb<SerializedState<LeafDb>>
     return SerializedState.new(this.spec, this.blake2b, leafDb);
   }
 
+  commitFinalized(headers: HeaderHash[]): void {
+    this.applyRefs(this.refs.commitFinalized(headers));
+  }
+
   markUnused(header: HeaderHash): void {
-    // We only remove the state from memory - values are not pruned at all,
-    // but since they are stored on disk we should be safe.
+    // Release the speculative references first (a no-op for finalized states,
+    // whose deltas were already consumed by `commitFinalized`).
+    this.applyRefs(this.refs.releaseUnfinalized(header));
     this.inMemStates.delete(header);
+  }
+
+  /** Apply a refcounting update and remove values that lost their last reference. */
+  private applyRefs(update: ValueRefsUpdate): void {
+    this.refsStore.apply(update);
+    if (update.removeValues.length === 0) {
+      return;
+    }
+    // Queued, not awaited: a failed removal only leaks a value.
+    this.pendingCleanup = this.pendingCleanup
+      .then(() =>
+        this.lmdbValues.transaction(() => {
+          for (const v of update.removeValues) {
+            this.lmdbValues.remove(v.raw);
+          }
+        }),
+      )
+      .catch((e) => {
+        logger.error`Failed to remove unreferenced values: ${e}`;
+      });
   }
 
   diskSizeInBytes(): number | null {
@@ -125,6 +168,7 @@ export class HybridSerializedStates implements StatesDb<SerializedState<LeafDb>>
   }
 
   async close() {
+    await this.pendingCleanup;
     await this.lmdbValues.close();
     await this.root.close();
   }
@@ -135,6 +179,11 @@ export class HybridSerializedStates implements StatesDb<SerializedState<LeafDb>>
       return Result.ok(OK);
     }
     try {
+      // Flush queued removals first: a pending cleanup might be about to delete
+      // a content hash we are re-inserting now. Writing behind it keeps the
+      // re-inserted value on disk (removals are only queued at refcount 0, so
+      // none can be queued for a value still referenced).
+      await this.pendingCleanup;
       await this.lmdbValues.transaction(() => {
         for (const [hash, val] of values) {
           this.lmdbValues.put(hash.raw, val.raw);
