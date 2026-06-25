@@ -31,7 +31,7 @@ export async function main(
 
   // Await the configuration object
   const chainSpec = config.chainSpec;
-  const db = config.openDatabase();
+  const db = await config.openDatabase();
   const blocks = db.getBlocksDb();
   const params = config.workerParams;
   const key = await ed25519.privateKey(params.key);
