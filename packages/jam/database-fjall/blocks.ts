@@ -13,7 +13,7 @@ import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database/blocks.js";
 import { HASH_SIZE, type WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import { FjallRoot, type FjallPartition, type Partition, toUint8Array } from "./root.js";
+import { type FjallPartition, type FjallRoot, type Partition, toUint8Array } from "./root.js";
 
 const BEST_BLOCK = new TextEncoder().encode("best hash and posterior state root");
 const logger = Logger.new(import.meta.filename, "db");

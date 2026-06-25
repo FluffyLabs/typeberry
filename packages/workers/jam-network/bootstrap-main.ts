@@ -5,7 +5,7 @@ import { initWorker } from "@typeberry/workers-api-node";
 import { main } from "./main.js";
 import { protocol as mainProtocol, NetworkingConfig } from "./protocol.js";
 
-const { config, comms } = await initWorker(mainProtocol, NetworkingConfig.Codec);
+const { config, comms, ready } = await initWorker(mainProtocol, NetworkingConfig.Codec);
 
 // Initialize OpenTelemetry for this worker
 const tele = Telemetry.initialize({
@@ -19,5 +19,5 @@ if (port === undefined) {
 }
 
 const networkingComms = Channel.rx(authorshipProtocol, port);
-await main(config, comms, networkingComms);
+await main(config, comms, networkingComms, ready);
 await tele?.close();

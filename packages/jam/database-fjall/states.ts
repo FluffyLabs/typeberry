@@ -17,7 +17,7 @@ import type { StateEntries, StateKey } from "@typeberry/state-merkleization";
 import { SerializedState, StateEntryUpdateAction, serializeStateUpdate } from "@typeberry/state-merkleization";
 import { type LeafNode, leafComparator, type ValueHash } from "@typeberry/trie";
 import { OK, Result, resultToString } from "@typeberry/utils";
-import { FjallRoot, type FjallPartition, type Partition, toUint8Array } from "./root.js";
+import { type FjallPartition, type FjallRoot, type Partition, toUint8Array } from "./root.js";
 
 const logger = Logger.new(import.meta.filename, "db");
 

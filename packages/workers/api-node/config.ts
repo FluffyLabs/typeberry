@@ -10,9 +10,9 @@ import {
 } from "@typeberry/database";
 import {
   FjallBlocks,
+  HybridSerializedStates as FjallHybridSerializedStates,
   FjallRoot,
   FjallStates,
-  HybridSerializedStates as FjallHybridSerializedStates,
   FjallValuesSession,
 } from "@typeberry/database-fjall";
 import {
@@ -181,15 +181,29 @@ export class FjallWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Se
       ephemeral: this.ephemeral,
       cacheSizeBytes: this.cacheSizeBytes,
     });
-    const [blocks, states] = await Promise.all([
+    let [blocks, states]: [FjallBlocks | null, FjallStates | null] = await Promise.all([
       FjallBlocks.open(this.chainSpec, fjall),
       FjallStates.open(this.chainSpec, this.blake2b, fjall),
     ]);
 
     return {
-      getBlocksDb: () => blocks,
-      getStatesDb: () => states,
-      close: async () => await fjall.close(),
+      getBlocksDb: () => {
+        if (blocks === null) {
+          throw new Error("Fjall database is closed.");
+        }
+        return blocks;
+      },
+      getStatesDb: () => {
+        if (states === null) {
+          throw new Error("Fjall database is closed.");
+        }
+        return states;
+      },
+      close: async () => {
+        blocks = null;
+        states = null;
+        await fjall.close();
+      },
     };
   }
 

@@ -8,8 +8,8 @@ import { createImporter, ImporterConfig } from "@typeberry/importer";
 import { tryAsU16 } from "@typeberry/numbers";
 import { CURRENT_SUITE, CURRENT_VERSION, Result, resultToString, version } from "@typeberry/utils";
 import {
-  FjallWorkerConfig,
   type FjallValuesSession,
+  FjallWorkerConfig,
   HybridWorkerConfig,
   InMemWorkerConfig,
   LmdbWorkerConfig,

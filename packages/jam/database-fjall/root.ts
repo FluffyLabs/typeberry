@@ -9,6 +9,8 @@ import {
   type ReadonlyPartition,
 } from "@fjall-js/fjall";
 
+const DEFAULT_CACHE_SIZE_BYTES = 64 * 1024 * 1024;
+
 export type { Partition, ReadonlyPartition };
 export type FjallPartition = Partition | ReadonlyPartition;
 
@@ -35,7 +37,7 @@ export type FjallRootOptions = {
   /**
    * Cache size in bytes, shared by all partitions of the keyspace. fjall reads
    * through this cache, so it bounds how much we keep in memory. When not set,
-   * fjall uses its own default.
+   * typeberry uses a conservative default.
    */
   cacheSizeBytes?: number;
 };
@@ -61,7 +63,7 @@ export class FjallRoot {
     // wrapper surface; durability is driven explicitly through persist().
     const config = {
       path: dbPath,
-      cacheSizeBytes: options.cacheSizeBytes,
+      cacheSizeBytes: options.cacheSizeBytes ?? DEFAULT_CACHE_SIZE_BYTES,
     };
     const keyspace = options.readOnly === true ? await openReadonly(config) : await open(config);
     return new FjallRoot(keyspace, dbPath, options);

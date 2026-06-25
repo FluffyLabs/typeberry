@@ -1,6 +1,7 @@
 /test-vectors
 /database
 /docs
+/.context
 
 # Logs
 logs

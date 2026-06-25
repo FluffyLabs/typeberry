@@ -25,6 +25,7 @@ export async function main(
   config: WorkerConfig<NetworkingConfig>,
   comms: NetworkingInternal,
   authorshipComms: AuthorshipComms,
+  ready: () => void = () => {},
 ) {
   await initWasm();
   logger.trace`🛜 Network starting`;
@@ -97,6 +98,7 @@ export async function main(
   network.ticketTask.setTicketValidator(ipcValidator);
 
   await network.network.start();
+  ready();
 
   // stop the network when the worker is finishing.
   await waitForFinish;
