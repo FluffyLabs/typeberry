@@ -79,6 +79,11 @@ export class FjallStates implements StatesDb<SerializedState<LeafDb>>, InitState
     return SerializedState.new(this.spec, this.blake2b, leafDbResult.ok);
   }
 
+  commitFinalized(_headers: HeaderHash[]): void {
+    // Values are never pruned here. This db survives restarts, so refcounting
+    // would need counts persisted (and crash-consistent) alongside the values.
+  }
+
   markUnused(headerHash: HeaderHash): void {
     void writable(this.states)
       .remove(headerHash.raw)
