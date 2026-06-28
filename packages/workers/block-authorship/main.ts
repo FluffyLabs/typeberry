@@ -31,12 +31,7 @@ type Config = WorkerConfig<BlockAuthorshipConfig>;
  * The `BlockAuthorship` should create new blocks and send them as signals to the main thread.
  */
 
-export async function main(
-  config: Config,
-  comms: GeneratorInternal,
-  networkingComms: NetworkingComms,
-  ready: () => void = () => {},
-) {
+export async function main(config: Config, comms: GeneratorInternal, networkingComms: NetworkingComms) {
   await initWasm();
   logger.info`🎁 Block Authorship running`;
   const chainSpec = config.chainSpec;
@@ -105,7 +100,6 @@ export async function main(
   });
 
   let ticketGeneratorDone = Promise.resolve();
-  ready();
 
   while (!isFinished) {
     const state = getBestState();

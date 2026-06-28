@@ -1,41 +1,20 @@
 import type { Worker } from "node:worker_threads";
 import * as blockAuthorship from "@typeberry/block-authorship";
 import { protocol } from "@typeberry/comms-authorship-network";
+import type { BlocksDb, LeafDb, StatesDb } from "@typeberry/database";
 import * as importer from "@typeberry/importer";
 import * as jamNetwork from "@typeberry/jam-network";
+import type { SerializedState } from "@typeberry/state-merkleization";
 import { Channel, type DirectPort, type DirectWorkerConfig, startSameThread } from "@typeberry/workers-api";
 import { type PersistentWorkerConfig, spawnWorker } from "@typeberry/workers-api-node";
 
-function createReadySignal() {
-  let markReady = () => {};
-  const signal = new Promise<void>((resolve) => {
-    markReady = resolve;
-  });
-  return { markReady, signal };
-}
-
-function raceReady(signal: Promise<void>, finished: Promise<unknown>, name: string) {
-  return Promise.race([
-    signal,
-    finished.then(
-      () => {
-        throw new Error(`${name} worker finished before becoming ready`);
-      },
-      (e: unknown) => {
-        throw e;
-      },
-    ),
-  ]);
-}
-
 export async function spawnImporterWorker(config: PersistentWorkerConfig<importer.ImporterConfig>) {
-  const { api, workerReady, workerFinished } = spawnWorker(
+  const { api, workerFinished } = spawnWorker(
     importer.protocol,
     importer.WORKER,
     config,
     importer.ImporterConfig.Codec,
   );
-  await workerReady;
 
   return {
     importer: api,
@@ -47,12 +26,12 @@ export async function spawnImporterWorker(config: PersistentWorkerConfig<importe
   };
 }
 
-export async function startImporterDirect(config: importer.Config): ReturnType<typeof spawnImporterWorker> {
+export async function startImporterDirect(
+  config: DirectWorkerConfig<importer.ImporterConfig, BlocksDb, StatesDb<SerializedState<LeafDb>>>,
+): ReturnType<typeof spawnImporterWorker> {
   const { api, internal } = startSameThread(importer.protocol);
-  const { markReady, signal } = createReadySignal();
 
-  const importerFinish = importer.main(config, internal, markReady);
-  await raceReady(signal, importerFinish, "importer");
+  const importerFinish = importer.main(config, internal);
 
   return {
     importer: api,
@@ -65,7 +44,7 @@ export async function startImporterDirect(config: importer.Config): ReturnType<t
 }
 
 export async function spawnNetworkWorker(config: PersistentWorkerConfig<jamNetwork.NetworkingConfig>) {
-  const { api, worker, workerReady, workerFinished } = spawnWorker(
+  const { api, worker, workerFinished } = spawnWorker(
     jamNetwork.protocol,
     jamNetwork.WORKER,
     config,
@@ -75,7 +54,6 @@ export async function spawnNetworkWorker(config: PersistentWorkerConfig<jamNetwo
   return {
     network: api,
     worker,
-    ready: workerReady,
     finish: async () => {
       await api.sendFinish();
       api.destroy();
@@ -90,13 +68,11 @@ export async function startNetwork(
 ): Promise<Omit<Awaited<ReturnType<typeof spawnNetworkWorker>>, "worker"> & { worker: Worker | null }> {
   const { api, internal } = startSameThread(jamNetwork.protocol);
   const authorshipComms = Channel.rx(protocol, authorshipPort);
-  const { markReady, signal } = createReadySignal();
 
-  const networkFinish = jamNetwork.main(config, internal, authorshipComms, markReady);
+  const networkFinish = jamNetwork.main(config, internal, authorshipComms);
   return {
     network: api,
     worker: null,
-    ready: raceReady(signal, networkFinish, "network"),
     finish: async () => {
       await api.sendFinish();
       api.destroy();
@@ -107,7 +83,7 @@ export async function startNetwork(
 }
 
 export async function spawnBlockGeneratorWorker(config: PersistentWorkerConfig<blockAuthorship.BlockAuthorshipConfig>) {
-  const { api, worker, workerReady, workerFinished } = spawnWorker(
+  const { api, worker, workerFinished } = spawnWorker(
     blockAuthorship.protocol,
     blockAuthorship.WORKER,
     config,
@@ -117,7 +93,6 @@ export async function spawnBlockGeneratorWorker(config: PersistentWorkerConfig<b
   return {
     generator: api,
     worker,
-    ready: workerReady,
     finish: async () => {
       await api.sendFinish();
       api.destroy();
@@ -133,13 +108,11 @@ export async function startBlockGenerator(
   const { api, internal } = startSameThread(blockAuthorship.protocol);
 
   const networkingComms = Channel.tx(protocol, networkingPort);
-  const { markReady, signal } = createReadySignal();
-  const finish = blockAuthorship.main(config, internal, networkingComms, markReady);
+  const finish = blockAuthorship.main(config, internal, networkingComms);
 
   return {
     generator: api,
     worker: null,
-    ready: raceReady(signal, finish, "block-authorship"),
     finish: async () => {
       await api.sendFinish();
       api.destroy();

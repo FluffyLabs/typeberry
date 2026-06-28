@@ -57,14 +57,22 @@ export class DirectPort implements Port {
 
   /** Create a pair of symmetrical inter-connected ports. */
   static pair(): [DirectPort, DirectPort] {
-    const events = new EventEmitter();
-    return [new DirectPort(events), new DirectPort(events)];
+    const state = {
+      events: new EventEmitter(),
+      pendingMessages: new Map<string, Envelope<unknown>[]>(),
+    };
+    return [new DirectPort(state), new DirectPort(state)];
   }
 
-  private constructor(private readonly events: EventEmitter) {}
+  private constructor(
+    private readonly state: {
+      events: EventEmitter;
+      pendingMessages: Map<string, Envelope<unknown>[]>;
+    },
+  ) {}
 
   onClose(callback: (e: Error) => void): void {
-    this.events.on("error", callback);
+    this.state.events.on("error", callback);
   }
 
   on<T>(event: string, _codec: Codec<T>, callback: (msg: Envelope<T>) => void): () => void {
@@ -72,10 +80,11 @@ export class DirectPort implements Port {
       // we simply cast the args, since there is no encoding involved.
       callback(args as Envelope<T>);
     };
-    this.events.on(event, trigger);
+    this.state.events.on(event, trigger);
+    this.flushPending(event, trigger);
 
     return () => {
-      this.events.off(event, trigger);
+      this.state.events.off(event, trigger);
     };
   }
 
@@ -84,19 +93,52 @@ export class DirectPort implements Port {
       // we simply cast the args, since there is no encoding involved.
       callback(args as Envelope<T>);
     };
-    this.events.once(event, trigger);
+
+    const pending = this.state.pendingMessages.get(event);
+    const pendingMessage = pending?.shift();
+    if (pending?.length === 0) {
+      this.state.pendingMessages.delete(event);
+    }
+    if (pendingMessage !== undefined) {
+      trigger(pendingMessage);
+      return () => {};
+    }
+
+    this.state.events.once(event, trigger);
 
     return () => {
-      this.events.off(event, trigger);
+      this.state.events.off(event, trigger);
     };
   }
 
   postMessage<T>(event: string, _codec: Codec<T>, msg: Envelope<T>): void {
-    this.events.emit(event, msg);
+    if (this.state.events.listenerCount(event) === 0) {
+      this.queuePending(event, msg);
+      return;
+    }
+    this.state.events.emit(event, msg);
   }
 
   close() {
-    this.events.emit("error", new Error("closing channel"));
-    this.events.removeAllListeners();
+    this.state.events.emit("error", new Error("closing channel"));
+    this.state.events.removeAllListeners();
+    this.state.pendingMessages.clear();
+  }
+
+  private queuePending(event: string, msg: Envelope<unknown>) {
+    const pending = this.state.pendingMessages.get(event) ?? [];
+    pending.push(msg);
+    this.state.pendingMessages.set(event, pending);
+  }
+
+  private flushPending(event: string, trigger: (args: unknown) => void) {
+    const pending = this.state.pendingMessages.get(event);
+    if (pending === undefined) {
+      return;
+    }
+    this.state.pendingMessages.delete(event);
+    for (const msg of pending) {
+      trigger(msg);
+    }
   }
 }

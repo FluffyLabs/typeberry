@@ -121,8 +121,6 @@ export async function main(
         statesDb: rootDb.getStatesDb(),
       }),
     ));
-  } else if (config.node.stateBackend === RegularStateBackend.Fjall) {
-    ({ importer, finish: closeImporter } = await startImporterDirect(importerConfig.config));
   } else {
     ({ importer, finish: closeImporter } = await spawnImporterWorker(importerConfig.config));
   }
@@ -272,7 +270,7 @@ const initAuthorship = async (
 
   logger.info`✍️  Starting block generator.`;
   const workerParams = { ...authorshipKeys, isFastForward };
-  const { generator, worker, ready, finish } = params.isInMemory
+  const { generator, worker, finish } = params.isInMemory
     ? await startBlockGenerator(
         DirectWorkerConfig.new({
           ...baseConfig,
@@ -295,8 +293,6 @@ const initAuthorship = async (
     logger.log`✍️  Produced block at ${block.header.view().timeSlotIndex.materialize()}`;
     await importer.sendImportBlock(block);
   });
-
-  await ready;
 
   return { closeAuthorship: finish, authorshipWorker: worker };
 };
@@ -345,7 +341,7 @@ const initNetwork = async (
     bootnodes: bootnodes.map((node) => node.toString()),
   });
 
-  const { network, worker, ready, finish } = params.isInMemory
+  const { network, worker, finish } = params.isInMemory
     ? await startNetwork(
         DirectWorkerConfig.new({
           ...baseConfig,
@@ -374,8 +370,6 @@ const initNetwork = async (
   bestHeader.on((header) => {
     network.sendNewHeader(header);
   });
-
-  await ready;
 
   return { closeNetwork: finish, networkApi: network, networkWorker: worker };
 };

@@ -2,7 +2,7 @@ import { MessageChannel, type MessagePort, parentPort, Worker } from "node:worke
 import type { Decode, Encode } from "@typeberry/codec";
 import { Listener } from "@typeberry/listener";
 import { Level, Logger } from "@typeberry/logger";
-import { assertNever, check } from "@typeberry/utils";
+import { assertNever } from "@typeberry/utils";
 import { Channel } from "@typeberry/workers-api";
 import type { Api, Internal, LousyProtocol } from "@typeberry/workers-api/types.js";
 import {
@@ -22,8 +22,6 @@ export enum WorkerControlPlaneMsg {
   CommunicationPort = 0,
   /** Transfers worker configuration. */
   Config = 1,
-  /** Worker protocol handlers are ready to receive messages. */
-  Ready = 2,
 }
 
 export type ThreadComms = {
@@ -45,10 +43,6 @@ export type WorkerControlPlane =
       parentPort: MessagePort;
       /** Configuration object. */
       config: TransferableConfig;
-    }
-  | {
-      /** Worker protocol handlers are ready to receive messages. */
-      kind: WorkerControlPlaneMsg.Ready;
     };
 
 function isControlPlane(data: unknown): data is WorkerControlPlane {
@@ -75,7 +69,6 @@ export function spawnWorker<To, From, Params>(
 ): {
   api: Api<typeof protocol>;
   worker: Worker;
-  workerReady: Promise<void>;
   workerFinished: Promise<void>;
 } {
   logger.trace`Spawning ${protocol.name} child worker.`;
@@ -106,41 +99,11 @@ export function spawnWorker<To, From, Params>(
     });
   });
 
-  let removeReadyListener = () => {};
-  const readySignal = new Promise<void>((resolve) => {
-    const onMessage = (input: unknown) => {
-      if (!isControlPlane(input)) {
-        logger.error`(${protocol.name}) received unexpected control message: ${input}`;
-        return;
-      }
-      if (input.kind !== WorkerControlPlaneMsg.Ready) {
-        logger.error`(${protocol.name}) received unexpected control message kind: ${input.kind}`;
-        return;
-      }
-      removeReadyListener();
-      resolve();
-    };
-    removeReadyListener = () => worker.off("message", onMessage);
-    worker.on("message", onMessage);
-  });
-  const workerReady = Promise.race([
-    readySignal,
-    workerFinished.then(
-      () => {
-        throw new Error(`(${protocol.name}) exited before becoming ready`);
-      },
-      (e: unknown) => {
-        throw e;
-      },
-    ),
-  ]).finally(removeReadyListener);
-
   // now return communication channel with that worker
   const txPort = ThreadPort.new(config.chainSpec, channel.port1);
   return {
     api: Channel.tx(protocol, txPort),
     worker,
-    workerReady,
     workerFinished,
   };
 }
@@ -155,7 +118,6 @@ export async function initWorker<To, From, Params>(
   config: PersistentWorkerConfig<Params>;
   comms: Internal<typeof protocol>;
   threadComms: Listener<ThreadComms>;
-  ready: () => void;
 }> {
   // configure logger inside a worker thread
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
@@ -172,7 +134,6 @@ export async function initWorker<To, From, Params>(
     workerParentPort.once("close", () => reject(new Error(`(${protocol.name}) parent port closed too early`)));
 
     let isResolved = false;
-    let isReady = false;
     const threadComms = new Listener<ThreadComms>();
     workerParentPort.on("message", async (msg) => {
       if (!isControlPlane(msg)) {
@@ -202,17 +163,7 @@ export async function initWorker<To, From, Params>(
           config,
           comms,
           threadComms,
-          ready: () => {
-            check`${isReady === false} (${protocol.name}) worker marked ready more than once`;
-            isReady = true;
-            workerParentPort.postMessage({ kind: WorkerControlPlaneMsg.Ready } satisfies WorkerControlPlane);
-          },
         });
-        return;
-      }
-
-      if (msg.kind === WorkerControlPlaneMsg.Ready) {
-        logger.error`--> (${protocol.name}) received unexpected ready message.`;
         return;
       }
 

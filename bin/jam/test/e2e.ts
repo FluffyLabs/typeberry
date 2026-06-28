@@ -8,6 +8,7 @@ import { Logger } from "@typeberry/logger";
 const TEST_TIMEOUT = 60_000;
 const SHUTDOWN_GRACE_PERIOD = 5_000;
 const TARGET_BLOCK = 6;
+const LOG_TAIL_LINES = 40;
 
 const logger = Logger.new(import.meta.filename, "jam:e2e");
 
@@ -26,15 +27,15 @@ test("JAM Node dev blocks with In Memory", { timeout: TEST_TIMEOUT }, async () =
   }
 });
 
-test("JAM Node dev blocks with LMDB", { timeout: TEST_TIMEOUT }, async () => {
+test("JAM Node dev blocks with Fjall", { timeout: TEST_TIMEOUT }, async () => {
   const dbPath = "./test-db";
   let jamProcess: ChildProcess | null = null;
   try {
-    // enable LMDB storage
+    // enable persistent storage (fjall by default)
     jamProcess = await start({ devIndex: "all", args: [`--config=.database_base_path="${dbPath}"`] });
 
     // wait for specific output on the console
-    await listenForBestBlocks("dev-lmdb", jamProcess, (blockNum) => blockNum > TARGET_BLOCK);
+    await listenForBestBlocks("dev-fjall", jamProcess, (blockNum) => blockNum > TARGET_BLOCK);
   } finally {
     await terminate(jamProcess);
     // clean up test database
@@ -65,7 +66,7 @@ test("JAM Node network connection", { timeout: TEST_TIMEOUT }, async () => {
   }
 });
 
-test("JAM Node ticket distribution with LMDB and worker threads", { timeout: 120_000 }, async () => {
+test("JAM Node ticket distribution with Fjall and worker threads", { timeout: 120_000 }, async () => {
   const VALIDATOR_COUNT = tinyChainSpec.validatorsCount;
   const TICKETS_PER_VALIDATOR = tinyChainSpec.ticketsPerValidator;
   const EPOCH_LENGTH = tinyChainSpec.epochLength;
@@ -74,7 +75,7 @@ test("JAM Node ticket distribution with LMDB and worker threads", { timeout: 120
   const testDbParentPath = "./test-db-e2e-ticket-distribution";
 
   try {
-    // Start 6 individual validator nodes, each with its own LMDB database and worker threads.
+    // Start 6 individual validator nodes, each with its own persistent fjall database and worker threads.
     for (let i = 0; i < VALIDATOR_COUNT; i++) {
       const dbPath = `${testDbParentPath}/validator-${i}`;
       const proc = await start({
@@ -129,6 +130,7 @@ async function collectLogsUntilBlock(
 ): Promise<string[]> {
   const blockPattern = /🧊 Best:.+#(\d+)/;
   const matchedLines: string[] = [];
+  const recentLines: string[] = [];
   let currentBlock = 0;
 
   return new Promise((resolve, reject) => {
@@ -143,6 +145,11 @@ async function collectLogsUntilBlock(
       remainder = lines.pop() ?? "";
 
       for (const line of lines) {
+        recentLines.push(line);
+        if (recentLines.length > LOG_TAIL_LINES) {
+          recentLines.shift();
+        }
+
         // Check for new blocks
         const blockMatch = blockPattern.exec(line);
         if (blockMatch !== null) {
@@ -169,11 +176,15 @@ async function collectLogsUntilBlock(
 
     proc?.on("exit", (code) => {
       if (code !== 0 && code !== null) {
-        reject(`(${prefix}) Process exited with code ${code}`);
+        reject(
+          new Error(
+            `(${prefix}) Process exited with code ${code} at block ${currentBlock}\n${formatLogTail(recentLines)}`,
+          ),
+        );
       } else if (currentBlock >= targetBlock) {
         resolve(matchedLines);
       } else {
-        reject(`(${prefix}) Process exited early at block ${currentBlock}`);
+        reject(new Error(`(${prefix}) Process exited early at block ${currentBlock}\n${formatLogTail(recentLines)}`));
       }
     });
 
@@ -181,6 +192,13 @@ async function collectLogsUntilBlock(
     proc?.stdout?.on("data", handleOutput);
     proc?.stderr?.on("data", handleOutput);
   });
+}
+
+function formatLogTail(lines: string[]): string {
+  if (lines.length === 0) {
+    return "No process output captured.";
+  }
+  return [`Last ${lines.length} process output lines:`, ...lines].join("\n");
 }
 
 /**
@@ -249,10 +267,10 @@ async function terminate(jamProcess: ChildProcess | null) {
 async function start(
   options: { devIndex: number | "all" | null; args?: string[]; timeout?: number } = { devIndex: "all" },
 ) {
-  const devArgs = options.devIndex === null ? ["--", "--config=dev", "--name=test"] : ["dev", `${options.devIndex}`];
+  const devArgs = options.devIndex === null ? ["--config=dev", "--name=test"] : ["dev", `${options.devIndex}`];
   const args = options.args !== undefined ? [...devArgs, ...options.args] : devArgs;
   const processTimeout = options.timeout ?? TEST_TIMEOUT;
-  const spawned = spawn("npm", ["start", ...args], {
+  const spawned = spawn("npm", ["start", "--", ...args], {
     cwd: process.cwd(),
   });
   const timeout = setTimeout(() => {

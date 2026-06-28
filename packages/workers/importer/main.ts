@@ -64,7 +64,7 @@ export async function createImporter(
  *
  * These blocks should be decoded, verified and later imported.
  */
-export async function main(config: Config, comms: ImporterInternal, ready: () => void = () => {}) {
+export async function main(config: Config, comms: ImporterInternal) {
   const wasmPromise = initWasm();
   logger.info`📥 Importer starting`;
 
@@ -96,7 +96,6 @@ export async function main(config: Config, comms: ImporterInternal, ready: () =>
 
   await wasmPromise;
   logger.info`📥 Importer waiting for blocks.`;
-  ready();
 
   // await finish signal
   await finishPromise;

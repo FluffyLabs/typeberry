@@ -5,7 +5,7 @@ import { initWorker } from "@typeberry/workers-api-node";
 import { main } from "./main.js";
 import { BlockAuthorshipConfig, protocol as mainProtocol } from "./protocol.js";
 
-const { config, comms, ready } = await initWorker(mainProtocol, BlockAuthorshipConfig.Codec);
+const { config, comms } = await initWorker(mainProtocol, BlockAuthorshipConfig.Codec);
 
 // Initialize OpenTelemetry for this worker
 const tele = Telemetry.initialize({
@@ -18,5 +18,5 @@ if (port === undefined) {
   throw new Error("Network port not found in config");
 }
 const networkingComms = Channel.tx(networkProtocol, port);
-await main(config, comms, networkingComms, ready);
+await main(config, comms, networkingComms);
 await tele?.close();
