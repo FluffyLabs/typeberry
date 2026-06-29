@@ -24,6 +24,22 @@
       "minLength": 1,
       "examples": ["./database"]
     },
+    "state_backend": {
+      "type": "string",
+      "description": "Persistent database backend used when database_base_path is set. lmdb is deprecated and retained only as an explicit fallback.",
+      "oneOf": [
+        {
+          "const": "fjall",
+          "description": "Default fjall backend."
+        },
+        {
+          "const": "lmdb",
+          "description": "Deprecated lmdb backend.",
+          "deprecated": true
+        }
+      ],
+      "default": "fjall"
+    },
     "authorship": {
       "$ref": "./specs/authorship.schema.json"
     }

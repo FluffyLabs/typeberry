@@ -1,5 +1,5 @@
 import type { ChainSpec, PvmBackend } from "@typeberry/config";
-import { LmdbBlocks, type LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
+import type { BlocksDb, RootDb, SerializedStatesDb } from "@typeberry/database";
 import type { Blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import {
@@ -46,14 +46,14 @@ function createParamsParseErrorMessage(error: z.ZodError): string {
 
 export class RpcServer {
   private readonly wss: WebSocketServer;
-  private readonly blocks: LmdbBlocks;
-  private readonly states: LmdbStates;
+  private readonly blocks: BlocksDb;
+  private readonly states: SerializedStatesDb;
   private readonly subscriptionManager: SubscriptionManager;
   private readonly logger: Logger;
 
   static new(
     port: number,
-    rootDb: LmdbRoot,
+    rootDb: RootDb<BlocksDb, SerializedStatesDb>,
     chainSpec: ChainSpec,
     blake2b: Blake2b,
     pvmBackend: PvmBackend,
@@ -65,7 +65,7 @@ export class RpcServer {
 
   private constructor(
     port: number,
-    private readonly rootDb: LmdbRoot,
+    private readonly rootDb: RootDb<BlocksDb, SerializedStatesDb>,
     private readonly chainSpec: ChainSpec,
     private readonly blake2b: Blake2b,
     private readonly pvmBackend: PvmBackend,
@@ -74,8 +74,8 @@ export class RpcServer {
   ) {
     this.logger = Logger.new(import.meta.filename, "rpc");
 
-    this.blocks = LmdbBlocks.new(chainSpec, this.rootDb);
-    this.states = LmdbStates.new(chainSpec, this.blake2b, this.rootDb);
+    this.blocks = this.rootDb.getBlocksDb();
+    this.states = this.rootDb.getStatesDb();
 
     this.wss = new WebSocketServer({ port });
     this.setupWebSocket();
@@ -240,6 +240,6 @@ export class RpcServer {
       this.wss.close(() => resolve());
     });
     this.subscriptionManager.destroy();
-    await this.rootDb.db.close();
+    await this.rootDb.close();
   }
 }

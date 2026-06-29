@@ -5,7 +5,12 @@ import { Level, Logger } from "@typeberry/logger";
 import { assertNever } from "@typeberry/utils";
 import { Channel } from "@typeberry/workers-api";
 import type { Api, Internal, LousyProtocol } from "@typeberry/workers-api/types.js";
-import { configTransferList, LmdbWorkerConfig, type TransferableConfig } from "./config.js";
+import {
+  configTransferList,
+  type PersistentWorkerConfig,
+  persistentConfigFromTransferable,
+  type TransferableConfig,
+} from "./config.js";
 import { logHeapLimit, workerResourceLimits } from "./host-environment.js";
 import { ThreadPort } from "./port.js";
 
@@ -59,7 +64,7 @@ function isControlPlane(data: unknown): data is WorkerControlPlane {
 export function spawnWorker<To, From, Params>(
   protocol: LousyProtocol<To, From>,
   bootstrapPath: URL,
-  config: LmdbWorkerConfig<Params>,
+  config: PersistentWorkerConfig<Params>,
   paramsEncoder: Encode<Params>,
 ): {
   api: Api<typeof protocol>;
@@ -110,7 +115,7 @@ export async function initWorker<To, From, Params>(
   protocol: LousyProtocol<To, From>,
   paramsDecoder: Decode<Params>,
 ): Promise<{
-  config: LmdbWorkerConfig<Params>;
+  config: PersistentWorkerConfig<Params>;
   comms: Internal<typeof protocol>;
   threadComms: Listener<ThreadComms>;
 }> {
@@ -121,15 +126,16 @@ export async function initWorker<To, From, Params>(
   logHeapLimit(logger, protocol.name);
 
   return new Promise((resolve, reject) => {
-    if (parentPort === null) {
+    const workerParentPort = parentPort;
+    if (workerParentPort === null) {
       throw new Error(`Unable to start ${protocol.name} worker. Not running in a worker thread!`);
     }
 
-    parentPort.once("close", () => reject(new Error(`(${protocol.name}) parent port closed too early`)));
+    workerParentPort.once("close", () => reject(new Error(`(${protocol.name}) parent port closed too early`)));
 
     let isResolved = false;
     const threadComms = new Listener<ThreadComms>();
-    parentPort.on("message", async (msg) => {
+    workerParentPort.on("message", async (msg) => {
       if (!isControlPlane(msg)) {
         logger.error`--> (${protocol.name}) received unexpected message: ${msg}`;
         return;
@@ -149,15 +155,19 @@ export async function initWorker<To, From, Params>(
 
         logger.trace`--> (${protocol.name}) received configuration.`;
         isResolved = true;
-        const config = await LmdbWorkerConfig.fromTransferable(paramsDecoder, msg.config);
-        const rxPort = ThreadPort.new(config.chainSpec, msg.parentPort);
-        const comms = Channel.rx(protocol, rxPort);
+        try {
+          const config = await persistentConfigFromTransferable(paramsDecoder, msg.config);
+          const rxPort = ThreadPort.new(config.chainSpec, msg.parentPort);
+          const comms = Channel.rx(protocol, rxPort);
 
-        resolve({
-          config,
-          comms,
-          threadComms,
-        });
+          resolve({
+            config,
+            comms,
+            threadComms,
+          });
+        } catch (e) {
+          reject(e);
+        }
         return;
       }
 

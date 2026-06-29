@@ -11,7 +11,7 @@ export interface WorkerConfig<TParams = void, TBlocks = BlocksDb, TStates = Stat
   readonly workerParams: TParams;
 
   /** Open database. */
-  openDatabase(options?: { readonly: boolean }): RootDb<TBlocks, TStates>;
+  openDatabase(options?: { readonly: boolean }): Promise<RootDb<TBlocks, TStates>>;
 }
 
 /**
@@ -44,7 +44,7 @@ export class DirectWorkerConfig<TParams = void, TBlocks = BlocksDb, TStates = St
     private readonly statesDb: TStates,
   ) {}
 
-  openDatabase(_options?: { readonly: boolean }): RootDb<TBlocks, TStates> {
+  async openDatabase(_options?: { readonly: boolean }): Promise<RootDb<TBlocks, TStates>> {
     return {
       getBlocksDb: () => this.blocksDb,
       getStatesDb: () => this.statesDb,

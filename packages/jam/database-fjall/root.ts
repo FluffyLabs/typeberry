@@ -1,8 +1,18 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { type Keyspace, open, type Partition } from "@fjall-js/fjall";
+import {
+  type Keyspace,
+  open,
+  openReadonly,
+  type Partition,
+  type ReadonlyKeyspace,
+  type ReadonlyPartition,
+} from "@fjall-js/fjall";
 
-export type { Partition };
+const DEFAULT_CACHE_SIZE_BYTES = 64 * 1024 * 1024;
+
+export type { Partition, ReadonlyPartition };
+export type FjallPartition = Partition | ReadonlyPartition;
 
 /**
  * Normalize a value read from fjall (a Node `Buffer`) into a plain `Uint8Array`.
@@ -15,9 +25,10 @@ export function toUint8Array(value: Buffer | null): Uint8Array | null {
 }
 
 export type FjallRootOptions = {
+  /** Open a read-only wrapper surface over the shared keyspace. */
+  readOnly?: boolean;
   /**
-   * When set, we skip the durability flush (`persist`) and `close()` does not
-   * do the sync-all fsync.
+   * When set, we skip explicit durability flushes (`persist`).
    *
    * Only safe for throwaway databases, like the fuzz target that wipes on every
    * reset.
@@ -26,7 +37,7 @@ export type FjallRootOptions = {
   /**
    * Cache size in bytes, shared by all partitions of the keyspace. fjall reads
    * through this cache, so it bounds how much we keep in memory. When not set,
-   * fjall uses its own default.
+   * typeberry uses a conservative default.
    */
   cacheSizeBytes?: number;
 };
@@ -40,26 +51,40 @@ export type FjallRootOptions = {
  */
 export class FjallRoot {
   private constructor(
-    private readonly keyspace: Keyspace,
+    private readonly keyspace: Keyspace | ReadonlyKeyspace,
     /** Path of the underlying keyspace directory, used to report on-disk usage. */
     private readonly dbPath: string,
     private readonly options: FjallRootOptions,
   ) {}
 
   /** Open (or create) a fjall keyspace at the given path. */
-  static async open(dbPath: string, options: FjallRootOptions): Promise<FjallRoot> {
-    // Forward our options to the binding: `ephemeral` makes `close()` skip the
-    // sync-all fsync, `cacheSizeBytes` bounds how much we keep in memory.
-    const keyspace = await open(dbPath, {
-      ephemeral: options.ephemeral,
-      cacheSizeBytes: options.cacheSizeBytes,
-    });
+  static async open(dbPath: string, options: FjallRootOptions = {}): Promise<FjallRoot> {
+    // fjall-js 0.3 shares one engine per path. Readers must use the read-only
+    // wrapper surface; durability is driven explicitly through persist().
+    const config = {
+      path: dbPath,
+      cacheSizeBytes: options.cacheSizeBytes ?? DEFAULT_CACHE_SIZE_BYTES,
+    };
+    const keyspace = options.readOnly === true ? await openReadonly(config) : await open(config);
     return new FjallRoot(keyspace, dbPath, options);
   }
 
+  /** Whether this root was opened through fjall's read-only surface. */
+  get readOnly(): boolean {
+    return this.options.readOnly === true;
+  }
+
   /** Open (or create) a partition under this keyspace. */
-  async partition(name: string): Promise<Partition> {
+  async partition(name: string): Promise<FjallPartition> {
     return this.keyspace.partition(name);
+  }
+
+  /** Open a writable partition, failing early when this root is read-only. */
+  async writablePartition(name: string): Promise<Partition> {
+    if (this.readOnly) {
+      throw new Error(`Cannot open writable fjall partition '${name}' from a read-only keyspace.`);
+    }
+    return (await this.keyspace.partition(name)) as Partition;
   }
 
   /**
@@ -72,7 +97,10 @@ export class FjallRoot {
     if (this.options.ephemeral === true) {
       return;
     }
-    await this.keyspace.persist();
+    if (this.readOnly) {
+      throw new Error("Cannot persist a read-only fjall keyspace.");
+    }
+    await (this.keyspace as Keyspace).persist();
   }
 
   /**
@@ -90,7 +118,7 @@ export class FjallRoot {
     }
   }
 
-  /** Persist with `sync-all` and release the keyspace handle. */
+  /** Release this keyspace handle. Call persist() first when durability is needed. */
   async close(): Promise<void> {
     await this.keyspace.close();
   }

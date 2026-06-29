@@ -5,7 +5,7 @@ import { configs } from "@typeberry/configs";
 import polkajamConfig from "@typeberry/configs/typeberry-polkajam-dev.json" with { type: "json" };
 import { parseFromJson } from "@typeberry/json-parser";
 import { workspacePathFix } from "@typeberry/utils";
-import { KnownChainSpec, loadConfig, NodeConfiguration } from "./node-config.js";
+import { KnownChainSpec, loadConfig, NodeConfiguration, RegularStateBackend } from "./node-config.js";
 
 const withRelPath = workspacePathFix(`${import.meta.dirname}/../..`);
 
@@ -49,6 +49,16 @@ describe("Importing Node Configuration", () => {
 
   it("should read the database base path", () => {
     assert.deepStrictEqual(config.databaseBasePath, "/tmp/jam-node-db");
+  });
+
+  it("defaults to the fjall state backend", () => {
+    assert.deepStrictEqual(config.stateBackend, RegularStateBackend.Fjall);
+  });
+
+  it("should read the state backend", () => {
+    const lmdbConfig = parseFromJson({ ...NODE_CONFIG_TEST, state_backend: "lmdb" }, NodeConfiguration.fromJson);
+
+    assert.deepStrictEqual(lmdbConfig.stateBackend, RegularStateBackend.Lmdb);
   });
 
   it("should read the chain spec", () => {

@@ -45,4 +45,26 @@ describe("ThreadPort", () => {
       data: tryAsU32(42),
     });
   });
+
+  it("should deliver messages sent before the listener is attached", async () => {
+    const tx = ThreadPort.new(spec, channel.port1);
+    const rx = ThreadPort.new(spec, channel.port2);
+
+    tx.postMessage("hello", codec.varU32, {
+      responseId: "10",
+      data: tryAsU32(42),
+    });
+
+    await setTimeout(10);
+
+    let received: Envelope<U32> | null = null;
+    rx.on("hello", codec.varU32, (msg) => {
+      received = msg;
+    });
+
+    assert.deepStrictEqual(received, {
+      responseId: "10",
+      data: tryAsU32(42),
+    });
+  });
 });

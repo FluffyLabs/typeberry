@@ -1,13 +1,13 @@
 /** biome-ignore-all lint/suspicious/noConsole: for displaying help */
 
 import { PvmBackend } from "@typeberry/config";
-import { loadConfig, NODE_DEFAULTS } from "@typeberry/config-node";
-import { LmdbRoot } from "@typeberry/database-lmdb";
+import { loadConfig, NODE_DEFAULTS, RegularStateBackend } from "@typeberry/config-node";
 import { Blake2b } from "@typeberry/hash";
 import { parseSharedOptions } from "@typeberry/jam/args.js";
 import { getChainSpec, getDatabasePath } from "@typeberry/node";
 import { validation } from "@typeberry/rpc-validation";
 import { version, workspacePathFix } from "@typeberry/utils";
+import { FjallWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
 import minimist from "minimist";
 import { handlers } from "./src/handlers.js";
 import { RpcServer } from "./src/server.js";
@@ -63,7 +63,7 @@ export async function main(args: string[]) {
   const nodeConfig = loadConfig(config, withRelPath);
   const spec = getChainSpec(nodeConfig.flavor);
   if (nodeConfig.databaseBasePath === undefined) {
-    throw new Error("RPC server requires a LMDB database path.");
+    throw new Error("RPC server requires a persistent database path.");
   }
 
   const { dbPath } = getDatabasePath(
@@ -73,8 +73,17 @@ export async function main(args: string[]) {
     withRelPath(nodeConfig.databaseBasePath),
   );
 
-  // Read-only view of a durable node db, which is written compressed by default.
-  const rootDb = LmdbRoot.new(dbPath, { readOnly: true, compression: true });
+  const dbConfigParams = {
+    nodeName,
+    chainSpec: spec,
+    workerParams: undefined,
+    dbPath,
+    blake2b,
+  };
+  const rootDb =
+    nodeConfig.stateBackend === RegularStateBackend.Fjall
+      ? await FjallWorkerConfig.new(dbConfigParams).openDatabase({ readonly: true })
+      : await LmdbWorkerConfig.new(dbConfigParams).openDatabase({ readonly: true });
   // TODO [RPC] Make PvmBackend configurable via CLI args
   const pvmBackend = PvmBackend.Ananas;
   const server = RpcServer.new(port, rootDb, spec, blake2b, pvmBackend, handlers, validation.schemas);
