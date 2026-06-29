@@ -145,6 +145,6 @@ export class DummyFinalizer implements Finalizer {
     this.lastFinalizedHash = finalizedHash;
     this.unfinalized = newUnfinalized;
 
-    return { finalizedHash, newlyFinalizedHeaders: newlyFinalized, prunableStateHashes: prunable };
+    return { finalizedHash, finalizedChain, newlyFinalizedHeaders: newlyFinalized, prunableStateHashes: prunable };
   }
 }
