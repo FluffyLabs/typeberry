@@ -235,6 +235,7 @@ export class Importer {
       const pruneBlocks = this.options.pruneBlocks ?? false;
       this.logger
         .info`🦭 Finalized: ${finality.finalizedHash.toStringTruncated()} (${finality.prunableStateHashes.length} to prune, blocks: ${pruneBlocks})`;
+      this.states.commitFinalized(finality.newlyFinalizedHeaders);
       for (const hash of finality.prunableStateHashes) {
         this.states.markUnused(hash);
         if (pruneBlocks) {
