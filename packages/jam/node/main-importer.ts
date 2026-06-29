@@ -1,7 +1,7 @@
 import type { BlockView, HeaderHash, StateRootHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { PvmBackend } from "@typeberry/config";
-import { KnownChainSpec } from "@typeberry/config-node";
+import { KnownChainSpec, RegularStateBackend } from "@typeberry/config-node";
 import { bandersnatch, initWasm } from "@typeberry/crypto";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { createImporter, ImporterConfig } from "@typeberry/importer";
@@ -9,6 +9,7 @@ import { tryAsU16 } from "@typeberry/numbers";
 import { CURRENT_SUITE, CURRENT_VERSION, Result, resultToString, version } from "@typeberry/utils";
 import {
   type FjallValuesSession,
+  FjallWorkerConfig,
   HybridWorkerConfig,
   InMemWorkerConfig,
   LmdbWorkerConfig,
@@ -19,7 +20,7 @@ import type { NodeApi } from "./main.js";
 
 const zeroHash = Bytes.zero(HASH_SIZE).asOpaque<StateRootHash>();
 
-export type StateBackend = "lmdb" | "lmdb-hybrid" | "fjall-hybrid";
+export type StateBackend = "lmdb" | "fjall" | "lmdb-hybrid" | "fjall-hybrid";
 
 export type ImporterOptions = {
   initGenesisFromAncestry?: boolean;
@@ -28,7 +29,9 @@ export type ImporterOptions = {
   /** Open the database without fsync/compression. Only safe for throwaway dbs (e.g. fuzzing). */
   ephemeral?: boolean;
   /**
-   * Persistent backend used when `databaseBasePath` is set. Defaults to full LMDB.
+   * Persistent backend used when `databaseBasePath` is set. Defaults to config's backend (fjall unless overridden).
+   *
+   * lmdb and lmdb-hybrid are deprecated and retained as explicit fallbacks.
    */
   stateBackend?: StateBackend;
   /**
@@ -54,8 +57,14 @@ export async function mainImporter(
 
   // Single source of truth for the states db backend: drives both the log line
   // below and the worker config picked further down.
-  const dbBackend = config.node.databaseBasePath === undefined ? "in-memory" : (options.stateBackend ?? "lmdb");
+  const dbBackend =
+    config.node.databaseBasePath === undefined
+      ? "in-memory"
+      : (options.stateBackend ?? config.node.stateBackend ?? RegularStateBackend.Fjall);
   logger.info`🗄️ States DB: ${dbBackend}.`;
+  if (dbBackend === "lmdb" || dbBackend === "lmdb-hybrid") {
+    logger.warn`🗄️ The ${dbBackend} state backend is deprecated. Use fjall unless you need a temporary fallback.`;
+  }
 
   const chainSpec = getChainSpec(config.node.flavor);
   const blake2b = await Blake2b.createHasher();
@@ -97,18 +106,27 @@ export async function mainImporter(
             backend: dbBackend === "lmdb-hybrid" ? "lmdb" : "fjall",
             sharedFjallSession: options.sharedFjallSession,
           })
-        : LmdbWorkerConfig.new({
-            nodeName,
-            chainSpec,
-            blake2b,
-            dbPath,
-            workerParams,
-            ephemeral,
-          });
+        : dbBackend === "fjall"
+          ? FjallWorkerConfig.new({
+              nodeName,
+              chainSpec,
+              blake2b,
+              dbPath,
+              workerParams,
+              ephemeral,
+            })
+          : LmdbWorkerConfig.new({
+              nodeName,
+              chainSpec,
+              blake2b,
+              dbPath,
+              workerParams,
+              ephemeral,
+            });
 
   // Initialize the database with genesis state and block if there isn't one.
   logger.info`🛢️ Opening database at ${dbPath}`;
-  const rootDb = workerConfig.openDatabase({ readonly: false });
+  const rootDb = await workerConfig.openDatabase({ readonly: false });
   await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry, {
     initGenesisFromAncestry: options.initGenesisFromAncestry,
   });

@@ -8,7 +8,13 @@ import {
   type RootDb,
   type SerializedStatesDb,
 } from "@typeberry/database";
-import { HybridSerializedStates as FjallHybridSerializedStates, FjallValuesSession } from "@typeberry/database-fjall";
+import {
+  FjallBlocks,
+  HybridSerializedStates as FjallHybridSerializedStates,
+  FjallRoot,
+  FjallStates,
+  FjallValuesSession,
+} from "@typeberry/database-fjall";
 import {
   LmdbBlocks,
   HybridSerializedStates as LmdbHybridSerializedStates,
@@ -23,7 +29,17 @@ import { ThreadPort, type TransferablePort } from "./port.js";
 // it across resets (see `HybridWorkerConfig` / `mainFuzz`).
 export { FjallValuesSession };
 
-/** Worker config for node.js, backed by the LMDB database. */
+/** Persistent regular-node backend. */
+export type PersistentBackend = "lmdb" | "fjall";
+
+/** Transferable worker config for persistent regular-node workers. */
+export type PersistentWorkerConfig<T> = LmdbWorkerConfig<T> | FjallWorkerConfig<T>;
+
+/**
+ * Worker config for node.js, backed by the LMDB database.
+ *
+ * @deprecated lmdb is retained as an explicit fallback. Use `FjallWorkerConfig` for regular nodes.
+ */
 export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, SerializedStatesDb> {
   static new<T>({
     nodeName,
@@ -47,12 +63,10 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
 
   /** Restore node config from a transferable config object. */
   static async fromTransferable<T>(decodeParams: Decode<T>, config: TransferableConfig) {
-    const blake2b = await Blake2b.createHasher();
-    const chainSpec = ChainSpec.new(config.chainSpec);
-    const workerParams = Decoder.decodeObject(decodeParams, config.workerParams, chainSpec);
-    const ports = new Map(
-      config.workerPorts.map(([name, port]) => [name, ThreadPort.fromTransferable(chainSpec, port)]),
-    );
+    if (config.databaseBackend !== "lmdb") {
+      throw new Error(`Expected lmdb worker config, got ${config.databaseBackend}.`);
+    }
+    const { blake2b, chainSpec, workerParams, ports } = await decodeTransferableConfig(decodeParams, config);
 
     return LmdbWorkerConfig.new({
       nodeName: config.nodeName,
@@ -77,7 +91,9 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
     public readonly ephemeral: boolean = false,
   ) {}
 
-  openDatabase(options: { readonly: boolean } = { readonly: true }): RootDb<BlocksDb, SerializedStatesDb> {
+  async openDatabase(
+    options: { readonly: boolean } = { readonly: true },
+  ): Promise<RootDb<BlocksDb, SerializedStatesDb>> {
     const lmdb = LmdbRoot.new(this.dbPath, {
       readOnly: options.readonly,
       ephemeral: this.ephemeral,
@@ -93,6 +109,7 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
   /** Convert this config into a thread-transferable object. */
   intoTransferable(paramsCodec: Encode<T>): TransferableConfig {
     return {
+      databaseBackend: "lmdb",
       nodeName: this.nodeName,
       chainSpec: this.chainSpec,
       workerParams: Encoder.encodeObject(paramsCodec, this.workerParams, this.chainSpec).raw,
@@ -102,14 +119,152 @@ export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Ser
   }
 }
 
+/** Worker config for node.js, backed by a shared fjall engine. */
+export class FjallWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, SerializedStatesDb> {
+  static new<T>({
+    nodeName,
+    chainSpec,
+    workerParams,
+    dbPath,
+    blake2b,
+    ports = new Map(),
+    ephemeral = false,
+    cacheSizeBytes,
+  }: {
+    nodeName: string;
+    chainSpec: ChainSpec;
+    workerParams: T;
+    dbPath: string;
+    blake2b: Blake2b;
+    ports?: Map<string, ThreadPort>;
+    ephemeral?: boolean;
+    cacheSizeBytes?: number;
+  }) {
+    return new FjallWorkerConfig(nodeName, chainSpec, workerParams, dbPath, blake2b, ports, ephemeral, cacheSizeBytes);
+  }
+
+  /** Restore node config from a transferable config object. */
+  static async fromTransferable<T>(decodeParams: Decode<T>, config: TransferableConfig) {
+    if (config.databaseBackend !== "fjall") {
+      throw new Error(`Expected fjall worker config, got ${config.databaseBackend}.`);
+    }
+    const { blake2b, chainSpec, workerParams, ports } = await decodeTransferableConfig(decodeParams, config);
+
+    return FjallWorkerConfig.new({
+      nodeName: config.nodeName,
+      chainSpec,
+      workerParams,
+      dbPath: config.dbPath,
+      blake2b,
+      ports,
+      cacheSizeBytes: config.cacheSizeBytes,
+    });
+  }
+
+  private constructor(
+    public readonly nodeName: string,
+    public readonly chainSpec: ChainSpec,
+    public readonly workerParams: T,
+    public readonly dbPath: string,
+    public readonly blake2b: Blake2b,
+    public readonly ports: Map<string, ThreadPort>,
+    // Kept for the fuzz/importer path. When set, persist() is skipped.
+    public readonly ephemeral: boolean = false,
+    public readonly cacheSizeBytes: number | undefined = undefined,
+  ) {}
+
+  async openDatabase(
+    options: { readonly: boolean } = { readonly: true },
+  ): Promise<RootDb<BlocksDb, SerializedStatesDb>> {
+    const fjall = await FjallRoot.open(this.dbPath, {
+      readOnly: options.readonly,
+      ephemeral: this.ephemeral,
+      cacheSizeBytes: this.cacheSizeBytes,
+    });
+    let blocks: FjallBlocks | null = null;
+    let states: FjallStates | null = null;
+    try {
+      [blocks, states] = await Promise.all([
+        FjallBlocks.open(this.chainSpec, fjall),
+        FjallStates.open(this.chainSpec, this.blake2b, fjall),
+      ]);
+    } catch (e) {
+      await fjall.close();
+      throw e;
+    }
+
+    return {
+      getBlocksDb: () => {
+        if (blocks === null) {
+          throw new Error("Fjall database is closed.");
+        }
+        return blocks;
+      },
+      getStatesDb: () => {
+        if (states === null) {
+          throw new Error("Fjall database is closed.");
+        }
+        return states;
+      },
+      close: async () => {
+        blocks = null;
+        states = null;
+        await fjall.close();
+      },
+    };
+  }
+
+  /** Convert this config into a thread-transferable object. */
+  intoTransferable(paramsCodec: Encode<T>): TransferableConfig {
+    return {
+      databaseBackend: "fjall",
+      nodeName: this.nodeName,
+      chainSpec: this.chainSpec,
+      workerParams: Encoder.encodeObject(paramsCodec, this.workerParams, this.chainSpec).raw,
+      dbPath: this.dbPath,
+      workerPorts: Array.from(this.ports.entries()).map(([name, port]) => [name, port.intoTransferable()]),
+      cacheSizeBytes: this.cacheSizeBytes,
+    };
+  }
+}
+
 /** Config that's safe to transfer between worker threads. */
 export type TransferableConfig = {
+  databaseBackend: PersistentBackend;
   nodeName: string;
   chainSpec: ChainSpec;
   workerParams: Uint8Array;
   dbPath: string;
   workerPorts: [string, TransferablePort][];
+  cacheSizeBytes?: number;
 };
+
+async function decodeTransferableConfig<T>(decodeParams: Decode<T>, config: TransferableConfig) {
+  const blake2b = await Blake2b.createHasher();
+  const chainSpec = ChainSpec.new(config.chainSpec);
+  const workerParams = Decoder.decodeObject(decodeParams, config.workerParams, chainSpec);
+  const ports = new Map(config.workerPorts.map(([name, port]) => [name, ThreadPort.fromTransferable(chainSpec, port)]));
+
+  return {
+    blake2b,
+    chainSpec,
+    workerParams,
+    ports,
+  };
+}
+
+/** Restore a persistent worker config from its transferable form. */
+export async function persistentConfigFromTransferable<T>(
+  decodeParams: Decode<T>,
+  config: TransferableConfig,
+): Promise<PersistentWorkerConfig<T>> {
+  switch (config.databaseBackend) {
+    case "lmdb":
+      return LmdbWorkerConfig.fromTransferable(decodeParams, config);
+    case "fjall":
+      return FjallWorkerConfig.fromTransferable(decodeParams, config);
+  }
+}
 
 /**
  * Collect the transferable objects (communication ports) embedded in a config.
@@ -155,7 +310,9 @@ export class InMemWorkerConfig<T = undefined> implements WorkerConfig<T, BlocksD
     this.states = InMemorySerializedStates.withHasher({ chainSpec, blake2b });
   }
 
-  openDatabase(_options: { readonly: boolean } = { readonly: true }): RootDb<BlocksDb, SerializedStatesDb> {
+  async openDatabase(
+    _options: { readonly: boolean } = { readonly: true },
+  ): Promise<RootDb<BlocksDb, SerializedStatesDb>> {
     // opening/closing db doesn't do anything, we persist the state.
     return {
       getBlocksDb: () => this.blocks,
@@ -238,7 +395,9 @@ export class HybridWorkerConfig<T = undefined> implements WorkerConfig<T, Blocks
     this.blocks = InMemoryBlocks.new();
   }
 
-  openDatabase(_options: { readonly: boolean } = { readonly: true }): RootDb<BlocksDb, SerializedStatesDb> {
+  async openDatabase(
+    _options: { readonly: boolean } = { readonly: true },
+  ): Promise<RootDb<BlocksDb, SerializedStatesDb>> {
     return {
       getBlocksDb: () => this.blocks,
       getStatesDb: () => this.states,

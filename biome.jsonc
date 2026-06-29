@@ -61,6 +61,8 @@
     "includes": [
       "**",
       "!**/dist/**/*",
+      "!**/.context/**/*",
+      "!docs/**/*",
       "!**/benchmarks/**/output/**/*",
       "!**/test-vectors/**/*",
       "!**/packages/misc/builder/pkg.ts",

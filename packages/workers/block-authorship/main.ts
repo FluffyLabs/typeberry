@@ -35,7 +35,7 @@ export async function main(config: Config, comms: GeneratorInternal, networkingC
   await initWasm();
   logger.info`🎁 Block Authorship running`;
   const chainSpec = config.chainSpec;
-  const db = config.openDatabase();
+  const db = await config.openDatabase();
   const blocks = db.getBlocksDb();
   const states = db.getStatesDb();
 

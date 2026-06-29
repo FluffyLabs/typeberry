@@ -25,10 +25,10 @@ export async function createImporter(
   options: CreateImporterOptions = {},
 ): Promise<{
   importer: Importer;
-  db: ReturnType<Config["openDatabase"]>;
+  db: Awaited<ReturnType<Config["openDatabase"]>>;
 }> {
   const chainSpec = config.chainSpec;
-  const db = config.openDatabase({ readonly: false });
+  const db = await config.openDatabase({ readonly: false });
   const pvm = config.workerParams.pvm;
   const blocks = db.getBlocksDb();
   const states = db.getStatesDb();

@@ -2,6 +2,7 @@ import { isMainThread } from "node:worker_threads";
 import type { BlockView, HeaderHash, HeaderView, StateRootHash } from "@typeberry/block";
 import { AUTHORSHIP_NETWORK_PORT } from "@typeberry/comms-authorship-network";
 import { type ChainSpec, PvmBackend } from "@typeberry/config";
+import { RegularStateBackend } from "@typeberry/config-node";
 import { initWasm } from "@typeberry/crypto";
 import {
   type BandersnatchSecretSeed,
@@ -20,7 +21,14 @@ import type { StateEntries } from "@typeberry/state-merkleization";
 import type { Telemetry } from "@typeberry/telemetry";
 import { CURRENT_SUITE, CURRENT_VERSION, Result, version } from "@typeberry/utils";
 import { DirectPort, DirectWorkerConfig } from "@typeberry/workers-api";
-import { InMemWorkerConfig, LmdbWorkerConfig, logHostEnvironment, ThreadPort } from "@typeberry/workers-api-node";
+import {
+  FjallWorkerConfig,
+  InMemWorkerConfig,
+  LmdbWorkerConfig,
+  logHostEnvironment,
+  type PersistentWorkerConfig,
+  ThreadPort,
+} from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import { initializeExtensions } from "./extensions.js";
 import type { JamConfig, NetworkConfig } from "./jam-config.js";
@@ -63,7 +71,10 @@ export async function main(
   const blake2b = await Blake2b.createHasher();
   const nodeName = config.nodeName;
   const isInMemory = config.node.databaseBasePath === undefined;
-  logger.info`🗄️ States DB: ${isInMemory ? "in-memory" : "lmdb"}.`;
+  logger.info`🗄️ States DB: ${isInMemory ? "in-memory" : config.node.stateBackend}.`;
+  if (!isInMemory && config.node.stateBackend === RegularStateBackend.Lmdb) {
+    logger.warn`🗄️ The lmdb state backend is deprecated. Use state_backend="fjall" unless you need a temporary fallback.`;
+  }
 
   const { dbPath, genesisHeaderHash } = getDatabasePath(
     blake2b,
@@ -72,7 +83,7 @@ export async function main(
     withRelPath(config.node.databaseBasePath ?? "<in-memory>"),
   );
 
-  const baseConfig = { nodeName, chainSpec, blake2b, dbPath };
+  const baseConfig = { nodeName, chainSpec, blake2b, dbPath, stateBackend: config.node.stateBackend };
   const importerParams = {
     ...baseConfig,
     workerParams: ImporterConfig.create({
@@ -84,17 +95,28 @@ export async function main(
 
   const importerConfig = isInMemory
     ? { isInMemory, config: InMemWorkerConfig.new(importerParams) }
-    : { isInMemory, config: LmdbWorkerConfig.new(importerParams) };
+    : { isInMemory, config: createPersistentWorkerConfig(importerParams) };
 
   // Initialize the database with genesis state and block if there isn't one.
   logger.info`🛢️ Opening database at ${dbPath}`;
-  const rootDb = importerConfig.config.openDatabase({ readonly: false });
-  await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
-  // NOTE [ToDr] even though, we should be closing the database here,
-  // it seems that opening it in the main thread for writing, and later
-  // in the importer thread, causes issues. Everything works fine though,
-  // if we DO NOT close the database (I guess it's process-shared?)
-  // await rootDb.close();
+  const rootDb = await importerConfig.config.openDatabase({ readonly: false });
+  try {
+    await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
+  } catch (e) {
+    try {
+      await rootDb.close();
+    } catch (closeError) {
+      logger.warn`Failed to close database after initialization error: ${closeError}`;
+    }
+    throw e;
+  }
+  // fjall-js shares the engine explicitly and requires every handle to close.
+  // Keep lmdb's historical main-thread handle open until shutdown.
+  let mainRootDb: RootDb<BlocksDb, SerializedStatesDb> | null = rootDb;
+  if (!importerConfig.isInMemory && config.node.stateBackend === RegularStateBackend.Fjall) {
+    await rootDb.close();
+    mainRootDb = null;
+  }
 
   // Start block importer
   let importer: ImporterApi;
@@ -208,8 +230,10 @@ export async function main(
       await closeImporter();
       logger.log`[main] ☠️  Closing the extensions`;
       closeExtensions();
-      logger.log`[main] 🛢️ Closing the database`;
-      await rootDb.close();
+      if (mainRootDb !== null) {
+        logger.log`[main] 🛢️ Closing the database`;
+        await mainRootDb.close();
+      }
       logger.log`[main] 📳 Closing telemetry`;
       await telemetry?.close();
       logger.info`[main] ✅ Done.`;
@@ -238,6 +262,7 @@ const initAuthorship = async (
     chainSpec: ChainSpec;
     blake2b: Blake2b;
     dbPath: string;
+    stateBackend: RegularStateBackend;
   },
   authorshipKeys: { keys: { bandersnatch: BandersnatchSecretSeed; ed25519: Ed25519SecretSeed }[] },
 ) => {
@@ -265,7 +290,7 @@ const initAuthorship = async (
         params.networkingPort,
       )
     : await spawnBlockGeneratorWorker(
-        LmdbWorkerConfig.new({
+        createPersistentWorkerConfig({
           ...baseConfig,
           workerParams,
           ports: new Map([[AUTHORSHIP_NETWORK_PORT, params.networkingPort]]),
@@ -298,6 +323,7 @@ const initNetwork = async (
     chainSpec: ChainSpec;
     blake2b: Blake2b;
     dbPath: string;
+    stateBackend: RegularStateBackend;
   },
   genesisHeaderHash: HeaderHash,
   networkConfig: NetworkConfig | null,
@@ -335,7 +361,7 @@ const initNetwork = async (
         params.authorshipPort,
       )
     : await spawnNetworkWorker(
-        LmdbWorkerConfig.new({
+        createPersistentWorkerConfig({
           ...baseConfig,
           workerParams: networkingConfig,
           ports: new Map([[AUTHORSHIP_NETWORK_PORT, params.authorshipPort]]),
@@ -356,3 +382,23 @@ const initNetwork = async (
 
   return { closeNetwork: finish, networkApi: network, networkWorker: worker };
 };
+
+function createPersistentWorkerConfig<T>({
+  stateBackend,
+  ...params
+}: {
+  stateBackend: RegularStateBackend;
+  nodeName: string;
+  chainSpec: ChainSpec;
+  workerParams: T;
+  dbPath: string;
+  blake2b: Blake2b;
+  ports?: Map<string, ThreadPort>;
+}): PersistentWorkerConfig<T> {
+  switch (stateBackend) {
+    case RegularStateBackend.Fjall:
+      return FjallWorkerConfig.new(params);
+    case RegularStateBackend.Lmdb:
+      return LmdbWorkerConfig.new(params);
+  }
+}

@@ -10,6 +10,8 @@ export interface FinalityResult {
   finalizedHash: HeaderHash;
   /** All newly finalized block hashes, ancestor-first, ending at `finalizedHash`. */
   finalizedChain: HeaderHash[];
+  /** Blocks that became finalized in this round, ancestor-first. */
+  newlyFinalizedHeaders: HeaderHash[];
   /** Block hashes whose states are no longer needed and can be pruned. */
   prunableStateHashes: HeaderHash[];
 }
@@ -107,6 +109,7 @@ export class DummyFinalizer implements Finalizer {
     // Collect prunable hashes and rebuild the unfinalized set.
     // The previously finalized block's state is no longer needed.
     const prunable: HeaderHash[] = [this.lastFinalizedHash];
+    const newlyFinalized: HeaderHash[] = [];
     const newUnfinalized: Chain[] = [];
 
     for (const chain of this.unfinalized) {
@@ -115,6 +118,12 @@ export class DummyFinalizer implements Finalizer {
 
       if (finIdx !== -1) {
         // Chain contains the finalized block — it's still alive.
+        // Collect newly finalized blocks only once (forks share prefixes).
+        if (newlyFinalized.length === 0) {
+          for (let i = 0; i <= finIdx; i++) {
+            newlyFinalized.push(chain[i]);
+          }
+        }
         // Prune states for blocks before the finalized block.
         for (let i = 0; i < finIdx; i++) {
           prunable.push(chain[i]);
@@ -136,6 +145,6 @@ export class DummyFinalizer implements Finalizer {
     this.lastFinalizedHash = finalizedHash;
     this.unfinalized = newUnfinalized;
 
-    return { finalizedHash, finalizedChain, prunableStateHashes: prunable };
+    return { finalizedHash, newlyFinalizedHeaders: newlyFinalized, prunableStateHashes: prunable };
   }
 }

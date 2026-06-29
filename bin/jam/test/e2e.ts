@@ -8,6 +8,7 @@ import { Logger } from "@typeberry/logger";
 const TEST_TIMEOUT = 60_000;
 const SHUTDOWN_GRACE_PERIOD = 5_000;
 const TARGET_BLOCK = 6;
+const LOG_TAIL_LINES = 40;
 
 const logger = Logger.new(import.meta.filename, "jam:e2e");
 
@@ -26,15 +27,15 @@ test("JAM Node dev blocks with In Memory", { timeout: TEST_TIMEOUT }, async () =
   }
 });
 
-test("JAM Node dev blocks with LMDB", { timeout: TEST_TIMEOUT }, async () => {
+test("JAM Node dev blocks with Fjall", { timeout: TEST_TIMEOUT }, async () => {
   const dbPath = "./test-db";
   let jamProcess: ChildProcess | null = null;
   try {
-    // enable LMDB storage
+    // enable persistent storage (fjall by default)
     jamProcess = await start({ devIndex: "all", args: [`--config=.database_base_path="${dbPath}"`] });
 
     // wait for specific output on the console
-    await listenForBestBlocks("dev-lmdb", jamProcess, (blockNum) => blockNum > TARGET_BLOCK);
+    await listenForBestBlocks("dev-fjall", jamProcess, (blockNum) => blockNum > TARGET_BLOCK);
   } finally {
     await terminate(jamProcess);
     // clean up test database
@@ -65,16 +66,15 @@ test("JAM Node network connection", { timeout: TEST_TIMEOUT }, async () => {
   }
 });
 
-test("JAM Node ticket distribution with LMDB and worker threads", { timeout: 120_000 }, async () => {
+test("JAM Node ticket distribution with Fjall and worker threads", { timeout: 120_000 }, async () => {
   const VALIDATOR_COUNT = tinyChainSpec.validatorsCount;
   const TICKETS_PER_VALIDATOR = tinyChainSpec.ticketsPerValidator;
-  const EPOCH_LENGTH = tinyChainSpec.epochLength;
   const TICKET_TEST_TIMEOUT = 110_000; // Shorter than test timeout (120s) to allow cleanup
   const processes: ChildProcess[] = [];
   const testDbParentPath = "./test-db-e2e-ticket-distribution";
 
   try {
-    // Start 6 individual validator nodes, each with its own LMDB database and worker threads.
+    // Start 6 individual validator nodes, each with its own persistent fjall database and worker threads.
     for (let i = 0; i < VALIDATOR_COUNT; i++) {
       const dbPath = `${testDbParentPath}/validator-${i}`;
       const proc = await start({
@@ -93,9 +93,9 @@ test("JAM Node ticket distribution with LMDB and worker threads", { timeout: 120
     // Each validator should have all 18 tickets (their own 3 + 15 from peers via network)
     const EXPECTED_TICKETS = VALIDATOR_COUNT * TICKETS_PER_VALIDATOR;
 
-    // Collect addTicket logs from each validator until epoch completes
+    // Collect addTicket logs from each validator until the ticket pool is complete.
     const validatorLogPromises = processes.map((proc, i) =>
-      collectLogsUntilBlock(`validator-${i}`, proc, /\[addTicket\] Added ticket for epoch/, EPOCH_LENGTH),
+      collectTicketLogs(`validator-${i}`, proc, EXPECTED_TICKETS),
     );
 
     const validatorLogs = await Promise.all(validatorLogPromises);
@@ -109,7 +109,7 @@ test("JAM Node ticket distribution with LMDB and worker threads", { timeout: 120
       logger.info`Validator ${i} has ${ticketCount} tickets`;
     }
 
-    logger.info`All ${VALIDATOR_COUNT} validators have at least ${EXPECTED_TICKETS} tickets after ${EPOCH_LENGTH} blocks`;
+    logger.info`All ${VALIDATOR_COUNT} validators have at least ${EXPECTED_TICKETS} tickets`;
   } finally {
     await Promise.all(processes.map((proc) => terminate(proc)));
     // clean up all test databases at once by removing parent folder
@@ -118,18 +118,15 @@ test("JAM Node ticket distribution with LMDB and worker threads", { timeout: 120
 });
 
 /**
- * Collects log lines matching a pattern until target block is reached.
+ * Collects ticket logs until the validator has observed the expected ticket count.
  * Returns array of matched log lines.
  */
-async function collectLogsUntilBlock(
-  prefix: string,
-  proc: ChildProcess,
-  pattern: RegExp,
-  targetBlock: number,
-): Promise<string[]> {
+async function collectTicketLogs(prefix: string, proc: ChildProcess, expectedTickets: number): Promise<string[]> {
   const blockPattern = /🧊 Best:.+#(\d+)/;
   const matchedLines: string[] = [];
+  const recentLines: string[] = [];
   let currentBlock = 0;
+  let maxTickets = 0;
 
   return new Promise((resolve, reject) => {
     // Buffer for incomplete lines across chunks
@@ -143,20 +140,28 @@ async function collectLogsUntilBlock(
       remainder = lines.pop() ?? "";
 
       for (const line of lines) {
+        recentLines.push(line);
+        if (recentLines.length > LOG_TAIL_LINES) {
+          recentLines.shift();
+        }
+
         // Check for new blocks
         const blockMatch = blockPattern.exec(line);
         if (blockMatch !== null) {
           currentBlock = Number.parseInt(blockMatch[1], 10);
         }
 
-        // Collect lines matching the pattern
-        if (pattern.test(line)) {
+        const ticketCount = parseTicketCount(line);
+        if (ticketCount !== null) {
           matchedLines.push(line);
+          maxTickets = Math.max(maxTickets, ticketCount);
         }
       }
 
-      // Resolve when target block is reached
-      if (currentBlock >= targetBlock) {
+      // Resolve as soon as ticket distribution has completed. Waiting for a
+      // later block height makes this test depend on multi-author chain
+      // convergence, even though the assertion is only about ticket gossip.
+      if (maxTickets >= expectedTickets) {
         // Note: remainder is intentionally NOT flushed - it's an incomplete fragment
         // Only fully-terminated lines (processed in the loop) are counted
         resolve(matchedLines);
@@ -167,13 +172,19 @@ async function collectLogsUntilBlock(
       reject(`(${prefix}) Failed to start process: ${err.message}`);
     });
 
-    proc?.on("exit", (code) => {
-      if (code !== 0 && code !== null) {
-        reject(`(${prefix}) Process exited with code ${code}`);
-      } else if (currentBlock >= targetBlock) {
+    proc?.on("close", (code) => {
+      if (maxTickets >= expectedTickets) {
         resolve(matchedLines);
+        return;
+      }
+      if (code !== 0 && code !== null) {
+        reject(
+          new Error(
+            `(${prefix}) Process exited with code ${code} at block ${currentBlock}\n${formatLogTail(recentLines)}`,
+          ),
+        );
       } else {
-        reject(`(${prefix}) Process exited early at block ${currentBlock}`);
+        reject(new Error(`(${prefix}) Process exited early at block ${currentBlock}\n${formatLogTail(recentLines)}`));
       }
     });
 
@@ -183,25 +194,37 @@ async function collectLogsUntilBlock(
   });
 }
 
+function formatLogTail(lines: string[]): string {
+  if (lines.length === 0) {
+    return "No process output captured.";
+  }
+  return [`Last ${lines.length} process output lines:`, ...lines].join("\n");
+}
+
 /**
  * Extracts ticket count from addTicket log lines.
  * Returns the maximum "total" value found (represents final ticket count).
  */
 function extractTicketCount(logLines: string[]): number {
-  const ticketPattern = /\[addTicket\] Added ticket for epoch (\d+), total: (\d+)/;
   let maxTickets = 0;
 
   for (const line of logLines) {
-    const match = ticketPattern.exec(line);
-    if (match !== null) {
-      const count = Number.parseInt(match[2], 10);
-      if (count > maxTickets) {
-        maxTickets = count;
-      }
+    const count = parseTicketCount(line);
+    if (count !== null && count > maxTickets) {
+      maxTickets = count;
     }
   }
 
   return maxTickets;
+}
+
+function parseTicketCount(line: string): number | null {
+  const ticketPattern = /\[addTicket\] Added ticket for epoch (\d+), total: (\d+)/;
+  const match = ticketPattern.exec(line);
+  if (match === null) {
+    return null;
+  }
+  return Number.parseInt(match[2], 10);
 }
 
 async function listenForBestBlocks(prefix: string, proc: ChildProcess, check: (blockNum: number) => boolean) {
@@ -249,10 +272,10 @@ async function terminate(jamProcess: ChildProcess | null) {
 async function start(
   options: { devIndex: number | "all" | null; args?: string[]; timeout?: number } = { devIndex: "all" },
 ) {
-  const devArgs = options.devIndex === null ? ["--", "--config=dev", "--name=test"] : ["dev", `${options.devIndex}`];
+  const devArgs = options.devIndex === null ? ["--config=dev", "--name=test"] : ["dev", `${options.devIndex}`];
   const args = options.args !== undefined ? [...devArgs, ...options.args] : devArgs;
   const processTimeout = options.timeout ?? TEST_TIMEOUT;
-  const spawned = spawn("npm", ["start", ...args], {
+  const spawned = spawn("npm", ["start", "--", ...args], {
     cwd: process.cwd(),
   });
   const timeout = setTimeout(() => {

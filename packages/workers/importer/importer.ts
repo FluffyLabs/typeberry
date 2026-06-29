@@ -237,7 +237,7 @@ export class Importer {
         .info`🦭 Finalized: ${finality.finalizedHash.toStringTruncated()} (${finality.prunableStateHashes.length} to prune, blocks: ${pruneBlocks})`;
       // Commit the finalized blocks BEFORE pruning: `markUnused` treats states
       // with a pending value delta as dead forks and releases their values.
-      this.states.commitFinalized(finality.finalizedChain);
+      this.states.commitFinalized(finality.newlyFinalizedHeaders);
       for (const hash of finality.prunableStateHashes) {
         this.states.markUnused(hash);
         if (pruneBlocks) {
