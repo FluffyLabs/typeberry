@@ -85,7 +85,7 @@ export class FjallStates implements StatesDb<SerializedState<LeafDb>>, InitState
   }
 
   markUnused(headerHash: HeaderHash): void {
-    void writable(this.states)
+    void writable(this.states, this.root)
       .remove(headerHash.raw)
       .catch((e) => logger.warn`Failed to prune state ${headerHash}: ${e}`);
   }
@@ -107,9 +107,11 @@ export class FjallStates implements StatesDb<SerializedState<LeafDb>>, InitState
     try {
       // Preserve dependency order: values first, then leaves that may reference them.
       if (values.length > 0) {
-        await writable(this.values).insertBatch(values.map(([hash, val]) => ({ key: hash.raw, value: val.raw })));
+        await writable(this.values, this.root).insertBatch(
+          values.map(([hash, val]) => ({ key: hash.raw, value: val.raw })),
+        );
       }
-      await writable(this.states).insert(headerHash.raw, stateLeafs.raw);
+      await writable(this.states, this.root).insert(headerHash.raw, stateLeafs.raw);
       await this.root.persist();
     } catch (e) {
       logger.error`${e}`;
@@ -128,9 +130,9 @@ export class FjallStates implements StatesDb<SerializedState<LeafDb>>, InitState
   }
 }
 
-function writable(partition: FjallPartition): Partition {
-  if (!("insert" in partition)) {
+function writable(partition: FjallPartition, root: FjallRoot): Partition {
+  if (root.readOnly) {
     throw new Error("Cannot write through a read-only fjall partition.");
   }
-  return partition;
+  return partition as Partition;
 }

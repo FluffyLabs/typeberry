@@ -46,6 +46,11 @@ export interface Port {
   close(): void;
 }
 
+type PortState = {
+  events: EventEmitter;
+  pendingMessages: Map<string, Envelope<unknown>[]>;
+};
+
 /**
  * A message-passing port that is directly connected to another end.
  *
@@ -57,22 +62,18 @@ export class DirectPort implements Port {
 
   /** Create a pair of symmetrical inter-connected ports. */
   static pair(): [DirectPort, DirectPort] {
-    const state = {
-      events: new EventEmitter(),
-      pendingMessages: new Map<string, Envelope<unknown>[]>(),
-    };
-    return [new DirectPort(state), new DirectPort(state)];
+    const left = createPortState();
+    const right = createPortState();
+    return [new DirectPort(left, right), new DirectPort(right, left)];
   }
 
   private constructor(
-    private readonly state: {
-      events: EventEmitter;
-      pendingMessages: Map<string, Envelope<unknown>[]>;
-    },
+    private readonly inbound: PortState,
+    private readonly outbound: PortState,
   ) {}
 
   onClose(callback: (e: Error) => void): void {
-    this.state.events.on("error", callback);
+    this.inbound.events.on("error", callback);
   }
 
   on<T>(event: string, _codec: Codec<T>, callback: (msg: Envelope<T>) => void): () => void {
@@ -80,11 +81,11 @@ export class DirectPort implements Port {
       // we simply cast the args, since there is no encoding involved.
       callback(args as Envelope<T>);
     };
-    this.state.events.on(event, trigger);
+    this.inbound.events.on(event, trigger);
     this.flushPending(event, trigger);
 
     return () => {
-      this.state.events.off(event, trigger);
+      this.inbound.events.off(event, trigger);
     };
   }
 
@@ -94,51 +95,63 @@ export class DirectPort implements Port {
       callback(args as Envelope<T>);
     };
 
-    const pending = this.state.pendingMessages.get(event);
+    const pending = this.inbound.pendingMessages.get(event);
     const pendingMessage = pending?.shift();
     if (pending?.length === 0) {
-      this.state.pendingMessages.delete(event);
+      this.inbound.pendingMessages.delete(event);
     }
     if (pendingMessage !== undefined) {
       trigger(pendingMessage);
       return () => {};
     }
 
-    this.state.events.once(event, trigger);
+    this.inbound.events.once(event, trigger);
 
     return () => {
-      this.state.events.off(event, trigger);
+      this.inbound.events.off(event, trigger);
     };
   }
 
   postMessage<T>(event: string, _codec: Codec<T>, msg: Envelope<T>): void {
-    if (this.state.events.listenerCount(event) === 0) {
+    if (this.outbound.events.listenerCount(event) === 0) {
       this.queuePending(event, msg);
       return;
     }
-    this.state.events.emit(event, msg);
+    this.outbound.events.emit(event, msg);
   }
 
   close() {
-    this.state.events.emit("error", new Error("closing channel"));
-    this.state.events.removeAllListeners();
-    this.state.pendingMessages.clear();
+    this.closeState(this.inbound);
+    this.closeState(this.outbound);
   }
 
   private queuePending(event: string, msg: Envelope<unknown>) {
-    const pending = this.state.pendingMessages.get(event) ?? [];
+    const pending = this.outbound.pendingMessages.get(event) ?? [];
     pending.push(msg);
-    this.state.pendingMessages.set(event, pending);
+    this.outbound.pendingMessages.set(event, pending);
   }
 
   private flushPending(event: string, trigger: (args: unknown) => void) {
-    const pending = this.state.pendingMessages.get(event);
+    const pending = this.inbound.pendingMessages.get(event);
     if (pending === undefined) {
       return;
     }
-    this.state.pendingMessages.delete(event);
+    this.inbound.pendingMessages.delete(event);
     for (const msg of pending) {
       trigger(msg);
     }
   }
+
+  private closeState(state: PortState) {
+    state.events.emit("error", new Error("closing channel"));
+    state.events.removeAllListeners();
+    state.pendingMessages.clear();
+  }
+}
+
+function createPortState(): PortState {
+  return {
+    events: new EventEmitter(),
+    pendingMessages: new Map<string, Envelope<unknown>[]>(),
+  };
 }

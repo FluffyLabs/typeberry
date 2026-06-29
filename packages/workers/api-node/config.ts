@@ -181,10 +181,17 @@ export class FjallWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Se
       ephemeral: this.ephemeral,
       cacheSizeBytes: this.cacheSizeBytes,
     });
-    let [blocks, states]: [FjallBlocks | null, FjallStates | null] = await Promise.all([
-      FjallBlocks.open(this.chainSpec, fjall),
-      FjallStates.open(this.chainSpec, this.blake2b, fjall),
-    ]);
+    let blocks: FjallBlocks | null = null;
+    let states: FjallStates | null = null;
+    try {
+      [blocks, states] = await Promise.all([
+        FjallBlocks.open(this.chainSpec, fjall),
+        FjallStates.open(this.chainSpec, this.blake2b, fjall),
+      ]);
+    } catch (e) {
+      await fjall.close();
+      throw e;
+    }
 
     return {
       getBlocksDb: () => {

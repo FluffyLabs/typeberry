@@ -44,9 +44,17 @@ export class FjallValuesSession {
 
   /** Open (or create) the keyspace at `dbPath` and its `values` partition. */
   static async open(dbPath: string, options: FjallRootOptions = {}): Promise<FjallValuesSession> {
+    if (options.readOnly === true) {
+      throw new Error("FjallValuesSession requires a writable keyspace.");
+    }
     const root = await FjallRoot.open(dbPath, options);
-    const values = await root.writablePartition("values");
-    return new FjallValuesSession(root, values);
+    try {
+      const values = await root.writablePartition("values");
+      return new FjallValuesSession(root, values);
+    } catch (e) {
+      await root.close();
+      throw e;
+    }
   }
 
   /** Flush the journal to disk (a no-op for ephemeral keyspaces). */

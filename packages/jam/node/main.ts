@@ -100,7 +100,16 @@ export async function main(
   // Initialize the database with genesis state and block if there isn't one.
   logger.info`🛢️ Opening database at ${dbPath}`;
   const rootDb = await importerConfig.config.openDatabase({ readonly: false });
-  await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
+  try {
+    await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry);
+  } catch (e) {
+    try {
+      await rootDb.close();
+    } catch (closeError) {
+      logger.warn`Failed to close database after initialization error: ${closeError}`;
+    }
+    throw e;
+  }
   // fjall-js shares the engine explicitly and requires every handle to close.
   // Keep lmdb's historical main-thread handle open until shutdown.
   let mainRootDb: RootDb<BlocksDb, SerializedStatesDb> | null = rootDb;

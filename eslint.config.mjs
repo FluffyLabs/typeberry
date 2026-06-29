@@ -9,7 +9,7 @@ export default tseslint.config(
   tseslint.configs.base,
   { plugins: baseImport.plugins },
   {
-    ignores: [".context/**", "dist/**", "packages/misc/builder/pkg.ts", "./web/docs/**"],
+    ignores: [".context/**", "dist/**", "docs/**", "packages/misc/builder/pkg.ts", "./web/docs/**"],
   },
   {
     files: ["**/*.ts"],

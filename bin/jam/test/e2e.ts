@@ -172,7 +172,7 @@ async function collectTicketLogs(prefix: string, proc: ChildProcess, expectedTic
       reject(`(${prefix}) Failed to start process: ${err.message}`);
     });
 
-    proc?.on("exit", (code) => {
+    proc?.on("close", (code) => {
       if (maxTickets >= expectedTickets) {
         resolve(matchedLines);
         return;

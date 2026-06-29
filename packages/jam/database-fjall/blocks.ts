@@ -38,7 +38,7 @@ export class FjallBlocks implements BlocksDb {
   ) {}
 
   async setPostStateRoot(hash: HeaderHash, postStateRoot: StateRootHash): Promise<void> {
-    await writable(this.postStateRoots).insert(hash.raw, postStateRoot.raw);
+    await writable(this.postStateRoots, this.root).insert(hash.raw, postStateRoot.raw);
   }
 
   getPostStateRoot(hash: HeaderHash): StateRootHash | null {
@@ -51,13 +51,13 @@ export class FjallBlocks implements BlocksDb {
 
   async insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void> {
     await Promise.all([
-      writable(this.headers).insert(block.hash.raw, block.data.header.view().encoded().raw),
-      writable(this.extrinsics).insert(block.hash.raw, block.data.extrinsic.view().encoded().raw),
+      writable(this.headers, this.root).insert(block.hash.raw, block.data.header.view().encoded().raw),
+      writable(this.extrinsics, this.root).insert(block.hash.raw, block.data.extrinsic.view().encoded().raw),
     ]);
   }
 
   async setBestHeaderHash(hash: HeaderHash): Promise<void> {
-    await writable(this.headers).insert(BEST_BLOCK, hash.raw);
+    await writable(this.headers, this.root).insert(BEST_BLOCK, hash.raw);
     await this.root.persist();
   }
 
@@ -87,18 +87,18 @@ export class FjallBlocks implements BlocksDb {
 
   markUnused(hash: HeaderHash): void {
     void Promise.all([
-      writable(this.headers).remove(hash.raw),
-      writable(this.extrinsics).remove(hash.raw),
-      writable(this.postStateRoots).remove(hash.raw),
+      writable(this.headers, this.root).remove(hash.raw),
+      writable(this.extrinsics, this.root).remove(hash.raw),
+      writable(this.postStateRoots, this.root).remove(hash.raw),
     ]).catch((e) => logger.warn`Failed to prune block ${hash}: ${e}`);
   }
 
   async close() {}
 }
 
-function writable(partition: FjallPartition): Partition {
-  if (!("insert" in partition)) {
+function writable(partition: FjallPartition, root: FjallRoot): Partition {
+  if (root.readOnly) {
     throw new Error("Cannot write through a read-only fjall partition.");
   }
-  return partition;
+  return partition as Partition;
 }

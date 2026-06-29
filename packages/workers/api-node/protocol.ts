@@ -155,15 +155,19 @@ export async function initWorker<To, From, Params>(
 
         logger.trace`--> (${protocol.name}) received configuration.`;
         isResolved = true;
-        const config = await persistentConfigFromTransferable(paramsDecoder, msg.config);
-        const rxPort = ThreadPort.new(config.chainSpec, msg.parentPort);
-        const comms = Channel.rx(protocol, rxPort);
+        try {
+          const config = await persistentConfigFromTransferable(paramsDecoder, msg.config);
+          const rxPort = ThreadPort.new(config.chainSpec, msg.parentPort);
+          const comms = Channel.rx(protocol, rxPort);
 
-        resolve({
-          config,
-          comms,
-          threadComms,
-        });
+          resolve({
+            config,
+            comms,
+            threadComms,
+          });
+        } catch (e) {
+          reject(e);
+        }
         return;
       }
 

@@ -60,10 +60,14 @@ describe("FjallWorkerConfig transfer list", () => {
       ports: new Map([["authorship-network", portA]]),
     });
 
-    const transferable = config.intoTransferable(codec.varU32);
-    assert.strictEqual(transferable.databaseBackend, "fjall");
-    assert.strictEqual(configTransferList(transferable).length, 1);
-    portB.close();
+    try {
+      const transferable = config.intoTransferable(codec.varU32);
+      assert.strictEqual(transferable.databaseBackend, "fjall");
+      assert.strictEqual(configTransferList(transferable).length, 1);
+    } finally {
+      portA.close();
+      portB.close();
+    }
   });
 
   it("opens writable and read-only handles over one shared fjall path", async () => {
@@ -76,16 +80,19 @@ describe("FjallWorkerConfig transfer list", () => {
       dbPath,
       blake2b,
     });
-    const writer = await config.openDatabase({ readonly: false });
-    const reader = await config.openDatabase({ readonly: true });
+    let writer: Awaited<ReturnType<typeof config.openDatabase>> | null = null;
+    let reader: Awaited<ReturnType<typeof config.openDatabase>> | null = null;
     try {
+      writer = await config.openDatabase({ readonly: false });
+      reader = await config.openDatabase({ readonly: true });
+
       const best = Bytes.fill(HASH_SIZE, 9).asOpaque<HeaderHash>();
       await writer.getBlocksDb().setBestHeaderHash(best);
 
       assert.strictEqual(reader.getBlocksDb().getBestHeaderHash().toString(), best.toString());
     } finally {
-      await reader.close();
-      await writer.close();
+      await reader?.close();
+      await writer?.close();
       fs.rmSync(dbPath, { recursive: true, force: true });
     }
   });

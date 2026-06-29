@@ -69,6 +69,11 @@ export class FjallRoot {
     return new FjallRoot(keyspace, dbPath, options);
   }
 
+  /** Whether this root was opened through fjall's read-only surface. */
+  get readOnly(): boolean {
+    return this.options.readOnly === true;
+  }
+
   /** Open (or create) a partition under this keyspace. */
   async partition(name: string): Promise<FjallPartition> {
     return this.keyspace.partition(name);
@@ -76,7 +81,7 @@ export class FjallRoot {
 
   /** Open a writable partition, failing early when this root is read-only. */
   async writablePartition(name: string): Promise<Partition> {
-    if (this.options.readOnly === true) {
+    if (this.readOnly) {
       throw new Error(`Cannot open writable fjall partition '${name}' from a read-only keyspace.`);
     }
     return (await this.keyspace.partition(name)) as Partition;
@@ -92,7 +97,7 @@ export class FjallRoot {
     if (this.options.ephemeral === true) {
       return;
     }
-    if (this.options.readOnly === true) {
+    if (this.readOnly) {
       throw new Error("Cannot persist a read-only fjall keyspace.");
     }
     await (this.keyspace as Keyspace).persist();
