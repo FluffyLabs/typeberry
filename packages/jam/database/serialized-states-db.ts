@@ -16,6 +16,7 @@ import { OK, Result } from "@typeberry/utils";
 import { LeafDb } from "./leaf-db.js";
 import { updateLeafs } from "./leaf-db-update.js";
 import type { InitStatesDb, StatesDb, StateUpdateError } from "./states.js";
+import { InMemoryValueRefsStore, ValueRefs, type ValueRefsUpdate } from "./value-refs.js";
 
 /** Abstract serialized-states db. */
 export type SerializedStatesDb = StatesDb<SerializedState<LeafDb>> & InitStatesDb<StateEntries>;
@@ -24,6 +25,8 @@ export type SerializedStatesDb = StatesDb<SerializedState<LeafDb>> & InitStatesD
 export class InMemorySerializedStates implements StatesDb<SerializedState<LeafDb>>, InitStatesDb<StateEntries> {
   private readonly db: HashDictionary<HeaderHash, SortedSet<LeafNode>> = HashDictionary.new();
   private readonly valuesDb: HashDictionary<ValueHash, BytesBlob> = HashDictionary.new();
+  private readonly refsStore = new InMemoryValueRefsStore();
+  private readonly refs = new ValueRefs(this.refsStore);
 
   static async new({ chainSpec }: { chainSpec: ChainSpec }) {
     const blake2b = await Blake2b.createHasher();
@@ -53,6 +56,7 @@ export class InMemorySerializedStates implements StatesDb<SerializedState<LeafDb
     }
 
     this.db.set(headerHash, leafs);
+    this.applyRefs(this.refs.onInitial(values.map((v) => v[0])));
     return Result.ok(OK);
   }
 
@@ -69,19 +73,21 @@ export class InMemorySerializedStates implements StatesDb<SerializedState<LeafDb
     const updatedValues = serializeStateUpdate(this.spec, blake2b, update);
     // make sure to clone the leafs before writing, since the collection is re-used.
     const newLeafs = SortedSet.fromSortedArray(leafComparator, state.backend.leafs.array);
-    const { values, leafs } = updateLeafs(newLeafs, blake2b, updatedValues);
+    const { values, removed, leafs } = updateLeafs(newLeafs, blake2b, updatedValues);
     // make sure to reset the cache and re-create leafsdb lookup
     state.updateBackend(LeafDb.fromLeaves(leafs, state.backend.db));
 
     // insert values to the db
     // valuesdb can be shared between all states because it's just
-    // <valuehash> -> <value> mapping and existence is managed by trie leafs.
+    // <valuehash> -> <value> mapping and existence is managed by value
+    // refcounting, driven by the per-block deltas recorded below.
     for (const val of values) {
       this.valuesDb.set(val[0], val[1]);
     }
 
     // store new set of leaves
     this.db.set(header, leafs);
+    this.applyRefs(this.refs.onImport(header, { inserted: values.map((v) => v[0]), removed }));
 
     return Result.ok(OK);
   }
@@ -104,13 +110,20 @@ export class InMemorySerializedStates implements StatesDb<SerializedState<LeafDb
     return SerializedState.new(this.spec, this.blake2b, leafDb);
   }
 
-  commitFinalized(_headers: HeaderHash[]): void {
-    // No value pruning here: this in-memory db keeps every value in a plain map
-    // and is not the long-running fuzz target the refcounting is meant for.
+  commitFinalized(headers: HeaderHash[]): void {
+    this.applyRefs(this.refs.commitFinalized(headers));
   }
 
   markUnused(header: HeaderHash): void {
+    this.applyRefs(this.refs.releaseUnfinalized(header));
     this.db.delete(header);
+  }
+
+  private applyRefs(update: ValueRefsUpdate): void {
+    this.refsStore.apply(update);
+    for (const v of update.removeValues) {
+      this.valuesDb.delete(v);
+    }
   }
 
   async close() {}

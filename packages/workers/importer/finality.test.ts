@@ -104,6 +104,11 @@ describe("DummyFinalizer", () => {
       const result = finalizer.onBlockImported(chain[6]);
       assertExists(result);
       assert.strictEqual(result.finalizedHash.isEqualTo(chain[3]), true);
+      // The whole prefix becomes finalized, ancestor-first.
+      assert.deepStrictEqual(
+        result.finalizedChain.map((h) => h.toString()),
+        chain.slice(0, 4).map((h) => h.toString()),
+      );
     });
 
     it("should prune prev finalized and depth predecessors on first finality", async () => {
@@ -147,6 +152,10 @@ describe("DummyFinalizer", () => {
       const r1 = finalizer.onBlockImported(chain[4]);
       assertExists(r1);
       assert.strictEqual(r1.finalizedHash.isEqualTo(chain[2]), true);
+      assert.deepStrictEqual(
+        r1.finalizedChain.map((h) => h.toString()),
+        chain.slice(0, 3).map((h) => h.toString()),
+      );
       assert.strictEqual(r1.prunableStateHashes.length, 3);
       assert.ok(r1.prunableStateHashes[0].isEqualTo(genesis));
       assert.ok(r1.prunableStateHashes[1].isEqualTo(chain[0]));
@@ -160,6 +169,11 @@ describe("DummyFinalizer", () => {
       const r2 = finalizer.onBlockImported(chain[7]);
       assertExists(r2);
       assert.strictEqual(r2.finalizedHash.isEqualTo(chain[5]), true);
+      // Only the blocks finalized in this round, not the ones from r1.
+      assert.deepStrictEqual(
+        r2.finalizedChain.map((h) => h.toString()),
+        chain.slice(3, 6).map((h) => h.toString()),
+      );
       assert.strictEqual(r2.prunableStateHashes.length, 3);
       assert.ok(r2.prunableStateHashes[0].isEqualTo(chain[2]));
       assert.ok(r2.prunableStateHashes[1].isEqualTo(chain[3]));
@@ -263,6 +277,10 @@ describe("DummyFinalizer", () => {
       const result = finalizer.onBlockImported(a5);
       assertExists(result);
       assert.strictEqual(result.finalizedHash.isEqualTo(a3), true);
+      assert.deepStrictEqual(
+        result.finalizedChain.map((h) => h.toString()),
+        [a1, a2, a3].map((h) => h.toString()),
+      );
 
       // Fork B [B1, B2] is dead (doesn't contain A3). B1 and B2 should be pruned.
       // Also: genesis (prev finalized) and A1, A2 pruned (before A3 in chain A).
