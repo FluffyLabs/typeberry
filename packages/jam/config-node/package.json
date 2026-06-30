@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/config-node",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Config for typeberry node.",
   "main": "index.ts",
   "type": "module",

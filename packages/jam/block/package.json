@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/block",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "JAM block definition.",
   "main": "index.ts",
   "dependencies": {

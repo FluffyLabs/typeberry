@@ -1,6 +1,6 @@
 {
   "name": "@typeberry/bytes",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Byte-related utilities and types.",
   "main": "index.ts",
   "dependencies": {
