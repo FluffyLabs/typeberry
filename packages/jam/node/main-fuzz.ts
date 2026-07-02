@@ -29,7 +29,7 @@ const FUZZ_DB_SUBDIR = "typeberry-fuzz-db";
 
 const FUZZ_DB_FJALL: StateBackend = "fjall-hybrid";
 const FUZZ_DB_LMDB: StateBackend = "lmdb-hybrid";
-const FUZZ_DB_OPTIONS: string[] = [FUZZ_DB_FJALL, FUZZ_DB_LMDB];
+const FUZZ_DB_OPTIONS: string[] = [FUZZ_DB_FJALL, FUZZ_DB_LMDB, "fjall", "lmdb"];
 
 /** Subdirectory (under the fuzzer's db dir) holding the reused fjall values keyspace. */
 const FUZZ_FJALL_VALUES_SUBDIR = "values-session";
