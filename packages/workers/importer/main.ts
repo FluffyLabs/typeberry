@@ -18,6 +18,8 @@ export type Config = WorkerConfig<ImporterConfig, BlocksDb, StatesDb<SerializedS
 
 export type CreateImporterOptions = {
   initGenesisFromAncestry?: boolean;
+  /** Provide an already-open database to reuse instead of opening a new one. */
+  db?: Awaited<ReturnType<Config["openDatabase"]>>;
 };
 
 export async function createImporter(
@@ -28,7 +30,7 @@ export async function createImporter(
   db: Awaited<ReturnType<Config["openDatabase"]>>;
 }> {
   const chainSpec = config.chainSpec;
-  const db = await config.openDatabase({ readonly: false });
+  const db = options.db ?? (await config.openDatabase({ readonly: false }));
   const pvm = config.workerParams.pvm;
   const blocks = db.getBlocksDb();
   const states = db.getStatesDb();
