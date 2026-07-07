@@ -1,5 +1,5 @@
 import { initWasm } from "@typeberry/crypto";
-import type { BlocksDb, LeafDb, StatesDb } from "@typeberry/database";
+import type { BlocksDb, LeafDb, RootDb, StatesDb } from "@typeberry/database";
 import { Blake2b, keccak, ZERO_HASH } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { SerializedState } from "@typeberry/state-merkleization";
@@ -20,15 +20,21 @@ export type CreateImporterOptions = {
   initGenesisFromAncestry?: boolean;
 };
 
+export type CreateImporterConfig = {
+  initGenesisFromAncestry?: boolean;
+  /** Reuse an already-open database instead of opening a new one. */
+  db?: RootDb<BlocksDb, StatesDb<SerializedState<LeafDb>>>;
+};
+
 export async function createImporter(
   config: Config,
-  options: CreateImporterOptions = {},
+  options: CreateImporterConfig = {},
 ): Promise<{
   importer: Importer;
-  db: Awaited<ReturnType<Config["openDatabase"]>>;
+  db: RootDb<BlocksDb, StatesDb<SerializedState<LeafDb>>>;
 }> {
   const chainSpec = config.chainSpec;
-  const db = await config.openDatabase({ readonly: false });
+  const db = options.db ?? (await config.openDatabase({ readonly: false }));
   const pvm = config.workerParams.pvm;
   const blocks = db.getBlocksDb();
   const states = db.getStatesDb();

@@ -130,9 +130,9 @@ export async function mainImporter(
   await initializeDatabase(chainSpec, blake2b, genesisHeaderHash, rootDb, config.node.chainSpec, config.ancestry, {
     initGenesisFromAncestry: options.initGenesisFromAncestry,
   });
-  await rootDb.close();
 
   const { db, importer } = await createImporter(workerConfig, {
+    db: rootDb,
     initGenesisFromAncestry: options.initGenesisFromAncestry,
   });
   await importer.prepareForNextEpoch();
