@@ -186,29 +186,30 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
             if (hybridStateBackend === FUZZ_DB_FJALL) {
               // fjall-hybrid: manage a reused values session.
               // Rebuild it periodically to avoid LSM read amplification.
+              const fjallSessionPath = `${withRelPath(fuzzDbBase)}/${FUZZ_FJALL_VALUES_SUBDIR}`;
               if (resetCount === 1) {
                 // First reset: start from a clean slate.
                 await wipeFuzzDb(fuzzDbBase);
-                fjallSession = await FjallValuesSession.open(`${withRelPath(fuzzDbBase)}/${FUZZ_FJALL_VALUES_SUBDIR}`, {
+                fjallSession = await FjallValuesSession.open(fjallSessionPath, {
                   ephemeral: true,
                   cacheSizeBytes: FUZZ_FJALL_CACHE_BYTES,
                 });
-                logger.info`🗄️ Opened reusable fjall values session at ${withRelPath(fuzzDbBase)}/${FUZZ_FJALL_VALUES_SUBDIR}`;
+                logger.info`🗄️ Opened reusable fjall values session at ${fjallSessionPath}`;
               }
               if (resetCount % REBUILD_FJALL_SESSION_EVERY === 0 && fjallSession !== null) {
                 // Periodic rebuild: close, wipe session dir, and reopen.
                 const session = fjallSession;
                 fjallSession = null;
                 await session.close().catch(() => {});
-                await wipeFuzzDb(`${fuzzDbBase}/${FUZZ_FJALL_VALUES_SUBDIR}`).catch(() => {});
+                await wipeFuzzDb(fjallSessionPath).catch(() => {});
               }
               if (fjallSession === null) {
                 // No active session: create a fresh one.
-                fjallSession = await FjallValuesSession.open(`${withRelPath(fuzzDbBase)}/${FUZZ_FJALL_VALUES_SUBDIR}`, {
+                fjallSession = await FjallValuesSession.open(fjallSessionPath, {
                   ephemeral: true,
                   cacheSizeBytes: FUZZ_FJALL_CACHE_BYTES,
                 });
-                logger.info`🗄️ Opened reusable fjall values session at ${withRelPath(fuzzDbBase)}/${FUZZ_FJALL_VALUES_SUBDIR}`;
+                logger.info`🗄️ Opened reusable fjall values session at ${fjallSessionPath}`;
               }
             } else {
               // All other backends ("fjall", "lmdb", "lmdb-hybrid"): wipe and reopen on every reset.
