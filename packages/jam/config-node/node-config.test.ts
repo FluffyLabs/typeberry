@@ -6,6 +6,7 @@ import polkajamConfig from "@typeberry/configs/typeberry-polkajam-dev.json" with
 import { parseFromJson } from "@typeberry/json-parser";
 import { workspacePathFix } from "@typeberry/utils";
 import { KnownChainSpec, loadConfig, NodeConfiguration, RegularStateBackend } from "./node-config.js";
+import { RpcOptions } from "./rpc.js";
 
 const withRelPath = workspacePathFix(`${import.meta.dirname}/../..`);
 
@@ -55,6 +56,15 @@ describe("Importing Node Configuration", () => {
     assert.deepStrictEqual(config.stateBackend, RegularStateBackend.Fjall);
   });
 
+  it("defaults to no rpc config", () => {
+    assert.deepStrictEqual(config.rpc, undefined);
+  });
+
+  it("should read rpc config when present", () => {
+    const withRpc = parseFromJson({ ...NODE_CONFIG_TEST, rpc: { port: 9999 } }, NodeConfiguration.fromJson);
+    assert.deepStrictEqual(withRpc.rpc, RpcOptions.new({ port: 9999 }));
+  });
+
   it("should read the state backend", () => {
     const lmdbConfig = parseFromJson({ ...NODE_CONFIG_TEST, state_backend: "lmdb" }, NodeConfiguration.fromJson);
 
@@ -92,6 +102,7 @@ describe("loadConfig", () => {
   it("should load default config", () => {
     const config = loadConfig(["default"], withRelPath);
     assert.deepStrictEqual(config, parseFromJson(configs.default, NodeConfiguration.fromJson));
+    assert.deepStrictEqual(config.rpc, RpcOptions.new({ port: 19800 }));
   });
 
   it("should load dev config", () => {

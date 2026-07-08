@@ -7,6 +7,7 @@ import { Logger } from "@typeberry/logger";
 import { isBrowser } from "@typeberry/utils";
 import { AuthorshipOptions } from "./authorship.js";
 import { JipChainSpec } from "./jip-chain-spec.js";
+import { RpcOptions } from "./rpc.js";
 
 const logger = Logger.new(import.meta.filename, "config");
 
@@ -68,6 +69,7 @@ type NodeConfigurationJson = {
   database_base_path?: string;
   state_backend?: RegularStateBackend;
   authorship: AuthorshipOptions;
+  rpc?: RpcOptions;
 };
 
 export class NodeConfiguration {
@@ -80,6 +82,7 @@ export class NodeConfiguration {
       database_base_path: json.optional("string"),
       state_backend: json.optional(regularStateBackendFromJson),
       authorship: AuthorshipOptions.fromJson,
+      rpc: json.optional(RpcOptions.fromJson),
     },
     NodeConfiguration.new,
   );
@@ -92,6 +95,7 @@ export class NodeConfiguration {
     database_base_path,
     state_backend,
     authorship,
+    rpc,
   }: NodeConfigurationJson) {
     if (version !== 1) {
       throw new Error("Only version=1 config is supported.");
@@ -104,6 +108,7 @@ export class NodeConfiguration {
       database_base_path ?? undefined,
       state_backend ?? RegularStateBackend.Fjall,
       authorship,
+      rpc ?? undefined,
     );
   }
 
@@ -117,6 +122,8 @@ export class NodeConfiguration {
     /** Persistent database backend used when `databaseBasePath` is set. */
     public readonly stateBackend: RegularStateBackend,
     public readonly authorship: AuthorshipOptions,
+    /** Optional RPC server configuration. When present, an in-process RPC server is started. */
+    public readonly rpc: RpcOptions | undefined,
   ) {}
 }
 

@@ -30,5 +30,8 @@
     },
     "id": "dev"
   },
-  "database_base_path": "./database"
+  "database_base_path": "./database",
+  "rpc": {
+    "port": 19800
+  }
 }

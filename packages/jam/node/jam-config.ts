@@ -28,6 +28,7 @@ export class JamConfig {
     pvmBackend,
     devConfig = null,
     networkConfig = null,
+    rpcPort = null,
     ancestry = [],
     devValidatorIndex = null,
   }: {
@@ -38,6 +39,8 @@ export class JamConfig {
     pvmBackend: PvmBackend;
     devConfig?: DevConfig | null;
     networkConfig?: NetworkConfig | null;
+    /** RPC WebSocket port. When set, an in-process RPC server is started. */
+    rpcPort?: number | null;
     ancestry?: [HeaderHash, TimeSlot][];
     /** Validator index for dev mode authorship. Use "all" to author as all validators. */
     devValidatorIndex?: U16 | "all" | null;
@@ -50,6 +53,7 @@ export class JamConfig {
       pvmBackend,
       devConfig,
       networkConfig,
+      rpcPort,
       ancestry,
       devValidatorIndex,
     );
@@ -70,6 +74,8 @@ export class JamConfig {
     public readonly dev: DevConfig | null,
     /** Networking options. */
     public readonly network: NetworkConfig | null,
+    /** RPC WebSocket port. When set, an in-process RPC server is started. */
+    public readonly rpcPort: number | null,
     /** Optional pre-genesis ancestry information. */
     public readonly ancestry: [HeaderHash, TimeSlot][],
     /** Validator index for dev mode authorship. Use "all" to author as all validators. */
