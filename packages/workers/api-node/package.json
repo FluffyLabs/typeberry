@@ -12,7 +12,6 @@
     "@typeberry/config": "*",
     "@typeberry/database": "*",
     "@typeberry/database-fjall": "*",
-    "@typeberry/database-lmdb": "*",
     "@typeberry/hash": "*",
     "@typeberry/listener": "*",
     "@typeberry/logger": "*",

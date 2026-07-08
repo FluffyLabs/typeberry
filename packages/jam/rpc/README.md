@@ -6,7 +6,7 @@ Implements the [JIP-2](https://github.com/polkadot-fellows/JIPs/blob/main/JIP-2.
 
 ## Overview
 
-The RPC server provides a JSON-RPC 2.0 interface over WebSocket for querying blockchain data. It runs in-process with the JAM node, sharing the database handle (fjall or lmdb) and is configured via the node's config file.
+The RPC server provides a JSON-RPC 2.0 interface over WebSocket for querying blockchain data. It runs in-process with the JAM node, sharing the database handle (fjall) and is configured via the node's config file.
 
 ## Configuration
 

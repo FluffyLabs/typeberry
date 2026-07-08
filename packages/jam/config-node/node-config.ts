@@ -34,8 +34,6 @@ export enum KnownChainSpec {
 
 /** Persistent regular-node database backend. */
 export enum RegularStateBackend {
-  /** @deprecated lmdb remains available as an explicit fallback, but fjall is the default backend. */
-  Lmdb = "lmdb",
   Fjall = "fjall",
 }
 
@@ -52,8 +50,6 @@ export const knownChainSpecFromJson = json.fromString((input, ctx): KnownChainSp
 
 export const regularStateBackendFromJson = json.fromString((input, ctx): RegularStateBackend => {
   switch (input) {
-    case RegularStateBackend.Lmdb:
-      return RegularStateBackend.Lmdb;
     case RegularStateBackend.Fjall:
       return RegularStateBackend.Fjall;
     default:

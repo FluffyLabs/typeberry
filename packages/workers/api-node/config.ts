@@ -15,12 +15,6 @@ import {
   FjallStates,
   FjallValuesSession,
 } from "@typeberry/database-fjall";
-import {
-  LmdbBlocks,
-  HybridSerializedStates as LmdbHybridSerializedStates,
-  LmdbRoot,
-  LmdbStates,
-} from "@typeberry/database-lmdb";
 import { Blake2b } from "@typeberry/hash";
 import type { WorkerConfig } from "@typeberry/workers-api";
 import { ThreadPort, type TransferablePort } from "./port.js";
@@ -30,94 +24,10 @@ import { ThreadPort, type TransferablePort } from "./port.js";
 export { FjallValuesSession };
 
 /** Persistent regular-node backend. */
-export type PersistentBackend = "lmdb" | "fjall";
+export type PersistentBackend = "fjall";
 
 /** Transferable worker config for persistent regular-node workers. */
-export type PersistentWorkerConfig<T> = LmdbWorkerConfig<T> | FjallWorkerConfig<T>;
-
-/**
- * Worker config for node.js, backed by the LMDB database.
- *
- * @deprecated lmdb is retained as an explicit fallback. Use `FjallWorkerConfig` for regular nodes.
- */
-export class LmdbWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, SerializedStatesDb> {
-  static new<T>({
-    nodeName,
-    chainSpec,
-    workerParams,
-    dbPath,
-    blake2b,
-    ports = new Map(),
-    ephemeral = false,
-  }: {
-    nodeName: string;
-    chainSpec: ChainSpec;
-    workerParams: T;
-    dbPath: string;
-    blake2b: Blake2b;
-    ports?: Map<string, ThreadPort>;
-    ephemeral?: boolean;
-  }) {
-    return new LmdbWorkerConfig(nodeName, chainSpec, workerParams, dbPath, blake2b, ports, ephemeral);
-  }
-
-  /** Restore node config from a transferable config object. */
-  static async fromTransferable<T>(decodeParams: Decode<T>, config: TransferableConfig) {
-    if (config.databaseBackend !== "lmdb") {
-      throw new Error(`Expected lmdb worker config, got ${config.databaseBackend}.`);
-    }
-    const { blake2b, chainSpec, workerParams, ports } = await decodeTransferableConfig(decodeParams, config);
-
-    return LmdbWorkerConfig.new({
-      nodeName: config.nodeName,
-      chainSpec,
-      workerParams,
-      dbPath: config.dbPath,
-      blake2b,
-      ports,
-    });
-  }
-
-  private constructor(
-    public readonly nodeName: string,
-    public readonly chainSpec: ChainSpec,
-    public readonly workerParams: T,
-    public readonly dbPath: string,
-    public readonly blake2b: Blake2b,
-    public readonly ports: Map<string, ThreadPort>,
-    // When set, the underlying database skips fsync. Only safe for throwaway
-    // databases (the fuzz target wipes on reset). Not transferred to worker
-    // threads, so the durable main node path always gets the default.
-    public readonly ephemeral: boolean = false,
-  ) {}
-
-  async openDatabase(
-    options: { readonly: boolean } = { readonly: true },
-  ): Promise<RootDb<BlocksDb, SerializedStatesDb>> {
-    const lmdb = LmdbRoot.new(this.dbPath, {
-      readOnly: options.readonly,
-      ephemeral: this.ephemeral,
-    });
-
-    return {
-      getBlocksDb: () => LmdbBlocks.new(this.chainSpec, lmdb),
-      getStatesDb: () => LmdbStates.new(this.chainSpec, this.blake2b, lmdb),
-      close: async () => await lmdb.close(),
-    };
-  }
-
-  /** Convert this config into a thread-transferable object. */
-  intoTransferable(paramsCodec: Encode<T>): TransferableConfig {
-    return {
-      databaseBackend: "lmdb",
-      nodeName: this.nodeName,
-      chainSpec: this.chainSpec,
-      workerParams: Encoder.encodeObject(paramsCodec, this.workerParams, this.chainSpec).raw,
-      dbPath: this.dbPath,
-      workerPorts: Array.from(this.ports.entries()).map(([name, port]) => [name, port.intoTransferable()]),
-    };
-  }
-}
+export type PersistentWorkerConfig<T> = FjallWorkerConfig<T>;
 
 /** Worker config for node.js, backed by a shared fjall engine. */
 export class FjallWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, SerializedStatesDb> {
@@ -258,12 +168,7 @@ export async function persistentConfigFromTransferable<T>(
   decodeParams: Decode<T>,
   config: TransferableConfig,
 ): Promise<PersistentWorkerConfig<T>> {
-  switch (config.databaseBackend) {
-    case "lmdb":
-      return LmdbWorkerConfig.fromTransferable(decodeParams, config);
-    case "fjall":
-      return FjallWorkerConfig.fromTransferable(decodeParams, config);
-  }
+  return FjallWorkerConfig.fromTransferable(decodeParams, config);
 }
 
 /**
@@ -323,12 +228,11 @@ export class InMemWorkerConfig<T = undefined> implements WorkerConfig<T, BlocksD
 }
 
 /** Persistent values store backing the hybrid config. */
-export type HybridBackend = "lmdb" | "fjall";
+export type HybridBackend = "fjall";
 
 /**
  * Hybrid worker config for the fuzz target: in-memory blocks and leaf sets,
- * but large values persisted to disk. The `backend` picks where the values go
- * (lmdb or fjall).
+ * but large values persisted to disk via fjall.
  *
  * fjall opens its keyspace asynchronously, that is why `new` here is async.
  *
@@ -350,7 +254,6 @@ export class HybridWorkerConfig<T = undefined> implements WorkerConfig<T, Blocks
     dbPath,
     ephemeral = false,
     compression = true,
-    backend = "lmdb",
     sharedFjallSession,
   }: {
     nodeName: string;
@@ -360,23 +263,19 @@ export class HybridWorkerConfig<T = undefined> implements WorkerConfig<T, Blocks
     dbPath: string;
     ephemeral?: boolean;
     compression?: boolean;
-    backend?: HybridBackend;
     /**
      * Reuse an already-open fjall values session instead of opening a fresh
      * keyspace. The fuzz target opens one per run and passes it on every reset,
-     * so only the in-memory blocks/leaf sets are rebuilt per vector. Ignored
-     * unless `backend === "fjall"`.
+     * so only the in-memory blocks/leaf sets are rebuilt per vector.
      */
     sharedFjallSession?: FjallValuesSession;
   }): Promise<HybridWorkerConfig<T>> {
     // The values store is created once here and shared across reopen. When a
     // session is given (fuzz reset reuse) we wrap it instead of opening a new one.
     const states =
-      backend === "fjall"
-        ? sharedFjallSession !== undefined
-          ? FjallHybridSerializedStates.fromSession(chainSpec, blake2b, sharedFjallSession)
-          : await FjallHybridSerializedStates.new({ spec: chainSpec, blake2b, dbPath, ephemeral })
-        : LmdbHybridSerializedStates.new({ spec: chainSpec, blake2b, dbPath, ephemeral, compression, readOnly: false });
+      sharedFjallSession !== undefined
+        ? FjallHybridSerializedStates.fromSession(chainSpec, blake2b, sharedFjallSession)
+        : await FjallHybridSerializedStates.new({ spec: chainSpec, blake2b, dbPath, ephemeral });
     return new HybridWorkerConfig(nodeName, chainSpec, workerParams, blake2b, dbPath, ephemeral, compression, states);
   }
 

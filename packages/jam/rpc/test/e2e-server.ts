@@ -1,10 +1,10 @@
 import { PvmBackend } from "@typeberry/config";
-import { loadConfig, NODE_DEFAULTS, RegularStateBackend } from "@typeberry/config-node";
+import { loadConfig, NODE_DEFAULTS } from "@typeberry/config-node";
 import { Blake2b } from "@typeberry/hash";
 import { getChainSpec, getDatabasePath } from "@typeberry/node";
 import { validation } from "@typeberry/rpc-validation";
 import { workspacePathFix } from "@typeberry/utils";
-import { FjallWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
+import { FjallWorkerConfig } from "@typeberry/workers-api-node";
 import { handlers } from "../src/handlers.js";
 import { RpcServer } from "../src/server.js";
 
@@ -35,10 +35,7 @@ export async function startTestRpcServer(configPath: string, port = DEFAULT_PORT
     dbPath,
     blake2b,
   };
-  const rootDb =
-    nodeConfig.stateBackend === RegularStateBackend.Fjall
-      ? await FjallWorkerConfig.new(dbConfigParams).openDatabase({ readonly: true })
-      : await LmdbWorkerConfig.new(dbConfigParams).openDatabase({ readonly: true });
+  const rootDb = await FjallWorkerConfig.new(dbConfigParams).openDatabase({ readonly: true });
 
   return RpcServer.new(port, rootDb, spec, blake2b, PvmBackend.Ananas, handlers, validation.schemas);
 }

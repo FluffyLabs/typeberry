@@ -4,10 +4,9 @@ import type { HeaderHash } from "@typeberry/block";
 import { Block as BlockCodec } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
-import { RegularStateBackend } from "@typeberry/config-node";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import { FjallWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
+import { FjallWorkerConfig } from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 
@@ -42,22 +41,13 @@ export async function exportBlocks(jamNodeConfig: JamConfig, output: string, wit
     jamNodeConfig.node.chainSpec.genesisHeader,
     withRelPath(jamNodeConfig.node.databaseBasePath),
   );
-  const config =
-    jamNodeConfig.node.stateBackend === RegularStateBackend.Fjall
-      ? FjallWorkerConfig.new({
-          nodeName: jamNodeConfig.nodeName,
-          chainSpec,
-          blake2b,
-          dbPath,
-          workerParams: undefined,
-        })
-      : LmdbWorkerConfig.new({
-          nodeName: jamNodeConfig.nodeName,
-          chainSpec,
-          blake2b,
-          dbPath,
-          workerParams: undefined,
-        });
+  const config = FjallWorkerConfig.new({
+    nodeName: jamNodeConfig.nodeName,
+    chainSpec,
+    blake2b,
+    dbPath,
+    workerParams: undefined,
+  });
 
   const rootDb = await config.openDatabase();
   const blocks = rootDb.getBlocksDb();

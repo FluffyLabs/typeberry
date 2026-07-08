@@ -65,10 +65,8 @@ describe("Importing Node Configuration", () => {
     assert.deepStrictEqual(withRpc.rpc, RpcOptions.new({ port: 9999 }));
   });
 
-  it("should read the state backend", () => {
-    const lmdbConfig = parseFromJson({ ...NODE_CONFIG_TEST, state_backend: "lmdb" }, NodeConfiguration.fromJson);
-
-    assert.deepStrictEqual(lmdbConfig.stateBackend, RegularStateBackend.Lmdb);
+  it("should reject unknown state backends", () => {
+    assert.throws(() => parseFromJson({ ...NODE_CONFIG_TEST, state_backend: "lmdb" }, NodeConfiguration.fromJson));
   });
 
   it("should read the chain spec", () => {

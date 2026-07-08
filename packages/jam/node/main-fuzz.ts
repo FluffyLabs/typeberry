@@ -28,8 +28,7 @@ const logger = Logger.new(import.meta.filename, "fuzztarget");
 const FUZZ_DB_SUBDIR = "typeberry-fuzz-db";
 
 const FUZZ_DB_FJALL: StateBackend = "fjall-hybrid";
-const FUZZ_DB_LMDB: StateBackend = "lmdb-hybrid";
-const FUZZ_DB_OPTIONS: string[] = [FUZZ_DB_FJALL, FUZZ_DB_LMDB, "fjall", "lmdb"];
+const FUZZ_DB_OPTIONS: string[] = [FUZZ_DB_FJALL, "fjall"];
 
 /** Subdirectory (under the fuzzer's db dir) holding the reused fjall values keyspace. */
 const FUZZ_FJALL_VALUES_SUBDIR = "values-session";
@@ -85,7 +84,6 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
   const fuzzDbBase = resolveFuzzDbBase(config.node.databaseBasePath);
 
   const rawFuzzDb = process.env.JAM_FUZZ_DB?.trim() ?? "";
-  // Using experimental fjall-hybrid by default, with an option to test lmdb as well.
   const hybridStateBackend = rawFuzzDb === "" ? FUZZ_DB_FJALL : rawFuzzDb;
   if (!isValidStateBackend(hybridStateBackend)) {
     throw new Error(`JAM_FUZZ_DB must be one of: ${FUZZ_DB_OPTIONS} (got: "${rawFuzzDb}").`);
@@ -173,7 +171,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
               // also turns on compression further down, so the big values do not grow the
               // db too much. Tiny stays uncompressed, its db is small and speed matters more.
               ephemeral: isPersistent,
-              stateBackend: isPersistent ? hybridStateBackend : "lmdb",
+              stateBackend: isPersistent ? hybridStateBackend : "fjall",
               // Reuse the session keyspace (fjall-hybrid only, other backends
               // ignore it). Nothing to pass for the in-memory fallback.
               sharedFjallSession: hybridStateBackend === "fjall-hybrid" ? (fjallSession ?? undefined) : undefined,
@@ -212,7 +210,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
                 logger.info`🗄️ Opened reusable fjall values session at ${fjallSessionPath}`;
               }
             } else {
-              // All other backends ("fjall", "lmdb", "lmdb-hybrid"): wipe and reopen on every reset.
+              // Other backends ("fjall"): wipe and reopen on every reset.
               await wipeFuzzDb(fuzzDbBase);
             }
             runningNode = await buildNode(fuzzDbBase);

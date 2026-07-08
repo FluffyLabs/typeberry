@@ -2,7 +2,7 @@ import { isMainThread } from "node:worker_threads";
 import type { BlockView, HeaderHash, HeaderView, StateRootHash } from "@typeberry/block";
 import { AUTHORSHIP_NETWORK_PORT } from "@typeberry/comms-authorship-network";
 import { type ChainSpec, PvmBackend } from "@typeberry/config";
-import { RegularStateBackend } from "@typeberry/config-node";
+import type { RegularStateBackend } from "@typeberry/config-node";
 import { initWasm } from "@typeberry/crypto";
 import {
   type BandersnatchSecretSeed,
@@ -24,7 +24,6 @@ import { DirectPort, DirectWorkerConfig } from "@typeberry/workers-api";
 import {
   FjallWorkerConfig,
   InMemWorkerConfig,
-  LmdbWorkerConfig,
   logHostEnvironment,
   type PersistentWorkerConfig,
   ThreadPort,
@@ -72,9 +71,6 @@ export async function main(
   const nodeName = config.nodeName;
   const isInMemory = config.node.databaseBasePath === undefined;
   logger.info`🗄️ States DB: ${isInMemory ? "in-memory" : config.node.stateBackend}.`;
-  if (!isInMemory && config.node.stateBackend === RegularStateBackend.Lmdb) {
-    logger.warn`🗄️ The lmdb state backend is deprecated. Use state_backend="fjall" unless you need a temporary fallback.`;
-  }
 
   const { dbPath, genesisHeaderHash } = getDatabasePath(
     blake2b,
@@ -111,9 +107,8 @@ export async function main(
     throw e;
   }
   // fjall-js shares the engine explicitly and requires every handle to close.
-  // Keep lmdb's historical main-thread handle open until shutdown.
   let mainRootDb: RootDb<BlocksDb, SerializedStatesDb> | null = rootDb;
-  if (!importerConfig.isInMemory && config.node.stateBackend === RegularStateBackend.Fjall) {
+  if (!importerConfig.isInMemory) {
     await rootDb.close();
     mainRootDb = null;
   }
@@ -384,7 +379,7 @@ const initNetwork = async (
 };
 
 function createPersistentWorkerConfig<T>({
-  stateBackend,
+  stateBackend: _,
   ...params
 }: {
   stateBackend: RegularStateBackend;
@@ -395,10 +390,5 @@ function createPersistentWorkerConfig<T>({
   blake2b: Blake2b;
   ports?: Map<string, ThreadPort>;
 }): PersistentWorkerConfig<T> {
-  switch (stateBackend) {
-    case RegularStateBackend.Fjall:
-      return FjallWorkerConfig.new(params);
-    case RegularStateBackend.Lmdb:
-      return LmdbWorkerConfig.new(params);
-  }
+  return FjallWorkerConfig.new(params);
 }
