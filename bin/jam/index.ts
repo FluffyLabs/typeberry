@@ -184,16 +184,17 @@ async function startNode(
 
   // Run regular node.
   const node = await main(jamNodeConfig, withRelPath, telemetry);
+  setCloser(() => node.close());
 
   // Start in-process RPC server if configured.
   const closeRpc = await startRpcServer(jamNodeConfig, blake2b, withRelPath);
 
-  setCloser(async () => {
-    if (closeRpc !== null) {
+  if (closeRpc !== null) {
+    setCloser(async () => {
       await closeRpc();
-    }
-    await node.close();
-  });
+      await node.close();
+    });
+  }
 }
 
 function devNodeName(defaultNodeName: string, idx: number | string) {
