@@ -11,9 +11,15 @@ import {
 } from "@typeberry/rpc-validation";
 import type WebSocket from "ws";
 import type z from "zod";
-import type { RpcServer } from "./server.js";
 
 const POLL_INTERVAL_MS = 1000;
+
+type CallHandler = <I, O>(
+  handler: GenericHandler<I, O>,
+  validatedParams: I,
+  outputSchema: z.ZodType<O>,
+  ws: WebSocket,
+) => Promise<unknown>;
 
 export class SubscriptionManager {
   // biome-ignore lint/suspicious/noExplicitAny: subscriptions must accept generic handlers
@@ -22,11 +28,11 @@ export class SubscriptionManager {
   private pollInterval: NodeJS.Timeout;
   private nextId: number;
 
-  static new(server: RpcServer) {
-    return new SubscriptionManager(server);
+  static new(callHandler: CallHandler) {
+    return new SubscriptionManager(callHandler);
   }
 
-  private constructor(private server: RpcServer) {
+  private constructor(private callHandler: CallHandler) {
     this.subscriptions = new Map();
     this.lastResults = new Map();
     this.pollInterval = setInterval(() => this.pollSubscriptions(), POLL_INTERVAL_MS);
@@ -39,7 +45,7 @@ export class SubscriptionManager {
       let notificationString: string;
 
       try {
-        const result = await this.server.callHandler(
+        const result = await this.callHandler(
           subscription.handler,
           subscription.params,
           subscription.outputSchema,

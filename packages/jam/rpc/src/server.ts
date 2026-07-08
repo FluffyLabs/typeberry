@@ -80,7 +80,7 @@ export class RpcServer {
     this.wss = new WebSocketServer({ port });
     this.setupWebSocket();
 
-    this.subscriptionManager = SubscriptionManager.new(this);
+    this.subscriptionManager = SubscriptionManager.new(this.callHandler.bind(this));
   }
 
   private setupWebSocket(): void {

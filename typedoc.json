@@ -12,7 +12,7 @@
     "./bin/convert/README.md",
     "./bin/jam/README.md",
     "./bin/lib/README.md",
-    "./packages/jam/rpc/README.md",
-    "./packages/README.md"
+    "./packages/README.md",
+    "./packages/jam/rpc/README.md"
   ]
 }
