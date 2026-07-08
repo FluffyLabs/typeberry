@@ -20,14 +20,7 @@ export interface InitStatesDb<T = State> {
   insertInitialState(headerHash: HeaderHash, initialState: T): Promise<Result<OK, StateUpdateError>>;
 }
 
-/**
- * Interface for accessing states stored in the database.
- *
- * NOTE that the design of this interface is heavily influenced
- * by the LMDB implementation, so that we can implement it efficiently.
- *
- * See the documentation there for more detailed reasoning.
- */
+/** Interface for accessing states stored in the database. */
 export interface StatesDb<T extends State = State> {
   /** Compute a state root for given state. */
   getStateRoot(state: T): Promise<StateRootHash>;

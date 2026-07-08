@@ -19,7 +19,7 @@
  *        (incomplete in-memory view).
  *     - `SerializedState<LeafDb>`: Disk-backed trie storage-leaf nodes live on
  *        disk and load on demand; cheap to update (no data duplication) and re-compute
- *        the `stateRoot`. Used in LMDB.
+ *        the `stateRoot`.
  *     - `SerializedState<StateEntries>`: serialized state represented as a simple in-memory
  *        hashmap of `key -> value` entries.
  */

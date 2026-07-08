@@ -32,13 +32,6 @@ export enum KnownChainSpec {
   Full = "full",
 }
 
-/** Persistent regular-node database backend. */
-export enum RegularStateBackend {
-  /** @deprecated lmdb remains available as an explicit fallback, but fjall is the default backend. */
-  Lmdb = "lmdb",
-  Fjall = "fjall",
-}
-
 export const knownChainSpecFromJson = json.fromString((input, ctx): KnownChainSpec => {
   switch (input) {
     case KnownChainSpec.Tiny:
@@ -50,24 +43,12 @@ export const knownChainSpecFromJson = json.fromString((input, ctx): KnownChainSp
   }
 }) as FromJson<KnownChainSpec>;
 
-export const regularStateBackendFromJson = json.fromString((input, ctx): RegularStateBackend => {
-  switch (input) {
-    case RegularStateBackend.Lmdb:
-      return RegularStateBackend.Lmdb;
-    case RegularStateBackend.Fjall:
-      return RegularStateBackend.Fjall;
-    default:
-      throw Error(`unknown state backend: ${input} at ${ctx}`);
-  }
-}) as FromJson<RegularStateBackend>;
-
 type NodeConfigurationJson = {
   $schema: string;
   version: number;
   flavor: KnownChainSpec;
   chain_spec: JipChainSpec;
   database_base_path?: string;
-  state_backend?: RegularStateBackend;
   authorship: AuthorshipOptions;
   rpc?: RpcOptions;
 };
@@ -80,23 +61,13 @@ export class NodeConfiguration {
       flavor: knownChainSpecFromJson,
       chain_spec: JipChainSpec.fromJson,
       database_base_path: json.optional("string"),
-      state_backend: json.optional(regularStateBackendFromJson),
       authorship: AuthorshipOptions.fromJson,
       rpc: json.optional(RpcOptions.fromJson),
     },
     NodeConfiguration.new,
   );
 
-  static new({
-    $schema,
-    version,
-    flavor,
-    chain_spec,
-    database_base_path,
-    state_backend,
-    authorship,
-    rpc,
-  }: NodeConfigurationJson) {
+  static new({ $schema, version, flavor, chain_spec, database_base_path, authorship, rpc }: NodeConfigurationJson) {
     if (version !== 1) {
       throw new Error("Only version=1 config is supported.");
     }
@@ -106,7 +77,6 @@ export class NodeConfiguration {
       flavor,
       chain_spec,
       database_base_path ?? undefined,
-      state_backend ?? RegularStateBackend.Fjall,
       authorship,
       rpc ?? undefined,
     );
@@ -119,8 +89,6 @@ export class NodeConfiguration {
     public readonly chainSpec: JipChainSpec,
     /** If database path is not provided, we load an in-memory db. */
     public readonly databaseBasePath: string | undefined,
-    /** Persistent database backend used when `databaseBasePath` is set. */
-    public readonly stateBackend: RegularStateBackend,
     public readonly authorship: AuthorshipOptions,
     /** Optional RPC server configuration. When present, an in-process RPC server is started. */
     public readonly rpc: RpcOptions | undefined,

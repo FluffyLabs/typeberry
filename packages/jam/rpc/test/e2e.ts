@@ -126,7 +126,7 @@ describe("JSON RPC Client-Server E2E", { concurrency: false }, () => {
     // TODO [ToDr] We should probably do a little bit better in terms of
     // tracking recently active services. Some options for the future:
     // 1. Use InMemoryDb for RPC E2E tests.
-    // 2. Store additional service metadata in LMDB
+    // 2. Store additional service metadata in the database.
     // 3. Cache the state object, so that accessed services would be returned here.
     assert.deepStrictEqual(result, []);
   });

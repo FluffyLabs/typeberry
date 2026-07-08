@@ -1,7 +1,7 @@
 // biome-ignore-all lint/suspicious/noConsole: bin file
 
 import { Bootnode } from "@typeberry/config";
-import { KnownChainSpec, loadConfig, RegularStateBackend } from "@typeberry/config-node";
+import { KnownChainSpec, loadConfig } from "@typeberry/config-node";
 import { ed25519 } from "@typeberry/crypto";
 import { deriveEd25519SecretKey } from "@typeberry/crypto/key-derivation.js";
 import { Blake2b } from "@typeberry/hash";
@@ -13,7 +13,7 @@ import { validation } from "@typeberry/rpc-validation";
 import { Telemetry } from "@typeberry/telemetry";
 import { asOpaqueType, type Closer, workspacePathFix } from "@typeberry/utils";
 import { installShutdownHandlers } from "@typeberry/utils/shutdown.node.js";
-import { FjallWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
+import { FjallWorkerConfig } from "@typeberry/workers-api-node";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 import { readFuzzEnv, synthesizeFuzzArgs } from "./fuzz-env.js";
 
@@ -247,10 +247,7 @@ async function startRpcServer(
     blake2b,
   };
 
-  const rootDb =
-    config.node.stateBackend === RegularStateBackend.Fjall
-      ? await FjallWorkerConfig.new(dbConfigParams).openDatabase({ readonly: true })
-      : await LmdbWorkerConfig.new(dbConfigParams).openDatabase({ readonly: true });
+  const rootDb = await FjallWorkerConfig.new(dbConfigParams).openDatabase({ readonly: true });
 
   const pvmBackend = config.pvmBackend;
   const server = RpcServer.new(rpcPort, rootDb, chainSpec, blake2b, pvmBackend, rpcHandlers, validation.schemas);

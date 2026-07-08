@@ -145,7 +145,7 @@ contract.
 | `JAM_FUZZ` | Yes (any non-empty value) | Activates fuzz mode. |
 | `JAM_FUZZ_SPEC` | Yes | Chain spec: `tiny` or `full`. |
 | `JAM_FUZZ_SOCK_PATH` | Yes | Unix domain socket path the target listens on. |
-| `JAM_FUZZ_DATA_PATH` | No | Database location. A real path runs the target against the hybrid backend (in-memory leaves plus an on-disk LMDB value store, recommended for full-spec runs to bound memory). Unset, empty, or `undefined` keeps the fully in-memory database (the default). |
+| `JAM_FUZZ_DATA_PATH` | No | Database location. A real path runs the target against the hybrid backend (in-memory leaves plus an on-disk fjall value store, recommended for full-spec runs to bound memory). Unset, empty, or `undefined` keeps the fully in-memory database (the default). |
 | `JAM_FUZZ_LOG_LEVEL` | No | Log verbosity: `error`, `warn`, `info`, `debug`, `trace`. Overrides `JAM_LOG` in fuzz mode. |
 
 The target stays up across multiple fuzzer sessions; on each `Initialize`
@@ -155,7 +155,7 @@ directory, the target uses a hybrid backend instead (wiped on every reset, so
 each session starts clean); if that store cannot be opened it logs a warning and
 falls back to in-memory. The hybrid backend keeps the trie-leaf sets in memory
 (so it still prunes at finality depth 10_000 to bound memory, like the in-memory
-backend) but persists the large values to an on-disk LMDB store fronted by an
+backend) but persists the large values to an on-disk fjall store fronted by an
 in-memory LRU cache. This keeps memory bounded while the large values live on
 disk. 
 

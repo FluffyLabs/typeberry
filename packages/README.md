@@ -38,7 +38,6 @@ Contains JAM (Join-Accumulate Machine) specific packages:
 - **config** - JAM configuration handling
 - **config-node** - Node-specific JAM configuration
 - **database** - Database abstractions for JAM
-- **database-lmdb** - LMDB database implementation
 - **executor** - JAM PVM execution entry point with host calls
 - **fuzz-proto** - Fuzzing protocol implementation
 - **in-core** - In-core execution utilities (refine phase)

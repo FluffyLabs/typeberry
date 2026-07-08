@@ -13,10 +13,9 @@ export interface ValueDelta {
 /**
  * Synchronous, read-only view of the persisted refcounting state.
  *
- * Both LMDB and fjall offer synchronous reads, so reads can go straight
- * to the backing store. All writes go through `ValueRefsUpdate` batches
- * instead, since persistent backends can only write asynchronously
- * (LMDB transactions, fjall inserts + persist).
+ * fjall offers synchronous reads, so reads can go straight to the backing
+ * store. All writes go through `ValueRefsUpdate` batches instead, since
+ * persistent backends can only write asynchronously (fjall inserts + persist).
  */
 export interface ValueRefsReader {
   /** How many leaves of the finalized-tip state reference the value. Missing keys read as `0`. */
@@ -32,7 +31,7 @@ export interface ValueRefsReader {
  *
  * The backend is responsible for applying the batch using its own write
  * primitive - ideally atomically with the state write that triggered it
- * (one LMDB transaction, one fjall persist).
+ * (one fjall persist).
  *
  * Counts are absolute values rather than increments, so applying the same
  * update more than once (e.g. on crash-replay) is harmless.

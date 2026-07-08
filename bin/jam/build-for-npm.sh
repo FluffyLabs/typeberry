@@ -10,7 +10,7 @@ DESCRIPTION=$(node -p "require('./package.json').description")
 # Start from the top-level project directory
 cd ../..
 
-# These four are native/external modules that ncc can't bundle, so they ship as
+# These three are native/external modules that ncc can't bundle, so they ship as
 # real prod deps and get installed by the `npm install` below. We read the
 # versions from the packages that actually declare them instead of hardcoding,
 # so the bundle never drifts from the rest of the workspace.
@@ -26,16 +26,15 @@ cd ../..
 # into the ESM bundle crashes at load with "__dirname is not defined", and even
 # if it bundled it would freeze the build host's platform binary into the bundle
 # (wrong for cross-platform deploys). Externalizing + shipping as a dep lets npm
-# pull the matching platform binary, just like lmdb.
+# pull the matching platform binary.
 NATIVE_VERSION=$(node -p "require('./packages/core/crypto/package.json').dependencies['@typeberry/native']")
-LMDB_VERSION=$(node -p "require('./packages/jam/database-lmdb/package.json').dependencies.lmdb")
 QUIC_VERSION=$(node -p "require('./packages/core/networking/package.json').dependencies['@matrixai/quic']")
 FJALL_VERSION=$(node -p "require('./packages/jam/database-fjall/package.json').dependencies['@fjall-js/fjall']")
 
 # A missing/renamed dependency key makes `node -p` print the literal "undefined"
 # and exit 0, so `set -e` won't catch it. Bail out here with a clear message
 # instead of writing a broken "undefined" version into dist/jam/package.json.
-for pair in "@typeberry/native=$NATIVE_VERSION" "lmdb=$LMDB_VERSION" "@matrixai/quic=$QUIC_VERSION" "@fjall-js/fjall=$FJALL_VERSION"; do
+for pair in "@typeberry/native=$NATIVE_VERSION" "@matrixai/quic=$QUIC_VERSION" "@fjall-js/fjall=$FJALL_VERSION"; do
   name="${pair%%=*}"
   ver="${pair#*=}"
   if [ -z "$ver" ] || [ "$ver" = "undefined" ]; then
@@ -60,7 +59,7 @@ if [ -n "$VERSION_SHA" ]; then
 fi
 
 # Build the main binary
-BUILD="npx @vercel/ncc build -a -s -e lmdb -e @matrixai/quic -e @fjall-js/fjall -e tsx/esm/api"
+BUILD="npx @vercel/ncc build -a -s -e @matrixai/quic -e @fjall-js/fjall -e tsx/esm/api"
 $BUILD ./bin/jam/index.ts -o $DIST_FOLDER
 
 # Despite using `-a` flag, @vercel/ncc does not bundle the worker files,
@@ -124,7 +123,6 @@ cat > ./package.json << EOF
     "jam": "./index.js"
   },
   "dependencies": {
-    "lmdb": "$LMDB_VERSION",
     "@matrixai/quic": "$QUIC_VERSION",
     "@fjall-js/fjall": "$FJALL_VERSION",
     "@typeberry/native": "$NATIVE_VERSION"
