@@ -10,7 +10,7 @@
     "bin/jam",
     "bin/lib",
     "bin/pvm",
-    "bin/rpc",
+    "packages/jam/rpc",
     "bin/test-runner",
     "packages/configs",
     "packages/core/bytes",

@@ -42,6 +42,19 @@
     },
     "authorship": {
       "$ref": "./specs/authorship.schema.json"
+    },
+    "rpc": {
+      "type": "object",
+      "description": "RPC server configuration. When present, an in-process JSON-RPC WebSocket server is started.",
+      "required": ["port"],
+      "properties": {
+        "port": {
+          "type": "number",
+          "description": "Port for the JSON-RPC WebSocket server.",
+          "default": 19800
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

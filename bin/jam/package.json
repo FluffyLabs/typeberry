@@ -20,6 +20,8 @@
     "@typeberry/logger": "*",
     "@typeberry/networking": "*",
     "@typeberry/node": "*",
+    "@typeberry/rpc": "*",
+    "@typeberry/rpc-validation": "*",
     "@typeberry/numbers": "*",
     "@typeberry/safrole": "*",
     "@typeberry/state": "*",
@@ -28,6 +30,7 @@
     "@typeberry/transition": "*",
     "@typeberry/utils": "*",
     "@typeberry/workers-api": "*",
+    "@typeberry/workers-api-node": "*",
     "minimist": "1.2.8"
   },
   "scripts": {

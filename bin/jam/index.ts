@@ -1,16 +1,19 @@
 // biome-ignore-all lint/suspicious/noConsole: bin file
 
 import { Bootnode } from "@typeberry/config";
-import { KnownChainSpec, loadConfig } from "@typeberry/config-node";
+import { KnownChainSpec, loadConfig, RegularStateBackend } from "@typeberry/config-node";
 import { ed25519 } from "@typeberry/crypto";
 import { deriveEd25519SecretKey } from "@typeberry/crypto/key-derivation.js";
 import { Blake2b } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { altNameRaw } from "@typeberry/networking";
-import { exportBlocks, importBlocks, JamConfig, main, mainFuzz } from "@typeberry/node";
+import { exportBlocks, getChainSpec, getDatabasePath, importBlocks, JamConfig, main, mainFuzz } from "@typeberry/node";
+import { RpcServer, rpcHandlers } from "@typeberry/rpc";
+import { validation } from "@typeberry/rpc-validation";
 import { Telemetry } from "@typeberry/telemetry";
 import { asOpaqueType, type Closer, workspacePathFix } from "@typeberry/utils";
 import { installShutdownHandlers } from "@typeberry/utils/shutdown.node.js";
+import { FjallWorkerConfig, LmdbWorkerConfig } from "@typeberry/workers-api-node";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 import { readFuzzEnv, synthesizeFuzzArgs } from "./fuzz-env.js";
 
@@ -102,6 +105,8 @@ async function prepareConfigFile(
   const devIndex = isDevMode ? args.args.index : null;
   const isFastForward = isDevMode ? args.args.isFastForward : false;
 
+  const rpcPort = nodeConfig.rpc !== undefined ? nodeConfig.rpc.port + devPortShift : null;
+
   return JamConfig.new({
     isAuthoring: isDevMode,
     isFastForward,
@@ -114,6 +119,7 @@ async function prepareConfigFile(
       port: devPort(devPortShift),
       bootnodes: devBootnodes.concat(nodeConfig.chainSpec.bootnodes ?? []),
     },
+    rpcPort,
     devValidatorIndex: devIndex,
   });
 }
@@ -178,7 +184,16 @@ async function startNode(
 
   // Run regular node.
   const node = await main(jamNodeConfig, withRelPath, telemetry);
-  setCloser(() => node.close());
+
+  // Start in-process RPC server if configured.
+  const closeRpc = await startRpcServer(jamNodeConfig, blake2b, withRelPath);
+
+  setCloser(async () => {
+    if (closeRpc !== null) {
+      await closeRpc();
+    }
+    await node.close();
+  });
 }
 
 function devNodeName(defaultNodeName: string, idx: number | string) {
@@ -196,4 +211,50 @@ function devNetworkingSeed(blake2b: Blake2b, name: string) {
   const seed = blake2b.hashString(name);
   const key = deriveEd25519SecretKey(seed.asOpaque(), blake2b);
   return key;
+}
+
+const logger = Logger.new(import.meta.filename, "rpc");
+
+async function startRpcServer(
+  config: JamConfig,
+  blake2b: Blake2b,
+  withRelPath: (p: string) => string,
+): Promise<Closer | null> {
+  const rpcPort = config.rpcPort;
+  if (rpcPort === null) {
+    return null;
+  }
+
+  if (config.node.databaseBasePath === undefined) {
+    logger.warn`RPC server requires a persistent database; skipping (in-memory mode).`;
+    return null;
+  }
+
+  const chainSpec = getChainSpec(config.node.flavor);
+  const { dbPath } = getDatabasePath(
+    blake2b,
+    config.nodeName,
+    config.node.chainSpec.genesisHeader,
+    withRelPath(config.node.databaseBasePath),
+  );
+
+  const dbConfigParams = {
+    nodeName: config.nodeName,
+    chainSpec,
+    workerParams: undefined,
+    dbPath,
+    blake2b,
+  };
+
+  const rootDb =
+    config.node.stateBackend === RegularStateBackend.Fjall
+      ? await FjallWorkerConfig.new(dbConfigParams).openDatabase({ readonly: true })
+      : await LmdbWorkerConfig.new(dbConfigParams).openDatabase({ readonly: true });
+
+  const pvmBackend = config.pvmBackend;
+  const server = RpcServer.new(rpcPort, rootDb, chainSpec, blake2b, pvmBackend, rpcHandlers, validation.schemas);
+
+  return async () => {
+    await server.close();
+  };
 }

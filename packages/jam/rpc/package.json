@@ -1,0 +1,40 @@
+{
+  "name": "@typeberry/rpc",
+  "version": "0.10.0",
+  "description": "A JSON RPC server for Typeberry.",
+  "license": "MPL-2.0",
+  "author": "Fluffy Labs",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
+    "test:e2e": "npm run test:e2e-setup && npm run test:e2e-run",
+    "test:e2e-setup": "NODE_ENV=development GP_VERSION=0.7.2 tsx ./test/e2e-setup.ts",
+    "test:e2e-run": "NODE_ENV=development GP_VERSION=0.7.2 tsx --test ./test/e2e.ts"
+  },
+  "dependencies": {
+    "@typeberry/block": "*",
+    "@typeberry/bytes": "*",
+    "@typeberry/codec": "*",
+    "@typeberry/collections": "*",
+    "@typeberry/config": "*",
+    "@typeberry/database": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/in-core": "*",
+    "@typeberry/logger": "*",
+    "@typeberry/numbers": "*",
+    "@typeberry/rpc-validation": "*",
+    "@typeberry/state": "*",
+    "@typeberry/transition": "*",
+    "@typeberry/utils": "*",
+    "ws": "^8.20.1",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@typeberry/config-node": "*",
+    "@typeberry/node": "*",
+    "@typeberry/rpc-client": "*",
+    "@typeberry/workers-api-node": "*",
+    "@types/ws": "^8.18.1"
+  }
+}
