@@ -39,6 +39,8 @@ const FUZZ_FJALL_VALUES_SUBDIR = "values-session";
  * the resident memory bounded.
  */
 const FUZZ_FJALL_CACHE_BYTES = 128 * 1024 * 1024;
+/** Rebuild the fjall-hybrid values session every N resets to limit LSM read amplification. */
+const REBUILD_FJALL_SESSION_EVERY = 50;
 
 /**
  * Resolve the directory the fuzzer should use for its on-disk database, or
@@ -97,6 +99,8 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
   // every reset, because opening it is the slow part. Only the in-memory blocks
   // and leaf sets are rebuilt for each vector. fjall-hybrid only.
   let fjallSession: FjallValuesSession | null = null;
+  // Track how many times resetState has been called for periodic fjall session rebuilds.
+  let resetCount = 0;
   // Set when close() starts. Guards resetState so a fuzz command arriving
   // mid-shutdown can't build a fresh node that close() then orphans.
   let isClosing = false;
@@ -137,6 +141,9 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
           await finish;
         }
 
+        // Increment reset counter for periodic fjall session rebuilds.
+        resetCount++;
+
         const buildNode = (databaseBasePath: string | undefined) => {
           const isPersistent = databaseBasePath !== undefined;
           return mainImporter(
@@ -169,7 +176,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
               stateBackend: isPersistent ? hybridStateBackend : "lmdb",
               // Reuse the session keyspace (fjall-hybrid only, other backends
               // ignore it). Nothing to pass for the in-memory fallback.
-              sharedFjallSession: isPersistent ? (fjallSession ?? undefined) : undefined,
+              sharedFjallSession: hybridStateBackend === "fjall-hybrid" ? (fjallSession ?? undefined) : undefined,
             },
           );
         };
@@ -177,26 +184,35 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
         if (fuzzDbBase !== undefined) {
           try {
             if (hybridStateBackend === FUZZ_DB_FJALL) {
-              // fjall-hybrid: open the values keyspace once and reuse it on every
-              // reset. The values partition is content-addressed and immutable, so
-              // it is fine that values pile up across resets, the unreferenced ones
-              // just sit there. `initializeDatabase` decides whether the db is
-              // already initialized from the in-memory blocks, which we rebuild on
-              // every reset, not from the values store, so reusing it does not
-              // resume the previous run.
-              if (fjallSession === null) {
-                // Start from a clean slate once, then keep the keyspace open.
+              // fjall-hybrid: manage a reused values session.
+              // Rebuild it periodically to avoid LSM read amplification.
+              const fjallSessionPath = `${withRelPath(fuzzDbBase)}/${FUZZ_FJALL_VALUES_SUBDIR}`;
+              if (resetCount === 1) {
+                // First reset: start from a clean slate.
                 await wipeFuzzDb(fuzzDbBase);
-                fjallSession = await FjallValuesSession.open(`${withRelPath(fuzzDbBase)}/${FUZZ_FJALL_VALUES_SUBDIR}`, {
+                fjallSession = await FjallValuesSession.open(fjallSessionPath, {
                   ephemeral: true,
                   cacheSizeBytes: FUZZ_FJALL_CACHE_BYTES,
                 });
-                logger.info`🗄️ Opened reusable fjall values session at ${withRelPath(fuzzDbBase)}/${FUZZ_FJALL_VALUES_SUBDIR}`;
+                logger.info`🗄️ Opened reusable fjall values session at ${fjallSessionPath}`;
+              }
+              if (resetCount % REBUILD_FJALL_SESSION_EVERY === 0 && fjallSession !== null) {
+                // Periodic rebuild: close, wipe session dir, and reopen.
+                const session = fjallSession;
+                fjallSession = null;
+                await session.close().catch(() => {});
+                await wipeFuzzDb(fjallSessionPath).catch(() => {});
+              }
+              if (fjallSession === null) {
+                // No active session: create a fresh one.
+                fjallSession = await FjallValuesSession.open(fjallSessionPath, {
+                  ephemeral: true,
+                  cacheSizeBytes: FUZZ_FJALL_CACHE_BYTES,
+                });
+                logger.info`🗄️ Opened reusable fjall values session at ${fjallSessionPath}`;
               }
             } else {
-              // lmdb-hybrid: keep the old behaviour, wipe and reopen on every
-              // reset. A fresh db each reset makes `initializeDatabase` set up
-              // genesis again instead of resuming the previous run.
+              // All other backends ("fjall", "lmdb", "lmdb-hybrid"): wipe and reopen on every reset.
               await wipeFuzzDb(fuzzDbBase);
             }
             runningNode = await buildNode(fuzzDbBase);
