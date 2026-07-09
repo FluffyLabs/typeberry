@@ -9,7 +9,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import { type Closer, CURRENT_VERSION, Result, version } from "@typeberry/utils";
-import { FjallValuesSession, logHostEnvironment } from "@typeberry/workers-api-node";
+import { FjallRoot, logHostEnvironment } from "@typeberry/workers-api-node";
 import { getChainSpec } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 import type { NodeApi } from "./main.js";
@@ -30,16 +30,15 @@ const FUZZ_DB_SUBDIR = "typeberry-fuzz-db";
 const FUZZ_DB_FJALL: StateBackend = "fjall-hybrid";
 const FUZZ_DB_OPTIONS: string[] = [FUZZ_DB_FJALL, "fjall"];
 
-/** Subdirectory (under the fuzzer's db dir) holding the reused fjall values keyspace. */
-const FUZZ_FJALL_VALUES_SUBDIR = "values-session";
+/** The partitions used by FjallBlocks and FjallStates in the full-fjall backend. */
+const FUZZ_FJALL_PARTITIONS = ["headers", "extrinsics", "postStateRoots", "states", "values"] as const;
 /**
- * Size of the fjall block-cache for the fuzz session. Values pile up across
- * resets (for fjall we do not wipe between them), so this cache is what keeps
- * the resident memory bounded.
+ * Size of the fjall block-cache for the fuzz session. The keyspace stays open
+ * across resets, so this cache is what keeps the resident memory bounded.
  */
 const FUZZ_FJALL_CACHE_BYTES = 128 * 1024 * 1024;
-/** Rebuild the fjall-hybrid values session every N resets to limit LSM read amplification. */
-const REBUILD_FJALL_SESSION_EVERY = 50;
+/** Rebuild the fjall-hybrid keyspace every N resets to limit LSM read amplification. */
+const REBUILD_FJALL_HYBRID_KEYSPACE_EVERY = 50;
 
 /**
  * Resolve the directory the fuzzer should use for its on-disk database, or
@@ -93,11 +92,10 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
   }
 
   let runningNode: NodeApi | null = null;
-  // The fjall values keyspace is opened once per fuzz session and reused on
-  // every reset, because opening it is the slow part. Only the in-memory blocks
-  // and leaf sets are rebuilt for each vector. fjall-hybrid only.
-  let fjallSession: FjallValuesSession | null = null;
-  // Track how many times resetState has been called for periodic fjall session rebuilds.
+  // The fjall keyspace is opened once per fuzz session and reused on every
+  // reset, because opening it is the slow part.
+  let fjallKeyspace: FjallRoot | null = null;
+  // Track how many times resetState has been called for periodic fjall keyspace rebuilds.
   let resetCount = 0;
   // Set when close() starts. Guards resetState so a fuzz command arriving
   // mid-shutdown can't build a fresh node that close() then orphans.
@@ -172,46 +170,53 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
               // db too much. Tiny stays uncompressed, its db is small and speed matters more.
               ephemeral: isPersistent,
               stateBackend: isPersistent ? hybridStateBackend : "fjall",
-              // Reuse the session keyspace (fjall-hybrid only, other backends
-              // ignore it). Nothing to pass for the in-memory fallback.
-              sharedFjallSession: hybridStateBackend === "fjall-hybrid" ? (fjallSession ?? undefined) : undefined,
+              // Reuse the keyspace for both fjall backends. Nothing to pass for
+              // the in-memory fallback.
+              sharedFjallKeyspace: fjallKeyspace ?? undefined,
             },
           );
         };
 
         if (fuzzDbBase !== undefined) {
           try {
+            const fjallKeyspacePath = withRelPath(fuzzDbBase);
             if (hybridStateBackend === FUZZ_DB_FJALL) {
-              // fjall-hybrid: manage a reused values session.
-              // Rebuild it periodically to avoid LSM read amplification.
-              const fjallSessionPath = `${withRelPath(fuzzDbBase)}/${FUZZ_FJALL_VALUES_SUBDIR}`;
-              if (resetCount === 1) {
+              // fjall-hybrid: values pile up across resets, so rebuild the
+              // keyspace periodically to avoid LSM read amplification.
+              if (resetCount === 1 || fjallKeyspace === null) {
                 // First reset: start from a clean slate.
                 await wipeFuzzDb(fuzzDbBase);
-                fjallSession = await FjallValuesSession.open(fjallSessionPath, {
+                fjallKeyspace = await FjallRoot.open(fjallKeyspacePath, {
                   ephemeral: true,
                   cacheSizeBytes: FUZZ_FJALL_CACHE_BYTES,
                 });
-                logger.info`🗄️ Opened reusable fjall values session at ${fjallSessionPath}`;
-              }
-              if (resetCount % REBUILD_FJALL_SESSION_EVERY === 0 && fjallSession !== null) {
-                // Periodic rebuild: close, wipe session dir, and reopen.
-                const session = fjallSession;
-                fjallSession = null;
-                await session.close().catch(() => {});
-                await wipeFuzzDb(fjallSessionPath).catch(() => {});
-              }
-              if (fjallSession === null) {
-                // No active session: create a fresh one.
-                fjallSession = await FjallValuesSession.open(fjallSessionPath, {
+                logger.info`🗄️ Opened reusable fjall keyspace at ${fjallKeyspacePath}`;
+              } else if (resetCount % REBUILD_FJALL_HYBRID_KEYSPACE_EVERY === 0) {
+                // Periodic rebuild: close, wipe keyspace dir, and reopen.
+                const keyspace = fjallKeyspace;
+                fjallKeyspace = null;
+                await keyspace.close().catch(() => {});
+                await wipeFuzzDb(fuzzDbBase).catch(() => {});
+                fjallKeyspace = await FjallRoot.open(fjallKeyspacePath, {
                   ephemeral: true,
                   cacheSizeBytes: FUZZ_FJALL_CACHE_BYTES,
                 });
-                logger.info`🗄️ Opened reusable fjall values session at ${fjallSessionPath}`;
+                logger.info`🗄️ Rebuilt reusable fjall keyspace at ${fjallKeyspacePath}`;
               }
             } else {
-              // Other backends ("fjall"): wipe and reopen on every reset.
-              await wipeFuzzDb(fuzzDbBase);
+              // full-fjall: keep one keyspace open and recycle only the five
+              // partitions used by FjallBlocks/FjallStates.
+              if (resetCount === 1 || fjallKeyspace === null) {
+                await wipeFuzzDb(fuzzDbBase);
+                fjallKeyspace = await FjallRoot.open(fjallKeyspacePath, {
+                  ephemeral: true,
+                  cacheSizeBytes: FUZZ_FJALL_CACHE_BYTES,
+                });
+                logger.info`🗄️ Opened reusable fjall keyspace at ${fjallKeyspacePath}`;
+              } else if (fjallKeyspace !== null) {
+                const keyspace = fjallKeyspace;
+                await Promise.all(FUZZ_FJALL_PARTITIONS.map((name) => keyspace.deletePartition(name)));
+              }
             }
             runningNode = await buildNode(fuzzDbBase);
             return await runningNode.getBestStateRootHash();
@@ -241,9 +246,9 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
       isClosing = true;
       // Stop accepting connections + unlink the socket.
       closeFuzzTarget();
-      // Drain the active session (flush + close DB). Swallow errors so a
+      // Drain the active reset (flush + close DB). Swallow errors so a
       // failing close still lets the process exit 0; the db is wiped next.
-      // The node references the shared fjall session, so it must close first.
+      // The node references the shared fjall keyspace, so it must close first.
       if (activeReset !== null) {
         await activeReset.catch((e) => logger.error`Error waiting for fuzz reset: ${e}`);
       }
@@ -252,11 +257,11 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
         runningNode = null;
         await node.close().catch((e) => logger.error`Error closing fuzz node: ${e}`);
       }
-      // Release the reused fjall values keyspace before wiping its files.
-      if (fjallSession !== null) {
-        const session = fjallSession;
-        fjallSession = null;
-        await session.close().catch((e) => logger.error`Error closing fjall session: ${e}`);
+      // Release the reused fjall keyspace before wiping its files.
+      if (fjallKeyspace !== null) {
+        const keyspace = fjallKeyspace;
+        fjallKeyspace = null;
+        await keyspace.close().catch((e) => logger.error`Error closing fjall keyspace: ${e}`);
       }
       if (fuzzDbBase !== undefined) {
         await wipeFuzzDb(fuzzDbBase).catch(() => {});

@@ -59,7 +59,7 @@ export class FjallRoot {
 
   /** Open (or create) a fjall keyspace at the given path. */
   static async open(dbPath: string, options: FjallRootOptions = {}): Promise<FjallRoot> {
-    // fjall-js 0.3 shares one engine per path. Readers must use the read-only
+    // fjall-js shares one engine per path. Readers must use the read-only
     // wrapper surface; durability is driven explicitly through persist().
     const config = {
       path: dbPath,
@@ -85,6 +85,14 @@ export class FjallRoot {
       throw new Error(`Cannot open writable fjall partition '${name}' from a read-only keyspace.`);
     }
     return (await this.keyspace.partition(name)) as Partition;
+  }
+
+  /** Delete a writable partition and all of its data. */
+  async deletePartition(name: string): Promise<void> {
+    if (this.readOnly) {
+      throw new Error(`Cannot delete fjall partition '${name}' from a read-only keyspace.`);
+    }
+    await (this.keyspace as Keyspace).deletePartition(name);
   }
 
   /**

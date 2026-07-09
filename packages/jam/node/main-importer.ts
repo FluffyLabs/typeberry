@@ -7,12 +7,7 @@ import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { createImporter, ImporterConfig } from "@typeberry/importer";
 import { tryAsU16 } from "@typeberry/numbers";
 import { CURRENT_SUITE, CURRENT_VERSION, Result, resultToString, version } from "@typeberry/utils";
-import {
-  type FjallValuesSession,
-  FjallWorkerConfig,
-  HybridWorkerConfig,
-  InMemWorkerConfig,
-} from "@typeberry/workers-api-node";
+import { type FjallRoot, FjallWorkerConfig, HybridWorkerConfig, InMemWorkerConfig } from "@typeberry/workers-api-node";
 import { getChainSpec, getDatabasePath, initializeDatabase, logger } from "./common.js";
 import type { JamConfig } from "./jam-config.js";
 import type { NodeApi } from "./main.js";
@@ -30,11 +25,10 @@ export type ImporterOptions = {
   /** Persistent backend used when `databaseBasePath` is set. Defaults to fjall. */
   stateBackend?: StateBackend;
   /**
-   * Reuse an already-open fjall values session instead of opening a fresh
-   * keyspace. Only used when `stateBackend === "fjall-hybrid"`. The fuzz target
-   * opens one per run and reuses it across resets.
+   * Reuse an already-open fjall keyspace instead of opening a fresh keyspace
+   * from `dbPath`. Used by fjall and fjall-hybrid fuzz targets.
    */
-  sharedFjallSession?: FjallValuesSession;
+  sharedFjallKeyspace?: FjallRoot;
 };
 
 export async function mainImporter(
@@ -92,7 +86,7 @@ export async function mainImporter(
             workerParams,
             ephemeral,
             compression,
-            sharedFjallSession: options.sharedFjallSession,
+            sharedFjallKeyspace: options.sharedFjallKeyspace,
           })
         : FjallWorkerConfig.new({
             nodeName,
@@ -101,6 +95,7 @@ export async function mainImporter(
             dbPath,
             workerParams,
             ephemeral,
+            sharedFjallKeyspace: options.sharedFjallKeyspace,
           });
 
   // Initialize the database with genesis state and block if there isn't one.

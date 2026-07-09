@@ -37,6 +37,8 @@ export class FjallBlocks implements BlocksDb {
     private readonly postStateRoots: FjallPartition,
   ) {}
 
+  private pendingPrune: Promise<unknown> = Promise.resolve();
+
   async setPostStateRoot(hash: HeaderHash, postStateRoot: StateRootHash): Promise<void> {
     await writable(this.postStateRoots, this.root).insert(hash.raw, postStateRoot.raw);
   }
@@ -86,14 +88,20 @@ export class FjallBlocks implements BlocksDb {
   }
 
   markUnused(hash: HeaderHash): void {
-    void Promise.all([
-      writable(this.headers, this.root).remove(hash.raw),
-      writable(this.extrinsics, this.root).remove(hash.raw),
-      writable(this.postStateRoots, this.root).remove(hash.raw),
-    ]).catch((e) => logger.warn`Failed to prune block ${hash}: ${e}`);
+    this.pendingPrune = this.pendingPrune
+      .then(() =>
+        Promise.all([
+          writable(this.headers, this.root).remove(hash.raw),
+          writable(this.extrinsics, this.root).remove(hash.raw),
+          writable(this.postStateRoots, this.root).remove(hash.raw),
+        ]),
+      )
+      .catch((e) => logger.warn`Failed to prune block ${hash}: ${e}`);
   }
 
-  async close() {}
+  async close() {
+    await this.pendingPrune;
+  }
 }
 
 function writable(partition: FjallPartition, root: FjallRoot): Partition {
