@@ -29,6 +29,7 @@ export class FjallStates implements StatesDb<SerializedState<LeafDb>>, InitState
   }
 
   private readonly valuesDb: ValuesDb;
+  private pendingPrune: Promise<unknown> = Promise.resolve();
 
   private constructor(
     private readonly spec: ChainSpec,
@@ -85,8 +86,8 @@ export class FjallStates implements StatesDb<SerializedState<LeafDb>>, InitState
   }
 
   markUnused(headerHash: HeaderHash): void {
-    void writable(this.states, this.root)
-      .remove(headerHash.raw)
+    this.pendingPrune = this.pendingPrune
+      .then(() => writable(this.states, this.root).remove(headerHash.raw))
       .catch((e) => logger.warn`Failed to prune state ${headerHash}: ${e}`);
   }
 
@@ -94,7 +95,9 @@ export class FjallStates implements StatesDb<SerializedState<LeafDb>>, InitState
     return this.root.sizeInBytes();
   }
 
-  async close() {}
+  async close() {
+    await this.pendingPrune;
+  }
 
   private async updateAndCommit(
     headerHash: HeaderHash,

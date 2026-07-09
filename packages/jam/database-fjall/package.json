@@ -9,7 +9,7 @@
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
   "dependencies": {
-    "@fjall-js/fjall": "0.3.3",
+    "@fjall-js/fjall": "0.4.1",
     "@typeberry/block": "*",
     "@typeberry/bytes": "*",
     "@typeberry/collections": "*",

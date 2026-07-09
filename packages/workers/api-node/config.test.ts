@@ -5,6 +5,7 @@ import type { HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { codec } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
+import { FjallRoot } from "@typeberry/database-fjall";
 import { Blake2b, HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import { configTransferList, FjallWorkerConfig, HybridWorkerConfig } from "./config.js";
@@ -61,6 +62,31 @@ describe("FjallWorkerConfig transfer list", () => {
       fs.rmSync(dbPath, { recursive: true, force: true });
     }
   });
+
+  it("can borrow a shared fjall root without closing it", async () => {
+    const blake2b = await Blake2b.createHasher();
+    const dbPath = fs.mkdtempSync("typeberry-fjall-worker-shared-");
+    const root = await FjallRoot.open(dbPath, { ephemeral: true });
+    const config = FjallWorkerConfig.new({
+      nodeName: "node",
+      chainSpec: spec,
+      workerParams: undefined,
+      dbPath,
+      blake2b,
+      sharedFjallKeyspace: root,
+    });
+    try {
+      const db = await config.openDatabase({ readonly: false });
+      await db.close();
+
+      await root.deletePartition("headers");
+      const headers = await root.writablePartition("headers");
+      assert.strictEqual(headers.get(Bytes.zero(HASH_SIZE).raw), null);
+    } finally {
+      await root.close();
+      fs.rmSync(dbPath, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("HybridWorkerConfig", () => {
@@ -89,6 +115,38 @@ describe("HybridWorkerConfig", () => {
         await db.close();
       }
     } finally {
+      fs.rmSync(dbPath, { recursive: true, force: true });
+    }
+  });
+
+  it("can borrow a shared fjall root for the values store", async () => {
+    const blake2b = await Blake2b.createHasher();
+    const dbPath = fs.mkdtempSync("typeberry-hybrid-fjall-shared-");
+    const root = await FjallRoot.open(dbPath, { ephemeral: true });
+    try {
+      const config = await HybridWorkerConfig.new({
+        nodeName: "node",
+        chainSpec: spec,
+        workerParams: undefined,
+        blake2b,
+        dbPath,
+        ephemeral: true,
+        sharedFjallKeyspace: root,
+      });
+
+      const db = await config.openDatabase({ readonly: false });
+      const states = db.getStatesDb();
+      try {
+        assert.notStrictEqual(db.getBlocksDb(), undefined);
+        assert.notStrictEqual(states, undefined);
+      } finally {
+        await states.close();
+        await db.close();
+      }
+
+      await root.deletePartition("values");
+    } finally {
+      await root.close();
       fs.rmSync(dbPath, { recursive: true, force: true });
     }
   });

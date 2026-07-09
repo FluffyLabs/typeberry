@@ -32,8 +32,8 @@ const logger = Logger.new(import.meta.filename, "db");
  * One open fjall keyspace together with its content-addressed `values`
  * partition.
  *
- * Opening the keyspace is the slow part, so the fuzz target opens one session
- * per run and reuses it for every reset (see `HybridSerializedStates.fromSession`).
+ * Opening the keyspace is the slow part, so the fuzz target can open one root
+ * per run and reuse it for every reset (see `HybridSerializedStates.fromRoot`).
  * The values partition is immutable - the key is the hash of the value - so it
  * is fine that values pile up across resets, the unreferenced ones just sit
  * there unused.
@@ -43,6 +43,8 @@ export class FjallValuesSession {
     private readonly root: FjallRoot,
     /** Shared content-addressed values partition, reused across resets. */
     readonly values: Partition,
+    /** Whether close() should release the underlying keyspace. */
+    private readonly ownsRoot: boolean,
   ) {}
 
   /** Open (or create) the keyspace at `dbPath` and its `values` partition. */
@@ -53,11 +55,17 @@ export class FjallValuesSession {
     const root = await FjallRoot.open(dbPath, options);
     try {
       const values = await root.writablePartition("values");
-      return new FjallValuesSession(root, values);
+      return new FjallValuesSession(root, values, true);
     } catch (e) {
       await root.close();
       throw e;
     }
+  }
+
+  /** Wrap an already-open keyspace and open its `values` partition. */
+  static async fromRoot(root: FjallRoot): Promise<FjallValuesSession> {
+    const values = await root.writablePartition("values");
+    return new FjallValuesSession(root, values, false);
   }
 
   /** Flush the journal to disk (a no-op for ephemeral keyspaces). */
@@ -72,7 +80,9 @@ export class FjallValuesSession {
 
   /** Release the keyspace handle (skips the sync-all fsync when ephemeral). */
   async close(): Promise<void> {
-    await this.root.close();
+    if (this.ownsRoot) {
+      await this.root.close();
+    }
   }
 }
 
@@ -90,7 +100,7 @@ export class FjallValuesSession {
  * decided by in-memory refcounting (`ValueRefs`) driven by the importer's
  * finality signal. Counts are not persisted: this db cannot resume from disk
  * anyway (the leaf sets live in memory), so values left over by a previous run
- * are never collected. An instance backed by a shared session (fuzz reset
+ * are never collected. An instance backed by a shared keyspace (fuzz reset
  * reuse) only ever prunes values it inserted itself, since its refcounts start
  * empty - values left behind by earlier resets stay untouched.
  */
@@ -110,6 +120,12 @@ export class HybridSerializedStates implements StatesDb<SerializedState<LeafDb>>
   }): Promise<HybridSerializedStates> {
     const session = await FjallValuesSession.open(dbPath, { ephemeral, cacheSizeBytes });
     // This instance owns the session it just opened, so its `close()` closes it.
+    return new HybridSerializedStates(spec, blake2b, session, true);
+  }
+
+  /** Create a db over an already-open keyspace owned by the caller. */
+  static async fromRoot(spec: ChainSpec, blake2b: Blake2b, root: FjallRoot): Promise<HybridSerializedStates> {
+    const session = await FjallValuesSession.fromRoot(root);
     return new HybridSerializedStates(spec, blake2b, session, true);
   }
 

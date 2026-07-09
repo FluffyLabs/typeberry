@@ -19,9 +19,9 @@ import { Blake2b } from "@typeberry/hash";
 import type { WorkerConfig } from "@typeberry/workers-api";
 import { ThreadPort, type TransferablePort } from "./port.js";
 
-// Re-exported so the fuzz target can open one values session per run and reuse
-// it across resets (see `HybridWorkerConfig` / `mainFuzz`).
-export { FjallValuesSession };
+// Re-exported so the fuzz target can open one keyspace per run and reuse it
+// across resets.
+export { FjallRoot, FjallValuesSession };
 
 /** Persistent regular-node backend. */
 export type PersistentBackend = "fjall";
@@ -40,6 +40,7 @@ export class FjallWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Se
     ports = new Map(),
     ephemeral = false,
     cacheSizeBytes,
+    sharedFjallKeyspace,
   }: {
     nodeName: string;
     chainSpec: ChainSpec;
@@ -49,8 +50,19 @@ export class FjallWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Se
     ports?: Map<string, ThreadPort>;
     ephemeral?: boolean;
     cacheSizeBytes?: number;
+    sharedFjallKeyspace?: FjallRoot;
   }) {
-    return new FjallWorkerConfig(nodeName, chainSpec, workerParams, dbPath, blake2b, ports, ephemeral, cacheSizeBytes);
+    return new FjallWorkerConfig(
+      nodeName,
+      chainSpec,
+      workerParams,
+      dbPath,
+      blake2b,
+      ports,
+      ephemeral,
+      cacheSizeBytes,
+      sharedFjallKeyspace,
+    );
   }
 
   /** Restore node config from a transferable config object. */
@@ -81,16 +93,23 @@ export class FjallWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Se
     // Kept for the fuzz/importer path. When set, persist() is skipped.
     public readonly ephemeral: boolean = false,
     public readonly cacheSizeBytes: number | undefined = undefined,
+    private readonly sharedFjallKeyspace: FjallRoot | undefined = undefined,
   ) {}
 
   async openDatabase(
     options: { readonly: boolean } = { readonly: true },
   ): Promise<RootDb<BlocksDb, SerializedStatesDb>> {
-    const fjall = await FjallRoot.open(this.dbPath, {
-      readOnly: options.readonly,
-      ephemeral: this.ephemeral,
-      cacheSizeBytes: this.cacheSizeBytes,
-    });
+    if (this.sharedFjallKeyspace !== undefined && options.readonly) {
+      throw new Error("Cannot open a read-only fjall database from a shared writable keyspace.");
+    }
+    const fjall =
+      this.sharedFjallKeyspace ??
+      (await FjallRoot.open(this.dbPath, {
+        readOnly: options.readonly,
+        ephemeral: this.ephemeral,
+        cacheSizeBytes: this.cacheSizeBytes,
+      }));
+    const ownsFjall = this.sharedFjallKeyspace === undefined;
     let blocks: FjallBlocks | null = null;
     let states: FjallStates | null = null;
     try {
@@ -99,7 +118,9 @@ export class FjallWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Se
         FjallStates.open(this.chainSpec, this.blake2b, fjall),
       ]);
     } catch (e) {
-      await fjall.close();
+      if (ownsFjall) {
+        await fjall.close();
+      }
       throw e;
     }
 
@@ -119,7 +140,9 @@ export class FjallWorkerConfig<T = void> implements WorkerConfig<T, BlocksDb, Se
       close: async () => {
         blocks = null;
         states = null;
-        await fjall.close();
+        if (ownsFjall) {
+          await fjall.close();
+        }
       },
     };
   }
@@ -254,7 +277,7 @@ export class HybridWorkerConfig<T = undefined> implements WorkerConfig<T, Blocks
     dbPath,
     ephemeral = false,
     compression = true,
-    sharedFjallSession,
+    sharedFjallKeyspace,
   }: {
     nodeName: string;
     chainSpec: ChainSpec;
@@ -264,17 +287,17 @@ export class HybridWorkerConfig<T = undefined> implements WorkerConfig<T, Blocks
     ephemeral?: boolean;
     compression?: boolean;
     /**
-     * Reuse an already-open fjall values session instead of opening a fresh
-     * keyspace. The fuzz target opens one per run and passes it on every reset,
-     * so only the in-memory blocks/leaf sets are rebuilt per vector.
+     * Reuse an already-open fjall keyspace instead of opening a fresh keyspace.
+     * The fuzz target opens one per run and passes it on every reset, so only
+     * the in-memory blocks/leaf sets are rebuilt per vector.
      */
-    sharedFjallSession?: FjallValuesSession;
+    sharedFjallKeyspace?: FjallRoot;
   }): Promise<HybridWorkerConfig<T>> {
     // The values store is created once here and shared across reopen. When a
-    // session is given (fuzz reset reuse) we wrap it instead of opening a new one.
+    // keyspace is given (fuzz reset reuse) we wrap it instead of opening a new one.
     const states =
-      sharedFjallSession !== undefined
-        ? FjallHybridSerializedStates.fromSession(chainSpec, blake2b, sharedFjallSession)
+      sharedFjallKeyspace !== undefined
+        ? await FjallHybridSerializedStates.fromRoot(chainSpec, blake2b, sharedFjallKeyspace)
         : await FjallHybridSerializedStates.new({ spec: chainSpec, blake2b, dbPath, ephemeral });
     return new HybridWorkerConfig(nodeName, chainSpec, workerParams, blake2b, dbPath, ephemeral, compression, states);
   }
