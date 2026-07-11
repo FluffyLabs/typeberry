@@ -37,8 +37,8 @@ const FUZZ_FJALL_PARTITIONS = ["headers", "extrinsics", "postStateRoots", "state
  * across resets, so this cache is what keeps the resident memory bounded.
  */
 const FUZZ_FJALL_CACHE_BYTES = 128 * 1024 * 1024;
-/** Rebuild the fjall-hybrid keyspace every N resets to limit LSM read amplification. */
-const REBUILD_FJALL_HYBRID_KEYSPACE_EVERY = 50;
+/** Rebuild reused fjall keyspaces every N resets to limit LSM write/read amplification. */
+const REBUILD_FJALL_KEYSPACE_EVERY = 50;
 
 /**
  * Resolve the directory the fuzzer should use for its on-disk database, or
@@ -191,7 +191,7 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
                   cacheSizeBytes: FUZZ_FJALL_CACHE_BYTES,
                 });
                 logger.info`🗄️ Opened reusable fjall keyspace at ${fjallKeyspacePath}`;
-              } else if (resetCount % REBUILD_FJALL_HYBRID_KEYSPACE_EVERY === 0) {
+              } else if (resetCount % REBUILD_FJALL_KEYSPACE_EVERY === 0) {
                 // Periodic rebuild: close, wipe keyspace dir, and reopen.
                 const keyspace = fjallKeyspace;
                 fjallKeyspace = null;
@@ -213,6 +213,18 @@ export async function mainFuzz(fuzzConfig: FuzzConfig, withRelPath: (v: string) 
                   cacheSizeBytes: FUZZ_FJALL_CACHE_BYTES,
                 });
                 logger.info`🗄️ Opened reusable fjall keyspace at ${fjallKeyspacePath}`;
+              } else if (resetCount % REBUILD_FJALL_KEYSPACE_EVERY === 0) {
+                // Periodic rebuild: delete/recreate keeps correctness, but a
+                // long-lived keyspace accumulates fjall write amplification.
+                const keyspace = fjallKeyspace;
+                fjallKeyspace = null;
+                await keyspace.close().catch(() => {});
+                await wipeFuzzDb(fuzzDbBase).catch(() => {});
+                fjallKeyspace = await FjallRoot.open(fjallKeyspacePath, {
+                  ephemeral: true,
+                  cacheSizeBytes: FUZZ_FJALL_CACHE_BYTES,
+                });
+                logger.info`🗄️ Rebuilt reusable fjall keyspace at ${fjallKeyspacePath}`;
               } else if (fjallKeyspace !== null) {
                 const keyspace = fjallKeyspace;
                 await Promise.all(FUZZ_FJALL_PARTITIONS.map((name) => keyspace.deletePartition(name)));
