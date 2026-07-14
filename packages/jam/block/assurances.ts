@@ -1,7 +1,7 @@
 import type { BitVec } from "@typeberry/bytes";
 import { type CodecRecord, codec, type DescribedBy } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypto";
+import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypto/browser.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { WithDebug } from "@typeberry/utils";
 import { codecKnownSizeArray, codecWithContext } from "./codec-utils.js";

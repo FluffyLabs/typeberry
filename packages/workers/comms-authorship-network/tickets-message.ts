@@ -1,7 +1,7 @@
 import type { Epoch } from "@typeberry/block";
 import { SignedTicket } from "@typeberry/block/tickets.js";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { WithDebug } from "@typeberry/utils";
+import { WithDebug } from "@typeberry/utils/debug.js";
 
 export class TicketsMessage extends WithDebug {
   static Codec = codec.Class(TicketsMessage, {

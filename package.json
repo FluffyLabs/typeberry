@@ -46,6 +46,7 @@
     "packages/jam/in-core",
     "packages/jam/jam-host-calls",
     "packages/jam/jamnp-s",
+    "packages/jam/networking-offline",
     "packages/jam/node",
     "packages/jam/rpc",
     "packages/jam/rpc-client",

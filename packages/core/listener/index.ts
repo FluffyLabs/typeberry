@@ -1,11 +1,16 @@
-import { EventEmitter } from "node:events";
+import { EventEmitter } from "eventemitter3";
 
 const EVENT = Symbol();
 const EVENT_DONE = Symbol();
 
+type ListenerEvents<T> = {
+  [EVENT]: [data: T];
+  [EVENT_DONE]: [];
+};
+
 /** A typed version of event emitter. */
 export class Listener<T> {
-  private readonly emitter = new EventEmitter();
+  private readonly emitter = new EventEmitter<ListenerEvents<T>>();
 
   emit(data: T) {
     this.emitter.emit(EVENT, data);
@@ -43,7 +48,7 @@ export class Listener<T> {
       // to avoid deadlocks and since we don't care about that signal,
       // we simply return the response immediately and process the emitting
       // later
-      setImmediate(() => this.emit(req));
+      globalThis.setTimeout(() => this.emit(req), 0);
     };
   }
 }

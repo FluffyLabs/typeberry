@@ -52,6 +52,7 @@ The following modules are available as subpath imports (e.g., `@typeberry/lib/bl
 - `config` - Configuration types
 - `config-node` - Node configuration utilities
 - `crypto` - Cryptographic primitives (Ed25519, Sr25519, BLS)
+- `crypto-browser` - Browser-safe cryptographic sizes and opaque data types
 - `database` - Database abstractions
 - `erasure-coding` - Erasure coding implementation
 - `fuzz-proto` - Fuzzing protocol support
@@ -61,6 +62,7 @@ The following modules are available as subpath imports (e.g., `@typeberry/lib/bl
 - `json-parser` - JSON parsing utilities
 - `logger` - Logging framework
 - `mmr` - Merkle Mountain Range implementation
+- `networking-offline` - Programmatically controlled offline JAM networking implementation
 - `numbers` - Fixed-size numeric types
 - `ordering` - Ordering and comparison utilities
 - `pvm-host-calls` - PVM host call implementations
@@ -75,6 +77,76 @@ The following modules are available as subpath imports (e.g., `@typeberry/lib/bl
 - `trie` - Trie data structures
 - `utils` - General utilities
 - `workers-api` - Workers API utilities
+
+### Browser-safe crypto metadata
+
+Use `@typeberry/lib/crypto-browser` when browser code only needs encoded
+cryptographic sizes or opaque key and signature types:
+
+```typescript
+import { ED25519_SIGNATURE_BYTES } from "@typeberry/lib/crypto-browser";
+import type { Ed25519Signature } from "@typeberry/lib/crypto-browser";
+```
+
+This entry point does not load signing, verification, native bindings, or WASM
+initialization. Use `@typeberry/lib/crypto` when those operations are required.
+
+### Offline networking controller
+
+The offline networking module is a browser-safe implementation of the standard
+networking-worker protocol. A node host can wire its `network` endpoint to an
+importer and best-header source, while callers control peer traffic through
+`offline`:
+
+<!-- example-code:networking-offline -->
+```typescript
+import { startOfflineNetworkingWorker } from "@typeberry/lib/networking-offline";
+import { Block, emptyBlock, reencodeAsView } from "@typeberry/lib/block";
+import { Bytes } from "@typeberry/lib/bytes";
+import { tinyChainSpec } from "@typeberry/lib/config";
+import { HASH_SIZE, WithHash } from "@typeberry/lib/hash";
+import { DirectPort } from "@typeberry/lib/workers-api";
+
+type BlockView = import("@typeberry/lib/block").BlockView;
+type HeaderHash = import("@typeberry/lib/block").HeaderHash;
+
+const authorshipPorts = DirectPort.pair();
+const worker = startOfflineNetworkingWorker(authorshipPorts[0]);
+// Connect authorshipPorts[1] to block authorship.
+
+// Connect blocks received through offline networking to the importer.
+const importedBlocks: BlockView[] = [];
+worker.network.setOnBlocks(async (blocks) => {
+  importedBlocks.push(...blocks);
+});
+
+const block = reencodeAsView(Block.Codec, emptyBlock(), tinyChainSpec);
+await worker.offline.submitBlock(block);
+assert.strictEqual(importedBlocks[0], block);
+
+// Outgoing online-network announcements are observable programmatically.
+let announcedHeader: unknown = null;
+worker.offline.announcedHeaders.once((header) => {
+  announcedHeader = header;
+});
+const header = WithHash.new(Bytes.zero(HASH_SIZE).asOpaque<HeaderHash>(), block.header.view());
+await worker.network.sendNewHeader(header);
+assert.strictEqual(announcedHeader, header);
+
+await worker.finish();
+```
+<!-- /example-code:networking-offline -->
+
+`submitBlock` and `submitBlocks` resolve once the standard networking protocol
+has delivered the blocks; importer acceptance remains intentionally separate.
+`submitTickets` returns the connected authorship module's validation decision.
+The announcement events expose headers and ticket messages that online
+networking would distribute to peers. Calling `finish()` is idempotent, and
+submission methods reject after shutdown.
+
+The concrete `@typeberry/node` package deliberately does not compose this
+controller yet. A future node integration should expose an RPC or equivalent
+control surface so external callers can submit offline network traffic.
 
 ## Examples
 
