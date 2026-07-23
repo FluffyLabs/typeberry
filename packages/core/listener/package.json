@@ -3,6 +3,9 @@
   "version": "0.11.0",
   "description": "Typed event-emitter and listener.",
   "main": "index.ts",
+  "dependencies": {
+    "eventemitter3": "^5.0.1"
+  },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },

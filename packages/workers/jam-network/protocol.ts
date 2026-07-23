@@ -1,10 +1,12 @@
-import { Block, type HeaderHash, headerViewWithHashCodec } from "@typeberry/block";
+import type { HeaderHash } from "@typeberry/block";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { ED25519_PRIV_KEY_BYTES, type Ed25519SecretSeed } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U16 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
-import { type Api, createProtocol, type Internal } from "@typeberry/workers-api";
+
+export type { NetworkingApi, NetworkingInternal } from "./messages.js";
+export { protocol } from "./messages.js";
 
 /** Network-specific worker initialisatation. */
 export class NetworkingConfig extends WithDebug {
@@ -35,25 +37,3 @@ export class NetworkingConfig extends WithDebug {
     super();
   }
 }
-
-export const protocol = createProtocol("net", {
-  toWorker: {
-    newHeader: {
-      request: headerViewWithHashCodec,
-      response: codec.nothing,
-    },
-    finish: {
-      request: codec.nothing,
-      response: codec.nothing,
-    },
-  },
-  fromWorker: {
-    blocks: {
-      request: codec.sequenceVarLen(Block.Codec.View),
-      response: codec.nothing,
-    },
-  },
-});
-
-export type NetworkingInternal = Internal<typeof protocol>;
-export type NetworkingApi = Api<typeof protocol>;

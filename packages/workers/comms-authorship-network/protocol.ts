@@ -1,5 +1,6 @@
 import { codec } from "@typeberry/codec";
-import { type Api, createProtocol, type Internal } from "@typeberry/workers-api";
+import { createProtocol } from "@typeberry/workers-api/protocol.js";
+import type { Api, Internal } from "@typeberry/workers-api/types.js";
 import { TicketsMessage } from "./tickets-message.js";
 
 /**

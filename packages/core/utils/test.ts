@@ -1,7 +1,6 @@
 /**
  * Utilities for tests.
  */
-import assert from "node:assert";
 import { inspect } from "./debug.js";
 import type { Result } from "./result.js";
 
@@ -62,14 +61,15 @@ export function deepEqual<T>(
        *
        * This workaround can be removed when this issue is resolved: https://github.com/nodejs/node/issues/57242
        */
-      const [major, minor] = process.versions.node.split(".").map(Number);
-      const isOoMWorkaroundNeeded = major > 22 || (major === 22 && minor >= 12);
+      const nodeVersion = typeof process === "undefined" ? null : process.versions?.node;
+      const [major = 0, minor = 0] = nodeVersion?.split(".").map(Number) ?? [];
+      const isOoMWorkaroundNeeded = nodeVersion !== null && (major > 22 || (major === 22 && minor >= 12));
       const message = isOoMWorkaroundNeeded ? new Error(`${actual} != ${expected}`) : undefined;
       const actualDisp = actual === null || actual === undefined ? actual : `${inspect(actual)}`;
       const expectedDisp = expected === null || expected === undefined ? expected : `${inspect(expected)}`;
 
       try {
-        assert.strictEqual(actualDisp, expectedDisp, message);
+        strictEqual(actualDisp, expectedDisp, message);
       } catch (e) {
         if (isOoMWorkaroundNeeded && !oomWarningPrinted) {
           // biome-ignore lint/suspicious/noConsole: warning
@@ -188,10 +188,16 @@ export function deepEqual<T>(
 
   errors.tryAndCatch(() => {
     // fallback
-    assert.strictEqual(actual, expected);
+    strictEqual(actual, expected);
   }, ctx);
 
   return errors.exitOrThrow();
+}
+
+function strictEqual(actual: unknown, expected: unknown, message?: Error): void {
+  if (!Object.is(actual, expected)) {
+    throw message ?? new Error(`Expected ${inspect(actual)} to strictly equal ${inspect(expected)}`);
+  }
 }
 
 function getAllKeysSorted<T>(a: (keyof T)[], b: (keyof T)[]): (keyof T)[] {

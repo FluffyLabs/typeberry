@@ -1,7 +1,13 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec, type DescribedBy } from "@typeberry/codec";
-import { BANDERSNATCH_KEY_BYTES, type BandersnatchKey, ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
-import { BANDERSNATCH_VRF_SIGNATURE_BYTES, type BandersnatchVrfSignature } from "@typeberry/crypto/bandersnatch.js";
+import {
+  BANDERSNATCH_KEY_BYTES,
+  BANDERSNATCH_VRF_SIGNATURE_BYTES,
+  type BandersnatchKey,
+  type BandersnatchVrfSignature,
+  ED25519_KEY_BYTES,
+  type Ed25519Key,
+} from "@typeberry/crypto/browser.js";
 import { HASH_SIZE, WithHash } from "@typeberry/hash";
 import { WithDebug } from "@typeberry/utils";
 import {

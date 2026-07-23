@@ -1,7 +1,7 @@
 import type { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "@typeberry/crypto/bandersnatch.js";
+import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "@typeberry/crypto/browser.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU8, tryAsU32, type U8 } from "@typeberry/numbers";
 import { asOpaqueType, type Opaque, WithDebug } from "@typeberry/utils";

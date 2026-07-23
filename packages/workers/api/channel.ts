@@ -1,5 +1,5 @@
 import { Logger } from "@typeberry/logger";
-import { check } from "@typeberry/utils";
+import { check } from "@typeberry/utils/debug.js";
 import type { Port } from "./port.js";
 import type {
   Destroy,
