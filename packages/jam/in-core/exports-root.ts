@@ -19,7 +19,7 @@ const NODE_PREFIX = BytesBlob.blobFromString("node");
  * @param exports Exports must be grouped and supplied in work-item order,
  * with each inner sequence preserving that work-item’s segment export order.
  * https://graypaper.fluffylabs.dev/#/ab2cdbd/1be5011be701?v=0.7.2
-*/
+ */
 export function computeExportsRoot(exports: readonly (readonly Segment[])[], blake2b: Blake2b): ExportsRootHash {
   let nodes: ExportsRootHash[] = [];
   // GP E.7: C hashes every segment with $leaf and pads with H₀.
