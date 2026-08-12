@@ -11,6 +11,11 @@ const NODE_PREFIX = BytesBlob.blobFromString("node");
  * Computes the segment-root commitment for segments exported by a work-package.
  * https://graypaper.fluffylabs.dev/#/ab2cdbd/1be4011be901?v=0.7.2
  *
+ * GP E.4: Merkle function `M` = N(C(v, H), H)
+ * C - creates leafs and padds
+ * N - creates tree and returns root
+ * https://graypaper.fluffylabs.dev/#/ab2cdbd/3d56003d5600?v=0.7.2
+ *
  * @param exports Exports must be grouped and supplied in work-item order,
  * with each inner sequence preserving that work-item’s segment export order.
  * https://graypaper.fluffylabs.dev/#/ab2cdbd/1be5011be701?v=0.7.2
@@ -25,8 +30,7 @@ export function computeExportsRoot(exports: readonly (readonly Segment[])[], bla
     }
   }
 
-  // GP E.4: Merkle function `M` = N(C(v, H), H)
-  // https://graypaper.fluffylabs.dev/#/ab2cdbd/3d56003d5600?v=0.7.2
+  // If we dont have any exports we return H₀.
   const zeroHash = Bytes.zero(HASH_SIZE).asOpaque<ExportsRootHash>();
   if (nodes.length === 0) {
     return zeroHash;
@@ -48,5 +52,6 @@ export function computeExportsRoot(exports: readonly (readonly Segment[])[], bla
     nodes = nextLevel;
   }
 
+  // If we have 1 segment we return that segment's leaf hash.
   return nodes[0];
 }
