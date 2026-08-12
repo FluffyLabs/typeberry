@@ -145,5 +145,6 @@ describe("InCore", () => {
     assert.strictEqual(result.isOk, true, `Expected OK but got error: ${result.isError ? result.details() : ""}`);
     assert.strictEqual(result.ok.report.coreIndex, 0);
     assert.strictEqual(result.ok.report.results.length, 1);
+    assert.strictEqual(result.ok.report.workPackageSpec.exportsRoot.toString(), Bytes.zero(HASH_SIZE).toString());
   });
 });

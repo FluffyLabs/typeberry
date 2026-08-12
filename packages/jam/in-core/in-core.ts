@@ -13,6 +13,7 @@ import { Logger } from "@typeberry/logger";
 import { tryAsU8, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { buildWorkPackageFetchData } from "@typeberry/transition/externalities/fetch-externalities.js";
 import { assertEmpty, Result } from "@typeberry/utils";
+import { computeExportsRoot } from "./exports-root.js";
 import type { ImportedSegment, PerWorkItem } from "./externalities/index.js";
 import { AuthorizationError, type AuthorizationOk, IsAuthorized } from "./is-authorized.js";
 export type { ImportedSegment, PerWorkItem };
@@ -49,7 +50,7 @@ export class InCore {
     public readonly chainSpec: ChainSpec,
     private readonly states: StatesDb,
     pvmBackend: PvmBackend,
-    blake2b: Blake2b,
+    private readonly blake2b: Blake2b,
   ) {
     this.isAuthorized = new IsAuthorized(chainSpec, pvmBackend, blake2b);
     this.refineItem = new Refine(chainSpec, pvmBackend, blake2b);
@@ -150,7 +151,14 @@ export class InCore {
 
     // amalgamate the work report now
     return Result.ok(
-      InCore.amalgamateWorkReport(asKnownSize(refineResults), authResult.ok, workPackageHash, context, core),
+      InCore.amalgamateWorkReport(
+        asKnownSize(refineResults),
+        authResult.ok,
+        workPackageHash,
+        context,
+        core,
+        this.blake2b,
+      ),
     );
   }
 
@@ -160,6 +168,7 @@ export class InCore {
     workPackageHash: WorkPackageHash,
     context: RefineContext,
     coreIndex: CoreIndex,
+    blake2b: Blake2b,
   ) {
     // unzip exports and work results for each work item
     const exports = refineResults.map((x) => x.exports);
@@ -170,8 +179,7 @@ export class InCore {
 
     // TODO [ToDr] Compute erasure root
     const erasureRoot = Bytes.zero(HASH_SIZE);
-    // TODO [ToDr] Compute exports root
-    const exportsRoot = Bytes.zero(HASH_SIZE).asOpaque();
+    const exportsRoot = computeExportsRoot(exports, blake2b);
     const exportsCount = exports.reduce((acc, x) => acc + x.length, 0);
 
     // TODO [ToDr] Segment root lookup computation?
