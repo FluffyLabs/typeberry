@@ -1,0 +1,17 @@
+{
+  "name": "@typeberry/merkleization",
+  "version": "0.11.0",
+  "description": "General JAM merkleization functions.",
+  "license": "MPL-2.0",
+  "author": "Fluffy Labs",
+  "main": "index.ts",
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "dependencies": {
+    "@typeberry/bytes": "*",
+    "@typeberry/hash": "*",
+    "@typeberry/trie": "*"
+  },
+  "type": "module"
+}

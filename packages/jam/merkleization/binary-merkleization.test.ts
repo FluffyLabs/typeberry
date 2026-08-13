@@ -1,9 +1,36 @@
+import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { KeccakHasher } from "@typeberry/hash/keccak.js";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
-import { deepEqual } from "@typeberry/utils";
-import { binaryMerkleization } from "./binary-merkleization.js";
+import { binaryMerkleization, binaryMerkleTreeRoot } from "./binary-merkleization.js";
+
+describe("binaryMerkleTreeRoot", () => {
+  it("should return the zero value for empty input", () => {
+    assert.strictEqual(
+      binaryMerkleTreeRoot<string>([], "zero", (left, right) => `(${left}+${right})`),
+      "zero",
+    );
+  });
+
+  it("should build tree in-place", () => {
+    const input = ["a", "b", "c", "d", "e"];
+
+    const result = binaryMerkleTreeRoot(input, "zero", (left, right) => `(${left}+${right})`);
+
+    assert.strictEqual(result, "(((a+b)+c)+(d+e))");
+    assert.strictEqual(input[0], result);
+  });
+
+  it("should build a balanced tree in-place", () => {
+    const input = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
+    const result = binaryMerkleTreeRoot(input, "zero", (left, right) => `(${left}+${right})`);
+
+    assert.strictEqual(result, "(((a+b)+(c+d))+((e+f)+(g+h)))");
+    assert.strictEqual(input[0], result);
+  });
+});
 
 describe("binaryMerkleization", () => {
   it("should correctly calculate merkle root for empty data", async () => {
@@ -14,7 +41,7 @@ describe("binaryMerkleization", () => {
 
     const result = binaryMerkleization(input, trieHasher);
 
-    deepEqual(result, expectedResult);
+    assert.deepStrictEqual(result.raw, expectedResult.raw);
   });
 
   it("should correctly calculate merkle root for not empty data", async () => {
@@ -28,6 +55,6 @@ describe("binaryMerkleization", () => {
 
     const result = binaryMerkleization(input, trieHasher);
 
-    deepEqual(result, expectedResult);
+    assert.deepStrictEqual(result.raw, expectedResult.raw);
   });
 });
