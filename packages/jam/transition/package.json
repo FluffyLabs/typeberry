@@ -16,6 +16,7 @@
     "@typeberry/hash": "*",
     "@typeberry/jam-host-calls": "*",
     "@typeberry/logger": "*",
+    "@typeberry/merkleization": "*",
     "@typeberry/mmr": "*",
     "@typeberry/numbers": "*",
     "@typeberry/safrole": "*",

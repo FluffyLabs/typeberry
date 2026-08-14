@@ -24,7 +24,6 @@
  *        hashmap of `key -> value` entries.
  */
 
-export * from "./binary-merkleization.js";
 export * from "./keys.js";
 export * from "./loader.js";
 export * from "./serialize.js";

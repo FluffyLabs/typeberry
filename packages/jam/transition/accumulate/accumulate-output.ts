@@ -1,9 +1,9 @@
 import { BytesBlob } from "@typeberry/bytes";
 import type { SortedArray } from "@typeberry/collections";
 import { KeccakHasher } from "@typeberry/hash/keccak.js";
+import { binaryMerkleization } from "@typeberry/merkleization";
 import { u32AsLeBytes } from "@typeberry/numbers";
 import type { AccumulationOutput } from "@typeberry/state";
-import { binaryMerkleization } from "@typeberry/state-merkleization";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import type { AccumulateRoot } from "./accumulate-state.js";
 

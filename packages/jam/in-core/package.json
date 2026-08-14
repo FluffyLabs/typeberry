@@ -17,6 +17,7 @@
     "@typeberry/hash": "*",
     "@typeberry/jam-host-calls": "*",
     "@typeberry/logger": "*",
+    "@typeberry/merkleization": "*",
     "@typeberry/numbers": "*",
     "@typeberry/ordering": "*",
     "@typeberry/pvm-host-calls": "*",
